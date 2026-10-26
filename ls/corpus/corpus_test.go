@@ -97,6 +97,35 @@ func TestIncrementalCarryForwardPreservesDiagnosticsCorpus(t *testing.T) {
 	runTranscript(t, "sync/testdata/incremental-carry-forward-preserves-diagnostics.json")
 }
 
+func TestTranscriptTemporaryRoots(t *testing.T) {
+	for _, tc := range []struct {
+		name, fixture, document string
+		wantOnDisk              bool
+	}{
+		{"without sources", "sync/testdata/incremental_edit.initialize.json", "incremental_edit.bal", false},
+		{"with sources", "sync/testdata/overlay-over-disk.json", "main.bal", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			runTranscriptWithCheck(t, tc.fixture, func(_ *workspace.ProjectService, _ *compile.CompilationService, root string) {
+				if !filepath.IsAbs(root) || !strings.Contains(root, " ") {
+					t.Fatalf("fixture root must exercise a native absolute path with spaces: %q", root)
+				}
+				info, err := os.Stat(root)
+				if err != nil || !info.IsDir() {
+					t.Fatalf("fixture root is not a directory: %v", err)
+				}
+				_, err = os.Stat(filepath.Join(root, tc.document))
+				if tc.wantOnDisk && err != nil {
+					t.Fatalf("source file must remain on disk: %v", err)
+				}
+				if !tc.wantOnDisk && !os.IsNotExist(err) {
+					t.Fatalf("overlay-only document must remain absent from disk: %v", err)
+				}
+			})
+		})
+	}
+}
+
 func runTranscript(t *testing.T, fixturePath string) {
 	t.Helper()
 	runTranscriptWithCheck(t, fixturePath, nil)
@@ -112,15 +141,12 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 	if err := json.Unmarshal(content, &fixture); err != nil {
 		t.Fatal(err)
 	}
-	rootPath := ""
-	if len(fixture.Sources) > 0 {
-		rootPath = materializeSources(t, fixture.Sources)
-		rootURI, err := workspace.FileURIFromPath(rootPath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		fixture.Root = strings.TrimPrefix(rootURI.String(), "file://")
+	rootPath := materializeSources(t, fixture.Sources)
+	rootURI, err := workspace.FileURIFromPath(rootPath)
+	if err != nil {
+		t.Fatal(err)
 	}
+	fixture.Root = rootURI.String()
 	source := ""
 	if fixture.Source != "" {
 		data, err := fs.ReadFile(os.DirFS("."), path.Join(path.Dir(fixturePath), fixture.Source))
@@ -277,7 +303,10 @@ func readMessages(output []byte) ([]json.RawMessage, error) {
 
 func materializeSources(t *testing.T, sources map[string]string) string {
 	t.Helper()
-	root := t.TempDir()
+	root := filepath.Join(t.TempDir(), "workspace with spaces")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	for rel, content := range sources {
 		applyDiskWrite(t, root, &diskWriteAction{Path: rel, Content: content})
 	}

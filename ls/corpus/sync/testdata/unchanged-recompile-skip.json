@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/unchanged-recompile-skip.bal",
+          "uri": "${root}/unchanged-recompile-skip.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -35,7 +35,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/unchanged-recompile-skip.bal",
+          "uri": "${root}/unchanged-recompile-skip.bal",
           "version": 2
         },
         "contentChanges": [
@@ -65,7 +65,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/unchanged-recompile-skip.bal"
+          "uri": "${root}/unchanged-recompile-skip.bal"
         }
       }
     }
@@ -88,7 +88,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/unchanged-recompile-skip.bal",
+        "uri": "${root}/unchanged-recompile-skip.bal",
         "diagnostics": [
           {
             "range": {
@@ -113,7 +113,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/unchanged-recompile-skip.bal",
+        "uri": "${root}/unchanged-recompile-skip.bal",
         "diagnostics": [
           {
             "range": {
@@ -138,7 +138,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/unchanged-recompile-skip.bal",
+        "uri": "${root}/unchanged-recompile-skip.bal",
         "diagnostics": []
       }
     }

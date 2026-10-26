@@ -30,7 +30,7 @@ func TestDocumentText_RegistrationKeyMatchesWorkspaceOpenTextKey(t *testing.T) {
 	greetModule := pkg.ModuleByName(mustModuleName(t, pkg, "multimoduleproject.greet"))
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	greetURI := fileURI(t, "file://"+greetPath)
+	greetURI := fileURI(t, greetPath)
 
 	name, _ := projSvc.Paths(pkg.Project()).NameOf(greetURI)
 	docID, ok := pkg.Project().DocumentID(name)

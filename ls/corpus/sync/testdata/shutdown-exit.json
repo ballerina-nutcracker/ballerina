@@ -28,7 +28,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/shutdown-exit.bal",
+          "uri": "${root}/shutdown-exit.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -51,7 +51,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/shutdown-exit.bal",
+          "uri": "${root}/shutdown-exit.bal",
           "version": 2
         },
         "contentChanges": [
@@ -100,7 +100,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/shutdown-exit.bal",
+        "uri": "${root}/shutdown-exit.bal",
         "version": 1,
         "diagnostics": [
           {

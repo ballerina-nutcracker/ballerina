@@ -37,7 +37,7 @@ func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testi
 	consumerID := moduleIDFor(t, pkg1, "multimoduleproject.consumer")
 
 	dir := multimoduleFixtureDir(t)
-	greetURI := fileURI(t, "file://"+filepath.Join(dir, "modules", "greet", "greet.bal"))
+	greetURI := fileURI(t, filepath.Join(dir, "modules", "greet", "greet.bal"))
 	applyOpen(t, projSvc, greetURI, "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n")
 
 	proj, err := projSvc.Project(greetURI)

@@ -163,7 +163,7 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 
 	newSvc := newProjectOnlyService(t)
 	_, mainURI := openMultimoduleFixture(t, newSvc)
-	newGreetURI := fileURI(t, "file://"+greetPath)
+	newGreetURI := fileURI(t, greetPath)
 	applyOpen(t, newSvc, newGreetURI, editedGreet)
 	newProj, err := newSvc.Project(mainURI)
 	if err != nil || newProj == nil {
@@ -204,7 +204,7 @@ func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 
 	newSvc := newProjectOnlyService(t)
 	_, mainURI := openMultimoduleFixture(t, newSvc)
-	newGreetURI := fileURI(t, "file://"+greetPath)
+	newGreetURI := fileURI(t, greetPath)
 	applyOpen(t, newSvc, newGreetURI, editedGreet)
 	newProj, err := newSvc.Project(mainURI)
 	if err != nil || newProj == nil {

@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/modifier-chain-identical-output.bal",
+          "uri": "${root}/modifier-chain-identical-output.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -35,7 +35,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/modifier-chain-identical-output.bal",
+          "uri": "${root}/modifier-chain-identical-output.bal",
           "version": 2
         },
         "contentChanges": [
@@ -65,7 +65,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///other/modifier-chain-fresh.bal",
+          "uri": "${root}/other/modifier-chain-fresh.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "// header\npublic function main() {\n int a = 1;\n}\n"
@@ -82,7 +82,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/modifier-chain-identical-output.bal"
+          "uri": "${root}/modifier-chain-identical-output.bal"
         }
       }
     },
@@ -91,7 +91,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file:///other/modifier-chain-fresh.bal"
+          "uri": "${root}/other/modifier-chain-fresh.bal"
         }
       }
     }
@@ -114,7 +114,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/modifier-chain-identical-output.bal",
+        "uri": "${root}/modifier-chain-identical-output.bal",
         "diagnostics": [
           {
             "range": {
@@ -139,7 +139,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/modifier-chain-identical-output.bal",
+        "uri": "${root}/modifier-chain-identical-output.bal",
         "diagnostics": [
           {
             "range": {
@@ -164,7 +164,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///other/modifier-chain-fresh.bal",
+        "uri": "${root}/other/modifier-chain-fresh.bal",
         "diagnostics": [
           {
             "range": {
@@ -189,7 +189,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/modifier-chain-identical-output.bal",
+        "uri": "${root}/modifier-chain-identical-output.bal",
         "diagnostics": []
       }
     },
@@ -197,7 +197,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///other/modifier-chain-fresh.bal",
+        "uri": "${root}/other/modifier-chain-fresh.bal",
         "diagnostics": []
       }
     }

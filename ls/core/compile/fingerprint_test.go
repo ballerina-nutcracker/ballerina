@@ -21,7 +21,7 @@ import "testing"
 func buildFingerprint(t *testing.T, source string) fingerprint {
 	t.Helper()
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/fp.bal")
+	u := tempFileURI(t, "fp.bal")
 	applyOpen(t, projSvc, u, source)
 	proj, err := projSvc.Project(u)
 	if err != nil || proj == nil {
@@ -62,7 +62,7 @@ func TestComputeFingerprint_DifferentSignature_DifferentFingerprint(t *testing.T
 
 func TestComputeFingerprint_ErroredContext_Invalid(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/fp-err.bal")
+	u := tempFileURI(t, "fp-err.bal")
 	applyOpen(t, projSvc, u, "public function greeting() returns UndefinedType {\n    return 1;\n}\n")
 	proj, err := projSvc.Project(u)
 	if err != nil || proj == nil {

@@ -17,11 +17,18 @@
 package workspace
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestNewFileURIAcceptsFileScheme(t *testing.T) {
-	u, err := NewFileURI("file:///workspace/main.bal")
+	// These are intentional parser inputs, not filesystem-backed documents.
+	raw, wantPath := "file:///workspace/main.bal", "/workspace/main.bal"
+	if runtime.GOOS == "windows" {
+		raw, wantPath = "file:///C:/workspace/main.bal", `C:\workspace\main.bal`
+	}
+	u, err := NewFileURI(raw)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -31,14 +38,14 @@ func TestNewFileURIAcceptsFileScheme(t *testing.T) {
 	if u.Scheme() != "file" {
 		t.Fatalf("scheme = %q, want %q", u.Scheme(), "file")
 	}
-	if u.Path() != "/workspace/main.bal" {
-		t.Fatalf("path = %q, want %q", u.Path(), "/workspace/main.bal")
+	if u.Path() != wantPath {
+		t.Fatalf("path = %q, want %q", u.Path(), wantPath)
 	}
-	if u.Identity() != "file:///workspace/main.bal" {
-		t.Fatalf("identity = %q, want %q", u.Identity(), "file:///workspace/main.bal")
+	if u.Identity() != raw {
+		t.Fatalf("identity = %q, want %q", u.Identity(), raw)
 	}
-	if u.String() != "file:///workspace/main.bal" {
-		t.Fatalf("string = %q, want %q", u.String(), "file:///workspace/main.bal")
+	if u.String() != raw {
+		t.Fatalf("string = %q, want %q", u.String(), raw)
 	}
 }
 
@@ -106,6 +113,7 @@ func TestNewBalaURISchemeValidation(t *testing.T) {
 }
 
 func TestNewBalaURIRejectsWrongScheme(t *testing.T) {
+	// The fixed file URI intentionally tests scheme rejection without filesystem access.
 	if _, err := NewBalaURI("file:///workspace/main.bal"); err == nil {
 		t.Fatal("NewBalaURI with file: scheme expected error")
 	}
@@ -138,6 +146,7 @@ func TestPathPanicsForNonFileSchemes(t *testing.T) {
 }
 
 func TestFileURIDriveIdentityAndEscaping(t *testing.T) {
+	// Fixed drive URIs exercise parser normalization on every platform.
 	lower, err := NewFileURI("file:///c:/Work/a%20b%23.bal")
 	if err != nil {
 		t.Fatal(err)
@@ -156,6 +165,7 @@ func TestFileURIDriveIdentityAndEscaping(t *testing.T) {
 }
 
 func TestFileURIRejectsUnsupportedPaths(t *testing.T) {
+	// Keep these malformed parser inputs independent of native path conversion.
 	for _, raw := range []string{"file://server/share/main.bal", "file:////server/share/main.bal", "file:C:app.bal", "file:///C:app.bal", "file:relative.bal", "file:///a\\\\b", "file:///a?query", "file:///a#fragment"} {
 		if _, err := NewFileURI(raw); err == nil {
 			t.Errorf("accepted %q", raw)
@@ -164,9 +174,15 @@ func TestFileURIRejectsUnsupportedPaths(t *testing.T) {
 }
 
 func TestDocumentURIComparableAsMapKey(t *testing.T) {
-	u1, _ := NewFileURI("file:///workspace/main.bal")
-	u2, _ := NewFileURI("file:///workspace/main.bal")
-	u3, _ := NewFileURI("file:///workspace/other.bal")
+	u1 := tempFileURI(t, "main.bal")
+	u2, err := NewFileURI(u1.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	u3, err := FileURIFromPath(filepath.Join(filepath.Dir(u1.Path()), "other.bal"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	m := map[DocumentURI]int{}
 	m[u1] = 1
 	if m[u2] != 1 {

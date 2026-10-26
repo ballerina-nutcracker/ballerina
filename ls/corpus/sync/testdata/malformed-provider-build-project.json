@@ -22,7 +22,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/greet/greet.bal",
+          "uri": "${root}/modules/greet/greet.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction broken(int {\n}\n"
@@ -39,7 +39,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/greet/greet.bal"
+          "uri": "${root}/modules/greet/greet.bal"
         }
       }
     },
@@ -48,7 +48,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "import ls/malformedprovider.greet;\n\npublic function main() {\n    _ = greet:greeting();\n    int unused = 1;\n}\n"
@@ -79,7 +79,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/greet/greet.bal",
+        "uri": "${root}/modules/greet/greet.bal",
         "diagnostics": [
           {
             "range": {
@@ -120,7 +120,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/greet/greet.bal",
+        "uri": "${root}/modules/greet/greet.bal",
         "diagnostics": []
       }
     },
@@ -128,7 +128,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": [
           {
             "range": {

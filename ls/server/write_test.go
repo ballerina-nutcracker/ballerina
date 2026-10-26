@@ -28,6 +28,7 @@ import (
 func TestWriteSerializesConcurrentFrames(t *testing.T) {
 	var buf bytes.Buffer
 	s := &Server{transport: pipeTransport{writer: &buf}}
+	uri := tempFileURI(t, "main.bal")
 
 	const perGoroutine = 50
 	const goroutines = 2
@@ -41,7 +42,7 @@ func TestWriteSerializesConcurrentFrames(t *testing.T) {
 					JSONRPC: "2.0",
 					Method:  "textDocument/publishDiagnostics",
 					Params: protocol.PublishDiagnosticsParams{
-						URI:         "file:///workspace/main.bal",
+						URI:         uri,
 						Diagnostics: nil,
 					},
 				}); err != nil {

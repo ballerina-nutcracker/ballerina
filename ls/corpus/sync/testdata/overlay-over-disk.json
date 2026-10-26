@@ -20,7 +20,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function main() {\n    int bufferVar = 1;\n}\n"
@@ -37,7 +37,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         }
       }
     }
@@ -60,7 +60,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": [
           {
             "range": {
@@ -85,7 +85,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": []
       }
     }

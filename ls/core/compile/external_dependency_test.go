@@ -113,7 +113,7 @@ func openExternalDependencyFixture(t *testing.T) (*workspace.ProjectService, *pr
 	repository := projects.NewFileSystemRepository(os.DirFS(filepath.Join(root, "repository")), ".")
 	projectService := workspace.New(os.DirFS, bus, workspace.WithRepositories([]projects.Repository{repository}))
 	documentPath := filepath.Join(root, "main.bal")
-	documentURI := fileURI(t, "file://"+documentPath)
+	documentURI := fileURI(t, documentPath)
 	applyOpen(t, projectService, documentURI, externalDependencySource)
 	project, err := projectService.Project(documentURI)
 	if err != nil || project == nil {

@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/stale-result-suppression.bal",
+          "uri": "${root}/stale-result-suppression.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -30,7 +30,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/stale-result-suppression.bal",
+          "uri": "${root}/stale-result-suppression.bal",
           "version": 2
         },
         "contentChanges": [
@@ -60,7 +60,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/stale-result-suppression.bal"
+          "uri": "${root}/stale-result-suppression.bal"
         }
       }
     }
@@ -83,7 +83,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/stale-result-suppression.bal",
+        "uri": "${root}/stale-result-suppression.bal",
         "diagnostics": [
           {
             "range": {
@@ -108,7 +108,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/stale-result-suppression.bal",
+        "uri": "${root}/stale-result-suppression.bal",
         "diagnostics": []
       }
     }

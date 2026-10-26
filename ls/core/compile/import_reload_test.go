@@ -90,11 +90,11 @@ func requireReloaded(t *testing.T, ps *workspace.ProjectService, u workspace.Doc
 
 func TestAddedImportResolvesAfterEdit(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, noImportSource)
 	requireNoUnknown(t, compileMessages(t, svc, u))
 
-	updateDoc(t, ps, "file:///workspace/main.bal", ioImportSource, 2)
+	updateDoc(t, ps, u.String(), ioImportSource, 2)
 
 	requireNoUnknown(t, compileMessages(t, svc, u))
 }
@@ -124,38 +124,38 @@ func TestRemovedImportReloadsAndDropsDependencySymbols(t *testing.T) {
 
 func TestHalfTypedImportDoesNotReload(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, noImportSource)
 	compileMessages(t, svc, u)
 	project, pkg := currentPackage(t, ps, u)
 
-	updateDoc(t, ps, "file:///workspace/main.bal", "import ballerina/i\n"+noImportSource, 2)
+	updateDoc(t, ps, u.String(), "import ballerina/i\n"+noImportSource, 2)
 
 	requireSamePackage(t, ps, u, project, pkg)
 }
 
 func TestReorderAndAliasChangesDoNotReload(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, "import ballerina/io;\nimport ballerina/lang.'int;\n\n"+noImportSource)
 	compileMessages(t, svc, u)
 	project, pkg := currentPackage(t, ps, u)
 
-	updateDoc(t, ps, "file:///workspace/main.bal", "import ballerina/lang.'int;\nimport ballerina/io;\n\n"+noImportSource, 2)
+	updateDoc(t, ps, u.String(), "import ballerina/lang.'int;\nimport ballerina/io;\n\n"+noImportSource, 2)
 	requireSamePackage(t, ps, u, project, pkg)
 
-	updateDoc(t, ps, "file:///workspace/main.bal", "import ballerina/lang.'int;\nimport ballerina/io as stdio;\n\n"+noImportSource, 3)
+	updateDoc(t, ps, u.String(), "import ballerina/lang.'int;\nimport ballerina/io as stdio;\n\n"+noImportSource, 3)
 	requireSamePackage(t, ps, u, project, pkg)
 }
 
 func TestEditWithoutImportChangeKeepsPackageAndCarriesForward(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, ioImportSource)
 	requireNoUnknown(t, compileMessages(t, svc, u))
 	project, pkg := currentPackage(t, ps, u)
 
-	updateDoc(t, ps, "file:///workspace/main.bal", strings.Replace(ioImportSource, "io:println(1)", "io:println(2)", 1), 2)
+	updateDoc(t, ps, u.String(), strings.Replace(ioImportSource, "io:println(1)", "io:println(2)", 1), 2)
 
 	requireSamePackage(t, ps, u, project, pkg)
 	requireNoUnknown(t, compileMessages(t, svc, u))
@@ -171,7 +171,7 @@ func openExternalDependencyServices(t *testing.T, source string) (*workspace.Pro
 	ps := workspace.New(os.DirFS, bus, workspace.WithRepositories([]projects.Repository{repository}))
 	svc := New(ps, bus, WithDebounce(0))
 	t.Cleanup(func() { svc.Shutdown(); bus.Close() })
-	u := fileURI(t, "file://"+filepath.Join(root, "main.bal"))
+	u := fileURI(t, filepath.Join(root, "main.bal"))
 	applyOpen(t, ps, u, source)
 	return ps, svc, u
 }

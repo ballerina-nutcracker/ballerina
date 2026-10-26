@@ -19,6 +19,7 @@ package compile
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
@@ -34,13 +35,33 @@ func newTestServices(t *testing.T) (*workspace.ProjectService, *CompilationServi
 	return projects, svc
 }
 
-func fileURI(t *testing.T, raw string) workspace.DocumentURI {
+func fileURI(t *testing.T, nativePath string) workspace.DocumentURI {
 	t.Helper()
-	u, err := workspace.NewFileURI(raw)
+	u, err := workspace.FileURIFromPath(nativePath)
 	if err != nil {
-		t.Fatalf("NewFileURI(%q): %v", raw, err)
+		t.Fatalf("FileURIFromPath(%q): %v", nativePath, err)
 	}
 	return u
+}
+
+func tempFileURI(t *testing.T, name string) workspace.DocumentURI {
+	t.Helper()
+	return fileURI(t, filepath.Join(t.TempDir(), name))
+}
+
+func TestFileURIFromNativePath(t *testing.T) {
+	nativePath := filepath.Join(t.TempDir(), "space dir", "main #.bal")
+	u := fileURI(t, nativePath)
+	if u.Path() != nativePath {
+		t.Fatalf("path = %q, want %q", u.Path(), nativePath)
+	}
+	parsed, err := workspace.NewFileURI(u.String())
+	if err != nil || parsed != u {
+		t.Fatalf("round trip = %v, %v, want %v", parsed, err, u)
+	}
+	if _, err := os.Stat(nativePath); !os.IsNotExist(err) {
+		t.Fatalf("URI conversion must leave the document absent: %v", err)
+	}
 }
 
 func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.DocumentURI, text string) {
@@ -54,7 +75,7 @@ func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.Doc
 
 func TestCompileReturnsDiagnosticsForErrorSource(t *testing.T) {
 	projects, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projects, u, "public function main() {\n    int x = 1;\n}\n")
 	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
 	if err != nil {
@@ -83,7 +104,7 @@ func TestCompileReturnsDiagnosticsForErrorSource(t *testing.T) {
 
 func TestCompileReturnsNoDiagnosticsForValidSource(t *testing.T) {
 	projects, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projects, u, "public function main() {}\n")
 	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
 	if err != nil {
@@ -96,7 +117,7 @@ func TestCompileReturnsNoDiagnosticsForValidSource(t *testing.T) {
 
 func TestCompileUnknownRootReturnsEmpty(t *testing.T) {
 	_, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/never-opened.bal")
+	u := tempFileURI(t, "never-opened.bal")
 	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
 	if err != nil {
 		t.Fatalf("Compile: %v", err)

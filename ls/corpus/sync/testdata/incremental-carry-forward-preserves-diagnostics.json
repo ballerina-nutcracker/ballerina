@@ -22,7 +22,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function main() {\n    int unused = 1;\n}\n"
@@ -39,7 +39,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         }
       }
     },
@@ -48,7 +48,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/util/foo.bal",
+          "uri": "${root}/modules/util/foo.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function greet() {\n}\n"
@@ -65,7 +65,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/util/foo.bal",
+          "uri": "${root}/modules/util/foo.bal",
           "version": 2
         },
         "contentChanges": [
@@ -95,7 +95,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/util/foo.bal"
+          "uri": "${root}/modules/util/foo.bal"
         }
       }
     },
@@ -104,7 +104,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function main() {\n    int unused = 1;\n}\n"
@@ -121,7 +121,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         }
       }
     }
@@ -144,7 +144,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": [
           {
             "range": {
@@ -169,7 +169,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": []
       }
     },
@@ -177,7 +177,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/util/foo.bal",
+        "uri": "${root}/modules/util/foo.bal",
         "diagnostics": []
       }
     },
@@ -185,7 +185,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/util/foo.bal",
+        "uri": "${root}/modules/util/foo.bal",
         "diagnostics": [
           {
             "range": {
@@ -210,7 +210,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/util/foo.bal",
+        "uri": "${root}/modules/util/foo.bal",
         "diagnostics": []
       }
     },
@@ -218,7 +218,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": [
           {
             "range": {
@@ -243,7 +243,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": []
       }
     }

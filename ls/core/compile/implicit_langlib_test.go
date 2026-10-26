@@ -37,7 +37,7 @@ const (
 
 func TestImplicitLangLibResolvesWithoutImport(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
 
 	requireNoUnknown(t, compileMessages(t, svc, u))
@@ -47,7 +47,7 @@ func TestSecondImplicitLangLibsResolveWithoutImport(t *testing.T) {
 	for name, source := range map[string]string{"string": stringLengthSource, "array": arrayLengthSource} {
 		t.Run(name, func(t *testing.T) {
 			ps, svc := newTestServices(t)
-			u := fileURI(t, "file:///workspace/main.bal")
+			u := tempFileURI(t, "main.bal")
 			applyOpen(t, ps, u, source)
 
 			requireNoUnknown(t, compileMessages(t, svc, u))
@@ -57,7 +57,7 @@ func TestSecondImplicitLangLibsResolveWithoutImport(t *testing.T) {
 
 func TestExplicitLangLibImportStillResolvesAndCompilesOnce(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringImported)
 	requireNoUnknown(t, compileMessages(t, svc, u))
 
@@ -70,7 +70,7 @@ func TestExplicitLangLibImportStillResolvesAndCompilesOnce(t *testing.T) {
 
 func TestLangRuntimeNeedsExplicitImport(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, runtimeSleepSource)
 	if messages := compileMessages(t, svc, u); len(messages) == 0 {
 		t.Fatal("runtime:sleep without an import must report a diagnostic")
@@ -85,7 +85,7 @@ func TestLangRuntimeNeedsExplicitImport(t *testing.T) {
 
 func TestImplicitLangLibDriversAdoptedAfterBodyEdit(t *testing.T) {
 	ps := newDriverOnlyProjectService(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
 	_, packageOne := currentPackage(t, ps, u)
 	generationOne := newPackageDriver(packageOne, ps.OpenText, nil, nil)
@@ -115,7 +115,7 @@ func TestImplicitLangLibDriversAdoptedAfterBodyEdit(t *testing.T) {
 
 func TestImplicitLangLibsResolveAfterImportChangeReload(t *testing.T) {
 	ps, svc := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
 	requireNoUnknown(t, compileMessages(t, svc, u))
 	project, pkg := currentPackage(t, ps, u)
@@ -128,7 +128,7 @@ func TestImplicitLangLibsResolveAfterImportChangeReload(t *testing.T) {
 
 func TestSymbolSpacesDoNotGrowWithLangLibsAcrossGenerations(t *testing.T) {
 	ps := newDriverOnlyProjectService(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
 	_, pkg := currentPackage(t, ps, u)
 	generation := newPackageDriver(pkg, ps.OpenText, nil, nil)
@@ -159,7 +159,7 @@ func TestSymbolSpacesDoNotGrowWithLangLibsAcrossGenerations(t *testing.T) {
 func spacesAfterAdvance(t *testing.T, source string) int {
 	t.Helper()
 	ps := newDriverOnlyProjectService(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, source)
 	_, pkg := currentPackage(t, ps, u)
 	newPackageDriver(pkg, ps.OpenText, nil, nil).advanceAll(stageTopLevelTypeResolved)

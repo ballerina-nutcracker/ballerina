@@ -26,7 +26,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/cancel.bal",
+          "uri": "${root}/cancel.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -49,7 +49,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/cancel.bal"
+          "uri": "${root}/cancel.bal"
         }
       }
     },
@@ -84,7 +84,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/cancel.bal",
+        "uri": "${root}/cancel.bal",
         "version": 1,
         "diagnostics": [
           {
@@ -110,7 +110,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/cancel.bal",
+        "uri": "${root}/cancel.bal",
         "diagnostics": []
       }
     },

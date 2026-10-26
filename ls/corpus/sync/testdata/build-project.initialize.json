@@ -22,7 +22,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/util/foo.bal",
+          "uri": "${root}/modules/util/foo.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function greet() {\n    int unused = 1;\n}\n"
@@ -39,7 +39,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/modules/util/foo.bal"
+          "uri": "${root}/modules/util/foo.bal"
         }
       }
     }
@@ -62,7 +62,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/util/foo.bal",
+        "uri": "${root}/modules/util/foo.bal",
         "diagnostics": [
           {
             "range": {
@@ -87,7 +87,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/modules/util/foo.bal",
+        "uri": "${root}/modules/util/foo.bal",
         "diagnostics": []
       }
     }

@@ -169,14 +169,14 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
 	cancelled := collectGen(t, bus, event.CompilationCancelled)
 
-	openDoc(t, projects, "file:///workspace/sf.bal", "public function main() {}\n", 1)
-	updateDoc(t, projects, "file:///workspace/sf.bal", "public function main() {}\nfunction f(){}\n", 2)
+	u := openDoc(t, projects, tempFileURI(t, "sf.bal").String(), "public function main() {}\n", 1)
+	updateDoc(t, projects, u.String(), "public function main() {}\nfunction f(){}\n", 2)
 	svc.Flush()
 
 	if len(succeeded.slice()) == 0 || lastGen(succeeded) != 2 {
 		t.Fatalf("CE-E1 gens = %v, want last == 2", succeeded.slice())
 	}
-	snap, ok := svc.store.Stable("/workspace/sf.bal")
+	snap, ok := svc.store.Stable(u.Path())
 	if !ok || snap.Key().Generation != 2 {
 		t.Fatalf("stable gen = %v ok=%v, want 2", snap.Key().Generation, ok)
 	}
@@ -190,19 +190,19 @@ func TestEnginePanicRecovery(t *testing.T) {
 	failed := collectGen(t, bus, event.CompilationFailed)
 
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult { panic("boom") }
-	openDoc(t, projects, "file:///workspace/panic.bal", "public function main() {}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "panic.bal").String(), "public function main() {}\n", 1)
 	svc.Flush()
 
 	if len(failed.slice()) != 1 || failed.slice()[0] != 1 {
 		t.Fatalf("CE-E2: %v, want [1]", failed.slice())
 	}
-	if _, ok := svc.store.Stable("/workspace"); ok {
+	if _, ok := svc.store.Stable(u.Path()); ok {
 		t.Fatal("panicking compile must not store a snapshot")
 	}
 
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
 	svc.compileFn = realCompilePackage
-	updateDoc(t, projects, "file:///workspace/panic.bal", "public function main() {}\n", 2)
+	updateDoc(t, projects, u.String(), "public function main() {}\n", 2)
 	svc.Flush()
 	if len(succeeded.slice()) == 0 || lastGen(succeeded) != 2 {
 		t.Fatalf("after recovery: CE-E1 = %v, want last 2", succeeded.slice())
@@ -217,7 +217,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{resolutionErrored: true, byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
-	openDoc(t, projects, "file:///workspace/reserr.bal", "public function main() {}\n", 1)
+	openDoc(t, projects, tempFileURI(t, "reserr.bal").String(), "public function main() {}\n", 1)
 	svc.Flush()
 	if len(e5a.slice()) != 1 {
 		t.Fatalf("resolution-error cycle: E5a=%d, want 1", len(e5a.slice()))
@@ -229,7 +229,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
-	openDoc(t, projects, "file:///workspace/clean.bal", "public function main() {}\n", 1)
+	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {}\n", 1)
 	svc.Flush()
 	if len(e5a.slice()) < 2 {
 		t.Fatalf("clean cycle: E5a=%d, want >=2", len(e5a.slice()))
@@ -245,7 +245,7 @@ func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
 
 	// The unused variable is a compiler diagnostic, not a package-resolution error.
-	openDoc(t, projects, "file:///workspace/clean.bal", "public function main() {\n int x = 1;\n}\n", 1)
+	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {\n int x = 1;\n}\n", 1)
 	svc.Flush()
 
 	if len(e5a.slice()) == 0 {
@@ -262,12 +262,12 @@ func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 func TestEngineDiagnosticsFor(t *testing.T) {
 	projects, svc, bus := newEngineTestServices(t)
 	_ = bus
-	u := openDoc(t, projects, "file:///workspace/df.bal", "public function main() {\n int x = 1;\n}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "df.bal").String(), "public function main() {\n int x = 1;\n}\n", 1)
 	svc.Flush()
 
 	diags, gen, ok := svc.DiagnosticsFor(u.Path())
 	if !ok {
-		t.Fatal("expected stable snapshot for /workspace")
+		t.Fatalf("expected stable snapshot for %s", u.Path())
 	}
 	if gen != 1 {
 		t.Fatalf("generation = %d, want 1", gen)
@@ -293,11 +293,11 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
 
-	openDoc(t, projects, "file:///workspace/cancel.bal", "public function main() {}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "cancel.bal").String(), "public function main() {}\n", 1)
 	<-started
 
 	svc.Cancel()
-	if g, ok := projects.Generation("/workspace/cancel.bal"); !ok || g != 2 {
+	if g, ok := projects.Generation(u.Path()); !ok || g != 2 {
 		t.Fatalf("after Cancel: generation = %d ok=%v, want 2", g, ok)
 	}
 
@@ -310,7 +310,7 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	if len(cancelled.slice()) != 1 || cancelled.slice()[0] != 1 {
 		t.Fatalf("cancelled compile must emit CE-E3 for gen 1; got %v", cancelled.slice())
 	}
-	if _, ok := svc.store.Stable("/workspace"); ok {
+	if _, ok := svc.store.Stable(u.Path()); ok {
 		t.Fatal("cancelled compile must store no stable snapshot")
 	}
 }

@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/incremental_edit.bal",
+          "uri": "${root}/incremental_edit.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -35,7 +35,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/incremental_edit.bal",
+          "uri": "${root}/incremental_edit.bal",
           "version": 2
         },
         "contentChanges": [
@@ -65,7 +65,7 @@
       "method": "textDocument/didSave",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/incremental_edit.bal"
+          "uri": "${root}/incremental_edit.bal"
         }
       }
     },
@@ -74,7 +74,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/incremental_edit.bal"
+          "uri": "${root}/incremental_edit.bal"
         }
       }
     }
@@ -97,7 +97,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/incremental_edit.bal",
+        "uri": "${root}/incremental_edit.bal",
         "diagnostics": [
           {
             "range": {
@@ -122,7 +122,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/incremental_edit.bal",
+        "uri": "${root}/incremental_edit.bal",
         "diagnostics": [
           {
             "range": {
@@ -147,7 +147,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/incremental_edit.bal",
+        "uri": "${root}/incremental_edit.bal",
         "diagnostics": []
       }
     }

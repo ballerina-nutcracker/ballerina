@@ -58,7 +58,7 @@ func openMultimoduleFixture(t *testing.T, projSvc *workspace.ProjectService) (*p
 	t.Helper()
 	dir := multimoduleFixtureDir(t)
 	mainPath := filepath.Join(dir, "main.bal")
-	u := fileURI(t, "file://"+mainPath)
+	u := fileURI(t, mainPath)
 	applyOpen(t, projSvc, u, mustReadFixture(t, mainPath))
 	proj, err := projSvc.Project(u)
 	if err != nil || proj == nil {
@@ -109,7 +109,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	greetURI := fileURI(t, "file://"+greetPath)
+	greetURI := fileURI(t, greetPath)
 	brokenGreet := "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction target(int {\n}\n"
 	applyOpen(t, projSvc, greetURI, brokenGreet)
 
@@ -202,7 +202,7 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	greetURI := fileURI(t, "file://"+greetPath)
+	greetURI := fileURI(t, greetPath)
 	brokenGreet := "public function greeting() returns UndefinedType {\n    return \"hello\";\n}\n"
 	applyOpen(t, projSvc, greetURI, brokenGreet)
 
@@ -278,7 +278,7 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	greetURI := fileURI(t, "file://"+greetPath)
+	greetURI := fileURI(t, greetPath)
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
 	applyOpen(t, projSvc, greetURI, editedGreet)
 
@@ -315,7 +315,7 @@ func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(
 
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
-	greetURI := fileURI(t, "file://"+greetPath)
+	greetURI := fileURI(t, greetPath)
 	brokenGreet := "public function greeting() returns UndefinedType {\n    return \"hello\";\n}\n"
 	applyOpen(t, projSvc, greetURI, brokenGreet)
 
@@ -367,7 +367,7 @@ func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t 
 	}
 
 	dir := multimoduleFixtureDir(t)
-	greetURI := fileURI(t, "file://"+filepath.Join(dir, "modules", "greet", "greet.bal"))
+	greetURI := fileURI(t, filepath.Join(dir, "modules", "greet", "greet.bal"))
 	// The type mismatch surfaces during semantic analysis.
 	applyOpen(t, projSvc, greetURI, "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n")
 

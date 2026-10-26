@@ -39,7 +39,7 @@ func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "main.bal"), []byte("public function main() {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	uri := fileURI(t, "file://"+filepath.Join(root, "main.bal"))
+	uri := fileURI(t, filepath.Join(root, "main.bal"))
 	before := "public function main() { /* exact overlay input */ }\n"
 	applyOpen(t, projects, uri, before)
 	old, ok := compiler.SealedModuleFor(context.Background(), uri)
@@ -61,7 +61,7 @@ func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
 	if text, ok := old.SourceText(uri); !ok || text != before {
 		t.Fatalf("old source changed = %q %v", text, ok)
 	}
-	other := fileURI(t, "file://"+filepath.Join(root, "other.bal"))
+	other := fileURI(t, filepath.Join(root, "other.bal"))
 	otherText := "function sibling() {}\n"
 	if err := os.WriteFile(other.Path(), []byte(otherText), 0o644); err != nil {
 		t.Fatal(err)
@@ -101,13 +101,13 @@ func TestSealedSourceCarriesForwardWithAST(t *testing.T) {
 	state := first.snapshotForCommit()
 	consumerID := moduleIDFor(t, pkg, "multimoduleproject.consumer")
 	consumer := state[consumerID].driver
-	consumerURI := fileURI(t, "file://"+filepath.Join(multimoduleFixtureDir(t), "modules", "consumer", "consumer.bal"))
+	consumerURI := fileURI(t, filepath.Join(multimoduleFixtureDir(t), "modules", "consumer", "consumer.bal"))
 	view := SealedModule{sources: consumer.sources, sourceIDs: consumer.sourceIDs, paths: projects.Paths(pkg.Project())}
 	original, ok := view.SourceText(consumerURI)
 	if !ok || original == "" {
 		t.Fatal("source missing from initial AST")
 	}
-	greetURI := fileURI(t, "file://"+filepath.Join(multimoduleFixtureDir(t), "modules", "greet", "greet.bal"))
+	greetURI := fileURI(t, filepath.Join(multimoduleFixtureDir(t), "modules", "greet", "greet.bal"))
 	applyOpen(t, projects, greetURI, "public function greeting() returns string { return \"changed\"; }\n")
 	project, err := projects.Project(greetURI)
 	if err != nil {

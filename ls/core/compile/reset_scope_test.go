@@ -17,6 +17,7 @@
 package compile
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/projects"
@@ -99,7 +100,7 @@ func TestModuleTextHash_StableForUnchangedContent_DiffersOnEdit(t *testing.T) {
 	}
 
 	dir := multimoduleFixtureDir(t)
-	greetURI := fileURI(t, "file://"+dir+"/modules/greet/greet.bal")
+	greetURI := fileURI(t, filepath.Join(dir, "modules", "greet", "greet.bal"))
 	applyOpen(t, projSvc, greetURI, "public function greeting() returns string {\n    return \"hi\";\n}\n")
 
 	h3 := moduleTextHash(greetModule, projSvc.OpenText)

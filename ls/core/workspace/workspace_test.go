@@ -19,6 +19,7 @@ package workspace
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
@@ -28,18 +29,18 @@ func newTestProjectService() *ProjectService {
 	return New(os.DirFS, event.New())
 }
 
-func fileURI(t *testing.T, raw string) DocumentURI {
+func tempFileURI(t *testing.T, name string) DocumentURI {
 	t.Helper()
-	u, err := NewFileURI(raw)
+	u, err := FileURIFromPath(filepath.Join(t.TempDir(), name))
 	if err != nil {
-		t.Fatalf("NewFileURI(%q): %v", raw, err)
+		t.Fatalf("FileURIFromPath: %v", err)
 	}
 	return u
 }
 
 func TestApplyOpenStoresDocument(t *testing.T) {
 	svc := newTestProjectService()
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	snap, err := svc.Apply(context.Background(), DocumentChange{
 		Kind:       ChangeOpen,
 		URI:        u,
@@ -61,7 +62,7 @@ func TestApplyOpenStoresDocument(t *testing.T) {
 
 func TestApplyUpdateChecksVersionMonotonicity(t *testing.T) {
 	svc := newTestProjectService()
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeOpen, URI: u, Text: "current", Version: 2, LanguageID: "ballerina",
 	}); err != nil {
@@ -89,7 +90,7 @@ func TestApplyUpdateChecksVersionMonotonicity(t *testing.T) {
 
 func TestApplyUpdateRejectsUnknownDocument(t *testing.T) {
 	svc := newTestProjectService()
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeUpdate, URI: u, Text: "x", Version: 1,
 	}); err == nil {
@@ -99,7 +100,7 @@ func TestApplyUpdateRejectsUnknownDocument(t *testing.T) {
 
 func TestApplyCloseRemovesDocument(t *testing.T) {
 	svc := newTestProjectService()
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeOpen, URI: u, Text: "abc", Version: 1, LanguageID: "ballerina",
 	}); err != nil {
@@ -117,7 +118,7 @@ func TestApplyCloseRemovesDocument(t *testing.T) {
 
 func TestApplyCloseRejectsUnknownDocument(t *testing.T) {
 	svc := newTestProjectService()
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeClose, URI: u,
 	}); err == nil {
@@ -127,7 +128,7 @@ func TestApplyCloseRejectsUnknownDocument(t *testing.T) {
 
 func TestApplyClosePreservesLanguageID(t *testing.T) {
 	svc := newTestProjectService()
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
 		Kind: ChangeOpen, URI: u, Text: "abc", Version: 1, LanguageID: "ballerina",
 	}); err != nil {

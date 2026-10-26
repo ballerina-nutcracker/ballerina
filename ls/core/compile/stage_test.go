@@ -53,7 +53,7 @@ func defaultModuleFor(t *testing.T, proj projects.Project) (*projects.Module, *c
 
 func TestModuleDriver_AdvancesOnlyToRequestedStage(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, validSource)
 
 	proj, err := projSvc.Project(u)
@@ -81,7 +81,7 @@ func TestModuleDriver_AdvancesOnlyToRequestedStage(t *testing.T) {
 
 func TestModuleDriver_ResolverErrorDoesNotAdvancePhase1(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, duplicateTopLevelSource)
 
 	proj, err := projSvc.Project(u)
@@ -109,7 +109,7 @@ func TestModuleDriver_ResolverErrorDoesNotAdvancePhase1(t *testing.T) {
 
 func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, "public function main() {\n    int value = missing;\n    int other = value;\n}\n")
 
 	proj, err := projSvc.Project(u)
@@ -134,7 +134,7 @@ func TestModuleDriver_UnresolvedReferenceReachesLocalTypeResolved(t *testing.T) 
 
 func TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, unusedTopLevelSource)
 
 	proj, err := projSvc.Project(u)
@@ -162,7 +162,7 @@ func TestModuleDriver_UnusedSymbolDoesNotBlockTypeResolution(t *testing.T) {
 
 func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, recursivePublicTypeSource)
 
 	proj, err := projSvc.Project(u)
@@ -193,7 +193,7 @@ func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 
 func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, malformedSignatureAndBodySource+"\npublic function sibling() {}\n")
 
 	proj, err := projSvc.Project(u)
@@ -221,7 +221,7 @@ func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *t
 
 func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, malformedTopLevelSource)
 
 	proj, err := projSvc.Project(u)
@@ -250,7 +250,7 @@ func TestModuleDriver_MalformedTopLevelReachesTopLevelTypeResolved(t *testing.T)
 
 func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, malformedTopLevelSource)
 
 	proj, err := projSvc.Project(u)
@@ -279,7 +279,7 @@ func TestModuleDriver_MalformedTopLevelReachesLocalTypeResolved(t *testing.T) {
 
 func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, breakOutsideLoopSource)
 
 	proj, err := projSvc.Project(u)
@@ -308,7 +308,7 @@ func TestModuleDriver_LocalTypeErrorStopsBeforeSemanticAnalysis(t *testing.T) {
 
 func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, malformedBodySource)
 
 	proj, err := projSvc.Project(u)
@@ -339,7 +339,7 @@ func TestModuleDriver_MalformedFunctionBodyReachesLocalTypeResolved(t *testing.T
 
 func TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, malformedBodySource+"\npublic function sibling() {}\n")
 
 	proj, err := projSvc.Project(u)
@@ -377,7 +377,7 @@ func TestModuleDriver_MalformedFunctionBodyWithSiblingRetainsSibling(t *testing.
 
 func TestModuleDriver_IdempotentOnAlreadyCompletedStage(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, oneSemanticErrorSource)
 
 	proj, err := projSvc.Project(u)
@@ -408,7 +408,7 @@ func TestModuleDriver_IdempotentOnAlreadyCompletedStage(t *testing.T) {
 // Re-parsing edited text retains the file index and isolates each driver's diagnostics.
 func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	projSvc, _ := newTestServices(t)
-	u := fileURI(t, "file:///workspace/main.bal")
+	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projSvc, u, validSource)
 
 	proj1, err := projSvc.Project(u)
@@ -429,7 +429,7 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	name, _ := projSvc.Paths(proj1).NameOf(u)
 	idx1 := env1.DiagnosticEnv().FileIndex(name)
 
-	updateDoc(t, projSvc, "file:///workspace/main.bal", oneSemanticErrorSource, 2)
+	updateDoc(t, projSvc, u.String(), oneSemanticErrorSource, 2)
 
 	proj2, err := projSvc.Project(u)
 	if err != nil || proj2 == nil {

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -29,6 +30,15 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
+
+func tempFileURI(t *testing.T, name string) string {
+	t.Helper()
+	u, err := workspace.FileURIFromPath(filepath.Join(t.TempDir(), name))
+	if err != nil {
+		t.Fatalf("FileURIFromPath: %v", err)
+	}
+	return u.String()
+}
 
 func newCoreServices() (*workspace.ProjectService, *compile.CompilationService, *event.Bus) {
 	bus := event.New()
@@ -155,7 +165,7 @@ func TestPublishDiagnosticsAfterOpenChangeClose(t *testing.T) {
 	session := newTestSession(t, true)
 	defer session.close()
 
-	const uri = "file:///workspace/main.bal"
+	uri := tempFileURI(t, "main.bal")
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -258,7 +268,7 @@ func TestPublishDiagnosticsOmitsVersionWithoutSupport(t *testing.T) {
 	session := newTestSession(t, false)
 	defer session.close()
 
-	const uri = "file:///workspace/main.bal"
+	uri := tempFileURI(t, "main.bal")
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -288,7 +298,7 @@ func TestPublishDiagnosticsIgnoresNonFileURI(t *testing.T) {
 			Text:       "public function main() {\n    int x = 1;\n}\n",
 		},
 	})
-	const uri = "file:///workspace/main.bal"
+	uri := tempFileURI(t, "main.bal")
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -321,7 +331,7 @@ func TestPublishDiagnosticsTransportErrorReachesServe(t *testing.T) {
 	}
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
-			URI:        "file:///workspace/main.bal",
+			URI:        tempFileURI(t, "main.bal"),
 			LanguageID: "ballerina",
 			Version:    1,
 			Text:       "public function main() {}\n",
@@ -350,7 +360,7 @@ func TestCancelRequestRoutesAsNotification(t *testing.T) {
 		ID: protocol.NewOrCancelParamsIdString("1"),
 	})
 
-	const uri = "file:///workspace/cancel.bal"
+	uri := tempFileURI(t, "cancel.bal")
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -389,10 +399,8 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	session := &testSession{t: t, server: server, clientW: clientWrite, clientR: bufio.NewReader(clientRead), done: done}
 	session.initialize(true)
 
-	const (
-		uriA = "file:///a/dedup-a.bal"
-		uriB = "file:///b/dedup-b.bal"
-	)
+	uriA := tempFileURI(t, "dedup-a.bal")
+	uriB := tempFileURI(t, "dedup-b.bal")
 	text := "public function main() {\n int x = 1;\n}\n"
 
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
@@ -405,7 +413,7 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	})
 	_ = decodePublishDiagnostics(t, session.receive(t))
 
-	// At capacity, opening /b evicts the closed root /a.
+	// At capacity, opening B evicts the closed root A.
 	session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{URI: uriB, LanguageID: "ballerina", Version: 1, Text: text},
 	})

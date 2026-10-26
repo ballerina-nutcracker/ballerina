@@ -20,7 +20,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "public function main() {\n    int unused = 1;\n}\n"
@@ -46,7 +46,7 @@
       "params": {
         "changes": [
           {
-            "uri": "file://${root}/Ballerina.toml",
+            "uri": "${root}/Ballerina.toml",
             "type": 1
           }
         ]
@@ -57,7 +57,7 @@
       "method": "textDocument/didChange",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "version": 2
         },
         "contentChanges": [
@@ -87,7 +87,7 @@
       "method": "textDocument/didClose",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         }
       }
     }
@@ -110,7 +110,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": [
           {
             "range": {
@@ -135,7 +135,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": [
           {
             "range": {
@@ -160,7 +160,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": []
       }
     }
