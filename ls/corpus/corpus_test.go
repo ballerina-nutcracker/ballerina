@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -69,47 +70,44 @@ const diskDeleteMethod = "$test/deleteFile"
 
 func TestCorpus(t *testing.T) {
 	t.Parallel()
-	runTranscript(t, "sync/testdata/incremental_edit.initialize.json")
+	fixtures, err := discoverTranscripts(os.DirFS("."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, fixture := range fixtures {
+		t.Run(fixture, func(t *testing.T) {
+			t.Parallel()
+			runTranscript(t, fixture)
+		})
+	}
 }
-func TestShutdownExitCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/shutdown-exit.json")
+
+func discoverTranscripts(files fs.FS) ([]string, error) {
+	paths, err := fs.Glob(files, "*/testdata/*.json")
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range paths {
+		if _, err := readTranscript(files, name); err != nil {
+			return nil, err
+		}
+	}
+	return paths, nil
 }
-func TestURISchemeRejectionCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/uri-scheme-rejection.json")
-}
-func TestBuildProjectCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/build-project.initialize.json")
-}
-func TestMalformedProviderBuildProjectCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/malformed-provider-build-project.json")
-}
-func TestOverlayOverDiskCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/overlay-over-disk.json")
-}
-func TestWatchedFileTransitionCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/watched-file-transition.json")
-}
-func TestStaleResultSuppressionCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/stale-result-suppression.json")
-}
-func TestUnchangedRecompileSkipCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/unchanged-recompile-skip.json")
-}
-func TestModifierChainIdenticalOutputCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/modifier-chain-identical-output.json")
-}
-func TestIncrementalCarryForwardPreservesDiagnosticsCorpus(t *testing.T) {
-	t.Parallel()
-	runTranscript(t, "sync/testdata/incremental-carry-forward-preserves-diagnostics.json")
+
+func readTranscript(files fs.FS, name string) (transcript, error) {
+	var fixture transcript
+	content, err := fs.ReadFile(files, name)
+	if err != nil {
+		return fixture, err
+	}
+	if err := json.Unmarshal(content, &fixture); err != nil {
+		return fixture, fmt.Errorf("%s: %w", name, err)
+	}
+	if fixture.Messages == nil || fixture.Expected == nil {
+		return fixture, fmt.Errorf("%s: transcript requires messages and expected arrays", name)
+	}
+	return fixture, nil
 }
 
 func TestTranscriptTemporaryRoots(t *testing.T) {
@@ -149,12 +147,8 @@ func runTranscript(t *testing.T, fixturePath string) {
 
 func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*workspace.ProjectService, *compile.CompilationService, string)) {
 	t.Helper()
-	content, err := fs.ReadFile(os.DirFS("."), fixturePath)
+	fixture, err := readTranscript(os.DirFS("."), fixturePath)
 	if err != nil {
-		t.Fatal(err)
-	}
-	var fixture transcript
-	if err := json.Unmarshal(content, &fixture); err != nil {
 		t.Fatal(err)
 	}
 	rootPath := materializeSources(t, fixture.Sources)

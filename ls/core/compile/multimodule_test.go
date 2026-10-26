@@ -167,6 +167,29 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 	}
 }
 
+func TestPackageDriver_ModulePrefixRetainsTargetDiagnostics(t *testing.T) {
+	t.Parallel()
+	projSvc := newProjectOnlyService(t)
+	pkg, _ := openMultimoduleFixture(t, projSvc)
+	module := pkg.ModuleByName(mustModuleName(t, pkg, "multimoduleproject.standalone"))
+
+	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
+	pd.advanceModule(stageCFGAnalyzed, module)
+
+	d, ok := pd.drivers[module.ModuleID()]
+	if !ok || d.currentStage() != stageSemanticAnalyzed {
+		t.Fatal("target module must stop after its semantic error")
+	}
+	if got := len(d.publishableDiagnostics()); got != 1 {
+		t.Fatalf("target diagnostics = %d, want exactly 1", got)
+	}
+	for id, other := range pd.drivers {
+		if id != module.ModuleID() && other.currentStage() > stageTopLevelTypeResolved {
+			t.Fatal("module prefix must not run Phase 2 for other modules")
+		}
+	}
+}
+
 func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) {
 	t.Parallel()
 	projSvc := newProjectOnlyService(t)

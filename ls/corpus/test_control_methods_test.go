@@ -25,17 +25,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 )
 
-func TestLegacyTestControlMethodsIgnoredCorpus(t *testing.T) {
-	t.Parallel()
-	for _, name := range []string{
-		"block-request", "flush-requests",
-	} {
-		t.Run(name, func(t *testing.T) {
-			runTranscript(t, "controls/testdata/legacy-"+name+".json")
-		})
-	}
-}
-
 func TestLegacyWriteFileIgnoredCorpus(t *testing.T) {
 	t.Parallel()
 	runTranscriptWithCheck(t, "controls/testdata/legacy-write-file.json",

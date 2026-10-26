@@ -20,7 +20,6 @@
 package compile
 
 import (
-	"context"
 	"runtime"
 	"sync"
 	"time"
@@ -510,80 +509,6 @@ func (s *CompilationService) DiagnosticsFor(root string) (diags map[workspace.Do
 		}
 	}
 	return out, snap.key.Generation, true
-}
-
-// Compile returns the latest stored diagnostics for the document, falling
-// back to an inline compile if no stable snapshot exists. It does not check
-// the snapshot's generation, publish diagnostics, or observe ctx cancellation.
-func (s *CompilationService) Compile(ctx context.Context, req CompileRequest) (CompileResult, error) {
-	_ = ctx
-	project, err := s.projects.Project(req.URI)
-	if err != nil || project == nil {
-		return CompileResult{}, nil
-	}
-	root, err := s.projects.ProjectKey(req.URI)
-	if err != nil {
-		return CompileResult{}, nil
-	}
-	name, ok := s.projects.Paths(project).NameOf(req.URI)
-	if !ok {
-		return CompileResult{}, nil
-	}
-	if snap, ok := s.store.Stable(root); ok {
-		return CompileResult{Diagnostics: snap.diagsForFile(name)}, nil
-	}
-	if !s.isKnown(root) {
-		return CompileResult{}, nil
-	}
-	pkg := project.CurrentPackage()
-	if pkg == nil {
-		return CompileResult{}, nil
-	}
-	diags := extractForURI(project, pkg, name, s.openText)
-	return CompileResult{Diagnostics: diags}, nil
-}
-
-// extractForURI compiles the topological prefix through the target module's
-// Phase 1, then only that module's Phase 2. It returns diagnostics for fileName
-// without reading or committing carried-forward state.
-func extractForURI(project projects.Project, pkg *projects.Package, fileName string, openText textProvider) []CompilerDiagnostic {
-	docID, ok := project.DocumentID(fileName)
-	if !ok {
-		return nil
-	}
-	module := pkg.Module(docID.ModuleID())
-	if module == nil {
-		return nil
-	}
-	doc := module.Document(docID)
-	if doc == nil {
-		return nil
-	}
-	text := documentText(module, doc, openText)
-	lineStarts := computeLineStarts(text)
-
-	compEnv := pkg.Project().Environment().CompilerEnvironment()
-
-	pd := newPackageDriver(pkg, openText, nil, nil)
-	pd.advanceModule(stageCFGAnalyzed, module)
-	d, ok := pd.drivers[module.ModuleID()]
-	if !ok {
-		return nil
-	}
-
-	env := compEnv.DiagnosticEnv()
-	var diags []CompilerDiagnostic
-	for _, diag := range d.publishableDiagnostics() {
-		location := diag.Location()
-		if !diagnostics.LocationHasSource(location) {
-			continue
-		}
-		if env.FileName(location) != fileName {
-			continue
-		}
-		diags = append(diags, convertDiag(text, lineStarts, diag))
-	}
-	return diags
 }
 
 // realCompilePackage drives all modules, commits module state unless aborted,

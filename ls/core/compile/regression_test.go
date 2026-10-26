@@ -198,13 +198,13 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 	}
 }
 
-func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
+func TestScheduledDiagnostics_MatchesOldPackageCompilationPath(t *testing.T) {
 	t.Parallel()
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
 
-	newSvc := newProjectOnlyService(t)
+	newSvc, compiler := newTestServices(t)
 	_, mainURI := openMultimoduleFixture(t, newSvc)
 	newGreetURI := fileURI(t, greetPath)
 	applyOpen(t, newSvc, newGreetURI, editedGreet)
@@ -212,9 +212,17 @@ func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 	if err != nil || newProj == nil {
 		t.Fatalf("new-path Project: %v", err)
 	}
-	newPkg := newProj.CurrentPackage()
 	greetPath, _ = newSvc.Paths(newProj).NameOf(newGreetURI)
-	newDiags := extractForURI(newProj, newPkg, greetPath, newSvc.OpenText)
+	root, err := newSvc.ProjectKey(newGreetURI)
+	if err != nil {
+		t.Fatalf("ProjectKey: %v", err)
+	}
+	compiler.Flush()
+	byURI, _, ok := compiler.DiagnosticsFor(root)
+	if !ok {
+		t.Fatal("scheduled compilation has no stable diagnostics")
+	}
+	newDiags := byURI[newGreetURI]
 
 	oldSvc := newProjectOnlyService(t)
 	_, oldMainURI := openMultimoduleFixture(t, oldSvc)
@@ -226,7 +234,7 @@ func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
 	wantDiags := oldExtractForURI(oldProj, oldPkg, greetPath)
 
 	if len(newDiags) != 1 {
-		t.Fatalf("extractForURI diagnostics = %d, want exactly 1", len(newDiags))
+		t.Fatalf("scheduled diagnostics = %d, want exactly 1", len(newDiags))
 	}
 	if len(wantDiags) != 1 {
 		t.Fatalf("old-path extractForURI diagnostics = %d, want exactly 1 (test fixture assumption broken)", len(wantDiags))

@@ -16,7 +16,6 @@
 package compile
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,13 +34,21 @@ const (
 
 func compileMessages(t *testing.T, svc *CompilationService, u workspace.DocumentURI) []string {
 	t.Helper()
-	svc.Flush()
-	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
+	root, err := svc.projects.ProjectKey(u)
 	if err != nil {
-		t.Fatalf("Compile: %v", err)
+		t.Fatalf("ProjectKey: %v", err)
 	}
-	messages := make([]string, 0, len(result.Diagnostics))
-	for _, diag := range result.Diagnostics {
+	svc.Flush()
+	byURI, _, ok := svc.DiagnosticsFor(root)
+	if !ok {
+		t.Fatal("scheduled compilation has no stable diagnostics")
+	}
+	diags, ok := byURI[u]
+	if !ok {
+		t.Fatalf("scheduled diagnostics omit %s", u)
+	}
+	messages := make([]string, 0, len(diags))
+	for _, diag := range diags {
 		messages = append(messages, diag.Message)
 	}
 	return messages

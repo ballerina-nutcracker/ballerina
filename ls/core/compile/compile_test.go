@@ -74,61 +74,11 @@ func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.Doc
 	}
 }
 
-func TestCompileReturnsDiagnosticsForErrorSource(t *testing.T) {
-	t.Parallel()
-	projects, svc := newTestServices(t)
-	u := tempFileURI(t, "main.bal")
-	applyOpen(t, projects, u, "public function main() {\n    int x = 1;\n}\n")
-	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
-	if err != nil {
-		t.Fatalf("Compile: %v", err)
-	}
-	if len(result.Diagnostics) != 1 {
-		t.Fatalf("diagnostics = %d, want 1", len(result.Diagnostics))
-	}
-	diag := result.Diagnostics[0]
-	if diag.Severity != SeverityError {
-		t.Errorf("severity = %v, want Error", diag.Severity)
-	}
-	if diag.Code != "SEMANTIC_ERROR" {
-		t.Errorf("code = %q, want SEMANTIC_ERROR", diag.Code)
-	}
-	if diag.Message == "" {
-		t.Error("message is empty")
-	}
-	if diag.StartLine != 1 || diag.StartChar != 4 {
-		t.Errorf("start = line %d char %d, want line 1 char 4", diag.StartLine, diag.StartChar)
-	}
-	if diag.EndLine != 1 || diag.EndChar != 14 {
-		t.Errorf("end = line %d char %d, want line 1 char 14", diag.EndLine, diag.EndChar)
-	}
-}
-
-func TestCompileReturnsNoDiagnosticsForValidSource(t *testing.T) {
-	t.Parallel()
-	projects, svc := newTestServices(t)
-	u := tempFileURI(t, "main.bal")
-	applyOpen(t, projects, u, "public function main() {}\n")
-	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
-	if err != nil {
-		t.Fatalf("Compile: %v", err)
-	}
-	if len(result.Diagnostics) != 0 {
-		t.Fatalf("diagnostics = %d, want 0", len(result.Diagnostics))
-	}
-}
-
-func TestCompileUnknownRootReturnsEmpty(t *testing.T) {
+func TestRunCycleAfterShutdownDoesNotStartCompilation(t *testing.T) {
 	t.Parallel()
 	_, svc := newTestServices(t)
-	u := tempFileURI(t, "never-opened.bal")
-	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
-	if err != nil {
-		t.Fatalf("Compile: %v", err)
-	}
-	if len(result.Diagnostics) != 0 {
-		t.Fatalf("diagnostics = %d, want 0", len(result.Diagnostics))
-	}
+	svc.Shutdown()
+	svc.runCycle(nil)
 }
 
 func TestByteOffsetToLineCharUTF16(t *testing.T) {

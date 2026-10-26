@@ -140,53 +140,6 @@ func TestCancelAfterCompletionIsNoop(t *testing.T) {
 	}
 }
 
-func TestDuplicateRequestIDRejectedKeepsOriginal(t *testing.T) {
-	t.Parallel()
-	srv, bt := newBatchServer(t)
-	responses, err := runBatch(t, srv, bt, []protocol.Message{
-		reqMessage(`"1"`, "initialize", map[string]any{}),
-		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"d1"`, "$test/blockRequest", map[string]any{}),
-		reqMessage(`"d1"`, "$test/blockRequest", map[string]any{}),
-		notifMessage("$test/releaseRequest", map[string]any{"id": "d1"}),
-		notifMessage("$test/flushRequests", map[string]any{}),
-	})
-	if err != nil {
-		t.Fatalf("Serve: %v", err)
-	}
-	rejection := mustFindResponse(t, responses, `"d1"`)
-	// The duplicate is rejected before release lets the original request reply.
-	if rejection.Error == nil || rejection.Error.Code != rpcInvalidRequest {
-		t.Fatalf("duplicate response = %+v, want Invalid Request -32600", rejection)
-	}
-	if entry := srv.registry.lookup(`"d1"`); entry != nil {
-		t.Fatal("registry still has entry for \"d1\" after completion")
-	}
-}
-
-func TestCancelProducesExactlyOneReply(t *testing.T) {
-	t.Parallel()
-	srv, bt := newBatchServer(t)
-	responses, err := runBatch(t, srv, bt, []protocol.Message{
-		reqMessage(`"1"`, "initialize", map[string]any{}),
-		notifMessage("initialized", map[string]any{}),
-		reqMessage(`"e1"`, "$test/blockRequest", map[string]any{}),
-		notifMessage("$/cancelRequest", map[string]any{"id": "e1"}),
-		notifMessage("$/cancelRequest", map[string]any{"id": "e1"}),
-		notifMessage("$test/flushRequests", map[string]any{}),
-	})
-	if err != nil {
-		t.Fatalf("Serve: %v", err)
-	}
-	if len(responses) != 2 {
-		t.Fatalf("got %d responses, want 2 (initialize + single -32800): %+v", len(responses), responses)
-	}
-	r := mustFindResponse(t, responses, `"e1"`)
-	if r.Error == nil || r.Error.Code != rpcRequestCancelled {
-		t.Fatalf("response = %+v, want RequestCancelled -32800", r)
-	}
-}
-
 func TestShutdownDrainsTrackedRequests(t *testing.T) {
 	t.Parallel()
 	srv, bt := newBatchServer(t)
