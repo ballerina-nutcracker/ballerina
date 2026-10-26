@@ -21,6 +21,7 @@ import (
 )
 
 func TestPublishCallsHandlersInRegistrationOrder(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 	var order []string
@@ -34,6 +35,7 @@ func TestPublishCallsHandlersInRegistrationOrder(t *testing.T) {
 }
 
 func TestSubscribeFiltersByKind(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 	var got []Kind
@@ -54,6 +56,7 @@ func TestSubscribeFiltersByKind(t *testing.T) {
 }
 
 func TestPanickingHandlerDoesNotStopSubsequent(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 	var after bool
@@ -66,6 +69,7 @@ func TestPanickingHandlerDoesNotStopSubsequent(t *testing.T) {
 }
 
 func TestSubscribeAllKindsOnEmptyFilter(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 	var count int
@@ -79,6 +83,7 @@ func TestSubscribeAllKindsOnEmptyFilter(t *testing.T) {
 }
 
 func TestCloseStopsPublish(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	bus.Close()
 	var count int
@@ -90,6 +95,7 @@ func TestCloseStopsPublish(t *testing.T) {
 }
 
 func TestEventValues(t *testing.T) {
+	t.Parallel()
 	r := NewProjectRegisteredEvent("/root")
 	if r.SourceRoot() != "/root" || r.Kind() != ProjectRegistered {
 		t.Fatalf("registered event = %+v", r)

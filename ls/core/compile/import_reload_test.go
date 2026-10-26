@@ -89,6 +89,7 @@ func requireReloaded(t *testing.T, ps *workspace.ProjectService, u workspace.Doc
 }
 
 func TestAddedImportResolvesAfterEdit(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, noImportSource)
@@ -100,6 +101,7 @@ func TestAddedImportResolvesAfterEdit(t *testing.T) {
 }
 
 func TestAddedLocalRepositoryImportResolvesAfterEdit(t *testing.T) {
+	t.Parallel()
 	ps, svc, u := openExternalDependencyServices(t, noImportSource)
 	requireNoUnknown(t, compileMessages(t, svc, u))
 
@@ -109,6 +111,7 @@ func TestAddedLocalRepositoryImportResolvesAfterEdit(t *testing.T) {
 }
 
 func TestRemovedImportReloadsAndDropsDependencySymbols(t *testing.T) {
+	t.Parallel()
 	ps, svc, u := openExternalDependencyServices(t, externalDependencySource)
 	requireNoUnknown(t, compileMessages(t, svc, u))
 	project, pkg := currentPackage(t, ps, u)
@@ -123,6 +126,7 @@ func TestRemovedImportReloadsAndDropsDependencySymbols(t *testing.T) {
 }
 
 func TestHalfTypedImportDoesNotReload(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, noImportSource)
@@ -135,6 +139,7 @@ func TestHalfTypedImportDoesNotReload(t *testing.T) {
 }
 
 func TestReorderAndAliasChangesDoNotReload(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, "import ballerina/io;\nimport ballerina/lang.'int;\n\n"+noImportSource)
@@ -149,6 +154,7 @@ func TestReorderAndAliasChangesDoNotReload(t *testing.T) {
 }
 
 func TestEditWithoutImportChangeKeepsPackageAndCarriesForward(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, ioImportSource)

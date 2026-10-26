@@ -27,6 +27,7 @@ import (
 )
 
 func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	projects := workspace.New(os.DirFS, bus)
@@ -94,6 +95,7 @@ func TestSealedSourceRetainsParserInputAcrossEditAndEviction(t *testing.T) {
 }
 
 func TestSealedSourceCarriesForwardWithAST(t *testing.T) {
+	t.Parallel()
 	projects := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projects)
 	first := newPackageDriver(pkg, projects.OpenText, nil, nil)

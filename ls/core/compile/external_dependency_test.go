@@ -29,6 +29,7 @@ import (
 const externalDependencySource = "import acme/dep;\n\npublic function main() {\n    dep:Public value = {};\n}\n"
 
 func TestPackageDriver_UnchangedExternalDependencyCarriesForward(t *testing.T) {
+	t.Parallel()
 	projectService, packageOne, documentURI := openExternalDependencyFixture(t)
 	generationOne := newPackageDriver(packageOne, projectService.OpenText, nil, nil)
 	generationOne.advanceAll(stageTopLevelTypeResolved)
@@ -60,6 +61,7 @@ func TestPackageDriver_UnchangedExternalDependencyCarriesForward(t *testing.T) {
 }
 
 func TestPackageDriver_EditedExternalDependencyRecompiles(t *testing.T) {
+	t.Parallel()
 	projectService, packageOne, documentURI := openExternalDependencyFixture(t)
 	generationOne := newPackageDriver(packageOne, projectService.OpenText, nil, nil)
 	generationOne.advanceAll(stageTopLevelTypeResolved)

@@ -24,6 +24,7 @@ import (
 )
 
 func TestConvertDiagnosticsUTF16Boundary(t *testing.T) {
+	t.Parallel()
 	text := "public function main() {\n    int x = 1;\n}\n"
 	diags := []compile.CompilerDiagnostic{
 		{
@@ -65,12 +66,14 @@ func TestConvertDiagnosticsUTF16Boundary(t *testing.T) {
 }
 
 func TestConvertDiagnosticsEmptyReturnsNil(t *testing.T) {
+	t.Parallel()
 	if converted := convertDiagnostics(nil, "abc"); converted != nil {
 		t.Fatalf("convertDiagnostics(nil) = %v, want nil", converted)
 	}
 }
 
 func TestConvertDiagnosticsSurrogatePairUTF16(t *testing.T) {
+	t.Parallel()
 	text := "𐐀x\n"
 	// 𐐀 occupies four UTF-8 bytes but two UTF-16 code units.
 	diags := []compile.CompilerDiagnostic{

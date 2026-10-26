@@ -67,37 +67,53 @@ type diskWriteAction struct {
 const diskWriteMethod = "$test/writeFile"
 const diskDeleteMethod = "$test/deleteFile"
 
-func TestCorpus(t *testing.T)             { runTranscript(t, "sync/testdata/incremental_edit.initialize.json") }
-func TestShutdownExitCorpus(t *testing.T) { runTranscript(t, "sync/testdata/shutdown-exit.json") }
+func TestCorpus(t *testing.T) {
+	t.Parallel()
+	runTranscript(t, "sync/testdata/incremental_edit.initialize.json")
+}
+func TestShutdownExitCorpus(t *testing.T) {
+	t.Parallel()
+	runTranscript(t, "sync/testdata/shutdown-exit.json")
+}
 func TestURISchemeRejectionCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/uri-scheme-rejection.json")
 }
 func TestBuildProjectCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/build-project.initialize.json")
 }
 func TestMalformedProviderBuildProjectCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/malformed-provider-build-project.json")
 }
 func TestOverlayOverDiskCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/overlay-over-disk.json")
 }
 func TestWatchedFileTransitionCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/watched-file-transition.json")
 }
 func TestStaleResultSuppressionCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/stale-result-suppression.json")
 }
 func TestUnchangedRecompileSkipCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/unchanged-recompile-skip.json")
 }
 func TestModifierChainIdenticalOutputCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/modifier-chain-identical-output.json")
 }
 func TestIncrementalCarryForwardPreservesDiagnosticsCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "sync/testdata/incremental-carry-forward-preserves-diagnostics.json")
 }
 
 func TestTranscriptTemporaryRoots(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name, fixture, document string
 		wantOnDisk              bool

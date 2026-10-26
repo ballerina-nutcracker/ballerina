@@ -100,6 +100,7 @@ func mustFindResponse(t *testing.T, responses []protocol.Message, id string) pro
 }
 
 func TestRegistryEntryRemovedOnCompletion(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	if _, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
@@ -116,6 +117,7 @@ func TestRegistryEntryRemovedOnCompletion(t *testing.T) {
 }
 
 func TestCancelAfterCompletionIsNoop(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
@@ -139,6 +141,7 @@ func TestCancelAfterCompletionIsNoop(t *testing.T) {
 }
 
 func TestDuplicateRequestIDRejectedKeepsOriginal(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
@@ -162,6 +165,7 @@ func TestDuplicateRequestIDRejectedKeepsOriginal(t *testing.T) {
 }
 
 func TestCancelProducesExactlyOneReply(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
@@ -184,6 +188,7 @@ func TestCancelProducesExactlyOneReply(t *testing.T) {
 }
 
 func TestShutdownDrainsTrackedRequests(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
@@ -206,6 +211,7 @@ func TestShutdownDrainsTrackedRequests(t *testing.T) {
 }
 
 func TestExitWithoutShutdownDrains(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),
@@ -223,6 +229,7 @@ func TestExitWithoutShutdownDrains(t *testing.T) {
 }
 
 func TestCancelIDKeyDistinguishesStringAndInteger(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),

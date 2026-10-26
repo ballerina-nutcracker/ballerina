@@ -26,6 +26,7 @@ import (
 )
 
 func TestWriteSerializesConcurrentFrames(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	s := &Server{transport: pipeTransport{writer: &buf}}
 	uri := tempFileURI(t, "main.bal")

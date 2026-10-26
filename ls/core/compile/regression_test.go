@@ -157,6 +157,7 @@ func keysOf(m map[string][]CompilerDiagnostic) []string {
 }
 
 func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
+	t.Parallel()
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"
@@ -198,6 +199,7 @@ func TestRealCompilePackage_MatchesOldPackageCompilationPath(t *testing.T) {
 }
 
 func TestExtractForURI_MatchesOldPackageCompilationPath(t *testing.T) {
+	t.Parallel()
 	dir := multimoduleFixtureDir(t)
 	greetPath := filepath.Join(dir, "modules", "greet", "greet.bal")
 	editedGreet := "public function greeting() returns string {\n    int x = \"hello\";\n    _ = x;\n    return \"hello\";\n}\n"

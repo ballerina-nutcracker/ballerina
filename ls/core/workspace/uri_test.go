@@ -23,6 +23,7 @@ import (
 )
 
 func TestNewFileURIAcceptsFileScheme(t *testing.T) {
+	t.Parallel()
 	// These are intentional parser inputs, not filesystem-backed documents.
 	raw, wantPath := "file:///workspace/main.bal", "/workspace/main.bal"
 	if runtime.GOOS == "windows" {
@@ -50,6 +51,7 @@ func TestNewFileURIAcceptsFileScheme(t *testing.T) {
 }
 
 func TestNewFileURIRejectsNonFileSchemes(t *testing.T) {
+	t.Parallel()
 	schemes := []string{
 		"untitled:Untitled-1",
 		"expr:///some/expr",
@@ -65,12 +67,14 @@ func TestNewFileURIRejectsNonFileSchemes(t *testing.T) {
 }
 
 func TestNewFileURIRejectsMalformed(t *testing.T) {
+	t.Parallel()
 	if _, err := NewFileURI(""); err == nil {
 		t.Fatal("empty URI expected error")
 	}
 }
 
 func TestNewExprURI(t *testing.T) {
+	t.Parallel()
 	u, err := NewExprURI("expr:///workspace/expr1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -84,6 +88,7 @@ func TestNewExprURI(t *testing.T) {
 }
 
 func TestNewAIURI(t *testing.T) {
+	t.Parallel()
 	u, err := NewAIURI("ai:///workspace/ai1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -97,6 +102,7 @@ func TestNewAIURI(t *testing.T) {
 }
 
 func TestNewBalaURISchemeValidation(t *testing.T) {
+	t.Parallel()
 	u, err := NewBalaURI("bala://ballerina/io/1.6.0")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -113,6 +119,7 @@ func TestNewBalaURISchemeValidation(t *testing.T) {
 }
 
 func TestNewBalaURIRejectsWrongScheme(t *testing.T) {
+	t.Parallel()
 	// The fixed file URI intentionally tests scheme rejection without filesystem access.
 	if _, err := NewBalaURI("file:///workspace/main.bal"); err == nil {
 		t.Fatal("NewBalaURI with file: scheme expected error")
@@ -120,6 +127,7 @@ func TestNewBalaURIRejectsWrongScheme(t *testing.T) {
 }
 
 func TestPathPanicsForNonFileSchemes(t *testing.T) {
+	t.Parallel()
 	schemes := []struct {
 		name string
 		raw  string
@@ -146,6 +154,7 @@ func TestPathPanicsForNonFileSchemes(t *testing.T) {
 }
 
 func TestFileURIDriveIdentityAndEscaping(t *testing.T) {
+	t.Parallel()
 	// Fixed drive URIs exercise parser normalization on every platform.
 	lower, err := NewFileURI("file:///c:/Work/a%20b%23.bal")
 	if err != nil {
@@ -165,6 +174,7 @@ func TestFileURIDriveIdentityAndEscaping(t *testing.T) {
 }
 
 func TestFileURIRejectsUnsupportedPaths(t *testing.T) {
+	t.Parallel()
 	// Keep these malformed parser inputs independent of native path conversion.
 	for _, raw := range []string{"file://server/share/main.bal", "file:////server/share/main.bal", "file:C:app.bal", "file:///C:app.bal", "file:relative.bal", "file:///a\\\\b", "file:///a?query", "file:///a#fragment"} {
 		if _, err := NewFileURI(raw); err == nil {
@@ -174,6 +184,7 @@ func TestFileURIRejectsUnsupportedPaths(t *testing.T) {
 }
 
 func TestDocumentURIComparableAsMapKey(t *testing.T) {
+	t.Parallel()
 	u1 := tempFileURI(t, "main.bal")
 	u2, err := NewFileURI(u1.String())
 	if err != nil {

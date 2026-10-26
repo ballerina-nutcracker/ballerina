@@ -113,6 +113,7 @@ func lastGen(c *genCollector) uint64 {
 }
 
 func TestSnapshotStoreStaleGate(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 
@@ -150,6 +151,7 @@ func TestSnapshotStoreStaleGate(t *testing.T) {
 }
 
 func TestSnapshotStoreEvictRoot(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	store := newSnapshotStore(16, func(string) (uint64, bool) { return 1, true })
@@ -165,6 +167,7 @@ func TestSnapshotStoreEvictRoot(t *testing.T) {
 }
 
 func TestEngineSingleFlightAndStaleGate(t *testing.T) {
+	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
 	cancelled := collectGen(t, bus, event.CompilationCancelled)
@@ -186,6 +189,7 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 }
 
 func TestEnginePanicRecovery(t *testing.T) {
+	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	failed := collectGen(t, bus, event.CompilationFailed)
 
@@ -210,6 +214,7 @@ func TestEnginePanicRecovery(t *testing.T) {
 }
 
 func TestEngineResolutionVsCompilationClassification(t *testing.T) {
+	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	e5a := collectGen(t, bus, event.ResolutionDiagnosticsReady)
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
@@ -240,6 +245,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 }
 
 func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
+	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	e5a := collectGen(t, bus, event.ResolutionDiagnosticsReady)
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
@@ -260,6 +266,7 @@ func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 }
 
 func TestEngineDiagnosticsFor(t *testing.T) {
+	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	_ = bus
 	u := openDoc(t, projects, tempFileURI(t, "df.bal").String(), "public function main() {\n int x = 1;\n}\n", 1)
@@ -278,6 +285,7 @@ func TestEngineDiagnosticsFor(t *testing.T) {
 }
 
 func TestEngineCancelSupersedesInFlight(t *testing.T) {
+	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
 	cancelled := collectGen(t, bus, event.CompilationCancelled)

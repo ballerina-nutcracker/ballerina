@@ -23,6 +23,7 @@ import (
 )
 
 func TestShutdownThenExitStopsServer(t *testing.T) {
+	t.Parallel()
 	session := newTestSession(t, false)
 
 	session.sendRequest("2", "shutdown", nil)
@@ -46,6 +47,7 @@ func TestShutdownThenExitStopsServer(t *testing.T) {
 }
 
 func TestExitWithoutShutdownFails(t *testing.T) {
+	t.Parallel()
 	session := newTestSession(t, false)
 
 	session.sendNotification("exit", map[string]any{})

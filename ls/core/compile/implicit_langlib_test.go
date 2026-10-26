@@ -36,6 +36,7 @@ const (
 )
 
 func TestImplicitLangLibResolvesWithoutImport(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
@@ -44,6 +45,7 @@ func TestImplicitLangLibResolvesWithoutImport(t *testing.T) {
 }
 
 func TestSecondImplicitLangLibsResolveWithoutImport(t *testing.T) {
+	t.Parallel()
 	for name, source := range map[string]string{"string": stringLengthSource, "array": arrayLengthSource} {
 		t.Run(name, func(t *testing.T) {
 			ps, svc := newTestServices(t)
@@ -56,6 +58,7 @@ func TestSecondImplicitLangLibsResolveWithoutImport(t *testing.T) {
 }
 
 func TestExplicitLangLibImportStillResolvesAndCompilesOnce(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringImported)
@@ -69,6 +72,7 @@ func TestExplicitLangLibImportStillResolvesAndCompilesOnce(t *testing.T) {
 }
 
 func TestLangRuntimeNeedsExplicitImport(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, runtimeSleepSource)
@@ -84,6 +88,7 @@ func TestLangRuntimeNeedsExplicitImport(t *testing.T) {
 }
 
 func TestImplicitLangLibDriversAdoptedAfterBodyEdit(t *testing.T) {
+	t.Parallel()
 	ps := newDriverOnlyProjectService(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
@@ -114,6 +119,7 @@ func TestImplicitLangLibDriversAdoptedAfterBodyEdit(t *testing.T) {
 }
 
 func TestImplicitLangLibsResolveAfterImportChangeReload(t *testing.T) {
+	t.Parallel()
 	ps, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)
@@ -127,6 +133,7 @@ func TestImplicitLangLibsResolveAfterImportChangeReload(t *testing.T) {
 }
 
 func TestSymbolSpacesDoNotGrowWithLangLibsAcrossGenerations(t *testing.T) {
+	t.Parallel()
 	ps := newDriverOnlyProjectService(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, ps, u, intFromStringSource)

@@ -33,6 +33,7 @@ func moduleIDFor(t *testing.T, pkg *projects.Package, name string) projects.Modu
 }
 
 func TestTopoTailScope_IncludesEverythingFromEarliestDirtyOnward(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
@@ -53,6 +54,7 @@ func TestTopoTailScope_IncludesEverythingFromEarliestDirtyOnward(t *testing.T) {
 }
 
 func TestTopoTailScope_EmptyDirtyProducesEmptyScope(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 	pd := newPackageDriver(pkg, projSvc.OpenText, nil, nil)
@@ -65,6 +67,7 @@ func TestTopoTailScope_EmptyDirtyProducesEmptyScope(t *testing.T) {
 }
 
 func TestDependentClosure_OnlyTrueDependents(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
@@ -89,6 +92,7 @@ func TestDependentClosure_OnlyTrueDependents(t *testing.T) {
 }
 
 func TestModuleTextHash_StableForUnchangedContent_DiffersOnEdit(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 	greetModule := pkg.ModuleByName(mustModuleName(t, pkg, "multimoduleproject.greet"))

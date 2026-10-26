@@ -162,6 +162,7 @@ func decodePublishDiagnostics(t *testing.T, message protocol.Message) protocol.P
 }
 
 func TestPublishDiagnosticsAfterOpenChangeClose(t *testing.T) {
+	t.Parallel()
 	session := newTestSession(t, true)
 	defer session.close()
 
@@ -265,6 +266,7 @@ func TestPublishDiagnosticsAfterOpenChangeClose(t *testing.T) {
 }
 
 func TestPublishDiagnosticsOmitsVersionWithoutSupport(t *testing.T) {
+	t.Parallel()
 	session := newTestSession(t, false)
 	defer session.close()
 
@@ -287,6 +289,7 @@ func TestPublishDiagnosticsOmitsVersionWithoutSupport(t *testing.T) {
 }
 
 func TestPublishDiagnosticsIgnoresNonFileURI(t *testing.T) {
+	t.Parallel()
 	session := newTestSession(t, true)
 	defer session.close()
 
@@ -314,6 +317,7 @@ func TestPublishDiagnosticsIgnoresNonFileURI(t *testing.T) {
 }
 
 func TestPublishDiagnosticsTransportErrorReachesServe(t *testing.T) {
+	t.Parallel()
 	serverRead, clientWrite := io.Pipe()
 	clientRead, serverWrite := io.Pipe()
 	transport := pipeTransport{reader: serverRead, writer: serverWrite}
@@ -352,6 +356,7 @@ func TestPublishDiagnosticsTransportErrorReachesServe(t *testing.T) {
 }
 
 func TestCancelRequestRoutesAsNotification(t *testing.T) {
+	t.Parallel()
 	session := newTestSession(t, true)
 	defer session.close()
 
@@ -385,6 +390,7 @@ func TestCancelRequestRoutesAsNotification(t *testing.T) {
 // Reloaded roots restart at generation 1; deduplication must not retain the
 // evicted root's publication claim.
 func TestDedupNotStaleAfterEviction(t *testing.T) {
+	t.Parallel()
 	serverRead, clientWrite := io.Pipe()
 	clientRead, serverWrite := io.Pipe()
 	transport := pipeTransport{reader: serverRead, writer: serverWrite}

@@ -44,6 +44,7 @@ func (r *recordingLogf) count() int {
 }
 
 func TestDefaultLogfIsNoop(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 	bus.Subscribe(nil, func(Event) { panic("boom") })
@@ -51,6 +52,7 @@ func TestDefaultLogfIsNoop(t *testing.T) {
 }
 
 func TestWithLogfReceivesInlineSubscriberPanic(t *testing.T) {
+	t.Parallel()
 	var rec recordingLogf
 	bus := New(WithLogf(rec.logf))
 	defer bus.Close()
@@ -62,6 +64,7 @@ func TestWithLogfReceivesInlineSubscriberPanic(t *testing.T) {
 }
 
 func TestWithLogfReceivesCriticalDrop(t *testing.T) {
+	t.Parallel()
 	var rec recordingLogf
 	bus := New(WithLogf(rec.logf))
 	defer bus.Close()
@@ -82,6 +85,7 @@ func TestWithLogfReceivesCriticalDrop(t *testing.T) {
 }
 
 func TestWithLogfReceivesTieredSubscriberPanic(t *testing.T) {
+	t.Parallel()
 	var rec recordingLogf
 	bus := New(WithLogf(rec.logf))
 	defer bus.Close()

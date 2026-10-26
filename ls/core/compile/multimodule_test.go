@@ -104,6 +104,7 @@ func mustModuleName(t *testing.T, pkg *projects.Package, name string) projects.M
 }
 
 func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	openMultimoduleFixture(t, projSvc)
 
@@ -167,6 +168,7 @@ func TestModuleDriver_OwnSyntaxError_RetainsValidSiblingsAndDependents(t *testin
 }
 
 func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
@@ -197,6 +199,7 @@ func TestPackageDriver_CrossModuleImport_PublishesExportedSymbols(t *testing.T) 
 }
 
 func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	openMultimoduleFixture(t, projSvc)
 
@@ -261,6 +264,7 @@ func TestPackageDriver_DependencyPhase1Error_CascadesSkipWithoutPanic(t *testing
 }
 
 func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
 
@@ -310,6 +314,7 @@ func TestPackageDriver_EditOneModule_UnrelatedDiagnosticsSurviveAcrossGeneration
 }
 
 func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	openMultimoduleFixture(t, projSvc)
 
@@ -343,6 +348,7 @@ func TestPackageDriver_DependencyPublicSurfaceBroken_DependentDriverNeverExists(
 }
 
 func TestPackageDriver_DependencyBodyOnlyError_DependentCarriesForwardPkgNode(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
 

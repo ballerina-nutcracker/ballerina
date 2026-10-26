@@ -28,6 +28,7 @@ func makeEntry(root string, openDocs int, t time.Time) *indexEntry {
 }
 
 func TestProjectIndexEvictsBackgroundFirst(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	var evicted []string
@@ -57,6 +58,7 @@ func TestProjectIndexEvictsBackgroundFirst(t *testing.T) {
 }
 
 func TestProjectIndexEvictsLRUActiveWhenAllActive(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	base := time.Unix(2000, 0)
@@ -76,6 +78,7 @@ func TestProjectIndexEvictsLRUActiveWhenAllActive(t *testing.T) {
 }
 
 func TestProjectIndexMemoLookup(t *testing.T) {
+	t.Parallel()
 	idx := newProjectIndex(8, time.Now)
 	idx.memoSourceRoot("/f/a.bal", "/rootA")
 	if root, ok := idx.lookupSourceRoot("/f/a.bal"); !ok || root != "/rootA" {
@@ -88,6 +91,7 @@ func TestProjectIndexMemoLookup(t *testing.T) {
 }
 
 func TestProjectIndexInvalidateUnder(t *testing.T) {
+	t.Parallel()
 	idx := newProjectIndex(8, time.Now)
 	idx.memoSourceRoot("/d/x.bal", "/d")
 	idx.memoSourceRoot("/d/sub/y.bal", "/d")
@@ -105,6 +109,7 @@ func TestProjectIndexInvalidateUnder(t *testing.T) {
 }
 
 func TestIsAncestor(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		dir, p string
 		want   bool

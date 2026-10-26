@@ -50,6 +50,7 @@ func tempFileURI(t *testing.T, name string) workspace.DocumentURI {
 }
 
 func TestFileURIFromNativePath(t *testing.T) {
+	t.Parallel()
 	nativePath := filepath.Join(t.TempDir(), "space dir", "main #.bal")
 	u := fileURI(t, nativePath)
 	if u.Path() != nativePath {
@@ -74,6 +75,7 @@ func applyOpen(t *testing.T, projects *workspace.ProjectService, u workspace.Doc
 }
 
 func TestCompileReturnsDiagnosticsForErrorSource(t *testing.T) {
+	t.Parallel()
 	projects, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projects, u, "public function main() {\n    int x = 1;\n}\n")
@@ -103,6 +105,7 @@ func TestCompileReturnsDiagnosticsForErrorSource(t *testing.T) {
 }
 
 func TestCompileReturnsNoDiagnosticsForValidSource(t *testing.T) {
+	t.Parallel()
 	projects, svc := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
 	applyOpen(t, projects, u, "public function main() {}\n")
@@ -116,6 +119,7 @@ func TestCompileReturnsNoDiagnosticsForValidSource(t *testing.T) {
 }
 
 func TestCompileUnknownRootReturnsEmpty(t *testing.T) {
+	t.Parallel()
 	_, svc := newTestServices(t)
 	u := tempFileURI(t, "never-opened.bal")
 	result, err := svc.Compile(context.Background(), CompileRequest{URI: u})
@@ -128,6 +132,7 @@ func TestCompileUnknownRootReturnsEmpty(t *testing.T) {
 }
 
 func TestByteOffsetToLineCharUTF16(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		text     string

@@ -27,6 +27,7 @@ import (
 )
 
 func TestWindowsNativeURIRoundTrip(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	file := filepath.Join(root, "Case Preserved #.bal")
 	lower := strings.ToLower(file[:1]) + file[1:]
@@ -54,6 +55,7 @@ func TestWindowsNativeURIRoundTrip(t *testing.T) {
 }
 
 func TestWindowsDriveRootPathsAndDiscovery(t *testing.T) {
+	t.Parallel()
 	fixture := t.TempDir()
 	if err := os.WriteFile(filepath.Join(fixture, "Ballerina.toml"), []byte("[package]\norg=\"test\"\nname=\"root\"\nversion=\"0.1.0\"\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -85,6 +87,7 @@ func TestWindowsDriveRootPathsAndDiscovery(t *testing.T) {
 }
 
 func TestWindowsNestedModulesAndSiblingPrefixes(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	bus := event.New()
 	defer bus.Close()

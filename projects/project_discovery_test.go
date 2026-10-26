@@ -27,6 +27,7 @@ type discoveryFailureFS struct{ err error }
 func (f discoveryFailureFS) Open(string) (fs.File, error) { return nil, f.err }
 
 func TestFindProjectRoot(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"main.bal", "modules/nested/main.bal"} {
 		t.Run(name, func(t *testing.T) {
 			root := t.TempDir()
@@ -42,6 +43,7 @@ func TestFindProjectRoot(t *testing.T) {
 }
 
 func TestFindProjectRootMissing(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	openDir := func(dir string) fs.FS {
 		if dir == root {
@@ -56,6 +58,7 @@ func TestFindProjectRootMissing(t *testing.T) {
 }
 
 func TestFindProjectRootFilesystemRoot(t *testing.T) {
+	t.Parallel()
 	manifest := t.TempDir()
 	if err := os.WriteFile(filepath.Join(manifest, BallerinaTomlFile), nil, 0o644); err != nil {
 		t.Fatal(err)
@@ -74,6 +77,7 @@ func TestFindProjectRootFilesystemRoot(t *testing.T) {
 }
 
 func TestFindProjectRootUnreadableAncestor(t *testing.T) {
+	t.Parallel()
 	for _, failure := range []error{fs.ErrPermission, errors.New("injected I/O failure")} {
 		t.Run(failure.Error(), func(t *testing.T) {
 			root := t.TempDir()

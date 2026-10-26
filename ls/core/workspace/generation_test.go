@@ -24,6 +24,7 @@ import (
 )
 
 func TestGenerationMonotonicAndProjectUpdated(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	svc := New(os.DirFS, bus)
@@ -52,6 +53,7 @@ func TestGenerationMonotonicAndProjectUpdated(t *testing.T) {
 }
 
 func TestPersistentProjectAcrossUpdates(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	svc := New(os.DirFS, bus)
@@ -76,6 +78,7 @@ func TestPersistentProjectAcrossUpdates(t *testing.T) {
 }
 
 func TestOpenDocumentsUnder(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	svc := New(os.DirFS, bus)

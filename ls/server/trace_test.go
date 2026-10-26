@@ -23,6 +23,7 @@ import (
 )
 
 func TestInitializeTraceFieldAcceptedWithoutError(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{"trace": "verbose"}),
@@ -37,6 +38,7 @@ func TestInitializeTraceFieldAcceptedWithoutError(t *testing.T) {
 }
 
 func TestSetTraceIsAcceptAndDiscardNoop(t *testing.T) {
+	t.Parallel()
 	srv, bt := newBatchServer(t)
 	responses, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),

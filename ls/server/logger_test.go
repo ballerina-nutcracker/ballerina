@@ -45,6 +45,7 @@ func newLoggingBatchServer(t *testing.T) (*Server, *batchTransport, *bytes.Buffe
 }
 
 func TestHostSelectedFileOutputReplacesStderr(t *testing.T) {
+	t.Parallel()
 	var stderr, fileOutput bytes.Buffer
 	selected := io.Writer(&fileOutput)
 	bus := event.New()
@@ -74,6 +75,7 @@ type discoveryErrorFS struct{}
 func (discoveryErrorFS) Open(string) (fs.File, error) { return nil, fs.ErrPermission }
 
 func TestDiscoveryErrorsAreLoggedWithoutClientNotifications(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	opener := func(dir string) fs.FS {
 		if dir == root {
@@ -124,6 +126,7 @@ func TestDiscoveryErrorsAreLoggedWithoutClientNotifications(t *testing.T) {
 }
 
 func TestRequestScopedLoggerReachesEveryDispatchPath(t *testing.T) {
+	t.Parallel()
 	srv, bt, logBuf := newLoggingBatchServer(t)
 	_, err := runBatch(t, srv, bt, []protocol.Message{
 		reqMessage(`"1"`, "initialize", map[string]any{}),

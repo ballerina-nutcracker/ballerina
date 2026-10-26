@@ -21,6 +21,7 @@ import (
 )
 
 func TestSourcePaths(t *testing.T) {
+	t.Parallel()
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX roots; native drive cases have TestWindows coverage")
 	}
@@ -57,6 +58,7 @@ func TestSourcePaths(t *testing.T) {
 }
 
 func TestSourcePathsCompilerPrefix(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	paths := SourcePaths{root: root, prefix: "main.bal/"}
 	u, err := FileURIFromPath(filepath.Join(root, "main.bal"))

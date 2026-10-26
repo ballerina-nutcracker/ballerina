@@ -26,6 +26,7 @@ import (
 )
 
 func TestLegacyTestControlMethodsIgnoredCorpus(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{
 		"block-request", "flush-requests",
 	} {
@@ -36,6 +37,7 @@ func TestLegacyTestControlMethodsIgnoredCorpus(t *testing.T) {
 }
 
 func TestLegacyWriteFileIgnoredCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscriptWithCheck(t, "controls/testdata/legacy-write-file.json",
 		func(_ *workspace.ProjectService, _ *compile.CompilationService, root string) {
 			content, err := os.ReadFile(filepath.Join(root, "main.bal"))

@@ -36,6 +36,7 @@ type transitionDiscoveryErrorFS struct{}
 func (transitionDiscoveryErrorFS) Open(string) (fs.File, error) { return nil, fs.ErrPermission }
 
 func TestProjectTransitionRejectsObsoleteCompilation(t *testing.T) {
+	t.Parallel()
 	for _, scenario := range []string{"manifest-round-trip", "discovery-recovery"} {
 		t.Run(scenario, func(t *testing.T) {
 			root := t.TempDir()

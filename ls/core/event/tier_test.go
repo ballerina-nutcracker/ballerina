@@ -22,6 +22,7 @@ import (
 )
 
 func TestTieredCriticalDeliversAsync(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 
@@ -51,6 +52,7 @@ func TestTieredCriticalDeliversAsync(t *testing.T) {
 }
 
 func TestTieredCriticalDropsOnFull(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 
@@ -81,13 +83,18 @@ func TestTieredCriticalDropsOnFull(t *testing.T) {
 // Pending events with the same key are replaced; an in-flight event is not
 // coalesced.
 func TestTieredCoalesceableLastWins(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 
 	var mu sync.Mutex
 	var received []uint64
 	block := make(chan struct{})
+	entered := make(chan struct{})
 	bus.SubscribeWithTier([]Kind{CompilationCancelled}, TierCoalesceable, func(e Event) {
+		if e.Generation() == 1 {
+			close(entered)
+		}
 		<-block
 		mu.Lock()
 		defer mu.Unlock()
@@ -95,6 +102,7 @@ func TestTieredCoalesceableLastWins(t *testing.T) {
 	})
 
 	bus.Publish(NewCompilationCancelledEvent("/r", 1))
+	<-entered
 	bus.Publish(NewCompilationCancelledEvent("/r", 2))
 	bus.Publish(NewCompilationCancelledEvent("/r", 3))
 	close(block)
@@ -102,12 +110,13 @@ func TestTieredCoalesceableLastWins(t *testing.T) {
 
 	mu.Lock()
 	defer mu.Unlock()
-	if len(received) != 1 || received[0] != 3 {
-		t.Fatalf("received %v, want [3] (last-wins)", received)
+	if len(received) != 2 || received[0] != 1 || received[1] != 3 {
+		t.Fatalf("received %v, want [1 3] (in-flight then last-wins)", received)
 	}
 }
 
 func TestTieredBestEffortHeadDrops(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 
@@ -144,6 +153,7 @@ func TestTieredBestEffortHeadDrops(t *testing.T) {
 }
 
 func TestFlushIsNoOpForInlineSubscribers(t *testing.T) {
+	t.Parallel()
 	bus := New()
 	defer bus.Close()
 	done := make(chan struct{})
@@ -154,6 +164,7 @@ func TestFlushIsNoOpForInlineSubscribers(t *testing.T) {
 }
 
 func TestNewEventTypesGeneration(t *testing.T) {
+	t.Parallel()
 	if g := NewProjectUpdatedEvent("/r", 7).Generation(); g != 7 {
 		t.Fatalf("ProjectUpdated Generation = %d, want 7", g)
 	}

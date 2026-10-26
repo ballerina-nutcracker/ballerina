@@ -22,6 +22,7 @@ import (
 )
 
 func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg1, _ := openMultimoduleFixture(t, projSvc)
 
@@ -65,6 +66,7 @@ func TestPackageDriver_UnchangedModule_CarriesForwardSameDriverInstance(t *testi
 }
 
 func TestPackageDriver_AllDirty_NoPriorState_FullResetScope(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
@@ -80,6 +82,7 @@ func TestPackageDriver_AllDirty_NoPriorState_FullResetScope(t *testing.T) {
 }
 
 func TestPackageDriver_Aborted_StopsBetweenModules(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 
@@ -97,6 +100,7 @@ func TestPackageDriver_Aborted_StopsBetweenModules(t *testing.T) {
 }
 
 func TestPackageDriver_AbortedFromStart_NoModulesReached(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 

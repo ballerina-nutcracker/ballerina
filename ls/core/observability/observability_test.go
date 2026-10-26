@@ -22,6 +22,7 @@ import (
 )
 
 func TestNewWritesToSuppliedWriter(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	logger := New(&buf)
 	logger.Info("hello", "key", "value")
@@ -34,6 +35,7 @@ func TestNewWritesToSuppliedWriter(t *testing.T) {
 }
 
 func TestNewDefaultLevelIsInfo(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	logger := New(&buf)
 	logger.Debug("should not appear")
@@ -47,11 +49,13 @@ func TestNewDefaultLevelIsInfo(t *testing.T) {
 }
 
 func TestNewNoopDiscardsOutput(t *testing.T) {
+	t.Parallel()
 	NewNoop().Info("hello")
 	New(nil).Warn("world")
 }
 
 func TestLoggerWithReturnsScopedLogger(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	New(&buf).With("method", "initialize").Info("handling message")
 	if !strings.Contains(buf.String(), "method=initialize") {
@@ -76,6 +80,7 @@ func (w *ownedWriter) Write(p []byte) (int, error) {
 func (w *ownedWriter) Close() error { w.closed = true; return nil }
 
 func TestLoggerLeavesWriterOwnershipToHost(t *testing.T) {
+	t.Parallel()
 	writer := &ownedWriter{}
 	New(writer).With("method", "shutdown").Info("drained")
 	if writer.closed || writer.Len() == 0 {
@@ -84,6 +89,7 @@ func TestLoggerLeavesWriterOwnershipToHost(t *testing.T) {
 }
 
 func TestLoggerWriterErrorUsesSlogPolicy(t *testing.T) {
+	t.Parallel()
 	writer := &ownedWriter{err: errors.New("injected write failure")}
 	New(writer).Error("not redirected")
 	if writer.calls != 1 || writer.closed {

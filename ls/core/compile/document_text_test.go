@@ -24,6 +24,7 @@ import (
 // Compiler registration and editor-name translation must agree for named
 // modules, or live-buffer lookups silently fall back to frozen source text.
 func TestDocumentText_RegistrationKeyMatchesWorkspaceOpenTextKey(t *testing.T) {
+	t.Parallel()
 	projSvc := newProjectOnlyService(t)
 	pkg, _ := openMultimoduleFixture(t, projSvc)
 

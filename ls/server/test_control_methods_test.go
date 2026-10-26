@@ -24,6 +24,7 @@ import (
 )
 
 func TestLegacyReleaseRequestIgnored(t *testing.T) {
+	t.Parallel()
 	srv, transport := newBatchServer(t)
 	defer srv.cancelAndDrainTrackedRequests()
 	var input bytes.Buffer

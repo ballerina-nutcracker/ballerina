@@ -39,6 +39,7 @@ func buildFingerprint(t *testing.T, source string) fingerprint {
 }
 
 func TestComputeFingerprint_SameSignature_SameFingerprint(t *testing.T) {
+	t.Parallel()
 	fp1 := buildFingerprint(t, "public function greeting() returns string {\n    return \"a\";\n}\n")
 	fp2 := buildFingerprint(t, "public function greeting() returns string {\n    return \"b\";\n}\n")
 	if !fp1.valid || !fp2.valid {
@@ -50,6 +51,7 @@ func TestComputeFingerprint_SameSignature_SameFingerprint(t *testing.T) {
 }
 
 func TestComputeFingerprint_DifferentSignature_DifferentFingerprint(t *testing.T) {
+	t.Parallel()
 	fp1 := buildFingerprint(t, "public function greeting() returns string {\n    return \"a\";\n}\n")
 	fp2 := buildFingerprint(t, "public function greeting() returns int {\n    return 1;\n}\n")
 	if !fp1.valid || !fp2.valid {
@@ -61,6 +63,7 @@ func TestComputeFingerprint_DifferentSignature_DifferentFingerprint(t *testing.T
 }
 
 func TestComputeFingerprint_ErroredContext_Invalid(t *testing.T) {
+	t.Parallel()
 	projSvc, _ := newTestServices(t)
 	u := tempFileURI(t, "fp-err.bal")
 	applyOpen(t, projSvc, u, "public function greeting() returns UndefinedType {\n    return 1;\n}\n")

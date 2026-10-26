@@ -27,6 +27,7 @@ import (
 )
 
 func TestOverlayFS(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "disk.bal"), []byte("disk"), 0o644); err != nil {
 		t.Fatal(err)
@@ -56,6 +57,7 @@ type failingSourceFS struct{ err error }
 func (f failingSourceFS) Open(string) (fs.File, error) { return nil, f.err }
 
 func TestDiscoveryFailureRetainsBufferWithoutPublication(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	bus := event.New()
 	defer bus.Close()
@@ -110,6 +112,7 @@ func TestDiscoveryFailureRetainsBufferWithoutPublication(t *testing.T) {
 }
 
 func TestLoadedChangeDoesNotOpenDirectories(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	calls := 0
 	opener := func(dir string) fs.FS { calls++; return os.DirFS(dir) }

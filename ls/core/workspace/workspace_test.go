@@ -39,6 +39,7 @@ func tempFileURI(t *testing.T, name string) DocumentURI {
 }
 
 func TestApplyOpenStoresDocument(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	u := tempFileURI(t, "main.bal")
 	snap, err := svc.Apply(context.Background(), DocumentChange{
@@ -61,6 +62,7 @@ func TestApplyOpenStoresDocument(t *testing.T) {
 }
 
 func TestApplyUpdateChecksVersionMonotonicity(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
@@ -89,6 +91,7 @@ func TestApplyUpdateChecksVersionMonotonicity(t *testing.T) {
 }
 
 func TestApplyUpdateRejectsUnknownDocument(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
@@ -99,6 +102,7 @@ func TestApplyUpdateRejectsUnknownDocument(t *testing.T) {
 }
 
 func TestApplyCloseRemovesDocument(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
@@ -117,6 +121,7 @@ func TestApplyCloseRemovesDocument(t *testing.T) {
 }
 
 func TestApplyCloseRejectsUnknownDocument(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
@@ -127,6 +132,7 @@ func TestApplyCloseRejectsUnknownDocument(t *testing.T) {
 }
 
 func TestApplyClosePreservesLanguageID(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	u := tempFileURI(t, "main.bal")
 	if _, err := svc.Apply(context.Background(), DocumentChange{
@@ -146,6 +152,7 @@ func TestApplyClosePreservesLanguageID(t *testing.T) {
 }
 
 func TestShutdownIsNoOp(t *testing.T) {
+	t.Parallel()
 	svc := newTestProjectService()
 	if err := svc.Shutdown(context.Background()); err != nil {
 		t.Fatalf("Shutdown: %v", err)

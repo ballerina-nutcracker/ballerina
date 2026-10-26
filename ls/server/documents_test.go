@@ -23,6 +23,7 @@ import (
 )
 
 func TestApplyChangesUTF16(t *testing.T) {
+	t.Parallel()
 	result, ok := applyChanges("𐐀x\n", []protocol.TextDocumentContentChangeEvent{
 		protocol.NewTextDocumentContentChangeEventTextDocumentContentChangePartial(protocol.TextDocumentContentChangePartial{
 			Range: protocol.Range{
@@ -38,6 +39,7 @@ func TestApplyChangesUTF16(t *testing.T) {
 }
 
 func TestApplyChangesRejectsInvalidBatchAtomically(t *testing.T) {
+	t.Parallel()
 	_, ok := applyChanges("abc", []protocol.TextDocumentContentChangeEvent{
 		protocol.NewTextDocumentContentChangeEventTextDocumentContentChangePartial(protocol.TextDocumentContentChangePartial{
 			Range: protocol.Range{
@@ -61,6 +63,7 @@ func TestApplyChangesRejectsInvalidBatchAtomically(t *testing.T) {
 }
 
 func TestApplyChangesEmptyChangesRejected(t *testing.T) {
+	t.Parallel()
 	if _, ok := applyChanges("abc", nil); ok {
 		t.Fatal("empty changes expected rejection")
 	}

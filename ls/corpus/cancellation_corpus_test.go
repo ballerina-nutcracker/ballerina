@@ -21,30 +21,37 @@ import (
 )
 
 func TestNumericIDCancelCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/numeric-id-cancel.json")
 }
 
 func TestStringIDCancelCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/string-id-cancel.json")
 }
 
 func TestCancelExactlyOnceCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/cancel-exactly-once.json")
 }
 
 func TestCancelNoopCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/cancel-noop.json")
 }
 
 func TestDuplicateInflightIDRejectedCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/duplicate-inflight-id-rejected.json")
 }
 
 func TestNormalCompletionCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/normal-completion.json")
 }
 
 // didClose must clear diagnostics before the blocked request's cancellation reply.
 func TestOrderedNotificationsDuringCancelCorpus(t *testing.T) {
+	t.Parallel()
 	runTranscript(t, "cancellation/testdata/ordered-notifications-during-cancel.json")
 }
