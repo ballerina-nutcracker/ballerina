@@ -93,11 +93,23 @@ func loadPrivateKey(platform pal.Platform, ep *endpoint) (ssh.Signer, error) {
 		signer, err = ssh.ParsePrivateKey(data)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("SFTP key authentication failed for private key \"%s\". %s Verify the key file is "+
-			"a valid private key and the passphrase (if any) is correct.", ep.privateKeyPath, err.Error())
+		return nil, &keyAuthError{path: ep.privateKeyPath, cause: err}
 	}
 	return signer, nil
 }
+
+// keyAuthError reproduces JSch's key-load failure text, which ends with a full stop.
+type keyAuthError struct {
+	path  string
+	cause error
+}
+
+func (e *keyAuthError) Error() string {
+	return "SFTP key authentication failed for private key \"" + e.path + "\". " + e.cause.Error() +
+		" Verify the key file is a valid private key and the passphrase (if any) is correct."
+}
+
+func (e *keyAuthError) Unwrap() error { return e.cause }
 
 // hostKeyCallback enables strict checking only when the known_hosts file exists, as JSch does
 // with StrictHostKeyChecking; otherwise any server key is accepted.
