@@ -144,6 +144,7 @@ func newParser(cfg *config, t *typer, shape *rowShape, rootSize int, failSafe *f
 func (p *parser) feed(ch rune) error {
 	p.trackLine(ch)
 	if p.recovering {
+		p.processLocation(ch)
 		if ch == '\n' {
 			return p.endRecovery()
 		}
