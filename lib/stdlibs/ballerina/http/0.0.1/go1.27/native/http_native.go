@@ -433,6 +433,9 @@ func initHttpModule(rt *runtime.Runtime) {
 				if err != nil {
 					return nil, 0, "", err
 				}
+				if wireCT != "" {
+					setRequestHeader(req, "content-type", wireCT, ctx.TypeCtx())
+				}
 				return bytes.NewReader(data), int64(len(data)), wireCT, nil
 			}
 			buf := holder.materialize()
@@ -931,6 +934,7 @@ func initHttpModule(rt *runtime.Runtime) {
 				if contentType != "" {
 					contentType = wireCT
 					reqHeaders["content-type"] = []string{contentType}
+					setRequestHeader(reqObj, "content-type", contentType, ctx.TypeCtx())
 				}
 			} else if ok {
 				if stream := holder.takeStream(); stream != nil {
