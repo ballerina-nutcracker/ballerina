@@ -193,7 +193,7 @@ func (e *zipExterns) readEntry(ctx *extern.Context, args []values.BalValue) (val
 		return zipError(ctx, entryNotFound, fmt.Sprintf("the archive contains no entry named '%s'", name))
 	}
 	entry := a.entries[index]
-	var content io.ReadCloser = io.NopCloser(bytes.NewReader(nil))
+	content := io.NopCloser(bytes.NewReader(nil))
 	if !entry.isDirectory() {
 		if errValue, err := unreadable(ctx, entry); errValue != nil || err != nil {
 			return errValue, err
