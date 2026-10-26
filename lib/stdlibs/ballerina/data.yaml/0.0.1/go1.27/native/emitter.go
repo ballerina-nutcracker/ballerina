@@ -25,7 +25,6 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -38,7 +37,7 @@ type writeOptions struct {
 	flowStyle       bool
 }
 
-func toYamlStringArray(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func toYamlString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	config, _ := args[1].(*values.Map)
 	indentation, _ := get(config, "indentationPolicy").(int64)
 	if indentation < 0 {
@@ -53,13 +52,7 @@ func toYamlStringArray(ctx *extern.Context, args []values.BalValue) (values.BalV
 		flowStyle:       get(config, "flowStyle") == true,
 	}}
 	w.write(args[0])
-	lines := make([]values.BalValue, len(w.lines))
-	for i, line := range w.lines {
-		lines[i] = line
-	}
-	env := ctx.TypeEnv()
-	ty := defineArray(env, semtypes.String)
-	return values.NewList(ty, semtypes.ToListAtomicType(env, ty), false, nil, len(lines), lines), nil
+	return strings.Join(w.lines, "\n"), nil
 }
 
 type yamlWriter struct {
