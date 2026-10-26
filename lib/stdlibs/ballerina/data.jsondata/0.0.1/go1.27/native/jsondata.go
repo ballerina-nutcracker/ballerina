@@ -45,7 +45,7 @@ func initJsondataModule(rt *runtime.Runtime) {
 	register("parseString", parseString)
 	register("parseBytes", parseBytes)
 	register("parseStream", parseStream)
-	register("toJson", toJson)
+	register("externToJson", toJson)
 }
 
 func parseAsType(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -92,7 +92,8 @@ func parseText(cache *typeCache, ctx *extern.Context, input string, optsArg, tdA
 
 func toJson(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	t := newTyper(cache, ctx.TypeCtx(), semtypes.Never, nil)
-	return t.toJSON(args[0], make(map[values.BalValue]struct{}))
+	result, err := t.toJSON(args[0], make(map[values.BalValue]struct{}))
+	return toResult(ctx, result, err)
 }
 
 // newTyperFor drops error from the typedesc constraint: an inferred typedesc can wrongly carry the module's

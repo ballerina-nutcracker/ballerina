@@ -55,7 +55,11 @@ public isolated function parseStream(stream<byte[], error?> s, Options options =
 #
 # + v - Source anydata value
 # + return - representation of `v` as value of type json
-public isolated function toJson(anydata v) returns json = external;
+public isolated function toJson(anydata v) returns json {
+    return checkpanic externToJson(v);
+}
+
+isolated function externToJson(anydata v) returns json|Error = external;
 
 # Represent the options that can be used to modify the behaviour of the projection.
 #

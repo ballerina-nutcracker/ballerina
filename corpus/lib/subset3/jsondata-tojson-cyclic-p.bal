@@ -18,6 +18,11 @@ import ballerina/data.jsondata;
 import ballerina/io;
 
 public function main() {
+    map<anydata> m = {};
+    m["self"] = m;
+    any|error trapped = trap jsondata:toJson(m);
+    io:println(trapped is jsondata:Error); // @output true
+
     anydata[] list = [1];
     list.push(list);
     json result = jsondata:toJson(list); // @panic the value has a cyclic reference

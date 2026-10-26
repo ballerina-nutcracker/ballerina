@@ -1,4 +1,6 @@
 -- stdout --
+true
 -- stderr --
 error: the value has a cyclic reference
-        at main(jsondata-tojson-cyclic-p.bal:23)
+        at ballerina/data.jsondata:toJson(0.0.1::json_api.bal:59)
+           main(jsondata-tojson-cyclic-p.bal:28)
