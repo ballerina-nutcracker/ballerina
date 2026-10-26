@@ -31,7 +31,8 @@ const (
 )
 
 type csvModule struct {
-	rt *runtime.Runtime
+	rt    *runtime.Runtime
+	types *csvTypes
 }
 
 func init() {
@@ -39,7 +40,7 @@ func init() {
 }
 
 func initCsvModule(rt *runtime.Runtime) {
-	m := &csvModule{rt: rt}
+	m := &csvModule{rt: rt, types: newCsvTypes(rt.GetTypeEnv())}
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", m.parseString)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", m.parseBytes)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", m.parseStream)
@@ -73,7 +74,7 @@ func (m *csvModule) parseString(ctx *extern.Context, args []values.BalValue) (va
 	opts, _ := args[1].(*values.Map)
 	td, _ := args[2].(*values.TypeDesc)
 	cfg := readOptions(opts)
-	t := newTyper(ctx.TypeCtx())
+	t := newTyper(ctx.TypeCtx(), m.types)
 	result, err := m.parseInput(cfg, t, targetType(td), input, input)
 	return toResult(result, err)
 }
@@ -83,7 +84,7 @@ func (m *csvModule) parseBytes(ctx *extern.Context, args []values.BalValue) (val
 	opts, _ := args[1].(*values.Map)
 	td, _ := args[2].(*values.TypeDesc)
 	cfg := readOptions(opts)
-	t := newTyper(ctx.TypeCtx())
+	t := newTyper(ctx.TypeCtx(), m.types)
 	root := targetType(td)
 	dec, ok := newDecoder(cfg.encoding)
 	if !ok {
@@ -108,7 +109,7 @@ func (m *csvModule) parseStream(ctx *extern.Context, args []values.BalValue) (va
 		return sourceErr, nil
 	}
 	input := dec.decodeAll(content)
-	t := newTyper(ctx.TypeCtx())
+	t := newTyper(ctx.TypeCtx(), m.types)
 	result, err := m.parseInput(cfg, t, targetType(td), input, input)
 	if err != nil {
 		return newError(streamReadErrorPrefix + err.Error()), nil
@@ -139,7 +140,7 @@ func (m *csvModule) traverseList(ctx *extern.Context, cfg *config, source *value
 	for i := range rows {
 		rows[i] = source.Get(i)
 	}
-	t := newTyper(ctx.TypeCtx())
+	t := newTyper(ctx.TypeCtx(), m.types)
 	tr := newTraversal(cfg, t, newFailSafeLogger(m.rt, cfg.failSafe, false))
 	return toResult(tr.traverse(rows, targetType(td)))
 }
