@@ -36,6 +36,18 @@ public function main() returns error? {
         io:println(noBoundaryResult.message()); // @output Error occurred while extracting body parts from entity: no boundary parameter found in Content-Type
     }
 
+    mime:Entity noPart = new;
+    noPart.setByteArray("garbage".toBytes(), "multipart/form-data; boundary=zzz");
+    mime:Entity[]|mime:ParserError noPartResult = noPart.getBodyParts();
+    if noPartResult is mime:ParserError {
+        io:println(noPartResult.message()); // @output Error occurred while extracting body parts from entity: Missing start boundary
+    }
+
+    mime:Entity emptyBody = new;
+    emptyBody.setByteArray([], "multipart/form-data; boundary=zzz");
+    mime:Entity[] emptyParts = check emptyBody.getBodyParts();
+    io:println(emptyParts.length()); // @output 0
+
     // entity with no content-type header at all
     mime:Entity noHeader = new;
     mime:Entity[]|mime:ParserError noHeaderResult = noHeader.getBodyParts();

@@ -34,6 +34,9 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+//nolint:staticcheck // error text mirrors jBallerina's mimepull message verbatim
+var errMissingStartBoundary = errors.New("Missing start boundary")
+
 type decodedPart struct {
 	header textproto.MIMEHeader
 	body   []byte
@@ -90,9 +93,10 @@ func MultipartBoundary(contentType string) (baseType, boundary string, isComposi
 // every part header verbatim and transfer-decoding each part body. A part without a
 // Content-Type header is left without one, as in jBallerina.
 //
-// A missing boundary is a ParserError. jBallerina decodes only a byte-channel body
-// (an inbound HTTP body or setFileAsEntityBody) and returns an empty Entity[] for a
-// setByteArray body.
+// A missing boundary is a ParserError, and so is non-empty data holding no part, which
+// jBallerina reports as a missing start boundary. Empty data decodes to no parts.
+// jBallerina decodes only a byte-channel body (an inbound HTTP body or
+// setFileAsEntityBody) and returns an empty Entity[] for a setByteArray body.
 func DecodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values.List, error) {
 	if boundary == "" {
 		return nil, fmt.Errorf("no boundary parameter found in Content-Type")
@@ -112,6 +116,9 @@ func DecodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values
 			return nil, err
 		}
 		decoded = append(decoded, decodedPart{header: part.Header, body: body})
+	}
+	if len(decoded) == 0 && len(data) > 0 {
+		return nil, errMissingStartBoundary
 	}
 	parts, err := newBodyParts(ctx, len(decoded))
 	if err != nil {
@@ -316,6 +323,9 @@ func getBodyPartsExtern() extern.NativeFunc {
 			return newBodyParts(ctx, 0)
 		}
 		parts, err := DecodeMultipart(ctx, body.bytes, boundary)
+		if err == nil && body.fromChannel && parts.Len() == 0 {
+			err = errMissingStartBoundary
+		}
 		if err != nil {
 			return mimeError("ParserError", "Error occurred while extracting body parts from entity: "+err.Error()), nil
 		}
