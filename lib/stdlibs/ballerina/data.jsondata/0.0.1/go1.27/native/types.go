@@ -18,6 +18,7 @@ package native
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -115,6 +116,7 @@ func emptyFieldSet() *fieldSet {
 // typer answers the type questions the jBallerina implementation answers through its runtime type API.
 type typer struct {
 	tc            semtypes.Context
+	cache         *typeCache
 	jsonTy        semtypes.SemType
 	anydataTy     semtypes.SemType
 	jsonMapTy     semtypes.SemType
@@ -129,7 +131,7 @@ type typer struct {
 	rootFieldKeys map[string]string
 }
 
-func newTyper(tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[string]string) *typer {
+func newTyper(cache *typeCache, tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[string]string) *typer {
 	jsonTy := semtypes.CreateJSON(tc)
 	jsonMapTy := semtypes.Intersect(jsonTy, semtypes.Mapping)
 	jsonListTy := semtypes.Intersect(jsonTy, semtypes.List)
@@ -138,6 +140,7 @@ func newTyper(tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[stri
 	anydataListTy := semtypes.Intersect(anydataTy, semtypes.List)
 	return &typer{
 		tc:            tc,
+		cache:         cache,
 		jsonTy:        jsonTy,
 		anydataTy:     anydataTy,
 		jsonMapTy:     jsonMapTy,
@@ -153,7 +156,56 @@ func newTyper(tc semtypes.Context, root semtypes.SemType, rootFieldKeys map[stri
 	}
 }
 
+// typeCache holds the classification of each structured type a runtime has parsed into. Classifying a
+// mapping or list type intersects its atoms, which mints runtime atoms, so it must happen once per type
+// rather than once per value.
+type typeCache struct {
+	mu       sync.Mutex
+	interner *semtypes.SemTypeInterner
+	infos    map[semtypes.InternHandle]typeInfo
+}
+
+func newTypeCache() *typeCache {
+	return &typeCache{interner: semtypes.NewSemtypeInterner(), infos: make(map[semtypes.InternHandle]typeInfo)}
+}
+
+func (c *typeCache) getOrClassify(ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	handle := c.interner.Intern(ty)
+	if ti, ok := c.infos[handle]; ok {
+		return ti
+	}
+	ti := classify(ty)
+	c.infos[handle] = ti
+	return ti
+}
+
+var valueBasicTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String}
+
+// cacheable reports whether ty is worth caching and the interner can recognise a copy of it: only mapping
+// and list types are costly to classify, and the interner never matches a proper subtype of a value type.
+func cacheable(ty semtypes.SemType) bool {
+	basic := semtypes.WidenToBasicTypes(ty)
+	if !semtypes.ContainsBasicType(basic, semtypes.Mapping) && !semtypes.ContainsBasicType(basic, semtypes.List) {
+		return false
+	}
+	for _, valueTy := range valueBasicTypes {
+		if semtypes.ContainsBasicType(basic, valueTy) && !semtypes.IsSubtypeSimple(valueTy, ty) {
+			return false
+		}
+	}
+	return true
+}
+
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
+	if !cacheable(ty) {
+		return t.classifyType(ty)
+	}
+	return t.cache.getOrClassify(ty, t.classifyType)
+}
+
+func (t *typer) classifyType(ty semtypes.SemType) typeInfo {
 	if semtypes.IsSameType(t.tc, ty, t.jsonTy) {
 		return typeInfo{kind: kindJSON, ty: ty}
 	}
