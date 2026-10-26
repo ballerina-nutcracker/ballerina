@@ -89,25 +89,26 @@ func init() {
 }
 
 func initYamlModule(rt *runtime.Runtime) {
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", parseString)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", parseBytes)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", parseStream)
+	types := newYamlTypes(rt.GetTypeEnv())
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", types.parseString)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", types.parseBytes)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", types.parseStream)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "toYamlString", toYamlString)
 }
 
-func parseString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func (types *yamlTypes) parseString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(string)
-	return parseInput(ctx, input, args[1], args[2], "")
+	return types.parseInput(ctx, input, args[1], args[2], "")
 }
 
-func parseBytes(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func (types *yamlTypes) parseBytes(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(*values.List)
-	return parseInput(ctx, decodeUTF8(input.ToByteSlice()), args[1], args[2], "")
+	return types.parseInput(ctx, decodeUTF8(input.ToByteSlice()), args[1], args[2], "")
 }
 
 // parseStream reads the whole byte-block stream before parsing. An error from the stream is returned
 // rather than ending the input early, as jBallerina does.
-func parseStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func (types *yamlTypes) parseStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	source, _ := args[0].(*values.Stream)
 	var content []byte
 	for {
@@ -125,7 +126,7 @@ func parseStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, 
 		content = append(content, list.ToByteSlice()...)
 	}
 	closeSource(source)
-	return parseInput(ctx, decodeUTF8(content), args[1], args[2], streamReadErrorPrefix)
+	return types.parseInput(ctx, decodeUTF8(content), args[1], args[2], streamReadErrorPrefix)
 }
 
 func closeSource(source *values.Stream) {
@@ -142,10 +143,10 @@ func decodeUTF8(data []byte) string {
 
 // parseInput parses input into the type the typedesc argument describes. errorPrefix is added to the
 // errors that jBallerina's parseStream wraps: those raised while binding values, not syntax errors.
-func parseInput(ctx *extern.Context, input string, optsArg, tdArg values.BalValue, errorPrefix string) (values.BalValue, error) {
+func (types *yamlTypes) parseInput(ctx *extern.Context, input string, optsArg, tdArg values.BalValue, errorPrefix string) (values.BalValue, error) {
 	opts, _ := optsArg.(*values.Map)
 	td, _ := tdArg.(*values.TypeDesc)
-	t := newTyper(ctx.TypeCtx())
+	t := newTyper(types, ctx.TypeCtx())
 	root := semtypes.Diff(td.Constraint(), semtypes.Error)
 	options := readReadOptions(opts)
 	c := &converter{t: t, options: options, root: root, renames: fieldRenames(ctx, td)}
