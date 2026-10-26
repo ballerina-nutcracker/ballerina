@@ -54,7 +54,7 @@ public function main() {
     // A required field without a matching header is an error.
     io:println(csv:parseString("a\n1", {}, ClosedRows));
     io:println(csv:parseString("b\n1", {}, OpenRows));
-    // A short row leaves the missing field present with ().
+    // A short row cannot leave a required non-nilable field without a value.
     io:println(csv:parseString("a,b\n1", {}, ClosedRows));
     io:println(csv:parseString("a,b\nz,y", {}, ClosedRows));
     io:println(csv:parseString("a,b\n1,null\n2,()\n3,NULL", {}, NilableRows));
@@ -83,7 +83,7 @@ public function main() {
 // @output [{"a":1,"b":2}]
 // @output error Error ("no matching header value is found for the required field 'b'")
 // @output error Error ("no matching header value is found for the required field 'a'")
-// @output [{"a":1,"b":null}]
+// @output error Error ("no matching header value is found for the required field 'b'")
 // @output error Error ("value 'z' cannot be cast into 'int'")
 // @output [{"a":1,"b":null},{"a":2,"b":null},{"a":3,"b":null}]
 // @output [{"a":1,"b":2}]

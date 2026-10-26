@@ -5,7 +5,7 @@ error Error ("no mapping field in the expected type for header 'c'")
 [{"a":1,"b":2}]
 error Error ("no matching header value is found for the required field 'b'")
 error Error ("no matching header value is found for the required field 'a'")
-[{"a":1,"b":null}]
+error Error ("no matching header value is found for the required field 'b'")
 error Error ("value 'z' cannot be cast into 'int'")
 [{"a":1,"b":null},{"a":2,"b":null},{"a":3,"b":null}]
 [{"a":1,"b":2}]

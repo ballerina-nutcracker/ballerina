@@ -5,7 +5,7 @@
 true
 [{"a":1,"b":"x"}]
 [{"a":1,"b":"x"}]
-[{"a":1,"b":"x"},{"a":2,"b":null},{"a":3,"b":"w"}]
+[{"a":1,"b":"x"},{"a":3,"b":"w"}]
 error Error ("provided header row is empty")
 [{"a":1,"b":"q"}]
 [{"a":1,"b":"q"}]
@@ -31,3 +31,4 @@ time=<TIME> level=ERROR module="" message="CSV parse error at row 3, column 1: v
 time=<TIME> level=ERROR module="" message="CSV parse error at row 3, column 2: expected \'escaped characters\'"
 time=<TIME> level=ERROR module="" message="CSV parse error at row 3, column 1: value \'z\' cannot be cast into \'int\'"
 time=<TIME> level=ERROR module="" message="CSV parse error at row 3, column 2: expected \'escaped characters\'"
+time=<TIME> level=ERROR module="" message="CSV parse error at row 3, column 2: no matching header value is found for the required field \'b\'"

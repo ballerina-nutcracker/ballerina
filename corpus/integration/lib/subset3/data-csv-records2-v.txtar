@@ -1,0 +1,10 @@
+-- stdout --
+error Error ("no matching header value is found for the required field 'b'")
+error Error ("no matching header value is found for the required field 'b'")
+error Error ("no matching header value is found for the required field 'b'")
+[{"a":4,"b":null}]
+[{"a":4}]
+[{"a":1,"b":"x"},{"a":3,"b":"w"}]
+[{"a":1,"b":"x"},{"a":4,"b":null},{"a":3,"b":"w"}]
+-- stderr --
+time=<TIME> level=ERROR module="" message="CSV parse error at row 3, column 2: no matching header value is found for the required field \'b\'"
