@@ -129,6 +129,8 @@ func (d *moduleDriver) advanceTo(target moduleStage, module *projects.Module, in
 		return
 	}
 	switch target {
+	case stageUnstarted:
+		return
 	case stageParsed:
 		d.ensureParsed(module)
 	case stageSymbolResolved:
@@ -248,8 +250,8 @@ func (d *moduleDriver) ensureTopLevelTypeResolved(module *projects.Module, input
 
 func (d *moduleDriver) hasNewErrorsSince(diagnosticCount int) bool {
 	for _, diagnostic := range d.ctx.Diagnostics()[diagnosticCount:] {
-		switch diagnostic.DiagnosticInfo().Severity() {
-		case diagnostics.Error, diagnostics.Fatal:
+		severity := diagnostic.DiagnosticInfo().Severity()
+		if severity == diagnostics.Error || severity == diagnostics.Fatal {
 			return true
 		}
 	}

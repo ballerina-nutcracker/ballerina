@@ -53,14 +53,14 @@ func newEngineTestServices(t *testing.T) (*workspace.ProjectService, *Compilatio
 	return projects, svc, bus
 }
 
-func openDoc(t *testing.T, p *workspace.ProjectService, raw, text string, version int32) workspace.DocumentURI {
+func openDoc(t *testing.T, p *workspace.ProjectService, raw, text string) workspace.DocumentURI {
 	t.Helper()
 	u, err := workspace.NewFileURI(raw)
 	if err != nil {
 		t.Fatalf("NewFileURI: %v", err)
 	}
 	if _, err := p.Apply(context.Background(), workspace.DocumentChange{
-		Kind: workspace.ChangeOpen, URI: u, Text: text, Version: version, LanguageID: "ballerina",
+		Kind: workspace.ChangeOpen, URI: u, Text: text, Version: 1, LanguageID: "ballerina",
 	}); err != nil {
 		t.Fatalf("Apply open: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	succeeded := collectGen(t, bus, event.CompilationSucceeded)
 	cancelled := collectGen(t, bus, event.CompilationCancelled)
 
-	u := openDoc(t, projects, tempFileURI(t, "sf.bal").String(), "public function main() {}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "sf.bal").String(), "public function main() {}\n")
 	updateDoc(t, projects, u.String(), "public function main() {}\nfunction f(){}\n", 2)
 	svc.Flush()
 
@@ -194,7 +194,7 @@ func TestEnginePanicRecovery(t *testing.T) {
 	failed := collectGen(t, bus, event.CompilationFailed)
 
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult { panic("boom") }
-	u := openDoc(t, projects, tempFileURI(t, "panic.bal").String(), "public function main() {}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "panic.bal").String(), "public function main() {}\n")
 	svc.Flush()
 
 	if len(failed.slice()) != 1 || failed.slice()[0] != 1 {
@@ -222,7 +222,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{resolutionErrored: true, byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
-	openDoc(t, projects, tempFileURI(t, "reserr.bal").String(), "public function main() {}\n", 1)
+	openDoc(t, projects, tempFileURI(t, "reserr.bal").String(), "public function main() {}\n")
 	svc.Flush()
 	if len(e5a.slice()) != 1 {
 		t.Fatalf("resolution-error cycle: E5a=%d, want 1", len(e5a.slice()))
@@ -234,7 +234,7 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
-	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {}\n", 1)
+	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {}\n")
 	svc.Flush()
 	if len(e5a.slice()) < 2 {
 		t.Fatalf("clean cycle: E5a=%d, want >=2", len(e5a.slice()))
@@ -251,7 +251,7 @@ func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 	e5b := collectGen(t, bus, event.CompilationDiagnosticsReady)
 
 	// The unused variable is a compiler diagnostic, not a package-resolution error.
-	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {\n int x = 1;\n}\n", 1)
+	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {\n int x = 1;\n}\n")
 	svc.Flush()
 
 	if len(e5a.slice()) == 0 {
@@ -269,7 +269,7 @@ func TestEngineDiagnosticsFor(t *testing.T) {
 	t.Parallel()
 	projects, svc, bus := newEngineTestServices(t)
 	_ = bus
-	u := openDoc(t, projects, tempFileURI(t, "df.bal").String(), "public function main() {\n int x = 1;\n}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "df.bal").String(), "public function main() {\n int x = 1;\n}\n")
 	svc.Flush()
 
 	diags, gen, ok := svc.DiagnosticsFor(u.Path())
@@ -301,7 +301,7 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 		return cycleResult{byFile: map[string][]CompilerDiagnostic{}, resByFile: map[string][]CompilerDiagnostic{}}
 	}
 
-	u := openDoc(t, projects, tempFileURI(t, "cancel.bal").String(), "public function main() {}\n", 1)
+	u := openDoc(t, projects, tempFileURI(t, "cancel.bal").String(), "public function main() {}\n")
 	<-started
 
 	svc.Cancel()

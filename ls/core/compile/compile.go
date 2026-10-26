@@ -241,6 +241,8 @@ func (s *CompilationService) handleLifecycle(e event.Event) {
 		s.knownRoots[e.SourceRoot()] = struct{}{}
 		s.evictGenState(e.SourceRoot())
 		s.clearFailedGen(e.SourceRoot())
+	default:
+		return
 	}
 }
 
