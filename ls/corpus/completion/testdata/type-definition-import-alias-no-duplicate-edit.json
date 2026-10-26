@@ -180,6 +180,29 @@
           ]
         },
         {
+          "label": "ballerina/ftp",
+          "kind": 9,
+          "detail": "Module",
+          "sortText": "076",
+          "filterText": "ftp",
+          "insertText": "ftp",
+          "additionalTextEdits": [
+            {
+              "range": {
+                "start": {
+                  "line": 3,
+                  "character": 0
+                },
+                "end": {
+                  "line": 3,
+                  "character": 0
+                }
+              },
+              "newText": "import ballerina/ftp;\n"
+            }
+          ]
+        },
+        {
           "label": "ballerina/http",
           "kind": 9,
           "detail": "Module",
