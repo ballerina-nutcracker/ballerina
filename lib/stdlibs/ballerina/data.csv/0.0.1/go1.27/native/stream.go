@@ -64,7 +64,56 @@ func (d *decoder) decodeAll(data []byte) string {
 	case charsetLatin1:
 		return latin1String(data)
 	}
-	return strings.ToValidUTF8(string(data), "\uFFFD")
+	return decodeUTF8(data)
+}
+
+// decodeUTF8 replaces each malformed sequence with one U+FFFD, grouping bytes the way Java's UTF-8
+// decoder does.
+func decodeUTF8(data []byte) string {
+	if utf8.Valid(data) {
+		return string(data)
+	}
+	var sb strings.Builder
+	sb.Grow(len(data))
+	for len(data) > 0 {
+		if r, size := utf8.DecodeRune(data); r != utf8.RuneError || size > 1 {
+			sb.Write(data[:size])
+			data = data[size:]
+			continue
+		}
+		sb.WriteRune(utf8.RuneError)
+		data = data[javaMalformedLength(data):]
+	}
+	return sb.String()
+}
+
+// javaMalformedLength is the number of leading bytes of an invalid sequence that Java's decoder replaces
+// with one U+FFFD: the lead byte and the continuation bytes that can still extend it. A complete
+// surrogate encoding counts as one sequence.
+func javaMalformedLength(data []byte) int {
+	need, lo, hi := 0, byte(0x80), byte(0xBF)
+	switch lead := data[0]; {
+	case lead >= 0xC2 && lead <= 0xDF:
+		need = 1
+	case lead == 0xE0:
+		need, lo = 2, 0xA0
+	case lead >= 0xE1 && lead <= 0xEF:
+		need = 2
+	case lead == 0xF0:
+		need, lo = 3, 0x90
+	case lead >= 0xF1 && lead <= 0xF3:
+		need = 3
+	case lead == 0xF4:
+		need, hi = 3, 0x8F
+	default:
+		return 1
+	}
+	n := 1
+	for n <= need && n < len(data) && data[n] >= lo && data[n] <= hi {
+		lo, hi = 0x80, 0xBF
+		n++
+	}
+	return n
 }
 
 func latin1String(data []byte) string {
