@@ -257,7 +257,7 @@ public type Service distinct service object {
 # while others act as warm standby members.
 public type CoordinationConfig record {|
     # Database configuration used for task coordination state
-    task:DatabaseConfig databaseConfig = <task:MysqlConfig>{};
+    task:DatabaseConfig databaseConfig = defaultCoordinationDatabaseConfig();
     # Interval in seconds to check the liveness of the active node
     int livenessCheckInterval = 30;
     # Unique identifier for this member. Must be distinct for each node in the distributed system
@@ -267,3 +267,5 @@ public type CoordinationConfig record {|
     # Interval in seconds for the node to update its heartbeat status
     int heartbeatFrequency = 1;
 |};
+
+isolated function defaultCoordinationDatabaseConfig() returns task:MysqlConfig => {};
