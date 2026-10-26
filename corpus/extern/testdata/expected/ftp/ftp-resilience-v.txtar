@@ -1,0 +1,22 @@
+-- stdout --
+AllRetryAttemptsFailedError: Operation 'getText' failed after 2 retry attempts: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/missing.txt not found
+AllRetryAttemptsFailedError: Operation 'getBytes' failed after 2 retry attempts: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/missing.txt not found
+true
+true
+fine
+CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
+CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
+true
+true
+here
+true
+true
+false
+Error: Circuit breaker failureCategories must not be empty
+Error: Circuit breaker failureThreshold must be between 0.0 and 1.0
+Error: Circuit breaker requestVolumeThreshold must be greater than 0
+Error: Circuit breaker resetTime must be greater than 0
+Error: Circuit breaker bucketSize must be greater than 0
+Error: Circuit breaker timeWindow must be greater than or equal to bucketSize
+Error: Circuit breaker timeWindow must be evenly divisible by bucketSize
+-- stderr --

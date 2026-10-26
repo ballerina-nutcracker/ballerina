@@ -25,6 +25,7 @@ package pal
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net"
 	"net/http"
@@ -113,6 +114,10 @@ type (
 		// localAddr first (empty = OS-chosen) and optionally upgrading to
 		// TLS (tlsCfg != nil) before returning. Reuses TLSConfig from HTTP.
 		Dial func(ctx context.Context, network, address, localAddr string, tlsCfg *TLSConfig) (net.Conn, error)
+		// ClientTLSConfig builds the client-side tls.Config Dial would use for
+		// tlsCfg (ServerName defaults to serverName), for protocols that start
+		// TLS on an already-open connection (e.g. FTP AUTH TLS).
+		ClientTLSConfig func(serverName string, tlsCfg *TLSConfig) (*tls.Config, error)
 		// Listen binds a TCP listener on address, optionally wrapping it in
 		// TLS (tlsCfg != nil). Reuses ServerTLSConfig from HTTP. The caller
 		// owns the accept loop and per-connection dispatch.

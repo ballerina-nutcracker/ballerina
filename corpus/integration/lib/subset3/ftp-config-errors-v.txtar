@@ -1,0 +1,41 @@
+-- stdout --
+InvalidConfigError: retryConfig.count must be greater than 0.
+InvalidConfigError: retryConfig.interval must be greater than 0.
+InvalidConfigError: retryConfig.backOffFactor must be greater than or equal to 1.0.
+InvalidConfigError: retryConfig.maxWaitInterval must be greater than 0.
+InvalidConfigError: retryConfig.maxWaitInterval must be greater than or equal to retryConfig.interval.
+Error: privateKey can only be used with SFTP protocol.
+Error: secureSocket can only be used with FTPS protocol.
+InvalidConfigError: privateKey path cannot be empty.
+InvalidConfigError: secureSocket.key.path cannot be empty.
+InvalidConfigError: secureSocket.cert.path cannot be empty.
+Error: Failed to configure SSL/TLS certificates for FTPS: TrustStore PEM file does not exist: /no/such/cert.pem
+InvalidConfigError: connectTimeout must be positive or zero (got: -1.0)
+InvalidConfigError: connectTimeout must not exceed 600 seconds (got: 601.0)
+InvalidConfigError: ftpDataTimeout must be positive or zero (got: -2.0)
+InvalidConfigError: ftpSocketTimeout must not exceed 600 seconds (got: 700.0)
+InvalidConfigError: sftpSessionTimeout must be positive or zero (got: -1.0)
+InvalidConfigError: Proxy host cannot be empty
+InvalidConfigError: Proxy port must be between 1 and 65535 (got: 0)
+Error: Proxy configuration is not yet supported
+Error: No preferred auth method is specified in the SFTP client configurations
+Error: Username cannot be empty
+InvalidConfigError: Invalid regex pattern for fileNamePattern: error parsing regexp: missing closing ): `(`
+Error: Private key path cannot be empty
+Error: Failed to load FTPS Server Keystore: Path cannot be empty
+Error: Failed to load FTPS Server Truststore: Path cannot be empty
+Error: No preferred auth method is specified in the SFTP client configurations
+InvalidConfigError: fileAgeFilter.minAge must be positive or zero (got: -1.0)
+InvalidConfigError: fileAgeFilter.maxAge must be positive or zero (got: -3.0)
+InvalidConfigError: fileAgeFilter.minAge (10.0) must not exceed fileAgeFilter.maxAge (1.0)
+InvalidConfigError: connectTimeout must not exceed 600 seconds (got: 1000.0)
+InvalidConfigError: retryConfig.count must be greater than 0.
+FTP listener is not initialized. Attach a service before polling.
+The 'path' field cannot be empty in @ftp:ServiceConfig annotation.
+Invalid regex pattern '(unclosed' in @ftp:ServiceConfig.fileNamePattern: error parsing regexp: missing closing ): `(unclosed`
+fileAgeFilter.minAge (10.0) must not exceed fileAgeFilter.maxAge (5.0)
+Invalid regex pattern '[' in fileDependencyConditions.targetPattern: error parsing regexp: missing closing ]: `[`
+Too many parameters for 'onFileText'. Format-specific handlers accept at most 3 parameters: (content, fileInfo?, caller?).
+Binding XML content to a record type is not yet supported
+ignored
+-- stderr --

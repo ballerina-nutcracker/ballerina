@@ -1,0 +1,20 @@
+-- stdout --
+[104,105,33]
+[104,105,33,1,2,3]
+Iterator error: source broken
+a,"b,c"
+d,e
+name,qty
+x,1
+"y""z",2
+20000 true
+20000
+true
+true
+plain more
+{"k":[1, "v"]}
+<a>b</a>
+[120,121]
+807534
+true
+-- stderr --

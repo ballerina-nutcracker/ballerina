@@ -1,0 +1,17 @@
+-- stdout --
+Hello, World!
+pen
+<note>hi</note>
+id,name
+1,"a,b"
+
+[1,2,3]
+3
+false
+true
+2
+true
+true
+over ssh
+["o2.json:book"]
+-- stderr --

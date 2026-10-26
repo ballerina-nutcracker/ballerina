@@ -175,6 +175,7 @@ func NewPlatform() (pal.Platform, func()) {
 		},
 		Net: pal.Net{
 			Dial:              Dial,
+			ClientTLSConfig:   ClientTLSConfig,
 			Listen:            ListenTCP,
 			DialPacket:        DialPacket,
 			ListenPacket:      ListenPacket,
