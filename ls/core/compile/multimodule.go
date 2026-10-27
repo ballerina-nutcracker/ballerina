@@ -19,7 +19,6 @@ package compile
 import (
 	stdcontext "context"
 	"sort"
-	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -27,30 +26,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semantics"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
-
-// registeredNames retains registration keys per DiagnosticEnv for the process
-// lifetime, including environments replaced by reloads.
-var (
-	registeredNamesMu sync.Mutex
-	registeredNames   = make(map[*diagnostics.DiagnosticEnv]map[string]bool)
-)
-
-func alreadyRegistered(env *diagnostics.DiagnosticEnv, name string) bool {
-	registeredNamesMu.Lock()
-	defer registeredNamesMu.Unlock()
-	return registeredNames[env][name]
-}
-
-func markRegistered(env *diagnostics.DiagnosticEnv, name string) {
-	registeredNamesMu.Lock()
-	defer registeredNamesMu.Unlock()
-	names, ok := registeredNames[env]
-	if !ok {
-		names = make(map[string]bool)
-		registeredNames[env] = names
-	}
-	names[name] = true
-}
 
 // migratedLangLibs lists the bundled libraries loaded for implicit imports.
 var migratedLangLibs = []string{

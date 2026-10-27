@@ -468,8 +468,14 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	if got := gen2.currentStage(); got != stageSemanticAnalyzed {
 		t.Fatalf("gen2 currentStage() = %v, want stageSemanticAnalyzed (a no-op gen2 would leave this at stageUnstarted)", got)
 	}
-	if got := len(gen2.diagnosticContext().Diagnostics()); got != 1 {
-		t.Errorf("gen2 diagnostics = %d, want 1 (derived from the new, erroring content)", got)
+	gen2Diags := gen2.diagnosticContext().Diagnostics()
+	if len(gen2Diags) != 1 {
+		t.Fatalf("gen2 diagnostics = %d, want 1 (derived from the new, erroring content)", len(gen2Diags))
+	}
+	location := gen2Diags[0].Location()
+	diagnosticEnv := env2.DiagnosticEnv()
+	if line, column := diagnosticEnv.StartLine(location), diagnosticEnv.StartColumn(location); line != 1 || column != 12 {
+		t.Errorf("gen2 diagnostic position = (%d, %d), want (1, 12)", line, column)
 	}
 	if got := len(gen1.diagnosticContext().Diagnostics()); got != 0 {
 		t.Errorf("gen1 diagnostics after gen2 ran = %d, want unchanged 0 (no cross-generation leak)", got)
@@ -477,6 +483,6 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 
 	idx2 := env1.DiagnosticEnv().FileIndex(name)
 	if idx2 != idx1 {
-		t.Errorf("FileIndex(%q) changed across generations (%d -> %d) — ensureParsed skips re-registration for already-registered names, so the index must stay stable", u.Path(), idx1, idx2)
+		t.Errorf("FileIndex(%q) changed across generations (%d -> %d) — re-registration must keep the index stable", u.Path(), idx1, idx2)
 	}
 }

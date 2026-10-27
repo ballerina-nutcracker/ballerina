@@ -148,7 +148,7 @@ func (d *moduleDriver) advanceTo(target moduleStage, module *projects.Module, in
 	}
 }
 
-// ensureParsed registers untracked source names and builds compilation units,
+// ensureParsed registers current source documents and builds compilation units,
 // capturing each document's parser input. Test documents are excluded.
 func (d *moduleDriver) ensureParsed(module *projects.Module) {
 	if d.stage >= stageParsed {
@@ -168,10 +168,7 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 		content := documentText(module, doc, d.openText)
 		d.sources[docID] = content
 		d.sourceIDs[name] = docID
-		if !alreadyRegistered(env, name) {
-			env.RegisterFile(name, doc.TextDocument())
-			markRegistered(env, name)
-		}
+		env.RegisterFile(name, doc.TextDocument())
 		syntaxTree, _ := parser.GetSyntaxTree(d.ctx, name, content)
 		if syntaxTree == nil {
 			continue
