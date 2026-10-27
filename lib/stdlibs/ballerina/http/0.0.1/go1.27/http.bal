@@ -818,6 +818,8 @@ public isolated client class Client {
     remote isolated function forward(string path, Request request,
             TargetType targetType = <>) returns targetType|error = external;
 
+    // Keep the resource methods below in the order of clientResourceAccessors in native/http_native.go.
+
     # Retrieves a representation of the specified resource, addressed with the client resource
     # access path syntax (`client->/albums/[id]`).
     #
