@@ -122,7 +122,8 @@ type Server struct {
 	initialized    bool
 	shuttingDown   bool
 
-	writeMu sync.Mutex // Prevents interleaved frames from concurrent response and diagnostic writes.
+	diagnosticMu sync.Mutex // Orders close clears against diagnostic validation and writes.
+	writeMu      sync.Mutex // Prevents interleaved frames from concurrent response and diagnostic writes.
 
 	ceDone        sync.WaitGroup // Diagnostic writes must finish before Flush returns.
 	lastPubMu     sync.Mutex
@@ -540,6 +541,12 @@ func (s *Server) handleDidClose(params json.RawMessage) error {
 	if err != nil {
 		return nil
 	}
+	s.diagnosticMu.Lock()
+	defer s.diagnosticMu.Unlock()
+	_, ok := s.projects.Snapshot(docURI)
+	if !ok {
+		return nil
+	}
 	if _, err := s.projects.Apply(context.Background(), workspace.DocumentChange{
 		Kind: workspace.ChangeClose,
 		URI:  docURI,
@@ -626,31 +633,28 @@ func (s *Server) publishRootDiagnostics(root string, gen uint64) {
 		return
 	}
 	openDocs := s.projects.OpenDocumentsUnder(root)
-	s.ceDone.Add(len(openDocs))
-	for _, u := range openDocs {
-		u := u
-		go func() {
-			defer s.ceDone.Done()
-			if g, ok := s.projects.Generation(root); !ok || g != gen {
-				return
-			}
-			snap, hasSnap := s.projects.Snapshot(u)
-			version := int32(0)
-			include := false
-			var text string
-			if hasSnap {
-				version = snap.Version
-				include = true
-				text = snap.Text
-			}
-			note := s.publishDiagnostics(u.String(), version, include, convertDiagnostics(diags[u], text))
-			if note == nil {
-				return
-			}
-			if err := s.write(*note); err != nil {
-				s.logger.Error("diagnostics write failed", "error", err)
-			}
-		}()
+	s.ceDone.Add(1)
+	go func() {
+		defer s.ceDone.Done()
+		for _, u := range openDocs {
+			s.publishDocumentDiagnostics(root, gen, u, diags[u])
+		}
+	}()
+}
+
+func (s *Server) publishDocumentDiagnostics(root string, gen uint64, u workspace.DocumentURI, diags []compile.CompilerDiagnostic) {
+	s.diagnosticMu.Lock()
+	defer s.diagnosticMu.Unlock()
+	if g, ok := s.projects.Generation(root); !ok || g != gen {
+		return
+	}
+	snap, open := s.projects.Snapshot(u)
+	if !open {
+		return
+	}
+	note := s.publishDiagnostics(u.String(), snap.Version, true, convertDiagnostics(diags, snap.Text))
+	if err := s.write(*note); err != nil {
+		s.logger.Error("diagnostics write failed", "error", err)
 	}
 }
 
