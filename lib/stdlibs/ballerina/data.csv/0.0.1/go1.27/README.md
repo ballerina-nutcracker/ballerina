@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `data.csv` module converts between CSV data and Ballerina values. It parses CSV text, bytes and byte-block streams into arrays of records, maps, arrays or tuples whose type is inferred from the call site, converts arrays of records and string lists to those types, and supports header handling, line skipping, data projection, nil representations, locale-aware number parsing, fail-safe error logging and constraint validation. The Go Native Interpreter currently supports the parse, transform and list conversion functions with their options, except constraint validation, field name annotations, parsing to a stream, and non-Latin character encodings.
+The `data.csv` module converts between CSV data and Ballerina values. It parses CSV text, bytes and byte-block streams into arrays of records, maps, arrays or tuples whose type is inferred from the call site, converts arrays of records and string lists to those types, and supports header handling, line skipping, data projection, nil representations, locale-aware number parsing, fail-safe error logging and constraint validation. The Go Native Interpreter currently supports the parse, transform and list conversion functions with their options, except constraint validation, field name annotations, parsing to a stream, and character encodings other than UTF-8, US-ASCII and ISO-8859-1.
 
 ## Key Functionalities
 
@@ -54,7 +54,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Parse a CSV string | Supported | `parseString` |
-| Parse a byte array | Partially Supported | `parseBytes` decodes only the UTF-8, US-ASCII and ISO-8859-1 encodings; any other `encoding` returns the error jBallerina returns for an unknown charset. |
+| Parse a byte array | Partially Supported | `parseBytes` decodes only the UTF-8, US-ASCII and ISO-8859-1 encodings and their Java aliases. Any other `encoding` returns the error jBallerina returns for an unknown charset, including charsets jBallerina decodes, such as `UTF-16` and `windows-1252`. |
 | Parse a byte-block stream | Partially Supported | `parseStream` has the same encoding limitation as `parseBytes`. |
 | Parse into a stream of records | Not Yet Supported | `parseToStream` is not declared: a typedesc parameter cannot yet be used inside a `stream` type in a dependently-typed return type (ballerina-nutcracker/ballerina#1389). |
 | Convert records | Supported | `transform` |
