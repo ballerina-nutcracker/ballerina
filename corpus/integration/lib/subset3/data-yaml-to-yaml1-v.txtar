@@ -109,4 +109,14 @@ j: null
 - 1.5E300
 --
 count is negative: -1
+"..."
+--
+["a,b", "c]d", {"k,1": "v{2}"}]
+--
+a: 1
+l:
+- 1
+- 2
+--
+indentationPolicy must be greater than 0 to write a nested block collection
 -- stderr --

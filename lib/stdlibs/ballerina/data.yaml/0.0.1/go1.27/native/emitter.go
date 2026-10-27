@@ -52,12 +52,25 @@ func toYamlString(ctx *extern.Context, args []values.BalValue) (values.BalValue,
 		flowStyle:       get(config, "flowStyle") == true,
 	}}
 	w.write(args[0])
+	if w.unindentedNesting {
+		return createError(ctx, "indentationPolicy must be greater than 0 to write a nested block collection")
+	}
 	return strings.Join(w.lines, "\n"), nil
 }
 
 type yamlWriter struct {
-	options writeOptions
-	lines   []string
+	options           writeOptions
+	lines             []string
+	unindentedNesting bool
+}
+
+// nestedIndent is the indentation of a block collection nested under ws. A sequence under a mapping key
+// is written at the key's indentation instead, so it does not use this.
+func (w *yamlWriter) nestedIndent(ws string) string {
+	if w.options.indent == "" {
+		w.unindentedNesting = true
+	}
+	return ws + w.options.indent
 }
 
 func (w *yamlWriter) write(v values.BalValue) {
@@ -110,7 +123,7 @@ func (w *yamlWriter) writeBlockMapping(m *values.Map, ws string) {
 				continue
 			}
 			w.lines = append(w.lines, prefix)
-			w.writeBlockMapping(value, ws+w.options.indent)
+			w.writeBlockMapping(value, w.nestedIndent(ws))
 		case *values.List:
 			if w.options.flowStyle {
 				w.lines = append(w.lines, prefix+" "+w.flow(value))
@@ -137,14 +150,14 @@ func (w *yamlWriter) writeBlockSequence(list *values.List, ws string) {
 				continue
 			}
 			w.lines = append(w.lines, ws+"-")
-			w.writeBlockMapping(item, ws+w.options.indent)
+			w.writeBlockMapping(item, w.nestedIndent(ws))
 		case *values.List:
 			if w.options.flowStyle {
 				w.lines = append(w.lines, ws+"- "+w.flow(item))
 				continue
 			}
 			w.lines = append(w.lines, ws+"-"+w.seqTag())
-			w.writeBlockSequence(item, ws+w.options.indent)
+			w.writeBlockSequence(item, w.nestedIndent(ws))
 		default:
 			w.lines = append(w.lines, ws+"- "+w.scalar(item))
 		}
@@ -157,7 +170,7 @@ func (w *yamlWriter) flow(v values.BalValue) string {
 		entries := make([]string, 0, v.Len())
 		for _, key := range v.Keys() {
 			value, _ := v.Get(key)
-			entries = append(entries, w.scalar(key)+": "+w.flow(value))
+			entries = append(entries, w.flowScalar(key)+": "+w.flow(value))
 		}
 		return "{" + strings.Join(entries, ", ") + "}"
 	case *values.List:
@@ -171,15 +184,23 @@ func (w *yamlWriter) flow(v values.BalValue) string {
 		}
 		return prefix + "[" + strings.Join(items, ", ") + "]"
 	}
-	return w.scalar(v)
+	return w.flowScalar(v)
 }
 
 // scalar writes a scalar as jBallerina's emitter does: its string form, with the !!str tag when
 // canonical. Strings are quoted when forceQuotes is set or when they would not read back as the same
 // string.
 func (w *yamlWriter) scalar(v values.BalValue) string {
+	return w.scalarIn(v, false)
+}
+
+func (w *yamlWriter) flowScalar(v values.BalValue) string {
+	return w.scalarIn(v, true)
+}
+
+func (w *yamlWriter) scalarIn(v values.BalValue, inFlow bool) string {
 	text, isString := scalarText(v)
-	if w.options.forceQuotes || (isString && needsQuotes(text)) {
+	if w.options.forceQuotes || (isString && (needsQuotes(text) || inFlow && strings.ContainsAny(text, ",[]{}"))) {
 		text = w.quote(text)
 	}
 	if w.options.canonical {
@@ -241,13 +262,17 @@ func isControl(r rune) bool {
 }
 
 // needsQuotes reports whether a string written as a plain scalar would be read back differently: it is
-// empty, has leading or trailing white space or control characters, starts with an indicator, contains
-// ": " or " #", or would be read as null, a boolean or a number.
+// empty, has leading or trailing white space or control characters, starts with an indicator or the
+// document-end marker, contains ": " or " #", or would be read as null, a boolean or a number. Inside a
+// flow collection a flow indicator anywhere in the string also needs quotes.
 func needsQuotes(text string) bool {
 	if text == "" || strings.ContainsFunc(text, isControl) || strings.TrimSpace(text) != text {
 		return true
 	}
 	if strings.ContainsRune("-?:,[]{}#&*!|>'\"%@`", rune(text[0])) {
+		return true
+	}
+	if text == "..." || strings.HasPrefix(text, "... ") {
 		return true
 	}
 	if strings.Contains(text, ": ") || strings.Contains(text, " #") || strings.HasSuffix(text, ":") {

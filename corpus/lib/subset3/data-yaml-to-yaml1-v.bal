@@ -61,6 +61,10 @@ public function main() {
     show(yaml:toYamlString({a: "", b: "true", c: "123", d: "a: b", e: "- x", f: "a #b", g: "line1\nline2", h: " x", i: "say \"hi\"", j: ()}));
     show(yaml:toYamlString([1.0, 1.0e20, 1.0e-5, -0.0, 1.5e300]));
     show(yaml:toYamlString({a: 1}, {indentationPolicy: -1}));
+    show(yaml:toYamlString("..."));
+    show(yaml:toYamlString(["a,b", "c]d", {"k,1": "v{2}"}], {flowStyle: true}));
+    show(yaml:toYamlString({a: 1, l: [1, 2]}, {indentationPolicy: 0}));
+    show(yaml:toYamlString({parent: {child: 1}}, {indentationPolicy: 0}));
 }
 
 // @output name: Central Library
@@ -173,3 +177,13 @@ public function main() {
 // @output - 1.5E300
 // @output --
 // @output count is negative: -1
+// @output "..."
+// @output --
+// @output ["a,b", "c]d", {"k,1": "v{2}"}]
+// @output --
+// @output a: 1
+// @output l:
+// @output - 1
+// @output - 2
+// @output --
+// @output indentationPolicy must be greater than 0 to write a nested block collection
