@@ -123,7 +123,7 @@ func (w *yamlWriter) writeBlockMapping(m *values.Map, ws string) {
 				continue
 			}
 			w.lines = append(w.lines, prefix)
-			w.writeBlockMapping(value, w.nestedIndent(ws))
+			w.writeNestedMapping(value, ws)
 		case *values.List:
 			if w.options.flowStyle {
 				w.lines = append(w.lines, prefix+" "+w.flow(value))
@@ -134,6 +134,13 @@ func (w *yamlWriter) writeBlockMapping(m *values.Map, ws string) {
 		default:
 			w.lines = append(w.lines, prefix+" "+w.scalar(value))
 		}
+	}
+}
+
+// writeNestedMapping skips an empty mapping, which writes no lines and so needs no indentation.
+func (w *yamlWriter) writeNestedMapping(m *values.Map, ws string) {
+	if m.Len() > 0 {
+		w.writeBlockMapping(m, w.nestedIndent(ws))
 	}
 }
 
@@ -150,7 +157,7 @@ func (w *yamlWriter) writeBlockSequence(list *values.List, ws string) {
 				continue
 			}
 			w.lines = append(w.lines, ws+"-")
-			w.writeBlockMapping(item, w.nestedIndent(ws))
+			w.writeNestedMapping(item, ws)
 		case *values.List:
 			if w.options.flowStyle {
 				w.lines = append(w.lines, ws+"- "+w.flow(item))

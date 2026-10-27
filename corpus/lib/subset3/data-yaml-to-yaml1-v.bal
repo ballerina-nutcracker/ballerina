@@ -78,6 +78,9 @@ public function main() {
     show(yaml:toYamlString({a: 1, l: [1, 2]}, {indentationPolicy: 0}));
     // With indentationPolicy 0, a nested mapping is an error (ballerina-platform/ballerina-library#9396).
     show(yaml:toYamlString({parent: {child: 1}}, {indentationPolicy: 0}));
+    // Empty collections need no indentation, since they are written in flow style (ballerina-platform/ballerina-library#9670).
+    show(yaml:toYamlString({a: {}}, {indentationPolicy: 0}));
+    show(yaml:toYamlString([{}], {indentationPolicy: 0}));
 }
 
 // @output name: Central Library
@@ -201,3 +204,7 @@ public function main() {
 // @output - 2
 // @output --
 // @output indentationPolicy must be greater than 0 to write a nested block collection
+// @output a:
+// @output --
+// @output -
+// @output --
