@@ -2,7 +2,7 @@
 {"name":"café"}
 {"a":"b"}
 {"a":"�"}
-{"a":"���A"}
+{"a":"���A�B��C�D��E��F�G"}
 {"name":"café","age":3}
 Error occurred while reading the stream: required field 'age' not present in YAML
 'unexpected event' at line: '1' column: '4'
