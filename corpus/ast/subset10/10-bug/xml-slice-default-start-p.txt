@@ -1,0 +1,14 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal a))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation slice expr:
+          (simple-var-ref x) (
+          (literal 2)))))))

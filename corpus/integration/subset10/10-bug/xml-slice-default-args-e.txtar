@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing required parameter 'startIndex'
+  --> xml-slice-default-args-e.bal:20:13
+   |
+20 |     xml _ = x.slice(); // @error
+   |             ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing required parameter 'startIndex'
+  --> xml-slice-default-args-e.bal:21:13
+   |
+21 |     xml _ = xml:slice(x, endIndex = 1); // @error
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^

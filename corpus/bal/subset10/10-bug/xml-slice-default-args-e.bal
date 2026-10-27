@@ -14,8 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// With `endIndex` omitted, the result type is still decided by the container.
+// Defaulting `endIndex` leaves `startIndex` required.
 public function main() {
-    xml<xml:Element> elems = xml `<a/>`;
-    xml<xml:Comment> _ = elems.slice(0); // @error
+    xml x = xml `<a/><b/>`;
+    xml _ = x.slice(); // @error
+    xml _ = xml:slice(x, endIndex = 1); // @error
 }
