@@ -43,12 +43,49 @@
           (invocation lang.xml slice (
             (simple-var-ref x)
             (literal 3) <default>)))))))
+    (var-def
+      (variable comments (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Comment))) (expr
+        (xml-sequence-literal
+          (xml-comment-literal p)
+          (xml-comment-literal q)))))
+    (var-def
+      (variable lastComment (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Comment))) (expr
+        (invocation lang.xml slice (
+          (simple-var-ref comments)
+          (literal 1) <default>)))))
     (expression-stmt
       (invocation io println (
-        (invocation lang.xml slice (
-          (simple-var-ref x)
-          (literal 1)
-          (literal 2))))))
+        (simple-var-ref lastComment))))
+    (var-def
+      (variable empty (type
+        (value-type xml)) (expr
+        (xml-sequence-literal))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.xml length (
+          (invocation lang.xml slice (
+            (simple-var-ref empty)
+            (literal 0) <default>)))))))
+    (var-def
+      (variable r (type
+        (value-type xml)) (expr
+        (xml-element-literal r
+          (xml-sequence-literal
+            (xml-element-literal p)
+            (xml-element-literal q))))))
+    (expression-stmt
+      (invocation io println (
+        (xml-step-expression
+          (simple-var-ref r)
+          (xml-step-all-children)
+          (xml-step-method-call-extend slice
+            (literal 1))))))
     (var-def
       (variable tail (type
         (constrained-type

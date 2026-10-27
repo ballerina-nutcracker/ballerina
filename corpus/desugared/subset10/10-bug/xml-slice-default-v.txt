@@ -107,15 +107,17 @@
               (simple-var-ref $desugar$9)
               (simple-var-ref $desugar$10)
               (simple-var-ref $desugar$11)))))))))
-      (expression-stmt
-        (invocation io println (
-          (invocation lang.xml slice (
-            (simple-var-ref x)
-            (literal 1)
-            (literal 2))))))
+      (var-def
+        (variable comments (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (xml-sequence-literal
+            (xml-comment-literal p)
+            (xml-comment-literal q)))))
       (var-def
         (variable $desugar$12 (expr
-          (invocation items ()))))
+          (simple-var-ref comments))))
       (var-def
         (variable $desugar$13 (expr
           (literal 1))))
@@ -125,14 +127,94 @@
             (simple-var-ref $desugar$12)
             (simple-var-ref $desugar$13))))))
       (var-def
+        (variable lastComment (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (invocation lang.xml slice (
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$14))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref lastComment))))
+      (var-def
+        (variable empty (type
+          (value-type xml)) (expr
+          (xml-sequence-literal))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml length (
+            (expression-thunk
+            (var-def
+              (variable $desugar$15 (expr
+                (simple-var-ref empty))))
+            (var-def
+              (variable $desugar$16 (expr
+                (literal 0))))
+            (var-def
+              (variable $desugar$17 (expr
+                (invocation $default$0 (
+                  (simple-var-ref $desugar$15)
+                  (simple-var-ref $desugar$16))))))
+            (invocation lang.xml slice (
+              (simple-var-ref $desugar$15)
+              (simple-var-ref $desugar$16)
+              (simple-var-ref $desugar$17)))))))))
+      (var-def
+        (variable r (type
+          (value-type xml)) (expr
+          (xml-element-literal r
+            (xml-sequence-literal
+              (xml-element-literal p)
+              (xml-element-literal q))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (simple-var-ref r)
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$main$0 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (expression-thunk
+                  (var-def
+                    (variable $desugar$0 (expr
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem))))))
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (literal 1))))
+                  (var-def
+                    (variable $desugar$2 (expr
+                      (invocation $default$0 (
+                        (simple-var-ref $desugar$0)
+                        (simple-var-ref $desugar$1))))))
+                  (invocation lang.xml slice (
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$2))))))))))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation items ()))))
+      (var-def
+        (variable $desugar$19 (expr
+          (literal 1))))
+      (var-def
+        (variable $desugar$20 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19))))))
+      (var-def
         (variable tail (type
           (constrained-type
             (builtin-ref-type xml)
             (user-defined-type xml Element))) (expr
           (invocation lang.xml slice (
-            (simple-var-ref $desugar$12)
-            (simple-var-ref $desugar$13)
-            (simple-var-ref $desugar$14))))))
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20))))))
       (expression-stmt
         (invocation io println (
           (simple-var-ref tail))))

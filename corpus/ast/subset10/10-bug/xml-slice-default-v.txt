@@ -52,12 +52,49 @@
             (invocation slice expr:
               (simple-var-ref x) (
               (literal 3))) ()))))
+      (var-def
+        (variable comments (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (xml-sequence-literal
+            (xml-comment-literal p)
+            (xml-comment-literal q)))))
+      (var-def
+        (variable lastComment (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Comment))) (expr
+          (invocation slice expr:
+            (simple-var-ref comments) (
+            (literal 1))))))
       (expression-stmt
         (invocation io println (
-          (invocation slice expr:
-            (simple-var-ref x) (
-            (literal 1)
-            (literal 2))))))
+          (simple-var-ref lastComment))))
+      (var-def
+        (variable empty (type
+          (value-type xml)) (expr
+          (xml-sequence-literal))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (invocation slice expr:
+              (simple-var-ref empty) (
+              (literal 0))) ()))))
+      (var-def
+        (variable r (type
+          (value-type xml)) (expr
+          (xml-element-literal r
+            (xml-sequence-literal
+              (xml-element-literal p)
+              (xml-element-literal q))))))
+      (expression-stmt
+        (invocation io println (
+          (xml-step-expression
+            (simple-var-ref r)
+            (xml-step-all-children)
+            (xml-step-method-call-extend slice
+              (literal 1))))))
       (var-def
         (variable tail (type
           (constrained-type
