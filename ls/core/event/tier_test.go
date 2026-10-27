@@ -169,7 +169,7 @@ func TestNewEventTypesGeneration(t *testing.T) {
 		t.Fatalf("ProjectUpdated Generation = %d, want 7", g)
 	}
 	if g := NewProjectRegisteredEvent("/r").Generation(); g != 0 {
-		t.Fatalf("08 event Generation = %d, want 0", g)
+		t.Fatalf("ProjectRegistered Generation = %d, want 0", g)
 	}
 	if g := NewCompilationSucceededEvent("/r", "pkg", 5).Generation(); g != 5 {
 		t.Fatalf("CompilationSucceeded Generation = %d, want 5", g)

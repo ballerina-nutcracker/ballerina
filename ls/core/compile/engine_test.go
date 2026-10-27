@@ -134,7 +134,7 @@ func TestSnapshotStoreStaleGate(t *testing.T) {
 		t.Fatalf("after gen1: stable gen = %d, want 1", got)
 	}
 	if len(succeeded) != 1 || succeeded[0] != 1 {
-		t.Fatalf("CE-E1 for gen1: %v, want [1]", succeeded)
+		t.Fatalf("CompilationSucceeded generations after gen1: %v, want [1]", succeeded)
 	}
 
 	current = 2
@@ -143,10 +143,10 @@ func TestSnapshotStoreStaleGate(t *testing.T) {
 		t.Fatalf("stale gen1 must not overwrite stable; got %d", got)
 	}
 	if len(cancelled) != 1 || cancelled[0] != 1 {
-		t.Fatalf("CE-E3 for stale gen1: %v, want [1]", cancelled)
+		t.Fatalf("CompilationCancelled generations after stale gen1: %v, want [1]", cancelled)
 	}
 	if len(succeeded) != 1 {
-		t.Fatalf("stale publish must not emit CE-E1; got %v", succeeded)
+		t.Fatalf("stale publish must not emit CompilationSucceeded; got %v", succeeded)
 	}
 }
 
@@ -177,14 +177,14 @@ func TestEngineSingleFlightAndStaleGate(t *testing.T) {
 	svc.Flush()
 
 	if len(succeeded.slice()) == 0 || lastGen(succeeded) != 2 {
-		t.Fatalf("CE-E1 gens = %v, want last == 2", succeeded.slice())
+		t.Fatalf("CompilationSucceeded generations = %v, want last == 2", succeeded.slice())
 	}
 	snap, ok := svc.store.Stable(u.Path())
 	if !ok || snap.Key().Generation != 2 {
 		t.Fatalf("stable gen = %v ok=%v, want 2", snap.Key().Generation, ok)
 	}
 	if len(cancelled.slice()) == 0 {
-		t.Fatalf("expected at least one CE-E3 for the superseded generation, got %v", cancelled.slice())
+		t.Fatalf("expected at least one CompilationCancelled event for the superseded generation, got %v", cancelled.slice())
 	}
 }
 
@@ -198,7 +198,7 @@ func TestEnginePanicRecovery(t *testing.T) {
 	svc.Flush()
 
 	if len(failed.slice()) != 1 || failed.slice()[0] != 1 {
-		t.Fatalf("CE-E2: %v, want [1]", failed.slice())
+		t.Fatalf("CompilationFailed generations = %v, want [1]", failed.slice())
 	}
 	if _, ok := svc.store.Stable(u.Path()); ok {
 		t.Fatal("panicking compile must not store a snapshot")
@@ -209,7 +209,7 @@ func TestEnginePanicRecovery(t *testing.T) {
 	updateDoc(t, projects, u.String(), "public function main() {}\n", 2)
 	svc.Flush()
 	if len(succeeded.slice()) == 0 || lastGen(succeeded) != 2 {
-		t.Fatalf("after recovery: CE-E1 = %v, want last 2", succeeded.slice())
+		t.Fatalf("after recovery: CompilationSucceeded generations = %v, want last 2", succeeded.slice())
 	}
 }
 
@@ -225,10 +225,10 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	openDoc(t, projects, tempFileURI(t, "reserr.bal").String(), "public function main() {}\n")
 	svc.Flush()
 	if len(e5a.slice()) != 1 {
-		t.Fatalf("resolution-error cycle: E5a=%d, want 1", len(e5a.slice()))
+		t.Fatalf("resolution-error cycle: ResolutionDiagnosticsReady count = %d, want 1", len(e5a.slice()))
 	}
 	if len(e5b.slice()) != 0 {
-		t.Fatalf("resolution-error cycle: E5b=%d, want 0", len(e5b.slice()))
+		t.Fatalf("resolution-error cycle: CompilationDiagnosticsReady count = %d, want 0", len(e5b.slice()))
 	}
 
 	svc.compileFn = func(pkg *proj.Package, cyc compileCycle) cycleResult {
@@ -237,10 +237,10 @@ func TestEngineResolutionVsCompilationClassification(t *testing.T) {
 	openDoc(t, projects, tempFileURI(t, "clean.bal").String(), "public function main() {}\n")
 	svc.Flush()
 	if len(e5a.slice()) < 2 {
-		t.Fatalf("clean cycle: E5a=%d, want >=2", len(e5a.slice()))
+		t.Fatalf("clean cycle: ResolutionDiagnosticsReady count = %d, want >=2", len(e5a.slice()))
 	}
 	if len(e5b.slice()) == 0 {
-		t.Fatalf("clean cycle: E5b=%d, want >=1", len(e5b.slice()))
+		t.Fatalf("clean cycle: CompilationDiagnosticsReady count = %d, want >=1", len(e5b.slice()))
 	}
 }
 
@@ -255,13 +255,13 @@ func TestEngineCleanCycleEmitsE5aAndE5b(t *testing.T) {
 	svc.Flush()
 
 	if len(e5a.slice()) == 0 {
-		t.Fatalf("clean cycle: CE-E5a = %d, want >=1", len(e5a.slice()))
+		t.Fatalf("clean cycle: ResolutionDiagnosticsReady count = %d, want >=1", len(e5a.slice()))
 	}
 	if len(e5b.slice()) == 0 {
-		t.Fatalf("clean cycle: CE-E5b = %d, want >=1", len(e5b.slice()))
+		t.Fatalf("clean cycle: CompilationDiagnosticsReady count = %d, want >=1", len(e5b.slice()))
 	}
 	if lastGen(e5a) != lastGen(e5b) {
-		t.Fatalf("clean cycle generation mismatch: E5a=%d E5b=%d", lastGen(e5a), lastGen(e5b))
+		t.Fatalf("clean cycle generation mismatch: ResolutionDiagnosticsReady=%d CompilationDiagnosticsReady=%d", lastGen(e5a), lastGen(e5b))
 	}
 }
 
@@ -313,10 +313,10 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	svc.Flush()
 
 	if len(succeeded.slice()) != 0 {
-		t.Fatalf("cancelled compile must not emit CE-E1; got %v", succeeded.slice())
+		t.Fatalf("cancelled compile must not emit CompilationSucceeded; got %v", succeeded.slice())
 	}
 	if len(cancelled.slice()) != 1 || cancelled.slice()[0] != 1 {
-		t.Fatalf("cancelled compile must emit CE-E3 for gen 1; got %v", cancelled.slice())
+		t.Fatalf("cancelled compile must emit CompilationCancelled for gen 1; got %v", cancelled.slice())
 	}
 	if _, ok := svc.store.Stable(u.Path()); ok {
 		t.Fatal("cancelled compile must store no stable snapshot")

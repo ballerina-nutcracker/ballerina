@@ -451,14 +451,14 @@ func TestModuleDriver_SecondGenerationOverSameModuleDoesNotPanic(t *testing.T) {
 	module2, env2 := defaultModuleFor(t, proj2)
 
 	if env1 != env2 {
-		t.Fatal("gen2's CompilerEnvironment is not the same pointer as gen1's — the modifier chain is expected to reuse it; this test would no longer exercise ticket 39's RegisterFile collision")
+		t.Fatal("gen2's CompilerEnvironment is not the same pointer as gen1's — the modifier chain is expected to reuse it; this test would no longer exercise duplicate RegisterFile registration for the edited file")
 	}
 
 	var gen2 *moduleDriver
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				t.Fatalf("gen2.advanceTo panicked (ticket 39 regression): %v", r)
+				t.Fatalf("gen2.advanceTo panicked while recompiling a registered file: %v", r)
 			}
 		}()
 		gen2 = newModuleDriver(env2, projSvc.OpenText, nil)
