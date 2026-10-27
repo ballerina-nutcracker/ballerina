@@ -1872,12 +1872,22 @@ func buildResponse(tc semtypes.Context, responseTy semtypes.SemType, statusCode 
 		headersMap.Put(tc, strings.ToLower(k), newListValue(items))
 	}
 	holder := eagerBufferResponse(respHeaders, bodyStream)
+	server := ""
+	for k, vals := range respHeaders {
+		if strings.EqualFold(k, "server") && len(vals) > 0 {
+			server = vals[0]
+			break
+		}
+	}
 	return values.NewObject(
 		responseTy,
 		map[string]values.BalValue{
-			"statusCode": int64(statusCode),
-			"$headers":   headersMap,
-			"body":       holder,
+			"statusCode":           int64(statusCode),
+			"reasonPhrase":         reasonPhrase(statusCode),
+			"server":               server,
+			"resolvedRequestedURI": "",
+			"$headers":             headersMap,
+			"body":                 holder,
 		},
 		responseMethodKeys(),
 		nil,

@@ -39,6 +39,7 @@ public function main() returns error? {
     anydata|http:Response anyTarget = check c->options("/path");
     if anyTarget is http:Response {
         io:println(anyTarget.statusCode); // @output 200
+        io:println(anyTarget.reasonPhrase); // @output OK
     }
 
     http:Response|error headResp = c->head("/path");
