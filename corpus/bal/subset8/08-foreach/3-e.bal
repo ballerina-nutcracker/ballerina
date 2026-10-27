@@ -14,8 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
 class FailingIterator {
     int idx = 0;
 
@@ -39,8 +37,7 @@ class FailingIterable {
 
 public function main() {
     FailingIterable f = new;
-    foreach int val in f { // @panic iterator failed
-        io:println(val); // @output 0
-                         // @output 1
+    foreach int val in f { // @error completion type includes error
+        _ = val;
     }
 }
