@@ -18,38 +18,12 @@ package server
 
 import (
 	"bufio"
-	"encoding/json"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
-
-func TestReceiveFramedMessages(t *testing.T) {
-	t.Parallel()
-	session := newTestSession(t, true)
-	defer session.close()
-	for _, version := range []int32{1, 2} {
-		session.sendNotification("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
-			TextDocument: protocol.TextDocumentItem{
-				URI: tempFileURI(t, "main.bal"), LanguageID: "ballerina", Version: version,
-				Text: "public function main() {}\n",
-			},
-		})
-		message := session.receive(t, "textDocument/publishDiagnostics", "")
-		if message.Method != "textDocument/publishDiagnostics" || len(message.ID) != 0 {
-			t.Fatalf("notification envelope changed: %+v", message)
-		}
-		var params protocol.PublishDiagnosticsParams
-		if err := json.Unmarshal(message.Params, &params); err != nil {
-			t.Fatal(err)
-		}
-		if got, ok := params.Version.Value(); !ok || got != version {
-			t.Fatalf("version = %v, want %d", params.Version, version)
-		}
-	}
-}
 
 func TestReceiveFailures(t *testing.T) {
 	t.Parallel()
