@@ -70,6 +70,7 @@ const (
 type DocumentChange struct {
 	Kind       ChangeKind
 	URI        DocumentURI
+	ClientURI  string // original client spelling; valid for ChangeOpen
 	Text       string // valid for ChangeOpen and ChangeUpdate
 	Version    int32  // valid for ChangeOpen and ChangeUpdate
 	LanguageID string // valid for ChangeOpen
@@ -78,6 +79,7 @@ type DocumentChange struct {
 // Snapshot is a value view of an open document's text and publication metadata.
 // Generation is zero when no successful publication has been recorded.
 type Snapshot struct {
+	ClientURI  string
 	Text       string
 	Version    int32
 	LanguageID string
@@ -139,7 +141,12 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 	defer s.mu.Unlock()
 	switch change.Kind {
 	case ChangeOpen:
+		clientURI := change.ClientURI
+		if clientURI == "" {
+			clientURI = change.URI.String()
+		}
 		snap := Snapshot{
+			ClientURI:  clientURI,
 			Text:       change.Text,
 			Version:    change.Version,
 			LanguageID: change.LanguageID,
@@ -155,6 +162,7 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 			return Snapshot{}, fmt.Errorf("workspace: stale version %d <= current %d", change.Version, current.Version)
 		}
 		snap := Snapshot{
+			ClientURI:  current.ClientURI,
 			Text:       change.Text,
 			Version:    change.Version,
 			LanguageID: current.LanguageID,

@@ -493,6 +493,7 @@ func (s *Server) handleDidOpen(ctx context.Context, params json.RawMessage) erro
 	if _, err := s.projects.Apply(context.Background(), workspace.DocumentChange{
 		Kind:       workspace.ChangeOpen,
 		URI:        docURI,
+		ClientURI:  didOpen.TextDocument.URI,
 		Text:       didOpen.TextDocument.Text,
 		Version:    didOpen.TextDocument.Version,
 		LanguageID: string(didOpen.TextDocument.LanguageID),
@@ -543,7 +544,7 @@ func (s *Server) handleDidClose(params json.RawMessage) error {
 	}
 	s.diagnosticMu.Lock()
 	defer s.diagnosticMu.Unlock()
-	_, ok := s.projects.Snapshot(docURI)
+	current, ok := s.projects.Snapshot(docURI)
 	if !ok {
 		return nil
 	}
@@ -553,7 +554,7 @@ func (s *Server) handleDidClose(params json.RawMessage) error {
 	}); err != nil {
 		return nil
 	}
-	note := s.publishDiagnostics(didClose.TextDocument.URI, 0, false, nil)
+	note := s.publishDiagnostics(current.ClientURI, 0, false, nil)
 	if note == nil {
 		return nil
 	}
@@ -652,7 +653,7 @@ func (s *Server) publishDocumentDiagnostics(root string, gen uint64, u workspace
 	if !open {
 		return
 	}
-	note := s.publishDiagnostics(u.String(), snap.Version, true, convertDiagnostics(diags, snap.Text))
+	note := s.publishDiagnostics(snap.ClientURI, snap.Version, true, convertDiagnostics(diags, snap.Text))
 	if err := s.write(*note); err != nil {
 		s.logger.Error("diagnostics write failed", "error", err)
 	}
