@@ -1,0 +1,74 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function items () (
+    (constrained-type
+      (builtin-ref-type xml)
+      (user-defined-type xml Element)))
+    (block-function-body
+      (compound-assignment +
+        (simple-var-ref counter)
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (literal eval))))
+      (return
+        (xml-sequence-literal
+          (xml-element-literal a)
+          (xml-element-literal b)
+          (xml-element-literal c)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-sequence-literal
+            (xml-element-literal a)
+            (xml-element-literal b)
+            (xml-element-literal c)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation slice expr:
+            (simple-var-ref x) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml slice (
+            (simple-var-ref x)
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation xml slice (
+            (simple-var-ref x)
+            (named-arg startIndex
+              (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (invocation slice expr:
+              (simple-var-ref x) (
+              (literal 3))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation slice expr:
+            (simple-var-ref x) (
+            (literal 1)
+            (literal 2))))))
+      (var-def
+        (variable tail (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (invocation slice expr:
+            (invocation items ()) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref tail))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref counter)))))))
