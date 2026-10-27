@@ -17,6 +17,7 @@
 package native
 
 import (
+	"slices"
 	"strings"
 	"sync"
 
@@ -249,7 +250,7 @@ func (t *typer) classifyMember(ty semtypes.SemType) typeInfo {
 		switch {
 		case semtypes.IsSameType(t.tc, ty, basic.ty):
 			return typeInfo{kind: basic.kind, ty: ty}
-		case basic.kind == kindInt && strings.HasPrefix(semtypes.ToString(t.tc, ty), "int:"):
+		case basic.kind == kindInt && t.isIntWidthType(ty):
 			return typeInfo{kind: kindIntSubtype, ty: ty}
 		case basic.kind == kindString && semtypes.IsSameType(t.tc, ty, semtypes.Char):
 			return typeInfo{kind: kindChar, ty: ty}
@@ -258,6 +259,17 @@ func (t *typer) classifyMember(ty semtypes.SemType) typeInfo {
 		}
 	}
 	return typeInfo{kind: kindUnsupported, ty: ty}
+}
+
+var intWidthTypes = []semtypes.SemType{
+	semtypes.SignedInt8, semtypes.SignedInt16, semtypes.SignedInt32,
+	semtypes.UnsignedInt8, semtypes.UnsignedInt16, semtypes.UnsignedInt32,
+}
+
+func (t *typer) isIntWidthType(ty semtypes.SemType) bool {
+	return slices.ContainsFunc(intWidthTypes, func(width semtypes.SemType) bool {
+		return semtypes.IsSameType(t.tc, ty, width)
+	})
 }
 
 // decompose splits ty into the members a union type tag would list: one per mapping or list
