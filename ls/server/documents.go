@@ -28,6 +28,10 @@ func applyChanges(text string, changes []protocol.TextDocumentContentChangeEvent
 		return "", false
 	}
 	for _, change := range changes {
+		if whole, ok := change.TextDocumentContentChangeWholeDocument(); ok {
+			text = whole.Text
+			continue
+		}
 		partial, ok := change.TextDocumentContentChangePartial()
 		if !ok {
 			return "", false
@@ -83,10 +87,7 @@ func utf16Offset(text string, position protocol.Position) (int, bool) {
 			return offset, true
 		}
 	}
-	if character == position.Character {
-		return lineEnd, true
-	}
-	return 0, false
+	return lineEnd, true
 }
 
 func nextLineStart(text string, start int) (int, bool) {
