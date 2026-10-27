@@ -1811,9 +1811,10 @@ func outboundHeaders(msg values.BalValue, headersArg values.BalValue) (map[strin
 	if hdrMap, ok := headersArg.(*values.Map); ok {
 		mergeHeaderArgs(headers, hdrMap)
 	}
+	// jBallerina sends the last Content-Type value, so an appended string[] value wins.
 	contentType := ""
 	if cts := headers["content-type"]; len(cts) > 0 {
-		contentType = cts[0]
+		contentType = cts[len(cts)-1]
 	}
 	delete(headers, "content-type")
 	return headers, contentType

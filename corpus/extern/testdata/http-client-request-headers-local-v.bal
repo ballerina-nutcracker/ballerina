@@ -65,4 +65,13 @@ public function main() returns error? {
     // A Content-Type header argument replaces the payload's default.
     string text = check c->post("/echo", "hi", {"Content-Type": "a/b", "X-Test": "text"});
     io:println(text); // @output a/b [text] []
+
+    // The last value of a string[] Content-Type argument is the one sent.
+    string textArr = check c->post("/echo", "hi", {"Content-Type": ["a/b", "c/d"]});
+    io:println(textArr); // @output c/d [] []
+
+    http:Request arrReq = new;
+    arrReq.setTextPayload("hi");
+    string reqArr = check c->post("/echo", arrReq, {"Content-Type": ["application/json"]});
+    io:println(reqArr); // @output application/json [] []
 }

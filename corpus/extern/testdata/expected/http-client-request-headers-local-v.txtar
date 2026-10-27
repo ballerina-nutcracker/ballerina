@@ -6,4 +6,6 @@ application/custom [delete] []
 application/json [execute] [arg]
 x/y [] []
 a/b [text] []
+c/d [] []
+application/json [] []
 -- stderr --
