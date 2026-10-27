@@ -77,7 +77,7 @@
                         (simple-var-ref $xmlStepItem))))))
                   (var-def
                     (variable $desugar$1 (expr
-                      (invocation $default$3 (
+                      (invocation $default$4 (
                         (simple-var-ref $desugar$0))))))
                   (invocation lang.xml elementChildren (
                     (simple-var-ref $desugar$0)

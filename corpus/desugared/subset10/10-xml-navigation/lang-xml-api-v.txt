@@ -818,7 +818,7 @@
               (simple-var-ref selected))))
           (var-def
             (variable $desugar$1 (expr
-              (invocation $default$2 (
+              (invocation $default$3 (
                 (simple-var-ref $desugar$0))))))
           (invocation lang.xml elements (
             (simple-var-ref $desugar$0)
@@ -840,7 +840,7 @@
               (simple-var-ref selected))))
           (var-def
             (variable $desugar$3 (expr
-              (invocation $default$3 (
+              (invocation $default$4 (
                 (simple-var-ref $desugar$2))))))
           (invocation lang.xml elementChildren (
             (simple-var-ref $desugar$2)
@@ -863,7 +863,7 @@
               (simple-var-ref selected))))
           (var-def
             (variable $desugar$5 (expr
-              (invocation $default$2 (
+              (invocation $default$3 (
                 (simple-var-ref $desugar$4))))))
           (invocation xml elements (
             (simple-var-ref $desugar$4)
@@ -880,7 +880,7 @@
               (simple-var-ref selected))))
           (var-def
             (variable $desugar$7 (expr
-              (invocation $default$3 (
+              (invocation $default$4 (
                 (simple-var-ref $desugar$6))))))
           (invocation xml elementChildren (
             (simple-var-ref $desugar$6)

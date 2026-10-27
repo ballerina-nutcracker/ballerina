@@ -7219,7 +7219,7 @@ $anonFunc$_3(xml) -> boolean{
 $anonFunc$_4(xml:Element) -> xml:Element{
   bb0 {
     $desugar$0 = y;
-    %3 = $default$3($desugar$0) -> bb1;
+    %3 = $default$4($desugar$0) -> bb1;
   }
   bb1 {
     $desugar$1 = %3;
@@ -10772,7 +10772,7 @@ $xmlStep$testXmlMethodCallIndexedAndFilterStepExtend$4(xml:Element) -> xml<xml:E
   }
   bb1 {
     $desugar$0 = %2;
-    %4 = $default$3($desugar$0) -> bb2;
+    %4 = $default$4($desugar$0) -> bb2;
   }
   bb2 {
     $desugar$1 = %4;
@@ -10874,7 +10874,7 @@ $xmlStep$testXmlMethodCallIndexedAndFilterStepExtend$10(xml:Element) -> xml<xml:
   bb1 {
     %3 = xmlFilter(%2, [*])
     $desugar$0 = %3;
-    %5 = $default$3($desugar$0) -> bb2;
+    %5 = $default$4($desugar$0) -> bb2;
   }
   bb2 {
     $desugar$1 = %5;
