@@ -49,4 +49,8 @@ public function main() {
     Pair|jsondata:Error r5 = jsondata:parseString("{}");
     show(r5);
     // @output true required field 'a' not present in JSON
+    string|jsondata:Error r6 = jsondata:parseString("\"\\ud83d|\\ud83d\\ude00\"");
+    if r6 is string {
+        io:println(r6.toBytes().toBase16()); // @output efbfbd7cf09f9880
+    }
 }
