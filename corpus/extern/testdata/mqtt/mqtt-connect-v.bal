@@ -72,6 +72,10 @@ public function main() returns error? {
     check connect("unparsable", "127.0.0.1:1883", "connect-v-4a");
     // @output missing scheme: missing scheme in broker URI: //localhost:1883 (mqtt:Error=true)
     check connect("missing scheme", "//localhost:1883", "connect-v-4b");
+    // @output tcp path: URI path must be empty "tcp://localhost:1883/a" (mqtt:Error=true)
+    check connect("tcp path", "tcp://localhost:1883/a", "connect-v-4c");
+    // @output ssl path: ssl://localhost:8883/ (mqtt:Error=true)
+    check connect("ssl path", "ssl://localhost:8883/", "connect-v-4d");
 
     check login("no credentials", "connect-v-6"); // @output no credentials: login rejected=true (mqtt:Error=true)
     // @output wrong credentials: login rejected=true (mqtt:Error=true)

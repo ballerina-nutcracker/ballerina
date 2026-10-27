@@ -101,10 +101,21 @@ func parseServerURI(raw string) (serverURI, *mqttError) {
 	default:
 		return serverURI{}, newError(fmt.Sprintf("no NetworkModule installed for scheme \"%s\" of URI \"%s\"", u.Scheme, raw))
 	}
+	if u.Path != "" {
+		return serverURI{}, newError(pathNotEmptyMessage(raw, secure))
+	}
 	if u.Port() != "" {
 		port = u.Port()
 	}
 	return serverURI{raw: raw, address: net.JoinHostPort(u.Hostname(), port), secure: secure}, nil
+}
+
+// pathNotEmptyMessage matches Paho Java, whose SSL module reports only the URI.
+func pathNotEmptyMessage(raw string, secure bool) string {
+	if secure {
+		return raw
+	}
+	return fmt.Sprintf("URI path must be empty \"%s\"", raw)
 }
 
 func parseConnectionOptions(platform pal.Platform, serverURIValue, clientID string, config *values.Map) (*connectionOptions, *mqttError) {
