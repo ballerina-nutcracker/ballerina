@@ -49,6 +49,9 @@ public function main() {
     show(withBom);
     map<string>|yaml:Error invalid = yaml:parseBytes([97, 58, 32, 255]);
     show(invalid);
+    // Each malformed sequence becomes one U+FFFD, grouped as Java's decoder groups it.
+    map<string>|yaml:Error malformed = yaml:parseBytes([97, 58, 32, 255, 254, 226, 130, 65]);
+    show(malformed);
 
     // A multi-byte character split across two blocks.
     byte[] first = "name: caf".toBytes();
@@ -78,6 +81,7 @@ public function main() {
 // @output {"name":"café"}
 // @output {"a":"b"}
 // @output {"a":"�"}
+// @output {"a":"���A"}
 // @output {"name":"café","age":3}
 // @output Error occurred while reading the stream: required field 'age' not present in YAML
 // @output 'unexpected event' at line: '1' column: '4'
