@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer maximal type such that it is a subtype of both anydata and error
+  --> trap-inferred-typedesc-e.bal:22:20
+   |
+22 |     error e = trap v.cloneWithType(); // @error no type that is both anydata and error
+   |                    ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer typedesc argument for parameter 't': no contextually expected type
+  --> trap-inferred-typedesc-e.bal:21:18
+   |
+21 |     var x = trap v.cloneWithType(); // @error no contextually expected type
+   |                  ^^^^^^^^^^^^^^^^^

@@ -16,6 +16,16 @@
 
 import ballerina/io;
 
+type R record {|
+    int x;
+|};
+
+function show(int|error v) {
+    io:println(v is error ? "error" : v.toString());
+}
+
+function convert(anydata v) returns int|error => trap v.cloneWithType();
+
 public function main() {
     anydata v = "abc";
     int|error a = trap v.cloneWithType();
@@ -27,4 +37,23 @@ public function main() {
 
     string|error c = trap trap v.cloneWithType();
     io:println(c); // @output abc
+
+    int|string|error d = trap v.cloneWithType();
+    io:println(d); // @output abc
+
+    anydata m = {x: 1};
+    R|error r = trap m.cloneWithType();
+    io:println(r); // @output {"x":1}
+
+    show(trap w.cloneWithType()); // @output 42
+    io:println(convert(v) is error); // @output true
+
+    int[]|error l = trap [1];
+    if l is int[] {
+        l.push(2);
+    }
+    io:println(l); // @output [1,2]
+
+    float|error f = trap 1;
+    io:println(f); // @output 1.0
 }
