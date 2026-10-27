@@ -119,4 +119,8 @@ l:
 - 2
 --
 indentationPolicy must be greater than 0 to write a nested block collection
+a:
+--
+-
+--
 -- stderr --
