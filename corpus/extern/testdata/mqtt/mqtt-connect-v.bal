@@ -68,6 +68,10 @@ public function main() returns error? {
     check connect("no scheme", "localhost:1883", "connect-v-3");
     // @output ws scheme: WebSocket broker URIs are not supported: ws://localhost:1883 (mqtt:Error=true)
     check connect("ws scheme", "ws://localhost:1883", "connect-v-4");
+    // @output unparsable: Can't parse string to URI "127.0.0.1:1883" (mqtt:Error=true)
+    check connect("unparsable", "127.0.0.1:1883", "connect-v-4a");
+    // @output missing scheme: missing scheme in broker URI: //localhost:1883 (mqtt:Error=true)
+    check connect("missing scheme", "//localhost:1883", "connect-v-4b");
 
     check login("no credentials", "connect-v-6"); // @output no credentials: login rejected=true (mqtt:Error=true)
     // @output wrong credentials: login rejected=true (mqtt:Error=true)

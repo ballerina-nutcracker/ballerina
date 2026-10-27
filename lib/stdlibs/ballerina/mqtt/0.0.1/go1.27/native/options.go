@@ -82,7 +82,10 @@ type connectionOptions struct {
 // ssl:// are accepted, with the same default ports.
 func parseServerURI(raw string) (serverURI, *mqttError) {
 	u, err := url.Parse(raw)
-	if err != nil || u.Scheme == "" {
+	if err != nil {
+		return serverURI{}, newError(fmt.Sprintf("Can't parse string to URI \"%s\"", raw))
+	}
+	if u.Scheme == "" {
 		return serverURI{}, newError(fmt.Sprintf("missing scheme in broker URI: %s", raw))
 	}
 	var secure bool
