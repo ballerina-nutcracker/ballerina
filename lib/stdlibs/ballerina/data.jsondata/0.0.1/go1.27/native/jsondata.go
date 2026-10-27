@@ -36,16 +36,17 @@ func init() {
 
 func initJsondataModule(rt *runtime.Runtime) {
 	cache := newTypeCache()
-	register := func(name string, impl func(*typeCache, *extern.Context, []values.BalValue) (values.BalValue, error)) {
-		runtime.RegisterExternFunction(rt, orgName, moduleName, name, func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			return impl(cache, ctx, args)
-		})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseAsType", withTypeCache(cache, parseAsType))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseString", withTypeCache(cache, parseString))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseBytes", withTypeCache(cache, parseBytes))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseStream", withTypeCache(cache, parseStream))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "externToJson", withTypeCache(cache, toJson))
+}
+
+func withTypeCache(cache *typeCache, impl func(*typeCache, *extern.Context, []values.BalValue) (values.BalValue, error)) extern.NativeFunc {
+	return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		return impl(cache, ctx, args)
 	}
-	register("parseAsType", parseAsType)
-	register("parseString", parseString)
-	register("parseBytes", parseBytes)
-	register("parseStream", parseStream)
-	register("externToJson", toJson)
 }
 
 func parseAsType(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
