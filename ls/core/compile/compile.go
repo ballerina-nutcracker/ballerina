@@ -186,6 +186,7 @@ func New(projectService *workspace.ProjectService, bus *event.Bus, opts ...Optio
 		knownRoots:     make(map[string]struct{}),
 		openText:       projectService.OpenText,
 		genStates:      make(map[string]*packageGenState),
+		failedGens:     make(map[string]uint64),
 		maxWorkers:     defaultMaxWorkers(),
 	}
 	s.idleCond = sync.NewCond(&s.cycleMu)
@@ -304,7 +305,7 @@ func (s *CompilationService) enqueueImmediately(root string, gen uint64) {
 	}
 	req := &cycleRequest{root: root, gen: gen, pkg: pkg, project: project}
 	s.cycleMu.Lock()
-	if s.closed {
+	if s.closed || (gen != 0 && s.failedGens[root] == gen) {
 		s.cycleMu.Unlock()
 		return
 	}
@@ -356,6 +357,9 @@ func (s *CompilationService) runCycle(req *cycleRequest) {
 		s.bus.Publish(event.NewCompilationCancelledEvent(req.root, req.gen))
 		return
 	}
+	if s.generationFailed(req.root, req.gen) {
+		return
+	}
 	done := make(chan struct{})
 	s.store.setInProgress(req.root, InProgressSnapshot{key: CompilationKey{req.root, req.gen}, done: done})
 	defer func() {
@@ -370,6 +374,7 @@ func (s *CompilationService) runCycle(req *cycleRequest) {
 		defer func() {
 			if r := recover(); r != nil {
 				panicked = true
+				s.markGenerationFailed(req.root, req.gen)
 				s.bus.Publish(event.NewCompilationFailedEvent(req.root, req.gen))
 			}
 		}()
