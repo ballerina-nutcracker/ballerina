@@ -15,8 +15,6 @@
 // under the License.
 
 public function main() {
-    xml x = xml `<a/><b/>`;
-    xml _ = x.slice(); // @error
-    xml _ = x.slice(0, "end"); // @error
-    xml _ = xml:slice(x, endIndex = 1); // @error
+    xml x = xml `<a/>`;
+    _ = x.slice(2); // @panic
 }

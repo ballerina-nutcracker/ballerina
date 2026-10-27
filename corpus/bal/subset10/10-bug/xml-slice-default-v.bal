@@ -33,7 +33,13 @@ public function main() {
     io:println(xml:slice(x, 2)); // @output <c/>
     io:println(xml:slice(x, startIndex = 1)); // @output <b/><c/>
     io:println(x.slice(3).length()); // @output 0
-    io:println(x.slice(1, 2)); // @output <b/>
+    xml<xml:Comment> comments = xml `<!--p--><!--q-->`;
+    xml<xml:Comment> lastComment = comments.slice(1);
+    io:println(lastComment); // @output <!--q-->
+    xml empty = xml ``;
+    io:println(empty.slice(0).length()); // @output 0
+    xml r = xml `<r><p/><q/></r>`;
+    io:println(r/*.slice(1)); // @output <q/>
 
     // @output eval
     xml<xml:Element> tail = items().slice(1);

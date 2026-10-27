@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected xml<xml:Comment>, got xml<xml:Element>
-  --> lang-xml-slice-default-type-e.bal:20:26
-   |
-20 |     xml<xml:Comment> _ = elems.slice(0); // @error
-   |                          ^^^^^^^^^^^^^^
