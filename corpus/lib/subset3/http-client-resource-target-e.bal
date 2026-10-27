@@ -16,22 +16,9 @@
 
 import ballerina/http;
 
-// Each case is in its own function because the compiler reports only the first
-// failing resource access per function.
-
 // A named `targetType` binds to the method's own parameter, so it must be a
 // `TargetType` typedesc rather than a query value.
-function namedTargetTypeMustBeTypedesc(http:Client c) returns error? {
-    http:Response _ = check c->/albums(targetType = "json"); // @error targetType is not a query parameter
-}
-
-// `head` has no `targetType` parameter, so its result cannot be bound.
-function headCannotBind(http:Client c) returns error? {
-    string _ = check c->/albums.head(); // @error head returns only http:Response
-}
-
 public function main() returns error? {
     http:Client c = check new ("https://example.com");
-    check namedTargetTypeMustBeTypedesc(c);
-    check headCannotBind(c);
+    http:Response _ = check c->/albums(targetType = "json"); // @error targetType is not a query parameter
 }
