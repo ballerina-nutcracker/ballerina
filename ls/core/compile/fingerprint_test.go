@@ -20,6 +20,12 @@ import "testing"
 
 func buildFingerprint(t *testing.T, source string) fingerprint {
 	t.Helper()
+	d := buildFingerprintDriver(t, source)
+	return computeFingerprint(d.diagnosticContext(), d.exported, d.pkgNode)
+}
+
+func buildFingerprintDriver(t *testing.T, source string) *moduleDriver {
+	t.Helper()
 	projSvc, _ := newTestServices(t)
 	u := tempFileURI(t, "fp.bal")
 	applyOpen(t, projSvc, u, source)
@@ -35,7 +41,7 @@ func buildFingerprint(t *testing.T, source string) fingerprint {
 	if d.diagnosticContext().HasErrors() {
 		t.Fatalf("unexpected errors: %v", d.diagnosticContext().Diagnostics())
 	}
-	return computeFingerprint(d.diagnosticContext(), d.exported)
+	return d
 }
 
 func TestComputeFingerprint_SameSignature_SameFingerprint(t *testing.T) {
@@ -77,7 +83,7 @@ func TestComputeFingerprint_ErroredContext_Invalid(t *testing.T) {
 	input := newModuleResolutionInput("", nil, nil)
 	d.advanceTo(stageTopLevelTypeResolved, module, input)
 
-	fp := computeFingerprint(d.diagnosticContext(), d.exported)
+	fp := computeFingerprint(d.diagnosticContext(), d.exported, d.pkgNode)
 	if fp.valid {
 		t.Errorf("expected an invalid fingerprint for an errored context, got %+v", fp)
 	}

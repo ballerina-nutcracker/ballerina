@@ -321,7 +321,7 @@ func (pd *packageDriver) adoptCarriedForward(module *projects.Module) bool {
 // it removes direct dependents from resetScope unless they are directly dirty.
 func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *moduleDriver) {
 	id := module.ModuleID()
-	fp := computeFingerprint(d.diagnosticContext(), d.exported)
+	fp := computeFingerprint(d.diagnosticContext(), d.exported, d.pkgNode)
 	if pd.fingerprints == nil {
 		pd.fingerprints = make(map[projects.ModuleID]fingerprint)
 	}
