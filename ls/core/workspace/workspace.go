@@ -110,9 +110,10 @@ type WatchedFileChange struct {
 type ProjectService struct {
 	openDir      func(string) fs.FS
 	bus          *event.Bus
-	mu           sync.RWMutex // guards documents and pendingRoots
+	mu           sync.RWMutex // guards documents, pendingRoots, and openMembers
 	documents    map[DocumentURI]Snapshot
 	pendingRoots map[DocumentURI]string // recovery membership only; guarded by mu
+	openMembers  map[DocumentURI]bool   // previously loaded members; guarded by mu
 	index        *projectIndex
 	now          func() time.Time
 	repositories []projects.Repository
@@ -127,6 +128,7 @@ func New(openDir func(string) fs.FS, bus *event.Bus, opts ...Option) *ProjectSer
 		bus:          bus,
 		documents:    make(map[DocumentURI]Snapshot),
 		pendingRoots: make(map[DocumentURI]string),
+		openMembers:  make(map[DocumentURI]bool),
 		index:        newProjectIndex(defaultMaxProjects, now),
 		now:          now,
 	}
@@ -175,6 +177,7 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 		}
 		delete(s.documents, change.URI)
 		delete(s.pendingRoots, change.URI)
+		delete(s.openMembers, change.URI)
 		return Snapshot{}, nil
 	default:
 		return Snapshot{}, fmt.Errorf("workspace: unknown change kind %d", change.Kind)
@@ -185,18 +188,17 @@ func (s *ProjectService) applyDocumentMap(change DocumentChange) (Snapshot, erro
 // Existing documents with unchanged import sets reuse the loaded project;
 // missing documents or changed import sets trigger a reload. Cancellation is
 // checked after storing text and discovering the root, before publication.
-// Close removes the buffer without publishing.
+// Close removes its overlay and refreshes the disk-backed project.
 func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snapshot, error) {
 	if change.Kind == ChangeClose {
-
-		sourceRoot, err := s.findSourceRootMemoized(change.URI)
-		if err == nil {
-			if entry, ok := s.index.get(sourceRoot); ok && entry.openDocs > 0 {
-				entry.openDocs--
-			}
-		}
+		sourceRoot, rootErr := s.findSourceRootMemoized(change.URI)
 		snap, err := s.applyDocumentMap(change)
-		return snap, err
+		if err != nil || rootErr != nil {
+			return snap, err
+		}
+		s.index.adjustOpenDocs(sourceRoot, -1)
+		s.refreshProject(sourceRoot, change.URI)
+		return snap, nil
 	}
 	snap, err := s.applyDocumentMap(change)
 	if err != nil {
@@ -207,9 +209,7 @@ func (s *ProjectService) Apply(ctx context.Context, change DocumentChange) (Snap
 		return snap, err
 	}
 	if change.Kind == ChangeOpen {
-		if entry, ok := s.index.get(sourceRoot); ok {
-			entry.openDocs++
-		}
+		s.index.adjustOpenDocs(sourceRoot, 1)
 	}
 	snap.SourceRoot = sourceRoot
 	if err := ctx.Err(); err != nil {
@@ -243,7 +243,11 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) uint6
 		s.publishLifecycle(sourceRoot, gen)
 		return gen
 	}
-	if s.documentInCurrentPackage(entry.project, change) && !s.importSetChanged(entry.project, change) {
+	member := documentInProject(entry.project, entry.paths, change.URI)
+	if member {
+		s.openMembers[change.URI] = true
+	}
+	if member && !s.importSetChanged(entry.project, change) {
 		gen := s.index.advance(sourceRoot)
 		s.mu.Unlock()
 		s.publishUpdated(sourceRoot, gen)
@@ -256,17 +260,21 @@ func (s *ProjectService) publish(change DocumentChange, sourceRoot string) uint6
 	return gen
 }
 
-func (s *ProjectService) documentInCurrentPackage(project projects.Project, change DocumentChange) bool {
+func documentInProject(project projects.Project, paths SourcePaths, uri DocumentURI) bool {
 	pkg := project.CurrentPackage()
 	if pkg == nil {
 		return false
 	}
-	name, contained := s.Paths(project).NameOf(change.URI)
+	name, contained := paths.NameOf(uri)
 	if !contained {
 		return false
 	}
 	docID, ok := project.DocumentID(name)
 	if !ok {
+		return false
+	}
+	actual, contained := paths.URIOf(project.DocumentPath(docID))
+	if !contained || actual != uri {
 		return false
 	}
 	module := pkg.Module(docID.ModuleID())
@@ -303,6 +311,23 @@ func (s *ProjectService) publishLifecycle(sourceRoot string, gen uint64) {
 	s.bus.Publish(event.NewProjectUpdatedEvent(sourceRoot, gen))
 }
 
+func (s *ProjectService) evictProject(root string) {
+	s.index.remove(root)
+	if s.bus != nil {
+		s.bus.Publish(event.NewProjectEvictedEvent(root, event.EvictionKindTransition))
+	}
+}
+
+func (s *ProjectService) refreshProject(root string, u DocumentURI) {
+	s.index.supersede(root)
+	gen := s.reloadAt(root, u)
+	if gen == 0 {
+		s.evictProject(root)
+		return
+	}
+	s.publishLifecycle(root, gen)
+}
+
 func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 	if s.bus == nil {
 		return
@@ -311,7 +336,7 @@ func (s *ProjectService) publishUpdated(sourceRoot string, gen uint64) {
 }
 
 // reloadAt loads through a fresh overlay and replaces the index entry with a
-// new generation, preserving any existing open-doc count. A load failure
+// new generation, recomputing open-document membership. A load failure
 // returns zero without replacing the entry.
 func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI) uint64 {
 	paths := SourcePaths{root: sourceRoot}
@@ -326,19 +351,41 @@ func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI) uint64 {
 	if err != nil || project == nil {
 		return 0
 	}
+	pkg := project.CurrentPackage()
+	if pkg == nil {
+		return 0
+	}
 	if root := project.SourceRoot(); root != "" && root != "." {
 		paths.prefix = root + "/"
 	}
+	s.mu.Lock()
+	openDocs := 0
+	for uri := range s.documents {
+		if root, known := s.index.lookupSourceRoot(uri.Path()); known && root == sourceRoot {
+			openDocs++
+		}
+		if documentInProject(project, paths, uri) {
+			s.openMembers[uri] = true
+		}
+	}
+	s.mu.Unlock()
 	entry := &indexEntry{
 		project:     project,
+		openDocs:    openDocs,
 		paths:       paths,
 		sourceRoot:  sourceRoot,
 		lastTouched: s.now(),
 	}
-	if old, ok := s.index.get(sourceRoot); ok {
-		entry.openDocs = old.openDocs
+	gen := s.index.putExisting(entry, s.bus)
+	for _, moduleID := range pkg.ModuleIDs() {
+		module := pkg.Module(moduleID)
+		for _, docID := range append(module.DocumentIDs(), module.TestDocumentIDs()...) {
+			if uri, ok := paths.URIOf(project.DocumentPath(docID)); ok {
+				s.index.memoSourceRoot(uri.Path(), sourceRoot)
+			}
+		}
 	}
-	return s.index.putExisting(entry, s.bus)
+	return gen
 }
 
 // Generation returns the root's current generation, including supersessions,
@@ -425,6 +472,7 @@ func (s *ProjectService) findSourceRoot(filePath string) (string, error) {
 
 func (s *ProjectService) buildOverlay(paths SourcePaths) overlayFS {
 	overlays := make(map[string][]byte)
+	members := make(map[string]bool)
 	s.mu.RLock()
 	for u, snap := range s.documents {
 		if !u.IsFile() {
@@ -432,10 +480,13 @@ func (s *ProjectService) buildOverlay(paths SourcePaths) overlayFS {
 		}
 		if name, ok := (SourcePaths{root: paths.root}).NameOf(u); ok {
 			overlays[name] = []byte(snap.Text)
+			if s.openMembers[u] {
+				members[name] = true
+			}
 		}
 	}
 	s.mu.RUnlock()
-	return overlayFS{base: s.openDir(paths.root), overlays: overlays, now: s.now}
+	return overlayFS{base: s.openDir(paths.root), overlays: overlays, members: members, now: s.now}
 }
 
 // ProjectKey discovers a file URI's workspace key: a package directory or
@@ -516,9 +567,8 @@ func (s *ProjectService) OpenText(project projects.Project, name string) (string
 	return snap.Text, ok
 }
 
-// ApplyWatchedFile rediscovers projects after Ballerina.toml changes and
-// removes indexed projects for deleted, closed source files. It ignores
-// non-file URIs and does not observe ctx cancellation.
+// ApplyWatchedFile refreshes cached projects after source or manifest events.
+// It ignores non-file URIs and does not observe ctx cancellation.
 func (s *ProjectService) ApplyWatchedFile(ctx context.Context, change WatchedFileChange) error {
 	_ = ctx
 	if !change.URI.IsFile() {
@@ -579,7 +629,7 @@ func (s *ProjectService) applyBallerinaTomlChange(kind WatchedFileKind, tomlPath
 // merge destinations, retaining their open buffers for rediscovery.
 func (s *ProjectService) invalidateProjectsUnder(dir string) ([]DocumentURI, map[string]uint64) {
 	var documents []DocumentURI
-	previous := make(map[string]uint64)
+	previous := s.index.affectedRoots(dir)
 	s.mu.Lock()
 	for u := range s.documents {
 		if !u.IsFile() {
@@ -634,29 +684,35 @@ func (s *ProjectService) recoveryRoot(u DocumentURI) (string, bool) {
 	return s.index.lookupSourceRoot(u.Path())
 }
 
-// applySourceFileChange removes the memoized owning project for a deleted,
-// closed file. Other changes leave the index untouched.
 func (s *ProjectService) applySourceFileChange(kind WatchedFileKind, filePath string) error {
-	if kind != WatchedFileDelete {
+	if filepath.Ext(filePath) != projects.BalFileExtension {
 		return nil
 	}
-	s.mu.RLock()
-	open := false
-	for u := range s.documents {
-		if u.IsFile() && u.Path() == filePath {
-			open = true
-			break
+	sourceRoot, known := s.index.lookupSourceRoot(filePath)
+	if !known {
+		if _, cached := s.index.peek(filePath); cached {
+			sourceRoot = filePath
+		} else {
+			var err error
+			sourceRoot, err = s.findSourceRoot(filePath)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	s.mu.RUnlock()
-	if open {
+	if _, cached := s.index.peek(sourceRoot); !cached {
 		return nil
 	}
-	sourceRoot, ok := s.index.lookupSourceRoot(filePath)
-	if !ok {
+	u, err := FileURIFromPath(filePath)
+	if err != nil {
+		return err
+	}
+	if _, open := s.Snapshot(u); open && kind == WatchedFileDelete {
+		gen := s.index.advance(sourceRoot)
+		s.publishUpdated(sourceRoot, gen)
 		return nil
 	}
-	s.index.remove(sourceRoot)
+	s.refreshProject(sourceRoot, u)
 	return nil
 }
 

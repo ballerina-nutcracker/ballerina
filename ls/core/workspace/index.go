@@ -99,6 +99,17 @@ func (i *projectIndex) putExisting(entry *indexEntry, bus *event.Bus) uint64 {
 	return gen
 }
 
+func (i *projectIndex) adjustOpenDocs(root string, delta int) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if entry, ok := i.entries[root]; ok {
+		entry.openDocs += delta
+		if entry.openDocs < 0 {
+			entry.openDocs = 0
+		}
+	}
+}
+
 func (i *projectIndex) advance(root string) uint64 {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -196,6 +207,18 @@ func (i *projectIndex) memoSourceRoot(filePath, sourceRoot string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.pathToSourceRoot[filePath] = sourceRoot
+}
+
+func (i *projectIndex) affectedRoots(dir string) map[string]uint64 {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	roots := make(map[string]uint64)
+	for root, entry := range i.entries {
+		if isAncestor(dir, root) || isAncestor(root, dir) {
+			roots[root] = entry.generation
+		}
+	}
+	return roots
 }
 
 func (i *projectIndex) invalidateUnder(dir string) {
