@@ -92,6 +92,7 @@ func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *
 		openText:              openText,
 		priorState:            priorState,
 		stale:                 stale,
+		fingerprints:          make(map[projects.ModuleID]fingerprint),
 	}
 }
 
@@ -309,6 +310,7 @@ func (pd *packageDriver) adoptCarriedForward(module *projects.Module) bool {
 		return false
 	}
 	pd.drivers[id] = snap.driver
+	pd.fingerprints[id] = snap.fingerprint
 	if snap.errored {
 		pd.phase1Errored[id] = true
 		return true
@@ -317,32 +319,25 @@ func (pd *packageDriver) adoptCarriedForward(module *projects.Module) bool {
 	return true
 }
 
-// recordFingerprintAndPrune records module's public-API fingerprint. If unchanged,
-// it removes direct dependents from resetScope unless they are directly dirty.
-func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *moduleDriver) {
-	id := module.ModuleID()
-	fp := computeFingerprint(d.diagnosticContext(), d.exported, d.pkgNode)
-	if pd.fingerprints == nil {
-		pd.fingerprints = make(map[projects.ModuleID]fingerprint)
-	}
-	pd.fingerprints[id] = fp
-
+// dependenciesUnchanged is evaluated only when the dependent is reached in
+// dependency order. An unchanged input cannot override another changed input.
+func (pd *packageDriver) dependenciesUnchanged(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) bool {
 	if pd.priorState == nil {
-		return
+		return false
 	}
-	prev, ok := pd.priorState.modules[id]
-	if !ok || !fp.equal(prev.fingerprint) {
-		return
-	}
-	if pd.reverseDeps == nil {
-		return
-	}
-	for _, dependent := range pd.reverseDeps[id] {
-		if pd.directlyDirty[dependent] {
+	for _, descriptor := range depGraph.DirectDependencies(module.Descriptor()) {
+		dependency := pd.pkg.ModuleByName(descriptor.Name())
+		if dependency == nil {
 			continue
 		}
-		delete(pd.resetScope, dependent)
+		id := dependency.ModuleID()
+		current, processed := pd.fingerprints[id]
+		previous, available := pd.priorState.modules[id]
+		if !processed || !available || pd.phase1Errored[id] || previous.errored || !current.equal(previous.fingerprint) {
+			return false
+		}
 	}
+	return true
 }
 
 // Failed Phase-1 dependencies skip the module. Usable symbols are published
@@ -350,6 +345,9 @@ func (pd *packageDriver) recordFingerprintAndPrune(module *projects.Module, d *m
 // block dependents.
 func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *projects.DependencyGraph[projects.ModuleDescriptor]) {
 	id := module.ModuleID()
+	if pd.resetScope[id] && !pd.directlyDirty[id] && pd.dependenciesUnchanged(module, depGraph) {
+		delete(pd.resetScope, id)
+	}
 	if !pd.resetScope[id] && pd.adoptCarriedForward(module) {
 		return
 	}
@@ -373,7 +371,7 @@ func (pd *packageDriver) runPhase1Module(module *projects.Module, depGraph *proj
 		pd.markPhase1Errored(module, d, input)
 		return
 	}
-	pd.recordFingerprintAndPrune(module, d)
+	pd.fingerprints[id] = computeFingerprint(d.diagnosticContext(), d.exported, d.pkgNode)
 }
 
 // markPhase1Errored marks module for dependent gating and attempts to finish
