@@ -17,12 +17,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
+	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 	"github.com/ballerina-nutcracker/ballerina/ls/server"
 )
 
@@ -39,11 +42,17 @@ func main() {
 }
 
 func serve() error {
-	logger := observability.New(os.Stderr)
+	return serveHost(stdioTransport{}, os.DirFS, os.Stderr)
+}
+
+// serveHost composes the server using host-owned transport, filesystem and log
+// output. The caller retains ownership of the streams, including log output.
+func serveHost(transport protocol.Transport, openDir func(string) fs.FS, logOutput io.Writer, opts ...workspace.Option) error {
+	logger := observability.New(logOutput)
 	bus := event.New(event.WithLogf(func(msg string, args ...any) { logger.Warn(msg, args...) }))
-	projects := workspace.New(os.DirFS, bus)
-	compiler := compile.New(projects, bus)
-	srv := server.New(stdioTransport{}, projects, compiler, bus, server.WithLogger(logger))
+	projects := workspace.New(openDir, bus, opts...)
+	compiler := compile.New(projects, bus, compile.WithLogger(logger))
+	srv := server.New(transport, projects, compiler, bus, server.WithLogger(logger))
 
 	// Supersede workspace generations before draining compiles; keep the bus
 	// open until the compiler finishes flushing events. Defers run in reverse order.

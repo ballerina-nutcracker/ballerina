@@ -21,6 +21,7 @@ import (
 	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/semantics"
@@ -67,6 +68,7 @@ type packageDriver struct {
 	openText   textProvider
 	priorState *packageGenState
 	stale      func() bool
+	logger     *observability.Logger
 
 	resetScopeReady bool
 	resetScope      map[projects.ModuleID]bool
@@ -92,6 +94,7 @@ func newPackageDriver(pkg *projects.Package, openText textProvider, priorState *
 		openText:              openText,
 		priorState:            priorState,
 		stale:                 stale,
+		logger:                observability.NewNoop(),
 		fingerprints:          make(map[projects.ModuleID]fingerprint),
 	}
 }
@@ -186,8 +189,8 @@ func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescr
 	}
 	pd.externalMaterializing[packageID] = true
 	defer func() {
-		if recover() != nil {
-			return
+		if r := recover(); r != nil {
+			pd.logger.Error("compile: recovered dependency panic", "recovered", r, "descriptor", descriptor.String())
 		}
 	}()
 
@@ -203,6 +206,7 @@ func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescr
 		dependencyDriver.publicSymbols[identifier] = symbols
 	}
 	dependencyDriver.externalMaterializing = pd.externalMaterializing
+	dependencyDriver.logger = pd.logger
 	dependencyDriver.loadResolvedDependencySymbols()
 	if pd.aborted() || dependencyDriver.aborted() {
 		return

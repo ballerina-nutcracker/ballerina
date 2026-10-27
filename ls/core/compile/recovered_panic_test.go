@@ -17,13 +17,18 @@
 package compile
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -304,6 +309,61 @@ func TestRecoveredPanicSealedWaitersAndLaterGeneration(t *testing.T) {
 	svc.Flush()
 	if got := succeeded.slice(); len(got) != 1 || got[0] != 2 {
 		t.Errorf("later generation successes = %v, want [2]", got)
+	}
+}
+
+type panicLogWriter struct {
+	bytes.Buffer
+	closes int
+}
+
+func (w *panicLogWriter) Close() error {
+	w.closes++
+	return nil
+}
+
+func TestRecoveredPanicHostWriter(t *testing.T) {
+	t.Parallel()
+	var logs panicLogWriter
+	logger := observability.New(&logs)
+	bus := event.New(event.WithLogf(func(string, ...any) { t.Error("compile panic used subscriber diagnostics hook") }))
+	defer bus.Close()
+	projectService := workspace.New(os.DirFS, bus)
+	svc := New(projectService, bus, WithDebounce(0), WithLogger(logger), WithLogger(nil))
+	defer svc.Shutdown()
+	if svc.logger != logger {
+		t.Fatal("nil logger option replaced the injected logger")
+	}
+	svc.compileFn = func(*projects.Package, compileCycle) cycleResult { panic("host-writer panic") }
+	u := openDoc(t, projectService, tempFileURI(t, "log-panic.bal").String(), "public function main() {}\n")
+	svc.Flush()
+	svc.Shutdown()
+	out := logs.String()
+	for _, want := range []string{"level=ERROR", "recovered=\"host-writer panic\"", "root=", u.Path(), "generation=1", "stack=", "runtime/debug.Stack", "runCycle", "TestRecoveredPanicHostWriter"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("host log missing %q: %s", want, out)
+		}
+	}
+	if got := strings.Count(out, "level=ERROR"); got != 1 {
+		t.Errorf("recovery records = %d, want 1", got)
+	}
+	if logs.closes != 0 {
+		t.Errorf("compiler closed host writer %d times", logs.closes)
+	}
+}
+
+func TestRecoveredPanicNilLogger(t *testing.T) {
+	t.Parallel()
+	projectService, svc, _ := newEngineTestServices(t)
+	WithLogger(nil)(svc)
+	if svc.logger == nil {
+		t.Fatal("nil logger option removed the quiet default")
+	}
+	svc.compileFn = func(*projects.Package, compileCycle) cycleResult { panic("quiet panic") }
+	u := openDoc(t, projectService, tempFileURI(t, "quiet-panic.bal").String(), "public function main() {}\n")
+	svc.Flush()
+	if !svc.generationFailed(u.Path(), 1) {
+		t.Fatal("nil logger prevented panic recovery")
 	}
 }
 

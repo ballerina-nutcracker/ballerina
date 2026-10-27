@@ -21,10 +21,12 @@ package compile
 
 import (
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -76,13 +78,14 @@ type cycleResult struct {
 }
 
 // compileCycle supplies live text, prior module state, a supersession check,
-// and a callback to commit the next generation's module state. Nil callbacks
-// disable their respective operations.
+// a module-state commit callback, and the logger for dependency recovery.
+// Nil callbacks disable their operations; a nil logger uses the quiet default.
 type compileCycle struct {
 	openText   textProvider
 	priorState *packageGenState
 	stale      func() bool
 	commit     func(map[projects.ModuleID]moduleGenSnapshot)
+	logger     *observability.Logger
 }
 
 // compileFunc compiles a package and extracts diagnostics. runCycle recovers
@@ -91,6 +94,16 @@ type compileFunc func(pkg *projects.Package, cyc compileCycle) cycleResult
 
 // Option configures the CompilationService at construction.
 type Option func(*CompilationService)
+
+// WithLogger sets the logger used for recovered compilation panics.
+// Logging is disabled by default; a nil logger leaves the current logger unchanged.
+func WithLogger(logger *observability.Logger) Option {
+	return func(s *CompilationService) {
+		if logger != nil {
+			s.logger = logger
+		}
+	}
+}
 
 // WithMaxWorkers overrides the worker pool size.
 func WithMaxWorkers(n int) Option {
@@ -133,6 +146,7 @@ type CompilationService struct {
 	bus       *event.Bus
 	store     *SnapshotStore
 	compileFn compileFunc
+	logger    *observability.Logger
 
 	cycleMu    sync.Mutex
 	inFlight   map[string]bool
@@ -178,6 +192,7 @@ func New(projectService *workspace.ProjectService, bus *event.Bus, opts ...Optio
 		bus:            bus,
 		store:          newSnapshotStore(16, projectService.Generation),
 		compileFn:      realCompilePackage,
+		logger:         observability.NewNoop(),
 		inFlight:       make(map[string]bool),
 		pending:        make(map[string]*cycleRequest),
 		debounce:       150 * time.Millisecond,
@@ -335,6 +350,7 @@ func (s *CompilationService) newCompileCycle(req *cycleRequest) compileCycle {
 	return compileCycle{
 		openText:   s.openText,
 		priorState: s.genStateFor(root),
+		logger:     s.logger,
 		stale: func() bool {
 			current, ok := s.reader.Generation(root)
 
@@ -375,6 +391,7 @@ func (s *CompilationService) runCycle(req *cycleRequest) {
 			if r := recover(); r != nil {
 				panicked = true
 				s.markGenerationFailed(req.root, req.gen)
+				s.logger.Error("compile: recovered panic", "recovered", r, "root", req.root, "generation", req.gen, "stack", string(debug.Stack()))
 				s.bus.Publish(event.NewCompilationFailedEvent(req.root, req.gen))
 			}
 		}()
@@ -526,6 +543,9 @@ func realCompilePackage(pkg *projects.Package, cyc compileCycle) cycleResult {
 	compEnv := pkg.Project().Environment().CompilerEnvironment()
 
 	pd := newPackageDriver(pkg, cyc.openText, cyc.priorState, cyc.stale)
+	if cyc.logger != nil {
+		pd.logger = cyc.logger
+	}
 	pd.advanceAll(stageCFGAnalyzed)
 	if pd.aborted() {
 		return cycleResult{}
