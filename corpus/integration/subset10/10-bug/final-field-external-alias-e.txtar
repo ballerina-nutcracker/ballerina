@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-alias-e.bal:24:5
+   |
+24 |     t.a = 2; // @error final field written through an alias
+   |     ^^^

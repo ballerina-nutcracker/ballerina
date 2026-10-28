@@ -305,6 +305,9 @@ type (
 	// FunctionSignatureRef identifies an untyped function signature in the compiler environment. Zero is unset.
 	FunctionSignatureRef int
 
+	// ObjectSignatureRef identifies an untyped object signature in the compiler environment. Zero is unset.
+	ObjectSignatureRef int
+
 	ModuleScope struct {
 		Main       *SymbolSpace
 		Prefix     map[string]ExportedSymbolSpace
@@ -579,6 +582,28 @@ func NewUntypedFunctionSignature(params []Param, hasRest bool) UntypedFunctionSi
 		Default:                defaults,
 		IncludedRecordMetadata: inclRecord,
 	}
+}
+
+// UntypedObjectSignature is the data the compiler keeps about a class that the
+// type system does not carry: the names of its final fields.
+type UntypedObjectSignature struct {
+	finalFields []string
+}
+
+// NewUntypedObjectSignature takes the names of the final fields in any order.
+func NewUntypedObjectSignature(finalFields []string) UntypedObjectSignature {
+	sorted := slices.Clone(finalFields)
+	slices.Sort(sorted)
+	return UntypedObjectSignature{finalFields: slices.Compact(sorted)}
+}
+
+func (sig UntypedObjectSignature) IsFinal(field string) bool {
+	return slices.Contains(sig.finalFields, field)
+}
+
+// FinalFields returns the names of the final fields in sorted order.
+func (sig UntypedObjectSignature) FinalFields() []string {
+	return slices.Clone(sig.finalFields)
 }
 
 func (sig *UntypedFunctionSignature) SetIncludedRecordMetadata(index int, metadata IncludedRecordMetadata) {

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-param-e.bal:23:5
+   |
+23 |     p.a = 2; // @error final field written through a parameter
+   |     ^^^
+
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-param-e.bal:27:5
+   |
+27 |     moduleVar.a = 3; // @error final field written through a module variable
+   |     ^^^^^^^^^^^

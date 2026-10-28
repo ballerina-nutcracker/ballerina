@@ -296,6 +296,10 @@ func validateAssignment(cx scope.Context, a ast.AssignmentNode) {
 			cx.SemanticErr(strings.Join([]string{"cannot assign a value to final field '", name, "'"}, ""), access.GetPosition())
 			return
 		}
+		if name, final := scope.FinalFieldWrittenThroughReceiver(cx, access); final {
+			cx.SemanticErr(strings.Join([]string{"cannot update 'final' object field '", name, "'"}, ""), access.GetPosition())
+			return
+		}
 	}
 	lhs, ok := dispatchTarget(cx, a.GetVariable())
 	if !ok {
