@@ -28,7 +28,7 @@ class C {
     bb0 {
       %2 = ConstantLoad 20
       %3 = ConstantLoad b
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

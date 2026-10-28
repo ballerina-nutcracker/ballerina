@@ -1,20 +1,20 @@
 module $anon.. v 0.0.0;
 class IntArgs {
-  next nil|{| value: int, never... |}
-  lax json
   ann nil|{| name: string, never... |}
   filtered xml
+  lax json
+  next nil|{| value: int, never... |}
 
   init(nil|{| value: int, never... |},json,nil|{| name: string, never... |},xml,int) -> nil{
     bb0 {
       %7 = ConstantLoad next
-      self[%7] = next;
+      self[%7] = next (unsafe);
       %8 = ConstantLoad lax
-      self[%8] = lax;
+      self[%8] = lax (unsafe);
       %9 = ConstantLoad ann
-      self[%9] = ann;
+      self[%9] = ann (unsafe);
       %10 = ConstantLoad filtered
-      self[%10] = filtered;
+      self[%10] = filtered (unsafe);
       _ = marker;
       return;
     }

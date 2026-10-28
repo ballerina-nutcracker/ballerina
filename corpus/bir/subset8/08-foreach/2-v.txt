@@ -8,11 +8,11 @@ class WordIterator {
     bb0 {
       %4 = ConstantLoad 0
       %5 = ConstantLoad idx
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       %6 = ConstantLoad data
-      self[%6] = data;
+      self[%6] = data (unsafe);
       %7 = ConstantLoad len
-      self[%7] = len;
+      self[%7] = len (unsafe);
       return;
     }
   }
@@ -49,7 +49,7 @@ class WordIterator {
       %9 = ConstantLoad 1
       %10 = %9;
       %11 = + %8 %10;
-      (1, self)[%6] = %11;
+      (1, self)[%6] = %11 (unsafe);
       %12 = ConstantLoad value
       %13 = newMap {| value: string, never... |}{%12=val}
       (1, %0) = %13;
@@ -68,7 +68,7 @@ class Words {
       %4 = ConstantLoad 2
       %5 = newArray [string...][%4]{%2, %3}
       %6 = ConstantLoad data
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       return;
     }
   }

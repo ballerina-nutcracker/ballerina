@@ -1,0 +1,102 @@
+module $anon.. v 0.0.0;
+class C {
+  a int
+  b int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad a
+      self[%3] = %2 (unsafe);
+      %4 = ConstantLoad 0
+      %5 = ConstantLoad b
+      self[%5] = %4 (unsafe);
+      return;
+    }
+  }
+}
+write(object { int a; int b; public function init() returns nil },int) -> nil{
+  bb0 {
+    %3 = ConstantLoad a
+    c[%3] = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:C
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    %6 = ConstantLoad 2
+    %7 = ConstantLoad b
+    c[%7] = %6;
+    %9 = ConstantLoad b
+    %8 = c[%9];
+    %10 = %8;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    GOTO bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad 2
+    %14 = %13;
+    %15 = write(c,%14) -> bb7;
+  }
+  bb7 {
+    %12 = %15;
+    GOTO bb8;
+  }
+  bb8 {
+    first = %12;
+    %17 = first is error
+    %18 = %17;
+    %19 = println(%18) -> bb9;
+  }
+  bb9 {
+    GOTO bb10;
+  }
+  bb10 {
+    %21 = ConstantLoad 3
+    %22 = %21;
+    %23 = write(c,%22) -> bb11;
+  }
+  bb11 {
+    %20 = %23;
+    GOTO bb12;
+  }
+  bb12 {
+    second = %20;
+    %25 = second is error
+    %26 = %25;
+    %27 = println(%26) -> bb13;
+  }
+  bb13 {
+    %29 = ConstantLoad a
+    %28 = c[%29];
+    %30 = %28;
+    %31 = println(%30) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+  
+  error-table {
+    [bb6, bb7] -> bb8, %12
+    [bb10, bb11] -> bb12, %20
+  }
+}

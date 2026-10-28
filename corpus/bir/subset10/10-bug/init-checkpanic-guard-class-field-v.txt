@@ -34,7 +34,7 @@ class Holder {
     bb5 {
       PushScopeFrame 1
       %0 = ConstantLoad x
-      (1, self)[%0] = (1, v);
+      (1, self)[%0] = (1, v) (unsafe);
       PopScopeFrame
       return;
     }

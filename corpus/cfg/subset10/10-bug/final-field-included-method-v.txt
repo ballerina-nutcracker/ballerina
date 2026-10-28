@@ -1,0 +1,43 @@
+(C
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (literal 2))
+    )
+  )
+  (reset
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (literal 3))
+    )
+  )
+)
+(P
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (literal 1))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation reset expr:
+        (simple-var-ref c) ()))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+  )
+)

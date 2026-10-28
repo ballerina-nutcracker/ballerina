@@ -1,21 +1,23 @@
 module $anon.. v 0.0.0;
 class C {
+  x int
+  y int
   z int
 
   init() -> nil{
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad z
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad 1
       %5 = ConstantLoad x
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       %6 = ConstantLoad 2
       %7 = ConstantLoad y
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       %8 = ConstantLoad 3
       %9 = ConstantLoad z
-      self[%9] = %8;
+      self[%9] = %8 (unsafe);
       return;
     }
   }

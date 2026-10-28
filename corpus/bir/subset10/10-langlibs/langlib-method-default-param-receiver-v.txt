@@ -5,7 +5,7 @@ class Holder {
   init(nil|int) -> nil{
     bb0 {
       %3 = ConstantLoad pos
-      self[%3] = pos;
+      self[%3] = pos (unsafe);
       return;
     }
   }

@@ -9,7 +9,7 @@ class SimpleListener {
       _ = svc;
       _ = attachPoint;
       %6 = ConstantLoad s
-      self[%6] = svc;
+      self[%6] = svc (unsafe);
       return;
     }
   }
@@ -19,7 +19,7 @@ class SimpleListener {
       _ = svc;
       %4 = ConstantLoad <nil>
       %5 = ConstantLoad s
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       return;
     }
   }
@@ -69,7 +69,7 @@ class SimpleListener {
     bb0 {
       %2 = ConstantLoad <nil>
       %3 = ConstantLoad s
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -96,7 +96,7 @@ class $service$0 {
     bb0 {
       %2 = ConstantLoad 10
       %3 = ConstantLoad x
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

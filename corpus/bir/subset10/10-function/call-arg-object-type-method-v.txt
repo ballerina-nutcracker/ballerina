@@ -6,7 +6,7 @@ class Square {
     bb0 {
       %2 = ConstantLoad 2
       %3 = ConstantLoad side
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
