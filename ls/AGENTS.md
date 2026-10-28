@@ -1,4 +1,4 @@
-Conventions for the Ballerina language server (`ls/` tree). Root `AGENTS.md` rules (unexported-by-default, `*Base` embedding, `SymbolRef` map keys, platform boundaries, license headers) all apply here too. The iteration process — research, HIL design gate, record — is the `ls-iteration` skill (`.agents/skills/ls-iteration/`); research source paths are in its `sources.md`.
+Conventions for the Ballerina language server (`ls/` tree). Root `AGENTS.md` rules (unexported-by-default, `*Base` embedding, `SymbolRef` map keys, platform boundaries, license headers) all apply here too.
 
 ## Package roles
 
@@ -11,7 +11,7 @@ Handlers must not talk to the transport directly; they take typed params and ret
 ## LSP-specific rules
 
 - Positions on the wire are UTF-16 code-unit based (LSP default). Compiler positions are byte/rune based — convert at the protocol boundary, never inside handlers or compiler code.
-- Target protocol version is 3.18. Go has no public 3.18 library; the protocol package is ours. gopls (path in the skill's `sources.md`) is the reference for framing/dispatch patterns.
+- Target protocol version is 3.18. Go has no public 3.18 library; the protocol package is ours. gopls is the reference for framing/dispatch patterns.
 - The host injects transport streams, filesystem access and a log writer. No direct production filesystem access inside `ls/` (the offline protocol generator is exempt).
 - Keep project keys, filesystem roots and compiler names distinct; single files sharing a folder need separate keys.
 - Logs must never reach protocol output. The host owns the log writer; the server must not close it.
@@ -26,23 +26,18 @@ Layout, per feature:
 
 ```
 ls/corpus/<feature>/testdata/
-  <scenario>.bal            # source fixture
-  <scenario>.<method>.json  # request params + golden expected response
+  <scenario>.json  # transcript: messages to send + golden server output
+  <scenario>.bal   # optional source the transcript names in "source"
 ```
 
-Example `record_field.hover.json`:
+Transcript fields (see `ls/corpus/sync/testdata/overlay-over-disk.json`):
 
-```json
-{
-  "position": {"line": 4, "character": 12},
-  "expected": {
-    "contents": {"kind": "markdown", "value": "```ballerina\nint age\n```"}
-  }
-}
-```
+- `messages` — JSON-RPC messages sent to the LS, in order. `"${source}"` is replaced with the content of the `source` file and `${root}` with the temporary workspace root URI. `$test/writeFile` and `$test/deleteFile` change files on disk between batches.
+- `expected` — every message the LS writes, in order (the golden).
+- `source` — optional `.bal` file next to the transcript.
+- `sources` — optional map of root-relative path to file content, written to the temporary workspace root before the session starts.
 
-- Driver: an in-process fake-transport session — start the LS, feed the fixture as a real JSON-RPC request (real framing, real dispatch), diff the response against `expected`.
-- Golden updates use the repo's existing flow: `go test ./ls/corpus --update`, then `git diff` the goldens and revert unrelated drift.
-- This mirrors the Java LS convention (`source/*.bal` + `configs/*.json`) inside this repo's corpus/`--update` culture.
+- Driver: `TestCorpus` runs each `*/testdata/*.json` transcript in an in-process fake-transport session (real framing, real dispatch) and diffs the output against `expected`.
+- Golden updates: `go test ./ls/corpus -run 'TestCorpus/<feature>/testdata/<scenario>.json' -update`, then `git diff` the goldens and revert unrelated drift.
 
 The driver is implemented in `ls/corpus/corpus_test.go`; extend it only when a fixture cannot express the scenario through the existing real-framing session.
