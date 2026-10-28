@@ -30,6 +30,7 @@ use (
 	./semtypes
 	./st
 	./testplan
+	./testrunner
 	./tools
 	./values
 )
@@ -79,6 +80,8 @@ replace github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0 => ./semtypes
 replace github.com/ballerina-nutcracker/ballerina/st v0.7.0 => ./st
 
 replace github.com/ballerina-nutcracker/ballerina/testplan v0.7.0 => ./testplan
+
+replace github.com/ballerina-nutcracker/ballerina/testrunner v0.7.0 => ./testrunner
 
 replace github.com/ballerina-nutcracker/ballerina/tools v0.7.0 => ./tools
 
