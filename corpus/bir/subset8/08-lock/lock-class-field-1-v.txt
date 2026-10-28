@@ -35,7 +35,7 @@ class Counter {
       %5 = %4;
       %0 = + %3 %5;
       %6 = ConstantLoad count
-      (1, self)[%6] = %0;
+      (1, self)[%6] = %0 (unsafe);
       PopScopeFrame
       lock-end "$anon/.:Counter.count" GOTO bb2;
     }
@@ -47,7 +47,7 @@ class Counter {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad count
-      self[%3] = initial;
+      self[%3] = initial (unsafe);
       return;
     }
   }

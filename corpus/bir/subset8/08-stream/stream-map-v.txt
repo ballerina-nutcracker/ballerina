@@ -6,7 +6,7 @@ class Counter {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad n
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -21,7 +21,7 @@ class Counter {
       %8 = %7;
       %5 = + %6 %8;
       %9 = ConstantLoad n
-      self[%9] = %5;
+      self[%9] = %5 (unsafe);
       %11 = current;
       %12 = ConstantLoad 3
       %13 = %12;
@@ -67,7 +67,7 @@ class Doubler {
     }
     bb4 {
       %6 = ConstantLoad c
-      self[%6] = %4;
+      self[%6] = %4 (unsafe);
       return;
     }
   }

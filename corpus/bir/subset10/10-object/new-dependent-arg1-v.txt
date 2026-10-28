@@ -8,7 +8,7 @@ class IntHolder {
       %6 = marker;
       %4 = + %5 %6;
       %7 = ConstantLoad v
-      self[%7] = %4;
+      self[%7] = %4 (unsafe);
       return;
     }
   }
@@ -19,7 +19,7 @@ class FloatHolder {
   init(float,string) -> nil{
     bb0 {
       %4 = ConstantLoad v
-      self[%4] = v;
+      self[%4] = v (unsafe);
       _ = marker;
       return;
     }

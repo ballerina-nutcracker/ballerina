@@ -6,9 +6,9 @@ class Node {
   init(int,nil|object { public function init(int, nil|...) returns nil; nil|... next; int value }) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       %5 = ConstantLoad next
-      self[%5] = next;
+      self[%5] = next (unsafe);
       return;
     }
   }

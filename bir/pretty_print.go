@@ -357,6 +357,8 @@ func (p *PrettyPrinter) PrintFieldAccess(access *FieldAccess) string {
 	switch access.Kind {
 	case InstructionKindMapStore, InstructionKindArrayStore, InstructionKindObjectStore:
 		return fmt.Sprintf("%s[%s] = %s;", p.PrintOperand(*access.LhsOp), p.PrintOperand(*access.KeyOp), p.PrintOperand(*access.RhsOp))
+	case InstructionKindObjectUnsafeStore:
+		return fmt.Sprintf("%s[%s] = %s (unsafe);", p.PrintOperand(*access.LhsOp), p.PrintOperand(*access.KeyOp), p.PrintOperand(*access.RhsOp))
 	case InstructionKindMapLoad, InstructionKindArrayLoad, InstructionKindObjectLoad, InstructionKindStringLoad:
 		return fmt.Sprintf("%s = %s[%s];", p.PrintOperand(*access.LhsOp), p.PrintOperand(*access.RhsOp), p.PrintOperand(*access.KeyOp))
 	case InstructionKindArrayFillingLoad, InstructionKindMapFillingLoad:

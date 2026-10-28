@@ -116,7 +116,7 @@ func execNewObject(ctx *extern.Context, newObject *bir.NewObject, frame *Frame) 
 	tmpl := ctx.Env.Registry.(*modules.Registry).GetClassTemplate(newObject.ClassDefRef)
 	fieldValues := make(map[string]values.BalValue, tmpl.FieldCount)
 	objType := newObject.GetLhsOperand().VariableDcl.GetType()
-	obj := values.NewObject(objType, fieldValues, tmpl.MethodKeys, tmpl.RTable, tmpl.Annotations)
+	obj := values.NewObject(objType, fieldValues, tmpl.MethodKeys, tmpl.FinalFields, tmpl.RTable, tmpl.Annotations)
 	setOperandValue(ctx, newObject.GetLhsOperand(), frame, obj)
 }
 
@@ -185,8 +185,16 @@ func execMapLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
 func execObjectStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
 	obj := getOperandValue(ctx, access.LhsOp, frame).(*values.Object)
 	field := getOperandValue(ctx, access.KeyOp, frame).(string)
-	value := getOperandValue(ctx, access.RhsOp, frame)
-	obj.Put(field, value)
+	if obj.IsFinal(field) {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("cannot update 'final' object field '%s'", field)))
+	}
+	obj.Put(field, getOperandValue(ctx, access.RhsOp, frame))
+}
+
+func execObjectUnsafeStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
+	obj := getOperandValue(ctx, access.LhsOp, frame).(*values.Object)
+	field := getOperandValue(ctx, access.KeyOp, frame).(string)
+	obj.Put(field, getOperandValue(ctx, access.RhsOp, frame))
 }
 
 func execObjectLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {

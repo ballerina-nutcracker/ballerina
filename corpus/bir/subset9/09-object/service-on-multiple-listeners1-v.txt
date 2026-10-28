@@ -42,7 +42,7 @@ class TaggedListener {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad tag
-      self[%3] = tag;
+      self[%3] = tag (unsafe);
       return;
     }
   }

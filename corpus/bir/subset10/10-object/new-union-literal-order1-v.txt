@@ -5,7 +5,7 @@ class Decimal {
   init(decimal) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = value;
+      self[%3] = value (unsafe);
       return;
     }
   }
@@ -16,7 +16,7 @@ class Float {
   init(float,int) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       _ = marker;
       return;
     }
@@ -28,7 +28,7 @@ class HexFloat {
   init(float,string) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       _ = marker;
       return;
     }
@@ -40,7 +40,7 @@ class HexDecimal {
   init(decimal,int) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       _ = marker;
       return;
     }

@@ -29,23 +29,23 @@ class Buffer {
     bb0 {
       %2 = ConstantLoad abc
       %3 = ConstantLoad lexeme
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad 0
       %5 = ConstantLoad count
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       %6 = ConstantLoad 0
       %7 = ConstantLoad item
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       %8 = ConstantLoad 0
       %9 = ConstantLoad value
-      self[%9] = %8;
+      self[%9] = %8 (unsafe);
       %10 = ConstantLoad 0
       %11 = ConstantLoad values
-      self[%11] = %10;
+      self[%11] = %10 (unsafe);
       %12 = ConstantLoad 2
       count = %12;
       %14 = ConstantLoad count
-      self[%14] = count;
+      self[%14] = count (unsafe);
       return;
     }
   }
@@ -113,7 +113,7 @@ class Buffer {
       %8 = ConstantLoad 10
       %9 = %8;
       %10 = + %7 %9;
-      (1, self)[%5] = %10;
+      (1, self)[%5] = %10 (unsafe);
       %12 = (1, $desugar$1);
       %13 = ConstantLoad 1
       %14 = %13;
@@ -140,7 +140,7 @@ class Buffer {
       lexeme = %2;
       %5 = ConstantLoad 
       %6 = ConstantLoad lexeme
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       %0 = lexeme;
       return;
     }
@@ -153,18 +153,19 @@ class Parent {
     bb0 {
       %2 = ConstantLoad 7
       %3 = ConstantLoad inherited
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
 }
 class Child {
+  inherited int
 
   init() -> nil{
     bb0 {
       %2 = ConstantLoad 7
       %3 = ConstantLoad inherited
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -190,7 +191,7 @@ class Resource {
     bb0 {
       %2 = ConstantLoad 8
       %3 = ConstantLoad count
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -334,7 +335,7 @@ $anonFunc$_0() -> int{
     %8 = ConstantLoad 10
     %9 = %8;
     %10 = + %7 %9;
-    (1, self)[%5] = %10;
+    (1, self)[%5] = %10 (unsafe);
     %0 = (1, count);
     return;
   }

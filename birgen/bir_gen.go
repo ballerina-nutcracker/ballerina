@@ -65,6 +65,7 @@ type functionContext struct {
 	pkgCtx       *packageContext
 	retVarDcl    *bir.BIRLocalVariableDcl // the function's return variable (frame index 0 of the root frame)
 	isClosure    bool                     // true iff captures variables otherwise treated as a simple lambda
+	selfRef      model.SymbolRef          // the class `self`; set only on a method root
 }
 
 func (fn *functionContext) addBB() *bir.BIRBasicBlock {
@@ -535,6 +536,7 @@ func transformFunctionSignature(root *funcBlock, astFunc *ast.BLangFunction, sel
 	retOp := root.addLocalVarInner(model.Name("%0"), funcSym.TypedSignature().ReturnType)
 	root.fn.retVarDcl = retOp.VariableDcl.(*bir.BIRLocalVariableDcl)
 	if selfSymbolRef != nil {
+		root.fn.selfRef = *selfSymbolRef
 		root.addLocalVar(model.Name("self"), ctx.CompilerContext.SymbolType(*selfSymbolRef), *selfSymbolRef)
 	}
 	requiredParams := make([]bir.BIRParameter, len(astFunc.RequiredParams))
@@ -674,6 +676,7 @@ func compoundAssignmentToMember(ctx context, curBB *bir.BIRBasicBlock, stmt *ast
 	curBB = indexEffect.block
 
 	loadKind, storeKind := memberAccessInstructionKinds(ctx.function().pkgCtx.typeContext(), ref.Expr.Type())
+	storeKind = fieldStoreKind(ctx, ref.Expr, storeKind)
 
 	lhsValue := ctx.addTempVar(ref.Type())
 	load := bir.NewFieldAccess(loadKind, lhsValue, indexEffect.result, containerEffect.result, pos)
@@ -714,6 +717,30 @@ func memberAccessInstructionKinds(tyCtx semtypes.Context, containerType semtypes
 	default:
 		return bir.InstructionKindMapLoad, bir.InstructionKindMapStore
 	}
+}
+
+// fieldStoreKind returns the unchecked object store when the compiler has
+// validated the write: the receiver is the class's own `self`. Every other
+// object store checks at runtime that the field is not final.
+func fieldStoreKind(ctx context, receiver ast.BLangExpression, storeKind bir.InstructionKind) bir.InstructionKind {
+	if storeKind == bir.InstructionKindObjectStore && isUnnarrowedSelf(ctx, receiver) {
+		return bir.InstructionKindObjectUnsafeStore
+	}
+	return storeKind
+}
+
+// isUnnarrowedSelf reports whether receiver is a reference to the `self` of
+// the class whose method ctx belongs to, ignoring type narrowing of `self`.
+func isUnnarrowedSelf(ctx context, receiver ast.BLangExpression) bool {
+	ref, ok := receiver.(*ast.BLangVarRef)
+	if !ok {
+		return false
+	}
+	fn := ctx.function()
+	for fn.enclosing != nil {
+		fn = fn.enclosing.function()
+	}
+	return !fn.selfRef.IsEmpty() && ctx.unnarrowedSymbol(ref.Symbol()) == fn.selfRef
 }
 
 func continueStatement(ctx context, curBB *bir.BIRBasicBlock, stmt *ast.BLangContinue) (statementEffect, bool) {
@@ -819,6 +846,7 @@ func assignToMemberStatement(ctx context, varRef *ast.BLangIndexBasedAccess, val
 	}
 	currBB = indexEffect.block
 	_, storeKind := memberAccessInstructionKinds(ctx.function().pkgCtx.typeContext(), varRef.Expr.Type())
+	storeKind = fieldStoreKind(ctx, varRef.Expr, storeKind)
 	fieldAccess := bir.NewFieldAccess(storeKind, containerRefEffect.result, indexEffect.result, valueEffect.result, pos)
 	currBB.Instructions = append(currBB.Instructions, fieldAccess)
 	return statementEffect{block: currBB}, true
@@ -2553,12 +2581,39 @@ func transformClassDefinition(ctx *packageContext, class *ast.BLangClassDefiniti
 	resourceLookupKey := func(rm *ast.BLangResourceMethod) string {
 		return buildFunctionLookupKeyFromSymbol(ctx, rm.Symbol())
 	}
-	birClassDef := transformClassBody(ctx, class.Scope(), classLookupKey, model.Name(className), class.Fields, class.InitFunction, class.Methods, class.ResourceMethods, methodLookupKey, resourceLookupKey, class.GetPosition())
+	birClassDef := transformClassBody(ctx, class.Scope(), classLookupKey, model.Name(className), classFieldDescriptors(ctx, class), class.InitFunction, class.Methods, class.ResourceMethods, methodLookupKey, resourceLookupKey, class.GetPosition())
 	if birClassDef == nil {
 		return nil
 	}
 	birClassDef.Annotations = ctx.CompilerContext.SymbolAnnotationValues(class.Symbol())
 	return birClassDef
+}
+
+// classFieldDescriptors returns every field of class, declared and included.
+func classFieldDescriptors(ctx *packageContext, class *ast.BLangClassDefinition) []*model.FieldDescriptor {
+	var fields []*model.FieldDescriptor
+	for _, member := range ctx.CompilerContext.SymbolMembers(class.Symbol()) {
+		if field, ok := member.(*model.FieldDescriptor); ok {
+			fields = append(fields, field)
+		}
+	}
+	return fields
+}
+
+// serviceFieldDescriptors returns the fields of svc. A service cannot include
+// types, so these are the fields it declares.
+func serviceFieldDescriptors(ctx *packageContext, svc *ast.BLangService) []*model.FieldDescriptor {
+	fields := make([]*model.FieldDescriptor, len(svc.Fields))
+	for i, field := range svc.Fields {
+		var flags model.FieldDescriptorFlag
+		if field.IsFinal() {
+			flags |= model.FieldDescriptorFinal
+		}
+		fd := model.NewFieldDescriptor(field.GetName().GetValue(), flags, field.IsPublic())
+		fd.SetMemberType(ctx.CompilerContext.SymbolType(field.Symbol()))
+		fields[i] = &fd
+	}
+	return fields
 }
 
 func transformService(ctx *packageContext, svc *ast.BLangService, idx int) *bir.BIRClassDef {
@@ -2573,7 +2628,7 @@ func transformService(ctx *packageContext, svc *ast.BLangService, idx int) *bir.
 		sym := ctx.CompilerContext.GetSymbol(rm.Symbol())
 		return buildLookupKey(pkg, className+"."+sym.Name())
 	}
-	birClassDef := transformClassBody(ctx, svc.Scope(), classLookupKey, model.Name(className), svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods, methodLookupKey, resourceLookupKey, svc.GetPosition())
+	birClassDef := transformClassBody(ctx, svc.Scope(), classLookupKey, model.Name(className), serviceFieldDescriptors(ctx, svc), svc.InitFunction, svc.Methods, svc.ResourceMethods, methodLookupKey, resourceLookupKey, svc.GetPosition())
 	if birClassDef == nil {
 		return nil
 	}
@@ -2586,7 +2641,7 @@ func transformClassBody(
 	classScope model.Scope,
 	classLookupKey string,
 	className model.Name,
-	fields []*ast.BLangVariable,
+	fields []*model.FieldDescriptor,
 	initFn *ast.BLangFunction,
 	methods map[string]*ast.BLangFunction,
 	resourceMethods []*ast.BLangResourceMethod,
@@ -2610,8 +2665,9 @@ func transformClassBody(
 
 	for _, field := range fields {
 		birClassDef.Fields = append(birClassDef.Fields, bir.ObjectField{
-			Name: field.GetName().GetValue(),
-			Ty:   ctx.CompilerContext.SymbolType(field.Symbol()),
+			Name:  field.MemberName(),
+			Ty:    field.MemberType(),
+			Final: field.IsFinal(),
 		})
 	}
 
@@ -2736,6 +2792,7 @@ func transformResourceMethodSignature(root *funcBlock, rm *ast.BLangResourceMeth
 	retOp := root.addLocalVarInner(model.Name("%0"), funcSym.TypedSignature().ReturnType)
 	root.fn.retVarDcl = retOp.VariableDcl.(*bir.BIRLocalVariableDcl)
 	if selfSymbolRef != nil {
+		root.fn.selfRef = *selfSymbolRef
 		root.addLocalVar(model.Name("self"), ctx.CompilerContext.SymbolType(*selfSymbolRef), *selfSymbolRef)
 	}
 	var requiredParams []bir.BIRParameter

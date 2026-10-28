@@ -42,6 +42,7 @@ func newProcessObject(handle pal.ProcessHandle) *values.Object {
 		},
 		nil,
 		nil,
+		nil,
 	)
 }
 

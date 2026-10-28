@@ -23,7 +23,7 @@ class Counter {
       %13 = ConstantLoad 1
       %14 = %13;
       %15 = + %12 %14;
-      self[%10] = %15;
+      self[%10] = %15 (unsafe);
       return;
     }
   }
@@ -34,12 +34,12 @@ class Counter {
       %4 = ConstantLoad 1
       %5 = newArray [int...][%4]{%3}
       %6 = ConstantLoad values
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       %7 = ConstantLoad 0
       %8 = ConstantLoad count
-      self[%8] = %7;
+      self[%8] = %7 (unsafe);
       %9 = ConstantLoad a
-      self[%9] = a;
+      self[%9] = a (unsafe);
       %11 = a;
       %12 = ConstantLoad 0
       %13 = %12;
@@ -50,7 +50,7 @@ class Counter {
       PushScopeFrame 2
       %0 = ConstantLoad 1
       %1 = ConstantLoad b
-      (1, self)[%1] = %0;
+      (1, self)[%1] = %0 (unsafe);
       PopScopeFrame
       GOTO bb3;
     }
@@ -58,7 +58,7 @@ class Counter {
       PushScopeFrame 2
       %0 = ConstantLoad 2
       %1 = ConstantLoad b
-      (1, self)[%1] = %0;
+      (1, self)[%1] = %0 (unsafe);
       PopScopeFrame
       GOTO bb3;
     }

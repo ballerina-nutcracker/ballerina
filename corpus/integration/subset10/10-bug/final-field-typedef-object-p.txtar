@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: cannot update 'final' object field 'b'
+        at main(final-field-typedef-object-p.bal:29)

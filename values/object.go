@@ -27,6 +27,7 @@ type Object struct {
 	Type        semtypes.SemType
 	fields      sync.Map // string -> BalValue
 	methodKeys  map[string]string
+	finalFields map[string]struct{}
 	rtable      map[string][]ResourceEntry
 	annotations AnnotationValues
 }
@@ -54,12 +55,17 @@ func LiteralPathSegment(seg ResourcePathSegmentDef) (string, bool) {
 	return s, ok
 }
 
-func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, rtable map[string][]ResourceEntry, annotations AnnotationValues) *Object {
+// NewObject creates an object. finalFields is the set of the class's final
+// fields; it is shared by reference and must not be mutated afterwards.
+func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, finalFields map[string]struct{}, rtable map[string][]ResourceEntry, annotations AnnotationValues) *Object {
 	if fieldValues == nil {
 		fieldValues = make(map[string]BalValue)
 	}
 	if methodKeys == nil {
 		methodKeys = make(map[string]string)
+	}
+	if finalFields == nil {
+		finalFields = make(map[string]struct{})
 	}
 	if rtable == nil {
 		rtable = make(map[string][]ResourceEntry)
@@ -70,6 +76,7 @@ func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys
 	o := &Object{
 		Type:        typ,
 		methodKeys:  methodKeys,
+		finalFields: finalFields,
 		rtable:      rtable,
 		annotations: annotations,
 	}
@@ -101,8 +108,17 @@ func (o *Object) AllResourceMethodNames() []string {
 	return names
 }
 
+// Put stores value in field without checking that the field is final. It is
+// unsafe for any write the compiler has not validated; Ballerina code writes
+// through the object store instructions, which do the check.
 func (o *Object) Put(field string, value BalValue) {
 	o.fields.Store(field, value)
+}
+
+// IsFinal reports whether field is a final field of the object's class.
+func (o *Object) IsFinal(field string) bool {
+	_, ok := o.finalFields[field]
+	return ok
 }
 
 func (o *Object) Get(field string) (BalValue, bool) {

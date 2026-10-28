@@ -1,5 +1,7 @@
 module $anon.. v 0.0.0;
 class Baz {
+  x int
+  y string
 
   getX() -> int{
     bb0 {
@@ -14,10 +16,10 @@ class Baz {
     bb0 {
       %2 = ConstantLoad 10
       %3 = ConstantLoad x
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad hello
       %5 = ConstantLoad y
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       return;
     }
   }

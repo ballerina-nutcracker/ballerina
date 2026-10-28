@@ -14,7 +14,7 @@ class Bar {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad x
-      self[%3] = x;
+      self[%3] = x (unsafe);
       return;
     }
   }
@@ -34,7 +34,7 @@ class Baz {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad x
-      self[%3] = x;
+      self[%3] = x (unsafe);
       return;
     }
   }

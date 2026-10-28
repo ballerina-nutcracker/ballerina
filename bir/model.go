@@ -74,8 +74,9 @@ type (
 	}
 
 	ObjectField struct {
-		Name string
-		Ty   semtypes.SemType
+		Name  string
+		Ty    semtypes.SemType
+		Final bool
 	}
 
 	BIRClassDef struct {
@@ -305,6 +306,7 @@ const (
 	InstructionKindWaitAll
 	InstructionKindXMLFilter
 	InstructionKindStringLoad
+	InstructionKindObjectUnsafeStore
 )
 
 func BB(number int) BIRBasicBlock {
