@@ -126,33 +126,9 @@ func (i *projectIndex) advanceLocked(entry *indexEntry) uint64 {
 	return entry.generation
 }
 
-// put preserves existing entry metadata except project and lastTouched.
-// It returns the stored entry and evicted root.
-func (i *projectIndex) put(entry *indexEntry) (*indexEntry, string) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	if existing, ok := i.entries[entry.sourceRoot]; ok {
-		existing.project = entry.project
-		existing.lastTouched = i.now()
-		return existing, ""
-	}
-	evictedRoot := ""
-	if len(i.entries) >= i.maxProjects {
-		evictedRoot = i.evictLRULocked()
-	}
-	i.entries[entry.sourceRoot] = entry
-	return entry, evictedRoot
-}
-
-// evictLRU removes the least-recently-touched background entry; if all entries
-// are active, removes the LRU active entry. Returns the evicted source root
-// (empty if the index was empty).
-func (i *projectIndex) evictLRU() string {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	return i.evictLRULocked()
-}
-
+// evictLRULocked removes the least-recently-touched background entry; if all
+// entries are active, removes the LRU active entry. Returns the evicted source
+// root (empty if the index was empty).
 func (i *projectIndex) evictLRULocked() string {
 	var victim *indexEntry
 	for _, entry := range i.entries {

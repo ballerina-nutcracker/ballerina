@@ -304,9 +304,9 @@ func TestEngineCancelSupersedesInFlight(t *testing.T) {
 	u := openDoc(t, projects, tempFileURI(t, "cancel.bal").String(), "public function main() {}\n")
 	<-started
 
-	svc.Cancel()
+	svc.cancel()
 	if g, ok := projects.Generation(u.Path()); !ok || g != 2 {
-		t.Fatalf("after Cancel: generation = %d ok=%v, want 2", g, ok)
+		t.Fatalf("after cancel: generation = %d ok=%v, want 2", g, ok)
 	}
 
 	releaseNow()

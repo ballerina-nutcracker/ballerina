@@ -131,14 +131,6 @@ func WithDebounce(d time.Duration) Option {
 	}
 }
 
-// WithQueueDepth is reserved and has no effect. Each root has one latest-wins
-// pending slot.
-func WithQueueDepth(n int) Option {
-	return func(s *CompilationService) {
-		_ = n
-	}
-}
-
 // CompilationService schedules per-project compilation and retains stable results.
 type CompilationService struct {
 	projects  *workspace.ProjectService
@@ -483,10 +475,10 @@ func (s *CompilationService) Shutdown() {
 	})
 }
 
-// Cancel supersedes every root with a running or pending cycle. Cycles check
+// cancel supersedes every root with a running or pending cycle. Cycles check
 // supersession at compilation boundaries and before stable publication.
 // Debounce timers and the event bus are unchanged.
-func (s *CompilationService) Cancel() {
+func (s *CompilationService) cancel() {
 	if s.isClosed() {
 		return
 	}

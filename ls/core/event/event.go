@@ -44,9 +44,6 @@ const (
 	ProjectKindTransitioned
 	// ProjectUpdated is published after a content republish.
 	ProjectUpdated
-	// CompilationStarted identifies a compile-cycle start. The compilation
-	// service does not currently publish it.
-	CompilationStarted
 	// CompilationSucceeded is published when a stable snapshot is stored.
 	CompilationSucceeded
 	// CompilationFailed is published when a compile panics.
@@ -175,22 +172,6 @@ func NewProjectUpdatedEvent(sourceRoot string, generation uint64) ProjectUpdated
 func (e ProjectUpdatedEvent) Kind() Kind         { return ProjectUpdated }
 func (e ProjectUpdatedEvent) SourceRoot() string { return e.root }
 func (e ProjectUpdatedEvent) Generation() uint64 { return e.generation }
-
-// CompilationStartedEvent identifies a compile-cycle start. The compilation
-// service does not currently publish it.
-type CompilationStartedEvent struct {
-	root       string
-	generation uint64
-}
-
-// NewCompilationStartedEvent constructs a CompilationStartedEvent.
-func NewCompilationStartedEvent(sourceRoot string, generation uint64) CompilationStartedEvent {
-	return CompilationStartedEvent{root: sourceRoot, generation: generation}
-}
-
-func (e CompilationStartedEvent) Kind() Kind         { return CompilationStarted }
-func (e CompilationStartedEvent) SourceRoot() string { return e.root }
-func (e CompilationStartedEvent) Generation() uint64 { return e.generation }
 
 // CompilationSucceededEvent is published when a stable snapshot is stored.
 type CompilationSucceededEvent struct {
