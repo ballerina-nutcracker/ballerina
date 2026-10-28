@@ -12,7 +12,7 @@ Handlers must not talk to the transport directly; they take typed params and ret
 
 - Positions on the wire are UTF-16 code-unit based (LSP default). Compiler positions are byte/rune based — convert at the protocol boundary, never inside handlers or compiler code.
 - Target protocol version is 3.18. Go has no public 3.18 library; the protocol package is ours. gopls is the reference for framing/dispatch patterns.
-- The host injects transport streams, filesystem access and a log writer. No direct production filesystem access inside `ls/` (the offline protocol generator is exempt).
+- The host injects transport streams, filesystem access and a log writer. No direct production filesystem access inside `ls/`.
 - Keep project keys, filesystem roots and compiler names distinct; single files sharing a folder need separate keys.
 - Logs must never reach protocol output. The host owns the log writer; the server must not close it.
 
