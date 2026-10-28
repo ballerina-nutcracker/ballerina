@@ -34,8 +34,9 @@ public client class Context {
     # when the activity returns only `error?`.
     #
     # + activityFunction - The activity function (must have `@Activity`)
-    # + args - Arguments keyed by parameter name. A module-level `final` client object may be
-    #          passed where the activity declares one
+    # + args - Arguments keyed by parameter name; every parameter must be named, a declared
+    #          default is not applied. A module-level `final` client object may be passed
+    #          where the activity declares one
     # + T - Expected return type (inferred from context)
     # + stepId - Identity of this step within the workflow, matching a node of the descriptor
     #            graph. A constant string; defaults to `<activity>#<ordinal>`
