@@ -1,0 +1,27 @@
+
+	testMapKeyMismatch: has failed.
+
+
+		[fail] testMapKeyMismatch:
+
+		    Assertion Failed!
+			 
+			expected: '{"name":"Alice","city":"NYC"}'
+			actual	: '{"name":"Alice","age":30}'
+			 
+			Diff	:
+			
+			expected keys	: city
+			actual keys	: age
+			
+			
+			
+
+
+		0 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+ballerina: there are test failures
+exit status 1

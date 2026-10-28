@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "rerunfailedwithdataprovider"
+version = "0.1.0"

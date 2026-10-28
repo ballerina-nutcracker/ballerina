@@ -1,0 +1,46 @@
+$ bal test
+
+	testSquare:bad has failed.
+
+		[pass] testSquare#good
+
+		[fail] testSquare#bad:
+
+		    Assertion Failed!
+			 
+			expected: '5'
+			actual	: '4'
+			
+			
+
+
+		1 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+ballerina: there are test failures
+exit status 1
+
+$ bal test --rerun-failed
+
+	testSquare:bad has failed.
+
+
+		[fail] testSquare#bad:
+
+		    Assertion Failed!
+			 
+			expected: '5'
+			actual	: '4'
+			
+			
+
+
+		0 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+ballerina: there are test failures
+exit status 1
