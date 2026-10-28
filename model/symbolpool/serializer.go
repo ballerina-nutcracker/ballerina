@@ -79,6 +79,8 @@ type symbolWriter struct {
 	refMap          map[model.SymbolRef]int
 	sigMap          map[model.FunctionSignatureRef]int
 	sigRefs         []model.FunctionSignatureRef
+	objectSigMap    map[model.ObjectSignatureRef]int
+	objectSigRefs   []model.ObjectSignatureRef
 	externalRefMap  map[serializedSymbolRefKey]int
 	externalRefKeys []serializedSymbolRefKey
 }
@@ -296,15 +298,24 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 	sw.refMap = make(map[model.SymbolRef]int, totalLen)
 	sw.sigMap = make(map[model.FunctionSignatureRef]int)
 	sw.sigRefs = nil
+	sw.objectSigMap = make(map[model.ObjectSignatureRef]int)
+	sw.objectSigRefs = nil
+	var objectOwners []model.SymbolRef
 	nextIndex := 0
 	for _, refs := range snapshots {
 		for _, ref := range refs {
 			sw.refMap[ref] = nextIndex
 			sw.collectFunctionSignature(ref)
+			if sw.collectObjectSignature(ref) {
+				objectOwners = append(objectOwners, ref)
+			}
 			nextIndex++
 		}
 	}
 	if err := sw.writeFunctionSignatureTable(buf); err != nil {
+		return err
+	}
+	if err := sw.writeObjectSignatureTable(buf); err != nil {
 		return err
 	}
 
@@ -314,6 +325,59 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 			if err := sw.writeSymbol(buf, ref, sym); err != nil {
 				return err
 			}
+		}
+	}
+	return sw.writeObjectSignatureAssociations(buf, objectOwners)
+}
+
+// collectObjectSignature records the object signature of ref, when ref is a
+// class or a type symbol that names one, and reports whether it has one.
+// Variables are not recorded: only the type symbols carry a signature across
+// modules.
+func (sw *symbolWriter) collectObjectSignature(ref model.SymbolRef) bool {
+	if _, isObjectType := sw.compilerEnv.GetSymbol(ref).(model.ObjectType); !isObjectType {
+		return false
+	}
+	sigRef, ok := sw.compilerEnv.ObjectSignatureRef(ref)
+	if !ok {
+		return false
+	}
+	if _, exists := sw.objectSigMap[sigRef]; !exists {
+		sw.objectSigMap[sigRef] = len(sw.objectSigRefs)
+		sw.objectSigRefs = append(sw.objectSigRefs, sigRef)
+	}
+	return true
+}
+
+func (sw *symbolWriter) writeObjectSignatureTable(buf *bytes.Buffer) error {
+	if err := write(buf, int64(len(sw.objectSigRefs))); err != nil {
+		return err
+	}
+	for _, ref := range sw.objectSigRefs {
+		finalFields := sw.compilerEnv.GetObjectSignatureByRef(ref).FinalFields()
+		if err := write(buf, int64(len(finalFields))); err != nil {
+			return err
+		}
+		for _, name := range finalFields {
+			if err := sw.writeStringCP(buf, name); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (sw *symbolWriter) writeObjectSignatureAssociations(buf *bytes.Buffer, owners []model.SymbolRef) error {
+	if err := write(buf, int64(len(owners))); err != nil {
+		return err
+	}
+	for _, owner := range owners {
+		sigRef, _ := sw.compilerEnv.ObjectSignatureRef(owner)
+		if err := sw.writeSymbolRef(buf, owner); err != nil {
+			return err
+		}
+		if err := write(buf, int64(sw.objectSigMap[sigRef])); err != nil {
+			return err
 		}
 	}
 	return nil

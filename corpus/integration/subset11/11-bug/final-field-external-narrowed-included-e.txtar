@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-narrowed-included-e.bal:36:9
+   |
+36 |         c.a = 5; // @error narrowed to P whose a is final
+   |         ^^^
+
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-narrowed-included-e.bal:40:9
+   |
+40 |         x.a = 6; // @error narrowed to P whose a is final
+   |         ^^^

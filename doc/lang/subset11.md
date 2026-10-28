@@ -28,6 +28,7 @@
 
 - [Assignment](https://ballerina.io/spec/lang/master/#assignment-stmt)
   - See supported [`lvexpr`](#expressions)
+  - Assignments to final object fields through receivers identified as a single class are rejected at compile time, except when initializing the field through `self`.
 - [Destructuring assignment statement](https://ballerina.io/spec/lang/master/#destructuring-assignment-stmt)
   - Only supports [`wildcard-binding-pattern`](https://ballerina.io/spec/lang/master/#wildcard-binding-pattern)
 - [Compound Assignment](https://ballerina.io/spec/lang/master/#compound-assignment-stmt)
@@ -344,6 +345,6 @@ These are intentional departures from the [language specification](https://balle
 
 ## Object/class definitions
 
-- Only `client`, `service` and `isolated` `object-type-quals` are supported
+- Only `client`, `service` and `isolated` `object-type-quals` / `class-type-quals` are supported
 - Supports `object-field-descriptor`, `method-decl`, `remote-method-decl` and `resource-method-decl` members
 - Supports `included-record-param`, `rest-param` and `defaultable-param` in methods

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> main.bal:20:5
+   |
+20 |     c.a = 2; // @error final field of an imported class
+   |     ^^^
+
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> main.bal:22:5
+   |
+22 |     t.a = 3; // @error final field through a public alias of an imported class
+   |     ^^^
