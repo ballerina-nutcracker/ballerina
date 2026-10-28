@@ -1,0 +1,69 @@
+(boom
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (invocation boom ()))))
+        (expression-stmt
+          (worker-async-send-action function
+            (simple-var-ref x)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (worker-receive-action a)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (binary-expr +
+            (literal trapped )
+            (invocation lang.error message (
+              (simple-var-ref r))))
+          (literal received)))))
+    (var-def
+      (variable w (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref a))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref w)
+            (error-type))
+          (binary-expr +
+            (literal trapped )
+            (invocation lang.error message (
+              (simple-var-ref w))))
+          (literal done)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (invocation boom ()))))
+    (expression-stmt
+      (worker-async-send-action function
+        (simple-var-ref x)))
+  )
+)

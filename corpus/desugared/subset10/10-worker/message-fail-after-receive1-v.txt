@@ -1,0 +1,218 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang error (as lang.error))
+  (function failAfterSyncSend () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:failAfterSyncSend:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$1)
+                    (literal 1))))
+                (var-def
+                  (variable sent (type
+                    (union-type
+                      (error-type)
+                      (value-type null))) (expr
+                    (invocation lang.__internal waitWorkerMessageReceived (
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$3))))))
+                (expression-stmt
+                  (invocation io println (
+                    (ternary-expr
+                      (type-test-expr is
+                        (simple-var-ref sent)
+                        (error-type))
+                      (literal failed)
+                      (literal delivered)))))
+                (var-def
+                  (variable r (type
+                    (union-type
+                      (error-type)
+                      (value-type null))) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$3)))))
+                (expression-stmt
+                  (invocation io println (
+                    (ternary-expr
+                      (type-test-expr is
+                        (simple-var-ref r)
+                        (error-type))
+                      (invocation lang.error message (
+                        (simple-var-ref r)))
+                      (literal done)))))))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $worker:failAfterSyncSend:a () (
+              (union-type
+                (error-type)
+                (value-type null)))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable _ (type
+                    (value-type int)) (expr
+                    (checked-expr
+                      (invocation lang.__internal getWorkerMessageValue (
+                        (simple-var-ref $desugar$1)
+                        (simple-var-ref $desugar$2)))))))
+                (return
+                  (error-constructor-expr (
+                    (literal after))))))))))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action
+          (invocation $desugar$5 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$2)))))
+  (function panicAfterFlush () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:panicAfterFlush:$function$body () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$1)
+                    (literal 1))))
+                (var-def
+                  (variable flushed (type
+                    (union-type
+                      (error-type)
+                      (value-type null))) (expr
+                    (invocation lang.__internal flushWorkerMessages (
+                      (list-constructor-expr
+                        (list-constructor-expr
+                          (simple-var-ref $desugar$1)))
+                      (list-constructor-expr
+                        (simple-var-ref $desugar$3)))))))
+                (expression-stmt
+                  (invocation io println (
+                    (ternary-expr
+                      (type-test-expr is
+                        (simple-var-ref flushed)
+                        (error-type))
+                      (literal failed)
+                      (literal flushed)))))
+                (var-def
+                  (variable r (type
+                    (union-type
+                      (error-type)
+                      (value-type null))) (expr
+                    (trap-expr
+                      (single-wait-action
+                        (simple-var-ref $desugar$3))))))
+                (expression-stmt
+                  (invocation io println (
+                    (ternary-expr
+                      (type-test-expr is
+                        (simple-var-ref r)
+                        (error-type))
+                      (invocation lang.error message (
+                        (simple-var-ref r)))
+                      (literal done)))))))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:panicAfterFlush:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $desugar$4 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$1))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$3)))))
+                (return
+                  (simple-var-ref $desugar$5))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:panicAfterFlush:a () (
+              (union-type
+                (error-type)
+                (value-type null)))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable _ (type
+                    (value-type int)) (expr
+                    (checked-expr
+                      (invocation lang.__internal getWorkerMessageValue (
+                        (simple-var-ref $desugar$1)
+                        (simple-var-ref $desugar$2)))))))
+                (panic
+                  (error-constructor-expr (
+                    (literal after))))))))))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action
+          (invocation $desugar$7 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation failAfterSyncSend ()))
+      (expression-stmt
+        (invocation panicAfterFlush ())))))

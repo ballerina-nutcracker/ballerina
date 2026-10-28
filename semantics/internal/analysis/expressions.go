@@ -101,6 +101,12 @@ func validateActionOrExprInner(cx scope.Context, e ast.BLangActionOrExpression, 
 		return validateClientResourceAccess(cx, e, expected)
 	case *ast.BLangStartAction:
 		return validateStart(cx, e, expected)
+	case *ast.BLangWorkerAsyncSendAction:
+		return validateWorkerAsyncSend(cx, e, expected)
+	case *ast.BLangWorkerSyncSendAction:
+		return validateWorkerSyncSend(cx, e, expected)
+	case *ast.BLangWorkerReceiveAction, *ast.BLangWorkerMultipleReceiveAction, *ast.BLangWorkerFlushAction:
+		return validateWorkerMessageResult(cx, e, expected)
 	case *ast.BLangSingleWaitAction:
 		return validateSingleWait(cx, e, expected)
 	case *ast.BLangAlternateWaitAction:

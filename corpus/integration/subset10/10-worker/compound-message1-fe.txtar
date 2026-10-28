@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> compound-message1-fe.bal:21:14
+   |
+21 |         x += <- function; // @error worker message send/receive is not supported here
+   |              ^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> compound-message1-fe.bal:22:14
+   |
+22 |         x += 1 -> function; // @error worker message send/receive is not supported here
+   |              ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> compound-message1-fe.bal:23:14
+   |
+23 |         x += (<- function); // @error worker message send/receive is not supported here
+   |              ^^^^^^^^^^^^^

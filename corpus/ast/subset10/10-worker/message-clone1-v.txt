@@ -1,0 +1,43 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker a (
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+        (block-function-body
+          (var-def
+            (variable values (type
+              (array-type
+                (value-type int) dimensions: 1 ([]))) (expr
+              (worker-receive-action function))))
+          (return
+            (simple-var-ref values))))
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (worker-sync-send-action a
+          (simple-var-ref values)))
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref values) (
+          (literal 3))))
+      (var-def
+        (variable received (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref received))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref values)))))))

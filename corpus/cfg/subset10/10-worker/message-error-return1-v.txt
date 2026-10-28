@@ -1,0 +1,78 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable first (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation run (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref first)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref first)))
+          (literal done)))))
+    (var-def
+      (variable second (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation run (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref second)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref second)))
+          (literal done)))))
+  )
+)
+(run
+  (bb0 () (bb1 bb3)
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (checked-expr
+              (worker-receive-action function)))))))
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal early))))
+  )
+  (bb2 (bb3) ()
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+    (expression-stmt
+      (checked-expr
+        (worker-flush-action a)))
+    (expression-stmt
+      (checked-expr
+        (single-wait-action
+          (simple-var-ref a))))
+  )
+  (bb3 (bb0) (bb2))
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (checked-expr
+          (worker-receive-action function)))))
+  )
+)

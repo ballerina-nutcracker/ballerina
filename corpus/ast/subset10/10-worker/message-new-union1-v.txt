@@ -1,0 +1,60 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntFn
+    (variable result (type
+      (value-type int)))
+    (function init (
+      (variable callback (type
+        (function-type () (
+          (value-type int)))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access result
+            (simple-var-ref self))
+          (invocation callback ())))))
+  (class-definition StringFn
+    (variable result (type
+      (value-type string)))
+    (function init (
+      (variable callback (type
+        (function-type () (
+          (value-type string)))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access result
+            (simple-var-ref self))
+          (invocation callback ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable local (type
+          (union-type
+            (user-defined-type IntFn)
+            (user-defined-type StringFn))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_0 () (
+                (value-type int))
+                (block-function-body
+                  (named-worker w (
+                    (value-type null))
+                    (block-function-body
+                      (expression-stmt
+                        (worker-async-send-action function
+                          (literal 2)))))
+                  (return
+                    (worker-receive-action w))))))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref local)
+          (user-defined-type IntFn))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access result
+                (simple-var-ref local)))))) ())
+      (block-stmt))))

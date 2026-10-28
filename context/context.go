@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ballerina-nutcracker/ballerina/context/internal/workermessages"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -208,6 +209,26 @@ func (c *CompilerContext) AddToCaptureGroup(group model.CaptureGroupRef, ref mod
 	c.env.addToCaptureGroup(group, ref)
 }
 
+// WorkerMessageTypeStore holds the type of each worker message for type
+// resolution.
+type WorkerMessageTypeStore = workermessages.Store
+
+// NewWorkerMessage allocates a worker message handle.
+func (c *CompilerContext) NewWorkerMessage() model.WorkerMessageRef {
+	return c.env.newWorkerMessage()
+}
+
+// WorkerMessageTypes returns the store of the worker message types published
+// outside candidate trials.
+func (c *CompilerContext) WorkerMessageTypes() *WorkerMessageTypeStore {
+	return c.env.workerMessageTypes
+}
+
+// NewWorkerMessageTypeStore returns an empty store for a candidate trial.
+func (c *CompilerContext) NewWorkerMessageTypeStore() *WorkerMessageTypeStore {
+	return workermessages.NewStore()
+}
+
 func (c *CompilerContext) CaptureGroupContains(group model.CaptureGroupRef, ref model.SymbolRef) bool {
 	return c.env.captureGroupContains(group, ref)
 }
@@ -310,6 +331,8 @@ func (c *CompilerContext) HasDiagnostics() bool {
 	return len(c.diagnostics) > 0
 }
 
+// HasErrors reports whether an error was reported. Type resolution calls it
+// while other goroutines report diagnostics.
 func (c *CompilerContext) HasErrors() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()

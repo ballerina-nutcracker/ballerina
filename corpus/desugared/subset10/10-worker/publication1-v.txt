@@ -18,7 +18,21 @@
       (var-def
         (variable $desugar$4))
       (var-def
-        (variable $desugar$5 (expr
+        (variable $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:chain:$function () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (single-wait-action
+                    (simple-var-ref $desugar$2)))))))))
+      (var-def
+        (variable $desugar$7 (expr
           (lambda
             (function $worker:chain:a () (
               (value-type int))
@@ -30,13 +44,13 @@
                   (variable fromB (type
                     (value-type int)) (expr
                     (single-wait-action
-                      (simple-var-ref $desugar$2)))))
+                      (simple-var-ref $desugar$3)))))
                 (return
                   (binary-expr +
                     (simple-var-ref fromB)
                     (literal 1)))))))))
       (var-def
-        (variable $desugar$6 (expr
+        (variable $desugar$8 (expr
           (lambda
             (function $worker:chain:b () (
               (value-type int))
@@ -48,13 +62,13 @@
                   (variable fromC (type
                     (value-type int)) (expr
                     (single-wait-action
-                      (simple-var-ref $desugar$3)))))
+                      (simple-var-ref $desugar$4)))))
                 (return
                   (binary-expr +
                     (simple-var-ref fromC)
                     (literal 1)))))))))
       (var-def
-        (variable $desugar$7 (expr
+        (variable $desugar$9 (expr
           (lambda
             (function $worker:chain:c () (
               (value-type int))
@@ -66,13 +80,13 @@
                   (variable fromD (type
                     (value-type int)) (expr
                     (single-wait-action
-                      (simple-var-ref $desugar$4)))))
+                      (simple-var-ref $desugar$5)))))
                 (return
                   (binary-expr +
                     (simple-var-ref fromD)
                     (literal 1)))))))))
       (var-def
-        (variable $desugar$8 (expr
+        (variable $desugar$10 (expr
           (lambda
             (function $worker:chain:d () (
               (value-type int))
@@ -85,19 +99,23 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action isolated
-          (invocation $desugar$5 ())))
+          (invocation $desugar$6 ())))
       (assignment
         (simple-var-ref $desugar$2)
         (start-action isolated
-          (invocation $desugar$6 ())))
+          (invocation $desugar$7 ())))
       (assignment
         (simple-var-ref $desugar$3)
         (start-action isolated
-          (invocation $desugar$7 ())))
+          (invocation $desugar$8 ())))
       (assignment
         (simple-var-ref $desugar$4)
         (start-action isolated
-          (invocation $desugar$8 ())))
+          (invocation $desugar$9 ())))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (start-action isolated
+          (invocation $desugar$10 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))

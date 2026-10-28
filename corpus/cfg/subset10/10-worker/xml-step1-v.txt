@@ -1,0 +1,84 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-element-literal a
+          (xml-sequence-literal
+            (xml-element-literal b
+              (xml-text-literal 1))
+            (xml-element-literal c
+              (xml-text-literal 2))
+            (xml-element-literal d
+              (xml-text-literal 3))
+            (xml-element-literal e
+              (xml-text-literal 4)))))))
+    (var-def
+      (variable d (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (simple-var-ref x)
+          (xml-step-element-children
+            (xml-name-pattern-identifier d))))))
+    (named-worker w1 (
+      (value-type xml))
+      (block-function-body
+        (return
+          (xml-step-expression
+            (simple-var-ref x)
+            (xml-step-element-children
+              (xml-name-pattern-identifier b))))))
+    (named-worker w2 (
+      (value-type xml))
+      (block-function-body
+        (return
+          (xml-step-expression
+            (simple-var-ref x)
+            (xml-step-element-children
+              (xml-name-pattern-identifier c))))))
+    (var-def
+      (variable e (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (simple-var-ref x)
+          (xml-step-element-children
+            (xml-name-pattern-identifier e))))))
+    (var-def
+      (variable b (type
+        (value-type xml)) (expr
+        (single-wait-action
+          (simple-var-ref w1)))))
+    (var-def
+      (variable c (type
+        (value-type xml)) (expr
+        (single-wait-action
+          (simple-var-ref w2)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref b)
+              (simple-var-ref c))
+            (simple-var-ref d))
+          (simple-var-ref e)))))
+  )
+)
+(worker w1
+  (bb0 () ()
+    (return
+      (xml-step-expression
+        (simple-var-ref x)
+        (xml-step-element-children
+          (xml-name-pattern-identifier b))))
+  )
+)
+(worker w2
+  (bb0 () ()
+    (return
+      (xml-step-expression
+        (simple-var-ref x)
+        (xml-step-element-children
+          (xml-name-pattern-identifier c))))
+  )
+)

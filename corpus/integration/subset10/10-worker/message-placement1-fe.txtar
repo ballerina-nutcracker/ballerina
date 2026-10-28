@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:23:9
+   |
+23 |         1 -> a; // @error worker message send/receive is not supported here
+   |         ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:32:17
+   |
+32 |         int _ = <- a; // @error worker message send/receive is not supported here
+   |                 ^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:41:9
+   |
+41 |         i -> a; // @error worker message send/receive is not supported here
+   |         ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:51:13
+   |
+51 |             1 -> a; // @error worker message send/receive is not supported here
+   |             ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:61:9
+   |
+61 |         1 -> a; // @error worker message send/receive is not supported here
+   |         ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:70:9
+   |
+70 |         1 -> a; // @error worker message send/receive is not supported here
+   |         ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:79:14
+   |
+79 |         1 -> a; // @error worker message send/receive is not supported here
+   |              ^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement1-fe.bal:88:17
+   |
+88 |                 1 -> b; // @error worker message send/receive is not supported here
+   |                 ^^^^^^

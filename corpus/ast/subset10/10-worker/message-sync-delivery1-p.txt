@@ -1,0 +1,43 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function failWith (
+    (variable message (type
+      (value-type string)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (simple-var-ref message))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (named-worker b (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failWith (
+                (literal b failed)))))
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (checked-expr
+                (worker-receive-action function)))))))
+      (expression-stmt
+        (worker-async-send-action b
+          (literal 2)))
+      (expression-stmt
+        (checked-expr
+          (worker-sync-send-action b
+            (literal 1)))))))

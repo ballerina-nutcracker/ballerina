@@ -1,0 +1,61 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no matching send
+  --> message-pairing2-e.bal:59:17
+   |
+59 |         int _ = <- function; // @error the first fault in pairing order is reported
+   |                 ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no matching send
+  --> message-pairing2-e.bal:66:17
+   |
+66 |         int _ = <- b; // @error no matching send
+   |                 ^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+   --> message-pairing2-e.bal:109:13
+    |
+109 |     int _ = <- a; // @error a's flush waits for b, which waits for the default worker
+    |             ^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+   --> message-pairing2-e.bal:123:13
+    |
+123 |     int _ = <- a; // @error a's flush waits for b, which waits for the default worker
+    |             ^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+   --> message-pairing2-e.bal:135:5
+    |
+135 |     1 -> a; // @error a and b wait for each other, so the default worker can't deliver
+    |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> message-pairing2-e.bal:20:17
+   |
+20 |         int x = <- b; // @error worker message deadlock
+   |                 ^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> message-pairing2-e.bal:37:13
+   |
+37 |     int x = <- a; // @error a waits for b, which waits for the default worker
+   |             ^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> message-pairing2-e.bal:49:5
+   |
+49 |     wait a; // @error a can't terminate before b receives its message
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> message-pairing2-e.bal:83:19
+   |
+83 |     record {} _ = <- {a, b}; // @error a waits for the default worker first
+   |                   ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> message-pairing2-e.bal:95:5
+   |
+95 |     wait a; // @error a's sync send waits for b, which waits for the default worker
+   |     ^^^^^^

@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no matching receive
+  --> message-pairing1-e.bal:21:9
+   |
+21 |         2 -> function; // @error no matching receive
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no matching receive
+  --> message-pairing1-e.bal:28:9
+   |
+28 |         1 ->> function; // @error no matching receive
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: no matching send
+  --> message-pairing1-e.bal:35:13
+   |
+35 |     int _ = <- a; // @error no matching send
+   |             ^^^^
+
+error[SEMANTIC_ERROR]: no matching send
+  --> message-pairing1-e.bal:44:19
+   |
+44 |     record {} _ = <- {a, b}; // @error no matching send from b
+   |                   ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker interaction after wait action
+  --> message-pairing1-e.bal:52:13
+   |
+52 |     int _ = <- a; // @error interaction after wait
+   |             ^^^^
+
+error[SEMANTIC_ERROR]: worker interaction after wait action
+  --> message-pairing1-e.bal:60:5
+   |
+60 |     1 -> a; // @error interaction after wait
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker interaction after wait action
+  --> message-pairing1-e.bal:70:5
+   |
+70 |     1 -> a; // @error interaction after wait
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> message-pairing1-e.bal:80:9
+   |
+80 |     _ = wait a | b; // @error neither worker can finish before the default worker sends
+   |         ^^^^^^^^^^

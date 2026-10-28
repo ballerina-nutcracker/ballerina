@@ -18,10 +18,7 @@
 function actions() {
     any a = start foo(; // @error
     any b = wait {one: f two: g}; // @error
-    any c = <- worker1; // @error
-    any d = flush worker1; // @error
     any e = commit; // @error
-    value -> worker1; // @error
     any f = client->get(; // @error
     any g = client->/path.get(; // @error
     any h = (start foo(); // @error
