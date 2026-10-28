@@ -122,7 +122,7 @@ type Server struct {
 	initialized    bool
 	shuttingDown   bool
 
-	diagnosticMu sync.Mutex // Orders close clears against diagnostic validation and writes.
+	diagnosticMu sync.Mutex // Orders document mutations and close clears against diagnostic validation and writes.
 	writeMu      sync.Mutex // Prevents interleaved frames from concurrent response and diagnostic writes.
 
 	ceDone        sync.WaitGroup // Diagnostic writes must finish before Flush returns.
@@ -490,6 +490,8 @@ func (s *Server) handleDidOpen(ctx context.Context, params json.RawMessage) erro
 	if err != nil {
 		return nil
 	}
+	s.diagnosticMu.Lock()
+	defer s.diagnosticMu.Unlock()
 	if _, err := s.projects.Apply(context.Background(), workspace.DocumentChange{
 		Kind:       workspace.ChangeOpen,
 		URI:        docURI,
@@ -513,6 +515,8 @@ func (s *Server) handleDidChange(ctx context.Context, params json.RawMessage) er
 	if err != nil {
 		return nil
 	}
+	s.diagnosticMu.Lock()
+	defer s.diagnosticMu.Unlock()
 	current, ok := s.projects.Snapshot(docURI)
 	if !ok {
 		return nil
@@ -664,6 +668,8 @@ func (s *Server) handleDidChangeWatchedFiles(ctx context.Context, params json.Ra
 	if json.Unmarshal(params, &didChange) != nil {
 		return nil
 	}
+	s.diagnosticMu.Lock()
+	defer s.diagnosticMu.Unlock()
 	for _, fileEvent := range didChange.Changes {
 		docURI, err := workspace.NewFileURI(fileEvent.URI)
 		if err != nil {
