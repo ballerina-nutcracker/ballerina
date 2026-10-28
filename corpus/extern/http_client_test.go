@@ -317,6 +317,10 @@ func TestHttpClientHeadersLocal(t *testing.T) {
 // sent, merged with the headers and mediaType arguments the way jBallerina's populateOptions does.
 func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Upgrade") != "" || r.Header.Get("Keep-Alive") != "" || strings.Contains(r.Header.Get("Connection"), "X-Test") {
+			w.WriteHeader(400)
+			return
+		}
 		w.Header().Set("Content-Type", "text/plain")
 		_, _ = fmt.Fprintf(w, "%s %v %v", r.Header.Get("Content-Type"), r.Header.Values("X-Test"), r.Header.Values("X-Multi"))
 	}))

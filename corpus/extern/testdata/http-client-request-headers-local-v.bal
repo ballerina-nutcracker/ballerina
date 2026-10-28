@@ -28,6 +28,15 @@ public function main() returns error? {
     io:println(post); // @output text/plain [post] []
 
     // A string[] header argument is appended to the request's own values.
+    // Headers owned by the transport are dropped; a header that Connection names is still sent, as in jBallerina.
+    http:Request hopReq = new;
+    hopReq.setTextPayload("hi");
+    hopReq.setHeader("Connection", "keep-alive, X-Test");
+    hopReq.setHeader("Upgrade", "h2c");
+    hopReq.setHeader("X-Test", "hop");
+    string hop = check c->post("/echo", hopReq, {"Keep-Alive": "timeout=5"});
+    io:println(hop); // @output text/plain [hop] []
+
     http:Request putReq = new;
     putReq.setTextPayload("hi");
     putReq.addHeader("X-Multi", "a");

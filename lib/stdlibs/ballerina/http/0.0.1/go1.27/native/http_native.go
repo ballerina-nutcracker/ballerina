@@ -1809,6 +1809,7 @@ func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalVal
 	if hdrMap, ok := headersArg.(*values.Map); ok {
 		mergeHeaderArgs(headers, hdrMap)
 	}
+	removeTransportOwnedHeaders(headers)
 	// jBallerina sends the last Content-Type value, so an appended string[] value wins.
 	contentType := ""
 	if cts := headers["content-type"]; len(cts) > 0 {
@@ -1819,6 +1820,17 @@ func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalVal
 	}
 	delete(headers, "content-type")
 	return headers, contentType
+}
+
+// transportOwnedHeaders are set by Go's transport, and its HTTP/2 transport rejects a request carrying any of them.
+var transportOwnedHeaders = []string{"connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade"}
+
+func removeTransportOwnedHeaders(headers map[string][]string) {
+	for name := range headers {
+		if slices.Contains(transportOwnedHeaders, strings.ToLower(name)) {
+			delete(headers, name)
+		}
+	}
 }
 
 func mergeHeaderArgs(headers map[string][]string, hdrMap *values.Map) {
