@@ -102,166 +102,151 @@ const (
 	EvictionKindTransition
 )
 
+// eventBase holds the source root and generation shared by every event.
+type eventBase struct {
+	root       string
+	generation uint64
+}
+
+func (e eventBase) SourceRoot() string { return e.root }
+func (e eventBase) Generation() uint64 { return e.generation }
+
 // ProjectRegisteredEvent reports a project load or reload attempt.
 type ProjectRegisteredEvent struct {
-	root string
+	eventBase
 }
 
 // NewProjectRegisteredEvent constructs a ProjectRegisteredEvent.
 func NewProjectRegisteredEvent(sourceRoot string) ProjectRegisteredEvent {
-	return ProjectRegisteredEvent{root: sourceRoot}
+	return ProjectRegisteredEvent{eventBase: eventBase{root: sourceRoot}}
 }
 
-func (e ProjectRegisteredEvent) Kind() Kind         { return ProjectRegistered }
-func (e ProjectRegisteredEvent) SourceRoot() string { return e.root }
-func (e ProjectRegisteredEvent) Generation() uint64 { return 0 }
+func (e ProjectRegisteredEvent) Kind() Kind { return ProjectRegistered }
 
 // ProjectEvictedEvent is published when a project leaves the index.
 type ProjectEvictedEvent struct {
-	root   string
+	eventBase
 	reason EvictionReason
 }
 
 // NewProjectEvictedEvent constructs a ProjectEvictedEvent.
 func NewProjectEvictedEvent(sourceRoot string, reason EvictionReason) ProjectEvictedEvent {
-	return ProjectEvictedEvent{root: sourceRoot, reason: reason}
+	return ProjectEvictedEvent{eventBase: eventBase{root: sourceRoot}, reason: reason}
 }
 
 // Reason returns why the project was evicted.
 func (e ProjectEvictedEvent) Reason() EvictionReason { return e.reason }
 
-func (e ProjectEvictedEvent) Kind() Kind         { return ProjectEvicted }
-func (e ProjectEvictedEvent) SourceRoot() string { return e.root }
-func (e ProjectEvictedEvent) Generation() uint64 { return 0 }
+func (e ProjectEvictedEvent) Kind() Kind { return ProjectEvicted }
 
 // ProjectKindTransitionedEvent reports a manifest create/delete reload of a
 // previously indexed root. The workspace publisher supplies the same root
 // as both oldRoot and newRoot.
 type ProjectKindTransitionedEvent struct {
+	eventBase
 	oldRoot string
-	newRoot string
 }
 
 // NewProjectKindTransitionedEvent constructs a ProjectKindTransitionedEvent.
 func NewProjectKindTransitionedEvent(oldRoot, newRoot string) ProjectKindTransitionedEvent {
-	return ProjectKindTransitionedEvent{oldRoot: oldRoot, newRoot: newRoot}
+	return ProjectKindTransitionedEvent{eventBase: eventBase{root: newRoot}, oldRoot: oldRoot}
 }
 
 // OldRoot returns the source root before the transition.
 func (e ProjectKindTransitionedEvent) OldRoot() string { return e.oldRoot }
 
 // NewRoot returns the source root after the transition.
-func (e ProjectKindTransitionedEvent) NewRoot() string { return e.newRoot }
+func (e ProjectKindTransitionedEvent) NewRoot() string { return e.root }
 
-func (e ProjectKindTransitionedEvent) Kind() Kind         { return ProjectKindTransitioned }
-func (e ProjectKindTransitionedEvent) SourceRoot() string { return e.newRoot }
-func (e ProjectKindTransitionedEvent) Generation() uint64 { return 0 }
+func (e ProjectKindTransitionedEvent) Kind() Kind { return ProjectKindTransitioned }
 
 // ProjectUpdatedEvent carries the source root's new generation after a content
 // republish.
 type ProjectUpdatedEvent struct {
-	root       string
-	generation uint64
+	eventBase
 }
 
 // NewProjectUpdatedEvent constructs a ProjectUpdatedEvent.
 func NewProjectUpdatedEvent(sourceRoot string, generation uint64) ProjectUpdatedEvent {
-	return ProjectUpdatedEvent{root: sourceRoot, generation: generation}
+	return ProjectUpdatedEvent{eventBase: eventBase{root: sourceRoot, generation: generation}}
 }
 
-func (e ProjectUpdatedEvent) Kind() Kind         { return ProjectUpdated }
-func (e ProjectUpdatedEvent) SourceRoot() string { return e.root }
-func (e ProjectUpdatedEvent) Generation() uint64 { return e.generation }
+func (e ProjectUpdatedEvent) Kind() Kind { return ProjectUpdated }
 
 // CompilationSucceededEvent is published when a stable snapshot is stored.
 type CompilationSucceededEvent struct {
-	root       string
+	eventBase
 	descriptor string
-	generation uint64
 }
 
 // NewCompilationSucceededEvent constructs a CompilationSucceededEvent.
 func NewCompilationSucceededEvent(sourceRoot, descriptor string, generation uint64) CompilationSucceededEvent {
-	return CompilationSucceededEvent{root: sourceRoot, descriptor: descriptor, generation: generation}
+	return CompilationSucceededEvent{eventBase: eventBase{root: sourceRoot, generation: generation}, descriptor: descriptor}
 }
 
 // DescriptorName returns the published package's descriptor name.
 func (e CompilationSucceededEvent) DescriptorName() string { return e.descriptor }
 
-func (e CompilationSucceededEvent) Kind() Kind         { return CompilationSucceeded }
-func (e CompilationSucceededEvent) SourceRoot() string { return e.root }
-func (e CompilationSucceededEvent) Generation() uint64 { return e.generation }
+func (e CompilationSucceededEvent) Kind() Kind { return CompilationSucceeded }
 
 // CompilationFailedEvent is published when a compile panics.
 type CompilationFailedEvent struct {
-	root       string
-	generation uint64
+	eventBase
 }
 
 // NewCompilationFailedEvent constructs a CompilationFailedEvent.
 func NewCompilationFailedEvent(sourceRoot string, generation uint64) CompilationFailedEvent {
-	return CompilationFailedEvent{root: sourceRoot, generation: generation}
+	return CompilationFailedEvent{eventBase: eventBase{root: sourceRoot, generation: generation}}
 }
 
-func (e CompilationFailedEvent) Kind() Kind         { return CompilationFailed }
-func (e CompilationFailedEvent) SourceRoot() string { return e.root }
-func (e CompilationFailedEvent) Generation() uint64 { return e.generation }
+func (e CompilationFailedEvent) Kind() Kind { return CompilationFailed }
 
 // CompilationCancelledEvent is published when a cycle is superseded before
 // compilation or stable publication.
 type CompilationCancelledEvent struct {
-	root       string
-	generation uint64
+	eventBase
 }
 
 // NewCompilationCancelledEvent constructs a CompilationCancelledEvent.
 func NewCompilationCancelledEvent(sourceRoot string, generation uint64) CompilationCancelledEvent {
-	return CompilationCancelledEvent{root: sourceRoot, generation: generation}
+	return CompilationCancelledEvent{eventBase: eventBase{root: sourceRoot, generation: generation}}
 }
 
-func (e CompilationCancelledEvent) Kind() Kind         { return CompilationCancelled }
-func (e CompilationCancelledEvent) SourceRoot() string { return e.root }
-func (e CompilationCancelledEvent) Generation() uint64 { return e.generation }
+func (e CompilationCancelledEvent) Kind() Kind { return CompilationCancelled }
 
 // ResolutionDiagnosticsReadyEvent is published with each stable snapshot,
 // even when its resolution diagnostics are empty.
 type ResolutionDiagnosticsReadyEvent struct {
-	root       string
+	eventBase
 	descriptor string
-	generation uint64
 }
 
 // NewResolutionDiagnosticsReadyEvent constructs a ResolutionDiagnosticsReadyEvent.
 func NewResolutionDiagnosticsReadyEvent(sourceRoot, descriptor string, generation uint64) ResolutionDiagnosticsReadyEvent {
-	return ResolutionDiagnosticsReadyEvent{root: sourceRoot, descriptor: descriptor, generation: generation}
+	return ResolutionDiagnosticsReadyEvent{eventBase: eventBase{root: sourceRoot, generation: generation}, descriptor: descriptor}
 }
 
 // DescriptorName returns the published package's descriptor name.
 func (e ResolutionDiagnosticsReadyEvent) DescriptorName() string { return e.descriptor }
 
-func (e ResolutionDiagnosticsReadyEvent) Kind() Kind         { return ResolutionDiagnosticsReady }
-func (e ResolutionDiagnosticsReadyEvent) SourceRoot() string { return e.root }
-func (e ResolutionDiagnosticsReadyEvent) Generation() uint64 { return e.generation }
+func (e ResolutionDiagnosticsReadyEvent) Kind() Kind { return ResolutionDiagnosticsReady }
 
 // CompilationDiagnosticsReadyEvent is published after a cycle with a clean
 // resolution, carrying compilation diagnostics.
 type CompilationDiagnosticsReadyEvent struct {
-	root       string
+	eventBase
 	descriptor string
-	generation uint64
 }
 
 // NewCompilationDiagnosticsReadyEvent constructs a CompilationDiagnosticsReadyEvent.
 func NewCompilationDiagnosticsReadyEvent(sourceRoot, descriptor string, generation uint64) CompilationDiagnosticsReadyEvent {
-	return CompilationDiagnosticsReadyEvent{root: sourceRoot, descriptor: descriptor, generation: generation}
+	return CompilationDiagnosticsReadyEvent{eventBase: eventBase{root: sourceRoot, generation: generation}, descriptor: descriptor}
 }
 
 // DescriptorName returns the published package's descriptor name.
 func (e CompilationDiagnosticsReadyEvent) DescriptorName() string { return e.descriptor }
 
-func (e CompilationDiagnosticsReadyEvent) Kind() Kind         { return CompilationDiagnosticsReady }
-func (e CompilationDiagnosticsReadyEvent) SourceRoot() string { return e.root }
-func (e CompilationDiagnosticsReadyEvent) Generation() uint64 { return e.generation }
+func (e CompilationDiagnosticsReadyEvent) Kind() Kind { return CompilationDiagnosticsReady }
 
 // Bus dispatches events inline on the publishing goroutine or asynchronously
 // on per-subscriber drainer goroutines. Handler panics are recovered and logged
