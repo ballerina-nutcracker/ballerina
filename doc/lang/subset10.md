@@ -219,6 +219,7 @@
   - `ballerina/lang.error`
     - `message`
   - `ballerina/lang.value`
+    - `clone`
     - `cloneWithType`
     - `fromJsonWithType`
     - `toString`
@@ -308,6 +309,7 @@
   - `string:indexOf`, `string:includes`, `string:substring` and `string:equalsIgnoreCaseAscii`
   - `string:toLowerAscii`, `string:toUpperAscii` and `string:trim`
   - `string:toBytes`
+  - `value:clone`
   - `value:cloneWithType`
   - `value:fromJsonWithType`
   - `value:toString` and `value:toBalString`

@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of Cloneable
+  --> value-clone-e.bal:25:9
+   |
+25 |     _ = a.clone(); // @error any is not a subtype of Cloneable
+   |         ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: expect first argument to be a subtype of Cloneable
+  --> value-clone-e.bal:33:9
+   |
+33 |     _ = value:clone(strm); // @error stream is not a subtype of Cloneable
+   |         ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: method not found: clone
+  --> value-clone-e.bal:28:9
+   |
+28 |     _ = c.clone(); // @error object values have no clone method
+   |         ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: missing required parameter 'v'
+  --> value-clone-e.bal:35:9
+   |
+35 |     _ = value:clone(); // @error missing required argument
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: stream type has no operation 'clone'
+  --> value-clone-e.bal:32:9
+   |
+32 |     _ = strm.clone(); // @error stream values have no clone method
+   |         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: too many arguments
+  --> value-clone-e.bal:36:26
+   |
+36 |     _ = value:clone(arr, arr); // @error too many arguments
+   |                          ^^^
