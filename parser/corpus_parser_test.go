@@ -151,7 +151,7 @@ func parseFile(t *testing.T, testCase test_util.TestCase) {
 		t.Fatalf("error reading file: %v", readErr)
 	}
 
-	source := string(content)
+	source := text.NormalizeSource(string(content))
 	reader := text.CharReaderFromText(source)
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 	ctx := context.NewCompilerContext(env)

@@ -16,6 +16,15 @@
 
 package text
 
+import "strings"
+
+var sourceNewlineNormalizer = strings.NewReplacer("\r\n", "\n", "\r", "\n")
+
+func NormalizeSource(source string) string {
+	source = strings.TrimPrefix(source, "\uFEFF")
+	return sourceNewlineNormalizer.Replace(source)
+}
+
 // TextDocumentFromText creates a TextDocument from the given text string.
 func TextDocumentFromText(text string) TextDocument {
 	return NewStringTextDocument(text)
