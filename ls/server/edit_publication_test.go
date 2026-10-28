@@ -31,9 +31,11 @@ import (
 )
 
 func TestEditPublicationBoundary(t *testing.T) {
+	t.Parallel()
 	for _, versionSupport := range []bool{false, true} {
 		for _, reopen := range []bool{false, true} {
 			t.Run(fmt.Sprintf("versions=%v/reopen=%v", versionSupport, reopen), func(t *testing.T) {
+				t.Parallel()
 				projects, compiler, bus := newCoreServices()
 				defer bus.Close()
 				defer compiler.Shutdown()

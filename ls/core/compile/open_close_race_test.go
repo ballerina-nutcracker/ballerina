@@ -27,6 +27,7 @@ import (
 )
 
 func TestSerialOpenCloseDuringCompilation(t *testing.T) {
+	t.Parallel()
 	projectsSvc, compiler := newTestServices(t)
 	root := t.TempDir()
 	text := "public function main() { missing(); }\n"

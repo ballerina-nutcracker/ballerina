@@ -26,6 +26,7 @@ import (
 )
 
 func TestEvictionCallbackReadsCompletedIndex(t *testing.T) {
+	t.Parallel()
 	bus := event.New()
 	defer bus.Close()
 	svc := New(os.DirFS, bus, WithMaxProjects(1))
