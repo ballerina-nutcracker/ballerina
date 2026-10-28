@@ -3106,7 +3106,7 @@ func (n *nodeBuilder) transformForkStatement(forkStatementNode *st.ForkStatement
 	if !n.expectNode(forkStatementNode) {
 		return nil, false
 	}
-	n.unimplemented("transformForkStatement unimplemented", forkStatementNode)
+	n.unimplemented("fork statements are not supported", forkStatementNode)
 	return nil, false
 }
 
@@ -3292,15 +3292,18 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	if !n.expectNode(functionBodyBlockNode) || !n.expectToken(functionBodyBlockNode.OpenBraceToken()) {
 		return nil, false
 	}
+	bLFuncBody := &ast.BLangBlockFunctionBody{}
 	if namedWorkerDeclarator := functionBodyBlockNode.NamedWorkerDeclarator(); namedWorkerDeclarator != nil {
 		if !n.expectNode(namedWorkerDeclarator) {
 			return nil, false
 		}
-		n.unimplemented("named worker declarators are not implemented", namedWorkerDeclarator)
-		return nil, false
+		workers, ok := n.generateNamedWorkerDeclarations(namedWorkerDeclarator)
+		if !ok {
+			return nil, false
+		}
+		bLFuncBody.InitStmts = n.generateBLangStatements(namedWorkerDeclarator.WorkerInitStatements(), namedWorkerDeclarator)
+		bLFuncBody.Workers = workers
 	}
-
-	bLFuncBody := &ast.BLangBlockFunctionBody{}
 	statements := []ast.StatementNode{}
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &statements, 0, functionBodyBlockNode)
 	if !n.expectToken(functionBodyBlockNode.CloseBraceToken()) || !n.expectOptionalToken(functionBodyBlockNode.SemicolonToken()) {
@@ -3309,6 +3312,95 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	bLFuncBody.Stmts = statements
 	bLFuncBody.SetPosition(n.getPosition(functionBodyBlockNode))
 	return bLFuncBody, true
+}
+
+func (n *nodeBuilder) generateNamedWorkerDeclarations(
+	namedWorkerDeclarator *st.NamedWorkerDeclarator,
+) ([]*ast.BLangNamedWorkerDeclaration, bool) {
+	declarations := namedWorkerDeclarator.NamedWorkerDeclarations()
+	workers := make([]*ast.BLangNamedWorkerDeclaration, 0, declarations.Size())
+	for declaration := range declarations.Iterator() {
+		worker, ok := n.transformNamedWorkerDeclaration(declaration)
+		if !ok {
+			return nil, false
+		}
+		workers = append(workers, worker)
+	}
+	return workers, true
+}
+
+func (n *nodeBuilder) transformNamedWorkerDeclaration(
+	namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode,
+) (*ast.BLangNamedWorkerDeclaration, bool) {
+	if !n.expectNode(namedWorkerDeclarationNode) || !n.expectNode(namedWorkerDeclarationNode.WorkerBody()) {
+		return nil, false
+	}
+	if transactional := namedWorkerDeclarationNode.TransactionalKeyword(); transactional != nil && !transactional.IsMissing() {
+		n.unimplemented("transactional workers are not supported", namedWorkerDeclarationNode)
+		return nil, false
+	}
+	if onFail := namedWorkerDeclarationNode.OnFailClause(); onFail != nil {
+		n.unimplemented("worker on fail clauses are not supported", onFail)
+		return nil, false
+	}
+	annotations, ok := n.transformAnnotations(namedWorkerDeclarationNode.Annotations())
+	if !ok {
+		return nil, false
+	}
+	returnType, ok := n.createWorkerReturnTypeDescriptor(namedWorkerDeclarationNode)
+	if !ok {
+		return nil, false
+	}
+	nameToken := namedWorkerDeclarationNode.WorkerName()
+	worker := &ast.BLangNamedWorkerDeclaration{
+		Name:       n.transformIdentifier(nameToken).GetValue(),
+		ReturnType: returnType,
+		Body:       n.createWorkerBody(namedWorkerDeclarationNode.WorkerBody()),
+	}
+	addAnnotationAttachments(annotations, worker)
+	worker.SetPosition(n.getPositionWithoutMetadata(namedWorkerDeclarationNode))
+	return worker, true
+}
+
+// createWorkerReturnTypeDescriptor builds the worker's return descriptor,
+// synthesising a nil descriptor when the source omits `returns`.
+func (n *nodeBuilder) createWorkerReturnTypeDescriptor(
+	namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode,
+) (*ast.BLangReturnTypeDescriptor, bool) {
+	retTypeDescNode, _ := namedWorkerDeclarationNode.ReturnTypeDesc().(*st.ReturnTypeDescriptorNode)
+	if retTypeDescNode == nil {
+		nilReturnType := &ast.BLangValueType{TypeKind: ast.TypeKindNil}
+		nilReturnType.SetPosition(diagnostics.NewBuiltinLocation())
+		descriptor := &ast.BLangReturnTypeDescriptor{TypeDescriptor: nilReturnType}
+		descriptor.SetPosition(diagnostics.NewBuiltinLocation())
+		return descriptor, true
+	}
+	if !n.expectNode(retTypeDescNode) || !n.expectToken(retTypeDescNode.ReturnsKeyword()) {
+		return nil, false
+	}
+	annotations, ok := n.transformAnnotations(retTypeDescNode.Annotations())
+	if !ok {
+		return nil, false
+	}
+	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, "return")
+	typeDescriptor := n.transformType(retTypeDescNode.Type())
+	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
+
+	descriptor := &ast.BLangReturnTypeDescriptor{TypeDescriptor: typeDescriptor}
+	addAnnotationAttachments(annotations, descriptor)
+	descriptor.SetPosition(typeDescriptor.GetPosition())
+	return descriptor, true
+}
+
+// createWorkerBody wraps a worker's block statement in a block function body.
+// The grammar makes the body mandatory, and a worker body cannot itself declare
+// workers, so only Stmts is populated.
+func (n *nodeBuilder) createWorkerBody(workerBody *st.BlockStatementNode) *ast.BLangBlockFunctionBody {
+	body := &ast.BLangBlockFunctionBody{
+		Stmts: n.generateBLangStatements(workerBody.Statements(), workerBody),
+	}
+	body.SetPosition(n.getPosition(workerBody))
+	return body
 }
 
 // createSpecificFieldNameLiteral builds a string-literal expression for a
@@ -5555,7 +5647,7 @@ func (n *nodeBuilder) transformFlushAction(flushActionNode *st.FlushActionNode) 
 	if !n.expectNode(flushActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformFlushAction unimplemented", flushActionNode)
+	n.unimplemented("worker flush is not supported", flushActionNode)
 	return nil, false
 }
 
@@ -5563,7 +5655,7 @@ func (n *nodeBuilder) transformAsyncSendAction(asyncSendActionNode *st.AsyncSend
 	if !n.expectNode(asyncSendActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformAsyncSendAction unimplemented", asyncSendActionNode)
+	n.unimplemented("worker message passing is not supported", asyncSendActionNode)
 	return nil, false
 }
 
@@ -5571,7 +5663,7 @@ func (n *nodeBuilder) transformSyncSendAction(syncSendActionNode *st.SyncSendAct
 	if !n.expectNode(syncSendActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformSyncSendAction unimplemented", syncSendActionNode)
+	n.unimplemented("worker message passing is not supported", syncSendActionNode)
 	return nil, false
 }
 
@@ -5579,7 +5671,7 @@ func (n *nodeBuilder) transformReceiveAction(receiveActionNode *st.ReceiveAction
 	if !n.expectNode(receiveActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformReceiveAction unimplemented", receiveActionNode)
+	n.unimplemented("worker message passing is not supported", receiveActionNode)
 	return nil, false
 }
 

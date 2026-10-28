@@ -1,0 +1,84 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation typeTest ()))
+    (expression-stmt
+      (invocation typeTestResult ()))
+    (expression-stmt
+      (invocation matchStatement ()))
+  )
+)
+(matchStatement
+  (bb0 () (bb2)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (simple-var-ref w)
+  )
+  (bb1 (bb2) ())
+  (bb2 (bb0) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (literal matched))))
+  )
+)
+(typeTest
+  (bb0 () (bb1)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (type-test-expr is
+      (simple-var-ref w)
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int)))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal is future<int>))))
+  )
+  (bb2 (bb1) ())
+)
+(typeTestResult
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (var-def
+      (variable isString (type
+        (value-type boolean)) (expr
+        (type-test-expr is
+          (simple-var-ref w)
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref isString))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

@@ -1,0 +1,78 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function chain (
+    (variable seed (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (named-worker a (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable fromB (type
+              (value-type int)) (expr
+              (single-wait-action
+                (simple-var-ref b)))))
+          (return
+            (binary-expr +
+              (simple-var-ref fromB)
+              (literal 1)))))
+      (named-worker b (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable fromC (type
+              (value-type int)) (expr
+              (single-wait-action
+                (simple-var-ref c)))))
+          (return
+            (binary-expr +
+              (simple-var-ref fromC)
+              (literal 1)))))
+      (named-worker c (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable fromD (type
+              (value-type int)) (expr
+              (single-wait-action
+                (simple-var-ref d)))))
+          (return
+            (binary-expr +
+              (simple-var-ref fromD)
+              (literal 1)))))
+      (named-worker d (
+        (value-type int))
+        (block-function-body
+          (return
+            (simple-var-ref seed))))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 200))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (invocation chain (
+              (simple-var-ref i))))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total)))))))

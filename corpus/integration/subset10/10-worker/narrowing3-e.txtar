@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrowing3-e.bal:26:20
+   |
+26 |             return v; // @error v is captured by this worker
+   |                    ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrowing3-e.bal:40:20
+   |
+40 |             return v; // @error v is captured by worker a
+   |                    ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrowing3-e.bal:53:16
+   |
+53 |         return v; // @error v is captured by worker w
+   |                ^

@@ -277,7 +277,7 @@ func dependentPartsDisjoint(tyCtx semtypes.Context, op model.TypeOp, paramTypes 
 func validateBody(cx scope.Context, body ast.FunctionBodyNode) bool {
 	switch body := body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		validateBlock(cx, body.Stmts)
+		validateBlockFunctionBody(cx, body)
 		return true
 	case *ast.BLangExprFunctionBody:
 		_, ok := validateActionOrExpr(cx, body.Expr, semtypes.SemType{})
@@ -288,4 +288,26 @@ func validateBody(cx scope.Context, body ast.FunctionBodyNode) bool {
 		cx.InternalErr("unexpected function body", body.GetPosition())
 		return false
 	}
+}
+
+// validateBlockFunctionBody validates the three regions of a block function
+// body in execution order: the default worker's initialization statements, the
+// named workers, and the remaining default-worker statements.
+func validateBlockFunctionBody(cx scope.Context, body *ast.BLangBlockFunctionBody) {
+	if len(body.Workers) > 0 {
+		scope.DeclareWorkers(cx, body.Workers)
+	}
+	validateBlock(cx, body.InitStmts)
+	for _, worker := range body.Workers {
+		validateNamedWorker(cx, worker)
+	}
+	validateBlock(cx, body.Stmts)
+}
+
+// validateNamedWorker validates a worker's annotations and its body under the
+// worker's own closure.
+func validateNamedWorker(cx scope.Context, worker *ast.BLangNamedWorkerDeclaration) {
+	workerCx := scope.NewWorker(cx, worker)
+	validateAnnotationAttachments(workerCx, worker.AnnAttachments)
+	validateBlockFunctionBody(workerCx, worker.Body)
 }

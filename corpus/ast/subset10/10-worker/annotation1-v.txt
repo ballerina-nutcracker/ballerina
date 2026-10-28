@@ -1,0 +1,31 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition WorkerConfig
+    (record-type
+      (field name
+        (value-type string))))
+  (annotation config const
+    (user-defined-type WorkerConfig)
+    (attach-point source worker))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 1)))
+        (annotation-attachment config
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal alpha)))))
+      (var-def
+        (variable result (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref w)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result)))))))

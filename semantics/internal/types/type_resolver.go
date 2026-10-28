@@ -1078,7 +1078,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 	case *ast.BLangExternFunctionBody:
 		_ = body
 	case *ast.BLangBlockFunctionBody:
-		resolveBlockStatements(ft, nil, body.Stmts)
+		resolveBlockFunctionBody(ft, nil, body)
 	case *ast.BLangExprFunctionBody:
 		resolveActionOrExpression(ft, nil, body.Expr, ft.retTy)
 	default:
@@ -2308,6 +2308,104 @@ func buildReturnTypeOp(t typeResolver, chain *binding, params map[string]param, 
 	}
 }
 
+// resolveBlockFunctionBody resolves the three regions of a block function body:
+// the default-worker initialization statements, the named worker declarations,
+// and the remaining default-worker statements. Every worker is resolved with
+// the narrowing state produced by the initialization region, so a worker sees
+// exactly what the default worker had in scope at the startup point.
+func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) {
+	startupChain := chain
+	if len(body.InitStmts) > 0 {
+		startupChain = resolveBlockStatements(t, chain, body.InitStmts).binding
+	}
+	returnTypes := make([]semtypes.SemType, len(body.Workers))
+	for i, worker := range body.Workers {
+		returnTy, workerChain, ok := declareNamedWorkerType(t, startupChain, worker)
+		if !ok {
+			// The worker's declared return type did not resolve, so its body
+			// cannot be checked against anything meaningful and neither can
+			// the trailing statements that wait on it. The failure is already
+			// reported; stop before producing cascading diagnostics.
+			return
+		}
+		returnTypes[i] = returnTy
+		startupChain = workerChain
+	}
+	// Workers run concurrently with each other and with the rest of the
+	// default worker, so every worker's captures are in effect in every worker
+	// body and in the trailing statements.
+	for _, worker := range body.Workers {
+		startupChain = addCaptureGroup(startupChain, worker.CaptureGroup())
+	}
+	for i, worker := range body.Workers {
+		resolveNamedWorker(t, startupChain, worker, returnTypes[i])
+	}
+	resolveBlockStatements(t, startupChain, body.Stmts)
+}
+
+// declareNamedWorkerType resolves a worker's return type and gives its symbol
+// the type future<T>. Every worker's type is declared before any worker body is
+// resolved, so a body can refer to peers declared before or after it. The node
+// builder always supplies a return descriptor, synthesising a nil one when the
+// source omits `returns`, so the only failure is an unresolvable type.
+func declareNamedWorkerType(
+	t typeResolver,
+	chain *binding,
+	worker *ast.BLangNamedWorkerDeclaration,
+) (semtypes.SemType, *binding, bool) {
+	returnTy, chain, ok := resolveBType(t, chain, worker.ReturnType, 0)
+	if !ok {
+		return semtypes.SemType{}, chain, false
+	}
+	updateSymbolType(t, worker, semtypes.FutureContaining(t.typeEnv(), returnTy))
+	resolveAnnotationAttachments(t, worker, ast.PointWorker, nil)
+	return returnTy, chain, true
+}
+
+// resolveNamedWorker resolves a worker body in an independent return context.
+func resolveNamedWorker(
+	t typeResolver,
+	chain *binding,
+	worker *ast.BLangNamedWorkerDeclaration,
+	returnTy semtypes.SemType,
+) {
+	ft := &functionTypeResolver{
+		atomSideTableBase: newAtomSideTableBase(),
+		parentResolver:    t,
+		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
+		retTy:             returnTy,
+		implicitImports:   make(map[string]ast.BLangImportPackage),
+		monoCounters:      make(map[string]int),
+		scope:             worker.Scope(),
+		context:           resolverContextForFunction(isolatedContext(t)),
+		ephemeralState:    resolverEphemeralState(t),
+	}
+
+	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
+	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
+
+}
+
+// waitEventualType returns the type a wait on the given operand yields. A
+// direct reference to a named worker has eventual type T; every other
+// future<T> expression, including an alias of a worker future, has eventual
+// type T|error.
+func waitEventualType(t typeResolver, expression ast.BLangExpression, expressionType semtypes.SemType) semtypes.SemType {
+	eventualTy := semtypes.FutureEventualType(t.typeContext(), expressionType)
+	if isNamedWorkerReference(t, expression) {
+		return eventualTy
+	}
+	return semtypes.Union(eventualTy, semtypes.Error)
+}
+
+func isNamedWorkerReference(t typeResolver, expression ast.BLangExpression) bool {
+	ref, ok := expression.(*ast.BLangVarRef)
+	if !ok || !ast.SymbolIsSet(ref) {
+		return false
+	}
+	return t.getSymbol(ref.Symbol()).Kind() == model.SymbolKindWorker
+}
+
 func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambdaFunction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	if e.HasInferredParams() {
 		return resolveInferredLambdaFunctionExpr(t, chain, e, expectedType)
@@ -2342,7 +2440,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 
 	switch body := e.Function.Body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		resolveBlockStatements(ft, boundaryChain, body.Stmts)
+		resolveBlockFunctionBody(ft, boundaryChain, body)
 	case *ast.BLangExprFunctionBody:
 		if _, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, ft.retTy); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
@@ -4436,13 +4534,15 @@ func resolveSingleWaitAction(t typeResolver, chain *binding, e *ast.BLangSingleW
 		t.semanticError("wait action requires a future expression", e.FutureExpr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	resultTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+	resultTy := waitEventualType(t, e.FutureExpr, futureTy)
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(sequentialChain(t, futureResult.effect)), true
 }
 
 func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlternateWaitAction) (semtypes.SemType, expressionEffect, bool) {
-	resultTy := semtypes.Error
+	// Each operand contributes its own eventual type. An ordinary future
+	// contributes T|error; a direct named-worker reference contributes T.
+	resultTy := semtypes.Never
 	for _, futureExpr := range e.FutureExprs {
 		futureResult, ok := resolveActionOrExpression(t, chain, futureExpr, semtypes.Future)
 		if !ok {
@@ -4454,7 +4554,7 @@ func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlte
 			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		resultTy = semtypes.Union(resultTy, semtypes.FutureEventualType(t.typeContext(), futureTy))
+		resultTy = semtypes.Union(resultTy, waitEventualType(t, futureExpr, futureTy))
 	}
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(chain), true
@@ -4484,7 +4584,7 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		fieldTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+		fieldTy := waitEventualType(t, futureExpr, futureTy)
 		fields[i] = semtypes.FieldFrom(fieldName, fieldTy, false, false)
 	}
 

@@ -1,0 +1,132 @@
+module $anon.. v 0.0.0;
+typeTest() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:typeTest:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = $desugar$1 is future<int>
+    %8 ? bb4 : bb6;
+  }
+  bb4 {
+    PushScopeFrame 2
+    %0 = ConstantLoad is future<int>
+    %1 = println(%0) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+typeTestResult() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:typeTestResult:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = $desugar$1 is future<string>
+    isString = %8;
+    %10 = isString;
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+matchStatement() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:matchStatement:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    GOTO bb5;
+  }
+  bb4 {
+    return;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = ConstantLoad matched
+    %1 = println(%0) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = typeTest() -> bb1;
+  }
+  bb1 {
+    %2 = typeTestResult() -> bb2;
+  }
+  bb2 {
+    %3 = matchStatement() -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$worker:matchStatement:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:typeTest:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:typeTestResult:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}

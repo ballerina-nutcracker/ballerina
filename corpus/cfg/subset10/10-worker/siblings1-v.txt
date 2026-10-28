@@ -1,0 +1,50 @@
+(main
+  (bb0 () ()
+    (named-worker first (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable peer (type
+            (value-type string)) (expr
+            (single-wait-action
+              (simple-var-ref second)))))
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref peer))))
+        (return
+          (literal 1))))
+    (named-worker second (
+      (value-type string))
+      (block-function-body
+        (return
+          (literal from second))))
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref first)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(worker first
+  (bb0 () ()
+    (var-def
+      (variable peer (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref second)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref peer))))
+    (return
+      (literal 1))
+  )
+)
+(worker second
+  (bb0 () ()
+    (return
+      (literal from second))
+  )
+)

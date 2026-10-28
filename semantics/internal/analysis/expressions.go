@@ -156,7 +156,7 @@ func validateLeafExpr(cx scope.Context, e ast.BLangActionOrExpression, expected 
 func validateVarRef(cx scope.Context, ref *ast.BLangVarRef, expected semtypes.SemType) (scope.Facts, bool) {
 	f := scope.FactsOfType(cx, ref)
 	scope.ApplyVarRef(cx, ref)
-	if !validateResolvedType(cx, ref, expected) {
+	if !scope.ReferenceWorker(cx, ref) || !validateResolvedType(cx, ref, expected) {
 		return f, false
 	}
 	return f, true
