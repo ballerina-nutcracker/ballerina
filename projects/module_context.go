@@ -250,13 +250,20 @@ func parseModule(moduleCtx *moduleContext) {
 	// Per-module package ID so anonymous-name counters don't interleave across concurrently built modules.
 	pkgID := createModelPackageID(compilerCtx, moduleCtx.moduleDescriptor)
 
-	// Parse all source and test documents in parallel.
+	// Parse all source and test documents in parallel. Test documents only
+	// flow into the compiled package (symbol/type resolution, BIR, and hence
+	// test discovery — see lib/stdlibs/ballerina/test's compilerplugin
+	// package) when SkipTests is explicitly disabled, i.e. for `bal test`;
+	// `bal build`/`bal run` leave it at its default (true) and never compile
+	// test sources.
+	includeTestTrees := !moduleCtx.project.BuildOptions().SkipTests()
 	syntaxTrees := parseDocumentsParallel(
 		compilerCtx,
 		moduleCtx.srcDocIDs,
 		moduleCtx.srcDocContextMap,
 		moduleCtx.testSrcDocIDs,
 		moduleCtx.testDocContextMap,
+		includeTestTrees,
 	)
 
 	if compilerCtx.HasDiagnostics() || len(syntaxTrees) == 0 {
@@ -434,13 +441,17 @@ func collectExplicitImports(compilationUnits []*ast.BLangCompilationUnit, defaul
 }
 
 // parseDocumentsParallel parses source and test documents in parallel.
-// Returns syntax trees from source documents only (test docs are parsed but not returned).
+// Returns syntax trees from source documents, plus test documents too when
+// includeTestTrees is set (otherwise test docs are parsed — so diagnostics in
+// them still surface — but their trees are dropped, matching normal build/run
+// behavior where test sources never need to compile).
 func parseDocumentsParallel(
 	compilerCtx *context.CompilerContext,
 	srcDocIDs []DocumentID,
 	srcDocContextMap map[DocumentID]*documentContext,
 	testDocIDs []DocumentID,
 	testDocContextMap map[DocumentID]*documentContext,
+	includeTestTrees bool,
 ) []*st.SyntaxTree {
 	var wg sync.WaitGroup
 
@@ -459,7 +470,7 @@ func parseDocumentsParallel(
 		}(docCtx, i)
 	}
 
-	// Parse test documents - no syntax trees collected
+	// Parse test documents - only collect syntax trees if requested
 	for _, docID := range testDocIDs {
 		docCtx := testDocContextMap[docID]
 		if docCtx == nil {
@@ -469,7 +480,12 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			dc.parse(compilerCtx)
+			st := dc.parse(compilerCtx)
+			if includeTestTrees && st != nil {
+				mu.Lock()
+				syntaxTrees = append(syntaxTrees, st)
+				mu.Unlock()
+			}
 		}(docCtx)
 	}
 
