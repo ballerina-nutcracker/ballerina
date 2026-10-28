@@ -524,10 +524,18 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	// --list-groups mirrors execute.bal#startSuite's own early branch exactly
 	// — it short-circuits before any execution or report-writing happens at
 	// all, using GroupStatusRegistry.getGroupsList's semantics: every group
-	// named by an *included* test (enabled or not — incrementTotalTest counts
-	// both), in discovery order, deduplicated.
+	// named by *any discovered* test (enabled or not — incrementTotalTest
+	// counts both), in discovery order, deduplicated. --tests/--groups/
+	// --disable-groups/--rerun-failed/--code-coverage/--test-report are all
+	// ignored here (found as a real bug: this previously narrowed the list to
+	// whatever --groups/--tests also selected, instead of always listing
+	// everything), matching TestCommand.java's own warning for exactly this
+	// combination.
 	if opts.listGroups {
-		printGroupsList(os.Stdout, testGroupsList(discovered, included))
+		if listGroupsOtherFlagsWarning(opts) {
+			_, _ = fmt.Fprint(os.Stdout, "\nWarning: Other flags are skipped when list-groups flag is provided.\n\n")
+		}
+		printGroupsList(os.Stdout, testGroupsList(discovered, nil))
 		return 0, nil
 	}
 
@@ -540,7 +548,16 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		return 0, nil
 	}
 
-	graph, err := testplan.BuildGraph(discovered)
+	// Build and run against the included subset only, not every test the
+	// plugin discovered — found as a real bug: validating the full plan here
+	// meant a --tests/--groups selection could fail over a disabled
+	// dependency or cycle belonging to some unrelated, unselected test
+	// elsewhere in the module. Safe to narrow like this because included is
+	// already transitively closed over dependsOn (testfilter.Select's
+	// closeDependsOn), so every dependency any included test actually
+	// references is guaranteed to still be present in the filtered plan.
+	selected := filterPlan(discovered, included)
+	graph, err := testplan.BuildGraph(selected)
 	if err != nil {
 		// Mirrors startSuite's own `orderTests()` failure branch: print the
 		// message and report it as a suite failure (exit 1), not a hard CLI
@@ -590,7 +607,7 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		subKeyFilters[name] = keys
 	}
 	start := time.Now()
-	report := testrunner.Run(rt, rootOrg, moduleName, discovered, graph, included, subKeyFilters)
+	report := testrunner.Run(rt, rootOrg, moduleName, selected, graph, included, subKeyFilters)
 	executionTime := time.Since(start)
 
 	// Gracefully stop any module-level listeners the package under test
@@ -620,15 +637,41 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	return testrunner.Summarize(report).ExitCode, nil
 }
 
+// filterPlan returns a copy of plan containing only the tests named in
+// included; hooks are carried over unchanged since they're global and never
+// subject to --tests/--groups filtering.
+func filterPlan(plan *testplan.TestPlan, included map[string]bool) *testplan.TestPlan {
+	filtered := &testplan.TestPlan{
+		BeforeSuite:  plan.BeforeSuite,
+		AfterSuite:   plan.AfterSuite,
+		BeforeEach:   plan.BeforeEach,
+		AfterEach:    plan.AfterEach,
+		BeforeGroups: plan.BeforeGroups,
+		AfterGroups:  plan.AfterGroups,
+	}
+	for _, t := range plan.Tests {
+		if included[t.Name] {
+			filtered.Tests = append(filtered.Tests, t)
+		}
+	}
+	return filtered
+}
+
 // testGroupsList ports register.bal's GroupStatusRegistry.getGroupsList:
 // every group named by an included test, deduplicated, in first-seen order
 // — "included" here, not "enabled", matching incrementTotalTest(group,
 // enabled) always incrementing totalTests regardless of the enabled flag.
+// included == nil means no restriction — every discovered test counts,
+// which is what --list-groups needs (see its call site): registration in
+// jballerina's own engine happens unconditionally for every discovered test
+// regardless of --tests/--groups/--disable-groups, only effectiveEnable
+// differs based on those, so the group list itself is never filtered by
+// them either.
 func testGroupsList(plan *testplan.TestPlan, included map[string]bool) []string {
 	seen := make(map[string]bool)
 	var groups []string
 	for _, t := range plan.Tests {
-		if !included[t.Name] {
+		if included != nil && !included[t.Name] {
 			continue
 		}
 		for _, g := range t.Groups {
@@ -642,11 +685,23 @@ func testGroupsList(plan *testplan.TestPlan, included map[string]bool) []string 
 }
 
 // printGroupsList ports execute.bal#startSuite's --list-groups branch
-// exactly: "\t[g1, g2]" or "\tThere are no groups available!".
+// exactly: "\tFollowing groups are available :\n\t[g1, g2]" or
+// "\tThere are no groups available!".
 func printGroupsList(w io.Writer, groups []string) {
 	if len(groups) == 0 {
 		_, _ = fmt.Fprintln(w, "\tThere are no groups available!")
 		return
 	}
+	_, _ = fmt.Fprintln(w, "\tFollowing groups are available :")
 	_, _ = fmt.Fprintln(w, "\t["+strings.Join(groups, ", ")+"]")
+}
+
+// listGroupsIgnoresOtherFlags mirrors TestCommand.java's own warning
+// condition exactly (listGroups && (rerunTests || coverage || testReport ||
+// groupList || disableGroupList || testList)) — --list-groups always lists
+// every group and ignores every other selection flag, warning the user
+// rather than silently narrowing the list the way this port previously did.
+func listGroupsOtherFlagsWarning(opts *testCmdOptions) bool {
+	return opts.rerunFailed || opts.codeCoverage || opts.testReport ||
+		opts.groups != "" || opts.disableGroups != "" || opts.tests != ""
 }

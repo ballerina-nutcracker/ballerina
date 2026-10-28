@@ -198,6 +198,21 @@ func TestTestCommand_Golden_RerunFailedWithDataProvider(t *testing.T) {
 	)
 }
 
+// TestTestCommand_Golden_RerunFailedWithArrayDataProvider matches jballerina's
+// DataProviderTest#testArrayDataRerunFailedTest: the array/tuple-shaped
+// sibling of TestTestCommand_Golden_RerunFailedWithDataProvider above (which
+// covers the MAP-shaped provider) — a tuple-of-tuple data provider with one
+// failing row (testAdd#1, 2+2 != 5) writes a rerun file on the first
+// invocation, and --rerun-failed on the second invocation re-runs only that
+// one row, keyed by its bare numeric index (not the map-style quoted string
+// key the other scenario uses).
+func TestTestCommand_Golden_RerunFailedWithArrayDataProvider(t *testing.T) {
+	runGoldenScenarioSteps(t, "rerun-failed-with-array-data-provider",
+		nil,
+		[]string{"--rerun-failed"},
+	)
+}
+
 func TestTestCommand_Golden_RerunFailedNoPriorRun(t *testing.T) {
 	runGoldenScenario(t, "rerun-failed-no-prior-run", "--rerun-failed")
 }

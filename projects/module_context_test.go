@@ -58,7 +58,7 @@ func TestParseDocumentsParallelPreservesDocumentOrder(t *testing.T) {
 			srcDocContextMap[docID] = newDocumentContext(docConfig, false, "")
 		}
 
-		syntaxTrees := parseDocumentsParallel(cx, srcDocIDs, srcDocContextMap, nil, nil)
+		syntaxTrees := parseDocumentsParallel(cx, srcDocIDs, srcDocContextMap, nil, nil, false, false)
 		if len(syntaxTrees) != numDocs {
 			t.Fatalf("iteration %d: got %d syntax trees, want %d", iter, len(syntaxTrees), numDocs)
 		}
