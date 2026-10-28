@@ -19,8 +19,6 @@ package workspace
 import (
 	"testing"
 	"time"
-
-	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 )
 
 func makeEntry(root string, openDocs int, t time.Time) *indexEntry {
@@ -29,19 +27,13 @@ func makeEntry(root string, openDocs int, t time.Time) *indexEntry {
 
 func TestProjectIndexEvictsBackgroundFirst(t *testing.T) {
 	t.Parallel()
-	bus := event.New()
-	defer bus.Close()
-	var evicted []string
-	bus.Subscribe([]event.Kind{event.ProjectEvicted}, func(e event.Event) {
-		evicted = append(evicted, e.SourceRoot())
-	})
 	base := time.Unix(1000, 0)
 	idx := newProjectIndex(2, func() time.Time { return base })
 
 	idx.entries["/bg1"] = makeEntry("/bg1", 0, base.Add(1*time.Second))
 	idx.entries["/act1"] = makeEntry("/act1", 1, base.Add(2*time.Second))
 	newEntry := makeEntry("/new1", 1, base.Add(3*time.Second))
-	idx.putExisting(newEntry, bus)
+	_, evicted := idx.putExisting(newEntry)
 
 	if _, ok := idx.entries["/bg1"]; ok {
 		t.Fatal("expected background entry /bg1 to be evicted")
@@ -52,22 +44,20 @@ func TestProjectIndexEvictsBackgroundFirst(t *testing.T) {
 	if _, ok := idx.entries["/new1"]; !ok {
 		t.Fatal("expected new entry /new1 to be stored")
 	}
-	if len(evicted) != 1 || evicted[0] != "/bg1" {
-		t.Fatalf("evicted = %v, want [/bg1]", evicted)
+	if evicted != "/bg1" {
+		t.Fatalf("evicted = %q, want /bg1", evicted)
 	}
 }
 
 func TestProjectIndexEvictsLRUActiveWhenAllActive(t *testing.T) {
 	t.Parallel()
-	bus := event.New()
-	defer bus.Close()
 	base := time.Unix(2000, 0)
 	idx := newProjectIndex(2, func() time.Time { return base })
 
 	idx.entries["/a1"] = makeEntry("/a1", 1, base.Add(1*time.Second))
 	idx.entries["/a2"] = makeEntry("/a2", 1, base.Add(2*time.Second))
 	newEntry := makeEntry("/a3", 1, base.Add(3*time.Second))
-	idx.putExisting(newEntry, bus)
+	idx.putExisting(newEntry)
 
 	if _, ok := idx.entries["/a1"]; ok {
 		t.Fatal("expected LRU active entry /a1 to be evicted")

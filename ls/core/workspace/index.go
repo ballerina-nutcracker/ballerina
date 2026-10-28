@@ -23,7 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
@@ -81,22 +80,23 @@ func (i *projectIndex) peek(sourceRoot string) (*indexEntry, bool) {
 
 // putExisting assigns a fresh generation and stores the entry, replacing any
 // existing entry for the same root. If the index is full for a new root, it evicts
-// the least-recently-touched background entry first. Eviction publishes
-// ProjectEvicted on the bus.
-func (i *projectIndex) putExisting(entry *indexEntry, bus *event.Bus) uint64 {
+// the least-recently-touched background entry first. It returns the generation
+// and evicted root so the caller can publish eviction after unlocking.
+func (i *projectIndex) putExisting(entry *indexEntry) (uint64, string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	gen := i.advanceLocked(entry)
 	if _, ok := i.entries[entry.sourceRoot]; ok {
 		entry.lastTouched = i.now()
 		i.entries[entry.sourceRoot] = entry
-		return gen
+		return gen, ""
 	}
+	evictedRoot := ""
 	if len(i.entries) >= i.maxProjects {
-		i.evictLRULocked(bus)
+		evictedRoot = i.evictLRULocked()
 	}
 	i.entries[entry.sourceRoot] = entry
-	return gen
+	return gen, evictedRoot
 }
 
 func (i *projectIndex) adjustOpenDocs(root string, delta int) {
@@ -128,7 +128,7 @@ func (i *projectIndex) advanceLocked(entry *indexEntry) uint64 {
 
 // put preserves existing entry metadata except project and lastTouched.
 // It returns the stored entry and evicted root.
-func (i *projectIndex) put(entry *indexEntry, bus *event.Bus) (*indexEntry, string) {
+func (i *projectIndex) put(entry *indexEntry) (*indexEntry, string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if existing, ok := i.entries[entry.sourceRoot]; ok {
@@ -138,7 +138,7 @@ func (i *projectIndex) put(entry *indexEntry, bus *event.Bus) (*indexEntry, stri
 	}
 	evictedRoot := ""
 	if len(i.entries) >= i.maxProjects {
-		evictedRoot = i.evictLRULocked(bus)
+		evictedRoot = i.evictLRULocked()
 	}
 	i.entries[entry.sourceRoot] = entry
 	return entry, evictedRoot
@@ -147,13 +147,13 @@ func (i *projectIndex) put(entry *indexEntry, bus *event.Bus) (*indexEntry, stri
 // evictLRU removes the least-recently-touched background entry; if all entries
 // are active, removes the LRU active entry. Returns the evicted source root
 // (empty if the index was empty).
-func (i *projectIndex) evictLRU(bus *event.Bus) string {
+func (i *projectIndex) evictLRU() string {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	return i.evictLRULocked(bus)
+	return i.evictLRULocked()
 }
 
-func (i *projectIndex) evictLRULocked(bus *event.Bus) string {
+func (i *projectIndex) evictLRULocked() string {
 	var victim *indexEntry
 	for _, entry := range i.entries {
 		if entry.openDocs == 0 {
@@ -173,9 +173,6 @@ func (i *projectIndex) evictLRULocked(bus *event.Bus) string {
 		return ""
 	}
 	i.removeLocked(victim.sourceRoot)
-	if bus != nil {
-		bus.Publish(event.NewProjectEvictedEvent(victim.sourceRoot, event.EvictionLRU))
-	}
 	return victim.sourceRoot
 }
 

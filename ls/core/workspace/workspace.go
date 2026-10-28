@@ -376,7 +376,10 @@ func (s *ProjectService) reloadAt(sourceRoot string, u DocumentURI) uint64 {
 		sourceRoot:  sourceRoot,
 		lastTouched: s.now(),
 	}
-	gen := s.index.putExisting(entry, s.bus)
+	gen, evictedRoot := s.index.putExisting(entry)
+	if evictedRoot != "" && s.bus != nil {
+		s.bus.Publish(event.NewProjectEvictedEvent(evictedRoot, event.EvictionLRU))
+	}
 	for _, moduleID := range pkg.ModuleIDs() {
 		module := pkg.Module(moduleID)
 		for _, docID := range append(module.DocumentIDs(), module.TestDocumentIDs()...) {
