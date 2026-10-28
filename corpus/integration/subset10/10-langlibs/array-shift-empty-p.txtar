@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: array index out of range: index: 0, size: 0
+        at main(array-shift-empty-p.bal:19)

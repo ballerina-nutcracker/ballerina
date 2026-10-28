@@ -1,0 +1,345 @@
+(package
+  (import-package ballerina lang array (as array))
+  (import-package ballerina io (as io))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))
+      (field age
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 3)
+            (literal 1)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$0))))))
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$3 (expr
+              (simple-var-ref values))))
+          (var-def
+            (variable $desugar$4 (expr
+              (literal descending))))
+          (var-def
+            (variable $desugar$5 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$3)
+                (simple-var-ref $desugar$4))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref values))))
+      (var-def
+        (variable $desugar$6 (expr
+          (simple-var-ref values))))
+      (var-def
+        (variable $desugar$7 (expr
+          (literal ascending))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7))))))
+      (var-def
+        (variable sorted (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)
+            (simple-var-ref $desugar$8))))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref sorted)
+          (literal 4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sorted))))
+      (var-def
+        (variable words (type
+          (array-type
+            (value-type string) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal pear)
+            (literal fig)
+            (literal apple)))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$9 (expr
+              (simple-var-ref words))))
+          (var-def
+            (variable $desugar$10 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$9))))))
+          (var-def
+            (variable $desugar$11 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$9)
+                (simple-var-ref $desugar$10))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$12 (expr
+              (simple-var-ref words))))
+          (var-def
+            (variable $desugar$13 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$12))))))
+          (var-def
+            (variable $desugar$14 (expr
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable w (type
+                    (value-type string)))) (
+                  (value-type int))
+                  (expr-function-body
+                    (invocation lang.string length (
+                      (simple-var-ref w)))))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$14)))))))
+      (var-def
+        (variable withNil (type
+          (array-type
+            (union-type
+              (value-type int)
+              (value-type null)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 2)
+            (literal <nil>)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$15 (expr
+              (simple-var-ref withNil))))
+          (var-def
+            (variable $desugar$16 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$15))))))
+          (var-def
+            (variable $desugar$17 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$15)
+                (simple-var-ref $desugar$16))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$15)
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$18 (expr
+              (simple-var-ref withNil))))
+          (var-def
+            (variable $desugar$19 (expr
+              (literal descending))))
+          (var-def
+            (variable $desugar$20 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$18)
+                (simple-var-ref $desugar$19))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$18)
+            (simple-var-ref $desugar$19)
+            (simple-var-ref $desugar$20)))))))
+      (var-def
+        (variable floats (type
+          (array-type
+            (value-type float) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 2)
+            (numeric-literal NaN)
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$21 (expr
+              (simple-var-ref floats))))
+          (var-def
+            (variable $desugar$22 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$21))))))
+          (var-def
+            (variable $desugar$23 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$21)
+                (simple-var-ref $desugar$22))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$21)
+            (simple-var-ref $desugar$22)
+            (simple-var-ref $desugar$23)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$24 (expr
+              (simple-var-ref floats))))
+          (var-def
+            (variable $desugar$25 (expr
+              (literal descending))))
+          (var-def
+            (variable $desugar$26 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$24)
+                (simple-var-ref $desugar$25))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$24)
+            (simple-var-ref $desugar$25)
+            (simple-var-ref $desugar$26)))))))
+      (var-def
+        (variable lists (type
+          (array-type
+            (value-type int) dimensions: 2 ([][]))) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (literal 2)
+              (literal 1))
+            (list-constructor-expr
+              (literal 1)
+              (literal 5))
+            (list-constructor-expr
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$27 (expr
+              (simple-var-ref lists))))
+          (var-def
+            (variable $desugar$28 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$27))))))
+          (var-def
+            (variable $desugar$29 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$27)
+                (simple-var-ref $desugar$28))))))
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$27)
+            (simple-var-ref $desugar$28)
+            (simple-var-ref $desugar$29)))))))
+      (var-def
+        (variable people (type
+          (array-type
+            (user-defined-type Person) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal b))
+              (key-value
+                (literal age)
+                (literal 30)))
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal a))
+              (key-value
+                (literal age)
+                (literal 20)))
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal c))
+              (key-value
+                (literal age)
+                (literal 30)))))))
+      (var-def
+        (variable byAge (type
+          (array-type
+            (user-defined-type Person) dimensions: 1 ([]))) (expr
+          (invocation lang.array sort (
+            (simple-var-ref people)
+            (literal descending)
+            (lambda
+              (function $anonFunc$_1 (
+                (variable p (type
+                  (user-defined-type Person)))) (
+                (value-type int))
+                (expr-function-body
+                  (index-based-access
+                    (simple-var-ref p)
+                    (literal age))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array map (
+            (simple-var-ref byAge)
+            (lambda
+              (function $anonFunc$_2 (
+                (variable p)) ()
+                (expr-function-body
+                  (index-based-access
+                    (simple-var-ref p)
+                    (literal name))))))))))
+      (var-def
+        (variable t (type
+          (tuple-type
+            (value-type int) (rest
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (literal 3)
+            (literal 1)))))
+      (var-def
+        (variable $desugar$30 (expr
+          (simple-var-ref t))))
+      (var-def
+        (variable $desugar$31 (expr
+          (invocation $default$1 (
+            (simple-var-ref $desugar$30))))))
+      (var-def
+        (variable $desugar$32 (expr
+          (invocation $default$2 (
+            (simple-var-ref $desugar$30)
+            (simple-var-ref $desugar$31))))))
+      (var-def
+        (variable fromTuple (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (invocation lang.array sort (
+            (simple-var-ref $desugar$30)
+            (simple-var-ref $desugar$31)
+            (simple-var-ref $desugar$32))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromTuple)))))))

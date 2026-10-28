@@ -1,0 +1,270 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    values = %5;
+    $desugar$0 = values;
+    %8 = $default$1($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %8;
+    %10 = $default$2($desugar$0,$desugar$1) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %10;
+    %12 = sort($desugar$0,$desugar$1,$desugar$2) -> bb3;
+  }
+  bb3 {
+    %13 = println(%12) -> bb4;
+  }
+  bb4 {
+    $desugar$3 = values;
+    %15 = ConstantLoad descending
+    $desugar$4 = %15;
+    %17 = $default$2($desugar$3,$desugar$4) -> bb5;
+  }
+  bb5 {
+    $desugar$5 = %17;
+    %19 = sort($desugar$3,$desugar$4,$desugar$5) -> bb6;
+  }
+  bb6 {
+    %20 = println(%19) -> bb7;
+  }
+  bb7 {
+    %21 = println(values) -> bb8;
+  }
+  bb8 {
+    $desugar$6 = values;
+    %23 = ConstantLoad ascending
+    $desugar$7 = %23;
+    %25 = $default$2($desugar$6,$desugar$7) -> bb9;
+  }
+  bb9 {
+    $desugar$8 = %25;
+    %27 = sort($desugar$6,$desugar$7,$desugar$8) -> bb10;
+  }
+  bb10 {
+    sorted = %27;
+    %29 = ConstantLoad 4
+    %30 = %29;
+    %31 = push(sorted,%30) -> bb11;
+  }
+  bb11 {
+    %32 = println(sorted) -> bb12;
+  }
+  bb12 {
+    %33 = ConstantLoad pear
+    %34 = ConstantLoad fig
+    %35 = ConstantLoad apple
+    %36 = ConstantLoad 3
+    %37 = newArray [string...][%36]{%33, %34, %35}
+    words = %37;
+    $desugar$9 = words;
+    %40 = $default$1($desugar$9) -> bb13;
+  }
+  bb13 {
+    $desugar$10 = %40;
+    %42 = $default$2($desugar$9,$desugar$10) -> bb14;
+  }
+  bb14 {
+    $desugar$11 = %42;
+    %44 = sort($desugar$9,$desugar$10,$desugar$11) -> bb15;
+  }
+  bb15 {
+    %45 = println(%44) -> bb16;
+  }
+  bb16 {
+    $desugar$12 = words;
+    %47 = $default$1($desugar$12) -> bb17;
+  }
+  bb17 {
+    $desugar$13 = %47;
+    %49 = fp $anon/.:$anonFunc$_0
+    $desugar$14 = %49;
+    %51 = sort($desugar$12,$desugar$13,$desugar$14) -> bb18;
+  }
+  bb18 {
+    %52 = println(%51) -> bb19;
+  }
+  bb19 {
+    %53 = ConstantLoad 2
+    %54 = ConstantLoad <nil>
+    %55 = ConstantLoad 1
+    %56 = ConstantLoad 3
+    %57 = newArray [nil|int...][%56]{%53, %54, %55}
+    withNil = %57;
+    $desugar$15 = withNil;
+    %60 = $default$1($desugar$15) -> bb20;
+  }
+  bb20 {
+    $desugar$16 = %60;
+    %62 = $default$2($desugar$15,$desugar$16) -> bb21;
+  }
+  bb21 {
+    $desugar$17 = %62;
+    %64 = sort($desugar$15,$desugar$16,$desugar$17) -> bb22;
+  }
+  bb22 {
+    %65 = println(%64) -> bb23;
+  }
+  bb23 {
+    $desugar$18 = withNil;
+    %67 = ConstantLoad descending
+    $desugar$19 = %67;
+    %69 = $default$2($desugar$18,$desugar$19) -> bb24;
+  }
+  bb24 {
+    $desugar$20 = %69;
+    %71 = sort($desugar$18,$desugar$19,$desugar$20) -> bb25;
+  }
+  bb25 {
+    %72 = println(%71) -> bb26;
+  }
+  bb26 {
+    %73 = ConstantLoad 2
+    %74 = ConstantLoad NaN
+    %75 = ConstantLoad 1
+    %76 = ConstantLoad 3
+    %77 = newArray [float...][%76]{%73, %74, %75}
+    floats = %77;
+    $desugar$21 = floats;
+    %80 = $default$1($desugar$21) -> bb27;
+  }
+  bb27 {
+    $desugar$22 = %80;
+    %82 = $default$2($desugar$21,$desugar$22) -> bb28;
+  }
+  bb28 {
+    $desugar$23 = %82;
+    %84 = sort($desugar$21,$desugar$22,$desugar$23) -> bb29;
+  }
+  bb29 {
+    %85 = println(%84) -> bb30;
+  }
+  bb30 {
+    $desugar$24 = floats;
+    %87 = ConstantLoad descending
+    $desugar$25 = %87;
+    %89 = $default$2($desugar$24,$desugar$25) -> bb31;
+  }
+  bb31 {
+    $desugar$26 = %89;
+    %91 = sort($desugar$24,$desugar$25,$desugar$26) -> bb32;
+  }
+  bb32 {
+    %92 = println(%91) -> bb33;
+  }
+  bb33 {
+    %93 = ConstantLoad 2
+    %94 = ConstantLoad 1
+    %95 = ConstantLoad 2
+    %96 = newArray [int...][%95]{%93, %94}
+    %97 = ConstantLoad 1
+    %98 = ConstantLoad 5
+    %99 = ConstantLoad 2
+    %100 = newArray [int...][%99]{%97, %98}
+    %101 = ConstantLoad 1
+    %102 = ConstantLoad 1
+    %103 = newArray [int...][%102]{%101}
+    %104 = ConstantLoad 3
+    %105 = newArray [[int...]...][%104]{%96, %100, %103}
+    lists = %105;
+    $desugar$27 = lists;
+    %108 = $default$1($desugar$27) -> bb34;
+  }
+  bb34 {
+    $desugar$28 = %108;
+    %110 = $default$2($desugar$27,$desugar$28) -> bb35;
+  }
+  bb35 {
+    $desugar$29 = %110;
+    %112 = sort($desugar$27,$desugar$28,$desugar$29) -> bb36;
+  }
+  bb36 {
+    %113 = println(%112) -> bb37;
+  }
+  bb37 {
+    %114 = ConstantLoad name
+    %115 = ConstantLoad b
+    %116 = ConstantLoad age
+    %117 = ConstantLoad 30
+    %118 = newMap {| age: int, name: string, never... |}{%114=%115, %116=%117}
+    %119 = ConstantLoad name
+    %120 = ConstantLoad a
+    %121 = ConstantLoad age
+    %122 = ConstantLoad 20
+    %123 = newMap {| age: int, name: string, never... |}{%119=%120, %121=%122}
+    %124 = ConstantLoad name
+    %125 = ConstantLoad c
+    %126 = ConstantLoad age
+    %127 = ConstantLoad 30
+    %128 = newMap {| age: int, name: string, never... |}{%124=%125, %126=%127}
+    %129 = ConstantLoad 3
+    %130 = newArray [{| age: int, name: string, never... |}...][%129]{%118, %123, %128}
+    people = %130;
+    %132 = ConstantLoad descending
+    %133 = fp $anon/.:$anonFunc$_1
+    %134 = sort(people,%132,%133) -> bb38;
+  }
+  bb38 {
+    byAge = %134;
+    %136 = fp $anon/.:$anonFunc$_2
+    %137 = map(byAge,%136) -> bb39;
+  }
+  bb39 {
+    %138 = println(%137) -> bb40;
+  }
+  bb40 {
+    %139 = ConstantLoad 3
+    %140 = ConstantLoad 1
+    %141 = ConstantLoad 2
+    %142 = newArray [int, int...][%141]{%139, %140}
+    t = %142;
+    $desugar$30 = t;
+    %145 = $default$1($desugar$30) -> bb41;
+  }
+  bb41 {
+    $desugar$31 = %145;
+    %147 = $default$2($desugar$30,$desugar$31) -> bb42;
+  }
+  bb42 {
+    $desugar$32 = %147;
+    %149 = sort($desugar$30,$desugar$31,$desugar$32) -> bb43;
+  }
+  bb43 {
+    fromTuple = %149;
+    %151 = println(fromTuple) -> bb44;
+  }
+  bb44 {
+    return;
+  }
+}
+$anonFunc$_0(string) -> int{
+  bb0 {
+    %2 = length(w) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_1({| age: int, name: string, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad age
+    %2 = p[%3];
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_2({| age: int, name: string, never... |}) -> string{
+  bb0 {
+    %3 = ConstantLoad name
+    %2 = p[%3];
+    %0 = %2;
+    return;
+  }
+}

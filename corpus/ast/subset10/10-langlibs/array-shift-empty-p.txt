@@ -1,0 +1,14 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation shift expr:
+          (simple-var-ref arr) ())))))

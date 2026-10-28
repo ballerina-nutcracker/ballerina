@@ -92,7 +92,7 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 
 ## Lang library coverage
 
-**47%** of jBallerina lang library functions are supported across 19 modules: 107 supported, 0 partially supported, 123 not yet supported. Functions handled directly by the compiler count as supported. See [Lang library support](doc/langlib/README.md) for per-module coverage.
+**49%** of jBallerina lang library functions are supported across 19 modules: 112 supported, 0 partially supported, 118 not yet supported. Functions handled directly by the compiler count as supported. See [Lang library support](doc/langlib/README.md) for per-module coverage.
 
 **Supported modules:** [lang.array](lib/langlibs/ballerina/lang.array/0.0.1/any/README.md), [lang.boolean](lib/langlibs/ballerina/lang.boolean/0.0.1/any/README.md), [lang.decimal](lib/langlibs/ballerina/lang.decimal/0.0.1/any/README.md), [lang.error](lib/langlibs/ballerina/lang.error/0.0.1/any/README.md), [lang.float](lib/langlibs/ballerina/lang.float/0.0.1/any/README.md), [lang.int](lib/langlibs/ballerina/lang.int/0.0.1/any/README.md), [lang.map](lib/langlibs/ballerina/lang.map/0.0.1/any/README.md), [lang.runtime](lib/langlibs/ballerina/lang.runtime/0.0.1/any/README.md), [lang.string](lib/langlibs/ballerina/lang.string/0.0.1/any/README.md), [lang.value](lib/langlibs/ballerina/lang.value/0.0.1/any/README.md), [lang.xml](lib/langlibs/ballerina/lang.xml/0.0.1/any/README.md)
 

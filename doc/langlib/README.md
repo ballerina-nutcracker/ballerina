@@ -10,7 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 
 | Module | Supported | Partially Supported | Not Yet Supported | Support % |
 |---|---|---|---|---|
-| [lang.array](../../lib/langlibs/ballerina/lang.array/0.0.1/any/README.md) | 11 | 0 | 15 | 42% |
+| [lang.array](../../lib/langlibs/ballerina/lang.array/0.0.1/any/README.md) | 16 | 0 | 10 | 62% |
 | [lang.boolean](../../lib/langlibs/ballerina/lang.boolean/0.0.1/any/README.md) | 1 | 0 | 2 | 33% |
 | [lang.decimal](../../lib/langlibs/ballerina/lang.decimal/0.0.1/any/README.md) | 9 | 0 | 1 | 90% |
 | [lang.error](../../lib/langlibs/ballerina/lang.error/0.0.1/any/README.md) | 1 | 0 | 5 | 17% |
@@ -29,4 +29,4 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | lang.typedesc | 0 | 0 | 1 | 0% |
 | [lang.value](../../lib/langlibs/ballerina/lang.value/0.0.1/any/README.md) | 4 | 0 | 15 | 21% |
 | [lang.xml](../../lib/langlibs/ballerina/lang.xml/0.0.1/any/README.md) | 27 | 0 | 0 | 100% |
-| **Total** | **107** | **0** | **123** | **47%** |
+| **Total** | **112** | **0** | **118** | **49%** |

@@ -1,0 +1,13 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    arr = %2;
+    %4 = pop(arr) -> bb1;
+  }
+  bb1 {
+    %5 = %4;
+    return;
+  }
+}

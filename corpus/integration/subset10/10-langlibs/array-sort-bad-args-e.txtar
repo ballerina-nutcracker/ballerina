@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect direction to be a subtype of array:SortDirection
+  --> array-sort-bad-args-e.bal:28:21
+   |
+28 |     _ = values.sort("up"); // @error direction must be an array:SortDirection
+   |                     ^^^^
+
+error[SEMANTIC_ERROR]: sort key must have an ordered type
+  --> array-sort-bad-args-e.bal:23:9
+   |
+23 |     _ = people.sort(); // @error sort key must have an ordered type
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: sort key must have an ordered type
+  --> array-sort-bad-args-e.bal:25:9
+   |
+25 |     _ = mixed.sort(); // @error sort key must have an ordered type
+   |         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: sort key must have an ordered type
+  --> array-sort-bad-args-e.bal:27:9
+   |
+27 |     _ = values.sort(key = isolated function(int v) returns Person => {name: v.toString()}); // @error sort key must have an ordered type
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

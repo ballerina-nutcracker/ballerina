@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: array index out of range: index: -1, size: 0
+        at main(array-pop-empty-p.bal:19)

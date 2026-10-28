@@ -69,6 +69,44 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 		return ref, true
 	}
 
+	// array:pop and array:shift share one monomorphizer. A shift also moves the
+	// remaining members down, so it rejects a tuple whose members don't fit there.
+	arrayRemoveEnd := func(name string, fromHead bool) monomorphizer {
+		return func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+			semanticError SemanticError, _ bool, args []ast.BLangExpression,
+			_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+			containerTy, ok := resolveMutableList(ctx, resolve, semanticError, args, pos)
+			if !ok {
+				return model.SymbolRef{}, false
+			}
+			if ref, found := ctx.lookupMono(owner, containerTy); found {
+				return ref, true
+			}
+			cx := ctx.typeContext()
+			if atomic := semtypes.ToListAtomicType(ctx.typeEnv(), containerTy); atomic != nil {
+				if semtypes.IsNever(atomic.Rest()) {
+					semanticError("cannot "+name+" a fixed-length list", pos)
+					return model.SymbolRef{}, false
+				}
+				if fromHead && !canShiftMembersDown(cx, atomic) {
+					semanticError("cannot "+name+" a tuple without violating its inherent type", pos)
+					return model.SymbolRef{}, false
+				}
+			}
+			ref, ok := materialize(model.TypedFunctionSignature{
+				ParamTypes:    []semtypes.SemType{containerTy},
+				RestParamType: semtypes.Never,
+				ReturnType:    semtypes.ListProj(cx, containerTy, semtypes.Int),
+				Flags:         model.FuncSymbolFlagIsolated,
+			})
+			if !ok {
+				return model.SymbolRef{}, false
+			}
+			ctx.storeMono(owner, ref, containerTy)
+			return ref, true
+		}
+	}
+
 	return map[packageKey][]*FunctionDefinition{
 		{org: "ballerina", pkg: "lang.array"}: {
 			model.OpaqueFnArrayPush: {
@@ -333,6 +371,65 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 					return ref, true
 				},
 			},
+			model.OpaqueFnArrayPop: {
+				name:         "pop",
+				params:       []model.Param{{Name: "arr"}},
+				monomorphize: arrayRemoveEnd("pop", false),
+			},
+			model.OpaqueFnArrayShift: {
+				name:         "shift",
+				params:       []model.Param{{Name: "arr"}},
+				monomorphize: arrayRemoveEnd("shift", true),
+			},
+			model.OpaqueFnArrayUnshift: {
+				name: "unshift",
+				params: []model.Param{
+					{Name: "arr"},
+					{Name: "vals", Flag: model.ParamFlagRestParam},
+				},
+				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+					semanticError SemanticError, _ bool, args []ast.BLangExpression,
+					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+					containerTy, ok := resolveMutableList(ctx, resolve, semanticError, args, pos)
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					if ref, found := ctx.lookupMono(owner, containerTy); found {
+						return ref, true
+					}
+					cx := ctx.typeContext()
+					if atomic := semtypes.ToListAtomicType(ctx.typeEnv(), containerTy); atomic != nil && semtypes.IsNever(atomic.Rest()) {
+						semanticError("cannot unshift a fixed-length list", pos)
+						return model.SymbolRef{}, false
+					}
+					ref, ok := materialize(model.TypedFunctionSignature{
+						ParamTypes:    []semtypes.SemType{containerTy},
+						RestParamType: semtypes.ListProj(cx, containerTy, semtypes.Int),
+						ReturnType:    semtypes.Nil,
+						Flags:         model.FuncSymbolFlagIsolated,
+					})
+					if !ok {
+						return model.SymbolRef{}, false
+					}
+					ctx.storeMono(owner, ref, containerTy)
+					return ref, true
+				},
+			},
+			model.OpaqueFnArrayReduce: {
+				name: "reduce",
+				params: []model.Param{
+					{Name: "arr"},
+					{Name: "func", Flag: model.ParamFlagIsolated},
+					{Name: "initial"},
+				},
+				monomorphize: monomorphizeArrayReduce,
+			},
+			model.OpaqueFnArraySort: {
+				name: "sort",
+				// Declared in lang.array's source, with `direction` and `key` defaults.
+				sourceDeclared: true,
+				monomorphize:   monomorphizeArraySort,
+			},
 		},
 		{org: "ballerina", pkg: "lang.map"}: {
 			model.OpaqueFnMapRemove: {name: "remove", params: mapParams(), monomorphize: mapMember},
@@ -588,6 +685,210 @@ func xmlCallbackMonomorphizer(returnConstraint semtypes.SemType,
 		ctx.storeMono(owner, ref, containerTy, callbackReturnTy, callbackParamTy)
 		return ref, true
 	}
+}
+
+// monomorphizeArrayReduce takes the accumulator type, which reduce returns, from
+// the callback's first parameter.
+func monomorphizeArrayReduce(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+	semanticError SemanticError, isolated bool, args []ast.BLangExpression,
+	expected semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+	containerTy, memberTy, ok := resolveList(ctx, resolve, semanticError, args, pos)
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	if len(args) < 2 {
+		semanticError("missing callback argument", pos)
+		return model.SymbolRef{}, false
+	}
+	cx := ctx.typeContext()
+	env := ctx.typeEnv()
+	callbackExpr := args[1]
+	expectedAccParamTy := semtypes.Never
+	expectedAccReturnTy := semtypes.Val
+	if !semtypes.IsZero(expected) && !semtypes.IsNever(expected) {
+		expectedAccParamTy = expected
+		expectedAccReturnTy = expected
+	}
+	callbackFlags := model.FuncSymbolFlags(0)
+	if isolated {
+		callbackFlags = model.FuncSymbolFlagIsolated
+	}
+	callbackTy, ok := resolve(callbackExpr, FunctionSemType(env, model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{expectedAccParamTy, memberTy},
+		ReturnType:    expectedAccReturnTy,
+		RestParamType: semtypes.Never,
+		Flags:         callbackFlags,
+	}))
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	callbackParamListTy := semtypes.FunctionParamListType(cx, callbackTy)
+	if semtypes.IsZero(callbackParamListTy) {
+		semanticError("callback must be a function", callbackExpr.GetPosition())
+		return model.SymbolRef{}, false
+	}
+	accTy := semtypes.ListProj(cx, callbackParamListTy, semtypes.IntConst(0))
+	callbackArgsDef := semtypes.NewListDefinition()
+	callbackArgsTy := callbackArgsDef.Define(env, []semtypes.SemType{accTy, memberTy},
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
+	callbackReturnTy := semtypes.FunctionReturnType(cx, callbackTy, callbackArgsTy)
+	if semtypes.IsZero(callbackReturnTy) {
+		semanticError("callback is not callable with an accumulator and the array member type",
+			callbackExpr.GetPosition())
+		return model.SymbolRef{}, false
+	}
+	if !semtypes.IsSubtype(cx, callbackReturnTy, accTy) {
+		semanticError("callback return type must be a subtype of its accumulator parameter type",
+			callbackExpr.GetPosition())
+		return model.SymbolRef{}, false
+	}
+	callbackParamTy := FunctionSemType(env, model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{accTy, memberTy},
+		ReturnType:    callbackReturnTy,
+		RestParamType: semtypes.Never,
+		Flags:         callbackFlags,
+	})
+	if ref, found := ctx.lookupMono(owner, containerTy, accTy, callbackParamTy); found {
+		return ref, true
+	}
+	ref, ok := materialize(model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{containerTy, callbackParamTy, accTy},
+		RestParamType: semtypes.Never,
+		ReturnType:    accTy,
+		Flags:         model.FuncSymbolFlagIsolated,
+	})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	ctx.storeMono(owner, ref, containerTy, accTy, callbackParamTy)
+	return ref, true
+}
+
+// monomorphizeArraySort requires the values sort compares, the members or the
+// key function's results, to have an ordered type.
+func monomorphizeArraySort(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+	semanticError SemanticError, isolated bool, args []ast.BLangExpression,
+	_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+	containerTy, memberTy, ok := resolveList(ctx, resolve, semanticError, args, pos)
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	cx := ctx.typeContext()
+	env := ctx.typeEnv()
+	directionTy := semtypes.Union(semtypes.StringConst("ascending"), semtypes.StringConst("descending"))
+	directionArgTy, ok := resolve(args[1], directionTy)
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	if !semtypes.IsSubtype(cx, directionArgTy, directionTy) {
+		semanticError("expect direction to be a subtype of array:SortDirection", args[1].GetPosition())
+		return model.SymbolRef{}, false
+	}
+	keyParamTy, sortKeyTys, ok := resolveSortKey(ctx, resolve, semanticError, isolated, args[2], memberTy)
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	for _, sortKeyTy := range sortKeyTys {
+		if !semtypes.IsSubtype(cx, sortKeyTy, semtypes.CreateOrdered(cx)) || !semtypes.Comparable(cx, sortKeyTy, sortKeyTy) {
+			semanticError("sort key must have an ordered type", pos)
+			return model.SymbolRef{}, false
+		}
+	}
+	if ref, found := ctx.lookupMono(owner, containerTy, keyParamTy); found {
+		return ref, true
+	}
+	resultDef := semtypes.NewListDefinition()
+	ref, ok := materialize(model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{containerTy, directionTy, keyParamTy},
+		RestParamType: semtypes.Never,
+		ReturnType:    resultDef.Define(env, nil, semtypes.ListRest(memberTy)),
+		Flags:         model.FuncSymbolFlagIsolated,
+	})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	ctx.storeMono(owner, ref, containerTy, keyParamTy)
+	return ref, true
+}
+
+// resolveSortKey returns the key parameter type and the types sort may compare:
+// the members when key may be (), and the key's results when it may be a
+// function. A single sort compares only one of these, so each is checked alone.
+func resolveSortKey(ctx *Context, resolve Resolve, semanticError SemanticError, isolated bool,
+	keyExpr ast.BLangExpression, memberTy semtypes.SemType) (semtypes.SemType, []semtypes.SemType, bool) {
+	if _, omitted := keyExpr.(*ast.BLangDefaultArg); omitted {
+		// The default resolves to the declared parameter type, so accept that type.
+		keyTy, ok := resolve(keyExpr, semtypes.Nil)
+		return keyTy, []semtypes.SemType{memberTy}, ok
+	}
+	cx := ctx.typeContext()
+	env := ctx.typeEnv()
+	keyFlags := model.FuncSymbolFlags(0)
+	if isolated {
+		keyFlags = model.FuncSymbolFlagIsolated
+	}
+	keyTopTy := semtypes.Union(semtypes.Nil, FunctionSemType(env, model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{memberTy},
+		ReturnType:    semtypes.CreateOrdered(cx),
+		RestParamType: semtypes.Never,
+		Flags:         keyFlags,
+	}))
+	keyTy, ok := resolve(keyExpr, keyTopTy)
+	if !ok {
+		return semtypes.SemType{}, nil, false
+	}
+	keyFnTy := semtypes.Diff(keyTy, semtypes.Nil)
+	if semtypes.IsNever(keyFnTy) {
+		return semtypes.Nil, []semtypes.SemType{memberTy}, true
+	}
+	keyArgsDef := semtypes.NewListDefinition()
+	keyArgsTy := keyArgsDef.Define(env, []semtypes.SemType{memberTy},
+		semtypes.ListMutability(semtypes.CellMutabilityNone))
+	keyReturnTy := semtypes.FunctionReturnType(cx, keyFnTy, keyArgsTy)
+	if semtypes.IsZero(keyReturnTy) {
+		semanticError("key function is not callable with the array member type", keyExpr.GetPosition())
+		return semtypes.SemType{}, nil, false
+	}
+	keyParamTy := FunctionSemType(env, model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{memberTy},
+		ReturnType:    keyReturnTy,
+		RestParamType: semtypes.Never,
+		Flags:         keyFlags,
+	})
+	if semtypes.IsNever(semtypes.Intersect(keyTy, semtypes.Nil)) {
+		return keyParamTy, []semtypes.SemType{keyReturnTy}, true
+	}
+	return semtypes.Union(keyParamTy, semtypes.Nil), []semtypes.SemType{memberTy, keyReturnTy}, true
+}
+
+// resolveList resolves the container argument of an array function that only
+// reads it, returning the container and member types.
+func resolveList(ctx *Context, resolve Resolve, semanticError SemanticError,
+	args []ast.BLangExpression, pos diagnostics.Location) (semtypes.SemType, semtypes.SemType, bool) {
+	if len(args) == 0 {
+		semanticError("missing container argument", pos)
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+	containerTy, ok := resolve(args[0], semtypes.SemType{})
+	if !ok {
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+	cx := ctx.typeContext()
+	if !semtypes.IsSubtype(cx, containerTy, semtypes.List) {
+		semanticError("expect first argument to be a list subtype", args[0].GetPosition())
+		return semtypes.SemType{}, semtypes.SemType{}, false
+	}
+	return containerTy, semtypes.ListProj(cx, containerTy, semtypes.Int), true
+}
+
+// canShiftMembersDown reports whether each member fits the mandatory slot below it.
+func canShiftMembersDown(cx semtypes.Context, atomic *semtypes.ListAtomicType) bool {
+	for idx := range atomic.FixedLength() {
+		if !semtypes.IsSubtype(cx, atomic.MemberAtInnerVal(idx+1), atomic.MemberAtInnerVal(idx)) {
+			return false
+		}
+	}
+	return true
 }
 
 // resolveMutableList resolves the container argument of an array function that

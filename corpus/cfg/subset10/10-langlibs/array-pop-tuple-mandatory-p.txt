@@ -1,0 +1,17 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable t (type
+        (tuple-type
+          (value-type int)
+          (value-type string) (rest
+            (value-type string)))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal a)))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.array pop (
+        (simple-var-ref t))))
+  )
+)

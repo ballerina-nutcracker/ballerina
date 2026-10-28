@@ -57,3 +57,27 @@ public isolated function fromBase64(string str) returns byte[]|error = external;
 # + str - the hexadecimal encoded string
 # + return - the decoded byte array or an error
 public isolated function fromBase16(string str) returns byte[]|error = external;
+
+# Direction for `sort` function.
+public enum SortDirection {
+    ASCENDING = "ascending",
+    DESCENDING = "descending"
+}
+
+# Any ordered type is a subtype of this.
+public type OrderedType ()|boolean|int|float|decimal|string|OrderedType[];
+
+# Sorts an array.
+#
+# If the member type of the array is not ordered, then the parameter `key` function
+# must be specified.
+# Sorting works the same as with the parameter `sort` clause of query expressions.
+#
+# @opaque
+#
+# + arr - the array to be sorted;
+# + direction - direction in which to sort
+# + key - function that returns a key to use to sort the members
+# + return - a new array consisting of the members of parameter `arr` in sorted order
+public isolated function sort((any|error)[] arr, SortDirection direction = ASCENDING,
+        (isolated function (any|error val) returns OrderedType)? key = ()) returns (any|error)[] = external;
