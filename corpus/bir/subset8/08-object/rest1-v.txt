@@ -5,7 +5,7 @@ class Adder {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad base
-      self[%3] = base;
+      self[%3] = base (unsafe);
       return;
     }
   }

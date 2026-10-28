@@ -18,7 +18,7 @@ class Holder {
     }
     bb2 {
       %7 = ConstantLoad items
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       return;
     }
   }

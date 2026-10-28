@@ -7,7 +7,7 @@ class Worker {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = value;
+      self[%3] = value (unsafe);
       return;
     }
   }
@@ -27,7 +27,7 @@ class Client {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = value;
+      self[%3] = value (unsafe);
       return;
     }
   }

@@ -1,0 +1,81 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal b))
+          (literal 0)))))
+  (function write (
+    (variable c (type
+      (user-defined-type C)))
+    (variable value (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref c)
+          (literal a))
+        (simple-var-ref value))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref c)
+          (literal b))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal b)))))
+      (var-def
+        (variable first (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref c)
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref first)
+            (error-type)))))
+      (var-def
+        (variable second (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref c)
+              (literal 3)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref second)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal a))))))))

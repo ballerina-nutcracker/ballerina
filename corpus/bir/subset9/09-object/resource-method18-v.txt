@@ -6,7 +6,7 @@ class foo {
     bb0 {
       %2 = ConstantLoad 5
       %3 = ConstantLoad bar
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

@@ -1,0 +1,115 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Base
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (type-definition View
+    (object-type))
+  (class-definition Middle
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 2)))))
+  (class-definition Leaf
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 3))
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 4))
+        (compound-assignment +
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 1))))
+    (function update () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 6)))))
+  (class-definition ExplicitFinal
+    (variable a (type
+      (value-type int)) (expr
+      (literal 8))))
+  (function write (
+    (variable value (type
+      (object-type
+        (field a
+          (value-type int)))))) (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (field-based-access a
+          (simple-var-ref value))
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (expr
+          (new
+            (user-defined-type Leaf) ()))))
+      (expression-stmt
+        (invocation update expr:
+          (simple-var-ref value) ()))
+      (compound-assignment +
+        (field-based-access a
+          (simple-var-ref value))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref value)))))
+      (var-def
+        (variable original (type
+          (user-defined-type Base)) (expr
+          (new ()))))
+      (var-def
+        (variable sourceResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref original)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref sourceResult)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref original)))))
+      (var-def
+        (variable explicitFinal (type
+          (user-defined-type ExplicitFinal)) (expr
+          (new ()))))
+      (var-def
+        (variable explicitResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref explicitFinal)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref explicitResult)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref explicitFinal))))))))

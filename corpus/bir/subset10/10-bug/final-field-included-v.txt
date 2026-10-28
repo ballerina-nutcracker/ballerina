@@ -6,18 +6,19 @@ class P {
     bb0 {
       %2 = ConstantLoad 1
       %3 = ConstantLoad a
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
 }
 class C {
+  a int
 
   init() -> nil{
     bb0 {
       %2 = ConstantLoad 2
       %3 = ConstantLoad a
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

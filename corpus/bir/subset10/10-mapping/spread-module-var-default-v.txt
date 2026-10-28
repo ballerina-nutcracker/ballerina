@@ -10,9 +10,9 @@ class Box {
       %4 = ConstantLoad 2
       %5 = newMap {| x: int, y: int, z: int, never... |}{...modulePoint, %3=%4}
       %6 = ConstantLoad initial
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       %7 = ConstantLoad value
-      self[%7] = p;
+      self[%7] = p (unsafe);
       return;
     }
   }

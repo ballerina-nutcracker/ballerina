@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: cannot update 'final' object field 'b'
+        at main(final-field-inline-object-type-p.bal:27)

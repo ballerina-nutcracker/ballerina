@@ -28,7 +28,7 @@ class Counters {
       %3 = ConstantLoad 1
       %4 = %3;
       %5 = + %2 %4;
-      (2, self)[%0] = %5;
+      (2, self)[%0] = %5 (unsafe);
       PopScopeFrame
       GOTO bb2;
     }
@@ -72,7 +72,7 @@ class Counters {
       %3 = ConstantLoad 1
       %4 = %3;
       %5 = + %2 %4;
-      (2, self)[%0] = %5;
+      (2, self)[%0] = %5 (unsafe);
       PopScopeFrame
       GOTO bb2;
     }
@@ -95,10 +95,10 @@ class Counters {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad counterA
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad 0
       %5 = ConstantLoad counterB
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       return;
     }
   }

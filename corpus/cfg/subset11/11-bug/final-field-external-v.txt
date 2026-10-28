@@ -1,0 +1,56 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ()))))
+    (assignment
+      (field-based-access b
+        (simple-var-ref c))
+      (literal 2))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access b
+          (simple-var-ref c)))))
+    (var-def
+      (variable first (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation write (
+            (simple-var-ref c)
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref first)
+          (error-type)))))
+    (var-def
+      (variable second (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation write (
+            (simple-var-ref c)
+            (literal 3)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref second)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+  )
+)
+(write
+  (bb0 () ()
+    (assignment
+      (field-based-access a
+        (simple-var-ref c))
+      (simple-var-ref value))
+  )
+)

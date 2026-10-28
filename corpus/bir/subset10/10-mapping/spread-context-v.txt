@@ -2,8 +2,8 @@ module $anon.. v 0.0.0;
 modulePoint  readonly&{| x: int, y: int, never... |};
 moduleSpread  {| int... |};
 class Holder {
-  initial {| x: int, y: int, z: int, never... |}
   assigned {| x: int, y: int, z: int, never... |}
+  initial {| x: int, y: int, z: int, never... |}
 
   init({| x: int, y: int, z: int, never... |}) -> nil{
     bb0 {
@@ -14,9 +14,9 @@ class Holder {
       %5 = ConstantLoad 5
       %6 = newMap {| x: int, y: int, z: int, never... |}{...%3, %4=%5}
       %7 = ConstantLoad initial
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       %8 = ConstantLoad assigned
-      self[%8] = assigned;
+      self[%8] = assigned (unsafe);
       return;
     }
   }

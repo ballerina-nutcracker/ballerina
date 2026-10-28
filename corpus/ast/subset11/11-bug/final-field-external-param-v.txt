@@ -1,0 +1,66 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition C
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (variable moduleVar (type
+    (user-defined-type C)) (expr
+    (new ())))
+  (function write (
+    (variable p (type
+      (user-defined-type C)))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (field-based-access a
+          (simple-var-ref p))
+        (literal 2))))
+  (function writeModule () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (field-based-access a
+          (simple-var-ref moduleVar))
+        (literal 3))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable moduleWrite (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation writeModule ())))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref moduleWrite)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref moduleVar)))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new ()))))
+      (var-def
+        (variable parameterWrite (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref c)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parameterWrite)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref c))))))))

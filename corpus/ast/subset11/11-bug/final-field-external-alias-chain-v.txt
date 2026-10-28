@@ -1,0 +1,60 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition FinalView
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (class-definition Mutable
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (type-definition Alias
+    (user-defined-type FinalView))
+  (type-definition AliasChain
+    (user-defined-type Alias))
+  (function write (
+    (variable value (type
+      (user-defined-type AliasChain)))) (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (field-based-access a
+          (simple-var-ref value))
+        (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (user-defined-type Mutable)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation write (
+          (simple-var-ref value))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref value)))))
+      (var-def
+        (variable finalValue (type
+          (user-defined-type AliasChain)) (expr
+          (new
+            (user-defined-type FinalView) ()))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref finalValue)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref finalValue))))))))

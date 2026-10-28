@@ -27,9 +27,9 @@ class Bar {
     bb0 {
       %3 = ConstantLoad 5
       %4 = ConstantLoad bar
-      self[%4] = %3;
+      self[%4] = %3 (unsafe);
       %5 = ConstantLoad baz
-      self[%5] = baz;
+      self[%5] = baz (unsafe);
       return;
     }
   }

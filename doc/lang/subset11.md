@@ -28,7 +28,7 @@
 
 - [Assignment](https://ballerina.io/spec/lang/master/#assignment-stmt)
   - See supported [`lvexpr`](#expressions)
-  - Assignments to final object fields through receivers identified as a single class are rejected at compile time, except when initializing the field through `self`.
+  - Assignments and compound assignments through receivers other than the object's own `self` panic at runtime if the field is final on that object. Writes through `self` to a final field are checked at compile time and are only allowed to initialize it.
 - [Destructuring assignment statement](https://ballerina.io/spec/lang/master/#destructuring-assignment-stmt)
   - Only supports [`wildcard-binding-pattern`](https://ballerina.io/spec/lang/master/#wildcard-binding-pattern)
 - [Compound Assignment](https://ballerina.io/spec/lang/master/#compound-assignment-stmt)

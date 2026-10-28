@@ -42,7 +42,7 @@ class L {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad n
-      self[%3] = n;
+      self[%3] = n (unsafe);
       %5 = ConstantLoad listener init 
       %4 = + %5 n;
       %6 = push(trace,%4) -> bb1;

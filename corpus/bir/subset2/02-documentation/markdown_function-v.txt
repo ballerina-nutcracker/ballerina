@@ -6,7 +6,7 @@ class File {
     bb0 {
       %2 = ConstantLoad 
       %3 = ConstantLoad path
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

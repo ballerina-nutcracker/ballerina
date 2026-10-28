@@ -1,0 +1,45 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (user-defined-type Mutable)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation write (
+        (simple-var-ref value))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref value)))))
+    (var-def
+      (variable finalValue (type
+        (user-defined-type AliasChain)) (expr
+        (new
+          (user-defined-type FinalView) ()))))
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation write (
+            (simple-var-ref finalValue)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref finalValue)))))
+  )
+)
+(write
+  (bb0 () ()
+    (compound-assignment +
+      (field-based-access a
+        (simple-var-ref value))
+      (literal 2))
+  )
+)

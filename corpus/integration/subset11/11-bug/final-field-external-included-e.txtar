@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
-  --> final-field-external-included-e.bal:30:5
-   |
-30 |     c.a = 2; // @error included final field written outside the class
-   |     ^^^

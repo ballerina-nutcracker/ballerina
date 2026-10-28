@@ -1,0 +1,70 @@
+module $anon.. v 0.0.0;
+class C {
+  a int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad a
+      self[%3] = %2 (unsafe);
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:C
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    GOTO bb5;
+  }
+  bb5 {
+    %7 = writeFinal(c) -> bb6;
+  }
+  bb6 {
+    %6 = %7;
+    GOTO bb7;
+  }
+  bb7 {
+    res = %6;
+    %9 = res is error
+    %10 = %9;
+    %11 = println(%10) -> bb8;
+  }
+  bb8 {
+    %13 = ConstantLoad a
+    %12 = c[%13];
+    %14 = %12;
+    %15 = println(%14) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+  
+  error-table {
+    [bb5, bb6] -> bb7, %6
+  }
+}
+writeFinal(object { int a; public function init() returns nil }) -> nil{
+  bb0 {
+    x = c;
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad a
+    x[%4] = %3;
+    return;
+  }
+}

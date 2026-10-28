@@ -20,7 +20,7 @@ class Holder {
     bb0 {
       %2 = closure_fp $anon/.:$anonFunc$_2
       %3 = ConstantLoad make
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

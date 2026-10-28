@@ -12,7 +12,7 @@ class DecFn {
       %8 = %7;
       %4 = + %6 %8;
       %9 = ConstantLoad value
-      self[%9] = %4;
+      self[%9] = %4 (unsafe);
       return;
     }
   }
@@ -26,7 +26,7 @@ class FloatFn {
     }
     bb1 {
       %5 = ConstantLoad value
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       _ = marker;
       return;
     }
@@ -44,7 +44,7 @@ class IntOnly {
       %7 = arg;
       %4 = + %6 %7;
       %8 = ConstantLoad value
-      self[%8] = %4;
+      self[%8] = %4 (unsafe);
       return;
     }
   }
@@ -55,7 +55,7 @@ class IntOrString {
   init(function() returns int,int|string) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = arg;
+      self[%4] = arg (unsafe);
       _ = callback;
       return;
     }

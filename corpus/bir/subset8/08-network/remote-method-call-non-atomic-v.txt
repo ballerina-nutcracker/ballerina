@@ -5,7 +5,7 @@ class Client1 {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad base
-      self[%3] = base;
+      self[%3] = base (unsafe);
       return;
     }
   }

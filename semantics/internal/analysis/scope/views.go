@@ -238,24 +238,6 @@ func FinalFieldReassigned(cx Context, access *ast.BLangFieldBaseAccess, compound
 	return "", false
 }
 
-// FinalFieldWrittenThroughReceiver returns the name of the final field that
-// access writes through a variable other than the enclosing class's self,
-// when the receiver's declared class, or the class it was narrowed to by an
-// `is` test, is known and has that field final.
-func FinalFieldWrittenThroughReceiver(cx Context, access *ast.BLangFieldBaseAccess) (string, bool) {
-	receiver, isRef := access.Expr.(*ast.BLangVarRef)
-	if !isRef {
-		return "", false
-	}
-	if fn, ok := EnclosingFunction(cx); ok && fn.isUnnarrowedSelf(cx, receiver.Symbol()) {
-		return "", false
-	}
-	ctx := cx.CompilerCtx()
-	sig, found := ctx.GetObjectSignature(receiver.Symbol())
-	name := access.Field.GetValue()
-	return name, found && sig.IsFinal(name)
-}
-
 // TargetIndex is a member of inner.
 func TargetIndex(inner LValue, _ *ast.BLangIndexBasedAccess) LValue {
 	return LValue{root: inner.root}

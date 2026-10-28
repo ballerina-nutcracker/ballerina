@@ -1,0 +1,31 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (class-definition C
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1)))
+    (variable b (type
+      (value-type int)) (expr
+      (literal 2))))
+  (type-definition O
+    (object-type
+      (field a
+        (value-type int))
+      (field b
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type O)) (expr
+          (new
+            (user-defined-type C) ()))))
+      (assignment
+        (field-based-access a
+          (simple-var-ref o))
+        (literal 3))
+      (assignment
+        (field-based-access b
+          (simple-var-ref o))
+        (literal 4)))))
