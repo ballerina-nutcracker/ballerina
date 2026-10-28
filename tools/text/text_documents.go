@@ -20,6 +20,7 @@ import "strings"
 
 var sourceNewlineNormalizer = strings.NewReplacer("\r\n", "\n", "\r", "\n")
 
+// NormalizeSource removes a leading UTF-8 BOM and converts all line endings to LF.
 func NormalizeSource(source string) string {
 	source = strings.TrimPrefix(source, "\uFEFF")
 	return sourceNewlineNormalizer.Replace(source)
