@@ -29,6 +29,7 @@ use (
 	./semantics
 	./semtypes
 	./st
+	./testplan
 	./tools
 	./values
 )
@@ -76,6 +77,8 @@ replace github.com/ballerina-nutcracker/ballerina/semantics v0.7.0 => ./semantic
 replace github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0 => ./semtypes
 
 replace github.com/ballerina-nutcracker/ballerina/st v0.7.0 => ./st
+
+replace github.com/ballerina-nutcracker/ballerina/testplan v0.7.0 => ./testplan
 
 replace github.com/ballerina-nutcracker/ballerina/tools v0.7.0 => ./tools
 
