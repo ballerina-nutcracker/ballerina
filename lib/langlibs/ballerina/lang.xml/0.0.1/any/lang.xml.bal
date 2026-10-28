@@ -25,6 +25,21 @@ public const string lang = "{http://www.w3.org/XML/1998/namespace}lang";
 public const string base = "{http://www.w3.org/XML/1998/namespace}base";
 
 public isolated function length(xml x) returns int = external;
+# Returns a subsequence of an xml value.
+#
+# The signature is declared here so that the compiler can take the parameter
+# names and the default value of `endIndex` from source. Calls are still
+# monomorphized: `@opaque` marks the declaration as the source form of an
+# opaque function, whose types are decided per call site in the compiler.
+#
+# @opaque
+#
+# + x - the xml value
+# + startIndex - start index, inclusive
+# + endIndex - end index, exclusive
+# + return - a subsequence of `x` consisting of items with index >= `startIndex` and < `endIndex`
+public isolated function slice(xml x, int startIndex, int endIndex = length(x)) returns xml = external;
+
 public isolated function concat((xml|string)... xs) returns xml = external;
 public isolated function getName(Element elem) returns string = external;
 public isolated function setName(Element elem, string xName) = external;

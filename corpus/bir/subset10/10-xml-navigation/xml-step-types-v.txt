@@ -279,7 +279,7 @@ $xmlStep$checkStepTypes$3(xml:Element) -> xml<xml:Element>{
   }
   bb1 {
     $desugar$0 = %2;
-    %4 = $default$3($desugar$0) -> bb2;
+    %4 = $default$4($desugar$0) -> bb2;
   }
   bb2 {
     $desugar$1 = %4;
