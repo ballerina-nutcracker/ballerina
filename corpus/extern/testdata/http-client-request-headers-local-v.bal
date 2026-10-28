@@ -27,7 +27,6 @@ public function main() returns error? {
     string post = check c->post("/echo", postReq);
     io:println(post); // @output text/plain [post] []
 
-    // A string[] header argument is appended to the request's own values.
     // Headers owned by the transport are dropped; a header that Connection names is still sent, as in jBallerina.
     http:Request hopReq = new;
     hopReq.setTextPayload("hi");
@@ -37,6 +36,7 @@ public function main() returns error? {
     string hop = check c->post("/echo", hopReq, {"Keep-Alive": "timeout=5"});
     io:println(hop); // @output text/plain [hop] []
 
+    // A string[] header argument is appended to the request's own values.
     http:Request putReq = new;
     putReq.setTextPayload("hi");
     putReq.addHeader("X-Multi", "a");
