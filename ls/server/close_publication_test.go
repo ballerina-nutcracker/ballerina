@@ -68,12 +68,14 @@ func waitForDiagnosticContender(t *testing.T, function string) {
 }
 
 func TestClosePublicationBoundary(t *testing.T) {
+	t.Parallel()
 	for _, closeFirst := range []bool{false, true} {
 		name := "publication-admitted"
 		if closeFirst {
 			name = "close-admitted"
 		}
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			projects, compiler, bus := newCoreServices()
 			defer bus.Close()
 			defer compiler.Shutdown()

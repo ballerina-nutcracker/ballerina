@@ -24,6 +24,7 @@ import (
 )
 
 func TestContractInvalidation(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"return-type", "parameter-name", "parameter-default", "record-default", "diamond"} {
 		for _, reverse := range []bool{false, true} {
 			scenario := name
@@ -31,6 +32,7 @@ func TestContractInvalidation(t *testing.T) {
 				scenario += "-reverse"
 			}
 			t.Run(scenario, func(t *testing.T) {
+				t.Parallel()
 				runTranscriptWithCheck(t, "invalidation/testdata/"+scenario+".json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 					uri, _ := workspace.FileURIFromPath(filepath.Join(root, "modules/c/c.bal"))
 					diags, gen, ok := compiler.DiagnosticsFor(root)

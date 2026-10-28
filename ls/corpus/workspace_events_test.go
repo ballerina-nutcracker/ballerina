@@ -28,8 +28,10 @@ import (
 )
 
 func TestExternalSourceEvents(t *testing.T) {
+	t.Parallel()
 	for _, kind := range []string{"create", "change", "delete"} {
 		t.Run(kind, func(t *testing.T) {
+			t.Parallel()
 			runTranscriptWithCheck(t, "sync/testdata/external-source-"+kind+".json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 				u, _ := workspace.FileURIFromPath(filepath.Join(root, "main.bal"))
 				diags, gen, ok := compiler.DiagnosticsFor(root)
@@ -47,6 +49,7 @@ func TestExternalSourceEvents(t *testing.T) {
 }
 
 func TestDeletedOpenMember(t *testing.T) {
+	t.Parallel()
 	runTranscriptWithCheck(t, "sync/testdata/deleted-open-member.json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 		project, _, ok := ws.CurrentProject(root)
 		if !ok {
@@ -65,6 +68,7 @@ func TestDeletedOpenMember(t *testing.T) {
 }
 
 func TestExternalOpenBuffer(t *testing.T) {
+	t.Parallel()
 	runTranscriptWithCheck(t, "sync/testdata/external-open-buffer.json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 		u, _ := workspace.FileURIFromPath(filepath.Join(root, "main.bal"))
 		diags, gen, ok := compiler.DiagnosticsFor(root)
@@ -76,6 +80,7 @@ func TestExternalOpenBuffer(t *testing.T) {
 }
 
 func TestBackgroundSourceChange(t *testing.T) {
+	t.Parallel()
 	runTranscriptWithCheck(t, "sync/testdata/background-source-change.json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 		u, _ := workspace.FileURIFromPath(filepath.Join(root, "helper.bal"))
 		text, ok := ws.DocumentText(u)
@@ -91,6 +96,7 @@ func TestBackgroundSourceChange(t *testing.T) {
 }
 
 func TestBackgroundManifestChange(t *testing.T) {
+	t.Parallel()
 	runTranscriptWithCheck(t, "sync/testdata/background-manifest-change.json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 		if _, _, ok := ws.CurrentProject(root); ok {
 			t.Fatal("manifest must invalidate cached roots without open buffers")
@@ -102,8 +108,10 @@ func TestBackgroundManifestChange(t *testing.T) {
 }
 
 func TestWorkspaceEventEdgeCases(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"deleted-member-close-with-sibling", "deleted-member-final-close", "deleted-default-member-close", "new-buffer-not-member", "absent-unmapped-source-event", "single-file-root-delete", "source-reload-failure", "empty-project-reload-failure", "unrelated-file-event", "unrelated-single-file-not-member", "manifest-events-diagnostics"} {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			runTranscriptWithCheck(t, "sync/testdata/"+name+".json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 				switch name {
 				case "single-file-root-delete", "source-reload-failure", "empty-project-reload-failure":
@@ -171,8 +179,10 @@ func TestWorkspaceEventEdgeCases(t *testing.T) {
 }
 
 func TestDeletedMemberStaysAbsentAfterReload(t *testing.T) {
+	t.Parallel()
 	for _, name := range []string{"deleted-default-member-close", "deleted-member-final-close-reopen"} {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			runTranscriptWithCheck(t, "sync/testdata/"+name+".json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 				project, gen, ok := ws.CurrentProject(root)
 				if !ok {
@@ -275,6 +285,7 @@ func assertFreshEventDiagnostics(t *testing.T, ws *workspace.ProjectService, com
 }
 
 func TestCloseDiscardsOverlay(t *testing.T) {
+	t.Parallel()
 	runTranscriptWithCheck(t, "sync/testdata/close-discards-overlay.json", func(ws *workspace.ProjectService, compiler *compile.CompilationService, root string) {
 		u, _ := workspace.FileURIFromPath(filepath.Join(root, "main.bal"))
 		diags, _, ok := compiler.DiagnosticsFor(root)

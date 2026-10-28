@@ -24,6 +24,7 @@ import (
 )
 
 func TestFingerprintSupportedContractEdits(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct{ name, before, after string }{
 		{"export name", "public function f(int a) returns int { return a; }", "public function g(int a) returns int { return a; }"},
 		{"parameter name", "public function f(int a) returns int { return a; }", "public function f(int b) returns int { return b; }"},
@@ -39,6 +40,7 @@ func TestFingerprintSupportedContractEdits(t *testing.T) {
 		{"return type", "public function f() returns int { return 1; }", "public function f() returns string { return \"a\"; }"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			a, b := buildFingerprint(t, tc.before), buildFingerprint(t, tc.after)
 			if !a.valid || !b.valid {
 				t.Fatalf("supported contracts must be valid: %+v, %+v", a, b)
@@ -51,6 +53,7 @@ func TestFingerprintSupportedContractEdits(t *testing.T) {
 }
 
 func TestFingerprintUnsupportedContracts(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct{ name, source string }{
 		{"record", "public type R record {| int a = 1; |};"},
 		{"object", "public type O object { int a; };"},
@@ -70,6 +73,7 @@ func TestFingerprintUnsupportedContracts(t *testing.T) {
 		{"included record", "type R record {| int a; |}; public function f(*R r) returns int { _ = r; return 1; }"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			fp := buildFingerprint(t, tc.source)
 			if fp.valid || fp.equal(fp) {
 				t.Fatalf("unsupported contracts must fail closed: %+v", fp)
@@ -83,8 +87,10 @@ func TestFingerprintUnsupportedContracts(t *testing.T) {
 }
 
 func TestFingerprintIncompleteMetadata(t *testing.T) {
+	t.Parallel()
 	for _, scenario := range []string{"unavailable exports", "unavailable context", "missing AST", "missing declaration", "missing default", "missing parameter name", "missing typed signature", "unsupported semantic subtype", "attached", "panic"} {
 		t.Run(scenario, func(t *testing.T) {
+			t.Parallel()
 			d := buildFingerprintDriver(t, "public function f(int a = 1) returns int { return a; }")
 			ctx, exports, node := d.diagnosticContext(), d.exported, d.pkgNode
 			fn := node.Functions[0]
@@ -125,6 +131,7 @@ func TestFingerprintIncompleteMetadata(t *testing.T) {
 }
 
 func TestFingerprintSupportedReuse(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct{ name, before, after string }{
 		{"empty exports", "function f() {}", "function g() {}"},
 		{"export order", "public function a() returns int { return 1; } public function b() returns string { return \"b\"; }", "public function b() returns string { return \"b\"; } public function a() returns int { return 1; }"},
@@ -132,6 +139,7 @@ func TestFingerprintSupportedReuse(t *testing.T) {
 		{"rest body", "public function f(int... a) returns int { _ = a; return 1; }", "public function f(int... a) returns int { _ = a; return 2; }"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			a, b := buildFingerprint(t, tc.before), buildFingerprint(t, tc.after)
 			if !a.equal(b) {
 				t.Fatalf("body/order-only edit must compare equal: %+v, %+v", a, b)

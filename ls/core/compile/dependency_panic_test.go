@@ -54,12 +54,14 @@ func (r *panickingDependencyRepository) GetPackageVersions(ctx context.Context, 
 }
 
 func TestDependencyPanicPreservesLocalAndLaterModuleProgress(t *testing.T) {
+	t.Parallel()
 	for _, logging := range []bool{true, false} {
 		name := "host writer"
 		if !logging {
 			name = "no-op default"
 		}
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			root := t.TempDir()
 			writeExternalDependencyFixture(t, root)
 			laterPath := filepath.Join(root, "modules", "later", "later.bal")

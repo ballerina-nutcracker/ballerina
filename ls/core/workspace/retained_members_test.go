@@ -23,6 +23,7 @@ import (
 )
 
 func TestRetainedMemberDirectories(t *testing.T) {
+	t.Parallel()
 	name := "modules/tools/helper.bal"
 	overlay := overlayFS{
 		base:     fstest.MapFS{},

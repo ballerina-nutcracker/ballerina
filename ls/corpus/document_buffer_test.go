@@ -23,6 +23,7 @@ import (
 )
 
 func TestDocumentBufferSynchronization(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name    string
 		text    string
@@ -34,6 +35,7 @@ func TestDocumentBufferSynchronization(t *testing.T) {
 		{"crlf-line-end-insertion", "public function main() {\r\n    int unused = 1; int added = 2;\r\n}\r\n", 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			runTranscriptWithCheck(t, "sync/testdata/"+tc.name+".didChange.json", func(ws *workspace.ProjectService, _ *compile.CompilationService, root string) {
 				uri, err := workspace.FileURIFromPath(filepath.Join(root, "buffer.bal"))
 				if err != nil {

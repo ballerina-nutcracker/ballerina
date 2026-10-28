@@ -141,6 +141,7 @@ func TestRecoveredPanicRejectsReaderRequeueAfterRecovery(t *testing.T) {
 }
 
 func TestRecoveredPanicLifecycleResetAllowsSameGeneration(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		kind event.Kind

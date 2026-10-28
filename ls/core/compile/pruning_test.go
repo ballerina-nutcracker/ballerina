@@ -22,10 +22,12 @@ import (
 )
 
 func TestPruningMultipleDirtyRootsAndOrders(t *testing.T) {
+	t.Parallel()
 	orders := [][]string{{"a", "b", "d", "c", "leaf", ""}, {"d", "a", "b", "leaf", "c", ""}}
 	for _, changed := range []string{"a", "d"} {
 		for orderIndex, order := range orders {
 			t.Run(changed+order[0], func(t *testing.T) {
+				t.Parallel()
 				ws := newProjectOnlyService(t)
 				dir, err := filepath.Abs("testdata/pruning")
 				if err != nil {
@@ -84,8 +86,10 @@ func TestPruningMultipleDirtyRootsAndOrders(t *testing.T) {
 }
 
 func TestPruningUnknownAndFailedInputs(t *testing.T) {
+	t.Parallel()
 	for _, scenario := range []string{"unknown prior", "unsupported", "failed"} {
 		t.Run(scenario, func(t *testing.T) {
+			t.Parallel()
 			ws := newProjectOnlyService(t)
 			pkg, _ := openMultimoduleFixture(t, ws)
 			first := newPackageDriver(pkg, ws.OpenText, nil, nil)
@@ -126,6 +130,7 @@ func TestPruningUnknownAndFailedInputs(t *testing.T) {
 }
 
 func TestPruningTwoInvalidFingerprintsCannotPermitReuse(t *testing.T) {
+	t.Parallel()
 	ws := newProjectOnlyService(t)
 	openMultimoduleFixture(t, ws)
 	uri := fileURI(t, filepath.Join(multimoduleFixtureDir(t), "modules/greet/greet.bal"))

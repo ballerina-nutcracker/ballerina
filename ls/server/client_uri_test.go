@@ -32,6 +32,7 @@ import (
 )
 
 func TestClientDiagnosticURI(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name    string
 		uri     string
@@ -42,6 +43,7 @@ func TestClientDiagnosticURI(t *testing.T) {
 		{"encoded-drive-synthetic", "file:///c%3A/workspace/a%40b.bal", func(string) fs.FS { return fstest.MapFS{} }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			canonical, err := workspace.NewFileURI(tc.uri)
 			if err != nil {
 				t.Fatal(err)
