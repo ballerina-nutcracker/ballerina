@@ -1,0 +1,316 @@
+module $anon.. v 0.0.0;
+waitForms() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %8 = closure_fp $anon/.:$worker:waitForms:fork0:a
+    $desugar$6 = %8;
+    %10 = closure_fp $anon/.:$worker:waitForms:fork0:b
+    $desugar$7 = %10;
+    %12 = closure_fp $anon/.:$worker:waitForms:fork0:c
+    $desugar$8 = %12;
+    %14 = closure_fp $anon/.:$worker:waitForms:fork0:d
+    $desugar$9 = %14;
+    %16 = closure_fp $anon/.:$worker:waitForms:fork0:e
+    $desugar$10 = %16;
+    %18 = start $desugar$6() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %18;
+    %19 = start $desugar$7() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %19;
+    %20 = start $desugar$8() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %20;
+    %21 = start $desugar$9() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %21;
+    %22 = start $desugar$10() isolated=false -> bb6;
+  }
+  bb6 {
+    $desugar$5 = %22;
+    %23 = openLatch($desugar$0) -> bb7;
+  }
+  bb7 {
+    %24 = wait $desugar$1 -> bb8;
+  }
+  bb8 {
+    one = %24;
+    %26 = one;
+    %27 = println(%26) -> bb9;
+  }
+  bb9 {
+    %28 = wait {b: $desugar$2, c: $desugar$3} -> bb10;
+  }
+  bb10 {
+    both = %28;
+    %30 = println(both) -> bb11;
+  }
+  bb11 {
+    %31 = wait $desugar$4 | $desugar$5 -> bb12;
+  }
+  bb12 {
+    s = %31;
+    %33 = println(s) -> bb13;
+  }
+  bb13 {
+    return;
+  }
+}
+noJoin() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:noJoin:fork0:slow
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = ConstantLoad after fork
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %10 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    r = %10;
+    %12 = println(r) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+noReturnsClause() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:noReturnsClause:fork0:n
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    r = %8;
+    %10 = r is nil
+    %11 = %10;
+    %12 = println(%11) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+capturesBeforeFork(int) -> nil{
+  bb0 {
+    %2 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %6 = closure_fp $anon/.:$worker:capturesBeforeFork:$function
+    $desugar$6 = %6;
+    %8 = closure_fp $anon/.:$worker:capturesBeforeFork:named
+    $desugar$7 = %8;
+    %10 = start $desugar$6() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %10;
+    %11 = start $desugar$7() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %11;
+    %12 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %13 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %13;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = waitForms() -> bb1;
+  }
+  bb1 {
+    %2 = noJoin() -> bb2;
+  }
+  bb2 {
+    %3 = noReturnsClause() -> bb3;
+  }
+  bb3 {
+    %4 = ConstantLoad 3
+    %5 = %4;
+    %6 = capturesBeforeFork(%5) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$worker:capturesBeforeFork:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = (1, param);
+    %4 = ConstantLoad 10
+    %5 = %4;
+    %2 = + %3 %5;
+    trailing = %2;
+    %7 = createLatch() -> bb2;
+  }
+  bb2 {
+    $desugar$3 = %7;
+    %10 = closure_fp $anon/.:$worker:capturesBeforeFork:fork0:f
+    $desugar$5 = %10;
+    %12 = start $desugar$5() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$4 = %12;
+    %13 = openLatch($desugar$3) -> bb4;
+  }
+  bb4 {
+    %14 = wait (1, $desugar$2) -> bb5;
+  }
+  bb5 {
+    n = %14;
+    %16 = wait $desugar$4 -> bb6;
+  }
+  bb6 {
+    r = %16;
+    %19 = n;
+    %20 = r;
+    %18 = + %19 %20;
+    %21 = %18;
+    %22 = println(%21) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}
+$worker:capturesBeforeFork:fork0:f() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$3)) -> bb1;
+  }
+  bb1 {
+    %3 = (2, param);
+    %4 = (1, trailing);
+    %2 = + %3 %4;
+    %0 = %2;
+    return;
+  }
+}
+$worker:capturesBeforeFork:named() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %0 = (1, param);
+    return;
+  }
+}
+$worker:noJoin:fork0:slow() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 0.2
+    %3 = %2;
+    %4 = sleep(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad worker done
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad slow
+    %0 = %7;
+    return;
+  }
+}
+$worker:noReturnsClause:fork0:n() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad in n
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$worker:waitForms:fork0:a() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:waitForms:fork0:b() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$worker:waitForms:fork0:c() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 3
+    %0 = %2;
+    return;
+  }
+}
+$worker:waitForms:fork0:d() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad d
+    %0 = %2;
+    return;
+  }
+}
+$worker:waitForms:fork0:e() -> string{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 0.5
+    %3 = %2;
+    %4 = sleep(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad e
+    %0 = %5;
+    return;
+  }
+}

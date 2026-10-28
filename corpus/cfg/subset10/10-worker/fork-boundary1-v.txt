@@ -1,0 +1,163 @@
+(earlyReturn
+  (bb0 () (bb1 bb2)
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 0))
+  )
+  (bb2 (bb0) ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 3)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (return
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+)
+(inNamedWorker
+  (bb0 () ()
+    (named-worker host (
+      (value-type int))
+      (block-function-body
+        (fork
+          (named-worker a (
+            (value-type null))
+            (block-function-body
+              (expression-stmt
+                (worker-async-send-action b
+                  (literal 1)))))
+          (named-worker b (
+            (value-type int))
+            (block-function-body
+              (return
+                (worker-receive-action a)))))
+        (return
+          (single-wait-action
+            (simple-var-ref b)))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref host)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(inTrailingStatements
+  (bb0 () ()
+    (named-worker other (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal other))))))
+    (expression-stmt
+      (single-wait-action
+        (simple-var-ref other)))
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 2)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (return
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation inNamedWorker ()))
+    (expression-stmt
+      (invocation io println (
+        (invocation inTrailingStatements ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation earlyReturn (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation earlyReturn (
+          (literal false))))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 1)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 2)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 3)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)
+(worker host
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 1)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (return
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+)
+(worker other
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal other))))
+  )
+)

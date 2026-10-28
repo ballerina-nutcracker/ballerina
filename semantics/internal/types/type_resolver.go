@@ -1873,6 +1873,8 @@ func resolveStatement(t typeResolver, chain *binding, stmt ast.StatementNode) (s
 		return statementEffect{nil, true}, true
 	case *ast.BLangBlockStmt:
 		return resolveBlockStatements(t, chain, s.Stmts), true
+	case *ast.BLangFork:
+		return resolveFork(t, chain, s)
 	case *ast.BLangLock:
 		restoreContext := setIsolatedContext(t, true)
 		effect := resolveBlockStatements(t, chain, s.Body.Stmts)
@@ -2335,35 +2337,71 @@ func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlo
 	if len(body.InitStmts) > 0 {
 		startupChain = resolveBlockStatements(t, chain, body.InitStmts).binding
 	}
-	if len(body.Workers) == 0 {
+	if body.Region == nil {
 		resolveBlockStatements(t, startupChain, body.Stmts)
 		return
 	}
-	returnTypes := make([]semtypes.SemType, len(body.Workers))
-	for i, worker := range body.Workers {
-		returnTy, workerChain, ok := declareNamedWorkerType(t, startupChain, worker)
+	region := body.Region
+	regionChain, returnTypes, ok := declareWorkerRegionTypes(t, startupChain, region)
+	if !ok {
+		// A worker's declared return type did not resolve, so its body
+		// cannot be checked against anything meaningful and neither can
+		// the trailing statements that wait on it. The failure is already
+		// reported; stop before producing cascading diagnostics.
+		return
+	}
+	t.setSymbolType(region.DefaultWorker.Symbol(), semtypes.FutureContaining(t.typeEnv(), t.expectedReturnType()))
+	children := newRegionWorkerResolutions(t, regionChain, region, returnTypes)
+	children = append(children, newDefaultWorkerResolution(t, regionChain, region))
+	resolveWorkerRegionChildren(t, children)
+}
+
+// resolveFork resolves the fork's workers and returns the effect of the fork on
+// the enclosing worker: every worker's captures are in effect after it, as
+// after a lambda.
+func resolveFork(t typeResolver, chain *binding, fork *ast.BLangFork) (statementEffect, bool) {
+	forkChain, returnTypes, ok := declareWorkerRegionTypes(t, chain, fork.Region)
+	if !ok {
+		return defaultStmtEffect(chain), false
+	}
+	resolveWorkerRegionChildren(t, newRegionWorkerResolutions(t, forkChain, fork.Region, returnTypes))
+	return statementEffect{forkChain, false}, true
+}
+
+// declareWorkerRegionTypes declares the future<T> type of every named worker
+// of region and returns the chain in effect in every worker body and after the
+// region's start point, together with the workers' return types.
+func declareWorkerRegionTypes(t typeResolver, chain *binding, region *ast.WorkerRegion) (*binding, []semtypes.SemType, bool) {
+	returnTypes := make([]semtypes.SemType, len(region.Workers))
+	for i, worker := range region.Workers {
+		returnTy, workerChain, ok := declareNamedWorkerType(t, chain, worker)
 		if !ok {
-			// The worker's declared return type did not resolve, so its body
-			// cannot be checked against anything meaningful and neither can
-			// the trailing statements that wait on it. The failure is already
-			// reported; stop before producing cascading diagnostics.
-			return
+			return nil, nil, false
 		}
 		returnTypes[i] = returnTy
-		startupChain = workerChain
+		chain = workerChain
 	}
-	t.setSymbolType(body.DefaultWorker, semtypes.FutureContaining(t.typeEnv(), t.expectedReturnType()))
-	// Workers run concurrently with each other and with the rest of the
-	// default worker, so every worker's captures are in effect in every worker
-	// body and in the trailing statements.
-	for _, worker := range body.Workers {
-		startupChain = addCaptureGroup(startupChain, worker.CaptureGroup())
+	// Workers run concurrently with each other and with whatever follows the
+	// start point, so every worker's captures are in effect in every worker
+	// body and after it.
+	for _, worker := range region.Workers {
+		chain = addCaptureGroup(chain, worker.CaptureGroup())
 	}
-	children := make([]workerResolution, 0, len(body.Workers)+1)
-	for i, worker := range body.Workers {
-		children = append(children, newNamedWorkerResolution(t, startupChain, worker, returnTypes[i]))
+	return chain, returnTypes, true
+}
+
+func newRegionWorkerResolutions(t typeResolver, chain *binding, region *ast.WorkerRegion, returnTypes []semtypes.SemType) []workerResolution {
+	children := make([]workerResolution, 0, len(region.Workers))
+	for i, worker := range region.Workers {
+		children = append(children, newNamedWorkerResolution(t, chain, region.NamePrefix, worker, returnTypes[i]))
 	}
-	children = append(children, newDefaultWorkerResolution(t, startupChain, body))
+	return children
+}
+
+// resolveWorkerRegionChildren resolves the workers of a region, each by its own
+// child resolver, all built before any of them runs. While the children run,
+// t is only read.
+func resolveWorkerRegionChildren(t typeResolver, children []workerResolution) {
 	if isResolvingPublicNodes(t) {
 		// Symbol resolution rejects message actions here, so no worker waits on another.
 		for _, child := range children {
@@ -2465,11 +2503,12 @@ func declareNamedWorkerType(
 func newNamedWorkerResolution(
 	t typeResolver,
 	chain *binding,
+	namePrefix string,
 	worker *ast.BLangNamedWorkerDeclaration,
 	returnTy semtypes.SemType,
 ) workerResolution {
 	return workerResolution{
-		resolver:     newWorkerChildResolver(t, returnTy, worker.Name, worker.Scope()),
+		resolver:     newWorkerChildResolver(t, returnTy, namePrefix, worker.Name, worker.Scope()),
 		chain:        &binding{flags: bindingFlagFunctionBoundary, prev: chain},
 		worker:       worker,
 		sendMessages: worker.SendMessages,
@@ -2479,15 +2518,15 @@ func newNamedWorkerResolution(
 // newDefaultWorkerResolution prepares the resolution of the trailing
 // statements of a body with workers. They belong to the enclosing function, so
 // they keep its return type, scope and narrowing, with no function boundary.
-func newDefaultWorkerResolution(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) workerResolution {
-	ft := newWorkerChildResolver(t, t.expectedReturnType(), constants.DefaultWorkerName, t.currentScope())
+func newDefaultWorkerResolution(t typeResolver, chain *binding, region *ast.WorkerRegion) workerResolution {
+	ft := newWorkerChildResolver(t, t.expectedReturnType(), region.NamePrefix, constants.DefaultWorkerName, t.currentScope())
 	// Mono symbols of the trailing statements share the function scope with
 	// those of the initialization statements, so their names continue from them.
 	ft.monoCounters = maps.Clone(resolverMonoCounters(t))
-	return workerResolution{resolver: ft, chain: chain, stmts: body.Stmts, sendMessages: body.DefaultWorkerSendMessages}
+	return workerResolution{resolver: ft, chain: chain, stmts: region.DefaultWorker.Stmts, sendMessages: region.DefaultWorker.SendMessages}
 }
 
-func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerName string, scope model.Scope) *functionTypeResolver {
+func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, namePrefix string, workerName string, scope model.Scope) *functionTypeResolver {
 	return &functionTypeResolver{
 		atomSideTableBase: newAtomSideTableBase(),
 		parentResolver:    t,
@@ -2495,7 +2534,7 @@ func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerNam
 		retTy:             returnTy,
 		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
-		xmlStepOwner:      workerXMLStepOwner(t, workerName),
+		xmlStepOwner:      workerXMLStepOwner(t, namePrefix, workerName),
 		scope:             scope,
 		context:           resolverContextForFunction(isolatedContext(t)),
 		ephemeralState:    childEphemeralState(t),
@@ -2513,10 +2552,13 @@ func resolverMonoCounters(t typeResolver) map[string]int {
 }
 
 // workerXMLStepOwner qualifies the XML step owner of the function declaring a
-// worker with the worker's name, so XML steps of sibling workers get distinct
-// function names.
-func workerXMLStepOwner(t typeResolver, workerName string) string {
-	return resolverXMLStepOwner(t) + "$" + workerName
+// worker with the worker's region prefix and name, so XML steps of sibling
+// workers, and of workers of different regions, get distinct function names.
+func workerXMLStepOwner(t typeResolver, namePrefix string, workerName string) string {
+	if namePrefix == "" {
+		return resolverXMLStepOwner(t) + "$" + workerName
+	}
+	return resolverXMLStepOwner(t) + "$" + namePrefix + "$" + workerName
 }
 
 func resolverXMLStepOwner(t typeResolver) string {

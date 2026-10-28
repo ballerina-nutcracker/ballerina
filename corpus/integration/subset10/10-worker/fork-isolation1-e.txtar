@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> fork-isolation1-e.bal:21:20
+   |
+21 |             return x; // @error captured variable is not final
+   |                    ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> fork-isolation1-e.bal:31:20
+   |
+31 |             return arr[0]; // @error captured variable is not isolated
+   |                    ^^^

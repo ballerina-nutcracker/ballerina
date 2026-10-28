@@ -64,6 +64,9 @@ func validateStmt(cx scope.Context, stmt ast.StatementNode) {
 		validateActionOrExpr(cx, stmt.Expr, semtypes.Error)
 	case *ast.BLangLock:
 		validateLock(cx, stmt)
+	case *ast.BLangFork:
+		scope.RejectForkInLock(cx, stmt)
+		validateWorkerRegion(cx, stmt.Region)
 	case *ast.BLangBlockStmt:
 		validateBlock(cx, stmt.Stmts)
 	case *ast.BLangBreak, *ast.BLangContinue:

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-multiple-receive1-e.bal:25:34
+   |
+25 |             record {} _ = <- {a, named}; // @error named isn't a peer of b
+   |                                  ^^^^^

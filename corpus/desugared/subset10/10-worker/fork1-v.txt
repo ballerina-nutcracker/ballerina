@@ -1,0 +1,313 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang runtime (as runtime))
+  (function waitForms () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4))
+      (var-def
+        (variable $desugar$5))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:waitForms:fork0:a () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 1))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:waitForms:fork0:b () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 2))))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (lambda
+            (function $worker:waitForms:fork0:c () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 3))))))))
+      (var-def
+        (variable $desugar$9 (expr
+          (lambda
+            (function $worker:waitForms:fork0:d () (
+              (value-type string))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal d))))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (lambda
+            (function $worker:waitForms:fork0:e () (
+              (value-type string))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (expression-stmt
+                  (invocation runtime sleep (
+                    (literal 0.5))))
+                (return
+                  (literal e))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$7 ())))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action
+          (invocation $desugar$8 ())))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (start-action
+          (invocation $desugar$9 ())))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (start-action
+          (invocation $desugar$10 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable one (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref one))))
+      (var-def
+        (variable both (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (multiple-wait-action b
+            (simple-var-ref $desugar$2) c
+            (simple-var-ref $desugar$3)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref both))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (alternate-wait-action
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s))))))
+  (function noJoin () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:noJoin:fork0:slow () (
+              (value-type string))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (expression-stmt
+                  (invocation runtime sleep (
+                    (literal 0.2))))
+                (expression-stmt
+                  (invocation io println (
+                    (literal worker done))))
+                (return
+                  (literal slow))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (literal after fork))))
+      (var-def
+        (variable r (type
+          (value-type string)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function noReturnsClause () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:noReturnsClause:fork0:n () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (expression-stmt
+                  (invocation io println (
+                    (literal in n))))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable r (type
+          (value-type null)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (value-type null)))))))
+  (function capturesBeforeFork (
+    (variable param (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:capturesBeforeFork:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable trailing (type
+                    (value-type int)) (expr
+                    (binary-expr +
+                      (simple-var-ref param)
+                      (literal 10)))))
+                (var-def
+                  (variable $desugar$3 (expr
+                    (invocation lang.__internal createLatch ()))))
+                (var-def
+                  (variable $desugar$4))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (lambda
+                      (function $worker:capturesBeforeFork:fork0:f () (
+                        (value-type int))
+                        (block-function-body
+                          (expression-stmt
+                            (invocation lang.__internal waitOnLatch (
+                              (simple-var-ref $desugar$3))))
+                          (return
+                            (binary-expr +
+                              (simple-var-ref param)
+                              (simple-var-ref trailing)))))))))
+                (assignment
+                  (simple-var-ref $desugar$4)
+                  (start-action
+                    (invocation $desugar$5 ())))
+                (expression-stmt
+                  (invocation lang.__internal openLatch (
+                    (simple-var-ref $desugar$3))))
+                (var-def
+                  (variable n (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))
+                (var-def
+                  (variable r (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$4)))))
+                (expression-stmt
+                  (invocation io println (
+                    (binary-expr +
+                      (simple-var-ref n)
+                      (simple-var-ref r)))))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:capturesBeforeFork:named () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (simple-var-ref param))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$7 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation waitForms ()))
+      (expression-stmt
+        (invocation noJoin ()))
+      (expression-stmt
+        (invocation noReturnsClause ()))
+      (expression-stmt
+        (invocation capturesBeforeFork (
+          (literal 3)))))))

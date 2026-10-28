@@ -26,141 +26,142 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-// desugarWorkerRegion lowers the worker region and the trailing statements of
-// a block function body with named workers to existing language constructs.
-// The emitted sequence is:
+// walkFork lowers a fork to the statements that start its workers, followed by
+// opening their latch. Its latch, message handles and future slots are locals
+// of the enclosing block, so every execution of the fork gets new ones.
+func walkFork(cx *functionContext, fork *ast.BLangFork) desugaredNode[ast.StatementNode] {
+	stmts, openLatch := lowerWorkerRegion(cx, fork.Region, fork.GetPosition())
+	return desugaredNode[ast.StatementNode]{initStmts: stmts, replacementNode: openLatch}
+}
+
+// desugarBodyWorkerRegion lowers the worker region of a block function body
+// to existing language constructs. The emitted sequence is:
 //
 //	handle $latch = createLatch();
 //	handle $m1 = createWorkerMessage(); ...      // one per send
 //	future<T> $default; future<T1> $w1; ... future<Tn> $wn;
-//	var $cd = function () returns T { waitOnLatch($latch); <trailing stmts> };
+//	var $cd = function () returns T { waitOnLatch($latch); <default worker stmts> };
 //	var $c1 = function () returns T1 { waitOnLatch($latch); <body 1> }; ...
 //	$default = start $cd(); $w1 = start $c1(); ... $wn = start $cn();
 //	openLatch($latch);
 //	return wait $default;
+func desugarBodyWorkerRegion(cx *functionContext, body *ast.BLangBlockFunctionBody) []ast.StatementNode {
+	region := body.Region
+	stmts, openLatch := lowerWorkerRegion(cx, region, region.Workers[0].GetPosition())
+	stmts = append(stmts, openLatch)
+	return append(stmts, returnDefaultWorkerResult(cx, region.DefaultWorker))
+}
+
+// lowerWorkerRegion returns the statements that start the region's workers
+// and, separately, the statement that opens its latch, which must come last.
 //
 // The only state shared between workers is the future slot table: a worker body
 // may reference a sibling declared after it, so every slot is allocated before
 // any body is lowered. Every closure is constructed before the first start, and
 // the latch is opened only after every slot has been assigned.
-func desugarWorkerRegion(cx *functionContext, body *ast.BLangBlockFunctionBody) []ast.StatementNode {
-	workers := body.Workers
-	pos := workers[0].GetPosition()
+func lowerWorkerRegion(cx *functionContext, region *ast.WorkerRegion, pos diagnostics.Location) (stmts []ast.StatementNode, openLatch ast.StatementNode) {
+	workers := region.Workers
+	defaultWorker := region.DefaultWorker
 
 	latchDef, latchRef := assignToLocal(cx, createLangInternalInvocation(cx, "createLatch", semtypes.Handle, nil, pos), pos)
-	stmts := make([]ast.StatementNode, 0, 3*len(workers)+6)
+	stmts = make([]ast.StatementNode, 0, 3*len(workers)+6)
 	stmts = append(stmts, latchDef)
 
+	// Nested contexts share these maps by reference, so the region's entries
+	// go into a copy.
 	cx.workerMessages = maps.Clone(cx.workerMessages)
 	if cx.workerMessages == nil {
 		cx.workerMessages = make(map[model.WorkerMessageRef]*ast.BLangVarRef)
 	}
-	stmts = append(stmts, declareWorkerMessages(cx, body, pos)...)
+	stmts = append(stmts, declareWorkerMessages(cx, region, pos)...)
 
 	cx.workerFutureSlots = maps.Clone(cx.workerFutureSlots)
 	if cx.workerFutureSlots == nil {
 		cx.workerFutureSlots = make(map[model.SymbolRef]*ast.BLangVarRef, len(workers)+1)
 	}
-	defaultDef, defaultSlot := declareWorkerFutureSlot(cx, body.DefaultWorker, pos)
-	stmts = append(stmts, defaultDef)
-	cx.workerFutureSlots[body.DefaultWorker] = defaultSlot
-	slotRefs := make([]*ast.BLangVarRef, len(workers))
-	for i, worker := range workers {
-		def, ref := declareWorkerFutureSlot(cx, worker.Symbol(), pos)
-		stmts = append(stmts, def)
-		slotRefs[i] = ref
-		cx.workerFutureSlots[worker.Symbol()] = ref
+	if defaultWorker != nil {
+		stmts = append(stmts, declareWorkerFutureSlot(cx, defaultWorker.Symbol(), pos))
+	}
+	for _, worker := range workers {
+		stmts = append(stmts, declareWorkerFutureSlot(cx, worker.Symbol(), pos))
 	}
 
-	defaultClosureDefs, defaultStart := desugarDefaultWorker(cx, body, latchRef, defaultSlot)
-	stmts = append(stmts, defaultClosureDefs...)
 	starts := make([]ast.StatementNode, 0, len(workers)+1)
-	starts = append(starts, defaultStart)
-	for i, worker := range workers {
-		closureDefs, start := desugarNamedWorker(cx, worker, latchRef, slotRefs[i])
+	if defaultWorker != nil {
+		closureDefs, start := desugarDefaultWorker(cx, region.NamePrefix, defaultWorker, latchRef)
+		stmts = append(stmts, closureDefs...)
+		starts = append(starts, start)
+	}
+	for _, worker := range workers {
+		closureDefs, start := desugarNamedWorker(cx, region.NamePrefix, worker, latchRef)
 		stmts = append(stmts, closureDefs...)
 		starts = append(starts, start)
 	}
 
 	stmts = append(stmts, starts...)
-	openLatch := createLangInternalInvocation(cx, "openLatch", semtypes.Nil,
+	open := createLangInternalInvocation(cx, "openLatch", semtypes.Nil,
 		[]ast.BLangExpression{copyVarRef(latchRef)}, pos)
-	stmts = append(stmts, expressionStatement(openLatch, pos))
-	return append(stmts, returnDefaultWorkerResult(cx, body, defaultSlot))
+	return stmts, expressionStatement(open, pos)
 }
 
 // desugarNamedWorker lowers one worker into the statements that bind its
 // closures and the statement that starts it and publishes the resulting future
-// into slot. They are returned separately because every closure must be bound
-// before the first worker is started.
+// into its slot. They are returned separately because every closure must be
+// bound before the first worker is started.
 func desugarNamedWorker(
 	cx *functionContext,
+	namePrefix string,
 	worker *ast.BLangNamedWorkerDeclaration,
 	latch *ast.BLangVarRef,
-	slot *ast.BLangVarRef,
 ) (closureDefs []ast.StatementNode, start ast.StatementNode) {
-	closureDefs, closure := createWorkerClosure(cx, worker, latch)
+	closureDefs, closure := createWorkerClosure(cx, namePrefix, worker, latch)
 	closureDef, closureRef := assignToLocal(cx, closure, worker.GetPosition())
-	return append(closureDefs, closureDef), createWorkerStart(cx, worker.Symbol(), closureRef, slot, worker.GetPosition())
+	return append(closureDefs, closureDef), createWorkerStart(cx, worker.Symbol(), closureRef, worker.GetPosition())
 }
 
-// desugarDefaultWorker lowers the trailing statements of a body with named
-// workers into the default worker's closure, and returns the statements that
-// bind its closures and the one that starts it.
+// desugarDefaultWorker lowers the default worker into its closure, and returns
+// the statements that bind its closures and the one that starts it. Unlike a
+// named worker, its statements belong to the enclosing function's scope, so
+// they are lowered in this context rather than as a nested function; BIR gen
+// resolves the variables they capture lexically.
 func desugarDefaultWorker(
 	cx *functionContext,
-	body *ast.BLangBlockFunctionBody,
+	namePrefix string,
+	worker *ast.BLangDefaultWorker,
 	latch *ast.BLangVarRef,
-	slot *ast.BLangVarRef,
 ) (closureDefs []ast.StatementNode, start ast.StatementNode) {
-	pos := defaultWorkerPosition(body)
-	returnTy := workerReturnType(cx, body.DefaultWorker)
-	name := workerClosureName(cx, constants.DefaultWorkerName)
+	pos := worker.GetPosition()
+	returnTy := workerReturnType(cx, worker.Symbol())
+	name := workerClosureName(cx, namePrefix, constants.DefaultWorkerName)
 	var returnTypeDescriptor ast.BType
 	if cx.returnTypeDescriptor != nil {
 		returnTypeDescriptor = cx.returnTypeDescriptor.TypeDescriptor
 	}
-	sends := asyncSendsOf(body.Stmts)
-	// The statements are lowered in this context rather than as a nested
-	// function; BIR gen resolves the variables they capture lexically.
-	stmts := walkStatementList(cx, body.Stmts)
+	sends := asyncSendsOf(worker.Stmts)
+	stmts := walkStatementList(cx, worker.Stmts)
 	if len(sends) > 0 {
 		inner := newWorkerClosure(cx, name+workerBodySuffix, newBlockFunctionBody(stmts, pos), returnTy, returnTypeDescriptor, cx.currentScope(), pos)
 		innerDef, innerRef := assignToLocal(cx, inner, pos)
 		closureDefs = append(closureDefs, innerDef)
-		stmts = withTerminationDelivery(cx, innerRef, returnTy, sends, diagnostics.EndLocation(body.GetPosition()))
+		stmts = withTerminationDelivery(cx, innerRef, returnTy, sends, diagnostics.EndLocation(pos))
 	}
 	latchWait := expressionStatement(waitOnLatchInvocation(cx, latch, pos), pos)
 	closureBody := newBlockFunctionBody(append([]ast.StatementNode{latchWait}, stmts...), pos)
 	lambda := newWorkerClosure(cx, name, closureBody, returnTy, returnTypeDescriptor, cx.currentScope(), pos)
 	closureDef, closureRef := assignToLocal(cx, lambda, pos)
-	// Starting over the trailing statements keeps the stack trace of a panic
-	// in them unchanged.
-	return append(closureDefs, closureDef), createWorkerStart(cx, body.DefaultWorker, closureRef, slot, pos)
-}
-
-// defaultWorkerPosition spans the trailing statements of a body and its
-// closing brace, where the default worker terminates.
-func defaultWorkerPosition(body *ast.BLangBlockFunctionBody) diagnostics.Location {
-	end := diagnostics.EndLocation(body.GetPosition())
-	if len(body.Stmts) == 0 {
-		return end
-	}
-	return diagnostics.SpanLocations(body.Stmts[0].GetPosition(), end)
+	// Starting over the default worker's statements keeps the stack trace of a
+	// panic in them unchanged.
+	return append(closureDefs, closureDef), createWorkerStart(cx, worker.Symbol(), closureRef, pos)
 }
 
 // returnDefaultWorkerResult makes the function return what its default worker
 // terminated with.
-func returnDefaultWorkerResult(
-	cx *functionContext,
-	body *ast.BLangBlockFunctionBody,
-	slot *ast.BLangVarRef,
-) ast.StatementNode {
-	pos := diagnostics.EndLocation(body.GetPosition())
-	slotRef := copyVarRef(slot)
+func returnDefaultWorkerResult(cx *functionContext, worker *ast.BLangDefaultWorker) ast.StatementNode {
+	pos := diagnostics.EndLocation(worker.GetPosition())
+	slotRef := copyVarRef(cx.workerFutureSlots[worker.Symbol()])
 	slotRef.SetPosition(pos)
 	wait := &ast.BLangSingleWaitAction{FutureExpr: slotRef}
-	ast.SetType(wait, workerReturnType(cx, body.DefaultWorker))
+	ast.SetType(wait, workerReturnType(cx, worker.Symbol()))
 	setPositionIfMissing(wait, pos)
 	ret := &ast.BLangReturn{Expr: wait}
 	setPositionIfMissing(ret, pos)
@@ -168,12 +169,9 @@ func returnDefaultWorkerResult(
 }
 
 // declareWorkerFutureSlot declares the hidden future slot of a worker without
-// initialising it. The slot is assigned by the generated start action.
-func declareWorkerFutureSlot(
-	cx *functionContext,
-	worker model.SymbolRef,
-	pos diagnostics.Location,
-) (ast.StatementNode, *ast.BLangVarRef) {
+// initialising it and records it in cx. The slot is assigned by the generated
+// start action.
+func declareWorkerFutureSlot(cx *functionContext, worker model.SymbolRef, pos diagnostics.Location) ast.StatementNode {
 	futureTy := cx.symbolType(worker)
 	name, symRef := cx.addDesugardSymbol(futureTy, model.SymbolKindVariable, pos)
 
@@ -187,7 +185,8 @@ func declareWorkerFutureSlot(
 	varRef.SetSymbol(symRef)
 	ast.SetType(varRef, futureTy)
 	setPositionIfMissing(varRef, pos)
-	return varDef, varRef
+	cx.workerFutureSlots[worker] = varRef
+	return varDef
 }
 
 // createWorkerClosure turns a source worker into an anonymous function whose
@@ -197,12 +196,13 @@ func declareWorkerFutureSlot(
 // statements binding it are returned too.
 func createWorkerClosure(
 	cx *functionContext,
+	namePrefix string,
 	worker *ast.BLangNamedWorkerDeclaration,
 	latch *ast.BLangVarRef,
 ) ([]ast.StatementNode, ast.BLangExpression) {
 	pos := worker.GetPosition()
 	returnTy := workerReturnType(cx, worker.Symbol())
-	name := workerClosureName(cx, worker.Name)
+	name := workerClosureName(cx, namePrefix, worker.Name)
 	returnTypeDescriptor := worker.ReturnType.TypeDescriptor
 
 	workerBody := worker.Body
@@ -314,7 +314,6 @@ func createWorkerStart(
 	cx *functionContext,
 	worker model.SymbolRef,
 	closure *ast.BLangVarRef,
-	slot *ast.BLangVarRef,
 	pos diagnostics.Location,
 ) ast.StatementNode {
 	invocation := &ast.BLangInvocation{}
@@ -327,7 +326,7 @@ func createWorkerStart(
 	ast.SetType(start, cx.symbolType(worker))
 	setPositionIfMissing(start, pos)
 
-	assignment := &ast.BLangAssignment{VarRef: copyVarRef(slot), Expr: start}
+	assignment := &ast.BLangAssignment{VarRef: copyVarRef(cx.workerFutureSlots[worker]), Expr: start}
 	setPositionIfMissing(assignment, pos)
 	return assignment
 }
@@ -365,11 +364,15 @@ func workerClosureType(cx *functionContext, returnTy semtypes.SemType, isolated 
 
 // workerClosureName is the name of the generated function a worker's body is
 // lowered into. Generated functions share one package-wide lookup-key
-// namespace, so the worker's source name is qualified with its owner; a worker
-// name is unique within its owner, and lambdas are already uniquely named. The
+// namespace, so the worker's source name is qualified with its owner and its
+// region's prefix; a worker name is unique within its region, region prefixes
+// are unique within their owner, and lambdas are already uniquely named. The
 // default worker's name can't clash with a source name.
-func workerClosureName(cx *functionContext, workerName string) string {
-	return constants.WorkerClosurePrefix + cx.uniqueNamePrefix + ":" + workerName
+func workerClosureName(cx *functionContext, namePrefix string, workerName string) string {
+	if namePrefix == "" {
+		return constants.WorkerClosurePrefix + cx.uniqueNamePrefix + ":" + workerName
+	}
+	return constants.WorkerClosurePrefix + cx.uniqueNamePrefix + ":" + namePrefix + ":" + workerName
 }
 
 // addWorkerClosureSymbol declares the generated closure for a worker.

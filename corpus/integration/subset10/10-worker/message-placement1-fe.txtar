@@ -37,13 +37,7 @@ fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
    |         ^^^^^^
 
 fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
-  --> message-placement1-fe.bal:79:14
+  --> message-placement1-fe.bal:78:17
    |
-79 |         1 -> a; // @error worker message send/receive is not supported here
-   |              ^
-
-fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
-  --> message-placement1-fe.bal:88:17
-   |
-88 |                 1 -> b; // @error worker message send/receive is not supported here
+78 |                 1 -> b; // @error worker message send/receive is not supported here
    |                 ^^^^^^

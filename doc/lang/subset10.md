@@ -45,9 +45,10 @@
 - [Match statement](https://ballerina.io/spec/lang/master/#match-stmt)
   - Currently only supports [const-pattern](https://ballerina.io/spec/lang/master/#const-pattern) and [wildcard-match-pattern](https://ballerina.io/spec/lang/master/#wildcard-match-pattern)
 - [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
-  - Only in a `block-function-body`, with optional annotations and return type
+  - Only in a `block-function-body` or a `fork` statement, with optional annotations and return type
   - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
-  - `fork`, `transactional` workers and `on fail` are not supported; message passing is listed under Actions
+  - `transactional` workers and `on fail` are not supported; message passing is listed under Actions
+- [Fork statement](https://ballerina.io/spec/lang/master/#fork-stmt)
 
 ## Expressions
 
@@ -62,7 +63,7 @@
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8): async send, sync send, receive, multiple receive and flush
   - Alternate receive (`<- a | b`) is not supported
-  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, or a lambda that doesn't declare the peer
+  - A message action must be a statement of the worker itself (or a `check`, `trap`, `return`, parenthesized, `match` subject or `foreach` collection operand there); it is not supported inside nested blocks, after an `if` without `else`, in queries, compound assignments, a send under `trap`, or an anonymous function in a module-level initializer, default parameter or object field initializer
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
 - [Check expression](https://ballerina.io/spec/lang/master/#checking-expr)
   - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.

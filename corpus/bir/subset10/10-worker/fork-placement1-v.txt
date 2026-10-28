@@ -1,0 +1,490 @@
+module $anon.. v 0.0.0;
+class Counter {
+  base int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 7
+      %3 = ConstantLoad base
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> int{
+    bb0 {
+      %3 = ConstantLoad base
+      %2 = self[%3];
+      b = %2;
+      %5 = createLatch() -> bb1;
+    }
+    bb1 {
+      $desugar$0 = %5;
+      %8 = closure_fp $anon/.:$worker:Counter.next:fork0:f
+      $desugar$2 = %8;
+      %10 = start $desugar$2() isolated=false -> bb2;
+    }
+    bb2 {
+      $desugar$1 = %10;
+      %11 = openLatch($desugar$0) -> bb3;
+    }
+    bb3 {
+      %12 = wait $desugar$1 -> bb4;
+    }
+    bb4 {
+      %0 = %12;
+      return;
+    }
+  }
+}
+initStatements() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:initStatements:fork0:f
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = createLatch() -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %8;
+    %12 = closure_fp $anon/.:$worker:initStatements:$function
+    $desugar$6 = %12;
+    %14 = closure_fp $anon/.:$worker:initStatements:w
+    $desugar$7 = %14;
+    %16 = start $desugar$6() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %16;
+    %17 = start $desugar$7() isolated=false -> bb6;
+  }
+  bb6 {
+    $desugar$5 = %17;
+    %18 = openLatch($desugar$3) -> bb7;
+  }
+  bb7 {
+    %19 = wait $desugar$4 -> bb8;
+  }
+  bb8 {
+    %0 = %19;
+    return;
+  }
+}
+trailingStatements() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %5 = closure_fp $anon/.:$worker:trailingStatements:$function
+    $desugar$6 = %5;
+    %7 = closure_fp $anon/.:$worker:trailingStatements:w
+    $desugar$7 = %7;
+    %9 = start $desugar$6() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %9;
+    %10 = start $desugar$7() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %12 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %12;
+    return;
+  }
+}
+nestedFork() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:nestedFork:fork0:host
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+inLambda() -> int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_0
+    g = %1;
+    %3 = g() -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+afterIfWithoutElse(boolean) -> int{
+  bb0 {
+    flag ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 0
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 8
+    %0 = createLatch() -> bb3;
+  }
+  bb3 {
+    $desugar$0 = %0;
+    %3 = closure_fp $anon/.:$worker:afterIfWithoutElse:fork0:f
+    $desugar$2 = %3;
+    %5 = start $desugar$2() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %5;
+    %6 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %7 = wait $desugar$1 -> bb6;
+  }
+  bb6 {
+    (1, %0) = %7;
+    PopScopeFrame
+    return;
+  }
+}
+inIsolated(int) -> int{
+  bb0 {
+    %2 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %6 = closure_fp $anon/.:$worker:inIsolated:fork0:a
+    $desugar$3 = %6;
+    %8 = closure_fp $anon/.:$worker:inIsolated:fork0:b
+    $desugar$4 = %8;
+    %10 = start $desugar$3() isolated=true -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %10;
+    %11 = start $desugar$4() isolated=true -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %11;
+    %12 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %13 = wait {a: $desugar$1, b: $desugar$2} -> bb5;
+  }
+  bb5 {
+    r = %13;
+    %16 = ConstantLoad a
+    %17 = get(r,%16) -> bb6;
+  }
+  bb6 {
+    %18 = %17;
+    %19 = ConstantLoad b
+    %20 = get(r,%19) -> bb7;
+  }
+  bb7 {
+    %21 = %20;
+    %15 = + %18 %21;
+    %0 = %15;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = initStatements() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = trailingStatements() -> bb3;
+  }
+  bb3 {
+    %5 = %4;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    %7 = nestedFork() -> bb5;
+  }
+  bb5 {
+    %8 = %7;
+    %9 = println(%8) -> bb6;
+  }
+  bb6 {
+    %10 = inLambda() -> bb7;
+  }
+  bb7 {
+    %11 = %10;
+    %12 = println(%11) -> bb8;
+  }
+  bb8 {
+    %13 = newObject $anon/.:Counter
+    %14 = %13.init() -> bb9;
+  }
+  bb9 {
+    %16 = %14 is nil
+    %16 ? bb10 : bb11;
+  }
+  bb10 {
+    %15 = %13;
+    GOTO bb12;
+  }
+  bb11 {
+    %15 = %14;
+    GOTO bb12;
+  }
+  bb12 {
+    c = %15;
+    %18 = c.next() -> bb13;
+  }
+  bb13 {
+    %19 = %18;
+    %20 = println(%19) -> bb14;
+  }
+  bb14 {
+    %21 = ConstantLoad false
+    %22 = %21;
+    %23 = afterIfWithoutElse(%22) -> bb15;
+  }
+  bb15 {
+    %24 = %23;
+    %25 = println(%24) -> bb16;
+  }
+  bb16 {
+    %26 = ConstantLoad 10
+    %27 = %26;
+    %28 = inIsolated(%27) -> bb17;
+  }
+  bb17 {
+    %29 = %28;
+    %30 = println(%29) -> bb18;
+  }
+  bb18 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:inLambda.$anonFunc$_0:fork0:f
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$worker:Counter.next:fork0:f() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %0 = (1, b);
+    return;
+  }
+}
+$worker:afterIfWithoutElse:fork0:f() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 9
+    %0 = %2;
+    return;
+  }
+}
+$worker:inIsolated:fork0:a() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %0 = (1, x);
+    return;
+  }
+}
+$worker:inIsolated:fork0:b() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = (1, x);
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$worker:inLambda.$anonFunc$_0:fork0:f() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 6
+    %0 = %2;
+    return;
+  }
+}
+$worker:initStatements:$function() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$3)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$1) -> bb2;
+  }
+  bb2 {
+    a = %2;
+    %4 = wait (1, $desugar$5) -> bb3;
+  }
+  bb3 {
+    b = %4;
+    %7 = a;
+    %8 = b;
+    %6 = + %7 %8;
+    %0 = %6;
+    return;
+  }
+}
+$worker:initStatements:fork0:f() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:initStatements:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$3)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}
+$worker:nestedFork.$worker:nestedFork:fork0:host:fork1:inner() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 5
+    %0 = %2;
+    return;
+  }
+}
+$worker:nestedFork:fork0:host() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = createLatch() -> bb2;
+  }
+  bb2 {
+    $desugar$0 = %2;
+    %5 = closure_fp $anon/.:$worker:nestedFork.$worker:nestedFork:fork0:host:fork1:inner
+    $desugar$2 = %5;
+    %7 = start $desugar$2() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %7;
+    %8 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %9 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %9;
+    return;
+  }
+}
+$worker:trailingStatements:$function() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    a = %2;
+    %4 = createLatch() -> bb3;
+  }
+  bb3 {
+    $desugar$3 = %4;
+    %7 = closure_fp $anon/.:$worker:trailingStatements:fork0:f
+    $desugar$5 = %7;
+    %9 = start $desugar$5() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$4 = %9;
+    %10 = openLatch($desugar$3) -> bb5;
+  }
+  bb5 {
+    %11 = wait $desugar$4 -> bb6;
+  }
+  bb6 {
+    %0 = %11;
+    return;
+  }
+}
+$worker:trailingStatements:fork0:f() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$3)) -> bb1;
+  }
+  bb1 {
+    %3 = (1, a);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$worker:trailingStatements:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 3
+    %0 = %2;
+    return;
+  }
+}

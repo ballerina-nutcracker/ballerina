@@ -24,9 +24,9 @@ import (
 )
 
 // declareWorkerMessages creates the WorkerMessage of every message the
-// workers of a body send, one per send, and records them for the message
+// workers of a region send, one per send, and records them for the message
 // actions lowered after it.
-func declareWorkerMessages(cx *functionContext, body *ast.BLangBlockFunctionBody, pos diagnostics.Location) []ast.StatementNode {
+func declareWorkerMessages(cx *functionContext, region *ast.WorkerRegion, pos diagnostics.Location) []ast.StatementNode {
 	var stmts []ast.StatementNode
 	declare := func(messages []model.WorkerMessageRef) {
 		for _, message := range messages {
@@ -35,8 +35,10 @@ func declareWorkerMessages(cx *functionContext, body *ast.BLangBlockFunctionBody
 			cx.workerMessages[message] = ref
 		}
 	}
-	declare(body.DefaultWorkerSendMessages)
-	for _, worker := range body.Workers {
+	if region.DefaultWorker != nil {
+		declare(region.DefaultWorker.SendMessages)
+	}
+	for _, worker := range region.Workers {
 		declare(worker.SendMessages)
 	}
 	return stmts
@@ -163,7 +165,8 @@ type asyncSendCollector struct {
 
 func (c *asyncSendCollector) Visit(node ast.BLangNode) ast.Visitor {
 	switch node := node.(type) {
-	case *ast.BLangLambdaFunction, *ast.BLangFunction, *ast.BLangClassDefinition:
+	case *ast.BLangLambdaFunction, *ast.BLangFunction, *ast.BLangClassDefinition,
+		*ast.BLangFork, *ast.BLangNamedWorkerDeclaration:
 		return nil
 	case *ast.BLangWorkerAsyncSendAction:
 		c.sends = append(c.sends, node)

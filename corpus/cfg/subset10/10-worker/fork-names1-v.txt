@@ -1,0 +1,195 @@
+(lambdaAndEnclosing
+  (bb0 () ()
+    (var-def
+      (variable g (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (fork
+                (named-worker w (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (literal 1)))))
+              (return
+                (single-wait-action
+                  (simple-var-ref w)))))))))
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 2))))
+    (var-def
+      (variable a (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (invocation g ())))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation twoBlocks (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation twoBlocks (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lambdaAndEnclosing ()))))
+  )
+)
+(twoBlocks
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-element-literal a
+          (xml-element-literal b
+            (xml-text-literal one))))))
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) ()
+    (named-worker w (
+      (value-type string))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action v
+            (invocation lang.value toString (
+              (group-expr
+                (xml-step-expression
+                  (simple-var-ref x)
+                  (xml-step-element-children
+                    (xml-name-pattern-identifier b))))))))
+        (return
+          (literal first))))
+    (named-worker v (
+      (value-type string))
+      (block-function-body
+        (return
+          (worker-receive-action w))))
+    (var-def
+      (variable a (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (var-def
+      (variable b (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref v)))))
+    (return
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref a)
+          (literal :))
+        (simple-var-ref b)))
+  )
+  (bb2 (bb0) ()
+    (named-worker w (
+      (value-type string))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action v
+            (invocation lang.value toString (
+              (group-expr
+                (xml-step-expression
+                  (simple-var-ref x)
+                  (xml-step-element-children
+                    (xml-name-pattern-identifier a))))))))
+        (return
+          (literal second))))
+    (named-worker v (
+      (value-type string))
+      (block-function-body
+        (return
+          (worker-receive-action w))))
+    (var-def
+      (variable a (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (var-def
+      (variable b (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref v)))))
+    (return
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref a)
+          (literal :))
+        (simple-var-ref b)))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker v
+  (bb0 () ()
+    (return
+      (worker-receive-action w))
+  )
+)
+(worker v
+  (bb0 () ()
+    (return
+      (worker-receive-action w))
+  )
+)
+(worker w
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action v
+        (invocation lang.value toString (
+          (group-expr
+            (xml-step-expression
+              (simple-var-ref x)
+              (xml-step-element-children
+                (xml-name-pattern-identifier a))))))))
+    (return
+      (literal second))
+  )
+)
+(worker w
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action v
+        (invocation lang.value toString (
+          (group-expr
+            (xml-step-expression
+              (simple-var-ref x)
+              (xml-step-element-children
+                (xml-name-pattern-identifier b))))))))
+    (return
+      (literal first))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 2))
+  )
+)

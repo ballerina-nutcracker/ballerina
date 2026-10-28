@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no matching receive
+  --> fork-pairing1-e.bal:21:13
+   |
+21 |             2 -> b; // @error no matching receive
+   |             ^^^^^^
+
+error[SEMANTIC_ERROR]: no matching send
+  --> fork-pairing1-e.bal:34:21
+   |
+34 |             int _ = <- a; // @error no matching send
+   |                     ^^^^
+
+error[SEMANTIC_ERROR]: worker message deadlock
+  --> fork-pairing1-e.bal:42:21
+   |
+42 |             int x = <- b; // @error worker message deadlock
+   |                     ^^^^

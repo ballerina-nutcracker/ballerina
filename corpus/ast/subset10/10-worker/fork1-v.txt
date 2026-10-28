@@ -1,0 +1,161 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (import-package ballerina lang runtime (as runtime))
+  (function waitForms () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker a (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 1))))
+        (named-worker b (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 2))))
+        (named-worker c (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 3))))
+        (named-worker d (
+          (value-type string))
+          (block-function-body
+            (return
+              (literal d))))
+        (named-worker e (
+          (value-type string))
+          (block-function-body
+            (expression-stmt
+              (invocation runtime sleep (
+                (literal 0.5))))
+            (return
+              (literal e)))))
+      (var-def
+        (variable one (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref one))))
+      (var-def
+        (variable both (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (multiple-wait-action b
+            (simple-var-ref b) c
+            (simple-var-ref c)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref both))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (alternate-wait-action
+            (simple-var-ref d)
+            (simple-var-ref e)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s))))))
+  (function noJoin () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker slow (
+          (value-type string))
+          (block-function-body
+            (expression-stmt
+              (invocation runtime sleep (
+                (literal 0.2))))
+            (expression-stmt
+              (invocation io println (
+                (literal worker done))))
+            (return
+              (literal slow)))))
+      (expression-stmt
+        (invocation io println (
+          (literal after fork))))
+      (var-def
+        (variable r (type
+          (value-type string)) (expr
+          (single-wait-action
+            (simple-var-ref slow)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function noReturnsClause () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker n (
+          (value-type null))
+          (block-function-body
+            (expression-stmt
+              (invocation io println (
+                (literal in n)))))))
+      (var-def
+        (variable r (type
+          (value-type null)) (expr
+          (single-wait-action
+            (simple-var-ref n)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (value-type null)))))))
+  (function capturesBeforeFork (
+    (variable param (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body
+      (named-worker named (
+        (value-type int))
+        (block-function-body
+          (return
+            (simple-var-ref param))))
+      (var-def
+        (variable trailing (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref param)
+            (literal 10)))))
+      (fork
+        (named-worker f (
+          (value-type int))
+          (block-function-body
+            (return
+              (binary-expr +
+                (simple-var-ref param)
+                (simple-var-ref trailing))))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref named)))))
+      (var-def
+        (variable r (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref n)
+            (simple-var-ref r)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation waitForms ()))
+      (expression-stmt
+        (invocation noJoin ()))
+      (expression-stmt
+        (invocation noReturnsClause ()))
+      (expression-stmt
+        (invocation capturesBeforeFork (
+          (literal 3)))))))

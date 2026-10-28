@@ -1248,37 +1248,38 @@ func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool
 	}
 }
 
-// resolveBlockFunctionBody resolves the three regions of a block function body
-// in order: the default-worker initialization statements, the named worker
-// declarations, and the remaining default-worker statements. Worker names are
-// unavailable in the initialization region and available everywhere after it.
+// resolveBlockFunctionBody resolves the regions of a block function body in
+// order: the default-worker initialization statements, then the worker region
+// (the named worker declarations, followed by the default worker's statements).
+// Worker names are unavailable in the initialization statements and available
+// everywhere after them.
 func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
 	ok := resolveStmts(r, body.InitStmts)
-	ok = declareNamedWorkers(r, body) && ok
-	for _, worker := range body.Workers {
-		ok = resolveNamedWorker(r, worker) && ok
-	}
 	ok = resolveStmts(r, body.Stmts) && ok
-	if len(body.Workers) > 0 {
-		ok = pairWorkerMessages(r, r.messageGroup) && ok
+	if body.Region == nil {
+		return ok
 	}
-	return ok
+	group, declared := declareRegionWorkers(r, body.Region)
+	ok = declared && ok
+	r.messageGroup = group
+	r.messageWorker = body.Region.DefaultWorker.Symbol()
+	ok = resolveRegionWorkers(r, body.Region, group) && ok
+	ok = resolveStmts(r, body.Region.DefaultWorker.Stmts) && ok
+	return pairWorkerMessages(r, group) && ok
 }
 
-// declareNamedWorkers declares every worker symbol before any worker body is
-// resolved, so a worker body can refer to peers declared before or after it.
-// A body with named workers also gets a default worker symbol.
-func declareNamedWorkers(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
-	if len(body.Workers) == 0 {
-		return true
-	}
-	// The name can't be written in source, so there is no shadowing check: a
-	// lambda with its own workers nested in a body with workers declares another.
-	r.AddSymbol(constants.DefaultWorkerName, model.NewWorkerSymbol(constants.DefaultWorkerName, body.GetPosition()))
-	lookup, _ := r.GetSymbol(constants.DefaultWorkerName)
-	body.DefaultWorker = lookup.ref
+// declareRegionWorkers declares every worker symbol of region before any
+// worker body is resolved, so a worker body can refer to peers declared before
+// or after it, and returns the region's message group.
+func declareRegionWorkers(r *blockSymbolResolver, region *ast.WorkerRegion) (*workerMessageGroup, bool) {
 	ok := true
-	for _, worker := range body.Workers {
+	if region.DefaultWorker != nil {
+		// The name can't be written in source, so there is no shadowing check: a
+		// lambda with its own workers nested in a body with workers declares another.
+		symbol := model.NewWorkerSymbol(constants.DefaultWorkerName, region.Workers[0].GetPosition())
+		addSymbolAndSetOnNode(r, constants.DefaultWorkerName, symbol, region.DefaultWorker)
+	}
+	for _, worker := range region.Workers {
 		name := worker.Name
 		if isShadowed(r, name) {
 			r.GetCtx().SemanticError("Variable already defined: "+name, worker.GetPosition())
@@ -1288,8 +1289,24 @@ func declareNamedWorkers(r *blockSymbolResolver, body *ast.BLangBlockFunctionBod
 		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
 		addSymbolAndSetOnNode(r, name, symbol, worker)
 	}
-	r.messageGroup = newWorkerMessageGroup(body, !inModuleLevelFunction(r))
-	r.messageWorker = body.DefaultWorker
+	return newWorkerMessageGroup(region, !inModuleLevelFunction(r)), ok
+}
+
+// resolveFork declares the fork's workers in the enclosing block, so the
+// statements after the fork see them, and resolves them as a region of their
+// own: the enclosing worker is not a peer of the fork's workers.
+func resolveFork(r *blockSymbolResolver, fork *ast.BLangFork) bool {
+	region := fork.Region
+	group, ok := declareRegionWorkers(r, region)
+	ok = resolveRegionWorkers(r, region, group) && ok
+	return pairWorkerMessages(r, group) && ok
+}
+
+func resolveRegionWorkers(r *blockSymbolResolver, region *ast.WorkerRegion, group *workerMessageGroup) bool {
+	ok := true
+	for _, worker := range region.Workers {
+		ok = resolveNamedWorker(r, worker, group) && ok
+	}
 	return ok
 }
 
@@ -1330,10 +1347,10 @@ func isNamedFunction(node ast.BLangNode) bool {
 	}
 }
 
-func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) bool {
+func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration, group *workerMessageGroup) bool {
 	peers := &workerSymbolResolver{blockSymbolResolver: r, workerName: worker.Name}
 	workerResolver := newFunctionResolver(peers, worker)
-	workerResolver.messageGroup = r.messageGroup
+	workerResolver.messageGroup = group
 	workerResolver.messageWorker = worker.Symbol()
 	worker.SetScope(workerResolver.scope)
 	ok := true
@@ -2423,6 +2440,8 @@ func resolveStmt(r *blockSymbolResolver, stmt ast.StatementNode) bool {
 		return resolveDo(r, n)
 	case *ast.BLangLock:
 		return resolveLock(r, n)
+	case *ast.BLangFork:
+		return resolveFork(r, n)
 	case *ast.BLangMatchStatement:
 		return resolveMatchStatement(r, n)
 	case *ast.BLangVariableDef:

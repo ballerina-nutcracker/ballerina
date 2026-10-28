@@ -1,0 +1,446 @@
+(asyncAndSync
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 1)))
+        (var-def
+          (variable e (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-sync-send-action b
+              (literal 2)))))
+        (return
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref e)
+              (value-type null))
+            (literal 1)
+            (literal 0)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (var-def
+          (variable y (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (return
+          (binary-expr +
+            (simple-var-ref x)
+            (simple-var-ref y)))))
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (multiple-wait-action a
+          (simple-var-ref a) b
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(flushes
+  (bb0 () ()
+    (named-worker a (
+      (value-type boolean))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (literal 1)))
+        (expression-stmt
+          (worker-async-send-action c
+            (literal 2)))
+        (var-def
+          (variable one (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-flush-action b))))
+        (var-def
+          (variable all (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-flush-action))))
+        (return
+          (binary-expr &&
+            (type-test-expr is
+              (simple-var-ref one)
+              (value-type null))
+            (type-test-expr is
+              (simple-var-ref all)
+              (value-type null))))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (named-worker c (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (var-def
+      (variable flushed (type
+        (value-type boolean)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (multiple-wait-action b
+          (simple-var-ref b) c
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref flushed))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation asyncAndSync ()))
+    (expression-stmt
+      (invocation multipleReceive ()))
+    (expression-stmt
+      (invocation flushes ()))
+    (expression-stmt
+      (invocation senderFails ()))
+    (expression-stmt
+      (invocation receiverFails ()))
+  )
+)
+(multipleReceive
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action c
+            (literal 1)))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action c
+            (literal x)))))
+    (named-worker c (
+      (record-type
+        (field a
+          (value-type int))
+        (field b
+          (value-type string))))
+      (block-function-body
+        (return
+          (worker-multiple-receive-action a:a b:b))))
+    (var-def
+      (variable r (type
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type string)))) (expr
+        (single-wait-action
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(receiverFails
+  (bb0 () ()
+    (named-worker a (
+      (value-type boolean))
+      (block-function-body
+        (var-def
+          (variable r (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-sync-send-action b
+              (literal 1)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation lang.error message (
+                  (simple-var-ref r))))))) ())
+        (block-stmt
+          (return
+            (type-test-expr is
+              (simple-var-ref r)
+              (error-type))))))
+    (named-worker b (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (wildcard-binding-pattern)
+          (checked-expr
+            (invocation int fromString (
+              (literal bad)))))
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action a))))))
+    (var-def
+      (variable failed (type
+        (value-type boolean)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable received (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr &&
+          (simple-var-ref failed)
+          (type-test-expr is
+            (simple-var-ref received)
+            (error-type))))))
+  )
+)
+(senderFails
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (checked-expr
+              (invocation int fromString (
+                (literal not a number)))))))
+        (return
+          (worker-sync-send-action b
+            (simple-var-ref x)))))
+    (named-worker b (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (union-type
+              (value-type int)
+              (error-type))) (expr
+            (worker-receive-action a))))
+        (return
+          (simple-var-ref x))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref r)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref r)))
+          (literal received)))))
+    (var-def
+      (variable sent (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref sent)
+          (error-type)))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 1)))
+    (expression-stmt
+      (worker-async-send-action c
+        (literal 2)))
+    (var-def
+      (variable one (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-flush-action b))))
+    (var-def
+      (variable all (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-flush-action))))
+    (return
+      (binary-expr &&
+        (type-test-expr is
+          (simple-var-ref one)
+          (value-type null))
+        (type-test-expr is
+          (simple-var-ref all)
+          (value-type null))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (literal 1)))
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-sync-send-action b
+          (literal 2)))))
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref e)
+          (value-type null))
+        (literal 1)
+        (literal 0)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action c
+        (literal 1)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation int fromString (
+            (literal not a number)))))))
+    (return
+      (worker-sync-send-action b
+        (simple-var-ref x)))
+  )
+)
+(worker a
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable r (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-sync-send-action b
+          (literal 1)))))
+    (type-test-expr is
+      (simple-var-ref r)
+      (error-type))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.error message (
+          (simple-var-ref r))))))
+  )
+  (bb2 (bb1 bb0) ()
+    (return
+      (type-test-expr is
+        (simple-var-ref r)
+        (error-type)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (assignment
+      (wildcard-binding-pattern)
+      (checked-expr
+        (invocation int fromString (
+          (literal bad)))))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action c
+        (literal x)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (worker-receive-action a))))
+    (return
+      (simple-var-ref x))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y)))
+  )
+)
+(worker c
+  (bb0 () ()
+    (return
+      (worker-multiple-receive-action a:a b:b))
+  )
+)
+(worker c
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)
