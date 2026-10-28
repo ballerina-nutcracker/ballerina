@@ -6,7 +6,7 @@ class Other {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad x
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -21,7 +21,7 @@ class C {
       o[%4] = %3;
       %5 = ConstantLoad 2
       %6 = ConstantLoad x
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       %7 = ConstantLoad 3
       %8 = ConstantLoad x
       o[%8] = %7;

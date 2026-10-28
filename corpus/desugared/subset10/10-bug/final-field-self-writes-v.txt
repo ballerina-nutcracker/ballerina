@@ -1,0 +1,86 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable a (type
+      (value-type int)))
+    (variable count (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 0))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 10))))
+    (function bump () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref self)
+              (literal count))
+            (literal 1)))
+        (compound-assignment +
+          (index-based-access
+            (simple-var-ref self)
+            (literal count))
+          (literal 1))
+        (var-def
+          (variable f (type
+            (function-type () (
+              (value-type null)))) (expr
+            (lambda
+              (function $anonFunc$_0 () (
+                (value-type null))
+                (block-function-body
+                  (assignment
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal count))
+                    (binary-expr +
+                      (index-based-access
+                        (simple-var-ref self)
+                        (literal count))
+                      (literal 5)))
+                  (compound-assignment +
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal count))
+                    (literal 1))))))))
+        (expression-stmt
+          (invocation f ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Counter)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation bump expr:
+          (simple-var-ref c) ()))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal count)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal a))))))))

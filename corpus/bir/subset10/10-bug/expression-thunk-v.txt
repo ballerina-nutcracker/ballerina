@@ -9,7 +9,7 @@ class CaptureCounter {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad value
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -578,7 +578,7 @@ $anonFunc$_1() -> int{
     %7 = %6;
     %8 = (2, local);
     %9 = + %7 %8;
-    (2, self)[%5] = %9;
+    (2, self)[%5] = %9 (unsafe);
     %11 = ConstantLoad value
     %10 = (2, self)[%11];
     %0 = %10;

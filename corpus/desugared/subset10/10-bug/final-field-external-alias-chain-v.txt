@@ -1,0 +1,74 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Alias
+    (user-defined-type FinalView))
+  (type-definition AliasChain
+    (user-defined-type Alias))
+  (class-definition FinalView
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (class-definition Mutable
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (function write (
+    (variable value (type
+      (user-defined-type AliasChain)))) (
+    (value-type null))
+    (block-function-body
+      (compound-assignment +
+        (index-based-access
+          (simple-var-ref value)
+          (literal a))
+        (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (user-defined-type Mutable)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation write (
+          (simple-var-ref value))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref value)
+            (literal a)))))
+      (var-def
+        (variable finalValue (type
+          (user-defined-type AliasChain)) (expr
+          (new
+            (user-defined-type FinalView) ()))))
+      (var-def
+        (variable result (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref finalValue)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref finalValue)
+            (literal a))))))))

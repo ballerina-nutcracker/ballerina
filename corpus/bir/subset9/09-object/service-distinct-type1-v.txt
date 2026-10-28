@@ -140,7 +140,7 @@ class $service$0 {
     bb0 {
       %2 = ConstantLoad 40
       %3 = ConstantLoad base
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -175,7 +175,7 @@ class $service$1 {
     bb0 {
       %2 = ConstantLoad 41
       %3 = ConstantLoad base
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

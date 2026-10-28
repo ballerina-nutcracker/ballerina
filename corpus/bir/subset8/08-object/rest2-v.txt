@@ -45,7 +45,7 @@ class Joiner {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad sep
-      self[%3] = sep;
+      self[%3] = sep (unsafe);
       return;
     }
   }

@@ -1,0 +1,88 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init (
+      (variable writeAlias (type
+        (value-type boolean)) (expr
+        (literal false)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1))
+        (if
+          (simple-var-ref writeAlias)
+          (block-stmt
+            (var-def
+              (variable other (type
+                (user-defined-type C)) (expr
+                (simple-var-ref self))))
+            (assignment
+              (index-based-access
+                (simple-var-ref other)
+                (literal a))
+              (literal 6))) ())
+        (block-stmt)))
+    (function reset () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable other (type
+            (user-defined-type C)) (expr
+            (simple-var-ref self))))
+        (assignment
+          (index-based-access
+            (simple-var-ref other)
+            (literal a))
+          (literal 5)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable initialized (type
+          (union-type
+            (user-defined-type C)
+            (error-type))) (expr
+          (trap-expr
+            (new
+              (user-defined-type C) (
+              (literal true)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref initialized)
+            (error-type)))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation $default$0 ()))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable reset (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation reset expr:
+              (simple-var-ref c) ())))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref reset)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal a)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal false)))))
