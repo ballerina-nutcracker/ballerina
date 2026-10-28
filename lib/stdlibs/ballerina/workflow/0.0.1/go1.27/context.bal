@@ -56,7 +56,12 @@ public client class Context {
     # + stepId - Identity of this step within the workflow, as for `callActivity`
     # + return - An error if the sleep fails, otherwise nil
     public isolated function sleep(Duration duration, string? stepId = ()) returns error? {
-        decimal totalSeconds = <decimal>duration.hours * 3600 +
+        if duration.years != 0 || duration.months != 0 {
+            return error("sleep does not support 'years' or 'months': they have no fixed length");
+        }
+        decimal totalSeconds = <decimal>duration.weeks * 604800 +
+                               <decimal>duration.days * 86400 +
+                               <decimal>duration.hours * 3600 +
                                <decimal>duration.minutes * 60 +
                                duration.seconds;
         int millis = <int>(totalSeconds * 1000);

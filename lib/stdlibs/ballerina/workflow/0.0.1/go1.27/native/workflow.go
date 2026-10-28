@@ -45,7 +45,16 @@ func initWorkflowModule(rt *runtime.Runtime) {
 	register("sendDataNative", eng.sendData)
 	register("getResult", eng.getResult)
 	register("waitForResult", eng.waitForResult)
+	register("getStatus", eng.getStatus)
 	register("Context.$remote$callActivity", eng.callActivity)
+	for _, name := range []string{"runWithIdNative", "getPendingAgentEvents", "completeHumanTaskNative",
+		"Context.$remote$await", "Context.$remote$awaitHumanTask", "Context.$remote$runChildWorkflow",
+		"Context.$remote$getChildWorkflowResult", "Context.$remote$waitForChildWorkflow",
+		"Context.$remote$callWorkflow", "Context.$remote$sendDataToChildWorkflow"} {
+		register(name, unsupported(name))
+	}
+	register("lastHumanTaskCompletionNative", noop)
+	register("lastReviewDecisionNative", noop)
 	register("isReplayingNative", func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 		return false, nil
 	})
@@ -66,6 +75,13 @@ func initWorkflowModule(rt *runtime.Runtime) {
 
 func noop(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 	return nil, nil
+}
+
+// unsupported returns an error-producing extern for an API the in-memory engine does not implement yet.
+func unsupported(name string) extern.NativeFunc {
+	return func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+		return values.NewErrorWithMessage("workflow API not supported by the in-memory engine yet: " + name), nil
+	}
 }
 
 // splitLookupKey splits a function lookup key of the form "org/module:name".

@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -161,7 +163,7 @@ func (e *engine) lookup(id string) (*instance, *values.Error) {
 	return inst, nil
 }
 
-func (e *engine) sendData(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+func (e *engine) sendData(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	inst, errVal := e.lookup(args[1].(string))
 	if errVal != nil {
 		return errVal, nil
@@ -171,8 +173,29 @@ func (e *engine) sendData(_ *extern.Context, args []values.BalValue) (values.Bal
 	if !ok {
 		return values.NewErrorWithMessage("workflow has no data event: " + dataName), nil
 	}
-	future.Complete(args[3], nil)
+	cx := ctx.TypeCtx()
+	converted, convErr := values.CloneWithType(cx, args[3], semtypes.FutureEventualType(cx, future.Type))
+	if convErr != nil {
+		return convErr, nil
+	}
+	future.Complete(converted, nil)
 	return nil, nil
+}
+
+func (e *engine) getStatus(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	inst, errVal := e.lookup(args[0].(string))
+	if errVal != nil {
+		return errVal, nil
+	}
+	select {
+	case <-inst.done:
+		if _, failed := inst.result.(*values.Error); failed {
+			return "FAILED", nil
+		}
+		return "COMPLETED", nil
+	default:
+		return "RUNNING", nil
+	}
 }
 
 func (e *engine) getResult(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -184,8 +207,12 @@ func (e *engine) getResult(ctx *extern.Context, args []values.BalValue) (values.
 	case <-inst.done:
 		return convertResult(ctx, inst.result, args[1].(*values.TypeDesc)), nil
 	default:
-		return values.NewErrorWithMessage("workflow is still running: " + inst.id), nil
+		return inProgressError(inst), nil
 	}
+}
+
+func inProgressError(inst *instance) *values.Error {
+	return values.NewErrorWithMessage("workflow is still running: " + inst.id)
 }
 
 func (e *engine) waitForResult(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -193,8 +220,44 @@ func (e *engine) waitForResult(ctx *extern.Context, args []values.BalValue) (val
 	if errVal != nil {
 		return errVal, nil
 	}
-	<-inst.done
+	timeout, errVal := durationMillis(args[2])
+	if errVal != nil {
+		return errVal, nil
+	}
+	if timeout < 0 {
+		<-inst.done
+	} else {
+		select {
+		case <-inst.done:
+		case <-time.After(time.Duration(timeout) * time.Millisecond):
+			return inProgressError(inst), nil
+		}
+	}
 	return convertResult(ctx, inst.result, args[1].(*values.TypeDesc)), nil
+}
+
+// durationMillis converts a workflow:Duration record to milliseconds; nil means no bound.
+func durationMillis(duration values.BalValue) (int64, *values.Error) {
+	if duration == nil {
+		return -1, nil
+	}
+	fields := duration.(*values.Map)
+	intField := func(name string) int64 {
+		v, ok := fields.Get(name)
+		if !ok {
+			return 0
+		}
+		return v.(int64)
+	}
+	if intField("years") != 0 || intField("months") != 0 {
+		return 0, values.NewErrorWithMessage("a timeout does not support 'years' or 'months': they have no fixed length")
+	}
+	seconds := intField("weeks")*604800 + intField("days")*86400 + intField("hours")*3600 + intField("minutes")*60
+	millis := seconds * 1000
+	if v, ok := fields.Get("seconds"); ok {
+		millis += int64(v.(*decimal.Decimal).Float64() * 1000)
+	}
+	return millis, nil
 }
 
 func convertResult(ctx *extern.Context, result values.BalValue, td *values.TypeDesc) values.BalValue {
@@ -223,12 +286,19 @@ func (e *engine) callActivity(ctx *extern.Context, args []values.BalValue) (valu
 		return values.NewErrorWithMessage("activity function has no signature: " + fn.LookupKey), nil
 	}
 	callArgs := make([]values.BalValue, len(sig.Params))
+	paramNames := make(map[string]bool, len(sig.Params))
 	for i, p := range sig.Params {
+		paramNames[p.Name] = true
 		v, present := named.Get(p.Name)
 		if !present {
 			return values.NewErrorWithMessage("missing activity argument: " + p.Name), nil
 		}
 		callArgs[i] = v
+	}
+	for _, key := range named.Keys() {
+		if !paramNames[key] {
+			return values.NewErrorWithMessage("unknown activity argument: " + key), nil
+		}
 	}
 	result, err := ctx.InvokeFunctionValue(fn, callArgs)
 	if err != nil {
