@@ -257,6 +257,14 @@ func parseModule(moduleCtx *moduleContext) {
 	// `bal build`/`bal run` leave it at its default (true) and never compile
 	// test sources.
 	includeTestTrees := !moduleCtx.project.BuildOptions().SkipTests()
+	// A single-file project (`bal test somefile.bal`) has no tests/
+	// directory at all — the one file plays both roles, so its functions
+	// must be discoverable as tests too, unlike a real project's main.bal
+	// (see discover.go's model.FlagTestable check, and the regression this
+	// guards: a @test:Config function outside tests/ must stay silently
+	// ignored for a real project, but single-file mode has no "outside" to
+	// speak of).
+	treatSourceAsTestable := includeTestTrees && moduleCtx.project.Kind() == ProjectKindSingleFile
 	syntaxTrees := parseDocumentsParallel(
 		compilerCtx,
 		moduleCtx.srcDocIDs,
@@ -264,6 +272,7 @@ func parseModule(moduleCtx *moduleContext) {
 		moduleCtx.testSrcDocIDs,
 		moduleCtx.testDocContextMap,
 		includeTestTrees,
+		treatSourceAsTestable,
 	)
 
 	if compilerCtx.HasDiagnostics() || len(syntaxTrees) == 0 {
@@ -452,6 +461,7 @@ func parseDocumentsParallel(
 	testDocIDs []DocumentID,
 	testDocContextMap map[DocumentID]*documentContext,
 	includeTestTrees bool,
+	treatSourceAsTestable bool,
 ) []*st.SyntaxTree {
 	var wg sync.WaitGroup
 
@@ -466,33 +476,42 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext, slot int) {
 			defer wg.Done()
-			treesBySlot[slot] = dc.parse(compilerCtx)
+			tree := dc.parse(compilerCtx)
+			if tree != nil {
+				tree.IsTest = treatSourceAsTestable
+			}
+			treesBySlot[slot] = tree
 		}(docCtx, i)
 	}
 
 	// Parse test documents - only collect syntax trees if requested
-	for _, docID := range testDocIDs {
+	testTreesBySlot := make([]*st.SyntaxTree, len(testDocIDs))
+	for i, docID := range testDocIDs {
 		docCtx := testDocContextMap[docID]
 		if docCtx == nil {
 			continue
 		}
 
 		wg.Add(1)
-		go func(dc *documentContext) {
+		go func(dc *documentContext, slot int) {
 			defer wg.Done()
-			st := dc.parse(compilerCtx)
-			if includeTestTrees && st != nil {
-				mu.Lock()
-				syntaxTrees = append(syntaxTrees, st)
-				mu.Unlock()
+			tree := dc.parse(compilerCtx)
+			if includeTestTrees && tree != nil {
+				tree.IsTest = true
+				testTreesBySlot[slot] = tree
 			}
-		}(docCtx)
+		}(docCtx, i)
 	}
 
 	wg.Wait()
 
-	syntaxTrees := make([]*st.SyntaxTree, 0, len(treesBySlot))
+	syntaxTrees := make([]*st.SyntaxTree, 0, len(treesBySlot)+len(testTreesBySlot))
 	for _, tree := range treesBySlot {
+		if tree != nil {
+			syntaxTrees = append(syntaxTrees, tree)
+		}
+	}
+	for _, tree := range testTreesBySlot {
 		if tree != nil {
 			syntaxTrees = append(syntaxTrees, tree)
 		}
@@ -519,6 +538,7 @@ func buildCompilationUnits(cx *context.CompilerContext, pkgID *model.PackageID, 
 		} else {
 			cu = nodebuilder.GetCompilationUnit(cx, pkgID, st)
 		}
+		cu.IsTest = st.IsTest
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
 		}

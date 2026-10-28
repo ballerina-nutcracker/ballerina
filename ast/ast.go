@@ -215,6 +215,12 @@ type (
 		Name          string
 		Scope         model.Scope
 		packageID     *model.PackageID
+		// IsTest mirrors st.SyntaxTree.IsTest — true when this unit was
+		// built from a module's tests/ directory. Set by
+		// projects.buildCompilationUnits; read by nodebuilder when
+		// assembling BLangPackage, to mark top-level declarations from
+		// test sources with model.FlagTestable.
+		IsTest bool
 	}
 
 	BLangPackage struct {
@@ -336,8 +342,10 @@ func (b *bLangInvokableNodeBase) IsInterface() bool     { return b.flags.Has(mod
 func (b *bLangInvokableNodeBase) IsNative() bool        { return b.flags.Has(model.FlagNative) }
 func (b *bLangInvokableNodeBase) IsAnonymous() bool     { return b.flags.Has(model.FlagLambda) }
 func (b *bLangInvokableNodeBase) IsAttached() bool      { return b.flags.Has(model.FlagAttached) }
+func (b *bLangInvokableNodeBase) IsTestable() bool      { return b.flags.Has(model.FlagTestable) }
 
 func (b *bLangInvokableNodeBase) SetAttached()      { b.flags |= model.FlagAttached }
+func (b *bLangInvokableNodeBase) SetTestable()      { b.flags |= model.FlagTestable }
 func (b *bLangInvokableNodeBase) Flags() model.Flag { return b.flags }
 
 func (b *bLangInvokableNodeBase) FuncSymbolFlags() model.FuncSymbolFlags {

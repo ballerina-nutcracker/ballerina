@@ -100,3 +100,22 @@ func TestSubKeyFilters_MatchesSpecialCharacterKey(t *testing.T) {
 		t.Error(`"other" should not match`)
 	}
 }
+
+// TestSubKeyFilters_QuotedKey confirms jballerina's own "--tests name#'key'"
+// convention (single-quote-wrapped sub-key, used whenever a key needs
+// disambiguating, e.g. from the top-level comma-separated --tests list —
+// DataProviderTest#testValidDataProviderCase uses exactly this form):
+// ParseSubKeyFilters strips a matching leading+trailing single-quote pair
+// before recording the key, so the quoted and unquoted forms behave
+// identically. Previously the literal quote characters were kept as part of
+// the recorded filter and never matched an unquoted row key, silently
+// running zero rows — see git history for the regression this fixed.
+func TestSubKeyFilters_QuotedKey(t *testing.T) {
+	filters := ParseSubKeyFilters("jsonDataProviderTest#'json1'")
+	if !filters.matches("jsonDataProviderTest", "json1") {
+		t.Errorf("expected the quoted sub-key to match the raw row key; got filters=%+v", filters)
+	}
+	if filters.matches("jsonDataProviderTest", "other") {
+		t.Error(`"other" should not match`)
+	}
+}

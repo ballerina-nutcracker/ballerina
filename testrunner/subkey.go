@@ -60,6 +60,18 @@ func ParseSubKeyFilters(tests string) SubKeyFilters {
 			continue
 		}
 		base, key := name[:hash], name[hash+1:]
+		// jballerina's own "--tests name#'key'" convention wraps a sub-key in
+		// single quotes (used whenever the key needs disambiguating from the
+		// comma-separated --tests list itself, e.g. a key containing a comma
+		// or already resembling another entry); the quotes are no part of the
+		// key being matched, and must be stripped before this value is
+		// compared against a row's raw, unquoted key in matches(). Only a
+		// matching leading+trailing pair is stripped — a lone quote or a
+		// quote that isn't closed is left as-is, since it isn't this
+		// convention.
+		if len(key) >= 2 && key[0] == '\'' && key[len(key)-1] == '\'' {
+			key = key[1 : len(key)-1]
+		}
 		filters[base] = append(filters[base], key)
 	}
 	return filters

@@ -156,8 +156,8 @@ func TestRun_PassSkipAndOrder(t *testing.T) {
 
 	report := testrunner.Run(rt, "testorg", "sample", plan, graph, nil, nil)
 	results := report.Results
-	if len(results) != 3 {
-		t.Fatalf("expected 3 results, got %d: %+v", len(results), results)
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d: %+v", len(results), results)
 	}
 	// This fixture's BeforeSuite/AfterSuite/BeforeEach/AfterEach/BeforeGroups/
 	// AfterGroups hooks all succeed silently — confirm the lifecycle wiring
@@ -167,8 +167,11 @@ func TestRun_PassSkipAndOrder(t *testing.T) {
 	}
 
 	byName := resultsByName(results)
-	if byName["testDisabled"].Status != testrunner.Skip {
-		t.Errorf("testDisabled: expected Skip, got %v", byName["testDisabled"].Status)
+	// testDisabled is excluded entirely, not reported as skipped — confirmed
+	// against jballerina directly: a disabled test runs zero times and isn't
+	// counted at all, not even as a skip.
+	if _, ok := byName["testDisabled"]; ok {
+		t.Errorf("expected testDisabled to be excluded entirely, got a result: %+v", byName["testDisabled"])
 	}
 	if byName["testSetup"].Status != testrunner.Pass {
 		t.Errorf("testSetup: expected Pass, got %v (%s)", byName["testSetup"].Status, byName["testSetup"].Message)
