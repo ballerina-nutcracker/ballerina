@@ -196,7 +196,7 @@ func TestModuleDriver_PublicTypeErrorDoesNotAdvancePhase1(t *testing.T) {
 	}
 }
 
-func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *testing.T) {
+func TestModuleDriver_MalformedFunctionSignatureRunsSymbolResolutionButUnusable(t *testing.T) {
 	t.Parallel()
 	projSvc, _ := newTestServices(t)
 	u := tempFileURI(t, "main.bal")
@@ -217,8 +217,8 @@ func TestModuleDriver_MalformedFunctionSignatureKeepsSymbolResolutionUsable(t *t
 	if d.pkgNode == nil {
 		t.Error("pkgNode = nil, want a package built despite the parser diagnostic")
 	}
-	if !d.symbolResolutionUsable {
-		t.Error("a malformed function recovered as a bad top-level node must not add a resolver error")
+	if d.symbolResolutionUsable {
+		t.Error("the malformed body's resolver diagnostic must make symbol resolution unusable")
 	}
 	if got := d.publishableDiagnostics(); len(got) != d.parserDiagnosticCount {
 		t.Errorf("publishableDiagnostics() = %d diagnostics, want exactly the %d parser diagnostics", len(got), d.parserDiagnosticCount)

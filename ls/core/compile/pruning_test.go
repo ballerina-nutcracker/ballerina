@@ -127,14 +127,14 @@ func TestPruningUnknownAndFailedInputs(t *testing.T) {
 
 func TestPruningTwoInvalidFingerprintsCannotPermitReuse(t *testing.T) {
 	ws := newProjectOnlyService(t)
-	pkg, _ := openMultimoduleFixture(t, ws)
+	openMultimoduleFixture(t, ws)
 	uri := fileURI(t, filepath.Join(multimoduleFixtureDir(t), "modules/greet/greet.bal"))
 	applyOpen(t, ws, uri, "public function greeting() returns string { return \"hello\"; }\npublic type R record {| int n = 1; |};\n")
 	project, err := ws.Project(uri)
 	if err != nil {
 		t.Fatal(err)
 	}
-	pkg = project.CurrentPackage()
+	pkg := project.CurrentPackage()
 	first := newPackageDriver(pkg, ws.OpenText, nil, nil)
 	first.advanceAll(stageCFGAnalyzed)
 	prior := first.snapshotForCommit()

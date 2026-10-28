@@ -88,11 +88,11 @@ func TestServeHostRecordsRecoveredCompilePanicWithoutProtocolOutput(t *testing.T
 	}
 	repository := &hostPanicRepository{attempted: make(chan struct{}, 1)}
 	input, client := io.Pipe()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	var logs, output hostCaptureWriter
 	done := make(chan error, 1)
 	go func() {
-		defer input.Close()
+		defer func() { _ = input.Close() }()
 		done <- serveHost(hostTestTransport{Reader: input, Writer: &output}, os.DirFS, &logs,
 			workspace.WithRepositories([]projects.Repository{repository}))
 	}()
