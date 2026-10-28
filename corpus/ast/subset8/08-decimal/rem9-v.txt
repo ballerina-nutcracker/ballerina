@@ -1,0 +1,128 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const C (
+    (value-type decimal)) (
+    (binary-expr %
+      (literal 9.0E32d)
+      (literal 1E-2d))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d1 (type
+          (value-type decimal)) (expr
+          (literal 1E+35d))))
+      (var-def
+        (variable d2 (type
+          (value-type decimal)) (expr
+          (literal 7d))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+40d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 3d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (unary-expr -
+          (literal 1E+40d)))
+      (assignment
+        (simple-var-ref d2)
+        (literal 3d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+40d))
+      (assignment
+        (simple-var-ref d2)
+        (unary-expr -
+          (literal 3d)))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (unary-expr -
+          (literal 1E+40d)))
+      (assignment
+        (simple-var-ref d2)
+        (literal 2d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+40d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1.1d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.0E32d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1E-2d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.999999999999999999999999999999998E6144d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1E-2d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.999999999999999999999999999999999E6144d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1.23E-6100d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 9.0E32d)
+            (literal 1E-2d)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (literal 1E+6144d)
+            (literal 0.7d)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C)))))))
