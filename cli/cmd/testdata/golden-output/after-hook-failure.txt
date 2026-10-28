@@ -1,0 +1,14 @@
+	[fail] [after test function for the test]:
+	    after hook failed
+		
+		
+		[pass] testA
+
+
+		1 passing
+		0 failing
+		1 skipped
+
+		Test execution time : <DURATION>s
+ballerina: there are test failures
+exit status 1

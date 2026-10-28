@@ -1,0 +1,13 @@
+	[fail] beforeEachFails[before each function for the test]:
+	    beforeEach failed
+		
+		
+
+
+		0 passing
+		0 failing
+		2 skipped
+
+		Test execution time : <DURATION>s
+ballerina: there are test failures
+exit status 1
