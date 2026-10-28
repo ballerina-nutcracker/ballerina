@@ -71,6 +71,7 @@ type (
 		StartFunction         *BIRFunction
 		GracefulStopFunction  *BIRFunction
 		ImmediateStopFunction *BIRFunction
+		RecordDefaults        map[*semtypes.MappingAtomicType][]MappingConstructorDefaultEntry
 	}
 
 	ObjectField struct {

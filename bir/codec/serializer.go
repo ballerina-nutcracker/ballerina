@@ -19,7 +19,9 @@ package codec
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -68,7 +70,9 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 		panic(fmt.Sprintf("writing BIR magic: %v", err))
 	}
 
-	tpBytes := semtypes.MarshalTypePool(bw.tp, bw.env).Bytes()
+	tpEncoding := semtypes.MarshalTypePool(bw.tp, bw.env)
+	bw.writeRecordDefaults(birbuf, pkg, tpEncoding)
+	tpBytes := tpEncoding.Bytes()
 	write(buf, int64(len(tpBytes)))
 	_, err = buf.Write(tpBytes)
 	if err != nil {
@@ -102,6 +106,25 @@ func (bw *birWriter) writeGlobalVars(buf *bytes.Buffer, pkg *bir.BIRPackage) {
 		bw.writeStringCPEntry(buf, name.Value())
 		bw.writeFlags(buf, gv.Flags)
 		bw.writeType(buf, gv.GetType())
+	}
+}
+
+func (bw *birWriter) writeRecordDefaults(buf *bytes.Buffer, pkg *bir.BIRPackage, tpEncoding semtypes.TypePoolEncoding) {
+	byIndex := make(map[int32][]bir.MappingConstructorDefaultEntry)
+	for atom, fields := range pkg.RecordDefaults {
+		if index, ok := tpEncoding.MappingAtomicTypeIndex(atom); ok {
+			byIndex[index] = fields
+		}
+	}
+	bw.writeLength(buf, len(byIndex))
+	for _, index := range slices.Sorted(maps.Keys(byIndex)) {
+		write(buf, index)
+		fields := byIndex[index]
+		bw.writeLength(buf, len(fields))
+		for _, field := range fields {
+			bw.writeStringCPEntry(buf, field.FieldName)
+			bw.writeStringCPEntry(buf, field.FunctionLookupKey)
+		}
 	}
 }
 

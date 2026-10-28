@@ -286,7 +286,7 @@ func coerceEntryToType(ctx *extern.Context, types ldapTypes, entry *goldap.Entry
 }
 
 func cloneWithLdapType(ctx *extern.Context, value values.BalValue, targetTy semtypes.SemType) (values.BalValue, *values.Error) {
-	result, convErr := values.CloneWithType(ctx.TypeCtx(), value, targetTy)
+	result, convErr := ctx.CloneWithType(value, targetTy)
 	if convErr != nil {
 		return nil, ldapError(convErr.Message)
 	}
