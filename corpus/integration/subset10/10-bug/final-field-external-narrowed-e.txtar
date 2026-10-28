@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-narrowed-e.bal:23:9
+   |
+23 |         x.a = 1; // @error final field written through a narrowed receiver
+   |         ^^^
+
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-narrowed-e.bal:28:5
+   |
+28 |     x.a = 2; // @error final field written through a narrowed receiver
+   |     ^^^

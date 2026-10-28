@@ -142,6 +142,30 @@ func (c *CompilerContext) GetFunctionSignatureByRef(ref model.FunctionSignatureR
 	return c.env.GetFunctionSignatureByRef(ref)
 }
 
+func (c *CompilerContext) AllocateObjectSignature(finalFields []string) model.ObjectSignatureRef {
+	return c.env.AllocateObjectSignature(finalFields)
+}
+
+func (c *CompilerContext) AssociateObjectSignature(sym model.SymbolRef, ref model.ObjectSignatureRef) bool {
+	return c.env.AssociateObjectSignature(sym, ref)
+}
+
+func (c *CompilerContext) ObjectSignatureRef(sym model.SymbolRef) (model.ObjectSignatureRef, bool) {
+	return c.env.ObjectSignatureRef(sym)
+}
+
+func (c *CompilerContext) UpdateObjectSignatureFinalFields(ref model.ObjectSignatureRef, finalFields []string) {
+	c.env.UpdateObjectSignatureFinalFields(ref, finalFields)
+}
+
+func (c *CompilerContext) GetObjectSignature(owner model.SymbolRef) (model.UntypedObjectSignature, bool) {
+	return c.env.GetObjectSignature(owner)
+}
+
+func (c *CompilerContext) GetObjectSignatureByRef(ref model.ObjectSignatureRef) model.UntypedObjectSignature {
+	return c.env.GetObjectSignatureByRef(ref)
+}
+
 func (c *CompilerContext) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {
 	return c.env.UnnarrowedSymbol(symbol)
 }
