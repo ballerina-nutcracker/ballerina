@@ -36,6 +36,14 @@ public function main() returns error? {
     string hop = check c->post("/echo", hopReq, {"Keep-Alive": "timeout=5"});
     io:println(hop); // @output text/plain [hop] []
 
+    // HTTP/2 permits only TE: trailers, so any other TE is dropped.
+    http:Request teReq = new;
+    teReq.setTextPayload("hi");
+    teReq.setHeader("TE", "gzip");
+    teReq.setHeader("X-Test", "te");
+    string te = check c->post("/echo", teReq);
+    io:println(te); // @output text/plain [te] []
+
     // A string[] header argument is appended to the request's own values.
     http:Request putReq = new;
     putReq.setTextPayload("hi");

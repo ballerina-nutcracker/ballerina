@@ -1,6 +1,7 @@
 -- stdout --
 text/plain [post] []
 text/plain [hop] []
+text/plain [te] []
 text/plain [] [a b c d]
 text/plain [arg] [kept]
 application/custom [delete] []

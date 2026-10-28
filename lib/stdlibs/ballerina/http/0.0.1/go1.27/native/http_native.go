@@ -1826,11 +1826,17 @@ func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalVal
 var transportOwnedHeaders = []string{"connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade"}
 
 func removeTransportOwnedHeaders(headers map[string][]string) {
-	for name := range headers {
-		if slices.Contains(transportOwnedHeaders, strings.ToLower(name)) {
+	for name, vals := range headers {
+		lower := strings.ToLower(name)
+		if slices.Contains(transportOwnedHeaders, lower) || lower == "te" && !onlyTrailers(vals) {
 			delete(headers, name)
 		}
 	}
+}
+
+// onlyTrailers reports whether a TE header is the `trailers` value that HTTP/2 permits (RFC 9113 §8.2.2).
+func onlyTrailers(vals []string) bool {
+	return !slices.ContainsFunc(vals, func(v string) bool { return !strings.EqualFold(strings.TrimSpace(v), "trailers") })
 }
 
 func mergeHeaderArgs(headers map[string][]string, hdrMap *values.Map) {

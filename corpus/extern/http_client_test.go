@@ -318,7 +318,7 @@ func TestHttpClientHeadersLocal(t *testing.T) {
 func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Upgrade") != "" || r.Header.Get("Keep-Alive") != "" || strings.Contains(r.Header.Get("Connection"), "X-Test") {
+		if r.Header.Get("Upgrade") != "" || r.Header.Get("Keep-Alive") != "" || r.Header.Get("Te") == "gzip" || strings.Contains(r.Header.Get("Connection"), "X-Test") {
 			w.WriteHeader(400)
 			return
 		}
