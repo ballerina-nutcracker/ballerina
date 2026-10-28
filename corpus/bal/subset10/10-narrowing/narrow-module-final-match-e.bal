@@ -16,16 +16,14 @@
 
 import ballerina/io;
 
-const int|string CONSTANT = 1;
 final int|string finalVar = 2;
 
-// Constants and final module bindings cannot be reassigned, so they stay
-// eligible for narrowing.
+// A final module variable cannot be narrowed by a match clause.
 public function main() {
-    if CONSTANT is int {
-        io:println(CONSTANT + 1); // @output 2
-    }
-    if finalVar is int {
-        io:println(finalVar + 1); // @output 3
+    match finalVar {
+        2 => {
+            2 p = finalVar; // @error a final module variable cannot be narrowed
+            io:println(p);
+        }
     }
 }

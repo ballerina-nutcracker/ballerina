@@ -1,4 +1,5 @@
 -- stdout --
-2
-3
+int
+true
+false
 -- stderr --
