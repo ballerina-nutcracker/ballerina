@@ -18,7 +18,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -63,7 +62,7 @@ func TestSerialOpenCloseDuringCompilation(t *testing.T) {
 			default:
 				projectsSvc.CurrentProject(root)
 				cyc.stale()
-				runtime.Gosched()
+				time.Sleep(time.Millisecond)
 			}
 		}
 	}
