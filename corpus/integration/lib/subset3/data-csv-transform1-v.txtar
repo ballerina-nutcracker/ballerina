@@ -18,7 +18,10 @@ error Error ("value '1' in index '0' is not compatible with array type 'int'")
 error {ballerina/lang.value}ConversionError ("'300' value cannot be converted to 'int:Unsigned8'",message="'300' value cannot be converted to 'int:Unsigned8'")
 error {ballerina/lang.value}ConversionError ("'\"xy\"' value cannot be converted to 'string:Char'",message="'\"xy\"' value cannot be converted to 'string:Char'")
 [{"a":"x"}]
-error Error ("value 'x' in index '0' is not compatible with array type '(\"x\"|\"y\")'")
+[["x"]]
+error Error ("value 'z' in index '0' is not compatible with array type '(\"x\"|\"y\")'")
+[{"grade":"B","level":2,"color":"GREEN"}]
+error Error ("no mapping type found for value '3' in key 'level'")
 [{"a":"1"}]
 error Error ("expected a array type, found 'int[]' ")
 [{"a":1}]

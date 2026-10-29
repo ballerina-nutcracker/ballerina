@@ -33,6 +33,13 @@ type Maps map<anydata>[];
 
 type Finite ("x"|"y")[][];
 
+enum Color {
+    RED,
+    GREEN
+}
+
+type FiniteFields record {|"A"|"B" grade; 1|2 level; Color color;|}[];
+
 type CharRows record {|string:Char a;|}[];
 
 type ByteRows record {|byte a;|}[];
@@ -76,6 +83,9 @@ public function main() {
     io:println(csv:transform([{"a": "xy"}], {}, CharRows));
     io:println(csv:transform([{"a": "x"}], {}, CharRows));
     io:println(csv:transform([{"a": "x"}], {}, Finite));
+    io:println(csv:transform([{"a": "z"}], {}, Finite));
+    io:println(csv:transform([{"grade": "B", "level": 2, "color": "GREEN"}], {}, FiniteFields));
+    io:println(csv:transform([{"grade": "B", "level": 3, "color": "GREEN"}], {}, FiniteFields));
     io:println(csv:transform([{"a": "1"}], {}, IntOrString));
     io:println(csv:transform([{"a": 1}], {}, NestedField));
     io:println(csv:transform([{"a": 1}], {}, BadUnion));
@@ -109,7 +119,10 @@ public function main() {
 // @output error {ballerina/lang.value}ConversionError ("'300' value cannot be converted to 'int:Unsigned8'",message="'300' value cannot be converted to 'int:Unsigned8'")
 // @output error {ballerina/lang.value}ConversionError ("'\"xy\"' value cannot be converted to 'string:Char'",message="'\"xy\"' value cannot be converted to 'string:Char'")
 // @output [{"a":"x"}]
-// @output error Error ("value 'x' in index '0' is not compatible with array type '(\"x\"|\"y\")'")
+// @output [["x"]]
+// @output error Error ("value 'z' in index '0' is not compatible with array type '(\"x\"|\"y\")'")
+// @output [{"grade":"B","level":2,"color":"GREEN"}]
+// @output error Error ("no mapping type found for value '3' in key 'level'")
 // @output [{"a":"1"}]
 // @output error Error ("expected a array type, found 'int[]' ")
 // @output [{"a":1}]
