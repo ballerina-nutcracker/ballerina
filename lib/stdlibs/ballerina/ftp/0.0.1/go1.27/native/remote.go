@@ -358,7 +358,7 @@ func (c *remoteClient) size(p string) (int64, error) {
 	if entry == nil || entry.isDir {
 		return 0, newError(kindError, "Could not determine the size of \""+c.uri(p)+"\" because it is not a file.")
 	}
-	return int64(int32(entry.size)), nil
+	return entry.size, nil
 }
 
 func (c *remoteClient) isDirectory(p string) (bool, error) {

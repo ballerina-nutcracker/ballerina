@@ -17,8 +17,23 @@
 
 import ballerina/ftp;
 import ballerina/io;
+import ballerina/lang.runtime;
 
 function jailPort() returns int = external;
+
+isolated string[] added = [];
+
+service class LoopService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
+        lock {
+            foreach ftp:FileInfo f in event.addedFiles {
+                added.push(f.pathDecoded);
+            }
+        }
+    }
+}
 
 public function main() returns error? {
     ftp:Client jailed = check new ({
@@ -45,5 +60,33 @@ public function main() returns error? {
     check jailed->copy("/x.txt", "/copied/x.txt");
     text = check jailed->getText("/copied/x.txt");
     io:println(text); // @output outside
+    int size = check jailed->size("/big.bin");
+    io:println(size); // @output 3221225472
+    ftp:FileInfo[] rootEntries = check jailed->list("/");
+    int[] listedSizes = from ftp:FileInfo e in rootEntries where e.name == "big.bin" select e.size;
+    io:println(listedSizes); // @output [3221225472]
     check jailed->close();
+
+    ftp:Listener looped = check new ({
+        host: "127.0.0.1",
+        port: jailPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        userDirIsRoot: true,
+        path: "/looped",
+        pollingInterval: 3600
+    });
+    check looped.attach(new LoopService());
+    check looped.poll();
+    foreach int _ in 0 ..< 200 {
+        lock {
+            if added.length() > 0 {
+                break;
+            }
+        }
+        runtime:sleep(0.05);
+    }
+    lock {
+        io:println(added.toString()); // @output ["/looped/a.txt"]
+    }
+    check looped.gracefulStop();
 }

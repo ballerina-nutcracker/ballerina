@@ -108,7 +108,10 @@ public function main() returns error? {
     ftp:Client|ftp:Error untrusted = sftp({credentials: creds}, badKnownHostsPath());
     io:println(outcome(untrusted)); // @output ConnectionError
     ftp:Client|ftp:Error noFile = sftp({credentials: creds}, missingKeyPath());
-    io:println(outcome(noFile)); // @output connected
+    io:println(outcome(noFile)); // @output Error
+    if noFile is ftp:Error {
+        io:println(noFile.message() == "SFTP known_hosts file could not be read: " + missingKeyPath()); // @output true
+    }
 
     ftp:Client sftpClient = check sftp({credentials: creds}, userDirIsRoot = true);
     check sftpClient->mkdir("/tree/sub");

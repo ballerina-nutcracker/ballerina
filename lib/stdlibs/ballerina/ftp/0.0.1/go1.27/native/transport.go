@@ -41,6 +41,7 @@ var errNotExist = errors.New("file does not exist")
 type remoteEntry struct {
 	name       string
 	isDir      bool
+	isLink     bool
 	size       int64
 	modTime    time.Time
 	readable   bool
@@ -314,6 +315,7 @@ func (s *ftpSession) readDir(p string) ([]remoteEntry, error) {
 		entries = append(entries, remoteEntry{
 			name:     path.Base(e.Name),
 			isDir:    e.Type == ftp.EntryTypeFolder || linkIsDir[e.Name],
+			isLink:   e.Type == ftp.EntryTypeLink,
 			size:     int64(e.Size),
 			modTime:  e.Time,
 			readable: true,

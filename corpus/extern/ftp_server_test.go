@@ -494,6 +494,33 @@ func startJailFTPServer(t *testing.T) int64 {
 	if err := os.Symlink("real", filepath.Join(home, "incoming")); err != nil {
 		t.Skipf("symlinks are not available: %v", err)
 	}
+	writeLinkLoop(t, filepath.Join(home, "looped"))
+	big, err := os.Create(filepath.Join(home, "big.bin"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer big.Close()
+	// A sparse file reports a size above the 32-bit range without using the disk space.
+	if err := big.Truncate(3 << 30); err != nil {
+		t.Fatal(err)
+	}
 	fs := jailFs{afero.NewBasePathFs(afero.NewOsFs(), root)}
 	return serveFTP(t, jailFTPDriver{newFTPTestDriver(t, fs, nil, ftpserver.ClearOrEncrypted)})
+}
+
+// writeLinkLoop creates dir holding a.txt and two symlinks to dir itself, so a scan that follows
+// links without detecting the loop lists 2^n folders at depth n.
+func writeLinkLoop(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"loop", "loop2"} {
+		if err := os.Symlink(".", filepath.Join(dir, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
