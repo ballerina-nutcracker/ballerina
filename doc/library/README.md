@@ -10,7 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
-| [data.yaml](../../lib/stdlibs/ballerina/data.yaml/0.0.1/go1.27/README.md)     | 16 | 5 | 2 | 70% |
+| [data.yaml](../../lib/stdlibs/ballerina/data.yaml/0.0.1/go1.27/README.md)     | 15 | 6 | 2 | 65% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +26,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **275** | **34** | **71** | **72%** |
+| **Total**                                         | **274** | **35** | **71** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -53,6 +53,7 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **Values at the root of a list target keep their text.** When the target can hold several documents, jBallerina first reads each value as JSON and converts that JSON's text, so `[007, 1.50]` binds to `string[]` as `["7", "1.5"]` and decimals lose precision; the Go-native version converts the YAML text directly, giving `["007", "1.50"]`.
 - **toYamlString quotes strings that would not read back unchanged.** jBallerina writes strings as they are, replaces a newline with the letter `n`, and never escapes embedded quotes, so `""`, `true`, `123`, `a: b` or `- x` come back as different values; the Go-native version writes such strings double-quoted with escapes, and `''` for a single quote inside single quotes. It also quotes the YAML 1.2 core schema number forms such as `.inf`, `.NaN`, `0x1F` and `0o17`, which jBallerina leaves bare and other YAML 1.2 readers take as numbers.
 - **toYamlString quotes the document-end marker and flow indicators in flow style.** jBallerina writes the string `...` unquoted, so it reads back as an empty document, and with `flowStyle` writes strings such as `a,b` or `c]d` unquoted inside a flow collection, so `[a,b]` reads back as two values or fails to parse; the Go-native version quotes them. See [ballerina-library#9394](https://github.com/ballerina-platform/ballerina-library/issues/9394) and [ballerina-library#9395](https://github.com/ballerina-platform/ballerina-library/issues/9395).
+- **The schema option decides which strings toYamlString quotes.** jBallerina ignores the `schema` field of `WriteConfig`; the Go-native version quotes a string that the schema would read as null, a boolean or a number, so with `CORE_SCHEMA`, the default, `true`, `True`, `~`, `1` and `0x1F` are quoted, with `JSON_SCHEMA` only `null`, `true`, `false` and JSON numbers such as `1` and `1.5` are, and with `FAILSAFE_SCHEMA`, where every plain scalar is a string, none of them is. See [ballerina-library#9417](https://github.com/ballerina-platform/ballerina-library/issues/9417).
 - **Only `@yaml:Name` renames a record field.** jBallerina renames a field with any annotation whose name ends in `Name`, so a field with only an annotation such as `@FieldName {value: "other"}` from another module binds the key `other`; the Go-native version ignores such annotations and binds the key `name`. See [ballerina-library#9414](https://github.com/ballerina-platform/ballerina-library/issues/9414).
 - **Zero indentation is rejected for nested block collections.** With `indentationPolicy: 0`, jBallerina writes a nested mapping or sequence at its parent's indentation, so `{parent: {child: 1}}` reads back as `{"parent":null,"child":1}`; the Go-native version returns `indentationPolicy must be greater than 0 to write a nested block collection`. Output without such nesting is unchanged. See [ballerina-library#9396](https://github.com/ballerina-platform/ballerina-library/issues/9396).
 - **toYamlString writes empty collections in flow style.** jBallerina writes an empty list as a bare `-` and an empty mapping as nothing, so `{a: [], b: {}}` reads back as `{"a":[null],"b":null}` and `{}` as an empty string that does not parse; the Go-native version writes `[]` and `{}`.
