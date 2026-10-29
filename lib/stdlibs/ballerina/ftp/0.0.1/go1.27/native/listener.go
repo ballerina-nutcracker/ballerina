@@ -272,13 +272,11 @@ func (m *ftpModule) register(ctx *extern.Context, args []values.BalValue) (value
 	serviceConfig := serviceConfigOf(ctx, svc)
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	if !state.modeSet {
-		state.modeSet = true
-		state.multiPath = serviceConfig != nil
-	} else if state.multiPath && serviceConfig == nil {
+	multiPath := serviceConfig != nil
+	if state.modeSet && state.multiPath && !multiPath {
 		return m.errorResult(ctx, newError(kindInvalidConfig, "All services attached to a listener must use "+
 			"@ftp:ServiceConfig annotation when any service uses it. The new service is missing the annotation."))
-	} else if !state.multiPath && serviceConfig != nil {
+	} else if state.modeSet && !state.multiPath && multiPath {
 		return m.errorResult(ctx, newError(kindInvalidConfig, "All services attached to a listener must use "+
 			"@ftp:ServiceConfig annotation when any service uses it. Previous services did not use the annotation."))
 	}
@@ -287,7 +285,8 @@ func (m *ftpModule) register(ctx *extern.Context, args []values.BalValue) (value
 		return m.errorResult(ctx, newError(kindError, "Failed to register service."))
 	}
 	sc := &serviceContext{svc: svc, handlers: handlers}
-	if state.multiPath {
+	var created *consumer
+	if multiPath {
 		watch, err := m.serviceWatchConfig(serviceConfig)
 		if err != nil {
 			return m.errorResult(ctx, err)
@@ -298,11 +297,10 @@ func (m *ftpModule) register(ctx *extern.Context, args []values.BalValue) (value
 					"' in @ftp:ServiceConfig. Each service must monitor a unique path."))
 			}
 		}
-		con, err := m.newConsumer(state, watch, "Unable to initialize the connection with the server. ")
-		if err != nil {
+		if created, err = m.newConsumer(state, watch, "Unable to initialize the connection with the server. "); err != nil {
 			return m.errorResult(ctx, err)
 		}
-		sc.consumer = con
+		sc.consumer = created
 	} else {
 		deps, err := parseDependencies(listValue(state.config, "fileDependencyConditions"), func(i int, field, _ string, err error) string {
 			return "Invalid regex pattern for fileDependencyConditions[" + formatInt(int64(i)) + "]." + field + ": " + err.Error()
@@ -310,31 +308,38 @@ func (m *ftpModule) register(ctx *extern.Context, args []values.BalValue) (value
 		if err != nil {
 			return m.errorResult(ctx, err)
 		}
-		if state.legacyCon == nil {
+		sc.consumer = state.legacyCon
+		if sc.consumer == nil {
 			watch := state.legacy
 			watch.dependencies = deps
-			con, err := m.newConsumer(state, watch, "Failed to initialize File server connector. ")
-			if err != nil {
+			if created, err = m.newConsumer(state, watch, "Failed to initialize File server connector. "); err != nil {
 				return m.errorResult(ctx, err)
 			}
-			state.legacyCon = con
+			sc.consumer = created
 		}
-		sc.consumer = state.legacyCon
 	}
 	if handlers.needsCaller() {
-		caller, err := m.callerFor(ctx, state)
+		caller, err := m.callerFor(ctx, state, multiPath)
 		if err != nil {
+			if created != nil {
+				_ = created.remote.close()
+			}
 			return m.errorResult(ctx, err)
 		}
 		sc.caller = caller
+	}
+	state.modeSet = true
+	state.multiPath = multiPath
+	if !multiPath {
+		state.legacyCon = sc.consumer
 	}
 	state.typeKeys[typeKey] = true
 	state.services = append(state.services, sc)
 	return nil, nil
 }
 
-func (m *ftpModule) callerFor(ctx *extern.Context, state *listenerState) (*values.Object, error) {
-	if !state.multiPath && state.shared != nil {
+func (m *ftpModule) callerFor(ctx *extern.Context, state *listenerState, multiPath bool) (*values.Object, error) {
+	if !multiPath && state.shared != nil {
 		return state.shared, nil
 	}
 	handle, ok := ctx.LookupFunction(orgName, moduleName, "createCaller")
@@ -349,7 +354,7 @@ func (m *ftpModule) callerFor(ctx *extern.Context, state *listenerState) (*value
 		return nil, &ftpError{kind: kindError, message: balErr.Message, cause: &balCause{value: balErr}}
 	}
 	caller := result.(*values.Object)
-	if !state.multiPath {
+	if !multiPath {
 		state.shared = caller
 	}
 	return caller, nil

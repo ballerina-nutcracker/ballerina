@@ -25,6 +25,17 @@ function sftpPort() returns int = external;
 
 function hashedKnownHostsPath() returns string = external;
 
+function ftpConnections() returns int = external;
+
+@ftp:ServiceConfig {path: "/missing"}
+service class MissingPathService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent event) returns error? {
+        io:println(event.addedFiles.length());
+    }
+}
+
 type Profile record {|
     int id;
     string? nickname;
@@ -115,6 +126,17 @@ public function main() returns error? {
     Profile[] profiles = check lax->getJson("/home/profiles.json");
     io:println(profiles); // @output [{"id":1,"nickname":null},{"id":2,"nickname":"b"}]
 
+    foreach int _ in 0 ..< 5 {
+        stream<byte[] & readonly, io:Error?> chunks = check lax->get("/home/profiles.json");
+        record {|byte[] & readonly value;|}? chunk = check chunks.next();
+        while chunk !is () {
+            chunk = check chunks.next();
+        }
+    }
+    _ = check lax->get("/home/profile.json");
+    _ = check lax->get("/home/profiles.json");
+    io:println(ftpConnections() <= 2); // @output true
+
     ftp:Client strict = check new ({
         host: "127.0.0.1",
         port: ftpPort(),
@@ -199,5 +221,17 @@ public function main() returns error? {
     io:println(inboxCount() == inboxAfterDetach); // @output true
     check paths.detach(new InboxService());
     check paths.gracefulStop();
+
+    ftp:Listener retried = check new ({
+        host: "127.0.0.1",
+        port: ftpPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        path: "/home"
+    });
+    error? missingPath = retried.attach(new MissingPathService());
+    io:println(missingPath is error); // @output true
+    error? legacyAfterFailure = retried.attach(new CountingService());
+    io:println(legacyAfterFailure is ()); // @output true
+    check retried.detach(new CountingService());
     check lax->close();
 }
