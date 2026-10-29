@@ -1824,14 +1824,14 @@ func clientResourceExternKey(accessor string, idx int) string {
 // resourceRequestPath renders client resource access path segments and query parameters into a
 // request path: segments are joined with "/", then any query parameters are appended after "?".
 // An empty segment list yields "/". Every segment and query value is rendered with Ballerina's
-// own `toString` semantics, then each segment is percent-encoded with url.PathEscape and each
-// query key and value with url.QueryEscape — see the README's "Notable Behavioural Changes" for
-// how both differ from jBallerina's wire format.
+// own `toString` semantics, then each segment is percent-encoded by writeEscapedPathSegment and
+// each query key and value with url.QueryEscape — see the README's "Notable Behavioural Changes"
+// for how both differ from jBallerina's wire format.
 func resourceRequestPath(segments *values.List, params values.BalValue) string {
 	var sb strings.Builder
 	for i := range segments.Len() {
 		sb.WriteByte('/')
-		sb.WriteString(url.PathEscape(balString(segments.Get(i))))
+		writeEscapedPathSegment(&sb, balString(segments.Get(i)))
 	}
 	if sb.Len() == 0 {
 		sb.WriteByte('/')
@@ -1841,6 +1841,30 @@ func resourceRequestPath(segments *values.List, params values.BalValue) string {
 		sb.WriteString(query)
 	}
 	return sb.String()
+}
+
+// writeEscapedPathSegment percent-encodes every byte outside RFC 3986 pchar, so `/`, `?`, `#`, `%`
+// and space are escaped while sub-delims such as `,` and `;` go out raw, as jBallerina sends them.
+func writeEscapedPathSegment(sb *strings.Builder, seg string) {
+	const upperHex = "0123456789ABCDEF"
+	for i := 0; i < len(seg); i++ {
+		c := seg[i]
+		if isPathSegmentChar(c) {
+			sb.WriteByte(c)
+			continue
+		}
+		sb.WriteByte('%')
+		sb.WriteByte(upperHex[c>>4])
+		sb.WriteByte(upperHex[c&0xF])
+	}
+}
+
+func isPathSegmentChar(c byte) bool {
+	switch {
+	case 'a' <= c && c <= 'z', 'A' <= c && c <= 'Z', '0' <= c && c <= '9':
+		return true
+	}
+	return strings.IndexByte("-._~!$&'()*+,;=:@", c) >= 0
 }
 
 // queryParamString renders a `QueryParams` record as "k=v" pairs joined with "&", in field
