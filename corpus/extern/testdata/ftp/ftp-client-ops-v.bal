@@ -156,11 +156,13 @@ public function main() returns error? {
     var r3 = c->size("/a");
     show("size dir", r3); // @output size dir: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
     var r4 = c->size("/nope");
-    show("size missing", r4); // @output size missing: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/nope" because it does not exist.
+    show("size missing", r4); // @output size missing: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/nope" because it is not a file.
     var r5 = c->list("/t.txt");
     show("list file", r5); // @output list file: Could not list the contents of "ftp://ballerina:***@127.0.0.1:PORT/t.txt" because it is not a folder.
     var r6 = c->getBytes("/a");
-    show("read dir", r6); // @output read dir: Could not read from "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
+    show("read dir", r6); // @output read dir: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
+    var r6s = c->getBytesAsStream("/a");
+    show("stream dir", r6s); // @output stream dir: Could not read from "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
     var r7 = c->getText("/nope");
     show("read missing", r7); // @output read missing: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/nope not found
     var r8 = c->delete("/nope");
@@ -178,7 +180,10 @@ public function main() returns error? {
     var r14 = c->copy("/t.txt", "/bad.txt");
     show("copy exists", r14); // @output copy exists: The file at ftp://ballerina:***@127.0.0.1:PORT/bad.txt already exists
     var r15 = c->copy("/a", "/z");
-    show("copy dir", r15); // @output copy dir: Could not read from "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
+    show("copy dir", r15); // @output copy dir: ok
+    boolean copiedIsDir = check c->isDirectory("/z");
+    ftp:FileInfo[] copiedChildren = check c->list("/z");
+    io:println(copiedIsDir, " ", copiedChildren.length()); // @output true 0
 
     var r16 = c->move("/t.txt", "/moved/deep/t.txt");
 

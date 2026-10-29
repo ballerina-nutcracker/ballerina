@@ -177,12 +177,18 @@ func (c *remoteClient) statOrFail(p, operation string) (*remoteEntry, error) {
 }
 
 func (c *remoteClient) openFile(p string) (io.ReadCloser, error) {
+	return c.open(p, "Could not read from")
+}
+
+// open opens a file for reading; a folder fails with notFilePrefix, which differs between
+// streamed and whole-file reads in jBallerina.
+func (c *remoteClient) open(p, notFilePrefix string) (io.ReadCloser, error) {
 	entry, err := c.statOrFail(p, "read file")
 	if err != nil {
 		return nil, err
 	}
 	if entry.isDir {
-		return nil, newError(kindError, "Could not read from \""+c.uri(p)+"\" because it is not a file.")
+		return nil, newError(kindError, notFilePrefix+" \""+c.uri(p)+"\" because it is not a file.")
 	}
 	r, err := c.sess.open(c.serverPath(p))
 	if err != nil {
@@ -192,7 +198,7 @@ func (c *remoteClient) openFile(p string) (io.ReadCloser, error) {
 }
 
 func (c *remoteClient) readAll(p string) ([]byte, error) {
-	r, err := c.openFile(p)
+	r, err := c.open(p, "Could not determine the size of")
 	if err != nil {
 		return nil, err
 	}
@@ -335,11 +341,14 @@ func (c *remoteClient) copy(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	if entry.isDir {
-		return newError(kindError, "Could not read from \""+c.uri(src)+"\" because it is not a file.")
-	}
 	if err := c.prepareDestination(dest, " already exists"); err != nil {
 		return err
+	}
+	if entry.isDir {
+		if err := c.sess.mkdir(c.serverPath(dest)); err != nil {
+			return operationError("Could not copy \""+c.uri(src)+"\" to \""+c.uri(dest)+"\".", err)
+		}
+		return nil
 	}
 	r, err := c.sess.open(c.serverPath(src))
 	if err != nil {
@@ -365,10 +374,7 @@ func (c *remoteClient) size(p string) (int64, error) {
 	if err != nil {
 		return 0, operationError("Could not determine the size of \""+c.uri(p)+"\".", err)
 	}
-	if entry == nil {
-		return 0, newError(kindError, "Could not determine the size of \""+c.uri(p)+"\" because it does not exist.")
-	}
-	if entry.isDir {
+	if entry == nil || entry.isDir {
 		return 0, newError(kindError, "Could not determine the size of \""+c.uri(p)+"\" because it is not a file.")
 	}
 	return int64(int32(entry.size)), nil

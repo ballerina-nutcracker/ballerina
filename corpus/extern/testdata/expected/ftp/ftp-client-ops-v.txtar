@@ -28,9 +28,10 @@ true 0 folder
 false
 isDirectory missing: /nope does not exist to check if it is a directory.
 size dir: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
-size missing: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/nope" because it does not exist.
+size missing: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/nope" because it is not a file.
 list file: Could not list the contents of "ftp://ballerina:***@127.0.0.1:PORT/t.txt" because it is not a folder.
-read dir: Could not read from "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
+read dir: Could not determine the size of "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
+stream dir: Could not read from "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
 read missing: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/nope not found
 delete missing: Failed to delete file: ftp://ballerina:***@127.0.0.1:PORT/nope not found
 rmdir missing: Failed to delete directory: ftp://ballerina:***@127.0.0.1:PORT/nope not found
@@ -39,7 +40,8 @@ rename missing: Failed to rename file: ftp://ballerina:***@127.0.0.1:PORT/nope n
 rename exists: The file at ftp://ballerina:***@127.0.0.1:PORT/bad.txt already exists or it is a directory
 copy missing: Failed to copy file: ftp://ballerina:***@127.0.0.1:PORT/nope not found
 copy exists: The file at ftp://ballerina:***@127.0.0.1:PORT/bad.txt already exists
-copy dir: Could not read from "ftp://ballerina:***@127.0.0.1:PORT/a" because it is not a file.
+copy dir: ok
+true 0
 move: ok
 true
 delete dir: Could not delete "ftp://ballerina:***@127.0.0.1:PORT/moved/deep".
