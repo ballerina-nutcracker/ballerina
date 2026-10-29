@@ -46,7 +46,11 @@ type node struct {
 	hasTyped bool
 	items    []*node
 	pairs    []pair
+	// size caches expandedSize; zero means not yet computed.
+	size int
 }
+
+const maxExpandedSize = 1 << 40
 
 type pair struct {
 	key   *node
@@ -63,6 +67,9 @@ type parser struct {
 	streamStarted  bool
 	// sawDocumentEnd records a `...` marker, which makes an input without documents one empty document.
 	sawDocumentEnd bool
+	// nodes counts the nodes composed and aliasNodes the nodes that aliases add when expanded.
+	nodes      int
+	aliasNodes int
 }
 
 func newParser(input string, options *readOptions) *parser {
@@ -151,6 +158,7 @@ func (p *parser) nextDocument() (doc *node, explicit bool, ok bool, err error) {
 			return &node{kind: nodeScalar, empty: true}, true, true, nil
 		}
 	}
+	p.anchors = make(map[string]*node)
 	doc, err = p.parseNode(true, false)
 	if err != nil {
 		return nil, false, false, err
@@ -311,6 +319,7 @@ func (p *parser) parseNode(block, indentlessSequence bool) (*node, error) {
 	if err != nil {
 		return nil, err
 	}
+	p.nodes++
 	if props.hasTag {
 		if err := p.castData(n, props.tag); err != nil {
 			return nil, err
@@ -342,7 +351,45 @@ func (p *parser) parseAlias(props nodeProperties) (*node, error) {
 	if !ok {
 		return nil, p.s.errorAt("anchor does not exist", tok.end)
 	}
+	p.aliasNodes += expandedSize(target)
+	if p.excessiveAliasing() {
+		return nil, p.s.errorAt("document contains excessive aliasing", tok.end)
+	}
 	return target, nil
+}
+
+// excessiveAliasing applies go-yaml's limit on the share of nodes that come from expanding aliases, which
+// conversion walks once per alias. Small documents may be almost all aliases; large ones may not.
+func (p *parser) excessiveAliasing() bool {
+	total := p.nodes + p.aliasNodes
+	if p.aliasNodes <= 100 || total <= 1000 {
+		return false
+	}
+	allowed := 0.99
+	switch {
+	case total >= 4000000:
+		allowed = 0.10
+	case total > 400000:
+		allowed = 0.99 - 0.89*float64(total-400000)/3600000
+	}
+	return float64(p.aliasNodes)/float64(total) > allowed
+}
+
+// expandedSize is the number of nodes n stands for once its aliases are expanded, capped so that it
+// cannot overflow.
+func expandedSize(n *node) int {
+	if n.size > 0 {
+		return n.size
+	}
+	size := 1
+	for _, item := range n.items {
+		size += expandedSize(item)
+	}
+	for _, p := range n.pairs {
+		size += expandedSize(p.key) + expandedSize(p.value)
+	}
+	n.size = min(size, maxExpandedSize)
+	return n.size
 }
 
 // castData applies an explicit tag the way jBallerina does: !!str, !!seq and !!map keep the node,

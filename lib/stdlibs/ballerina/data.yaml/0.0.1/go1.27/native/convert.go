@@ -123,6 +123,17 @@ func (c *converter) convertScalar(n *node, ti typeInfo, sc scope) (values.BalVal
 	return nil, c.incompatible(n.value, ti.ty, sc)
 }
 
+// isNullNode reports whether n reads as nil: an empty value, the plain word null or a value tagged null.
+func isNullNode(n *node) bool {
+	switch {
+	case n.kind != nodeScalar:
+		return false
+	case n.hasTyped:
+		return n.typed == nil
+	}
+	return n.empty || n.value == "null"
+}
+
 func (c *converter) convertMapping(n *node, ti typeInfo, sc scope) (values.BalValue, error) {
 	switch ti.kind {
 	case kindRecord, kindMap:
@@ -182,8 +193,7 @@ func (c *converter) convertToMapping(n *node, shape rowShape, sc scope) (values.
 		key := keyString(p.key)
 		if f, declared := c.fieldFor(&shape, key); declared {
 			delete(remaining, f.name)
-			if c.options.nilAsOptionalField && f.optional && !f.nilable && p.value.kind == nodeScalar &&
-				!p.value.empty && !p.value.hasTyped && p.value.value == "null" {
+			if c.options.nilAsOptionalField && f.optional && !f.nilable && isNullNode(p.value) {
 				continue
 			}
 			value, err := c.convert(p.value, f.ty, sc.child(f.name, f))
