@@ -30,10 +30,20 @@ import (
 // attempt catches it and moves on to the next member.
 type jsonError struct {
 	message string
+	format  func() string
 }
 
 func (e *jsonError) Error() string {
+	if e.format != nil {
+		e.message, e.format = e.format(), nil
+	}
 	return e.message
+}
+
+// lazyJSONError formats its message only when it is read. A failed union member's error is dropped when the
+// next member is tried, and formatting the value each time would make deep input quadratic.
+func lazyJSONError(format func() string) *jsonError {
+	return &jsonError{format: format}
 }
 
 // returnedError is an error jBallerina returns as a value from a conversion helper; the caller decides how to
