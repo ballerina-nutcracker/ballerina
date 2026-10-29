@@ -22,6 +22,7 @@ import "testing"
 // A corpus test would need more than 2^24 puts before float32 rounding makes
 // evictionCount exceed the capacity, so the negative eviction target is tested here.
 func TestEvictToNegativeTargetEmptiesCache(t *testing.T) {
+	t.Parallel()
 	c := newLRUCache(2, 1.0)
 	c.put("a", nil, -1)
 	c.put("b", nil, -1)
