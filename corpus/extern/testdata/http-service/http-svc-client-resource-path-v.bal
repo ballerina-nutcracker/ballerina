@@ -94,6 +94,13 @@ public function testMain() returns error? {
     http:Response escaped = check c->/p/["a/b"]/["a?b"]/["a%b"]/["a b"];
     io:println(check escaped.getHeader("x-raw-path")); // @output /p/a%2Fb/a%3Fb/a%25b/a%20b
 
+    // Characters legal in a path segment, including the sub-delims, go out raw.
+    http:Response subDelims = check c->/p/["1,2"]/["a;b=c"]/["!$&'()*+:@-._~"];
+    io:println(check subDelims.getHeader("x-raw-path")); // @output /p/1,2/a;b=c/!$&'()*+:@-._~
+
+    http:Response hash = check c->/p/["a#b"]/["é"];
+    io:println(check hash.getHeader("x-raw-path")); // @output /p/a%23b/%C3%A9
+
     // Query parameters are appended after "?" and joined with "&", in the order
     // the named arguments were written.
     http:Response query = check c->/p/albums(tag = "rock", count = 3, exact = true);
