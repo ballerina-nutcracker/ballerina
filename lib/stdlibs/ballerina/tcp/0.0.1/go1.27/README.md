@@ -61,7 +61,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Client initialization with local interface binding and read/write timeouts | Supported | |
-| Client secure connection using a certificate file path | Partially Supported | `ClientSecureSocket.handshakeTimeout` and `sessionTimeout` are ignored. |
+| Client secure connection using a certificate file path | Partially Supported | `ClientSecureSocket.sessionTimeout` is ignored. |
 | Listener initialization | Supported | |
 | Listener secure connection using a certificate and private key file pair | Partially Supported | `CertKey.keyPassword` is ignored, so an encrypted private key file fails at the TLS handshake. `ListenerSecureSocket.handshakeTimeout` and `sessionTimeout` are ignored. |
 | Client secure connection using a trust store | Cannot Support | Extracting every certificate from a PKCS12 trust store isn't implemented for this module; supplying a trust store value for `ClientSecureSocket.cert` returns an `Error` at runtime. Use a PEM certificate file path instead. |
@@ -87,7 +87,7 @@ Support Levels:
 ### Notable Behavioural Changes
 
 - **A connection is closed if `onConnect` returns an error.** jBallerina leaves the connection open with reads permanently paused in this case — a bug in the reference implementation. This port closes the connection instead.
-- **`onClose` is invoked exactly once.** jBallerina can invoke `onClose` twice for a locally-initiated `Caller.close()` (once synchronously from `close()`, once again from the resulting disconnect event) — a bug in the reference implementation. This port guards with per-connection state so `onClose` fires exactly once regardless of who triggers the close.
+- **`onClose` is invoked at most once.** jBallerina can invoke `onClose` twice for a locally-initiated `Caller.close()` (once synchronously from `close()`, once again from the resulting disconnect event) — a bug in the reference implementation. This port guards with per-connection state so `onClose` fires exactly once regardless of who triggers the close. As in jBallerina, a connection closed before `onConnect` returns never dispatches `onClose`.
 - **`Caller`'s fields are computed once, at accept time.** jBallerina constructs a fresh `Caller` object (recomputing `remoteHost`/`remotePort`/`localHost`/`localPort`/`id`, including a potential reverse-DNS lookup) on every single `onConnect`/`onBytes` dispatch. This port computes these fields once when the connection is accepted and reuses them for its lifetime.
 - **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
 - **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
