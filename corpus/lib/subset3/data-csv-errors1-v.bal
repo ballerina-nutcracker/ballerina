@@ -46,6 +46,10 @@ public function main() {
     io:println(csv:parseString("a,b", {header: ()}, Rows));
     // A quoted header row that ends the input leaves a row that was never created.
     io:println(csv:parseString("\"a\",\"b\"", {}, Strings));
+    Strings|error headerOnly = csv:parseString("\"a\",\"b\"", {}, Strings);
+    if headerOnly is error {
+        io:println(headerOnly.message());
+    }
     // Values that do not fit the target are reported with their value.
     io:println(csv:transform([{"a": 2.5}], {}, StringRows));
     io:println(csv:transform([{"a": 1234.5678d}], {}, StringRows));
@@ -71,7 +75,8 @@ public function main() {
 // @output error Error ("provided header row is empty")
 // @output error Error ("provided header row is empty")
 // @output error Error ("no matching header value is found for the required field 'a'")
-// @output error {ballerina/lang.array}InherentTypeViolation ("incompatible types: expected 'string[]', found '()'",message="incompatible types: expected 'string[]', found '()'")
+// @output error("{ballerina/lang.array}InherentTypeViolation",message="incompatible types: expected 'string[]', found '()'")
+// @output {ballerina/lang.array}InherentTypeViolation
 // @output error Error ("no mapping type found for value '2.5' in key 'a'")
 // @output error Error ("no mapping type found for value '1234.5678' in key 'a'")
 // @output error Error ("no mapping type found for value '1,234,567' in key 'a'")

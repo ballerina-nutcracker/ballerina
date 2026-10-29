@@ -55,7 +55,7 @@ func (e *conversionError) Error() string {
 func nilRowError(rowTypeName string) *conversionError {
 	message := fmt.Sprintf("incompatible types: expected '%s', found '()'", rowTypeName)
 	detail := values.NewMap(semtypes.Mapping, &semtypes.MappingAtomicInner, true, []values.MapEntry{{Key: "message", Value: message}})
-	return &conversionError{value: values.NewError(semtypes.Error, message, nil, "{ballerina/lang.array}InherentTypeViolation", detail)}
+	return &conversionError{value: values.NewError(semtypes.Error, "{ballerina/lang.array}InherentTypeViolation", nil, "", detail)}
 }
 
 func newCsvError(format string, args ...any) *csvError {
