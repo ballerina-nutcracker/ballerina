@@ -27,6 +27,11 @@ type Person record {|
     string name;
 |};
 
+type Nick record {|
+    @FieldName {value: "other"}
+    string name;
+|};
+
 function repeat(string s, int n) returns string {
     string out = "";
     foreach int _ in 0 ..< n {
@@ -97,6 +102,11 @@ public function main() {
 
     Person|yaml:Error person = yaml:parseString("full-name: Ann", {}, Person);
     show(person);
+    // Only @yaml:Name renames a field, so another annotation whose name ends in Name is ignored.
+    Nick|yaml:Error nick = yaml:parseString("name: Ann", {}, Nick);
+    show(nick);
+    Nick|yaml:Error renamed = yaml:parseString("other: Ann", {}, Nick);
+    show(renamed);
 }
 
 // @output 'exceeded max depth of 10000' at line: '1' column: '10,000'
@@ -134,3 +144,5 @@ public function main() {
 // @output {"name":"a"}
 // @output {"name":"a"}
 // @output {"name":"Ann"}
+// @output {"name":"Ann"}
+// @output required field 'name' not present in YAML
