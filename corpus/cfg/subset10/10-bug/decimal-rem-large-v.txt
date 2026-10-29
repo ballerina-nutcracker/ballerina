@@ -15,17 +15,6 @@
           (simple-var-ref d2)))))
     (assignment
       (simple-var-ref d1)
-      (literal 1E+40))
-    (assignment
-      (simple-var-ref d2)
-      (literal 3))
-    (expression-stmt
-      (invocation io println (
-        (binary-expr %
-          (simple-var-ref d1)
-          (simple-var-ref d2)))))
-    (assignment
-      (simple-var-ref d1)
       (unary-expr -
         (literal 1E+40)))
     (assignment
@@ -54,6 +43,19 @@
         (literal 1E+40)))
     (assignment
       (simple-var-ref d2)
+      (unary-expr -
+        (literal 3)))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (simple-var-ref d1)
+          (simple-var-ref d2)))))
+    (assignment
+      (simple-var-ref d1)
+      (unary-expr -
+        (literal 1E+40)))
+    (assignment
+      (simple-var-ref d2)
       (literal 2))
     (expression-stmt
       (invocation io println (
@@ -65,7 +67,18 @@
       (literal 1E+40))
     (assignment
       (simple-var-ref d2)
-      (literal 1.1))
+      (literal 1.10))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (simple-var-ref d1)
+          (simple-var-ref d2)))))
+    (assignment
+      (simple-var-ref d1)
+      (literal 1E+39))
+    (assignment
+      (simple-var-ref d2)
+      (literal 3E+2))
     (expression-stmt
       (invocation io println (
         (binary-expr %
@@ -84,10 +97,18 @@
           (simple-var-ref d2)))))
     (assignment
       (simple-var-ref d1)
-      (literal 9.999999999999999999999999999999998E+6144))
+      (literal 1E+6144))
     (assignment
       (simple-var-ref d2)
-      (literal 0.01))
+      (literal 9999999999999999999999999999999999))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr %
+          (simple-var-ref d1)
+          (simple-var-ref d2)))))
+    (assignment
+      (simple-var-ref d2)
+      (literal 7.000000000000000000000000000000000E-6143))
     (expression-stmt
       (invocation io println (
         (binary-expr %
@@ -104,18 +125,22 @@
         (binary-expr %
           (simple-var-ref d1)
           (simple-var-ref d2)))))
+    (assignment
+      (simple-var-ref d1)
+      (literal 1E+34))
+    (assignment
+      (simple-var-ref d2)
+      (literal 7))
     (expression-stmt
       (invocation io println (
         (binary-expr %
-          (literal 9.0E+32)
-          (literal 0.01)))))
+          (simple-var-ref d1)
+          (simple-var-ref d2)))))
     (expression-stmt
       (invocation io println (
-        (binary-expr %
-          (literal 1E+6144)
-          (literal 0.7)))))
+        (simple-var-ref C1))))
     (expression-stmt
       (invocation io println (
-        (simple-var-ref C))))
+        (simple-var-ref C2))))
   )
 )

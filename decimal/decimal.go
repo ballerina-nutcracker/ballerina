@@ -235,13 +235,11 @@ func (a *Decimal) Rem(b *Decimal) (*Decimal, *Error) {
 	return out, nil
 }
 
-// remLargeQuotient computes a % b when the integer quotient a / b has more
+// remLargeQuotient returns a % b when the integer quotient a / b has more
 // digits than the decimal128 precision, which apd reports as
-// DivisionImpossible. The remainder is still exactly representable
-// [https://ballerina.io/spec/lang/master/#section_6.23]: such a quotient implies
-// a's exponent exceeds b's, so the remainder is
-// (coeff(a) * 10^(exp(a)-exp(b)) mod coeff(b)) * 10^exp(b), whose coefficient
-// is smaller than coeff(b).
+// DivisionImpossible. It requires exp(a) > exp(b). The spec still requires a
+// result [https://ballerina.io/spec/lang/master/#section_6.23], and it is exact
+// because its coefficient is smaller than coeff(b).
 func (a *Decimal) remLargeQuotient(b *Decimal) (*Decimal, *Error) {
 	shift := apd.NewBigInt(int64(a.v.Exponent) - int64(b.v.Exponent))
 	out := &Decimal{}
@@ -250,12 +248,9 @@ func (a *Decimal) remLargeQuotient(b *Decimal) (*Decimal, *Error) {
 	out.v.Coeff.Rem(&out.v.Coeff, &b.v.Coeff)
 	out.v.Exponent = b.v.Exponent
 	out.v.Negative = a.v.Negative
-	cond, err := context.Round(&out.v, &out.v)
+	cond, _ := context.Round(&out.v, &out.v)
 	if e := validate(out, cond); e != nil {
 		return nil, e
-	}
-	if err != nil {
-		return nil, &Error{Kind: ErrInvalid}
 	}
 	return out, nil
 }

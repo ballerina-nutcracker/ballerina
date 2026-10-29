@@ -16,16 +16,13 @@
 
 import ballerina/io;
 
-const decimal C = 9.0E32d % 1E-2d;
+const decimal C1 = 1E+40d % 3d;
+const decimal C2 = -1E+40d % 1.1d;
 
 public function main() {
     decimal d1 = 1E+35d;
     decimal d2 = 7d;
     io:println(d1 % d2); // @output 5
-
-    d1 = 1E+40d;
-    d2 = 3d;
-    io:println(d1 % d2); // @output 1
 
     d1 = -1E+40d;
     d2 = 3d;
@@ -36,26 +33,40 @@ public function main() {
     io:println(d1 % d2); // @output 1
 
     d1 = -1E+40d;
+    d2 = -3d;
+    io:println(d1 % d2); // @output -1
+
+    d1 = -1E+40d;
     d2 = 2d;
     io:println(d1 % d2); // @output 0
 
     d1 = 1E+40d;
-    d2 = 1.1d;
-    io:println(d1 % d2); // @output 1.0
+    d2 = 1.10d;
+    io:println(d1 % d2); // @output 1.00
+
+    d1 = 1E+39d;
+    d2 = 3E+2d;
+    io:println(d1 % d2); // @output 1E+2
 
     d1 = 9.0E32d;
     d2 = 1E-2d;
     io:println(d1 % d2); // @output 0
 
-    d1 = 9.999999999999999999999999999999998E6144d;
-    d2 = 1E-2d;
-    io:println(d1 % d2); // @output 0
+    d1 = 1E+6144d;
+    d2 = 9999999999999999999999999999999999d;
+    io:println(d1 % d2); // @output 1000000000000000000000000
+
+    d2 = 7.000000000000000000000000000000000E-6143d;
+    io:println(d1 % d2); // @output 5.000000000000000000000000000000000E-6143
 
     d1 = 9.999999999999999999999999999999999E6144d;
     d2 = 1.23E-6100d;
     io:println(d1 % d2); // @output 8.4E-6101
 
-    io:println(9.0E32d % 1E-2d); // @output 0
-    io:println(1E+6144d % 0.7d); // @output 0.3
-    io:println(C); // @output 0
+    d1 = 1E+34d;
+    d2 = 7d;
+    io:println(d1 % d2); // @output 4
+
+    io:println(C1); // @output 1
+    io:println(C2); // @output -1.0
 }
