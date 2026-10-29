@@ -57,6 +57,7 @@ public function main() {
     show(yaml:toYamlString([], {isStream: true}));
     // isStream on a non-list value writes nested sequences normally (ballerina-platform/ballerina-library#9679).
     show(yaml:toYamlString({a: [1, 2]}, {isStream: true}));
+    // An empty collection at the root is written in flow style (ballerina-platform/ballerina-library#9670).
     show(yaml:toYamlString([]));
     show(yaml:toYamlString({}));
     show(yaml:toYamlString("Simple Scalar"));
@@ -93,12 +94,11 @@ public function main() {
 // @output -
 // @output   title: Emma
 // @output   year: 1815
-// @output   tags:
-// @output   -
+// @output   tags: []
 // @output open: true
 // @output rating: 4.5
 // @output fee: 2.50
-// @output empty:
+// @output empty: {}
 // @output --
 // @output name: Central Library
 // @output books:
@@ -110,12 +110,11 @@ public function main() {
 // @output -
 // @output     title: Emma
 // @output     year: 1815
-// @output     tags:
-// @output     -
+// @output     tags: []
 // @output open: true
 // @output rating: 4.5
 // @output fee: 2.50
-// @output empty:
+// @output empty: {}
 // @output --
 // @output {name: Central Library, books: [{title: "1984", year: 1949, tags: [dystopia]}, {title: Emma, year: 1815, tags: []}], open: true, rating: 4.5, fee: 2.50, empty: {}}
 // @output --
@@ -129,12 +128,11 @@ public function main() {
 // @output -
 // @output   !!str title: !!str Emma
 // @output   !!str year: !!str 1815
-// @output   !!str tags: !!seq
-// @output   - !!seq
+// @output   !!str tags: !!seq []
 // @output !!str open: !!str true
 // @output !!str rating: !!str 4.5
 // @output !!str fee: !!str 2.50
-// @output !!str empty:
+// @output !!str empty: {}
 // @output --
 // @output {!!str name: !!str Central Library, !!str books: !!seq [{!!str title: !!str "1984", !!str year: !!str 1949, !!str tags: !!seq [!!str dystopia]}, {!!str title: !!str Emma, !!str year: !!str 1815, !!str tags: !!seq []}], !!str open: !!str true, !!str rating: !!str 4.5, !!str fee: !!str 2.50, !!str empty: {}}
 // @output --
@@ -158,9 +156,9 @@ public function main() {
 // @output - 1
 // @output - 2
 // @output --
-// @output -
+// @output []
 // @output --
-// @output 
+// @output {}
 // @output --
 // @output Simple Scalar
 // @output --
@@ -204,7 +202,7 @@ public function main() {
 // @output - 2
 // @output --
 // @output indentationPolicy must be greater than 0 to write a nested block collection
-// @output a:
+// @output a: {}
 // @output --
-// @output -
+// @output - {}
 // @output --
