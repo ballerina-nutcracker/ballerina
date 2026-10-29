@@ -14,11 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 import ballerina/io;
 
+const decimal C = 1E+6144d % 1.000000000000000000000000000000001E-6143d; // @error
+
 public function main() {
-    decimal d1 = 1E+6144d;
-    decimal d2 = 1.000000000000000000000000000000001E-6143d;
-    io:println(d1 % d2); // @panic arithmetic underflow
+    io:println(C);
 }
