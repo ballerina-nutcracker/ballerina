@@ -64,11 +64,12 @@ Support Levels:
 | List the keys | Supported | `keys`; the order differs from jBallerina (see Notable Behavioural Changes) |
 | Cache size | Supported | `size`; counts expired entries not yet removed, as in jBallerina |
 | Cache capacity | Supported | `capacity` |
-| Least recently used eviction | Supported | When `put` finds the cache full it evicts `ceil(capacity * evictionFactor)` entries, computed in 32-bit float arithmetic as jBallerina does |
+| Least recently used eviction | Supported | When `put` finds the cache full it evicts `ceil(capacity * evictionFactor)` entries, computed in 32-bit float arithmetic as jBallerina does; as in jBallerina, a count of 0 (a tiny `evictionFactor`) evicts nothing, so the cache settles at `capacity + 1` entries |
 | Entry expiry | Supported | `maxAge` and `defaultMaxAge`; as in jBallerina, expiry compares whole seconds, so an entry can expire up to one second early |
-| Periodic cleanup | Supported | `cleanupInterval` schedules a recurring `ballerina/task` job that removes expired entries |
+| Periodic cleanup | Supported | `cleanupInterval` schedules a recurring `ballerina/task` job that removes expired entries; as in jBallerina, a run that starts while the previous one is still scanning is skipped |
 
 ### Notable Behavioural Changes
 
 - **Keys are listed from least to most recently used.** jBallerina returns `keys()` in the iteration order of a Java `ConcurrentHashMap`, which depends on key hashes and was never specified; the Go-native version returns them in recency order.
 - **Capacities above the 32-bit range are honoured.** jBallerina narrows `capacity` to a Java `int`, so `capacity = 4294967297` behaves as a capacity of 1 during eviction while `capacity()` still returns 4294967297; the Go-native version uses the full `int` value.
+- **An eviction count above the capacity empties the cache.** For capacities above 2^24, the 32-bit float product `capacity * evictionFactor` can round up past `capacity` (e.g. `capacity = 16777219, evictionFactor = 1.0` gives 16777220); jBallerina then fails the `put` with a `NullPointerException`, while the Go-native version evicts every entry and inserts the new one.

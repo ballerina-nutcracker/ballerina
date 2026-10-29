@@ -21,15 +21,14 @@ import (
 	"container/list"
 	"math"
 	"sync"
+	"sync/atomic"
 
-	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-const expTimeField = "expTime"
-
 type lruCache struct {
 	mu             sync.Mutex
+	cleaning       atomic.Bool
 	capacity       int64
 	evictionFactor float64
 	// Front is the least recently used entry.
@@ -38,8 +37,9 @@ type lruCache struct {
 }
 
 type cacheItem struct {
-	key   string
-	entry *values.Map
+	key     string
+	entry   *values.Map
+	expTime int64
 }
 
 func newLRUCache(capacity int64, evictionFactor float64) *lruCache {
@@ -51,18 +51,20 @@ func newLRUCache(capacity int64, evictionFactor float64) *lruCache {
 	}
 }
 
-func (c *lruCache) put(key string, entry *values.Map) {
+func (c *lruCache) put(key string, entry *values.Map, expTime int64) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if int64(len(c.entries)) >= c.capacity {
 		c.evictTo(c.capacity - c.evictionCount())
 	}
 	if elem, ok := c.entries[key]; ok {
-		elem.Value.(*cacheItem).entry = entry
+		item := elem.Value.(*cacheItem)
+		item.entry = entry
+		item.expTime = expTime
 		c.order.MoveToBack(elem)
 		return
 	}
-	c.entries[key] = c.order.PushBack(&cacheItem{key: key, entry: entry})
+	c.entries[key] = c.order.PushBack(&cacheItem{key: key, entry: entry, expTime: expTime})
 }
 
 // evictionCount matches jBallerina, which computes `capacity * evictionFactor` in 32-bit float arithmetic.
@@ -71,8 +73,9 @@ func (c *lruCache) evictionCount() int64 {
 	return int64(math.Ceil(float64(product)))
 }
 
+// evictTo clamps size at zero because float32 rounding can make evictionCount exceed the capacity.
 func (c *lruCache) evictTo(size int64) {
-	for int64(len(c.entries)) > size {
+	for int64(len(c.entries)) > max(size, 0) {
 		c.removeElement(c.order.Front())
 	}
 }
@@ -85,7 +88,7 @@ func (c *lruCache) get(key string, now int64) *values.Map {
 		return nil
 	}
 	item := elem.Value.(*cacheItem)
-	if isExpired(item.entry, now) {
+	if item.isExpired(now) {
 		c.removeElement(elem)
 		return nil
 	}
@@ -115,10 +118,10 @@ func (c *lruCache) hasKey(key string) bool {
 	return ok
 }
 
-func (c *lruCache) keys() []string {
+func (c *lruCache) keys() []values.BalValue {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	keys := make([]string, 0, len(c.entries))
+	keys := make([]values.BalValue, 0, len(c.entries))
 	for elem := c.order.Front(); elem != nil; elem = elem.Next() {
 		keys = append(keys, elem.Value.(*cacheItem).key)
 	}
@@ -131,12 +134,17 @@ func (c *lruCache) size() int {
 	return len(c.entries)
 }
 
+// cleanUp skips a run while another is still scanning, as jBallerina's cleanupInProgress flag does.
 func (c *lruCache) cleanUp(now int64) {
+	if !c.cleaning.CompareAndSwap(false, true) {
+		return
+	}
+	defer c.cleaning.Store(false)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for elem := c.order.Front(); elem != nil; {
 		next := elem.Next()
-		if isExpired(elem.Value.(*cacheItem).entry, now) {
+		if elem.Value.(*cacheItem).isExpired(now) {
 			c.removeElement(elem)
 		}
 		elem = next
@@ -148,8 +156,6 @@ func (c *lruCache) removeElement(elem *list.Element) {
 	c.order.Remove(elem)
 }
 
-func isExpired(entry *values.Map, now int64) bool {
-	v, _ := entry.Get(expTimeField)
-	expTime := truncate(v.(*decimal.Decimal))
-	return expTime != -1 && expTime <= now
+func (item *cacheItem) isExpired(now int64) bool {
+	return item.expTime != -1 && item.expTime <= now
 }

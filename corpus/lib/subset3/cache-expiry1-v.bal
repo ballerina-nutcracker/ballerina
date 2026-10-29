@@ -27,19 +27,23 @@ function sleepToFraction(decimal fraction) {
 
 public function main() returns error? {
     cache:Cache c = new (capacity = 10, defaultMaxAge = 1.5);
-    // Expiry compares whole seconds, so an entry expires within the second it is due in.
-    sleepToFraction(0.1);
+    // Expiry compares whole seconds, so an entry expires within the second it is due in. Putting at
+    // x.0 leaves half a second of slack before "half" would be due in the next second.
+    sleepToFraction(0);
     check c.put("half", "v", 0.5);
-    check c.put("forever", "v");
     check c.put("zero", "v", 0);
     check c.put("negative", "v", -5);
     check c.put("long", "v", 100);
-    runtime:sleep(0.2);
     io:println(c.get("half") is cache:Error); // @output true
     io:println(c.get("zero") is cache:Error, " ", c.get("negative") is cache:Error); // @output false false
-    runtime:sleep(1.5);
+    runtime:sleep(2);
     io:println(c.get("zero") is cache:Error, " ", c.get("negative") is cache:Error); // @output true true
     io:println(c.get("long") is cache:Error); // @output false
+
+    cache:Cache distant = new (capacity = 10, defaultMaxAge = 10000000000, cleanupInterval = 10000000000);
+    check distant.put("default", "v");
+    check distant.put("explicit", "v", 10000000000);
+    io:println(distant.get("default"), " ", distant.get("explicit")); // @output v v
 
     cache:Cache forever = new (capacity = 10);
     check forever.put("a", "v");

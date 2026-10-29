@@ -26,9 +26,10 @@ import (
 )
 
 const (
-	orgName     = "ballerina"
-	moduleName  = "cache"
-	cacheHandle = "$cache"
+	orgName      = "ballerina"
+	moduleName   = "cache"
+	cacheHandle  = "$cache"
+	expTimeField = "expTime"
 )
 
 func initCacheModule(rt *runtime.Runtime) {
@@ -61,7 +62,9 @@ func cacheOf(self values.BalValue) *lruCache {
 }
 
 func putExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	cacheOf(args[0]).put(args[1].(string), args[2].(*values.Map))
+	entry := args[2].(*values.Map)
+	expTime, _ := entry.Get(expTimeField)
+	cacheOf(args[0]).put(args[1].(string), entry, truncate(expTime.(*decimal.Decimal)))
 	return nil, nil
 }
 
@@ -93,12 +96,7 @@ func keysExtern(rt *runtime.Runtime) extern.NativeFunc {
 	strArrTy := ld.Define(env, nil, semtypes.ListRest(semtypes.String))
 	atomic := semtypes.ToListAtomicType(env, strArrTy)
 	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		keys := cacheOf(args[0]).keys()
-		items := make([]values.BalValue, len(keys))
-		for i, k := range keys {
-			items[i] = k
-		}
-		return values.NewList(strArrTy, atomic, false, nil, 0, items), nil
+		return values.NewList(strArrTy, atomic, false, nil, 0, cacheOf(args[0]).keys()), nil
 	}
 }
 

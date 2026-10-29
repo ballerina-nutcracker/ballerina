@@ -116,23 +116,9 @@ public isolated class Cache {
             return prepareError("Unsupported cache value '()' for the key: " + key + ".");
         }
 
-        time:Utc currentUtc = time:utcNow();
-        // Calculate the `expTime` of the cache entry based on the `maxAgeInSeconds` property and
-        // `defaultMaxAge` property.
-        decimal calculatedExpTime = -1;
-        if maxAge != -1d && maxAge > 0d {
-            time:Utc newTime = time:utcAddSeconds(currentUtc, maxAge);
-            calculatedExpTime = <decimal>newTime[0] + newTime[1];
-        } else {
-            if self.defaultMaxAge != -1d {
-                time:Utc newTime = time:utcAddSeconds(currentUtc, self.defaultMaxAge);
-                calculatedExpTime = <decimal>newTime[0] + newTime[1];
-            }
-        }
-
         CacheEntry entry = {
             data: value,
-            expTime: calculatedExpTime
+            expTime: expiryTime(time:utcNow(), maxAge > 0d ? maxAge : self.defaultMaxAge)
         };
         return externPut(self, key, entry);
     }
@@ -222,6 +208,13 @@ public isolated class Cache {
     public isolated function capacity() returns int {
         return self.maxCapacity;
     }
+}
+
+isolated function expiryTime(time:Utc now, decimal maxAge) returns decimal {
+    if maxAge == -1d {
+        return -1;
+    }
+    return <decimal>now[0] + now[1] + maxAge;
 }
 
 // Mirrors the `ballerina/constraint` annotations jBallerina declares on `CacheConfig`, including the

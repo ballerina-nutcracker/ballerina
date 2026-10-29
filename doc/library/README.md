@@ -46,6 +46,7 @@ Consolidated from each package's README. Only permanent divergences are listed h
 
 - **Keys are listed from least to most recently used.** jBallerina returns `keys()` in the iteration order of a Java `ConcurrentHashMap`, which depends on key hashes and was never specified; the Go-native version returns them in recency order.
 - **Capacities above the 32-bit range are honoured.** jBallerina narrows `capacity` to a Java `int`, so `capacity = 4294967297` behaves as a capacity of 1 during eviction while `capacity()` still returns 4294967297; the Go-native version uses the full `int` value.
+- **An eviction count above the capacity empties the cache.** For capacities above 2^24, the 32-bit float product `capacity * evictionFactor` can round up past `capacity` (e.g. `capacity = 16777219, evictionFactor = 1.0` gives 16777220); jBallerina then fails the `put` with a `NullPointerException`, while the Go-native version evicts every entry and inserts the new one.
 
 ### crypto
 

@@ -64,4 +64,8 @@ public function main() returns error? {
     check e.invalidateAll();
     check e.put("z", 1);
     io:println(e.size(), " ", e.keys()); // @output 1 ["z"]
+
+    cache:Cache tiny = new (capacity = 2, evictionFactor = 1.0E-300);
+    check fill(tiny, 10);
+    io:println(tiny.size(), " ", tiny.keys()); // @output 3 ["k7","k8","k9"]
 }
