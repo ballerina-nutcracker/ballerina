@@ -124,7 +124,7 @@ func connect(platform pal.Platform, ep *endpoint) (*remoteClient, error) {
 		message := "Error while connecting to the FTP server with URL: " + maskURLPassword(connectURL(ep, "/")) +
 			". " + err.Error()
 		kind := kindConnection
-		if code, ok := extractFtpCode(message); ok && isServiceUnavailableCode(code) {
+		if code, ok := ftpReplyCode(message, err); ok && isServiceUnavailableCode(code) {
 			kind = kindServiceUnavailable
 		}
 		return nil, &ftpError{kind: kind, message: message}

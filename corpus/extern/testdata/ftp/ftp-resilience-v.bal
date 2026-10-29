@@ -101,6 +101,15 @@ public function main() returns error? {
     io:println(busyReplies()); // @output 3
     check busy->close();
 
+    ftp:Client busyOnce = check new ({
+        host: "127.0.0.1",
+        port: busyPort(),
+        auth: {credentials: {username: "linger", password: "x"}}
+    });
+    var busyOnceText = busyOnce->getText("/busy.txt");
+    io:println(busyOnceText is ftp:ServiceUnavailableError); // @output true
+    check busyOnce->close();
+
     ftp:Client slowBusy = check new ({
         host: "127.0.0.1",
         port: busyPort(),

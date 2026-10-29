@@ -336,6 +336,12 @@ func (cb *circuitBreaker) countsAsFailure(err error) bool {
 // categorize mirrors FailureCategorizer as it sees client errors: the cause chain of the
 // Ballerina error (or its own message when it has no cause) is matched by reply code and text.
 func categorize(err error) (failureCategory, bool) {
+	var reply *textproto.Error
+	if errors.As(err, &reply) {
+		if category, ok := categorizeCode(reply.Code); ok {
+			return category, true
+		}
+	}
 	typed := asFtpError(err)
 	messages := []string{typed.message}
 	if typed.cause != nil {
@@ -362,13 +368,20 @@ var (
 		"stream closed", "socket closed", "remote host closed"}
 )
 
+func categorizeCode(code int) (failureCategory, bool) {
+	switch {
+	case isServiceUnavailableCode(code):
+		return categoryTransient, true
+	case code == 530:
+		return categoryAuthentication, true
+	}
+	return "", false
+}
+
 func categorizeMessage(message string) (failureCategory, bool) {
-	if code, ok := extractFtpCode(message); ok {
-		if isServiceUnavailableCode(code) {
-			return categoryTransient, true
-		}
-		if code == 530 {
-			return categoryAuthentication, true
+	if code, ok := ftpReplyCode(message, nil); ok {
+		if category, ok := categorizeCode(code); ok {
+			return category, true
 		}
 	}
 	lower := strings.ToLower(message)

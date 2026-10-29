@@ -8,6 +8,7 @@ fine
 true
 true
 3
+true
 true true
 true
 CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
