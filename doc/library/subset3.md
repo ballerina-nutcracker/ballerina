@@ -172,7 +172,7 @@ Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code
 All seven accessors are declared as resource methods on `http:Client`, so a request can be written as a path rather than as a string argument:
 
 ```ballerina
-resource isolated function get [PathParamType... path](map<string|string[]>? headers = (),
+isolated resource function get [PathParamType... path](map<string|string[]>? headers = (),
         TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 ```
 
