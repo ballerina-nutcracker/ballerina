@@ -18,9 +18,11 @@ package native
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -35,14 +37,25 @@ func (e *csvError) Error() string {
 	return e.message
 }
 
-// conversionError is a runtime conversion error that jBallerina returns as it is rather than as a
-// csv:Error.
+// conversionError is a runtime error that jBallerina returns as it is rather than as a csv:Error.
 type conversionError struct {
 	value *values.Error
 }
 
+// Error is the message jBallerina logs for the error, which is its type name.
 func (e *conversionError) Error() string {
+	if e.value.TypeName != "" {
+		return e.value.TypeName
+	}
 	return e.value.Message
+}
+
+// nilRowError is the error jBallerina raises when input ends inside a quoted or escaped header: the
+// last header value becomes a row that was never created, and appending it fails.
+func nilRowError(rowTypeName string) *conversionError {
+	message := fmt.Sprintf("incompatible types: expected '%s', found '()'", rowTypeName)
+	detail := values.NewMap(semtypes.Mapping, &semtypes.MappingAtomicInner, true, []values.MapEntry{{Key: "message", Value: message}})
+	return &conversionError{value: values.NewError(semtypes.Error, message, nil, "{ballerina/lang.array}InherentTypeViolation", detail)}
 }
 
 func newCsvError(format string, args ...any) *csvError {
@@ -173,39 +186,54 @@ func formatMessageArg(v values.BalValue) string {
 	case int64:
 		return formatJavaInt(v)
 	case float64:
-		return formatJavaNumber(strconv.FormatFloat(v, 'f', -1, 64))
+		return formatJavaDouble(v)
 	}
 	return javaValueOf(v)
 }
 
-// formatJavaNumber applies the default en-US NumberFormat to a plain decimal string: grouped integer
-// digits and at most three fraction digits, rounded half-even.
-func formatJavaNumber(plain string) string {
-	if strings.ContainsAny(plain, "EeNI") {
-		return plain
+// formatJavaDouble applies the default en-US NumberFormat to a double: the shortest round-trip digits,
+// grouped, with at most three fraction digits rounded half-even on the exact binary value.
+func formatJavaDouble(v float64) string {
+	switch {
+	case math.IsNaN(v):
+		return "NaN"
+	case math.IsInf(v, 1):
+		return "∞"
+	case math.IsInf(v, -1):
+		return "-∞"
 	}
-	negative := strings.HasPrefix(plain, "-")
-	plain = strings.TrimPrefix(plain, "-")
-	intPart, fracPart, _ := strings.Cut(plain, ".")
+	abs := math.Abs(v)
+	intPart, fracPart, _ := strings.Cut(strconv.FormatFloat(abs, 'f', -1, 64), ".")
 	if len(fracPart) > 3 {
-		dropped := fracPart[3:]
+		roundUp := roundsUpHalfEven(abs, fracPart[2])
 		fracPart = fracPart[:3]
-		last := fracPart[2]
-		roundUp := dropped[0] > '5' || (dropped[0] == '5' && (strings.Trim(dropped[1:], "0") != "" || (last-'0')%2 == 1))
 		if roundUp {
 			intPart, fracPart = incrementDigits(intPart, fracPart)
 		}
 	}
 	fracPart = strings.TrimRight(fracPart, "0")
-	n, _ := strconv.ParseInt(intPart, 10, 64)
-	result := formatJavaInt(n)
+	result := groupDigits(intPart)
 	if fracPart != "" {
 		result += "." + fracPart
 	}
-	if negative && strings.Trim(result, "0.,") != "" {
+	if v < 0 && strings.Trim(result, "0.,") != "" {
 		return "-" + result
 	}
 	return result
+}
+
+// roundsUpHalfEven reports whether a non-negative double rounds up at the third fraction digit, judged
+// on its exact binary value as java.text.DecimalFormat does.
+func roundsUpHalfEven(abs float64, lastKept byte) bool {
+	_, exactFrac, _ := strings.Cut(strconv.FormatFloat(abs, 'f', 1074, 64), ".")
+	dropped := exactFrac[3:]
+	switch {
+	case dropped[0] != '5':
+		return dropped[0] > '5'
+	case strings.TrimRight(dropped[1:], "0") != "":
+		return true
+	}
+	return (lastKept-'0')%2 == 1
 }
 
 func incrementDigits(intPart, fracPart string) (string, string) {
@@ -229,12 +257,15 @@ func incrementDigits(intPart, fracPart string) (string, string) {
 // formatJavaInt renders an integer the way java.text.MessageFormat does in the en-US locale.
 func formatJavaInt(n int64) string {
 	digits := strconv.FormatInt(n, 10)
-	negative := strings.HasPrefix(digits, "-")
-	digits = strings.TrimPrefix(digits, "-")
-	var sb strings.Builder
-	if negative {
-		sb.WriteByte('-')
+	if strings.HasPrefix(digits, "-") {
+		return "-" + groupDigits(digits[1:])
 	}
+	return groupDigits(digits)
+}
+
+// groupDigits inserts en-US grouping separators into a string of decimal digits.
+func groupDigits(digits string) string {
+	var sb strings.Builder
 	head := len(digits) % 3
 	if head == 0 {
 		head = 3

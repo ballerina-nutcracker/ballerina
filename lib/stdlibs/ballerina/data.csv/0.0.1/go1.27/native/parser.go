@@ -25,7 +25,6 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -82,7 +81,9 @@ type parser struct {
 	fieldHierarchy map[string]*recordField
 	fieldNames     map[string]*recordField
 
-	row                    *rowBuilder
+	row *rowBuilder
+	// rowStarted is set once the current row passed the skipLines check and has its builder.
+	rowStarted             bool
 	isCurrentCsvNodeEmpty  bool
 	currentCsvNodeLength   int
 	isRowMaxSizeReached    bool
@@ -96,7 +97,9 @@ type parser struct {
 
 	failSafe *failSafeLogger
 	// recovering is set while the rest of a line that raised a tolerated error is discarded.
-	recovering    bool
+	recovering bool
+	// lineRecovered is set when the last character fed ended the discarded line of a tolerated error.
+	lineRecovered bool
 	pendingErr    error
 	pendingColumn int
 	pendingLine   int
@@ -143,6 +146,7 @@ func newParser(cfg *config, t *typer, shape *rowShape, rootSize int, failSafe *f
 // offending line and resumes with the next row.
 func (p *parser) feed(ch rune) error {
 	p.trackLine(ch)
+	p.lineRecovered = false
 	if p.recovering {
 		p.processLocation(ch)
 		if ch == '\n' {
@@ -163,19 +167,25 @@ func (p *parser) feed(ch rune) error {
 	p.resetAfterError()
 	if ch == '\n' {
 		p.pendingLine--
+		p.lineRecovered = true
 		return p.logPending(p.previousLine)
 	}
 	p.recovering = true
 	return nil
 }
 
-// finish feeds the end of input.
+// finish feeds the end of input. When a tolerated error discarded the input up to its end, the row
+// has already ended, as in jBallerina.
 func (p *parser) finish() error {
 	if p.recovering {
 		p.recovering = false
+		p.lineRecovered = true
 		if err := p.logPending(string(p.currentLine)); err != nil {
 			return err
 		}
+	}
+	if p.lineRecovered {
+		p.state = stateRowEnd
 	}
 	err := p.transition(endOfInput)
 	if err == nil && p.state != stateRowEnd && p.state != stateHeaderEnd && !p.isHeaderConfigExceedLineNumber {
@@ -204,6 +214,7 @@ func (p *parser) trackLine(ch rune) {
 
 func (p *parser) endRecovery() error {
 	p.recovering = false
+	p.lineRecovered = true
 	return p.logPending(p.previousLine)
 }
 
@@ -474,7 +485,7 @@ func (p *parser) rowStart(ch rune) error {
 		}
 		return nil
 	}
-	if p.isCurrentCsvNodeEmpty {
+	if p.isCurrentCsvNodeEmpty && !p.rowStarted {
 		skip, err := p.isSkipped(p.rowIndex)
 		if err != nil {
 			return err
@@ -485,6 +496,7 @@ func (p *parser) rowStart(ch rune) error {
 			return nil
 		}
 		p.row = newRowBuilder(p.shape)
+		p.rowStarted = true
 		if err := p.addHeadersAsTheFirstElementIfApplicable(); err != nil {
 			return err
 		}
@@ -681,6 +693,7 @@ func (p *parser) updateLineAndColumnIndexes() {
 func (p *parser) updateLineAndColumnIndexesWithoutRowIndexes() {
 	p.lineNumber++
 	p.row = nil
+	p.rowStarted = false
 	p.isCurrentCsvNodeEmpty = true
 	p.columnIndex = 0
 	p.isColumnMaxSizeReached = false
@@ -722,12 +735,12 @@ func (p *parser) addHeadersAsTheFirstElementIfApplicable() error {
 }
 
 func (p *parser) addHeaderAsRowValue(header string) error {
-	ty, ok, err := p.expectedRowType()
+	ti, ok, err := p.expectedRowType()
 	if err != nil {
 		return err
 	}
 	if ok {
-		if err := p.convertAndUpdateCurrentRow(header, ty, nil); err != nil {
+		if err := p.convertAndUpdateCurrentRow(header, ti, nil); err != nil {
 			return err
 		}
 	}
@@ -738,6 +751,9 @@ func (p *parser) addHeaderAsRowValue(header string) error {
 // finalizeTheRow adds the row to the result. A closed result array keeps its first rows and ignores the
 // rest of the input once it is full.
 func (p *parser) finalizeTheRow() error {
+	if p.row == nil {
+		return nilRowError(p.t.typeName(p.shape.ty))
+	}
 	row, err := p.row.build(p.t)
 	if err != nil {
 		return err
@@ -762,7 +778,7 @@ func (p *parser) addRowValue(trim bool) error {
 	if trim {
 		value = javaTrim(value)
 	}
-	ty, ok, err := p.expectedRowType()
+	ti, ok, err := p.expectedRowType()
 	if err != nil {
 		return err
 	}
@@ -775,7 +791,7 @@ func (p *parser) addRowValue(trim bool) error {
 			}
 			field = p.fieldNames[header]
 		}
-		if err := p.convertAndUpdateCurrentRow(value, ty, field); err != nil {
+		if err := p.convertAndUpdateCurrentRow(value, ti, field); err != nil {
 			return err
 		}
 	}
@@ -784,39 +800,39 @@ func (p *parser) addRowValue(trim bool) error {
 }
 
 // expectedRowType is the type of the value in the current column; false means the value is dropped.
-func (p *parser) expectedRowType() (semtypes.SemType, bool, error) {
+func (p *parser) expectedRowType() (typeInfo, bool, error) {
 	switch p.shape.kind {
 	case kindRecord:
 		header, err := p.headerForColumn()
 		if err != nil {
-			return semtypes.Never, false, err
+			return typeInfo{}, false, err
 		}
 		if f, ok := p.fieldNames[header]; ok {
-			return f.ty, true, nil
+			return f.info, true, nil
 		}
 		if p.shape.hasRest {
-			return p.shape.rest, true, nil
+			return p.shape.restInfo, true, nil
 		}
 		if p.cfg.allowDataProjection {
-			return semtypes.Never, false, nil
+			return typeInfo{}, false, nil
 		}
-		return semtypes.Never, false, noFieldForHeaderError(header)
+		return typeInfo{}, false, noFieldForHeaderError(header)
 	case kindMap:
-		return p.shape.rest, true, nil
+		return p.shape.restInfo, true, nil
 	case kindArray, kindTuple:
-		if ty, ok := p.shape.memberType(p.columnIndex); ok {
-			return ty, true, nil
+		if ti, ok := p.shape.memberType(p.columnIndex); ok {
+			return ti, true, nil
 		}
 		if p.cfg.allowDataProjection {
 			p.isColumnMaxSizeReached = true
-			return semtypes.Never, false, nil
+			return typeInfo{}, false, nil
 		}
 		if p.shape.kind == kindArray {
-			return semtypes.Never, false, arraySizeError(p.shape.size)
+			return typeInfo{}, false, arraySizeError(p.shape.size)
 		}
-		return semtypes.Never, false, tupleSizeError(p.shape.size)
+		return typeInfo{}, false, tupleSizeError(p.shape.size)
 	}
-	return semtypes.Never, false, nil
+	return typeInfo{}, false, nil
 }
 
 // headerForColumn is the header of the current column. Without a header row or custom headers the
@@ -833,17 +849,21 @@ func (p *parser) headerForColumn() (string, error) {
 	return p.headers[p.columnIndex], nil
 }
 
-func (p *parser) convertAndUpdateCurrentRow(value string, ty semtypes.SemType, field *recordField) error {
-	if p.cfg.nilAsOptionalField && !p.t.isNilable(ty) && p.conv.isNullValue(value) && field != nil && field.optional {
+func (p *parser) convertAndUpdateCurrentRow(value string, ti typeInfo, field *recordField) error {
+	if p.cfg.nilAsOptionalField && !p.t.isNilable(ti.ty) && p.conv.isNullValue(value) && field != nil && field.optional {
 		return nil
 	}
-	converted, ok := p.conv.fromString(value, ty)
+	converted, ok := p.conv.fromString(value, ti)
 	p.isCurrentCsvNodeEmpty = false
 	if !ok {
 		if p.ignoresIncompatibleValue() {
 			return nil
 		}
-		return invalidCastError(value, p.t.typeName(ty))
+		return invalidCastError(value, p.t.typeName(ti.ty))
+	}
+	if p.row == nil {
+		p.currentCsvNodeLength++
+		return nil
 	}
 	if p.shape.isMapping() {
 		header, err := p.headerForColumn()

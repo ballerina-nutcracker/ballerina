@@ -54,6 +54,10 @@ type typeInfo struct {
 	mapping *semtypes.MappingAtomicType
 	list    *semtypes.ListAtomicType
 	members []semtypes.SemType
+	// memberInfos classifies the members of a union, and conversionOrder orders them nil first, the
+	// order FromString tries them in.
+	memberInfos     []typeInfo
+	conversionOrder []typeInfo
 }
 
 // isBasic is CsvUtils.isBasicType: the member types transform accepts inside a union.
@@ -139,8 +143,27 @@ func (t *typer) classify(ty semtypes.SemType) typeInfo {
 	case 1:
 		return t.classifyMember(parts[0])
 	default:
-		return typeInfo{kind: kindUnion, ty: ty, members: parts}
+		return t.classifyUnion(ty, parts)
 	}
+}
+
+func (t *typer) classifyUnion(ty semtypes.SemType, members []semtypes.SemType) typeInfo {
+	ti := typeInfo{kind: kindUnion, ty: ty, members: members, memberInfos: make([]typeInfo, len(members))}
+	for i, member := range members {
+		ti.memberInfos[i] = t.classify(member)
+	}
+	ti.conversionOrder = slices.Clone(ti.memberInfos)
+	slices.SortStableFunc(ti.conversionOrder, func(a, b typeInfo) int {
+		return nilRank(a.ty) - nilRank(b.ty)
+	})
+	return ti
+}
+
+func nilRank(ty semtypes.SemType) int {
+	if semtypes.IsSubtypeSimple(ty, semtypes.Nil) {
+		return 0
+	}
+	return 1
 }
 
 func (t *typer) classifyMember(ty semtypes.SemType) typeInfo {
@@ -150,7 +173,7 @@ func (t *typer) classifyMember(ty semtypes.SemType) typeInfo {
 			return typeInfo{kind: kindUnsupported, ty: ty}
 		}
 		kind := kindMap
-		if len(atomic.FieldNames()) > 0 || semtypes.IsNever(mappingRest(atomic)) {
+		if len(atomic.FieldNames()) > 0 || semtypes.IsNever(atomic.Rest()) {
 			kind = kindRecord
 		}
 		return typeInfo{kind: kind, ty: ty, mapping: atomic}
@@ -290,15 +313,18 @@ type rowShape struct {
 	fieldOrder []string
 	// rest is the record rest field type, the tuple rest type, or the array element type; hasRest
 	// reports whether it exists.
-	rest    semtypes.SemType
-	hasRest bool
+	rest     semtypes.SemType
+	restInfo typeInfo
+	hasRest  bool
+	// memberInfos classifies the members of a tuple.
+	memberInfos []typeInfo
 	// size is the length of a closed array or the member count of a tuple; -1 for an open array.
 	size int
 }
 
 type recordField struct {
 	name     string
-	ty       semtypes.SemType
+	info     typeInfo
 	optional bool
 	nilable  bool
 }
@@ -307,14 +333,14 @@ func (t *typer) rowShapeOf(ti typeInfo) rowShape {
 	shape := rowShape{typeInfo: ti, readonly: t.isReadonly(ti.ty), size: -1}
 	switch ti.kind {
 	case kindRecord, kindMap:
-		shape.rest = mappingRest(ti.mapping)
+		shape.rest = ti.mapping.Rest()
 		shape.hasRest = !semtypes.IsNever(shape.rest)
 		shape.fields = make(map[string]*recordField)
 		for _, name := range ti.mapping.FieldNames() {
 			ty := ti.mapping.FieldInnerVal(name)
 			shape.fields[name] = &recordField{
 				name:     name,
-				ty:       ty,
+				info:     t.classify(ty),
 				optional: ti.mapping.IsOptional(t.tc, name),
 				nilable:  t.isNilable(ty),
 			}
@@ -332,22 +358,28 @@ func (t *typer) rowShapeOf(ti typeInfo) rowShape {
 		shape.size = ti.list.FixedLength()
 		shape.rest = ti.list.Rest()
 		shape.hasRest = !semtypes.IsNever(shape.rest)
+		for i := range shape.size {
+			shape.memberInfos = append(shape.memberInfos, t.classify(ti.list.MemberAtInnerVal(i)))
+		}
+	}
+	if shape.hasRest {
+		shape.restInfo = t.classify(shape.rest)
 	}
 	return shape
 }
 
 // memberType is the declared type at index of a tuple, or the element type of an array.
-func (s *rowShape) memberType(index int) (semtypes.SemType, bool) {
+func (s *rowShape) memberType(index int) (typeInfo, bool) {
 	if s.kind == kindArray {
 		if s.size != -1 && index >= s.size {
-			return semtypes.Never, false
+			return typeInfo{}, false
 		}
-		return s.rest, true
+		return s.restInfo, true
 	}
 	if index < s.size {
-		return s.list.MemberAtInnerVal(index), true
+		return s.memberInfos[index], true
 	}
-	return s.rest, s.hasRest
+	return s.restInfo, s.hasRest
 }
 
 // remainingFields copies the declared fields of a record, keyed by field name: the fields not yet
@@ -451,15 +483,4 @@ func defineArray(env semtypes.Env, elem semtypes.SemType) semtypes.SemType {
 func defineMap(env semtypes.Env, fields []semtypes.Field, rest semtypes.SemType) semtypes.SemType {
 	md := semtypes.NewMappingDefinition()
 	return md.Define(env, fields, rest)
-}
-
-// mappingRest is the rest field type of a mapping: FieldInnerVal falls back to it for a name that is not
-// a declared field.
-func mappingRest(atomic *semtypes.MappingAtomicType) semtypes.SemType {
-	names := atomic.FieldNames()
-	undeclared := "\x00"
-	for slices.Contains(names, undeclared) {
-		undeclared += "\x00"
-	}
-	return atomic.FieldInnerVal(undeclared)
 }

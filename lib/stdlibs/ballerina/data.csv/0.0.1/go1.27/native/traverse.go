@@ -55,10 +55,23 @@ type traversal struct {
 
 	fieldHierarchy map[string]*recordField
 	currentField   *recordField
+
+	// skipLines and skipErr are cfg.skipDataRows, which every row consults.
+	skipLines skipSet
+	skipErr   error
 }
 
 func newTraversal(cfg *config, t *typer, failSafe *failSafeLogger) *traversal {
-	return &traversal{cfg: cfg, t: t, conv: cfg.converter(t), failSafe: failSafe}
+	skipLines, skipErr := cfg.skipDataRows()
+	return &traversal{
+		cfg:            cfg,
+		t:              t,
+		conv:           cfg.converter(t),
+		failSafe:       failSafe,
+		fieldHierarchy: make(map[string]*recordField),
+		skipLines:      skipLines,
+		skipErr:        skipErr,
+	}
 }
 
 // traverse converts source rows to root, a list type or a union of list types.
@@ -95,7 +108,7 @@ func (tr *traversal) traverseArray(source []values.BalValue, root typeInfo) (val
 	if rootShape.size != -1 && rootShape.size > len(source) {
 		return nil, arraySizeError(len(source))
 	}
-	elem := tr.t.rowShapeOf(tr.t.classify(rootShape.rest))
+	elem := tr.t.rowShapeOf(rootShape.restInfo)
 	tr.shape = &elem
 	var err error
 	switch {
@@ -139,11 +152,10 @@ func (tr *traversal) isFull(rootSize int) bool {
 }
 
 func (tr *traversal) isSkipped(rowNumber int) (bool, error) {
-	skip, err := tr.cfg.skipDataRows()
-	if err != nil {
-		return false, err
+	if tr.skipErr != nil {
+		return false, tr.skipErr
 	}
-	return skip.contains(int64(rowNumber)), nil
+	return tr.skipLines.contains(int64(rowNumber)), nil
 }
 
 // tolerate logs a row error that failSafe allows and reports whether the traversal continues.
@@ -335,17 +347,17 @@ func (tr *traversal) keysForMappingRow(row *values.Map) ([]string, error) {
 }
 
 // elementType is the type of the list member at index; false means the value is projected away.
-func (tr *traversal) elementType(index int) (semtypes.SemType, bool, error) {
-	if ty, ok := tr.shape.memberType(index); ok {
-		return ty, true, nil
+func (tr *traversal) elementType(index int) (typeInfo, bool, error) {
+	if ti, ok := tr.shape.memberType(index); ok {
+		return ti, true, nil
 	}
 	if tr.cfg.allowDataProjection {
-		return semtypes.Never, false, nil
+		return typeInfo{}, false, nil
 	}
 	if tr.shape.kind == kindArray {
-		return semtypes.Never, false, arraySizeError(tr.shape.size)
+		return typeInfo{}, false, arraySizeError(tr.shape.size)
 	}
-	return semtypes.Never, false, tupleSizeError(tr.shape.size)
+	return typeInfo{}, false, tupleSizeError(tr.shape.size)
 }
 
 func (tr *traversal) listRow(row values.BalValue) (values.BalValue, error) {
@@ -400,14 +412,14 @@ func (tr *traversal) insertListMember(builder *rowBuilder, v values.BalValue, in
 	return false, tr.insertToList(builder, v, memberType, index)
 }
 
-func (tr *traversal) insertToList(builder *rowBuilder, v values.BalValue, ty semtypes.SemType, index int) error {
+func (tr *traversal) insertToList(builder *rowBuilder, v values.BalValue, ti typeInfo, index int) error {
 	tr.currentField = nil
-	converted, status, err := tr.convertValue(ty, v, false)
+	converted, status, err := tr.convertValue(ti, v, false)
 	if err != nil {
 		return err
 	}
 	if status == valueUnmapped {
-		return invalidTypeForArrayError(formatMessageArg(v), index, tr.t.typeName(ty))
+		return invalidTypeForArrayError(formatMessageArg(v), index, tr.t.typeName(ti.ty))
 	}
 	builder.set(index, converted)
 	return nil
@@ -475,13 +487,13 @@ func (tr *traversal) headersMatchRecord() bool {
 }
 
 func (tr *traversal) insertMappingMember(builder *rowBuilder, key string, v values.BalValue) error {
-	ty := tr.shape.rest
+	ti := tr.shape.restInfo
 	tr.currentField = nil
 	if tr.shape.kind == kindRecord {
 		f, declared := tr.fieldHierarchy[key]
 		if !declared {
 			if tr.shape.hasRest {
-				converted, status, err := tr.convertValue(tr.shape.rest, v, false)
+				converted, status, err := tr.convertValue(tr.shape.restInfo, v, false)
 				if err != nil {
 					return err
 				}
@@ -497,9 +509,9 @@ func (tr *traversal) insertMappingMember(builder *rowBuilder, key string, v valu
 		}
 		delete(tr.fieldHierarchy, key)
 		tr.currentField = f
-		ty = f.ty
+		ti = f.info
 	}
-	converted, status, err := tr.convertValue(ty, v, false)
+	converted, status, err := tr.convertValue(ti, v, false)
 	switch {
 	case err != nil:
 		return err
@@ -527,24 +539,22 @@ func (tr *traversal) checkRequiredFields() error {
 
 // convertValue is convertCsvValueIntoExpectedType. A string value is converted with FromString when
 // stringConversion is set; otherwise only values whose own type is compatible with the target convert.
-func (tr *traversal) convertValue(ty semtypes.SemType, v values.BalValue, recursive bool) (values.BalValue, valueStatus, error) {
-	if !recursive && tr.cfg.nilAsOptionalField && !tr.t.isNilable(ty) && tr.isNullValue(v) &&
+func (tr *traversal) convertValue(ti typeInfo, v values.BalValue, recursive bool) (values.BalValue, valueStatus, error) {
+	if !recursive && tr.cfg.nilAsOptionalField && !tr.t.isNilable(ti.ty) && tr.isNullValue(v) &&
 		tr.currentField != nil && tr.currentField.optional {
 		return nil, valueSkipped, nil
 	}
 	if s, isString := v.(string); isString && tr.cfg.stringConversion {
-		if converted, ok := tr.conv.fromString(s, ty); ok {
+		if converted, ok := tr.conv.fromString(s, ti); ok {
 			return converted, valueMapped, nil
 		}
 		return nil, valueUnmapped, nil
 	}
-	ti := tr.t.classify(ty)
 	switch ti.kind {
 	case kindUnion:
-		for _, member := range scalarsFirst(tr.t, ti.members) {
-			memberInfo := tr.t.classify(member)
-			if !memberInfo.isBasic() {
-				return nil, valueUnmapped, onlyBasicTypesError(tr.t.typeName(member))
+		for _, member := range scalarsFirst(ti.memberInfos) {
+			if !member.isBasic() {
+				return nil, valueUnmapped, onlyBasicTypesError(tr.t.typeName(member.ty))
 			}
 			converted, status, err := tr.convertValue(member, v, true)
 			if err != nil {
@@ -556,7 +566,7 @@ func (tr *traversal) convertValue(ty semtypes.SemType, v values.BalValue, recurs
 		}
 		return nil, valueUnmapped, nil
 	case kindRecord, kindMap, kindArray, kindTuple, kindUnsupported:
-		return nil, valueUnmapped, invalidExpectedTypeError(tr.t.typeName(ty))
+		return nil, valueUnmapped, invalidExpectedTypeError(tr.t.typeName(ti.ty))
 	}
 	if !isCompatible(ti.kind, v) {
 		return nil, valueUnmapped, nil
@@ -580,16 +590,16 @@ func (tr *traversal) isNullValue(v values.BalValue) bool {
 
 // scalarsFirst orders union members with the basic types before the structured ones. Declaration order,
 // which jBallerina follows, is not available here.
-func scalarsFirst(t *typer, members []semtypes.SemType) []semtypes.SemType {
+func scalarsFirst(members []typeInfo) []typeInfo {
 	ordered := slices.Clone(members)
-	slices.SortStableFunc(ordered, func(a, b semtypes.SemType) int {
-		return structuredRank(t, a) - structuredRank(t, b)
+	slices.SortStableFunc(ordered, func(a, b typeInfo) int {
+		return structuredRank(a) - structuredRank(b)
 	})
 	return ordered
 }
 
-func structuredRank(t *typer, ty semtypes.SemType) int {
-	if t.classify(ty).isBasic() {
+func structuredRank(ti typeInfo) int {
+	if ti.isBasic() {
 		return 0
 	}
 	return 1

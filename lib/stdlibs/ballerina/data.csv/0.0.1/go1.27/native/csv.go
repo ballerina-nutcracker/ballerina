@@ -75,7 +75,7 @@ func (m *csvModule) parseString(ctx *extern.Context, args []values.BalValue) (va
 	td, _ := args[2].(*values.TypeDesc)
 	cfg := readOptions(opts)
 	t := newTyper(ctx.TypeCtx(), m.types)
-	result, err := m.parseInput(cfg, t, targetType(td), input, input)
+	result, err := m.parseInput(cfg, t, targetType(td), input, func() string { return input })
 	return toResult(result, err)
 }
 
@@ -91,7 +91,7 @@ func (m *csvModule) parseBytes(ctx *extern.Context, args []values.BalValue) (val
 		return newError(invalidCastError(javaValueOf(bytes), "typedesc "+t.typeName(root)).Error()), nil
 	}
 	input := dec.decodeAll(bytes.ToByteSlice())
-	result, err := m.parseInput(cfg, t, root, input, javaValueOf(bytes))
+	result, err := m.parseInput(cfg, t, root, input, func() string { return javaValueOf(bytes) })
 	return toResult(result, err)
 }
 
@@ -110,7 +110,7 @@ func (m *csvModule) parseStream(ctx *extern.Context, args []values.BalValue) (va
 	}
 	input := dec.decodeAll(content)
 	t := newTyper(ctx.TypeCtx(), m.types)
-	result, err := m.parseInput(cfg, t, targetType(td), input, input)
+	result, err := m.parseInput(cfg, t, targetType(td), input, func() string { return input })
 	if err != nil {
 		return newError(streamReadErrorPrefix + err.Error()), nil
 	}
@@ -145,9 +145,9 @@ func (m *csvModule) traverseList(ctx *extern.Context, cfg *config, source *value
 	return toResult(tr.traverse(rows, targetType(td)))
 }
 
-// parseInput parses CSV text into root, a list type or a union of list types. sourceText is how the
-// input appears in the error jBallerina reports when no member of a union element type fits.
-func (m *csvModule) parseInput(cfg *config, t *typer, root semtypes.SemType, input, sourceText string) (values.BalValue, error) {
+// parseInput parses CSV text into root, a list type or a union of list types. sourceText renders the
+// input as it appears in the error jBallerina reports when no member of a union element type fits.
+func (m *csvModule) parseInput(cfg *config, t *typer, root semtypes.SemType, input string, sourceText func() string) (values.BalValue, error) {
 	rootInfo := t.classify(root)
 	switch rootInfo.kind {
 	case kindUnion:
@@ -157,7 +157,7 @@ func (m *csvModule) parseInput(cfg *config, t *typer, root semtypes.SemType, inp
 		return nil, invalidTypeError(t.typeName(root))
 	}
 	rootShape := t.rowShapeOf(rootInfo)
-	elemInfo := t.classify(rootShape.rest)
+	elemInfo := rootShape.restInfo
 	elem := t.rowShapeOf(elemInfo)
 	switch {
 	case elem.kind == kindUnion:
@@ -174,7 +174,7 @@ func (m *csvModule) parseInput(cfg *config, t *typer, root semtypes.SemType, inp
 
 // parseIntoUnion reads the rows as map<string> values and converts them as a whole to the first member
 // type that every row fits, as jBallerina does for union types.
-func (m *csvModule) parseIntoUnion(cfg *config, t *typer, root semtypes.SemType, input, sourceText string) (values.BalValue, error) {
+func (m *csvModule) parseIntoUnion(cfg *config, t *typer, root semtypes.SemType, input string, sourceText func() string) (values.BalValue, error) {
 	parseLogger := newFailSafeLogger(m.rt, cfg.failSafe, true)
 	rows, err := m.parseAsStringMaps(cfg, t, input, parseLogger)
 	if err != nil {
@@ -189,7 +189,7 @@ func (m *csvModule) parseIntoUnion(cfg *config, t *typer, root semtypes.SemType,
 	if err != nil && cfg.enableConstraintValidation {
 		// jBallerina hands the traversal's error value to constraint validation, which fails on it with a
 		// non-csv exception that the entry point reports as this generic cast error.
-		return nil, invalidCastError(sourceText, "typedesc "+t.typeName(root))
+		return nil, invalidCastError(sourceText(), "typedesc "+t.typeName(root))
 	}
 	return result, err
 }
