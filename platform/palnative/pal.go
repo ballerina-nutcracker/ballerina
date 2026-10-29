@@ -49,7 +49,7 @@ func createParentDirs(path string) error {
 	return nil
 }
 
-func LineSeparator() string {
+func lineSeparator() string {
 	if runtime.GOOS == "windows" {
 		return "\r\n"
 	}
@@ -171,7 +171,7 @@ func NewPlatform() (pal.Platform, func()) {
 				return result
 			},
 			Exec:          Exec,
-			LineSeparator: LineSeparator,
+			LineSeparator: lineSeparator,
 		},
 		Time: pal.Time{
 			Now:          time.Now,

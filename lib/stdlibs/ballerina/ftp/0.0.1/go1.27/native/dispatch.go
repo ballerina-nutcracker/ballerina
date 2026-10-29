@@ -283,7 +283,7 @@ func (m *ftpModule) dispatchChange(ctx *extern.Context, sc *serviceContext, even
 	ep := sc.consumer.remote.ep
 	added := make([]values.BalValue, len(event.added))
 	for i, f := range event.added {
-		added[i] = listenerFileInfo(m.types, tc, ep, f.logical, f.entry)
+		added[i] = listenerFileInfo(m.types, ep, f.logical, f.entry)
 	}
 	var watchEvent values.BalValue = values.NewMap(m.types.watchEventTy, m.types.watchEvAtom, false, []values.MapEntry{
 		{Key: "addedFiles", Value: m.types.fileInfoList(added)},
@@ -364,7 +364,7 @@ func (m *ftpModule) dispatchContent(ctx *extern.Context, state *listenerState, s
 			return
 		}
 	}
-	fileInfo := listenerFileInfo(m.types, tc, remote.ep, f.logical, f.entry)
+	fileInfo := listenerFileInfo(m.types, remote.ep, f.logical, f.entry)
 	m.start(ctx, sc, h.name, m.handlerArgs(h, sc, content, fileInfo))
 }
 

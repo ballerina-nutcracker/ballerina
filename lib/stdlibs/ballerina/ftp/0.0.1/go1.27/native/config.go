@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	protocolFTP  = "ftp"
 	protocolFTPS = "ftps"
 	protocolSFTP = "sftp"
 )

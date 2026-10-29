@@ -155,9 +155,11 @@ func (m *ftpModule) registerClientExterns() {
 	register("externInitialGetStreamEntryRecord", m.getFirst)
 	register("externGetStreamEntryRecord", m.getNext)
 	register("externCloseInputStream", m.closeLegacyStream)
-	register("toJsonString", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return toJSONString(args[0]), nil
-	})
+	register("toJsonString", toJSONStringExtern)
+}
+
+func toJSONStringExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return toJSONString(args[0]), nil
 }
 
 func (m *ftpModule) initEndpoint(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -489,7 +491,7 @@ func (m *ftpModule) list(ctx *extern.Context, args []values.BalValue) (values.Ba
 	dir := cleanPath(p)
 	items := make([]values.BalValue, len(entries))
 	for i, entry := range entries {
-		items[i] = clientFileInfo(m.types, ctx.TypeCtx(), ep, path.Join(dir, entry.name), entry)
+		items[i] = clientFileInfo(m.types, ep, path.Join(dir, entry.name), entry)
 	}
 	return m.types.fileInfoList(items), nil
 }

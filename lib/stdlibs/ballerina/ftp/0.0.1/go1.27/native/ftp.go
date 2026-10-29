@@ -176,7 +176,7 @@ func depth(p string) int64 {
 	return int64(strings.Count(p, "/") + 1)
 }
 
-func (t *ftpTypes) fileInfo(tc semtypes.Context, f fileInfoFields) *values.Map {
+func (t *ftpTypes) fileInfo(f fileInfoFields) *values.Map {
 	fileType := "file"
 	if f.entry.isDir {
 		fileType = "folder"
@@ -217,8 +217,8 @@ func (t *ftpTypes) fileInfoList(items []values.BalValue) *values.List {
 
 // clientFileInfo is the FileInfo client->list returns: path is the server path and uri holds
 // the full URI with the password, as VFS FileName.getURI does.
-func clientFileInfo(t *ftpTypes, tc semtypes.Context, ep *endpoint, logical string, entry remoteEntry) *values.Map {
-	return t.fileInfo(tc, fileInfoFields{
+func clientFileInfo(t *ftpTypes, ep *endpoint, logical string, entry remoteEntry) *values.Map {
+	return t.fileInfo(fileInfoFields{
 		path:     logical,
 		uri:      vfsURI(ep, logical, false),
 		rootURI:  vfsRootURI(ep, false),
@@ -231,9 +231,9 @@ func clientFileInfo(t *ftpTypes, tc semtypes.Context, ep *endpoint, logical stri
 
 // listenerFileInfo is the FileInfo a listener passes to handlers: path is the full URI and
 // uri the scheme-less URL path, both with the password, as in FtpListener.
-func listenerFileInfo(t *ftpTypes, tc semtypes.Context, ep *endpoint, logical string, entry remoteEntry) *values.Map {
+func listenerFileInfo(t *ftpTypes, ep *endpoint, logical string, entry remoteEntry) *values.Map {
 	full := vfsURI(ep, logical, false)
-	return t.fileInfo(tc, fileInfoFields{
+	return t.fileInfo(fileInfoFields{
 		path:     full,
 		uri:      strings.TrimPrefix(full, ep.protocol+":"),
 		rootURI:  vfsRootURI(ep, false),
