@@ -21,11 +21,7 @@
 #           function's declared input parameter type (any `anydata` subtype)
 # + return - The workflow ID, or an error
 public isolated function run(function processFunction, anydata input = ()) returns string|error {
-    string|error result = runNative(processFunction, input);
-    if result is string {
-    } else {
-    }
-    return result;
+    return runNative(processFunction, input);
 }
 
 isolated function runNative(function processFunction, anydata input) returns string|error = external;
@@ -46,11 +42,7 @@ isolated function runNative(function processFunction, anydata input) returns str
 public isolated function runWithId(function processFunction, string instanceId, anydata input = (),
         RunningInstancePolicy ifRunning = FAIL, ClosedInstancePolicy ifClosed = ALLOW_DUPLICATE)
         returns string|InstanceAlreadyExistsError|error {
-    string|error result = runWithIdNative(processFunction, instanceId, input, ifRunning, ifClosed);
-    if result is string {
-    } else {
-    }
-    return result;
+    return runWithIdNative(processFunction, instanceId, input, ifRunning, ifClosed);
 }
 
 isolated function runWithIdNative(function processFunction, string instanceId, anydata input,
@@ -64,8 +56,7 @@ isolated function runWithIdNative(function processFunction, string instanceId, a
 # + data - The data payload
 # + return - An error if sending fails
 public isolated function sendData(function workflow, string workflowId, string dataName, anydata data) returns error? {
-    error? result = sendDataNative(workflow, workflowId, dataName, data);
-    return result;
+    return sendDataNative(workflow, workflowId, dataName, data);
 }
 
 isolated function sendDataNative(function workflow, string workflowId, string dataName,
@@ -139,3 +130,16 @@ isolated function completeHumanTaskNative(string taskWorkflowId, anydata result,
 #
 # + return - An error if stopping fails
 isolated function stopWorkflowRuntime() returns error? = external;
+
+// Factories for the engine: Go code cannot construct the module's typed errors itself.
+isolated function newInProgressError(string instanceId) returns WorkflowInProgressError =>
+    error WorkflowInProgressError("workflow instance is still running: " + instanceId);
+
+isolated function newInstanceNotFoundError(string instanceId) returns InstanceNotFoundError =>
+    error InstanceNotFoundError("workflow instance not found: " + instanceId, instanceId = instanceId);
+
+isolated function newInstanceFailedError(string instanceId, error cause) returns InstanceFailedError =>
+    error InstanceFailedError(cause.message(), cause, instanceId = instanceId, status = FAILED);
+
+isolated function newHumanTaskFailedError(string message) returns HumanTaskFailedError =>
+    error HumanTaskFailedError(message);

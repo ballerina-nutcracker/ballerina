@@ -38,50 +38,87 @@ func initWorkflowModule(rt *runtime.Runtime) {
 	register("initModule", noop)
 	register("initInMemoryProgramNative", noop)
 	register("stopWorkflowRuntime", noop)
-	register("initProgramNative", func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
-		return values.NewErrorWithMessage("only the IN_MEMORY mode is supported"), nil
-	})
+	register("initProgramNative", initProgram)
 	register("runNative", eng.run)
 	register("sendDataNative", eng.sendData)
 	register("getResult", eng.getResult)
 	register("waitForResult", eng.waitForResult)
 	register("getStatus", eng.getStatus)
 	register("Context.$remote$callActivity", eng.callActivity)
-	for _, name := range []string{"runWithIdNative", "getPendingAgentEvents", "completeHumanTaskNative",
-		"Context.$remote$await", "Context.$remote$awaitHumanTask", "Context.$remote$runChildWorkflow",
-		"Context.$remote$getChildWorkflowResult", "Context.$remote$waitForChildWorkflow",
-		"Context.$remote$callWorkflow", "Context.$remote$sendDataToChildWorkflow"} {
-		register(name, unsupported(name))
-	}
+	register("isReplayingNative", isReplaying)
+	register("getWorkflowIdNative", getWorkflowID)
+	register("getWorkflowTypeNative", getWorkflowType)
+	register("currentTimeMillisContextNative", currentTimeMillis)
+	register("sleepContextNative", sleepContext)
 	register("lastHumanTaskCompletionNative", noop)
 	register("lastReviewDecisionNative", noop)
-	register("isReplayingNative", func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
-		return false, nil
-	})
-	register("getWorkflowIdNative", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return args[0].(*instance).id, nil
-	})
-	register("getWorkflowTypeNative", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		return args[0].(*instance).workflowType, nil
-	})
-	register("currentTimeMillisContextNative", func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
-		return rt.Platform().Time.Now().UnixMilli(), nil
-	})
-	register("sleepContextNative", func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-		time.Sleep(time.Duration(args[1].(int64)) * time.Millisecond)
-		return nil, nil
-	})
+	// Not implemented yet. Those whose declared return admits an error answer one; `await`
+	// returns a bare T, so it panics, and `awaitHumanTask` answers its HumanTaskFailedError.
+	for _, name := range []string{"runWithIdNative", "getPendingAgentEvents", "completeHumanTaskNative",
+		"Context.$remote$runChildWorkflow", "Context.$remote$getChildWorkflowResult",
+		"Context.$remote$waitForChildWorkflow", "Context.$remote$callWorkflow",
+		"Context.$remote$sendDataToChildWorkflow"} {
+		register(name, unsupported(name))
+	}
+	register("Context.$remote$await", unsupportedPanic("Context.await"))
+	register("Context.$remote$awaitHumanTask", unsupportedHumanTask)
 }
 
 func noop(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
 	return nil, nil
 }
 
+func initProgram(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+	return values.NewErrorWithMessage("only the IN_MEMORY mode is supported"), nil
+}
+
+func isReplaying(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+	return false, nil
+}
+
+func getWorkflowID(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return args[0].(*instance).id, nil
+}
+
+func getWorkflowType(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return args[0].(*instance).workflowType, nil
+}
+
+func currentTimeMillis(ctx *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+	return ctx.Env.Platform.Time.Now().UnixMilli(), nil
+}
+
+// sleepContext waits on the PAL clock while yielding, as runtime:sleep does, so the strands
+// sharing this thread keep running.
+func sleepContext(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	clock := ctx.Env.Platform.Time
+	deadline := clock.MonotonicNow() + time.Duration(args[1].(int64))*time.Millisecond
+	for clock.MonotonicNow() < deadline {
+		<-ctx.Yield()
+	}
+	return nil, nil
+}
+
+func unsupportedMessage(name string) string {
+	return "workflow API not supported by the in-memory engine yet: " + name
+}
+
 // unsupported returns an error-producing extern for an API the in-memory engine does not implement yet.
 func unsupported(name string) extern.NativeFunc {
 	return func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
-		return values.NewErrorWithMessage("workflow API not supported by the in-memory engine yet: " + name), nil
+		return values.NewErrorWithMessage(unsupportedMessage(name)), nil
 	}
+}
+
+// unsupportedPanic is for an API whose declared return type has no room for an error.
+func unsupportedPanic(name string) extern.NativeFunc {
+	return func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+		panic(values.NewErrorWithMessage(unsupportedMessage(name)))
+	}
+}
+
+func unsupportedHumanTask(ctx *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+	return moduleError(ctx, "newHumanTaskFailedError", unsupportedMessage("Context.awaitHumanTask")), nil
 }
 
 // splitLookupKey splits a function lookup key of the form "org/module:name".
