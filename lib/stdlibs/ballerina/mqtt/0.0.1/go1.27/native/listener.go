@@ -362,9 +362,8 @@ func (m *mqttModule) callerComplete(ctx *extern.Context, args []values.BalValue)
 	return result(ctx, cs.listener.conn.complete(cs.message))
 }
 
-// callerRespond publishes the response to the request's response topic, carrying the
-// request's correlation data, and reports a failed publish (ballerina-library#9326).
-// onComplete is invoked once the response is delivered.
+// callerRespond publishes the reply with the request's correlation data and reports a failed
+// publish (ballerina-library#9326); onComplete is invoked once the reply is delivered.
 func (m *mqttModule) callerRespond(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	cs := callerOf(args[0].(*values.Object))
 	response, _ := args[1].(*values.Map)

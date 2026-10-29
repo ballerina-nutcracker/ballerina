@@ -268,8 +268,7 @@ func (c *connection) connectPacket() *paho.Connect {
 	return cp
 }
 
-// monitor waits for the link to drop and, unless the drop was requested, starts the automatic
-// reconnect cycle when enabled. As observed on jBallerina, a lost network connection is
+// monitor handles an unrequested link drop. As on jBallerina, a lost network connection is
 // reported to the connection-loss handler but a server-initiated DISCONNECT is not.
 func (c *connection) monitor(link *activeLink) {
 	<-link.client.Done()
@@ -582,9 +581,8 @@ func (c *connection) reconnect() *mqttError {
 	return nil
 }
 
-// keepAlivePinger sends the first PINGREQ only after a keep-alive interval of inactivity, as
-// Paho Java does. paho's DefaultPinger pings as soon as CONNACK arrives, which Mosquitto may
-// reject with "PINGREQ before session is active" and drop the connection.
+// keepAlivePinger delays the first PINGREQ by a keep-alive interval, as Paho Java does; Mosquitto
+// may drop a connection that pings right after CONNACK ("PINGREQ before session is active").
 type keepAlivePinger struct {
 	*paho.DefaultPinger
 }

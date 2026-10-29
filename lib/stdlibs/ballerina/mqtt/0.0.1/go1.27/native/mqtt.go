@@ -50,9 +50,8 @@ func init() {
 	runtime.RegisterModuleInitializer(initMqttModule)
 }
 
-// callHelper invokes a private Ballerina function of this module. Values whose types are
-// declared in mqtt (the distinct Error, Message, DeliveryToken, Caller, StreamIterator) are
-// built on the Ballerina side so they carry their declared types.
+// callHelper invokes a private Ballerina function of this module, which builds values of types
+// declared in mqtt (Error, Message, DeliveryToken, ...) so they carry their declared types.
 func callHelper(ctx *extern.Context, name string, args ...values.BalValue) (values.BalValue, error) {
 	handle, ok := ctx.LookupFunction(orgName, moduleName, name)
 	if !ok {

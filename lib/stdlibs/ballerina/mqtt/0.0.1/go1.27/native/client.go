@@ -121,9 +121,8 @@ func subscribeOptions(subscriptions *values.List) ([]paho.SubscribeOptions, *mqt
 	return options, nil
 }
 
-// clientReceive returns a stream backed by a StreamIterator object. The stream's next/close
-// run the iterator's Ballerina methods on a context of their own so the stream can be
-// consumed from any strand.
+// clientReceive returns a stream whose next/close run the StreamIterator's Ballerina methods on
+// a pooled context, so the stream can be consumed from any strand.
 func (m *mqttModule) clientReceive(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	cs := clientOf(args[0].(*values.Object))
 	td, _ := args[1].(*values.TypeDesc)

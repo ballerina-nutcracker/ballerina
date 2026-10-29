@@ -67,9 +67,8 @@ type methodSpec struct {
 	countMessage   string
 }
 
-// validateService applies the signature rules jBallerina's compiler plugin enforces at
-// compile time, so the dispatcher never binds a value to a parameter that cannot hold it.
-// A service without onMessage is still accepted and reported through onError at runtime.
+// validateService applies jBallerina's compiler-plugin signature rules at attach time; a service
+// without onMessage is still accepted and reported through onError at runtime.
 func validateService(ctx *extern.Context, svc *values.Object) (*mqttError, error) {
 	types, err := lookupServiceParamTypes(ctx)
 	if err != nil {
