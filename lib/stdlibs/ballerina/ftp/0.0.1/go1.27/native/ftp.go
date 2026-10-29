@@ -215,8 +215,8 @@ func (t *ftpTypes) fileInfoList(items []values.BalValue) *values.List {
 	return values.NewList(t.fileInfoArrTy, t.fileInfoArrAt, false, nil, 0, items)
 }
 
-// clientFileInfo is the FileInfo client->list returns: path is the server path and uri holds
-// the full URI with the password, as VFS FileName.getURI does.
+// clientFileInfo is the FileInfo client->list returns: path is the server path and uri the
+// full URI without credentials.
 func clientFileInfo(t *ftpTypes, ep *endpoint, logical string, entry remoteEntry) *values.Map {
 	return t.fileInfo(fileInfoFields{
 		path:     logical,
@@ -230,7 +230,7 @@ func clientFileInfo(t *ftpTypes, ep *endpoint, logical string, entry remoteEntry
 }
 
 // listenerFileInfo is the FileInfo a listener passes to handlers: path is the full URI and
-// uri the scheme-less URL path, both with the password, as in FtpListener.
+// uri the scheme-less URL path, as in FtpListener, both without credentials.
 func listenerFileInfo(t *ftpTypes, ep *endpoint, logical string, entry remoteEntry) *values.Map {
 	full := vfsURI(ep, logical, false)
 	return t.fileInfo(fileInfoFields{

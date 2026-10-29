@@ -215,8 +215,8 @@ public function main() returns error? {
     printEvents();
     // @output caller sees a.txt false
     // @output change added=["/watch/sub/inner.txt"] deleted=2
-    // @output change deleted ftp://ballerina:ballerina@127.0.0.1:PORT/watch/a.txt
-    // @output change deleted ftp://ballerina:ballerina@127.0.0.1:PORT/watch/a.txt
+    // @output change deleted ftp://127.0.0.1:PORT/watch/a.txt
+    // @output change deleted ftp://127.0.0.1:PORT/watch/a.txt
     // @output onFileDeleted 2
     check legacy.gracefulStop();
 

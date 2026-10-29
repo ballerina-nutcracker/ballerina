@@ -179,7 +179,7 @@ public function main() returns error? {
     printEvents();
     // @output bytes data.bin 4
     // @output bytes notes.json 2
-    // @output info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
+    // @output info ftp://127.0.0.1:PORT/in/stream/big.dat //127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
     // @output json good.json pen
     // @output onError true
     // @output panic boom.txt
@@ -192,9 +192,9 @@ public function main() returns error? {
     waitFor(9);
     printEvents();
     // @output bytes notes.json 2
-    // @output deleted ftp://ballerina:ballerina@127.0.0.1:PORT/in/mixed/data.bin
-    // @output deleted ftp://ballerina:ballerina@127.0.0.1:PORT/in/mixed/note.txt
-    // @output info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
+    // @output deleted ftp://127.0.0.1:PORT/in/mixed/data.bin
+    // @output deleted ftp://127.0.0.1:PORT/in/mixed/note.txt
+    // @output info ftp://127.0.0.1:PORT/in/stream/big.dat //127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
     // @output json good.json pen
     // @output onError true
     // @output panic boom.txt
