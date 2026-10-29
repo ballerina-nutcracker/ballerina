@@ -45,6 +45,19 @@ service /multiparts on new http:Listener(19502) {
         return resp;
     }
 
+    resource function get preamble() returns http:Response {
+        http:Response resp = new;
+        resp.setBinaryPayload("preamble\r\n--BB\r\nContent-Type: text/plain\r\nX-Pad: padding\r\n\r\nhello\r\n--BB--\r\n".toBytes(),
+                "multipart/mixed; boundary=BB");
+        return resp;
+    }
+
+    resource function get passthrough() returns http:Response|error {
+        http:Response resp = check backend->get("/multiparts/preamble");
+        _ = check resp.getBodyParts();
+        return resp;
+    }
+
     resource function get bogus() returns http:Response {
         mime:Entity part = new;
         part.setText("x", "text/plain; charset=bogus-cs");
@@ -53,6 +66,8 @@ service /multiparts on new http:Listener(19502) {
         return resp;
     }
 }
+
+final http:Client backend = check new ("http://localhost:19502");
 
 public function testMain() returns error? {
     http:Client c = check new http:Client("http://localhost:19502", {});
@@ -77,4 +92,10 @@ public function testMain() returns error? {
     io:println(r.statusCode); // @output 500
     map<json> errBody = <map<json>>check r.getJsonPayload();
     io:println(errBody["message"]); // @output failed to encode multipart body: bogus-cs
+
+    r = check c->get("/multiparts/passthrough");
+    mime:Entity[] relayed = check r.getBodyParts();
+    io:println(check relayed[0].getText()); // @output hello
+    r.setPayload("replaced");
+    io:println(check r.getTextPayload()); // @output replaced
 }

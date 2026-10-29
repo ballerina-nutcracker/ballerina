@@ -9,4 +9,9 @@ true
 0
 true
 true
+{"a":"1","b":"2"}
+true
+true
+500
+failed to serialize resource return value: failed to encode multipart body: member 0 is not a mime:Entity
 -- stderr --

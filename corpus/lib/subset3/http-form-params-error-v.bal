@@ -37,6 +37,8 @@ public function main() returns error? {
     http:Request badEncoding = new;
     badEncoding.setTextPayload("a=%zz", contentType = "application/x-www-form-urlencoded");
     map<string>|error badEncodingResult = badEncoding.getFormParams();
-    io:println(badEncodingResult is error); // @output true
+    if badEncodingResult is error {
+        io:println(badEncodingResult.message()); // @output form data decode failure
+    }
     return;
 }

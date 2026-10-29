@@ -45,7 +45,7 @@ func outboundPayload(ctx *extern.Context, types *httpTypes, v values.BalValue, c
 		}
 		// A list holding objects can only be a mime:Entity[], since anydata excludes objects.
 		if !semtypes.IsZero(p.Type) && !semtypes.IsSubtype(ctx.TypeCtx(), p.Type, types.anydataTy) {
-			return encodeMultipartBody(ctx, p, cmp.Or(contentType, "multipart/form-data"))
+			return encodeMultipartBody(ctx, p, contentType)
 		}
 	}
 	b, err := toJSONBytes(v)

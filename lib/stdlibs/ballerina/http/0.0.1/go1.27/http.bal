@@ -614,7 +614,7 @@ public class Request {
         }
         string baseType = mediaType.primaryType + "/" + mediaType.subType;
         if !baseType.equalsIgnoreCaseAscii(mime:APPLICATION_FORM_URLENCODED) {
-            return error(message, error("Invalid content type: expected 'application/x-www-form-urlencoded'"));
+            return error(message, error("Invalid content type : expected 'application/x-www-form-urlencoded'"));
         }
         string|error formData = self.getTextPayload();
         if formData is error {
@@ -634,7 +634,10 @@ isolated function parseFormData(string formData) returns map<string>|error {
     if formData.length() == 0 {
         return parameters;
     }
-    string decodedValue = check url:decode(formData, "UTF-8");
+    string|error decodedValue = url:decode(formData, "UTF-8");
+    if decodedValue is error {
+        return error("form data decode failure", decodedValue);
+    }
     int entryStart = 0;
     int equalsIndex = -1;
     int charIndex = 0;
