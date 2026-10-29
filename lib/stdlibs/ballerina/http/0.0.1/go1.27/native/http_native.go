@@ -1830,15 +1830,10 @@ func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalVal
 // transportOwnedHeaders are set by Go's transport, and its HTTP/2 transport rejects a request carrying any of them.
 var transportOwnedHeaders = []string{"connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade"}
 
-// removeTransportOwnedHeaders keeps a single `Connection: close`: Go's HTTP/1.1 transport honours it by closing the
-// connection after the response, and its HTTP/2 transport accepts it.
 func removeTransportOwnedHeaders(headers map[string][]string) {
 	for name, vals := range headers {
 		lower := strings.ToLower(name)
-		switch {
-		case lower == "connection" && len(vals) == 1 && strings.EqualFold(strings.TrimSpace(vals[0]), "close"):
-			headers[name] = []string{"close"}
-		case slices.Contains(transportOwnedHeaders, lower) || lower == "te" && !onlyTrailers(vals):
+		if slices.Contains(transportOwnedHeaders, lower) || lower == "te" && !onlyTrailers(vals) {
 			delete(headers, name)
 		}
 	}

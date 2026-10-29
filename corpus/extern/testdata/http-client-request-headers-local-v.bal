@@ -36,7 +36,7 @@ public function main() returns error? {
     string hop = check c->post("/echo", hopReq, {"Keep-Alive": "timeout=5"});
     io:println(hop); // @output text/plain [hop] []
 
-    // An explicit Connection: close is honoured; the server rejects the request without it.
+    // A Connection: close header is not sent, as jBallerina sends its own keep-alive value; the server rejects it.
     string close = check c->post("/echo", "hi", {"Connection": "Close", "X-Test": "conn-close"});
     io:println(close); // @output text/plain [conn-close] []
 

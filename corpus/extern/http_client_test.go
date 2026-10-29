@@ -324,7 +324,7 @@ func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
 			wantTE = []string{"trailers"}
 		}
 		if r.Header.Get("Upgrade") != "" || r.Header.Get("Keep-Alive") != "" || strings.Contains(r.Header.Get("Connection"), "X-Test") ||
-			!slices.Equal(r.Header.Values("Te"), wantTE) || r.Close != (r.Header.Get("X-Test") == "conn-close") {
+			!slices.Equal(r.Header.Values("Te"), wantTE) || r.Close {
 			w.WriteHeader(400)
 			return
 		}
