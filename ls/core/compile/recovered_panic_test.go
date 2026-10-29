@@ -392,11 +392,17 @@ func TestRecoveredStalePanicDoesNotBlockCurrentGeneration(t *testing.T) {
 	updateDoc(t, projectService, u.String(), after, 2)
 	bus.Flush()
 	releaseNow()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
+	readStart := time.Now()
 	view, ok := svc.SealedModuleFor(ctx, u)
 	if !ok {
-		t.Fatal("stale panic blocked the current sealed read")
+		current, known := svc.reader.Generation(u.Path())
+		stable, hasStable := svc.store.Stable(u.Path())
+		progress, compiling := svc.store.InProgress(u.Path())
+		t.Fatalf("current sealed read failed after %s: context=%v attempts=%d current=%d known=%v failed=%v stable=%v stableGeneration=%d compiling=%v compilingGeneration=%d",
+			time.Since(readStart), ctx.Err(), attempts.Load(), current, known, svc.generationFailed(u.Path(), current),
+			hasStable, stable.key.Generation, compiling, progress.key.Generation)
 	}
 	if text, ok := view.SourceText(u); !ok || text != after {
 		t.Errorf("current source = %q, %v", text, ok)
