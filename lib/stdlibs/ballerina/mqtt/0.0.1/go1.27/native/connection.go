@@ -150,7 +150,7 @@ func (c *connection) connect() *mqttError {
 	c.state = stateConnecting
 	c.mu.Unlock()
 	if err := c.connectToAny(); err != nil {
-		c.connectFailed()
+		c.setState(stateDisconnected)
 		return err
 	}
 	return nil
@@ -317,7 +317,7 @@ func (c *connection) reconnectCycle(stop chan struct{}) {
 		if err := c.connectToAny(); err == nil {
 			return
 		}
-		c.connectFailed()
+		c.setState(stateDisconnected)
 		if delay < c.opts.maxReconnectDelay {
 			delay = min(delay*2, c.opts.maxReconnectDelay)
 		}
@@ -328,15 +328,6 @@ func (c *connection) cancelReconnectCycleLocked() {
 	if c.stopReconnect != nil {
 		close(c.stopReconnect)
 		c.stopReconnect = nil
-	}
-}
-
-// connectFailed leaves the connecting state unless the connection was closed meanwhile.
-func (c *connection) connectFailed() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.state == stateConnecting {
-		c.state = stateDisconnected
 	}
 }
 
@@ -572,7 +563,7 @@ func (c *connection) reconnect() *mqttError {
 	c.mu.Unlock()
 	go func() {
 		if err := c.connectToAny(); err != nil {
-			c.connectFailed()
+			c.setState(stateDisconnected)
 			if c.opts.automaticReconnect {
 				c.startReconnectCycle()
 			}
