@@ -35,6 +35,7 @@ Every mapping the module specification defines is supported in both directions.
 `fromAvro` infers `targetType` from the contextually expected type, so `Person p = check schema.fromAvro(data);` binds the decoded payload to `Person`. Without a contextually expected type the compiler reports `cannot infer typedesc argument for parameter 'targetType'` — pass `targetType = Person` explicitly in that case.
 
 Records, enums, tuples, singletons, `map<T>`, `T[]`, `json`, `map<json>`, `anydata` and nilable forms of all of these are accepted as targets, along with numeric widening from `int` to `float` and `decimal`. A `readonly &` intersection of any of these is accepted too and binds to a frozen value.
+
 ## [io](https://github.com/ballerina-platform/module-ballerina-io/blob/master/docs/spec/spec.md)
 
 Subset 2 covered console printing and whole-file I/O (string, lines, bytes, JSON, XML). Subset 3 adds stream-based file reading and writing, built on the language's new `stream` type, plus byte channels — the low-level, object-based `ReadableByteChannel`/`WritableByteChannel` API for reading and writing bytes incrementally, either from a file or from an in-memory byte array.
