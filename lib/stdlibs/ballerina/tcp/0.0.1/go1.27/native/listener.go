@@ -18,9 +18,11 @@
 package native
 
 import (
+	"errors"
 	"net"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
@@ -151,20 +153,19 @@ func listenerStart(rt *runtime.Runtime, types tcpTypes) extern.NativeFunc {
 }
 
 // listenerGracefulStop stops accepting new connections and returns at once, leaving open connections up, as jBallerina does.
+// The listener is closed under the lock so a concurrent start() cannot bind a new one while the old accept loop still runs.
 func listenerGracefulStop(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	state := stateOf(args[0].(*values.Object))
 	state.mu.Lock()
-	ln := state.ln
-	alreadyStopped := state.stopped
-	state.stopped = true
-	state.mu.Unlock()
-	if alreadyStopped {
+	defer state.mu.Unlock()
+	if state.stopped {
 		return nil, nil
 	}
-	if ln == nil {
+	state.stopped = true
+	if state.ln == nil {
 		return tcpError("Unable to initialize the tcp listener."), nil
 	}
-	if err := ln.Close(); err != nil {
+	if err := state.ln.Close(); err != nil {
 		return tcpError("Failed to gracefully shutdown the Listener."), nil
 	}
 	return nil, nil
@@ -192,13 +193,20 @@ func listenerImmediateStop(_ *extern.Context, args []values.BalValue) (values.Ba
 
 // acceptLoop reads the attached service per connection, so start() works without a service and attach/detach apply to later connections.
 func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, ln net.Listener) {
+	var backoff time.Duration
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			return
+			if errors.Is(err, net.ErrClosed) || !state.isServing(ln) {
+				return
+			}
+			backoff = nextAcceptBackoff(backoff)
+			sleep(rt, backoff)
+			continue
 		}
+		backoff = 0
 		state.mu.Lock()
-		if state.stopped {
+		if state.stopped || state.ln != ln {
 			state.mu.Unlock()
 			_ = conn.Close()
 			return
@@ -220,4 +228,24 @@ func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, ln ne
 			handleConnection(rt, types, svcObj, conn)
 		}()
 	}
+}
+
+func (state *listenerState) isServing(ln net.Listener) bool {
+	state.mu.RLock()
+	defer state.mu.RUnlock()
+	return state.ln == ln && !state.stopped
+}
+
+// nextAcceptBackoff retries a transient Accept error (e.g. fd exhaustion) with the same backoff as net/http.Server.Serve.
+func nextAcceptBackoff(prev time.Duration) time.Duration {
+	if prev == 0 {
+		return 5 * time.Millisecond
+	}
+	return min(2*prev, time.Second)
+}
+
+func sleep(rt *runtime.Runtime, d time.Duration) {
+	done := make(chan struct{})
+	rt.Platform().Time.AfterFunc(d, func() { close(done) })
+	<-done
 }

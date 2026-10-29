@@ -203,7 +203,8 @@ func clientReadBytes(rt *runtime.Runtime, types tcpTypes) extern.NativeFunc {
 		_ = conn.SetReadDeadline(deadlineAfter(rt, timeout.(time.Duration)))
 		buf := make([]byte, readBufferSize)
 		n, err := conn.Read(buf)
-		if err != nil {
+		// The final bytes may arrive with the error, e.g. TLS data followed by close_notify; the next read reports the error.
+		if err != nil && n == 0 {
 			return classifyReadErr(err), nil
 		}
 		return bytesToList(types, ctx, buf[:n]), nil

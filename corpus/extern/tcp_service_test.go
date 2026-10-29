@@ -16,7 +16,15 @@
 
 package extern_test
 
-import "testing"
+import (
+	"errors"
+	"net"
+	"sync/atomic"
+	"testing"
+
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+)
 
 // TestTcpServiceEcho starts a tcp:Listener + attached service on a real port
 // and drives it from testMain via a real tcp:Client, exercising the full
@@ -119,4 +127,49 @@ func TestTcpClientWriteTimeout(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)
 	runExtern(t, fileCase("tcp-service/tcp-client-write-timeout-v"), newTcpPal(), nil)
+}
+
+// TestTcpServiceAcceptRetry verifies that a transient Accept error does not
+// stop the listener's accept loop.
+func TestTcpServiceAcceptRetry(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-accept-retry-v"), &flakyAcceptPal{tcpPal: newTcpPal()}, nil)
+}
+
+// TestTcpServiceNoConnectionService verifies that a connection whose
+// onConnect returns () stays tracked, so immediateStop still closes it.
+func TestTcpServiceNoConnectionService(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-no-conn-svc-v"), newTcpPal(), nil)
+}
+
+type flakyAcceptPal struct {
+	*tcpPal
+}
+
+func (p *flakyAcceptPal) Platform() pal.Platform {
+	base := p.tcpPal.Platform()
+	base.Net.Listen = func(network, address string, tlsCfg *pal.ServerTLSConfig) (net.Listener, error) {
+		ln, err := palnative.ListenTCP(network, address, tlsCfg)
+		if err != nil {
+			return nil, err
+		}
+		return &flakyListener{Listener: ln}, nil
+	}
+	return base
+}
+
+// flakyListener fails its first Accept with a transient error.
+type flakyListener struct {
+	net.Listener
+	failed atomic.Bool
+}
+
+func (l *flakyListener) Accept() (net.Conn, error) {
+	if l.failed.CompareAndSwap(false, true) {
+		return nil, errors.New("transient accept failure")
+	}
+	return l.Listener.Accept()
 }
