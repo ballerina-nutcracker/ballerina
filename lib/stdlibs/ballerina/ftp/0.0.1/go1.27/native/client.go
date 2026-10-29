@@ -321,7 +321,8 @@ func (m *ftpModule) putXML(ctx *extern.Context, args []values.BalValue) (values.
 
 func (m *ftpModule) putCsv(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	appendMode := writeOption(args[3])
-	return m.writeContent(ctx, args, []byte(csvContent(args[2].(*values.List), !appendMode)), appendMode)
+	content := csvContent(args[2].(*values.List), !appendMode, m.rt.Platform().OS.LineSeparator())
+	return m.writeContent(ctx, args, []byte(content), appendMode)
 }
 
 // iteratorError is a failure of the source stream itself, reported as is rather than as a
@@ -389,6 +390,7 @@ func (m *ftpModule) putBytesAsStream(ctx *extern.Context, args []values.BalValue
 
 func (m *ftpModule) putCsvAsStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	first := !writeOption(args[3])
+	lineSeparator := m.rt.Platform().OS.LineSeparator()
 	return m.writeStream(ctx, args, func(v values.BalValue) []byte {
 		var row string
 		switch t := v.(type) {

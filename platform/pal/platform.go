@@ -99,6 +99,8 @@ type (
 		UnsetEnv    func(key string) error
 		ListEnv     func() map[string]string
 		Exec        func(command string, args []string, envOverride map[string]string) (ProcessHandle, error)
+		// LineSeparator returns the text line separator, Java's System.lineSeparator().
+		LineSeparator func() string
 	}
 	Time struct {
 		Now          func() time.Time

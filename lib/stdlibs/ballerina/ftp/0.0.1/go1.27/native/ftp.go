@@ -19,7 +19,6 @@ package native
 
 import (
 	"path"
-	goruntime "runtime"
 	"strings"
 	"sync"
 
@@ -33,14 +32,6 @@ const (
 	orgName    = "ballerina"
 	moduleName = "ftp"
 )
-
-// lineSeparator stands in for Java's System.lineSeparator(), which CSVUtils writes after rows.
-var lineSeparator = func() string {
-	if goruntime.GOOS == "windows" {
-		return "\r\n"
-	}
-	return "\n"
-}()
 
 type ftpTypes struct {
 	env            semtypes.Env

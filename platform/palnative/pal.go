@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -46,6 +47,13 @@ func createParentDirs(path string) error {
 		return os.MkdirAll(dir, 0o755)
 	}
 	return nil
+}
+
+func LineSeparator() string {
+	if runtime.GOOS == "windows" {
+		return "\r\n"
+	}
+	return "\n"
 }
 
 // NewPlatform returns the native-CLI pal.Platform, wiring os.Stdout/Stderr for
@@ -162,7 +170,8 @@ func NewPlatform() (pal.Platform, func()) {
 				}
 				return result
 			},
-			Exec: Exec,
+			Exec:          Exec,
+			LineSeparator: LineSeparator,
 		},
 		Time: pal.Time{
 			Now:          time.Now,
