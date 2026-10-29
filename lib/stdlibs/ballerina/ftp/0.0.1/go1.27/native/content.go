@@ -248,7 +248,7 @@ func csvRecordRow(record *values.Map, keys []string) string {
 
 // csvContent mirrors CSVUtils.convertToCsv: a record array takes its columns from the first
 // record, and every row (the last included) ends with the platform line separator.
-func csvContent(content *values.List, addHeader bool) string {
+func csvContent(content *values.List, addHeader bool, lineSeparator string) string {
 	if content.Len() == 0 {
 		return ""
 	}

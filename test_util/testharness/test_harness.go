@@ -384,7 +384,8 @@ func (p *testPal) Platform() pal.Platform {
 			},
 			// Real subprocess execution (like SetEnv/GetEnv above, which hit the
 			// real OS) so os:exec can be exercised end-to-end from corpus tests.
-			Exec: palnative.Exec,
+			Exec:          palnative.Exec,
+			LineSeparator: func() string { return "\n" },
 		},
 		Time: pal.Time{
 			Now:          time.Now,
