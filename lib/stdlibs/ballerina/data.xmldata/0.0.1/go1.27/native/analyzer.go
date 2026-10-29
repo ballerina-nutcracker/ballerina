@@ -142,8 +142,7 @@ func (a *analyzer) validateRequiredFields(current *mapNode) error {
 		}
 		if ti := a.classify(field.ty); ti.kind == kindArray {
 			if ti.size != -1 {
-				array, _ := current.get(field.runtimeName).(*arrayNode)
-				if array == nil || array.length() != ti.size {
+				if _, ok := current.get(field.runtimeName).(*arrayNode); !ok {
 					return arraySizeMismatchError()
 				}
 			}

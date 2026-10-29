@@ -165,7 +165,10 @@ func (t *typer) buildArray(n *arrayNode) (values.BalValue, error) {
 	items := make([]values.BalValue, len(n.items))
 	for i, item := range n.items {
 		if item == nil {
-			filler, _ := values.FillerValue(t.tc, n.ty.element)
+			filler, ok := values.FillerValue(t.tc, n.ty.element)
+			if !ok {
+				return nil, arraySizeMismatchError()
+			}
 			items[i] = filler
 			continue
 		}
@@ -174,13 +177,6 @@ func (t *typer) buildArray(n *arrayNode) (values.BalValue, error) {
 			return nil, err
 		}
 		items[i] = value
-	}
-	for i := len(items); i < n.ty.size; i++ {
-		filler, ok := values.FillerValue(t.tc, n.ty.element)
-		if !ok {
-			return nil, arraySizeMismatchError()
-		}
-		items = append(items, filler)
 	}
 	atomic := n.ty.list
 	restFiller, _ := values.FillerFactoryFor(t.tc, atomic.Rest())

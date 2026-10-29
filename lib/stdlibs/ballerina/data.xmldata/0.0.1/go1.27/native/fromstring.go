@@ -68,8 +68,8 @@ func (t *typer) fromString(value string, ty semtypes.SemType) (values.BalValue, 
 			return n, nil
 		}
 	case kindByte:
-		if n, ok := parseJavaLong(value); ok && int32(n) >= 0 && int32(n) <= 255 {
-			return int64(int32(n)), nil
+		if n, ok := parseJavaLong(value); ok && n >= 0 && n <= 255 {
+			return n, nil
 		}
 	case kindFloat:
 		if f, ok := parseJavaDouble(value, false); ok {

@@ -35,6 +35,14 @@ type XmlField record {|
     xml a;
 |};
 
+type Flag record {|
+    byte y;
+|};
+
+type Pair record {|
+    Person[2] p;
+|};
+
 class FailingAfterDocument {
     int count = 0;
 
@@ -86,6 +94,22 @@ public function main() {
     XmlField|xmldata:Error emptyXml = xmldata:parseString("<r><a/></r>");
     io:println(emptyXml is xmldata:Error ? emptyXml.message() : "parsed");
     // @output field 'a' cannot be converted into the type 'xml'
+
+    // jBallerina narrows a byte value to 32 bits before the range check, so 4294967297 becomes 1.
+    Flag|xmldata:Error wideByte = xmldata:parseAsType(xml `<r><y>4294967297</y></r>`);
+    io:println(wideByte is xmldata:Error ? wideByte.message() : wideByte);
+    // @output 'string' value '4294967297' cannot be converted to 'byte'
+
+    // jBallerina fails with an internal error when a fixed-length array slot is left without a filler value.
+    Pair|xmldata:Error shortParsed = xmldata:parseString("<r><p><name>x</name></p></r>");
+    io:println(shortParsed is xmldata:Error ? shortParsed.message() : shortParsed);
+    // @output array size is not compatible with the expected size
+    Pair|xmldata:Error shortTraversed = xmldata:parseAsType(xml `<r><p><name>x</name></p></r>`);
+    io:println(shortTraversed is xmldata:Error ? shortTraversed.message() : shortTraversed);
+    // @output array size is not compatible with the expected size
+    Pair|xmldata:Error full = xmldata:parseString("<r><p><name>x</name></p><p><name>y</name></p></r>");
+    io:println(full is xmldata:Error ? full.message() : full);
+    // @output {"p":[{"name":"x"},{"name":"y"}]}
 
     // jBallerina returns the stream's own error; this port returns an xmldata:Error with its message.
     stream<byte[], error?> failing = new (new FailingAfterDocument());
