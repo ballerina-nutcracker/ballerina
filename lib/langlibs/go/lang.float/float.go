@@ -18,6 +18,7 @@ package floatruntime
 
 import (
 	"math"
+	"math/big"
 	"regexp"
 	"strconv"
 	"strings"
@@ -117,6 +118,14 @@ func unaryMath(fn func(float64) float64) extern.NativeFunc {
 	}
 }
 
+// Every finite float64 is a multiple of 2^-1074 = 5^1074 * 10^-1074, so rounding
+// to more than 1073 fraction digits never changes it.
+const maxSignificantFractionDigits = 1073
+
+// Every finite float64 is smaller in magnitude than 0.5 * 10^309, so rounding to
+// fewer than -308 fraction digits always gives zero.
+const minSignificantFractionDigits = -308
+
 func floatRound(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	x := args[0].(float64)
 	fractionDigits := args[1].(int64)
@@ -126,22 +135,49 @@ func floatRound(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 	if fractionDigits == 0 {
 		return math.RoundToEven(x), nil
 	}
-	scale := math.Pow10(int(fractionDigits))
-	if math.IsInf(scale, 0) {
+	if fractionDigits > maxSignificantFractionDigits {
 		return x, nil
 	}
-	if scale == 0 {
+	if fractionDigits < minSignificantFractionDigits {
 		return 0.0, nil
 	}
-	scaled := x * scale
-	if math.IsInf(scaled, 0) {
-		return x, nil
+	return roundToFractionDigits(x, fractionDigits), nil
+}
+
+func roundToFractionDigits(x float64, fractionDigits int64) float64 {
+	pow := new(big.Int).Exp(big.NewInt(10), big.NewInt(absInt64(fractionDigits)), nil)
+	scale := new(big.Rat).SetInt(pow)
+	if fractionDigits < 0 {
+		scale.Inv(scale)
 	}
-	rounded := math.RoundToEven(scaled)
-	if rounded == 0 {
-		return 0.0, nil
+	scaled := new(big.Rat).SetFloat64(x)
+	scaled.Mul(scaled, scale)
+	rounded := roundHalfEven(scaled)
+	if rounded.Sign() == 0 {
+		return 0.0
 	}
-	return rounded / scale, nil
+	result := new(big.Rat).SetInt(rounded)
+	result.Quo(result, scale)
+	out, _ := result.Float64()
+	return out
+}
+
+func absInt64(n int64) int64 {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
+
+func roundHalfEven(r *big.Rat) *big.Int {
+	quotient, remainder := new(big.Int).QuoRem(r.Num(), r.Denom(), new(big.Int))
+	twiceRemainder := new(big.Int).Abs(remainder)
+	twiceRemainder.Lsh(twiceRemainder, 1)
+	cmp := twiceRemainder.Cmp(r.Denom())
+	if cmp > 0 || (cmp == 0 && quotient.Bit(0) == 1) {
+		quotient.Add(quotient, big.NewInt(int64(r.Sign())))
+	}
+	return quotient
 }
 
 func floatPow(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
