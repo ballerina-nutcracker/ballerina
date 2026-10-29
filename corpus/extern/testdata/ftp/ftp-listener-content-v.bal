@@ -104,6 +104,17 @@ service class StreamService {
     }
 }
 
+@ftp:ServiceConfig {path: "/in/panic"}
+service class PanicService {
+    *ftp:Service;
+
+    remote function onFileText(string content, ftp:FileInfo fileInfo) {
+        recordEvent(string `panic ${fileInfo.name}`);
+        int[] empty = [];
+        _ = empty[content.length()];
+    }
+}
+
 function waitFor(int count) {
     foreach int _ in 0 ..< 200 {
         if eventCount() >= count {
@@ -150,6 +161,7 @@ public function main() returns error? {
         big.push(<byte>(i % 7));
     }
     check c->putBytes("/in/stream/big.dat", big);
+    check c->putText("/in/panic/boom.txt", "boom");
 
     ftp:Listener ftpListener = check new ({
         host: "127.0.0.1",
@@ -160,22 +172,24 @@ public function main() returns error? {
     check ftpListener.attach(new JsonService());
     check ftpListener.attach(new MixedService());
     check ftpListener.attach(new StreamService());
+    check ftpListener.attach(new PanicService());
 
     check ftpListener.poll();
-    waitFor(8);
+    waitFor(9);
     printEvents();
     // @output bytes data.bin 4
     // @output bytes notes.json 2
     // @output info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
     // @output json good.json pen
     // @output onError true
+    // @output panic boom.txt
     // @output stream big.dat 10000
     // @output text note.txt hello
     // @output xml <a>1</a>
 
     check c->delete("/in/mixed/data.bin");
     check ftpListener.poll();
-    waitFor(8);
+    waitFor(9);
     printEvents();
     // @output bytes notes.json 2
     // @output deleted ftp://ballerina:ballerina@127.0.0.1:PORT/in/mixed/data.bin
@@ -183,6 +197,7 @@ public function main() returns error? {
     // @output info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
     // @output json good.json pen
     // @output onError true
+    // @output panic boom.txt
     // @output stream big.dat 10000
     // @output xml <a>1</a>
 
