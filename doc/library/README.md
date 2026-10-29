@@ -64,6 +64,7 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **Regular expressions.** jBallerina compiles file name and dependency patterns as Java regular expressions; the Go-native version uses Go regular expressions, which reject look-around and back-references, and reports invalid patterns with Go's error text.
 - **File permissions in FileInfo.** jBallerina reports SFTP readability, writability and executability for the connected user; the Go-native version reports the owner permission bits.
 - **Handler failure output.** jBallerina prints a stack trace when a listener handler fails or a file cannot be read; the Go-native version prints `error: <message>` to stderr.
+- **Deleting a non-empty folder.** jBallerina's `delete` returns `()` and leaves a non-empty folder in place; the Go-native version returns an `ftp:Error` — spec section 3.4 requires an error when the operation fails.
 - **Transport error causes.** jBallerina reports connection and transfer failures with commons-vfs and JSch messages; the Go-native version keeps the same outer messages and error types but the underlying cause text comes from the Go network, FTP and SSH libraries.
 
 ### http
