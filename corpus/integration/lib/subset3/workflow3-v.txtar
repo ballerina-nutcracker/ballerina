@@ -1,0 +1,8 @@
+-- stdout --
+true
+a timeout must not be negative
+a timeout does not support 'years' or 'months': they have no fixed length
+o1 approved
+true
+sleep does not support 'years' or 'months': they have no fixed length
+-- stderr --
