@@ -106,7 +106,7 @@ func vfsRootURI(ep *endpoint, masked bool) string {
 }
 
 // remoteClient implements the file operations of an ftp:Client on top of a session, adding
-// the commons-vfs behaviours jBallerina relies on (parent creation, recursive delete, copy).
+// the commons-vfs behaviours jBallerina relies on (parent creation, copy).
 type remoteClient struct {
 	platform pal.Platform
 	ep       *endpoint
@@ -245,7 +245,17 @@ func (c *remoteClient) writeBytes(p string, data []byte, appendMode bool) error 
 }
 
 func (c *remoteClient) delete(p string) error {
-	entry, err := c.statOrFail(p, "delete file")
+	return c.remove(p, "delete file")
+}
+
+// rmdir removes a folder only when it is empty, as delete does; jBallerina removes a non-empty
+// folder recursively, which spec section 3.4 forbids (ballerina-library#9410).
+func (c *remoteClient) rmdir(p string) error {
+	return c.remove(p, "delete directory")
+}
+
+func (c *remoteClient) remove(p string, operation string) error {
+	entry, err := c.statOrFail(p, operation)
 	if err != nil {
 		return err
 	}
@@ -262,33 +272,6 @@ func (c *remoteClient) delete(p string) error {
 		err = c.sess.removeFile(target)
 	}
 	if err != nil {
-		return operationError("Could not delete \""+c.uri(p)+"\".", err)
-	}
-	return nil
-}
-
-func (c *remoteClient) removeAll(serverPath string, isDir bool) error {
-	if !isDir {
-		return c.sess.removeFile(serverPath)
-	}
-	children, err := c.sess.readDir(serverPath)
-	if err != nil {
-		return err
-	}
-	for _, child := range children {
-		if err := c.removeAll(path.Join(serverPath, child.name), child.isDir); err != nil {
-			return err
-		}
-	}
-	return c.sess.removeDir(serverPath)
-}
-
-func (c *remoteClient) rmdir(p string) error {
-	entry, err := c.statOrFail(p, "delete directory")
-	if err != nil {
-		return err
-	}
-	if err := c.removeAll(c.serverPath(p), entry.isDir); err != nil {
 		return operationError("Could not delete \""+c.uri(p)+"\".", err)
 	}
 	return nil

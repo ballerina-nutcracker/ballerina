@@ -429,7 +429,7 @@ Types: `ftp:Client` (client class), `ftp:Listener` (class), `ftp:Caller` (client
 | `getBytes` / `getText` / `getBytesAsStream` | Whole-file and streamed reads |
 | `getJson(path, targetType?)` / `getXml(path, targetType?)` | JSON bound to `json` or record types (with `laxDataBinding`); XML bound to `xml`. CSV reads and XML record binding are not yet supported |
 | `putBytes` / `putText` / `putJson` / `putXml` / `putCsv` / `putBytesAsStream` / `putCsvAsStream` | `OVERWRITE` or `APPEND`; `putXml` takes `xml` values |
-| `mkdir` / `rmdir` / `delete` / `rename` / `move` / `copy` / `exists` / `size` / `list` / `isDirectory` / `close` | Parent directories are created for writes, renames and copies; `rmdir` is recursive |
+| `mkdir` / `rmdir` / `delete` / `rename` / `move` / `copy` / `exists` / `size` / `list` / `isDirectory` / `close` | Parent directories are created for writes, renames and copies; `rmdir` and `delete` fail on a non-empty folder |
 | `get` / `put` / `append` | Deprecated untyped operations, including ZIP compression for `put` |
 | `retryConfig` / `circuitBreaker` | Exponential-backoff retry of whole-file reads; a rolling-window circuit breaker over all client operations |
 | `new ftp:Listener(config)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop`, `poll` | Polls each `@ftp:ServiceConfig` path (or the deprecated listener-level path) with file name patterns, age filters and dependency conditions |

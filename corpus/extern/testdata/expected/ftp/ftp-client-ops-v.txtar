@@ -45,6 +45,8 @@ true 0
 move: ok
 true
 delete dir: Could not delete "ftp://ballerina:***@127.0.0.1:PORT/moved/deep".
+rmdir non-empty: Could not delete "ftp://ballerina:***@127.0.0.1:PORT/moved".
+true
 rmdir: ok
 false
 delete empty dir: ok

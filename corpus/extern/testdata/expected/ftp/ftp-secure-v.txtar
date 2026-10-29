@@ -15,6 +15,7 @@ one+two
 ["c.txt","sub"]
 sftp 7 true
 [111,110,101,43,116,119,111]
+true
 false
 secret data
 secret data
