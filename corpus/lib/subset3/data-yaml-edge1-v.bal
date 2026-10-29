@@ -61,6 +61,9 @@ public function main() {
     show(expanded);
     json|yaml:Error aliased = yaml:parseString("a: &a [1, 2]\nb: [*a, *a, *a]");
     show(aliased);
+    string aliasHeavy = "---\na: &a [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\nb: [*a" + repeat(", *a", 84) + "]\n";
+    json[]|yaml:Error aliasHeavyStream = yaml:parseString(repeat(aliasHeavy, 500));
+    show(aliasHeavyStream is error ? aliasHeavyStream : aliasHeavyStream.length());
 
     json|yaml:Error crossDocument = yaml:parseString("--- &x 1\n--- *x");
     show(crossDocument);
@@ -101,6 +104,7 @@ public function main() {
 // @output true
 // @output 'document contains excessive aliasing' at line: '4' column: '9'
 // @output {"a":[1,2],"b":[[1,2],[1,2],[1,2]]}
+// @output 500
 // @output 'anchor does not exist' at line: '2' column: '5'
 // @output [1,2]
 // @output cannot write a value that has a cyclic reference
