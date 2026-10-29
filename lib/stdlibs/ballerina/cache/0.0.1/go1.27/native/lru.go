@@ -19,7 +19,8 @@ package native
 
 import (
 	"container/list"
-	"math"
+	"math/big"
+	"strconv"
 	"sync"
 	"sync/atomic"
 
@@ -27,10 +28,10 @@ import (
 )
 
 type lruCache struct {
-	mu             sync.Mutex
-	cleaning       atomic.Bool
-	capacity       int64
-	evictionFactor float64
+	mu            sync.Mutex
+	cleaning      atomic.Bool
+	capacity      int64
+	evictionCount int64
 	// Front is the least recently used entry.
 	order   *list.List
 	entries map[string]*list.Element
@@ -45,10 +46,10 @@ type cacheItem struct {
 
 func newLRUCache(capacity int64, evictionFactor float64) *lruCache {
 	return &lruCache{
-		capacity:       capacity,
-		evictionFactor: evictionFactor,
-		order:          list.New(),
-		entries:        make(map[string]*list.Element),
+		capacity:      capacity,
+		evictionCount: evictionCount(capacity, evictionFactor),
+		order:         list.New(),
+		entries:       make(map[string]*list.Element),
 	}
 }
 
@@ -63,16 +64,21 @@ func (c *lruCache) put(key string, entry *values.Map, expTime int64) {
 		return
 	}
 	if int64(len(c.entries)) >= c.capacity {
-		c.evictTo(c.capacity - c.evictionCount())
+		c.evictTo(c.capacity - c.evictionCount)
 	}
 	c.entries[key] = c.order.PushBack(&cacheItem{key: key, entry: entry, expTime: expTime})
 }
 
-// evictionCount computes `capacity * evictionFactor` in 32-bit float arithmetic as jBallerina does,
-// clamped to [1, capacity] so the cache never exceeds its capacity.
-func (c *lruCache) evictionCount() int64 {
-	product := float32(c.capacity) * float32(c.evictionFactor)
-	return min(max(int64(math.Ceil(float64(product))), 1), c.capacity)
+// evictionCount computes ceil(capacity * evictionFactor) exactly from the factor's shortest decimal form, so
+// 100 * 0.07 is 7, and clamps it to [1, capacity] so the cache never exceeds its capacity.
+func evictionCount(capacity int64, evictionFactor float64) int64 {
+	product, _ := new(big.Rat).SetString(strconv.FormatFloat(evictionFactor, 'g', -1, 64))
+	product.Mul(product, new(big.Rat).SetInt64(capacity))
+	count := new(big.Int).Quo(product.Num(), product.Denom()).Int64()
+	if !product.IsInt() {
+		count++
+	}
+	return min(max(count, 1), capacity)
 }
 
 func (c *lruCache) evictTo(size int64) {

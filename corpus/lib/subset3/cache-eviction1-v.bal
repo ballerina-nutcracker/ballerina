@@ -32,8 +32,13 @@ function sizeAfterOverflow(int capacity, float evictionFactor) returns int|error
 }
 
 public function main() returns error? {
-    // Evicts ceil(capacity * evictionFactor) entries, computed in 32-bit float as jBallerina does and clamped to [1, capacity].
+    // Evicts ceil(capacity * evictionFactor) entries, computed exactly from the decimal factor and clamped to [1, capacity].
     io:println(check sizeAfterOverflow(10, 0.3)); // @output 8
+    io:println(check sizeAfterOverflow(50, 0.3)); // @output 36
+    io:println(check sizeAfterOverflow(100, 0.6)); // @output 41
+    io:println(check sizeAfterOverflow(100, 0.15)); // @output 86
+    io:println(check sizeAfterOverflow(10, 0.25)); // @output 8
+    io:println(check sizeAfterOverflow(3, 0.1)); // @output 3
     io:println(check sizeAfterOverflow(10, 0.1)); // @output 10
     io:println(check sizeAfterOverflow(3, 0.7)); // @output 1
     io:println(check sizeAfterOverflow(7, 0.2)); // @output 6
