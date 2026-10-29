@@ -44,6 +44,10 @@ type config struct {
 	locale        string
 	encoding      string
 	nilValue      *string
+	// lfEndsLine and crlfEndsLine are the lineTerminator option: whether a bare LF, or an LF right after a
+	// CR, ends a line.
+	lfEndsLine   bool
+	crlfEndsLine bool
 	// header is the 0-based line of the header row, or nil when there is no header row.
 	header                       *int64
 	customHeadersIfHeadersAbsent []string
@@ -64,6 +68,8 @@ func readOptions(opts *values.Map) *config {
 		comment:       '#',
 		locale:        "en_US",
 		encoding:      "UTF-8",
+		lfEndsLine:    true,
+		crlfEndsLine:  true,
 		header:        new(int64),
 	}
 	if projection, ok := get(opts, "allowDataProjection").(*values.Map); ok {
@@ -96,6 +102,7 @@ func readOptions(opts *values.Map) *config {
 	if v, ok := get(opts, "nilValue").(string); ok {
 		cfg.nilValue = &v
 	}
+	cfg.readLineTerminators(get(opts, "lineTerminator"))
 	if opts != nil {
 		if _, present := opts.Get("header"); present {
 			cfg.header = nil
@@ -113,6 +120,20 @@ func readOptions(opts *values.Map) *config {
 	return cfg
 }
 
+func (c *config) readLineTerminators(v values.BalValue) {
+	var terminators []string
+	switch v := v.(type) {
+	case string:
+		terminators = []string{v}
+	case *values.List:
+		terminators = stringList(v)
+	default:
+		return
+	}
+	c.lfEndsLine = slices.Contains(terminators, "\n")
+	c.crlfEndsLine = slices.Contains(terminators, "\r\n")
+}
+
 // unionMemberConfig is CsvConfig.createConfigOptionsForUnion: the parser options for reading the rows
 // of a union element type as map<string> values before they are converted.
 func (c *config) unionMemberConfig() *config {
@@ -124,6 +145,8 @@ func (c *config) unionMemberConfig() *config {
 		locale:        c.locale,
 		encoding:      c.encoding,
 		nilValue:      c.nilValue,
+		lfEndsLine:    c.lfEndsLine,
+		crlfEndsLine:  c.crlfEndsLine,
 		header:        c.header,
 		failSafe:      c.failSafe,
 	}

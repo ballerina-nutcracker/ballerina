@@ -46,7 +46,7 @@ public function main() {
     io:println(csv:parseString("a,b\n1,\\uD83D\\uDE00", {}, Rows));
     // Escapes in a header.
     io:println(csv:parseString("\\u0061,\"\\u0062\"\n1,2", {outputWithHeaders: true}, Lists));
-    // Carriage returns are dropped everywhere.
+    // Carriage returns outside quotes are dropped.
     io:println(csv:parseString("a,b\r\n1,ab\rc\r\n", {}, Rows));
     // Unquoted values are trimmed; quoted values are not.
     io:println(csv:parseString("a,b\n  1  ,  x  y  \n2,\"  z  \"", {}, Rows));
