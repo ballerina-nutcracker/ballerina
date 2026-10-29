@@ -244,3 +244,42 @@ public function testMain() returns error? {
 }
 `, certFile, keyFile), externs)
 }
+
+// TestTcpClientTLSHandshakeTimeout verifies that secureSocket.handshakeTimeout
+// bounds the client handshake against a server that never answers the ClientHello.
+func TestTcpClientTLSHandshakeTimeout(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	_, caFile, _, _ := writeTLSCertFiles(t)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer func() { _ = ln.Close() }()
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		time.Sleep(10 * time.Second)
+	}()
+	host, port, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		t.Fatalf("splitting listener addr: %v", err)
+	}
+
+	start := time.Now()
+	runInlineCase(t, "tcp-client-tls-handshake-timeout-v", fmt.Sprintf(`
+import ballerina/io;
+import ballerina/tcp;
+
+public function main() {
+    tcp:Client|tcp:Error c = new (%q, %s, secureSocket = {cert: %q, handshakeTimeout: 0.5});
+    io:println(c is tcp:Error); // @output true
+}
+`, host, port, caFile), nil)
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Fatalf("handshake took %v, want it bounded by handshakeTimeout", elapsed)
+	}
+}
