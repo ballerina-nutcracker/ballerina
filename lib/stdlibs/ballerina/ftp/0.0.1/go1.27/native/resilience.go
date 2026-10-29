@@ -242,9 +242,19 @@ func (cb *circuitBreaker) updateState() {
 	}
 }
 
-func (cb *circuitBreaker) isOpen() bool {
+// tryAcquire decides whether a request may run and records its start under one lock, so only one
+// concurrent request becomes the HALF_OPEN trial.
+func (cb *circuitBreaker) tryAcquire() bool {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
+	if cb.isOpen() {
+		return false
+	}
+	cb.recordRequestStart()
+	return true
+}
+
+func (cb *circuitBreaker) isOpen() bool {
 	switch cb.state {
 	case circuitClosed:
 		return false
@@ -259,8 +269,6 @@ func (cb *circuitBreaker) isOpen() bool {
 }
 
 func (cb *circuitBreaker) recordRequestStart() {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
 	cb.updateState()
 	if cb.state == circuitOpen || (cb.state == circuitHalfOpen && cb.trialInProgress) {
 		return
@@ -382,11 +390,10 @@ func guard[T any](cb *circuitBreaker, op func() (T, error)) (T, error) {
 	if cb == nil {
 		return op()
 	}
-	if cb.isOpen() {
+	if !cb.tryAcquire() {
 		var zero T
 		return zero, cb.openError()
 	}
-	cb.recordRequestStart()
 	result, err := op()
 	cb.recordOutcome(err)
 	return result, err
