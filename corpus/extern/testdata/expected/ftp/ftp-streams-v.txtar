@@ -19,4 +19,5 @@ plain more
 [120,121]
 807534
 true
+true false
 -- stderr --

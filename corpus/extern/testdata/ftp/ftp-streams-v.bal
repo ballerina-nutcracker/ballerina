@@ -131,8 +131,13 @@ public function main() returns error? {
     check c->put("/s/archive.txt", "zip me", ftp:ZIP);
     byte[] zipped = check c->getBytes("/s/archive.zip");
     io:println(zipped[0], zipped[1], zipped[2], zipped[3]); // @output 807534
-    ftp:Error?|error noDot = trap c->put("/s/noext", "x", ftp:ZIP);
-    io:println(noDot is error && !(noDot is ftp:Error)); // @output true
+    check c->put("/s/noext", "x", ftp:ZIP);
+    boolean appended = check c->exists("/s/noext.zip");
+    io:println(appended); // @output true
+    check c->put("/s/v1.2/report", "x", ftp:ZIP);
+    boolean inDottedDir = check c->exists("/s/v1.2/report.zip");
+    boolean cutAtDir = check c->exists("/s/v1.zip");
+    io:println(inDottedDir, " ", cutAtDir); // @output true false
 
     check c->close();
 }

@@ -21,7 +21,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -574,14 +573,14 @@ func (m *ftpModule) closeLegacyStream(_ *extern.Context, args []values.BalValue)
 	return nil, nil
 }
 
-// compressedName mirrors FtpUtil.getCompressedFileName, which cuts the whole path at its last
-// dot and panics when there is none.
-func compressedName(p string) (string, error) {
-	i := strings.LastIndexByte(p, '.')
-	if i < 0 {
-		return "", fmt.Errorf("begin 0, end -1, length %d", len(p))
+// compressedName replaces the extension of the file name with .zip, or appends it; jBallerina
+// cuts the whole path at its last dot (ballerina-library#9382).
+func compressedName(p string) string {
+	dir, base := path.Split(p)
+	if ext := path.Ext(base); ext != "" && ext != base {
+		base = strings.TrimSuffix(base, ext)
 	}
-	return p[:i] + ".zip", nil
+	return dir + base + ".zip"
 }
 
 func zipContent(name string, data []byte) []byte {
@@ -626,12 +625,8 @@ func (m *ftpModule) legacyWrite(ctx *extern.Context, args []values.BalValue, app
 		return m.errorResult(ctx, err)
 	}
 	if getBool(input, "compressInput") {
-		name, err := compressedName(p)
-		if err != nil {
-			return nil, err
-		}
 		data = zipContent(path.Base(p), data)
-		p = name
+		p = compressedName(p)
 	}
 	remote, err := state.active()
 	if err != nil {
