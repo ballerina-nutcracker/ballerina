@@ -1,0 +1,12 @@
+-- stdout --
+-float:Infinity
+[-float:Infinity]
+{"a":-float:Infinity}
+[[-float:Infinity],{"k":-float:Infinity}]
+[-float:Infinity,"x"]
+[error("boom",v=-float:Infinity)]
+float:Infinity
+float:NaN
+-1.5
+-Infinity
+-- stderr --
