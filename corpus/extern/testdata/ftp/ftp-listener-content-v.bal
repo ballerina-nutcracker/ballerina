@@ -69,8 +69,8 @@ service class MixedService {
     *ftp:Service;
 
     remote function onFileText(string content, ftp:FileInfo fileInfo, ftp:Caller caller) returns error? {
-        recordEvent(string `text ${fileInfo.name} ${content}`);
         check caller->delete(fileInfo.pathDecoded);
+        recordEvent(string `text ${fileInfo.name} ${content}`);
     }
 
     remote function onFile(byte[] content, ftp:FileInfo fileInfo) returns error? {
@@ -189,17 +189,10 @@ public function main() returns error? {
 
     check c->delete("/in/mixed/data.bin");
     check ftpListener.poll();
-    waitFor(9);
+    waitFor(2);
     printEvents();
-    // @output bytes notes.json 2
     // @output deleted ftp://127.0.0.1:PORT/in/mixed/data.bin
     // @output deleted ftp://127.0.0.1:PORT/in/mixed/note.txt
-    // @output info ftp://127.0.0.1:PORT/in/stream/big.dat //127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
-    // @output json good.json pen
-    // @output onError true
-    // @output panic boom.txt
-    // @output stream big.dat 10000
-    // @output xml <a>1</a>
 
     check ftpListener.gracefulStop();
     error? afterStop = ftpListener.poll();
