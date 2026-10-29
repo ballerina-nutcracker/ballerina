@@ -12,6 +12,7 @@ worked on — they're one of:
   package's README support matrix), but an actual defect: the dependency's Go implementation
   diverges from its own documented behaviour, or produces wrong output for a case its README claims
   is `Supported`.
+- **A bug in the jBallerina reference implementation** — jBallerina's behaviour contradicts its spec or API docs, or is clearly defective, and the port implements the correct behaviour instead (see `add-stdlib-support` Step 5). These are tracked in the upstream library repo, not this one; see "jBallerina bugs" below.
 
 Both are worth tracking independently of whatever local workaround this port ends up taking, so the
 underlying limitation doesn't get silently rediscovered by the next person who hits it.
@@ -63,3 +64,34 @@ underlying limitation doesn't get silently rediscovered by the next person who h
    run `gh issue create` against `ballerina-nutcracker/ballerina` on their behalf. Filing an issue is
    visible to others, so only do that with direct confirmation for that specific issue; never file
    proactively.
+
+## jBallerina bugs
+
+A `jBallerina bug` row from the Step 5 behaviour table is tracked at **https://github.com/ballerina-platform/ballerina-library/issues** with the labels `Type/Bug` and `module/<name>`. The same draft-don't-file rule applies: hand the draft to the developer, and run `gh issue create` only with their direct confirmation for that specific issue. Search the repo for an existing issue first.
+
+Use the repo's bug-report sections:
+
+```markdown
+### Description
+<What jBallerina does, why it is wrong (quote the spec or API doc it contradicts), and the Java/.bal location, e.g. "`Cache.java` lines 58–63".>
+
+### Steps to Reproduce
+\`\`\`ballerina
+<the run-jballerina probe>
+\`\`\`
+Output:
+\`\`\`
+<verbatim jBallerina output>
+\`\`\`
+Expected: <the correct output>.
+
+Suggested fix: <one line, if obvious>.
+
+### Version
+ballerina/<name> <jBallerina package version>, Ballerina <bal version>
+
+### Environment Details (with versions)
+<OS, Ballerina version>
+```
+
+Once filed, link the issue from the package README's **Notable Behavioural Changes** bullet and from the corpus test that asserts the corrected behaviour.

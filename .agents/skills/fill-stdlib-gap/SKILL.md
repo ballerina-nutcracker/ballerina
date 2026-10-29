@@ -11,7 +11,7 @@ If the user wants to port a brand-new stdlib (`lib/stdlibs/ballerina/<name>/` do
 
 Coding rules and the PAL constraint live in `AGENTS.md` at the repo root — read it before editing. Shared templates and patterns live in `add-stdlib-support`'s directory (`../add-stdlib-support/templates/`, `../add-stdlib-support/references/`) — this skill points there rather than repeating them.
 
-**Golden rule** (same as `add-stdlib-support`): the Ballerina public interface must stay identical to jBallerina's, and if the jBallerina reference ships a `docs/spec/spec.md`, its prose must exactly match the Go implementation's actual behaviour for the surface being touched. A spec/implementation mismatch is a defect to resolve before the gap-fill is done — not something to leave unreconciled.
+**Golden rule** (same as `add-stdlib-support`): the Ballerina public interface must stay identical to jBallerina's, and if the jBallerina reference ships a `docs/spec/spec.md`, its prose must exactly match the Go implementation's actual behaviour for the surface being touched. A spec/implementation mismatch is a defect to resolve before the gap-fill is done — not something to leave unreconciled. Matching jBallerina's runtime behaviour is the default, not an absolute: where jBallerina's behaviour is a bug, implement the correct behaviour and record the divergence; never copy the bug (see `add-stdlib-support` Step 5).
 
 ## 1. Identify the gap
 
@@ -54,9 +54,9 @@ Do not assume you know what a jBallerina feature does from prior training. Imple
 
 Produce a focused 3-column table for the touched surface only:
 
-| Feature | Risk | Resolution |
-|---|---|---|
-| ... | ... | ... |
+| Feature | Risk | Classification | Resolution |
+|---|---|---|---|
+| ... | ... | `match` / `unavoidable divergence` / `jBallerina bug` | ... |
 
 Check the hot-spots in `../add-stdlib-support/references/parity-risks.md`, scoped to just this surface (decimal precision, UTF-8 vs UTF-16 string ops, NaN/overflow, error-message wording on the outer error, plus the module's domain-specific risks). Where a row's behaviour is verifiable by running code, verify it with the **`run-jballerina`** skill — run a small probe on jBallerina (`bal run`) and on this interpreter, and compare — rather than reasoning from documentation.
 
@@ -65,6 +65,7 @@ If `docs/spec/spec.md` exists: check every behavioural claim it makes about the 
 Rules:
 - **Avoidable** divergences — fix during Step 4.
 - **Unavoidable** divergences — record in the README under **Notable Behavioural Changes** during Step 5.
+- **jBallerina bugs** (jBallerina contradicts its spec or API docs, or is clearly defective; see the defect patterns in `../add-stdlib-support/references/parity-risks.md`) — confirm the classification with the user, implement the correct behaviour, record it under **Notable Behavioural Changes** with the upstream issue link, and draft the upstream issue per `../add-stdlib-support/references/reporting-limitations.md`. Don't write a corpus `@output` that asserts the bug.
 - **A genuine bug** — either in this stdlib's own previously-`Supported` behaviour, or in a stdlib it depends on, rather than a new architectural constraint — isn't just an "unavoidable" row: also follow `../add-stdlib-support/references/reporting-limitations.md` to get it tracked upstream.
 
 If every row is "No risk identified", say so and move on.
@@ -136,7 +137,7 @@ A library test's `-update` run only ever writes `corpus/integration/lib/**.txtar
 Update the README row via the **`stdlib-readme-format`** skill:
 
 - Promote the affected row's status (`Not Yet Supported` → `Supported`, or `Partially Supported` → `Supported` if the caveats are resolved).
-- If the parity check in Step 3 surfaced an unavoidable divergence, add it to **Notable Behavioural Changes**.
+- If the parity check in Step 3 surfaced an unavoidable divergence or a jBallerina bug fix, add it to **Notable Behavioural Changes**.
 - Update the aggregator `doc/library/README.md`: recount this package's row and recompute the **Total** footer; if a behavioural change was added or removed, mirror it into the package's `### <name>` subsection of the consolidated section. Then update the repo-root `README.md` **Standard library coverage** summary sentence (overall %, package count, Supported / Partially Supported / Not Yet Supported totals) to match the new Total footer.
 - Re-run the full `stdlib-readme-format` validation checklist against the updated README (catches pre-existing violations too).
 - Update `doc/library/subset<N>.md` (the subset the tests were added to above) to document the newly-covered surface — this is separate from, and in addition to, the per-package `README.md`.
@@ -153,7 +154,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] README row status reflects what's now implemented.
 - [ ] `doc/library/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed), and the repo-root `README.md` coverage summary matches its Total footer.
 - [ ] `stdlib-readme-format` validation checklist passes.
-- [ ] Any unavoidable divergence is in **Notable Behavioural Changes**.
+- [ ] Any unavoidable divergence or jBallerina bug fix is in **Notable Behavioural Changes**, bug fixes with their upstream issue link.
 - [ ] **Run the `validate-stdlib-contract` skill on this package** (at minimum, review its diff output for the touched surface) — the verdict must be PASS, or PASS with notes that you have reviewed.
 - [ ] If a new `import ballerina/<dep>` was added to the `.bal` source: `Dependencies.toml` updated with the new entry and `dependencies = [...]` field.
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.

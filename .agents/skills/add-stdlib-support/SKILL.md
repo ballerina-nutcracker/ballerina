@@ -13,7 +13,7 @@ End-to-end workflow for porting a `ballerina/<name>` package from jBallerina (Ja
 | 2 | Resolve imports, check existing stdlib coverage | — |
 | 3 | Cross-check language support | — |
 | 4 | Propose plan + showcase `.bal` | **user approval required** |
-| 5 | Behavioural parity analysis | **parity table required** |
+| 5 | Behaviour analysis | **behaviour table required** |
 | 6 | Evaluate Go libraries (if any) | **user approval before touching `go.mod`** |
 | 7 | Implement | — |
 | 8 | Tests + coverage | subset choice needs user confirmation |
@@ -23,6 +23,8 @@ End-to-end workflow for porting a `ballerina/<name>` package from jBallerina (Ja
 All coding rules and the PAL constraint live in `AGENTS.md` at the repo root — read it before implementing. This skill encodes the *process*, not the rules. Supporting files in this skill's directory (`templates/`, `references/`) hold the manifest/source templates and shared patterns — read each one when its step tells you to.
 
 **Golden rule:** two things must hold when this port is done — (1) the Ballerina public interface must stay identical to jBallerina's (never break customer code — see `validate-stdlib-contract`), and (2) if the jBallerina reference root ships a `docs/spec/spec.md`, its prose must exactly match the Go implementation's actual behaviour for every in-scope feature. A spec sentence describing behaviour the Go code doesn't have, or silent on a divergence the Go code does have, is a defect to resolve (by fixing the implementation to match intended design, or by recording the divergence) before the port is done — not something to leave unreconciled.
+
+Matching jBallerina's runtime behaviour is the default, not an absolute. Where jBallerina's behaviour is a bug, the port implements the correct behaviour and records the divergence; it never copies the bug to keep outputs identical (Step 5).
 
 If the user wants to fix a gap in a stdlib that already exists under `lib/stdlibs/ballerina/<name>/`, use `fill-stdlib-gap` instead — this skill is heavyweight by design.
 
@@ -39,7 +41,7 @@ That root should contain:
 Then:
 
 - Read every `.bal` file under `<root>/ballerina/`, excluding `tests/` and `build/`, to enumerate the full jBallerina feature set and identify which functions are `external`.
-- If `<root>/native/` exists, read the Java sources backing those extern functions. This is the authoritative source of truth for runtime semantics — error wording, edge-case handling, parsing rules, numeric behaviour — and is what the Go natives must match for parity (see Step 5). Don't infer behaviour from `.bal` signatures alone when Java source is available.
+- If `<root>/native/` exists, read the Java sources backing those extern functions. This is the authoritative source of truth for runtime semantics — error wording, edge-case handling, parsing rules, numeric behaviour — and is what the Go natives must match unless it is a jBallerina bug (see Step 5). Don't infer behaviour from `.bal` signatures alone when Java source is available.
 - If `<root>/docs/spec/spec.md` exists, read it in full and note every behavioural claim it makes for features in scope. Treat divergences between the spec and the Java/`.bal` source as a flag to raise with the user (Step 4), not something to silently resolve one way.
 
 ## 2. Resolve imports and check existing stdlib coverage
@@ -85,26 +87,38 @@ Produce both:
 
 **Wait for the user to approve both the plan and the showcase file before touching any Go code.**
 
-## 5. Behavioral parity analysis *(GATE: parity table required)*
+## 5. Behaviour analysis *(GATE: behaviour table required)*
 
-The Go-native behaviour **must match the jBallerina (JVM) behaviour** for every supported feature. Users migrating from jBallerina must not observe breaking changes. Before writing any Go code, produce a parity table for each in-scope feature:
+Decide the Go-native behaviour of each in-scope feature in this order of precedence:
 
-| Feature | Known Go/JVM divergence risk | Avoidable? | Resolution |
-|---|---|---|---|
-| ... | ... | ... | ... |
+1. **Public interface** — identical to jBallerina, so existing code keeps compiling (see `validate-stdlib-contract`).
+2. **Spec** — if `docs/spec/spec.md` exists, its prose is the behavioural contract.
+3. **jBallerina's observable behaviour** — match it where the spec is silent and the behaviour is sensible: defaults, outer error messages and types, edge cases users can rely on. Users migrating from jBallerina must not observe breaking changes in correct programs.
+4. **jBallerina bugs** — where jBallerina contradicts the spec or its own API docs, or is clearly defective, implement the correct behaviour instead of copying it. Clear defects include data loss or corruption, races and shared mutable state, silent overflow or truncation, configured limits that are not enforced, and inputs ignored without an error. See `references/parity-risks.md` for common patterns.
 
-Read `references/parity-risks.md` for the hot-spots to investigate (decimal precision, UTF-8 vs UTF-16, error-message rules, numeric edge cases) plus a domain-specific example. Where a row's behaviour is verifiable by running code, verify it with the **`run-jballerina`** skill (`bal run` the probe on jBallerina, compare against this interpreter) rather than reasoning from documentation.
+Before writing any Go code, produce a behaviour table for each in-scope feature:
+
+| Feature | jBallerina behaviour (verified) | Spec says | Classification | Go behaviour | Upstream issue |
+|---|---|---|---|---|---|
+| ... | ... | ... | `match` / `unavoidable divergence` / `jBallerina bug` | ... | ... |
+
+List every `jBallerina bug` row in the plan presented to the user and wait for their agreement: whether something is a bug is a judgement call, never a silent decision.
+
+jBallerina's output is evidence of how it behaves today, not the expected value. A corpus `@output` that differs from jBallerina because a bug was fixed is correct; cite the upstream issue in a comment next to it.
+
+Read `references/parity-risks.md` for the hot-spots to investigate (decimal precision, UTF-8 vs UTF-16, error-message rules, numeric edge cases, common jBallerina defect patterns) plus a domain-specific example. Where a row's behaviour is verifiable by running code, verify it with the **`run-jballerina`** skill (`bal run` the probe on jBallerina, compare against this interpreter) rather than reasoning from documentation.
 
 ### Spec cross-check (only if `docs/spec/spec.md` exists)
 
-Add a row to the parity table for every behavioural claim the spec makes about an in-scope feature, and verify the planned Go implementation will match it exactly — same edge-case handling, same defaults, same error conditions. A spec/implementation mismatch is treated the same as a spec/Java mismatch: raise it with the user rather than picking a side silently. This check is repeated against the *actual* implementation in Step 10 — Step 5 catches mismatches before code is written, Step 10 catches drift introduced while writing it.
+Add a row to the behaviour table for every behavioural claim the spec makes about an in-scope feature, and verify the planned Go implementation will match it exactly — same edge-case handling, same defaults, same error conditions. A spec/implementation mismatch is treated the same as a spec/Java mismatch: raise it with the user rather than picking a side silently. This check is repeated against the *actual* implementation in Step 10 — Step 5 catches mismatches before code is written, Step 10 catches drift introduced while writing it.
 
 ### Rules
 
 - **Avoidable** divergences (resolvable in the Go layer) — fix before merging.
 - **Unavoidable** divergences (architectural Go/JVM constraint) — record in the README under **Notable Behavioural Changes** *before* implementing.
+- **jBallerina bugs** — implement the correct behaviour, record it in the README under **Notable Behavioural Changes** with the upstream issue link, and draft an issue for `ballerina-platform/ballerina-library` per `references/reporting-limitations.md`. Verify the bug on jBallerina with the **`run-jballerina`** skill first; the draft carries that probe as its reproduction.
 - **A divergence traced to an actual bug in a dependency stdlib** (not an architectural constraint, and not already a catalogued gap) — don't just record it as unavoidable; also follow `references/reporting-limitations.md` to get it tracked upstream.
-- Do not proceed to Step 6 without a complete parity table, even if every row says "No risk identified."
+- Do not proceed to Step 6 without a complete behaviour table, even if every row says "No risk identified."
 
 ## 6. Evaluate Go libraries *(GATE: wait for approval before touching `go.mod`)*
 
@@ -225,7 +239,7 @@ If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-c
 
 ## 9. README
 
-Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence from the Step 5 parity table into **Notable Behavioural Changes** — these must be present before merge.
+Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence and every jBallerina bug fix from the Step 5 behaviour table into **Notable Behavioural Changes** — these must be present before merge.
 
 Then update the aggregator `doc/library/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any). Then update the repo-root `README.md` **Standard library coverage** summary sentence (overall %, package count, Supported / Partially Supported / Not Yet Supported totals) to match the new Total footer, and add the package to its `**Supported packages:**` list (alphabetical, linked to the package README).
 
@@ -247,8 +261,10 @@ Before declaring done, check every box:
 - [ ] Local coverage of the new `native/` package is **≥80%** (Step 8's `go tool cover -func=... | grep total` command). This is what Codecov's patch-coverage check in CI (`native-ci.yml` + `codecov.yml`) will otherwise fail the PR on.
 
 ### Parity & contract
-- [ ] Every Step 5 parity-table row marked **"Avoidable / Fixed"** verified against jBallerina for at least one representative input, via the **`run-jballerina`** skill.
+- [ ] Every Step 5 behaviour-table row classified `match` verified against jBallerina for at least one representative input, via the **`run-jballerina`** skill.
 - [ ] Every unavoidable divergence recorded in **Notable Behavioural Changes**.
+- [ ] Every `jBallerina bug` row reproduced on jBallerina, agreed with the user, recorded in **Notable Behavioural Changes** with its upstream issue link (or a placeholder until the developer files it), and its upstream issue drafted.
+- [ ] No corpus test asserts behaviour classified as a `jBallerina bug`.
 - [ ] **Run the `validate-stdlib-contract` skill on the new package — the verdict must be PASS** (or PASS with notes, each note reviewed). This is the final public-interface gate.
 - [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every in-scope behavioural claim it makes matches the shipped Go implementation exactly. Any mismatch found during implementation (not just at Step 5's planning stage) has been resolved — implementation fixed, or the divergence explicitly documented — not left unreconciled.
 
@@ -269,8 +285,8 @@ Before declaring done, check every box:
 Summarise:
 - What was implemented and what was scoped out (with reasons).
 - Any new PAL methods or external Go dependencies added.
-- The complete parity table from Step 5.
+- The complete behaviour table from Step 5.
 - The measured `native/` coverage % from Step 8's verify command.
 - The `validate-stdlib-contract` verdict.
 - Which `corpus/lib/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
-- Any language-limitation or dependency-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it.
+- Any language-limitation, dependency-bug or jBallerina-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it.

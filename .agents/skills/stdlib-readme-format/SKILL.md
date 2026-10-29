@@ -47,6 +47,7 @@ Support Levels:
 
 <Use bullet points with bold headers, one bullet per divergence. Format each as:
 - **<Short title>.** <jBallerina behaviour>; the Go-native version <Go-native behaviour> — <reason if helpful>.
+For a jBallerina bug fix, end the bullet with the upstream issue link: (<https://github.com/ballerina-platform/ballerina-library/issues/N>).
 
 If there are no notable behavioural changes, write:
 There are **no** notable behavioural changes in the Go-native version compared to the original jBallerina implementation for the currently supported features.>
@@ -76,7 +77,9 @@ Always `|---|---|---|`. Never wide-padded column separators.
 ## Notable Behavioural Changes rules
 
 - **Format**: bullet list with a bold header followed by a period, then a sentence. Example: `- **Title.** jBallerina does X; the Go-native version does Y — reason.`
-- **Content**: only permanent, architectural Go-level constraints that cannot be resolved in the `native/` layer.
+- **Content**: permanent divergences of two kinds:
+  - Architectural Go-level constraints that cannot be resolved in the `native/` layer.
+  - Fixes of jBallerina bugs, where the port deliberately implements the correct behaviour (see `add-stdlib-support` Step 5). Each one links its `ballerina-platform/ballerina-library` issue.
 - **Do not include**:
   - Temporary language gaps that will be fixed when the interpreter gains the feature (e.g. `distinct` error subtypes, `readonly &` intersections, `stream` type, XML, full `typedesc` parameter handling). These belong in the support table as `Not Yet Supported` or `Partially Supported`.
   - Entries that say "identical" or "matching" — if the behaviour is identical, it is not a change.
@@ -102,6 +105,8 @@ The script cannot check these; confirm each is YES:
 - [ ] Every `Supported` row's Comments cell is either empty or a *meaningful* caveat
 - [ ] If the module declares a module-level error type (e.g. `io:Error`), the table has a row tracking it with an accurate status — `Partially Supported` with a `distinct` comment when the type ships as a plain alias, `Not Yet Supported` when it isn't declared at all
 - [ ] No bullet describes behaviour identical to jBallerina
+- [ ] Every bullet that fixes a jBallerina bug links its upstream issue
+- [ ] No Comments cell justifies a behaviour only with "as in jBallerina" when that behaviour is a known jBallerina bug
 - [ ] No bullet describes a temporary language gap (`distinct`, `readonly &`, `stream`, etc.) — those belong in the support table
 - [ ] No bullet describes a future feature's potential divergence
 - [ ] Key Functionalities reflects only currently supported features
