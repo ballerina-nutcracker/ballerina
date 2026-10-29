@@ -1,0 +1,36 @@
+-- stdout --
+'exceeded max depth of 10000' at line: '1' column: '10,000'
+'exceeded max depth of 10000' at line: '1' column: '20,000'
+true
+'document contains excessive aliasing' at line: '4' column: '9'
+{"a":[1,2],"b":[[1,2],[1,2],[1,2]]}
+'anchor does not exist' at line: '2' column: '5'
+[1,2]
+cannot write a value that has a cyclic reference
+cannot write a value that has a cyclic reference
+-
+  - 1
+-
+  - 1
+indentationPolicy must not be greater than 1024
+a: []
+b: {}
+c:
+- []
+- {}
+{"a":[],"b":{},"c":[[],{}]}
+{}
+[]
+- ".inf"
+- "-.Inf"
+- ".NaN"
+- "0x1F"
+- "0o17"
+- "+12"
+- "1."
+- ".5e3"
+- 1_000
+{"name":"a"}
+{"name":"a"}
+{"name":"Ann"}
+-- stderr --
