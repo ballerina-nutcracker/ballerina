@@ -159,6 +159,7 @@ func (p *parser) nextDocument() (doc *node, explicit bool, ok bool, err error) {
 		}
 	}
 	p.anchors = make(map[string]*node)
+	p.nodes, p.aliasNodes = 0, 0
 	doc, err = p.parseNode(true, false)
 	if err != nil {
 		return nil, false, false, err
