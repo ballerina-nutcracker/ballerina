@@ -112,12 +112,7 @@ func cleanUpExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, 
 // truncate drops the fractional seconds of an epoch time the way jBallerina's
 // `BigDecimal.longValue()` does, so expiry is compared at whole-second granularity.
 func truncate(d *decimal.Decimal) int64 {
-	var whole *decimal.Decimal
-	if d.Cmp(decimal.FromInt64(0)) < 0 {
-		whole, _ = d.Ceiling()
-	} else {
-		whole, _ = d.Floor()
-	}
+	whole, _ := d.Truncate()
 	n, _, _ := whole.Int64()
 	return n
 }
