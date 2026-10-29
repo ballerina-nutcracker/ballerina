@@ -36,6 +36,7 @@ type writeOptions struct {
 	forceQuotes     bool
 	isStream        bool
 	flowStyle       bool
+	schema          yamlSchema
 }
 
 func toYamlString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -55,6 +56,7 @@ func toYamlString(ctx *extern.Context, args []values.BalValue) (values.BalValue,
 			forceQuotes:     get(config, "forceQuotes") == true,
 			isStream:        get(config, "isStream") == true,
 			flowStyle:       get(config, "flowStyle") == true,
+			schema:          schemaOf(get(config, "schema")),
 		},
 		visiting: make(map[values.BalValue]bool),
 	}
@@ -243,7 +245,7 @@ func (w *yamlWriter) flowScalar(v values.BalValue) string {
 
 func (w *yamlWriter) scalarIn(v values.BalValue, inFlow bool) string {
 	text, isString := scalarText(v)
-	if w.options.forceQuotes || (isString && (needsQuotes(text) || inFlow && strings.ContainsAny(text, ",[]{}"))) {
+	if w.options.forceQuotes || (isString && (needsQuotes(text, w.options.schema) || inFlow && strings.ContainsAny(text, ",[]{}"))) {
 		text = w.quote(text)
 	}
 	if w.options.canonical {
@@ -306,9 +308,9 @@ func isControl(r rune) bool {
 
 // needsQuotes reports whether a string written as a plain scalar would be read back differently: it is
 // empty, has leading or trailing white space or control characters, starts with an indicator or the
-// document-end marker, contains ": " or " #", or would be read as null, a boolean or a number. Inside a
-// flow collection a flow indicator anywhere in the string also needs quotes.
-func needsQuotes(text string) bool {
+// document-end marker, contains ": " or " #", or the schema would resolve it to null, a boolean or a
+// number. Inside a flow collection a flow indicator anywhere in the string also needs quotes.
+func needsQuotes(text string, schema yamlSchema) bool {
 	if text == "" || strings.ContainsFunc(text, isControl) || strings.TrimSpace(text) != text {
 		return true
 	}
@@ -321,6 +323,18 @@ func needsQuotes(text string) bool {
 	if strings.Contains(text, ": ") || strings.Contains(text, " #") || strings.HasSuffix(text, ":") {
 		return true
 	}
+	switch schema {
+	case schemaJSON:
+		return isAnyOf(text, "null", "true", "false") || jsonSchemaNumber.MatchString(text)
+	case schemaCore:
+		return isCoreSchemaNonString(text)
+	}
+	return false
+}
+
+// isCoreSchemaNonString reports whether the core schema, or jBallerina's number parsing, reads text as
+// something other than a string.
+func isCoreSchemaNonString(text string) bool {
 	if isAnyOf(text, "null", "Null", "NULL", "~", "true", "True", "TRUE", "false", "False", "FALSE") {
 		return true
 	}
@@ -337,3 +351,6 @@ func needsQuotes(text string) bool {
 // coreSchemaNumber matches the YAML 1.2 core schema int and float forms, which also cover the JSON schema.
 var coreSchemaNumber = regexp.MustCompile(`^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+|` +
 	`[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$`)
+
+// jsonSchemaNumber matches the YAML 1.2 JSON schema int and float forms.
+var jsonSchemaNumber = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.[0-9]*)?(?:[eE][-+]?[0-9]+)?$`)
