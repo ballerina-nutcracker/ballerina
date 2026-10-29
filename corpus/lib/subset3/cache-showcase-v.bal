@@ -47,7 +47,7 @@ public function main() returns error? {
 
     check c.put("t", "T", 1);
     runtime:sleep(2);
-    io:println(c.hasKey("t"), " ", c.get("t") is cache:Error, " ", c.hasKey("t")); // @output true true false
+    io:println(c.size(), " ", c.hasKey("t"), " ", c.size()); // @output 1 false 0
 
     cache:Cache c2 = new (defaultMaxAge = 1, cleanupInterval = 1);
     check c2.put("x", 1);

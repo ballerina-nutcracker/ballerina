@@ -18,6 +18,8 @@
 package native
 
 import (
+	"math"
+
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -64,12 +66,12 @@ func cacheOf(self values.BalValue) *lruCache {
 func putExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	entry := args[2].(*values.Map)
 	expTime, _ := entry.Get(expTimeField)
-	cacheOf(args[0]).put(args[1].(string), entry, truncate(expTime.(*decimal.Decimal)))
+	cacheOf(args[0]).put(args[1].(string), entry, expiryNanos(expTime.(*decimal.Decimal)))
 	return nil, nil
 }
 
 func getExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	entry := cacheOf(args[0]).get(args[1].(string), truncate(args[2].(*decimal.Decimal)))
+	entry := cacheOf(args[0]).get(args[1].(string), unixNanos(args[2].(*decimal.Decimal)))
 	if entry == nil {
 		return nil, nil
 	}
@@ -87,7 +89,7 @@ func removeAllExtern(_ *extern.Context, args []values.BalValue) (values.BalValue
 }
 
 func hasKeyExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	return cacheOf(args[0]).hasKey(args[1].(string)), nil
+	return cacheOf(args[0]).hasKey(args[1].(string), unixNanos(args[2].(*decimal.Decimal))), nil
 }
 
 func keysExtern(rt *runtime.Runtime) extern.NativeFunc {
@@ -105,14 +107,34 @@ func sizeExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 }
 
 func cleanUpExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	cacheOf(args[0]).cleanUp(truncate(args[1].(*decimal.Decimal)))
+	cacheOf(args[0]).cleanUp(unixNanos(args[1].(*decimal.Decimal)))
 	return nil, nil
 }
 
-// truncate drops the fractional seconds of an epoch time the way jBallerina's
-// `BigDecimal.longValue()` does, so expiry is compared at whole-second granularity.
-func truncate(d *decimal.Decimal) int64 {
-	whole, _ := d.Truncate()
-	n, _, _ := whole.Int64()
-	return n
+var (
+	neverExpires   = decimal.FromInt64(-1)
+	nanosPerSecond = decimal.FromInt64(1_000_000_000)
+	zero           = decimal.FromInt64(0)
+)
+
+func expiryNanos(expTime *decimal.Decimal) int64 {
+	if expTime.Cmp(neverExpires) == 0 {
+		return math.MaxInt64
+	}
+	return unixNanos(expTime)
+}
+
+// unixNanos converts epoch seconds to Unix nanoseconds, saturating at the int64 bounds.
+func unixNanos(seconds *decimal.Decimal) int64 {
+	if product, err := seconds.Mul(nanosPerSecond); err == nil {
+		if whole, err := product.Truncate(); err == nil {
+			if n, ok, _ := whole.Int64(); ok {
+				return n
+			}
+		}
+	}
+	if seconds.Cmp(zero) < 0 {
+		return math.MinInt64
+	}
+	return math.MaxInt64
 }

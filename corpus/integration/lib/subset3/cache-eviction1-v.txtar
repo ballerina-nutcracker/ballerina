@@ -8,10 +8,10 @@
 5
 1
 7 ["k2","k3","k4","k5","k6","k7","new"]
-2 true false true
+3 true true true
 99
-["k0","k1","x"]
+["k1","x"]
 3 ["k0","k2","y"]
 1 ["z"]
-3 ["k7","k8","k9"]
+2 ["k8","k9"]
 -- stderr --

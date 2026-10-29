@@ -37,8 +37,9 @@ type lruCache struct {
 }
 
 type cacheItem struct {
-	key     string
-	entry   *values.Map
+	key   string
+	entry *values.Map
+	// expTime is in Unix nanoseconds; math.MaxInt64 means the entry never expires.
 	expTime int64
 }
 
@@ -54,9 +55,6 @@ func newLRUCache(capacity int64, evictionFactor float64) *lruCache {
 func (c *lruCache) put(key string, entry *values.Map, expTime int64) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if int64(len(c.entries)) >= c.capacity {
-		c.evictTo(c.capacity - c.evictionCount())
-	}
 	if elem, ok := c.entries[key]; ok {
 		item := elem.Value.(*cacheItem)
 		item.entry = entry
@@ -64,18 +62,21 @@ func (c *lruCache) put(key string, entry *values.Map, expTime int64) {
 		c.order.MoveToBack(elem)
 		return
 	}
+	if int64(len(c.entries)) >= c.capacity {
+		c.evictTo(c.capacity - c.evictionCount())
+	}
 	c.entries[key] = c.order.PushBack(&cacheItem{key: key, entry: entry, expTime: expTime})
 }
 
-// evictionCount matches jBallerina, which computes `capacity * evictionFactor` in 32-bit float arithmetic.
+// evictionCount computes `capacity * evictionFactor` in 32-bit float arithmetic as jBallerina does,
+// clamped to [1, capacity] so the cache never exceeds its capacity.
 func (c *lruCache) evictionCount() int64 {
 	product := float32(c.capacity) * float32(c.evictionFactor)
-	return int64(math.Ceil(float64(product)))
+	return min(max(int64(math.Ceil(float64(product))), 1), c.capacity)
 }
 
-// evictTo clamps size at zero because float32 rounding can make evictionCount exceed the capacity.
 func (c *lruCache) evictTo(size int64) {
-	for int64(len(c.entries)) > max(size, 0) {
+	for int64(len(c.entries)) > size {
 		c.removeElement(c.order.Front())
 	}
 }
@@ -111,11 +112,19 @@ func (c *lruCache) removeAll() {
 	clear(c.entries)
 }
 
-func (c *lruCache) hasKey(key string) bool {
+// hasKey removes an expired entry and reports it as absent, as get does, without changing recency.
+func (c *lruCache) hasKey(key string, now int64) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	_, ok := c.entries[key]
-	return ok
+	elem, ok := c.entries[key]
+	if !ok {
+		return false
+	}
+	if elem.Value.(*cacheItem).isExpired(now) {
+		c.removeElement(elem)
+		return false
+	}
+	return true
 }
 
 func (c *lruCache) keys() []values.BalValue {
@@ -157,5 +166,5 @@ func (c *lruCache) removeElement(elem *list.Element) {
 }
 
 func (item *cacheItem) isExpired(now int64) bool {
-	return item.expTime != -1 && item.expTime <= now
+	return item.expTime <= now
 }

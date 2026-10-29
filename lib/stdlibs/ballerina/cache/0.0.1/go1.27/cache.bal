@@ -109,16 +109,21 @@ public isolated class Cache {
     # + key - Key of the value to be cached
     # + value - Value to be cached. Value should not be `()`
     # + maxAge - The time in seconds for which the cache entry is valid. If the value is '-1', the entry is
-    #                     valid forever.
-    # + return - `()` if successfully added to the cache or a `cache:Error` if a `()` value is inserted to the cache.
+    #                     valid for the cache's `defaultMaxAge`. Any other value must be positive.
+    # + return - `()` if successfully added to the cache or a `cache:Error` if a `()` value is inserted to the cache
+    #            or `maxAge` is neither '-1' nor positive.
     public isolated function put(string key, any value, decimal maxAge = -1) returns Error? {
         if value is () {
             return prepareError("Unsupported cache value '()' for the key: " + key + ".");
         }
+        if maxAge != -1d && maxAge <= 0d {
+            return prepareError("Unsupported max-age '" + maxAge.toString() + "' for the key: " + key
+                + ". It must be -1 or positive.");
+        }
 
         CacheEntry entry = {
             data: value,
-            expTime: expiryTime(time:utcNow(), maxAge > 0d ? maxAge : self.defaultMaxAge)
+            expTime: expiryTime(time:utcNow(), maxAge == -1d ? self.defaultMaxAge : maxAge)
         };
         return externPut(self, key, entry);
     }
@@ -176,7 +181,8 @@ public isolated class Cache {
     # + return - `true` if a cached value is available for the provided key or `false` if there is no cached value
     #            associated for the given key
     public isolated function hasKey(string key) returns boolean {
-        return externHasKey(self, key);
+        time:Utc currentUtc = time:utcNow();
+        return externHasKey(self, key, <decimal>currentUtc[0] + currentUtc[1]);
     }
 
     # Returns a list of all the keys from the cache.
@@ -255,7 +261,7 @@ isolated function externInit(Cache cache) = external;
 
 isolated function externRemoveAll(Cache cache) = external;
 
-isolated function externHasKey(Cache cache, string key) returns boolean = external;
+isolated function externHasKey(Cache cache, string key, decimal currentTime) returns boolean = external;
 
 isolated function externKeys(Cache cache) returns string[] = external;
 

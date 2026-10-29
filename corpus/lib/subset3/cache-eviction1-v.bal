@@ -32,7 +32,7 @@ function sizeAfterOverflow(int capacity, float evictionFactor) returns int|error
 }
 
 public function main() returns error? {
-    // Evicts ceil(capacity * evictionFactor) entries, computed in 32-bit float as jBallerina does.
+    // Evicts ceil(capacity * evictionFactor) entries, computed in 32-bit float as jBallerina does and clamped to [1, capacity].
     io:println(check sizeAfterOverflow(10, 0.3)); // @output 8
     io:println(check sizeAfterOverflow(10, 0.1)); // @output 10
     io:println(check sizeAfterOverflow(3, 0.7)); // @output 1
@@ -51,7 +51,7 @@ public function main() returns error? {
     check fill(c, 3);
     _ = c.hasKey("k0");
     check c.put("k0", 99);
-    io:println(c.size(), " ", c.hasKey("k0"), " ", c.hasKey("k1"), " ", c.hasKey("k2")); // @output 2 true false true
+    io:println(c.size(), " ", c.hasKey("k0"), " ", c.hasKey("k1"), " ", c.hasKey("k2")); // @output 3 true true true
     io:println(check c.get("k0")); // @output 99
 
     cache:Cache d = new (capacity = 3, evictionFactor = 0.34);
@@ -59,7 +59,7 @@ public function main() returns error? {
     _ = check d.get("k0");
     check d.put("k1", 11);
     check d.put("x", 1);
-    io:println(d.keys()); // @output ["k0","k1","x"]
+    io:println(d.keys()); // @output ["k1","x"]
 
     cache:Cache e = new (capacity = 3, evictionFactor = 0.34);
     check fill(e, 3);
@@ -72,5 +72,5 @@ public function main() returns error? {
 
     cache:Cache tiny = new (capacity = 2, evictionFactor = 1.0E-300);
     check fill(tiny, 10);
-    io:println(tiny.size(), " ", tiny.keys()); // @output 3 ["k7","k8","k9"]
+    io:println(tiny.size(), " ", tiny.keys()); // @output 2 ["k8","k9"]
 }
