@@ -37,6 +37,10 @@ isolated function work(cache:Cache c, int id) returns int|error {
 }
 
 public function main() returns error? {
+    // Run every call site once on this strand first: the interpreter's per-call-site callee cache is not yet thread-safe (#1123).
+    _ = check work(new (capacity = PER_WORKER), -1);
+    _ = check fillSmall(new (capacity = 10, evictionFactor = 0.5), -1);
+
     cache:Cache big = new (capacity = WORKERS * PER_WORKER);
     future<int|error>[] futures = [];
     foreach int id in 0 ..< WORKERS {
