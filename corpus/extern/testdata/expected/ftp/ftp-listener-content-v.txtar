@@ -4,6 +4,7 @@ bytes notes.json 2
 info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
 json good.json pen
 onError true
+panic boom.txt
 stream big.dat 10000
 text note.txt hello
 xml <a>1</a>
@@ -13,7 +14,10 @@ deleted ftp://ballerina:ballerina@127.0.0.1:PORT/in/mixed/note.txt
 info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
 json good.json pen
 onError true
+panic boom.txt
 stream big.dat 10000
 xml <a>1</a>
 FTP listener is not initialized. Attach a service before polling.
 -- stderr --
+error: invalid array index: 4
+error: invalid array index: 4

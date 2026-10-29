@@ -18,6 +18,7 @@
 package native
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -194,23 +195,42 @@ func (m *ftpModule) logError(message string) {
 	_, _ = m.rt.Platform().IO.Stderr([]byte("error: " + message + "\n"))
 }
 
-// start runs a handler on its own strand without waiting for it, as jBallerina does; a failure
-// is printed to stderr.
+// start runs a handler on its own strand without waiting for it, as jBallerina does; a returned
+// error or a panic is printed to stderr and the listener keeps polling.
 func (m *ftpModule) start(ctx *extern.Context, sc *serviceContext, name string, args []values.BalValue) {
 	handle, ok := ctx.LookupRemoteMethod(sc.svc, name)
 	if !ok {
 		return
 	}
-	done, err := ctx.StartMethod(handle, append([]values.BalValue{sc.svc}, args...))
-	if err != nil {
-		m.logError(err.Error())
-		return
-	}
-	go func() {
-		if result, isErr := (<-done).(*values.Error); isErr {
-			m.logError(result.Message)
+	go m.invokeHandler(handle, append([]values.BalValue{sc.svc}, args...))
+}
+
+func (m *ftpModule) invokeHandler(handle extern.MethodHandle, args []values.BalValue) {
+	ctx := m.rt.AcquirePooledContext()
+	defer m.rt.ReleasePooledContext(ctx)
+	defer func() {
+		if rec := recover(); rec != nil {
+			ctx.ReleaseAllHeldLocks()
+			m.logError(panicMessage(rec))
 		}
 	}()
+	result, err := ctx.InvokeMethod(handle, args)
+	if err != nil {
+		m.logError(err.Error())
+	} else if balErr, isErr := result.(*values.Error); isErr {
+		m.logError(balErr.Message)
+	}
+}
+
+func panicMessage(r any) string {
+	switch v := r.(type) {
+	case *values.Error:
+		return v.Message
+	case error:
+		return v.Error()
+	default:
+		return fmt.Sprintf("%v", r)
+	}
 }
 
 func (m *ftpModule) handlerArgs(h *handler, sc *serviceContext, content, fileInfo values.BalValue) []values.BalValue {
