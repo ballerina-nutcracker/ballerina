@@ -20,7 +20,6 @@ package native
 import (
 	"path"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,7 +39,8 @@ type fileEvent struct {
 
 // consumer polls one watched directory, following RemoteFileSystemConsumer: every file that
 // passes the filters is reported as added on every poll, and a file is reported as deleted when
-// it was reported before but is no longer listed.
+// it was reported before but is no longer listed. As there, processed gains a copy of a file's
+// URI on every poll that reports it, so a deletion is reported once per such poll.
 type consumer struct {
 	platform  pal.Platform
 	remote    *remoteClient
@@ -87,12 +87,12 @@ func (c *consumer) consume() (fileEvent, bool) {
 		}
 	}
 	var event fileEvent
-	var current []string
-	c.handleDirectory(root, children, rootFiles, &event, &current)
+	current := map[string]struct{}{}
+	c.handleDirectory(root, children, rootFiles, &event, current)
 	if len(c.processed) != len(current) {
 		kept := c.processed[:0]
 		for _, p := range c.processed {
-			if slices.Contains(current, p) {
+			if _, listed := current[p]; listed {
 				kept = append(kept, p)
 			} else {
 				event.deleted = append(event.deleted, p)
@@ -103,7 +103,7 @@ func (c *consumer) consume() (fileEvent, bool) {
 	return event, len(event.added) > 0 || len(event.deleted) > 0
 }
 
-func (c *consumer) handleDirectory(dir string, children []remoteEntry, rootFiles []string, event *fileEvent, current *[]string) {
+func (c *consumer) handleDirectory(dir string, children []remoteEntry, rootFiles []string, event *fileEvent, current map[string]struct{}) {
 	for _, child := range children {
 		if c.watch.pattern != nil && !c.watch.pattern.MatchString(child.name) {
 			continue
@@ -117,7 +117,7 @@ func (c *consumer) handleDirectory(dir string, children []remoteEntry, rootFiles
 			continue
 		}
 		uri := c.uri(logical)
-		*current = append(*current, uri)
+		current[uri] = struct{}{}
 		if !c.passesAgeFilter(child) || !c.passesDependencies(child.name, rootFiles) {
 			continue
 		}
