@@ -19,6 +19,7 @@ package native
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -107,15 +108,17 @@ var scalarBasicTypes = []struct {
 // typer answers the type questions the jBallerina implementation answers through its runtime type API.
 type typer struct {
 	tc         semtypes.Context
+	cache      *typeCache
 	jsonTy     semtypes.SemType
 	anydataTy  semtypes.SemType
 	root       semtypes.SemType
 	rootAnnots typeAnnotations
 }
 
-func newTyper(tc semtypes.Context, root semtypes.SemType, rootAnnots typeAnnotations) *typer {
+func newTyper(cache *typeCache, tc semtypes.Context, root semtypes.SemType, rootAnnots typeAnnotations) *typer {
 	return &typer{
 		tc:         tc,
+		cache:      cache,
 		jsonTy:     semtypes.CreateJSON(tc),
 		anydataTy:  semtypes.CreateAnydata(tc),
 		root:       root,
@@ -123,7 +126,101 @@ func newTyper(tc semtypes.Context, root semtypes.SemType, rootAnnots typeAnnotat
 	}
 }
 
+// typeCache holds, per runtime, the classification of each structured type and the map and array types
+// defined over each constraint. Classifying a mapping or list type and defining a type both mint runtime
+// atoms that stay live, so doing either per parsed value makes every later parse slower.
+type typeCache struct {
+	mu       sync.Mutex
+	interner *semtypes.SemTypeInterner
+	infos    map[semtypes.InternHandle]typeInfo
+	maps     definedTypes
+	arrays   definedTypes
+}
+
+// definedTypes keys interner-recognisable constraints by handle; the rest, such as byte, are few per
+// program and are matched by type equality.
+type definedTypes struct {
+	byHandle map[semtypes.InternHandle]semtypes.SemType
+	others   []definedType
+}
+
+type definedType struct {
+	constraint semtypes.SemType
+	defined    semtypes.SemType
+}
+
+func newTypeCache() *typeCache {
+	return &typeCache{
+		interner: semtypes.NewSemtypeInterner(),
+		infos:    make(map[semtypes.InternHandle]typeInfo),
+		maps:     definedTypes{byHandle: make(map[semtypes.InternHandle]semtypes.SemType)},
+		arrays:   definedTypes{byHandle: make(map[semtypes.InternHandle]semtypes.SemType)},
+	}
+}
+
+func (c *typeCache) getOrClassify(ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	handle := c.interner.Intern(ty)
+	if ti, ok := c.infos[handle]; ok {
+		return ti
+	}
+	ti := classify(ty)
+	c.infos[handle] = ti
+	return ti
+}
+
+func (c *typeCache) getOrDefine(tc semtypes.Context, types *definedTypes, constraint semtypes.SemType,
+	define func(semtypes.SemType) semtypes.SemType) semtypes.SemType {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !internable(constraint) {
+		for _, d := range types.others {
+			if semtypes.IsSameType(tc, d.constraint, constraint) {
+				return d.defined
+			}
+		}
+		defined := define(constraint)
+		types.others = append(types.others, definedType{constraint: constraint, defined: defined})
+		return defined
+	}
+	handle := c.interner.Intern(constraint)
+	if defined, ok := types.byHandle[handle]; ok {
+		return defined
+	}
+	defined := define(constraint)
+	types.byHandle[handle] = defined
+	return defined
+}
+
+var valueBasicTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String}
+
+// internable reports whether the interner can recognise a copy of ty: it never matches a proper subtype of
+// a value type.
+func internable(ty semtypes.SemType) bool {
+	basic := semtypes.WidenToBasicTypes(ty)
+	for _, valueTy := range valueBasicTypes {
+		if semtypes.ContainsBasicType(basic, valueTy) && !semtypes.IsSubtypeSimple(valueTy, ty) {
+			return false
+		}
+	}
+	return true
+}
+
+// classifyMints reports whether classifying ty mints atoms, which only its mapping and list parts do.
+func classifyMints(ty semtypes.SemType) bool {
+	basic := semtypes.WidenToBasicTypes(ty)
+	return semtypes.ContainsBasicType(basic, semtypes.Mapping) || semtypes.ContainsBasicType(basic, semtypes.List)
+}
+
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
+	if !classifyMints(ty) || !internable(ty) {
+		return t.classifyType(ty)
+	}
+	return t.cache.getOrClassify(ty, t.classifyType)
+}
+
+func (t *typer) classifyType(ty semtypes.SemType) typeInfo {
 	if semtypes.IsSameType(t.tc, ty, t.jsonTy) {
 		return typeInfo{kind: kindJSON, ty: ty}
 	}
@@ -348,13 +445,17 @@ func (t *typer) contains(ty semtypes.SemType, v values.BalValue) bool {
 }
 
 func (t *typer) mapType(constraint semtypes.SemType) semtypes.SemType {
-	md := semtypes.NewMappingDefinition()
-	return md.Define(t.tc.Env(), nil, constraint)
+	return t.cache.getOrDefine(t.tc, &t.cache.maps, constraint, func(constraint semtypes.SemType) semtypes.SemType {
+		md := semtypes.NewMappingDefinition()
+		return md.Define(t.tc.Env(), nil, constraint)
+	})
 }
 
 func (t *typer) arrayType(element semtypes.SemType) semtypes.SemType {
-	ld := semtypes.NewListDefinition()
-	return ld.Define(t.tc.Env(), nil, semtypes.ListRest(element))
+	return t.cache.getOrDefine(t.tc, &t.cache.arrays, element, func(element semtypes.SemType) semtypes.SemType {
+		ld := semtypes.NewListDefinition()
+		return ld.Define(t.tc.Env(), nil, semtypes.ListRest(element))
+	})
 }
 
 // mapTypeFromConstraint is DataUtils.getMapTypeFromConstraintType.
