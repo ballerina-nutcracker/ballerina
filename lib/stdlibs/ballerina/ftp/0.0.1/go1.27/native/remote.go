@@ -73,8 +73,10 @@ func connectURL(ep *endpoint, p string) string {
 	return s
 }
 
-// vfsURI renders a file URI the way VFS GenericFileName does: the default port is dropped, an
-// empty password leaves no `:`, and the path escapes only `%`, space and `#`.
+// vfsURI renders a file URI the way VFS GenericFileName does: the default port is dropped and
+// the path escapes only `%`, space and `#`. Only a masked URI names the user, as `user:***@`
+// when there is a password; the others carry no credentials, where jBallerina exposes the
+// password (ballerina-library#9381).
 func vfsURI(ep *endpoint, p string, masked bool) string {
 	return vfsRootURI(ep, masked) + vfsPathEscaper.Replace(strings.TrimPrefix(p, "/"))
 }
@@ -85,17 +87,13 @@ func vfsRootURI(ep *endpoint, masked bool) string {
 	var b strings.Builder
 	b.WriteString(ep.protocol)
 	b.WriteString("://")
-	b.WriteString(url.User(ep.username).String())
-	if ep.hasPassword && ep.password != "" {
-		b.WriteByte(':')
-		if masked {
-			b.WriteString("***")
-		} else {
-			pw := url.UserPassword("", ep.password).String()
-			b.WriteString(strings.TrimPrefix(pw, ":"))
+	if masked {
+		b.WriteString(url.User(ep.username).String())
+		if ep.hasPassword && ep.password != "" {
+			b.WriteString(":***")
 		}
+		b.WriteByte('@')
 	}
-	b.WriteByte('@')
 	b.WriteString(ep.host)
 	if ep.port != defaultPort(ep.protocol) {
 		b.WriteByte(':')

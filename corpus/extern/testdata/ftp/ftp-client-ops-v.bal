@@ -135,14 +135,14 @@ public function main() returns error? {
     ftp:FileInfo f = files[0];
     io:println(f.path, " ", f.name, " ", f.extension, " ", f.size, " ", f.isFile, " ", f.isFolder, " ", f.depth);
     // @output /a/b/c.bin c.bin bin 3 true false 4
-    io:println(scrub(f.uri)); // @output ftp://ballerina:ballerina@127.0.0.1:PORT/a/b/c.bin
+    io:println(scrub(f.uri)); // @output ftp://127.0.0.1:PORT/a/b/c.bin
     io:println(scrub(f.friendlyURI)); // @output ftp://ballerina:***@127.0.0.1:PORT/a/b/c.bin
     io:println(scrub(f.rootURI), " ", f.scheme, " ", f.fileType, " ", f.lastModifiedTimestamp > 0);
-    // @output ftp://ballerina:ballerina@127.0.0.1:PORT/ ftp file true
+    // @output ftp://127.0.0.1:PORT/ ftp file true
     check c->putText("/my dir/a b#1.txt", "s");
     ftp:FileInfo[] spaced = check c->list("/my dir");
     io:println(scrub(spaced[0].friendlyURI), " ", scrub(spaced[0].uri), " ", spaced[0].pathDecoded);
-    // @output ftp://ballerina:***@127.0.0.1:PORT/my%20dir/a%20b%231.txt ftp://ballerina:ballerina@127.0.0.1:PORT/my%20dir/a%20b%231.txt /my dir/a b#1.txt
+    // @output ftp://ballerina:***@127.0.0.1:PORT/my%20dir/a%20b%231.txt ftp://127.0.0.1:PORT/my%20dir/a%20b%231.txt /my dir/a b#1.txt
     var spacedMissing = c->getText("/my dir/no such.txt");
     show("read spaced missing", spacedMissing);
     // @output read spaced missing: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/my%20dir/no%20such.txt not found

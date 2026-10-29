@@ -19,10 +19,10 @@ a,1,"x,y"
 getCsv: Reading CSV content is not yet supported
 putXml record: Failed to convert record to XML: converting a record to XML is not yet supported
 /a/b/c.bin c.bin bin 3 true false 4
-ftp://ballerina:ballerina@127.0.0.1:PORT/a/b/c.bin
+ftp://127.0.0.1:PORT/a/b/c.bin
 ftp://ballerina:***@127.0.0.1:PORT/a/b/c.bin
-ftp://ballerina:ballerina@127.0.0.1:PORT/ ftp file true
-ftp://ballerina:***@127.0.0.1:PORT/my%20dir/a%20b%231.txt ftp://ballerina:ballerina@127.0.0.1:PORT/my%20dir/a%20b%231.txt /my dir/a b#1.txt
+ftp://127.0.0.1:PORT/ ftp file true
+ftp://ballerina:***@127.0.0.1:PORT/my%20dir/a%20b%231.txt ftp://127.0.0.1:PORT/my%20dir/a%20b%231.txt /my dir/a b#1.txt
 read spaced missing: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/my%20dir/no%20such.txt not found
 true 0 folder
 false

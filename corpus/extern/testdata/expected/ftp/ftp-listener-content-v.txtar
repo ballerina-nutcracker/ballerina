@@ -1,7 +1,7 @@
 -- stdout --
 bytes data.bin 4
 bytes notes.json 2
-info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
+info ftp://127.0.0.1:PORT/in/stream/big.dat //127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
 json good.json pen
 onError true
 panic boom.txt
@@ -9,9 +9,9 @@ stream big.dat 10000
 text note.txt hello
 xml <a>1</a>
 bytes notes.json 2
-deleted ftp://ballerina:ballerina@127.0.0.1:PORT/in/mixed/data.bin
-deleted ftp://ballerina:ballerina@127.0.0.1:PORT/in/mixed/note.txt
-info ftp://ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat //ballerina:ballerina@127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
+deleted ftp://127.0.0.1:PORT/in/mixed/data.bin
+deleted ftp://127.0.0.1:PORT/in/mixed/note.txt
+info ftp://127.0.0.1:PORT/in/stream/big.dat //127.0.0.1:PORT/in/stream/big.dat /in/stream/big.dat 4 ftp://ballerina:***@127.0.0.1:PORT/in/stream/big.dat
 json good.json pen
 onError true
 panic boom.txt
