@@ -118,6 +118,7 @@ type ftpSession struct {
 	mu        sync.Mutex
 	idle      []*ftp.ServerConn
 	closed    bool
+	home      string
 }
 
 func dialFTP(platform pal.Platform, ep *endpoint) (session, error) {
@@ -250,24 +251,28 @@ func isNotFoundReply(err error) bool {
 	return errors.As(err, &reply) && reply.Code == ftp.StatusFileUnavailable
 }
 
-// stat resolves an entry the way commons-vfs does over FTP: by listing the parent, after first
-// resolving the parent itself, since servers disagree on how they answer LIST for a missing path.
+// stat resolves an entry the way commons-vfs does over FTP, by listing its parent. The root and
+// the login directory are known folders, so a jailed user never lists the ancestors of home.
 func (s *ftpSession) stat(p string) (*remoteEntry, error) {
-	if p == "/" {
-		return &remoteEntry{name: "", isDir: true, readable: true, writable: true}, nil
+	if p == "/" || p == s.home {
+		return &remoteEntry{name: path.Base(p), isDir: true, readable: true, writable: true}, nil
 	}
-	parent, err := s.stat(path.Dir(p))
-	if err != nil {
-		return nil, err
-	}
-	if !parent.isDir {
+	parent := path.Dir(p)
+	if parent == p {
 		return nil, errNotExist
 	}
-	entries, err := s.readDir(path.Dir(p))
-	if err != nil {
-		if errors.Is(err, errNotExist) || isNotFoundReply(err) {
+	entries, err := s.readDir(parent)
+	if errors.Is(err, errNotExist) {
+		return nil, errNotExist
+	}
+	if isReply(err) {
+		// Servers disagree on how they answer LIST for a missing path, so a refusal means the
+		// entry is missing only when the parent is.
+		if _, parentErr := s.stat(parent); errors.Is(parentErr, errNotExist) {
 			return nil, errNotExist
 		}
+	}
+	if err != nil {
 		return nil, err
 	}
 	name := path.Base(p)
@@ -281,10 +286,19 @@ func (s *ftpSession) stat(p string) (*remoteEntry, error) {
 
 func (s *ftpSession) readDir(p string) ([]remoteEntry, error) {
 	var list []*ftp.Entry
+	linkIsDir := map[string]bool{}
 	err := s.do(func(c *ftp.ServerConn) error {
 		var err error
-		list, err = c.List(p)
-		return err
+		if list, err = c.List(p); err != nil {
+			return err
+		}
+		// A link takes its target's type, as in commons-vfs; CWD follows it on the server.
+		for _, e := range list {
+			if e.Type == ftp.EntryTypeLink {
+				linkIsDir[e.Name] = c.ChangeDir(path.Join(p, path.Base(e.Name))) == nil
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		if isNotFoundReply(err) {
@@ -299,7 +313,7 @@ func (s *ftpSession) readDir(p string) ([]remoteEntry, error) {
 		}
 		entries = append(entries, remoteEntry{
 			name:     path.Base(e.Name),
-			isDir:    e.Type == ftp.EntryTypeFolder,
+			isDir:    e.Type == ftp.EntryTypeFolder || linkIsDir[e.Name],
 			size:     int64(e.Size),
 			modTime:  e.Time,
 			readable: true,
@@ -380,6 +394,9 @@ func (s *ftpSession) homeDir() (string, error) {
 		dir, err = c.CurrentDir()
 		return err
 	})
+	if err == nil {
+		s.home = dir
+	}
 	return dir, err
 }
 

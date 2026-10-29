@@ -343,12 +343,8 @@ func (c *remoteClient) copy(src, dest string) error {
 	if err != nil {
 		return operationError("Could not copy \""+c.uri(src)+"\" to \""+c.uri(dest)+"\".", err)
 	}
-	// Buffered: an FTP control connection carries one transfer at a time.
-	data, readErr := io.ReadAll(r)
-	if err := errors.Join(readErr, r.Close()); err != nil {
-		return operationError("Could not copy \""+c.uri(src)+"\" to \""+c.uri(dest)+"\".", err)
-	}
-	if err := c.sess.store(c.serverPath(dest), bytes.NewReader(data), false); err != nil {
+	storeErr := c.sess.store(c.serverPath(dest), r, false)
+	if err := errors.Join(storeErr, r.Close()); err != nil {
 		return operationError("Could not copy \""+c.uri(src)+"\" to \""+c.uri(dest)+"\".", err)
 	}
 	return nil

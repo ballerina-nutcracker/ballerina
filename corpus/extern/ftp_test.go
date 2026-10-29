@@ -68,6 +68,20 @@ func runFtp(t *testing.T, name string) {
 	}
 	externs = append(externs, testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "busyReplies",
 		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) { return f.busyReplies.Load(), nil }})
+	externs = append(externs, testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "ftpConnections",
+		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) { return f.ftpDriver.connections.Load(), nil }})
+	runExtern(t, fileCase("ftp/"+name), &ftpPal{TestPal: testharness.NewTestPal()}, externs)
+}
+
+// TestFtpJail runs against a server whose login directory is not "/" and whose ancestors of it
+// cannot be listed, with a symlinked folder in it.
+func TestFtpJail(t *testing.T) {
+	t.Parallel()
+	skipIfNoNetwork(t)
+	port := startJailFTPServer(t)
+	name := "ftp-jail-v"
+	externs := []testharness.ExternRegistration{{Org: "$anon", Module: name, FuncName: "jailPort",
+		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) { return port, nil }}}
 	runExtern(t, fileCase("ftp/"+name), &ftpPal{TestPal: testharness.NewTestPal()}, externs)
 }
 

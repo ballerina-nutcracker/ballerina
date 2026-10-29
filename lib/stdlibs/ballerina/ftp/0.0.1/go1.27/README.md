@@ -60,7 +60,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Client initialization and configuration validation | Supported | A `port` outside 1–65535 and an invalid `circuitBreaker` fail with an `ftp:InvalidConfigError` before connecting, the intended behaviour confirmed in ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 falls back to the default port and reports breaker errors as `ftp:Error` after connecting |
-| FTP connections | Supported | Directories are listed with `LIST`, as commons-vfs does |
+| FTP connections | Supported | Directories are listed with `LIST`, and a symbolic link takes its target's type, as commons-vfs does |
 | FTPS connections | Partially Supported | Explicit and implicit modes, PEM `cert` paths and PKCS12 `crypto:TrustStore`/`crypto:KeyStore` files, and `verifyHostName` are supported. `dataChannelProtection` and JKS stores are not; see Notable Behavioural Changes |
 | SFTP connections | Partially Supported | Password, keyboard-interactive and private-key (optionally encrypted) authentication, `preferredMethods` and `sftpSshKnownHosts` are supported. `GSSAPI_WITH_MIC`, `sftpCompression` and `sftpSessionTimeout` have no effect; see Notable Behavioural Changes |
 | Anonymous login and server root | Supported | `userDirIsRoot` maps `/` to the login directory |
