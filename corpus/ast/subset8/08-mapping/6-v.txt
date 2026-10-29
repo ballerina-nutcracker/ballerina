@@ -1,0 +1,17 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const a () (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1))
+      (key-value
+        (literal y)
+        (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a)))))))

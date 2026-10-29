@@ -14,4 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const a = {x: 1, y: 2}; // @error
+import ballerina/io;
+
+const a = {x: 1, y: 2};
+
+public function main() {
+    io:println(a); // @output {"x":1,"y":2}
+}

@@ -14,4 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const boolean a = [1, 2] == [1, 2]; // @error
+import ballerina/io;
+
+public function main() {
+    decimal d = 0x12;
+    io:println(d); // @output 18
+}
