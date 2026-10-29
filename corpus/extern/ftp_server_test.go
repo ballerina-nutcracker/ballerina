@@ -18,6 +18,7 @@ package extern_test
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -32,6 +33,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -56,6 +58,7 @@ const (
 // implicit FTPS server and an SFTP server, each with its own in-memory file system.
 type ftpFixture struct {
 	ftpPort          int64
+	ftpDriver        *ftpTestDriver
 	ftpsPort         int64
 	ftpsImplicitPort int64
 	sftpPort         int64
@@ -71,18 +74,20 @@ type ftpFixture struct {
 }
 
 type ftpTestDriver struct {
-	fs       afero.Fs
-	settings *ftpserver.Settings
-	tls      *tls.Config
+	fs          afero.Fs
+	settings    *ftpserver.Settings
+	tls         *tls.Config
+	connections atomic.Int64
 }
 
 func (d *ftpTestDriver) GetSettings() (*ftpserver.Settings, error) { return d.settings, nil }
 
 func (d *ftpTestDriver) ClientConnected(ftpserver.ClientContext) (string, error) {
+	d.connections.Add(1)
 	return "ballerina test server", nil
 }
 
-func (d *ftpTestDriver) ClientDisconnected(ftpserver.ClientContext) {}
+func (d *ftpTestDriver) ClientDisconnected(ftpserver.ClientContext) { d.connections.Add(-1) }
 
 func (d *ftpTestDriver) AuthUser(_ ftpserver.ClientContext, user, pass string) (ftpserver.ClientDriver, error) {
 	if (user == ftpTestUser && pass == ftpTestPassword) || user == "anonymous" {
@@ -131,15 +136,18 @@ func (loopbackPassivePorts) FetchNext() (int, int, bool) {
 
 func (loopbackPassivePorts) NumberAttempts() int { return 100 }
 
-func startFTPServer(t *testing.T, tlsConfig *tls.Config, mode ftpserver.TLSRequirement) int64 {
+// startFTPServer serves an in-memory file system; the driver counts the open control connections.
+func startFTPServer(t *testing.T, tlsConfig *tls.Config, mode ftpserver.TLSRequirement) (int64, *ftpTestDriver) {
+	t.Helper()
+	driver := newFTPTestDriver(t, afero.NewMemMapFs(), tlsConfig, mode)
+	return serveFTP(t, driver), driver
+}
+
+func newFTPTestDriver(t *testing.T, fs afero.Fs, tlsConfig *tls.Config, mode ftpserver.TLSRequirement) *ftpTestDriver {
 	t.Helper()
 	ln := listenLoopback(t)
-	var err error
-	if err != nil {
-		t.Fatalf("listen: %v", err)
-	}
 	driver := &ftpTestDriver{
-		fs:  afero.NewMemMapFs(),
+		fs:  fs,
 		tls: tlsConfig,
 		settings: &ftpserver.Settings{
 			Listener:                 ln,
@@ -151,6 +159,13 @@ func startFTPServer(t *testing.T, tlsConfig *tls.Config, mode ftpserver.TLSRequi
 	if mode == ftpserver.ImplicitEncryption {
 		driver.settings.Listener = tls.NewListener(ln, tlsConfig)
 	}
+	return driver
+}
+
+func serveFTP(t *testing.T, driver ftpserver.MainDriver) int64 {
+	t.Helper()
+	settings, _ := driver.GetSettings()
+	ln := settings.Listener
 	server := ftpserver.NewFtpServer(driver)
 	server.Logger = slog.New(slog.NewTextHandler(io.Discard, nil))
 	if err := server.Listen(); err != nil {
@@ -371,6 +386,9 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 		t.Fatal(err)
 	}
 	busyPort, busyReplies := startBusyFTPServer(t)
+	ftpPort, ftpDriver := startFTPServer(t, nil, ftpserver.ClearOrEncrypted)
+	ftpsPort, _ := startFTPServer(t, tlsConfig, ftpserver.MandatoryEncryption)
+	ftpsImplicitPort, _ := startFTPServer(t, tlsConfig, ftpserver.ImplicitEncryption)
 	hashedKnownHosts := filepath.Join(dir, "known_hosts_hashed")
 	hashedLine := knownhosts.HashHostname("[127.0.0.1]:"+strconv.FormatInt(sftpPort, 10)) + " " +
 		string(ssh.MarshalAuthorizedKey(hostKey))
@@ -378,9 +396,10 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 		t.Fatal(err)
 	}
 	return &ftpFixture{
-		ftpPort:          startFTPServer(t, nil, ftpserver.ClearOrEncrypted),
-		ftpsPort:         startFTPServer(t, tlsConfig, ftpserver.MandatoryEncryption),
-		ftpsImplicitPort: startFTPServer(t, tlsConfig, ftpserver.ImplicitEncryption),
+		ftpPort:          ftpPort,
+		ftpDriver:        ftpDriver,
+		ftpsPort:         ftpsPort,
+		ftpsImplicitPort: ftpsImplicitPort,
 		sftpPort:         sftpPort,
 		busyPort:         busyPort,
 		busyReplies:      busyReplies,
@@ -392,4 +411,73 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 		hashedKnownHosts: hashedKnownHosts,
 		missingKeyPath:   filepath.Join(dir, "missing_key"),
 	}
+}
+
+// jailFTPDriver logs users in to /home/alice of an OS directory in which "/" and "/home" cannot be
+// listed, as on a chrooted server, and /home/alice/incoming is a symlink to a folder.
+type jailFTPDriver struct {
+	*ftpTestDriver
+}
+
+func (d jailFTPDriver) AuthUser(cc ftpserver.ClientContext, user, pass string) (ftpserver.ClientDriver, error) {
+	cc.SetPath("/home/alice")
+	return d.ftpTestDriver.AuthUser(cc, user, pass)
+}
+
+// WrapPassiveListener rewrites the Go file mode letter of a symlink (`L`) in LIST output to the
+// `l` FTP servers send.
+func (d jailFTPDriver) WrapPassiveListener(ln net.Listener) (net.Listener, error) {
+	return linkListingListener{ln}, nil
+}
+
+type linkListingListener struct{ net.Listener }
+
+func (l linkListingListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+	return linkListingConn{conn}, nil
+}
+
+type linkListingConn struct{ net.Conn }
+
+func (c linkListingConn) Write(b []byte) (int, error) {
+	out := bytes.ReplaceAll(b, []byte("\r\nL"), []byte("\r\nl"))
+	if bytes.HasPrefix(out, []byte("L")) {
+		out[0] = 'l'
+	}
+	if _, err := c.Conn.Write(out); err != nil {
+		return 0, err
+	}
+	return len(b), nil
+}
+
+type jailFs struct{ afero.Fs }
+
+func (f jailFs) Open(name string) (afero.File, error) {
+	if p := path.Clean(name); p == "/" || p == "/home" {
+		return nil, os.ErrPermission
+	}
+	return f.Fs.Open(name)
+}
+
+func startJailFTPServer(t *testing.T) int64 {
+	t.Helper()
+	root := t.TempDir()
+	home := filepath.Join(root, "home", "alice")
+	if err := os.MkdirAll(filepath.Join(home, "real"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, "x.txt"), []byte("outside"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, "real", "in.txt"), []byte("inside"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("real", filepath.Join(home, "incoming")); err != nil {
+		t.Skipf("symlinks are not available: %v", err)
+	}
+	fs := jailFs{afero.NewBasePathFs(afero.NewOsFs(), root)}
+	return serveFTP(t, jailFTPDriver{newFTPTestDriver(t, fs, nil, ftpserver.ClearOrEncrypted)})
 }

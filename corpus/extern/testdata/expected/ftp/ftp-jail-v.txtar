@@ -1,0 +1,10 @@
+-- stdout --
+true
+outside
+true
+true
+["in.txt"]
+inside
+written
+outside
+-- stderr --
