@@ -82,6 +82,12 @@ func unsupportedTypeError() *xmlError {
 	return newXMLError("unsupported input type")
 }
 
+func recoverAsParseError(err *error) {
+	if r := recover(); r != nil {
+		*err = newXMLError("failed to parse xml: %v", r)
+	}
+}
+
 func xmlParseError(message string) *xmlError {
 	return newXMLError("failed to parse xml: '%s'", message)
 }

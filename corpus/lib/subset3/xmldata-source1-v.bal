@@ -34,6 +34,22 @@ class FailingBlocks {
     }
 }
 
+class FailingAfterDocument {
+    int count = 0;
+
+    public isolated function next() returns record {|byte[] value;|}|error? {
+        self.count += 1;
+        if self.count == 1 {
+            return {value: "<p><name>A</name><age>1</age></p>".toBytes()};
+        }
+        return error("stream failure");
+    }
+}
+
+type JsonValue record {|
+    json value;
+|};
+
 function chunk(byte[] bytes, int 'start, int end) returns byte[] {
     byte[] result = [];
     foreach int i in 'start ..< end {
@@ -75,4 +91,24 @@ public function main() {
     Person|xmldata:Error r4 = xmldata:parseStream(s4);
     show(r4 is xmldata:Error);
     // @output true
+    stream<byte[], error?> s5 = new (new FailingAfterDocument());
+    Person|xmldata:Error r5 = xmldata:parseStream(s5);
+    show(r5);
+    // @output E: stream failure
+
+    Person|xmldata:Error latin1 = xmldata:parseString("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><p><name>D</name><age>4</age></p>");
+    show(latin1);
+    // @output {"name":"D","age":4}
+
+    string prefix = "failed to parse xml: ";
+    foreach string input in ["<p></p></q>", "</p>"] {
+        Person|xmldata:Error unmatched = xmldata:parseString(input);
+        show(unmatched is xmldata:Error && unmatched.message().substring(0, prefix.length()) == prefix);
+    }
+    // @output true
+    // @output true
+
+    JsonValue|xmldata:Error rootText = xmldata:parseString("<r>hello</r>", {textFieldName: "value"});
+    show(rootText);
+    // @output E: failed to parse xml
 }

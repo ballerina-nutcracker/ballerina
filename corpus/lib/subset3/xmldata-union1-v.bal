@@ -98,4 +98,12 @@ public function main() {
     A|B|xmldata:Error neither = xmldata:parseString("<x><c>s</c></x>");
     show(neither is xmldata:Error);
     // @output true
+
+    // Text split by a comment is joined, then escaped once as BXml.toString does.
+    A|B|xmldata:Error split = xmldata:parseString("<x><b>x &amp; y<!--c-->z</b></x>");
+    show(split);
+    // @output {"b":"x &amp; yz"}
+    B|xmldata:Error splitTraversed = xmldata:parseAsType(checkpanic xml:fromString("<x><b>x &amp; y<!--c-->z</b></x>"));
+    show(splitTraversed);
+    // @output {"b":"x &amp; yz"}
 }

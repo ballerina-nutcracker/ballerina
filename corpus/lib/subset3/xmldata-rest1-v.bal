@@ -41,6 +41,10 @@ type ArrayRest record {|
     string[]...;
 |};
 
+type OnlyRest record {|
+    string...;
+|};
+
 type JsonRest record {|
     string id;
     json...;
@@ -144,4 +148,7 @@ public function main() {
     both("<r><b>x</b><c>y</c></r>", Mixed, {allowDataProjection: false});
     // @output E: undefined field 'c'
     // @output E: undefined field 'c'
+    both("<r><a>x</a><b>y</b></r>", OnlyRest);
+    // @output {"a":"x","b":"y"}
+    // @output {"a":"x","b":"y"}
 }

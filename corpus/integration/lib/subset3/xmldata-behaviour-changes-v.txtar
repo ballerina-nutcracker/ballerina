@@ -4,4 +4,7 @@ true
 Invalid XML found: 'validating XML against an XSD file is not supported'
 duplicate field 'b'
 duplicate field 'b'
+field 'a' cannot be converted into the type '(int|string)'
+field 'a' cannot be converted into the type 'xml'
+stream failure
 -- stderr --

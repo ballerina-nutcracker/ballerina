@@ -54,13 +54,8 @@ func childrenOf(e *values.XMLElement) xmlSeq {
 
 // xmlText is BXml.toString, which renders a text item with its markup characters escaped.
 func xmlText(v values.XMLValue) string {
-	if text, ok := v.(*values.XMLText); ok {
-		return textEscaper.Replace(text.Body)
-	}
 	return v.XMLString()
 }
-
-var textEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
 
 func isCommentOrPI(v values.XMLValue) bool {
 	switch v.(type) {
@@ -70,7 +65,8 @@ func isCommentOrPI(v values.XMLValue) bool {
 	return false
 }
 
-func traverseXML(t *typer, opts sourceOptions, source values.XMLValue, target semtypes.SemType) (values.BalValue, error) {
+func traverseXML(t *typer, opts sourceOptions, source values.XMLValue, target semtypes.SemType) (result values.BalValue, err error) {
+	defer recoverAsParseError(&err)
 	a := &analyzer{typer: t, sourceOptions: opts}
 	if err := a.traverseToType(source, target); err != nil {
 		return nil, err
@@ -686,7 +682,7 @@ func (a *analyzer) convertSequence(seq xmlSeq, ty semtypes.SemType) error {
 		}
 		var text strings.Builder
 		for _, item := range filtered {
-			text.WriteString(xmlText(item))
+			text.WriteString(item.(*values.XMLText).Body)
 		}
 		return a.convertXML(values.NewXMLText(text.String()), true)
 	}

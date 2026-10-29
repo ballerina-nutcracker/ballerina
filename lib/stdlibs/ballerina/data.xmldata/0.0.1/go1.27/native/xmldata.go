@@ -17,6 +17,7 @@
 package native
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -61,12 +62,19 @@ func parseBytes(ctx *extern.Context, args []values.BalValue) (values.BalValue, e
 	return parseText(ctx, string(input.ToByteSlice()), args[1], args[2])
 }
 
-// parseStream reads the whole byte-block stream before parsing; an error from the stream ends the input.
+// parseStream reads the whole byte-block stream before parsing.
 func parseStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	byteStream, _ := args[0].(*values.Stream)
 	var input []byte
 	for {
-		record, ok := byteStream.Next().(*values.Map)
+		next := byteStream.Next()
+		if streamErr, ok := next.(*values.Error); ok {
+			if byteStream.Close != nil {
+				byteStream.Close()
+			}
+			return toResult(ctx, nil, errors.New(streamErr.Message))
+		}
+		record, ok := next.(*values.Map)
 		if !ok {
 			break
 		}

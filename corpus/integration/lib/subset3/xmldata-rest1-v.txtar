@@ -35,4 +35,6 @@ E: 'string' value 'y' cannot be converted to 'int'
 {"items":[{"a":1},2]}
 E: undefined field 'c'
 E: undefined field 'c'
+{"a":"x","b":"y"}
+{"a":"x","b":"y"}
 -- stderr --

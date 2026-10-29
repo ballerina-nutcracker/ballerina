@@ -27,6 +27,26 @@ type NestedUnion record {|
     record {| int a; |}|record {| string b; |} r;
 |};
 
+type UnionField record {|
+    int|string a;
+|};
+
+type XmlField record {|
+    xml a;
+|};
+
+class FailingAfterDocument {
+    int count = 0;
+
+    public isolated function next() returns record {|byte[] value;|}|error? {
+        self.count += 1;
+        if self.count == 1 {
+            return {value: "<p><name>x</name></p>".toBytes()};
+        }
+        return error("stream failure");
+    }
+}
+
 // jBallerina's compiler plugin rejects this record (duplicate field found): the @Name override of `a` clashes
 // with the field `b`. Without compiler-plugin support the check runs when the type is used as a target.
 type Clash record {|
@@ -58,4 +78,18 @@ public function main() {
     Clash|xmldata:Error traversed = xmldata:parseAsType(xml `<r><b>x</b></r>`, {}, Clash);
     io:println(traversed is xmldata:Error ? traversed.message() : "parsed");
     // @output duplicate field 'b'
+
+    // jBallerina leaves a required field whose type cannot hold () as () when its element is empty.
+    UnionField|xmldata:Error emptyUnion = xmldata:parseString("<r><a></a></r>");
+    io:println(emptyUnion is xmldata:Error ? emptyUnion.message() : "parsed");
+    // @output field 'a' cannot be converted into the type '(int|string)'
+    XmlField|xmldata:Error emptyXml = xmldata:parseString("<r><a/></r>");
+    io:println(emptyXml is xmldata:Error ? emptyXml.message() : "parsed");
+    // @output field 'a' cannot be converted into the type 'xml'
+
+    // jBallerina returns the stream's own error; this port returns an xmldata:Error with its message.
+    stream<byte[], error?> failing = new (new FailingAfterDocument());
+    Person|xmldata:Error streamed = xmldata:parseStream(failing);
+    io:println(streamed is xmldata:Error ? streamed.message() : "parsed");
+    // @output stream failure
 }

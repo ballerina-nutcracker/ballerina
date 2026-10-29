@@ -146,6 +146,9 @@ func (t *typer) buildMap(n *mapNode) (values.BalValue, error) {
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 	}
 	for _, field := range n.required {
+		if n.get(field.runtimeName) == nil && !semtypes.ContainsBasicType(field.ty, semtypes.Nil) {
+			return nil, fieldCannotConvertError(field.name, t.typeName(field.ty))
+		}
 		if n.containsKey(field.runtimeName) {
 			continue
 		}

@@ -72,6 +72,7 @@ type staxReader struct {
 func newStaxReader(input string) *staxReader {
 	decoder := xml.NewDecoder(strings.NewReader(input))
 	decoder.Strict = true
+	decoder.CharsetReader = func(_ string, input io.Reader) (io.Reader, error) { return input, nil }
 	return &staxReader{
 		input:   input,
 		decoder: decoder,
@@ -132,6 +133,9 @@ func (r *staxReader) accept(token xml.Token, offset int64) (staxEvent, bool, err
 		r.open = append(r.open, t.Name)
 		return eventStartElement, false, nil
 	case xml.EndElement:
+		if len(r.open) == 0 {
+			return eventNone, false, r.syntaxError(fmt.Sprintf("unexpected end element </%s>", qualified(t.Name)))
+		}
 		if open := r.open[len(r.open)-1]; open != t.Name {
 			return eventNone, false, r.syntaxError(fmt.Sprintf("element <%s> closed by </%s>", qualified(open), qualified(t.Name)))
 		}

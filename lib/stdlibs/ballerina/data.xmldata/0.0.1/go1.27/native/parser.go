@@ -37,7 +37,10 @@ type xmlParser struct {
 	siblings         *qnameMap[bool]
 }
 
-func parseXML(t *typer, opts sourceOptions, input string, target semtypes.SemType) (values.BalValue, error) {
+// parseXML recovers from a panic as XmlParser.parse catches Throwable: the parser keeps jBallerina's stack
+// handling, so an input that breaks a stack invariant fails the call instead of the program.
+func parseXML(t *typer, opts sourceOptions, input string, target semtypes.SemType) (result values.BalValue, err error) {
+	defer recoverAsParseError(&err)
 	if t.containsUnionType(target) {
 		source, err := values.ParseAsXMLValue(t.tc, input, values.XMLStrictContentMode)
 		if err != nil {
@@ -46,7 +49,11 @@ func parseXML(t *typer, opts sourceOptions, input string, target semtypes.SemTyp
 		return traverseXML(t, opts, source, target)
 	}
 	ti := t.classify(target)
-	if ti.kind != kindRecord {
+	switch ti.kind {
+	case kindRecord:
+	case kindMap:
+		ti.kind = kindRecord
+	default:
 		return nil, invalidTypeError("record", "")
 	}
 	p := &xmlParser{
@@ -246,6 +253,9 @@ func (p *xmlParser) readText(isCData bool) error {
 	case kindArray:
 		return p.addTextToCurrentNodeIfExpTypeIsArray(ti, key, text)
 	case kindAnydata, kindJSON:
+		if len(p.nodesStack) == 0 {
+			return newXMLError("failed to parse xml")
+		}
 		parent := pop(&p.nodesStack).(*mapNode)
 		return p.convertTextAndUpdateCurrentNode(p.currentNode, parent, key, text, field.ty)
 	}

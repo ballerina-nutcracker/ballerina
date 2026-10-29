@@ -5,4 +5,9 @@
 {"name":"B","age":2}
 E: required field 'age' not present in XML
 true
+E: stream failure
+{"name":"D","age":4}
+true
+true
+E: failed to parse xml
 -- stderr --

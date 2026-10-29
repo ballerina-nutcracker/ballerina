@@ -18,4 +18,6 @@ E: field 'r' cannot be converted
 {"b":"s"}
 {"a":1}
 true
+{"b":"x &amp; yz"}
+{"b":"x &amp; yz"}
 -- stderr --
