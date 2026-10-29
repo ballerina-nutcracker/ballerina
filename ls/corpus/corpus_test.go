@@ -26,6 +26,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -83,6 +84,9 @@ func TestCorpus(t *testing.T) {
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
 			t.Parallel()
+			if strings.HasPrefix(fixture, "signature/") && slices.Contains(signatureSkipList(), "ls/corpus/"+fixture) {
+				t.Skip("incomplete call recovery is not supported yet")
+			}
 			runTranscript(t, fixture)
 		})
 	}
@@ -179,16 +183,16 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 	bus := event.New()
 	defer bus.Close()
 	var gate *signatureGateRepository
-	var workspaceOptions []workspace.Option
-	if fixture.HoldSignatureDependency {
-		gate = newSignatureGateRepository(workspace.NewFileSystemRepository(platform, path.Join(rootPath, "repository")))
-		workspaceOptions = append(workspaceOptions, workspace.WithRepositories([]projects.Repository{gate}))
-	} else if fixture.SignatureRepository {
-		workspaceOptions = append(workspaceOptions, workspace.WithRepositories([]projects.Repository{
-			workspace.NewFileSystemRepository(platform, path.Join(rootPath, "repository")),
-		}))
+	var options []workspace.Option
+	if fixture.HoldSignatureDependency || fixture.SignatureRepository {
+		var repository projects.Repository = projects.NewFileSystemRepository(os.DirFS(filepath.Join(rootPath, "repository")), ".")
+		if fixture.HoldSignatureDependency {
+			gate = newSignatureGateRepository(repository)
+			repository = gate
+		}
+		options = append(options, workspace.WithRepositories([]projects.Repository{repository}))
 	}
-	projectService := workspace.New(platform, bus, workspaceOptions...)
+	projectService := workspace.New(os.DirFS, bus, options...)
 	compiler := compile.New(projectService, bus, compile.WithDebounce(0))
 	defer compiler.Shutdown()
 	srv := server.New(transport, projectService, compiler, bus)
@@ -247,6 +251,10 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 	if *update {
 		fixture.Expected = actualNorm
 		if strings.HasPrefix(fixturePath, "signature/") {
+			content, err := os.ReadFile(fixturePath)
+			if err != nil {
+				t.Fatal(err)
+			}
 			expected, err := json.MarshalIndent(fixture.Expected, "  ", "  ")
 			if err != nil {
 				t.Fatal(err)
@@ -255,7 +263,7 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := platform.FS.WriteFile(fixturePath, updated); err != nil {
+			if err := os.WriteFile(fixturePath, updated, 0o644); err != nil {
 				t.Fatal(err)
 			}
 			return
@@ -269,7 +277,7 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 		}
 		return
 	}
-	actualValues, expectedValues := normalizeMessages(actualNorm), normalizeMessages(expectedNorm)
+	actualValues, expectedValues := normalizeMessages(actualNorm), normalizeMessages(fixture.Expected)
 	if fixture.Unordered {
 		less := func(values []any, i, j int) bool {
 			a, _ := json.Marshal(values[i])

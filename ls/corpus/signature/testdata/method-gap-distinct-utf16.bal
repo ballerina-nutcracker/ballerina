@@ -22,6 +22,6 @@ public function main() {
     string[] arr = []; _ = arr;
     string word = "abc"; _ = word;
     Box box = new; _ = box;
-    word.substring(1, // 😀 
+    word.substring(1, // 𐐀 
 }
 public function sibling() { known(1, 2); }

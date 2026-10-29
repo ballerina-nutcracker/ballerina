@@ -58,6 +58,7 @@ const (
 	rpcMethodNotFound       = -32601
 	rpcInvalidParams        = -32602
 	rpcParseError           = -32700
+	rpcInternalError        = -32603
 )
 
 type requestEntry struct {

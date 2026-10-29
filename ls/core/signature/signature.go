@@ -10,6 +10,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package signature renders call signatures from sealed compiler modules.
 package signature
 
 import (
@@ -24,15 +25,18 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
-// Help contains byte ranges within Label, independent of wire coordinates.
+// Help is a rendered call signature and its active parameter.
 type Help struct {
-	Label                  string
-	Description            string
+	Label       string
+	Description string
+	// Parameters contains byte ranges within Label, not wire coordinates.
 	Parameters             [][2]int
 	ParameterDocumentation []parameterDocumentation
 	ActiveParameter        *int
 }
 
+// At returns signature help at a byte offset in uri's source.
+// The boolean is false when no supported call signature can be determined.
 func At(ctx stdcontext.Context, sm compile.SealedModule, uri workspace.DocumentURI, offset int) (Help, bool, error) {
 	if err := ctx.Err(); err != nil {
 		return Help{}, false, err
@@ -41,13 +45,17 @@ func At(ctx stdcontext.Context, sm compile.SealedModule, uri workspace.DocumentU
 	if !ok || offset < 0 || offset > len(text) {
 		return Help{}, false, nil
 	}
-	fileIndex := sm.Context().DiagnosticEnv().FileIndex(uri.Path())
+	name, ok := sm.NameOf(uri)
+	if !ok {
+		return Help{}, false, nil
+	}
+	fileIndex := sm.Context().DiagnosticEnv().FileIndex(name)
 	paths := nodeChainsAtOffset(sm.PackageNode(), offset, fileIndex)
 	node, args, empty := callAtPaths(paths, fileIndex)
 	if node == nil {
 		return Help{}, false, nil
 	}
-	ref, name, sig, ok := callSignature(sm, node)
+	ref, name, sig, ok := callSignature(sm, node, paths[0])
 	if !ok {
 		return Help{}, false, nil
 	}
@@ -114,8 +122,7 @@ func emptyCallContext(paths [][]ast.BLangNode, call ast.BLangNode, args []ast.BL
 	return true
 }
 
-// loweredMethodCallAlias returns the synthetic package alias of a call the type resolver rewrote
-// from x.f(args) to f(x, args...): the receiver is the first argument and the alias spans the whole call.
+// Langlib lowering rewrites x.f(args) to f(x, args...) with a call-wide package alias.
 func loweredMethodCallAlias(call ast.BLangNode) (ast.BLangNode, bool) {
 	inv, ok := call.(*ast.BLangInvocation)
 	if !ok || inv.Expr != nil || inv.PkgAlias == nil || len(inv.ArgExprs) == 0 {
@@ -185,8 +192,7 @@ func argumentIndex(call ast.BLangNode, args []ast.BLangExpression, chain []ast.B
 	return 0, false
 }
 
-// isMalformedArgument reports whether arg is a bad node that spans source text. A zero-width bad
-// node is a missing argument (e.g. foo(1, )), which is still a valid place for signature help.
+// Zero-width bad expressions can mark missing arguments, as in foo(1, ).
 func isMalformedArgument(arg ast.BLangExpression) bool {
 	if _, bad := arg.(*ast.BLangBadExprOrAction); !bad {
 		return false
@@ -238,19 +244,62 @@ func namedParameterIndex(named *ast.BLangNamedArgsExpression, sig model.UntypedF
 	return index, index >= 0
 }
 
-func callSignature(sm compile.SealedModule, node ast.BLangNode) (model.SymbolRef, string, model.UntypedFunctionSignature, bool) {
+// Failed initializer checks give the expression type never. Its explicit or declared
+// target still identifies the constructor without committing compiler trial state.
+func newExpressionType(cx *context.CompilerContext, node *ast.BLangNewExpression, chain []ast.BLangNode) semtypes.SemType {
+	if !node.ClassSymbol.IsEmpty() {
+		return cx.SymbolType(node.ClassSymbol)
+	}
+	if ty := node.Type(); !semtypes.IsZero(ty) && !semtypes.IsNever(ty) {
+		return ty
+	}
+	if node.TypeDescriptor != nil {
+		return node.TypeDescriptor.Type()
+	}
+	for _, parent := range chain {
+		if variable, ok := parent.(*ast.BLangVariable); ok && variable.GetInitialExpression() == node {
+			return variable.GetAssociatedType()
+		}
+	}
+	return semtypes.SemType{}
+}
+
+func methodReference(cx *context.CompilerContext, receiver ast.BLangExpression, name string) (model.SymbolRef, bool) {
+	if receiver == nil || semtypes.IsZero(receiver.Type()) || semtypes.IsNever(receiver.Type()) {
+		return model.SymbolRef{}, false
+	}
+	atom, unique := semtypes.ObjectPositiveAtom(semtypes.ContextFrom(cx.GetTypeEnv()), receiver.Type())
+	if !unique {
+		return model.SymbolRef{}, false
+	}
+	table, ok := cx.ObjectMethodTable(atom)
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	ref, ok := table.Methods[name]
+	return ref, ok
+}
+
+func callSignature(sm compile.SealedModule, node ast.BLangNode, chain []ast.BLangNode) (model.SymbolRef, string, model.UntypedFunctionSignature, bool) {
 	cx := sm.Context()
 	var raw model.Symbol
 	switch n := node.(type) {
 	case *ast.BLangInvocation:
 		raw = n.RawSymbol
+		if _, resolved := raw.(*model.SymbolRef); !resolved && n.Name != nil {
+			if ref, ok := methodReference(cx, n.Expr, n.Name.GetValue()); ok {
+				raw = &ref
+			}
+		}
 	case *ast.BLangRemoteMethodCallAction:
 		raw = n.RawSymbol
-	case *ast.BLangNewExpression:
-		ty := n.GetDeterminedType()
-		if !n.ClassSymbol.IsEmpty() {
-			ty = cx.SymbolType(n.ClassSymbol)
+		if _, resolved := raw.(*model.SymbolRef); !resolved && n.Name != nil {
+			if ref, ok := methodReference(cx, n.Expr, model.RemoteMethodName(n.Name.GetValue())); ok {
+				raw = &ref
+			}
 		}
+	case *ast.BLangNewExpression:
+		ty := newExpressionType(cx, n, chain)
 		if semtypes.IsZero(ty) {
 			return model.SymbolRef{}, "", model.UntypedFunctionSignature{}, false
 		}

@@ -15,7 +15,10 @@ package corpus
 import (
 	"context"
 	"encoding/json"
+	"io/fs"
+	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -23,30 +26,27 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/model"
-	"github.com/ballerina-nutcracker/ballerina/platform/pal"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 func TestSignatureDocumentationExternalIdentity(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
+	t.Parallel()
 	for _, scenario := range []struct {
 		name  string
 		count int
 	}{{"docs-imported", 5}, {"docs-stdlib", 1}} {
 		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
 			fixturePath := "signature/testdata/" + scenario.name + ".signatureHelp.json"
-			runTranscript(t, platform, fixturePath)
-			assertExternalDocumentationIdentity(t, platform, fixturePath, scenario.count)
+			assertExternalDocumentationIdentity(t, fixturePath, scenario.count)
 		})
 	}
 }
 
-func assertExternalDocumentationIdentity(t *testing.T, platform pal.Platform, fixturePath string, expectedCount int) {
+func assertExternalDocumentationIdentity(t *testing.T, fixturePath string, expectedCount int) {
 	t.Helper()
-	content, err := platform.FS.ReadFile(fixturePath)
+	content, err := fs.ReadFile(os.DirFS("."), fixturePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,13 +58,13 @@ func assertExternalDocumentationIdentity(t *testing.T, platform pal.Platform, fi
 	var text string
 	var options []workspace.Option
 	if len(fixture.Sources) > 0 {
-		root := materializeSources(t, platform, fixture.Sources)
-		uri, err = workspace.NewFileURI("file://" + path.Join(root, "main.bal"))
+		root := materializeSources(t, fixture.Sources)
+		uri, err = workspace.FileURIFromPath(filepath.Join(root, "main.bal"))
 		text = fixture.Sources["main.bal"]
-		options = append(options, workspace.WithRepositories([]projects.Repository{workspace.NewFileSystemRepository(platform, path.Join(root, "repository"))}))
+		options = append(options, workspace.WithRepositories([]projects.Repository{projects.NewFileSystemRepository(os.DirFS(filepath.Join(root, "repository")), ".")}))
 	} else {
-		uri, err = workspace.NewFileURI("file:///tmp/signature68-identity.bal")
-		source, readErr := platform.FS.ReadFile(path.Join(path.Dir(fixturePath), fixture.Source))
+		uri, err = workspace.FileURIFromPath(filepath.Join(t.TempDir(), "signature68-identity.bal"))
+		source, readErr := fs.ReadFile(os.DirFS("."), path.Join(path.Dir(fixturePath), fixture.Source))
 		if readErr != nil {
 			t.Fatal(readErr)
 		}
@@ -75,7 +75,7 @@ func assertExternalDocumentationIdentity(t *testing.T, platform pal.Platform, fi
 	}
 	bus := event.New()
 	defer bus.Close()
-	service := workspace.New(platform, bus, options...)
+	service := workspace.New(os.DirFS, bus, options...)
 	compiler := compile.New(service, bus, compile.WithDebounce(0))
 	defer compiler.Shutdown()
 	if _, err := service.Apply(context.Background(), workspace.DocumentChange{Kind: workspace.ChangeOpen, URI: uri, Text: text, Version: 1, LanguageID: "ballerina"}); err != nil {
@@ -127,7 +127,7 @@ func (v *documentationCalls) Visit(node ast.BLangNode) ast.Visitor {
 		raw = node.RawSymbol
 	case *ast.BLangNewExpression:
 		cx := v.sm.Context()
-		ty := node.GetDeterminedType()
+		ty := node.Type()
 		if !node.ClassSymbol.IsEmpty() {
 			ty = cx.SymbolType(node.ClassSymbol)
 		}

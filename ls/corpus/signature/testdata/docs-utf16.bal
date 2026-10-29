@@ -19,5 +19,5 @@
 # + count - Count parameter.
 function emoji(string '𐐀name, int count) { _ = '𐐀name; _ = count; }
 public function main() {
-    emoji("😀", 1);
+    emoji("𐐀", 1);
 }

@@ -12,43 +12,13 @@
 
 package corpus
 
-import (
-	"path"
-	"slices"
-	"strings"
-	"testing"
-
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
-)
-
-func TestSignatureCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	entries, err := platform.FS.ReadDir("signature/testdata")
-	if err != nil {
-		t.Fatal(err)
-	}
-	skips := signatureSkipList()
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
-			t.Run(entry.Name(), func(t *testing.T) {
-				configPath := "signature/testdata/" + entry.Name()
-				if slices.Contains(skips, path.Clean("ls/corpus/"+configPath)) {
-					t.Skip()
-				}
-				runTranscript(t, platform, configPath)
-			})
-		}
-	}
-}
-
 func signatureSkipList() []string {
-	// TODO: Re-enable these configs when the stashed incomplete-call compiler support is restored.
 	return []string{
 		// TODO: Preserve call ASTs when positional or named argument expressions are missing.
 		"ls/corpus/signature/testdata/ast-nested-recovery.signatureHelp.json",
 		"ls/corpus/signature/testdata/langlib-second-argument.signatureHelp.json",
 		"ls/corpus/signature/testdata/recovery.signatureHelp.json",
+		// TODO: Support incomplete calls before enabling these fixtures.
 		"ls/corpus/signature/testdata/delimiter-imported-both-empty.signatureHelp.json",
 		"ls/corpus/signature/testdata/delimiter-imported-both-supplied.signatureHelp.json",
 		"ls/corpus/signature/testdata/delimiter-imported-both-trailing.signatureHelp.json",

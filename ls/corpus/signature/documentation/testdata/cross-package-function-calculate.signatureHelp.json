@@ -35,7 +35,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "import test/pkgB;\n\npublic function main() {\n    // Test 1: Cross-package function call - processData (at opening parenthesis)\n    string result1 = pkgB:processData(\"test\", 3);\n\n    // Test 2: Cross-package function call - calculate (between parameters)\n    float result2 = pkgB:calculate(10.5, 20.3, \"add\");\n\n    // Test 3: Cross-package method call - DataProcessor\n    pkgB:DataProcessor processor = new(\"myProcessor\");\n    string result3 = processor.process(\"hello\", true);\n\n    // Test 4: Cross-package method call - DataProcessor transform\n    string result4 = processor.transform(\"world\", \"[\", \"]\");\n\n    // Test 5: Cross-package action call - ApiClient fetch\n    pkgB:ApiClient cl = new(\"https://api.example.com\");\n    string|error result5 = cl->fetch(123, false);\n\n    // Test 6: Cross-package action call - ApiClient send\n    map<string> headers = {\"Authorization\": \"Bearer token\"};\n    boolean|error result6 = cl->send(\"POST\", \"/submit\", headers);\n}\n"
@@ -44,7 +44,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -52,7 +52,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         },
         "position": {
           "line": 7,
@@ -63,7 +63,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],

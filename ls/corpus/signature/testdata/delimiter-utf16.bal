@@ -16,5 +16,5 @@
 
 function known(string first, int second = 0) { _ = first; _ = second; }
 public function main() {
-    known("😀", 
+    known("𐐀", 
 }

@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal",
+          "uri": "${root}/main.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).\n//\n// WSO2 LLC. licenses this file to you under the Apache License,\n// Version 2.0 (the \"License\"); you may not use this file except\n// in compliance with the License.\n// You may obtain a copy of the License at\n//\n// http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing,\n// software distributed under the License is distributed on an\n// \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n// KIND, either express or implied. See the License for the\n// specific language governing permissions and limitations\n// under the License.\n\nimport testorg/signature66.lib;\npublic function main() {\n    sibling(1, \"sibling\");\n    lib:imported(1, \"imported\");\n    lib:Alias aliasValue = \"ok\";\n    lib:aliasCall(aliasValue);\n    lib:Box box = new lib:Box(1);\n    box.put(1, \"tag\");\n    _ = box;\n}\n"
@@ -27,7 +27,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -36,7 +36,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         },
         "position": {
           "line": 18,
@@ -46,7 +46,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -55,7 +55,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         },
         "position": {
           "line": 19,
@@ -65,7 +65,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -74,7 +74,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         },
         "position": {
           "line": 21,
@@ -84,7 +84,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -93,7 +93,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         },
         "position": {
           "line": 22,
@@ -103,7 +103,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -112,7 +112,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file://${root}/main.bal"
+          "uri": "${root}/main.bal"
         },
         "position": {
           "line": 23,
@@ -122,7 +122,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -137,7 +137,6 @@
             "change": 2,
             "save": true
           },
-          "completionProvider": {},
           "signatureHelpProvider": {
             "triggerCharacters": [
               "(",
@@ -151,7 +150,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file://${root}/main.bal",
+        "uri": "${root}/main.bal",
         "diagnostics": []
       }
     },

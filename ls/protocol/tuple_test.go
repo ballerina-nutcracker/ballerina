@@ -18,6 +18,7 @@ import (
 )
 
 func TestSignatureLabelTuple(t *testing.T) {
+	t.Parallel()
 	want := `[4,13]`
 	tuple := NewOrParameterInformationLabelVariant1(TupleParameterInformationLabelItem1{Item0: 4, Item1: 13})
 	got, err := json.Marshal(tuple)

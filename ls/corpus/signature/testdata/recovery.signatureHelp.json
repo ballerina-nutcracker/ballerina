@@ -13,7 +13,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///tmp/signature.bal",
+          "uri": "${root}/signature.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -22,7 +22,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -31,7 +31,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file:///tmp/signature.bal"
+          "uri": "${root}/signature.bal"
         },
         "position": {
           "line": 19,
@@ -41,7 +41,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -50,7 +50,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file:///tmp/signature.bal"
+          "uri": "${root}/signature.bal"
         },
         "position": {
           "line": 20,
@@ -60,7 +60,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -69,7 +69,7 @@
       "method": "textDocument/signatureHelp",
       "params": {
         "textDocument": {
-          "uri": "file:///tmp/signature.bal"
+          "uri": "${root}/signature.bal"
         },
         "position": {
           "line": 22,
@@ -79,7 +79,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -94,7 +94,6 @@
             "change": 2,
             "save": true
           },
-          "completionProvider": {},
           "signatureHelpProvider": {
             "triggerCharacters": [
               "(",
@@ -108,7 +107,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///tmp/signature.bal",
+        "uri": "${root}/signature.bal",
         "diagnostics": [
           {
             "range": {
