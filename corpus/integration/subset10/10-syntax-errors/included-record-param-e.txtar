@@ -19,9 +19,21 @@ error[SYNTAX_ERROR]: missing function keyword
    |
 
 error[SYNTAX_ERROR]: missing identifier
+  --> included-record-param-e.bal:17:30
+   |
+17 | function foo(+A{} string args) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
   --> included-record-param-e.bal:21:13
    |
 21 |     int y = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing open paren token
+  --> included-record-param-e.bal:17:30
+   |
+17 | function foo(+A{} string args) { // @error
    |
 
 error[SYNTAX_ERROR]: missing semicolon token

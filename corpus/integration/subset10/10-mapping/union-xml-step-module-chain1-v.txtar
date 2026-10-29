@@ -1,0 +1,10 @@
+-- stdout --
+A
+{"v":<b>1</b><b>2</b>,"m":1}
+B
+{"v":<a><b>1</b></a><a><b>2</b></a>,"m":"s"}
+[xml, int]
+[<b>1</b><b>2</b>,1]
+[function (xml) returns xml[], int]
+[<a><b>1</b></a><a><b>2</b></a>,<b>1</b><b>2</b><b>1</b><b>2</b>,12]
+-- stderr --

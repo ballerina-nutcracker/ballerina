@@ -18,4 +18,19 @@
 enum Palette RED, BLUE } // @error
 -- ast --
 (package
-  (bad-top-level enum))
+  (const RED enum-member (
+    (value-type string)) (
+    (literal RED)))
+  (const BLUE enum-member (
+    (value-type string)) (
+    (literal BLUE)))
+  (type-definition Palette enum
+    (union-type
+      (user-defined-type RED)
+      (user-defined-type BLUE))))
+-- stderr --
+error[SYNTAX_ERROR]: missing open brace token
+  --> enum-missing-open-e.bal:17:14
+   |
+17 | enum Palette RED, BLUE } // @error
+   |

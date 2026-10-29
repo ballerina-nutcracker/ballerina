@@ -1,0 +1,118 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    $desugar$0 = arr;
+    %7 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %7;
+    %9 = ConstantLoad 0
+    %10 = newArray list[%9]{}
+    $desugar$2 = %10;
+    %13 = ConstantLoad 0
+    $desugar$3 = %13;
+    GOTO bb2;
+  }
+  bb2 {
+    %16 = $desugar$3;
+    %17 = $desugar$1;
+    %15 = < %16 %17;
+    %15 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 12
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %1 = ConstantLoad id
+    %3 = (1, x);
+    %4 = ConstantLoad 3
+    %5 = %4;
+    %2 = * %3 %5;
+    %6 = newMap {| id: int, never... |}{%1=%2}
+    %7 = push((1, $desugar$2),%6) -> bb5;
+  }
+  bb4 {
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad 2
+    %20 = newArray [[{| id: int, never... |}...], int, never...][%19]{$desugar$2, %18}
+    r = %20;
+    %22 = println(r) -> bb6;
+  }
+  bb5 {
+    %9 = (1, $desugar$3);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$3) = %8;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %23 = r is [[{| id: int, never... |}...], int, never...]
+    %24 = %23;
+    %25 = println(%24) -> bb7;
+  }
+  bb7 {
+    $desugar$4 = arr;
+    %27 = length($desugar$4) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %27;
+    %29 = ConstantLoad 0
+    %30 = newArray list[%29]{}
+    $desugar$6 = %30;
+    %33 = ConstantLoad 0
+    $desugar$7 = %33;
+    GOTO bb9;
+  }
+  bb9 {
+    %36 = $desugar$7;
+    %37 = $desugar$5;
+    %35 = < %36 %37;
+    %35 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$4)[(1, $desugar$7)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$6),%5) -> bb12;
+  }
+  bb11 {
+    %38 = ConstantLoad 1
+    %39 = newArray [[int...], never...][%38]{$desugar$6}
+    %40 = ConstantLoad 1
+    %41 = ConstantLoad 2
+    %42 = newArray [[[int...], never...]|[[string...], never...], int, never...][%41]{%39, %40}
+    o = %42;
+    %44 = println(o) -> bb13;
+  }
+  bb12 {
+    %8 = (1, $desugar$7);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$7) = %7;
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb13 {
+    %46 = ConstantLoad 0
+    %45 = o[%46];
+    %47 = %45 is [[int...], never...]
+    %48 = %47;
+    %49 = println(%48) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}

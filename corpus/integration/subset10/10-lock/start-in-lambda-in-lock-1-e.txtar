@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-in-lambda-in-lock-1-e.bal:34:29
+   |
+34 |             future<int> r = start isolatedFn(42); // @error start action lexically inside lock
+   |                             ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-in-lambda-in-lock-1-e.bal:46:33
+   |
+46 |                 future<int> r = start isolatedFn(1); // @error start action lexically inside lock
+   |                                 ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-in-lambda-in-lock-1-e.bal:57:29
+   |
+57 |             future<int> r = start isolatedFn(2); // @error start action lexically inside lock
+   |                             ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-in-lambda-in-lock-1-e.bal:69:33
+   |
+69 |                 future<int> r = start isolatedFn(3); // @error start action inside lock
+   |                                 ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-in-lambda-in-lock-1-e.bal:83:33
+   |
+83 |                 future<int> r = start isolatedFn(4); // @error start action lexically inside lock
+   |                                 ^^^^^^^^^^^^^^^^^^^

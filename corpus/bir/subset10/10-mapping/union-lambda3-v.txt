@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    %6 = ConstantLoad v
+    %7 = closure_fp $anon/.:$anonFunc$_0
+    %8 = map(arr,%7) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad m
+    %10 = ConstantLoad 1
+    %11 = newMap {| m: int, v: [[int...]...], never... |}{%6=%8, %9=%10}
+    r = %11;
+    %13 = println(r) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> [int...]{
+  bb0 {
+    %2 = closure_fp $anon/.:$anonFunc$_1
+    %3 = map((1, arr),%2) -> bb1;
+  }
+  bb1 {
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %4 = (1, x);
+    %5 = ConstantLoad 10
+    %6 = %5;
+    %3 = * %4 %6;
+    %7 = %3;
+    %8 = y;
+    %2 = + %7 %8;
+    %0 = %2;
+    return;
+  }
+}

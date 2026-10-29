@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'decimal', got '"1"'
+  --> task1-e.bal:27:75
+   |
+27 |     task:JobId id = check task:scheduleJobRecurByFrequency(new NotAJob(), "1"); // @error
+   |                                                                           ^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'object { public function execute() returns nil }', got '1'
+  --> task1-e.bal:26:48
+   |
+26 |     _ = check task:scheduleJobRecurByFrequency(1, 1); // @error
+   |                                                ^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'object { public function execute() returns nil }', got 'object { public function init() returns nil; public function run() returns nil }'
+  --> task1-e.bal:25:48
+   |
+25 |     _ = check task:scheduleJobRecurByFrequency(new NotAJob(), 1); // @error
+   |                                                ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'object { public function execute() returns nil }', got 'object { public function init() returns nil; public function run() returns nil }'
+  --> task1-e.bal:27:60
+   |
+27 |     task:JobId id = check task:scheduleJobRecurByFrequency(new NotAJob(), "1"); // @error
+   |                                                            ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'readonly&{| id: int, never... |}', got 'int'
+  --> task1-e.bal:28:25
+   |
+28 |     check task:pauseJob(id.id); // @error
+   |                         ^^^^^

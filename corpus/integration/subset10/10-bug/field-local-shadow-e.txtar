@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Variable already defined: self
+  --> field-local-shadow-e.bal:42:9
+   |
+42 |         int self = 1; // @error implicit self is a block binding
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: value
+  --> field-local-shadow-e.bal:21:9
+   |
+21 |         int value = 1; // @error parameter is a block binding
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: value
+  --> field-local-shadow-e.bal:28:13
+   |
+28 |             int value = 2; // @error outer local is still a block binding
+   |             ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Variable already defined: value
+  --> field-local-shadow-e.bal:35:50
+   |
+35 |         function (int) returns int f = function (int value) returns int { // @error outer local blocks lambda parameter
+   |                                                  ^^^^^^^^^

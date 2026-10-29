@@ -17,8 +17,11 @@ isolated function compute() returns int {
     return 42;
 }
 
+isolated int starts = 0;
+
 function startInLock() {
     lock {
+        starts += 1;
         future<int> result = start compute(); // @error start action inside lock
         _ = result;
     }

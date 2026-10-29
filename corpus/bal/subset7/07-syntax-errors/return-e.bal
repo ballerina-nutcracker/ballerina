@@ -19,7 +19,7 @@ import ballerina/io;
 function add(int a, int b) return int { // @error
     return a + b;
 }
-
+// @error missing close brace of add
 public function main() {
     int result = add(5, 10);
     io:println(result);

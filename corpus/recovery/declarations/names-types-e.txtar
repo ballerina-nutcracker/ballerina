@@ -28,7 +28,7 @@ function types() {
 function valid() {}
 function discarded(int _) {} // @error discarded signature
 function discardedReferences() {
-    discarded(); // @error unresolved discarded declaration
+    discarded();
     int surviving = 5; // @error unused surviving sibling
 }
 -- ast --
@@ -39,12 +39,12 @@ function discardedReferences() {
   (type-definition (bad-identifier)
     (value-type int))
   (type-definition Broken
-    (bad-type))
+    (bad-type qualified-reference (tokens (":" 19:16 19:17))))
   (type-definition Nested
     (array-type
       (constrained-type
         (builtin-ref-type map)
-        (bad-type)) dimensions: 1 ([])))
+        (bad-type qualified-reference (tokens (":" 20:20 20:21)))) dimensions: 1 ([])))
   (function types () (
     (value-type null))
     (block-function-body
@@ -58,7 +58,7 @@ function discardedReferences() {
           (literal 2))))
       (var-def
         (variable local (type
-          (bad-type)) (expr
+          (bad-type qualified-reference (tokens (":" 24:8 24:9)))) (expr
           (literal 3))))
       (var-def
         (variable later (type
@@ -81,3 +81,75 @@ function discardedReferences() {
         (variable surviving (type
           (value-type int)) (expr
           (literal 5)))))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> names-types-e.bal:25:1
+   |
+25 |     int later = 4; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'local'
+  --> names-types-e.bal:24:1
+   |
+24 |     mod:_ local = 3; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |     int later = 4; // @error unused surviving sibling
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'surviving'
+  --> names-types-e.bal:31:1
+   |
+31 |     int surviving = 5; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | }
+   |
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:17:5
+   |
+17 | int '_ = 1; // @error
+   |     ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:18:6
+   |
+18 | type _ int; // @error
+   |      ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:19:17
+   |
+19 | type Broken mod:_; // @error
+   |                 ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:20:21
+   |
+20 | type Nested map<mod:_>[]; // @error
+   |                     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:22:9
+   |
+22 |     int '_ = 1; // @error
+   |         ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:24:9
+   |
+24 |     mod:_ local = 3; // @error
+   |         ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-types-e.bal:28:24
+   |
+28 | function discarded(int _) {} // @error discarded signature
+   |                        ^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> names-types-e.bal:23:9
+   |
+23 |     int = 2; // @error
+   |

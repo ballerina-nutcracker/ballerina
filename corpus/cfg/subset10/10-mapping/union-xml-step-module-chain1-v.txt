@@ -1,0 +1,121 @@
+(kind
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref v)
+      (user-defined-type A))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal A))
+  )
+  (bb2 (bb0) (bb3 bb4)
+    (type-test-expr is
+      (simple-var-ref v)
+      (user-defined-type B))
+  )
+  (bb3 (bb2) ()
+    (return
+      (literal B))
+  )
+  (bb4 (bb2) (bb5 bb6)
+    (type-test-expr is
+      (simple-var-ref v)
+      (tuple-type
+        (value-type xml)
+        (value-type int)))
+  )
+  (bb5 (bb4) ()
+    (return
+      (literal [xml, int]))
+  )
+  (bb6 (bb4) (bb7 bb8)
+    (type-test-expr is
+      (simple-var-ref v)
+      (tuple-type
+        (function-type (
+          (value-type xml)) (
+          (array-type
+            (value-type xml) dimensions: 1 ([]))))
+        (value-type int)))
+  )
+  (bb7 (bb6) ()
+    (return
+      (literal [function (xml) returns xml[], int]))
+  )
+  (bb8 (bb6) ()
+    (return
+      (literal other))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation kind (
+          (simple-var-ref first))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref first))))
+    (expression-stmt
+      (invocation io println (
+        (invocation kind (
+          (simple-var-ref second))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref second))))
+    (expression-stmt
+      (invocation io println (
+        (invocation kind (
+          (simple-var-ref list))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref list))))
+    (var-def
+      (variable l (expr
+        (simple-var-ref lambda))))
+    (expression-stmt
+      (invocation io println (
+        (invocation kind (
+          (simple-var-ref l))))))
+    (type-test-expr is
+      (simple-var-ref l)
+      (tuple-type
+        (function-type (
+          (value-type xml)) (
+          (array-type
+            (value-type xml) dimensions: 1 ([]))))
+        (value-type int)))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable f (expr
+        (index-based-access
+          (simple-var-ref l)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (simple-var-ref y))))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (list-constructor-expr
+      (xml-step-expression
+        (simple-var-ref s)
+        (xml-step-element-children
+          (xml-name-pattern-identifier a)))
+      (xml-step-expression
+        (group-expr
+          (binary-expr +
+            (simple-var-ref s)
+            (simple-var-ref y)))
+        (xml-step-element-descendants
+          (xml-name-pattern-identifier b)))
+      (xml-step-expression
+        (field-based-access v
+          (simple-var-ref first))
+        (xml-step-all-children)))
+  )
+)

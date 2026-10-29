@@ -1,0 +1,26 @@
+module $anon.. v 0.0.0;
+isNil(any) -> boolean{
+  bb0 {
+    %2 = v is nil
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad s
+    %2 = ConstantLoad <nil>
+    %3 = newMap {| s: nil|stream<int|{| s: nil|..., never... |}>, never... |}{%1=%2}
+    r = %3;
+    %6 = ConstantLoad s
+    %5 = r[%6];
+    %7 = isNil(%5) -> bb1;
+  }
+  bb1 {
+    %8 = %7;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

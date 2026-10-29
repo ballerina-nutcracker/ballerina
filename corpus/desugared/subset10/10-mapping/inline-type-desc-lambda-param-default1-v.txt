@@ -1,0 +1,72 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition C
+    (record-type
+      (field f
+        (function-type (
+          (value-type int)) (
+          (value-type boolean))))))
+  (type-definition D
+    (record-type
+      (field f
+        (function-type (
+          (value-type string)) (
+          (value-type boolean))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type any)) (expr
+          (literal 1))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type C)
+            (user-defined-type D))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f)
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable y)) ()
+                  (expr-function-body
+                    (expression-thunk
+                    (var-def
+                      (variable $desugar$0))
+                    (assignment
+                      (simple-var-ref $desugar$0)
+                      (lambda
+                        (function $default$0 () ()
+                          (block-function-body
+                            (return
+                              (invocation lang.string length (
+                                (simple-var-ref y))))))))
+                    (type-test-expr is
+                      (simple-var-ref v)
+                      (function-type (
+                        (value-type int)) (
+                        (value-type null)))))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (user-defined-type D)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref r)
+          (user-defined-type D))
+        (block-stmt
+          (var-def
+            (variable f (type
+              (function-type (
+                (value-type string)) (
+                (value-type boolean)))) (expr
+              (index-based-access
+                (simple-var-ref r)
+                (literal f)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation f (
+                (literal ab))))))) ())
+      (block-stmt))))

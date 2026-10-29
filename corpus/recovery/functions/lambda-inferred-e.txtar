@@ -20,8 +20,8 @@ function consumeFunction(function() returns int callable) returns int => callabl
 
 function inferredBody() {
     function(int) returns int inferred = value => value + missingInferred; // @error
-    consume(inferred(1)); // @error expression value must be assigned
-    consume(2); // @error expression value must be assigned
+    consume(inferred(1));
+    consume(2);
 }
 -- ast --
 (package
@@ -60,3 +60,9 @@ function inferredBody() {
       (expression-stmt
         (invocation consume (
           (literal 2)))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingInferred
+  --> lambda-inferred-e.bal:21:59
+   |
+21 |     function(int) returns int inferred = value => value + missingInferred; // @error
+   |                                                           ^^^^^^^^^^^^^^^

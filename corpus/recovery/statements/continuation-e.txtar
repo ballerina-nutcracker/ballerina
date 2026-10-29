@@ -34,13 +34,13 @@ function brokenBody() returns int {
     match missingMatch { _ => { probe("skipped"); } } // @error
     match 1 { missingPattern => { probe("skipped"); } } // @error
     match 1 { _ if missingGuard => { probe("skipped"); } } // @error
-    probe("outer"); // @error later outer sibling resolved
+    probe("outer");
     int later = 4;
     return later;
 }
 function probe(int value) returns int => value;
 function unavailableSignature(Unknown value) returns int { // @error
-    probe("signatureSkipped");
+    probe("signatureResolved");
     return 1;
 }
 class Survivor {
@@ -215,7 +215,7 @@ function callers(Survivor survivor) returns int {
     (block-function-body
       (expression-stmt
         (invocation probe (
-          (literal signatureSkipped))))
+          (literal signatureResolved))))
       (return
         (literal 1))))
   (function callers (
@@ -236,3 +236,203 @@ function callers(Survivor survivor) returns int {
         (binary-expr +
           (simple-var-ref named)
           (simple-var-ref method))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> continuation-e.bal:18:15
+   |
+18 |     int bad = ; // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> continuation-e.bal:27:17
+   |
+27 |     if (true && ) { probe("skippedBad"); } // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> continuation-e.bal:29:30
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> continuation-e.bal:47:19
+   |
+47 |         int bad = ; // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: absent
+  --> continuation-e.bal:21:19
+   |
+21 |     int unknown = absent + 1; // @error
+   |                   ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: absentArgument
+  --> continuation-e.bal:22:28
+   |
+22 |     int invocation = probe(absentArgument); // @error
+   |                            ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: absentInferred
+  --> continuation-e.bal:24:23
+   |
+24 |     var unavailable = absentInferred; // @error
+   |                       ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missing
+  --> continuation-e.bal:26:20
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |                    ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingCollection
+  --> continuation-e.bal:31:25
+   |
+31 |     foreach var item in missingCollection { probe("skipped"); } // @error
+   |                         ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingCondition
+  --> continuation-e.bal:28:8
+   |
+28 |     if missingCondition { probe("skipped"); } // @error
+   |        ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingGuard
+  --> continuation-e.bal:35:20
+   |
+35 |     match 1 { _ if missingGuard => { probe("skipped"); } } // @error
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingLoop
+  --> continuation-e.bal:30:11
+   |
+30 |     while missingLoop { probe("skipped"); } // @error
+   |           ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingMatch
+  --> continuation-e.bal:33:11
+   |
+33 |     match missingMatch { _ => { probe("skipped"); } } // @error
+   |           ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingPattern
+  --> continuation-e.bal:34:15
+   |
+34 |     match 1 { missingPattern => { probe("skipped"); } } // @error
+   |               ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> continuation-e.bal:32:13
+   |
+32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
+   |             ^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Unknown
+  --> continuation-e.bal:41:31
+   |
+41 | function unavailableSignature(Unknown value) returns int { // @error
+   |                               ^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: malformedType
+  --> continuation-e.bal:20:10
+   |
+20 |     int| malformedType = 1; // @error
+   |          ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> continuation-e.bal:18:1
+   |
+18 |     int bad = ; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^
+19 |     int '_ = 1; // @error bad statement
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'bad'
+  --> continuation-e.bal:47:1
+   |
+47 |         int bad = ; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^
+48 |         return 5;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'badInner'
+  --> continuation-e.bal:29:15
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |               ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'dependent'
+  --> continuation-e.bal:25:1
+   |
+25 |     int dependent = unavailable + 1; // @error unused dependent
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     { int nested = missing; probe("inner"); } // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'invocation'
+  --> continuation-e.bal:22:1
+   |
+22 |     int invocation = probe(absentArgument); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |     unknown = 2;
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'item'
+  --> continuation-e.bal:31:13
+   |
+31 |     foreach var item in missingCollection { probe("skipped"); } // @error
+   |             ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'item'
+  --> continuation-e.bal:32:13
+   |
+32 |     foreach Unknown item in [1] { probe("skipped"); } // @error
+   |             ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'nested'
+  --> continuation-e.bal:26:7
+   |
+26 |     { int nested = missing; probe("inner"); } // @error
+   |       ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> continuation-e.bal:41:31
+   |
+41 | function unavailableSignature(Unknown value) returns int { // @error
+   |                               ^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> continuation-e.bal:19:9
+   |
+19 |     int '_ = 1; // @error bad statement
+   |         ^^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> continuation-e.bal:18:15
+   |
+18 |     int bad = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> continuation-e.bal:20:24
+   |
+20 |     int| malformedType = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> continuation-e.bal:27:17
+   |
+27 |     if (true && ) { probe("skippedBad"); } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> continuation-e.bal:29:30
+   |
+29 |     if true { int badInner = ; probe("innerIf"); } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> continuation-e.bal:47:19
+   |
+47 |         int bad = ; // @error
+   |

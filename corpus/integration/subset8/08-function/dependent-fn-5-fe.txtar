@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: rest parameters are not supported on dependently-typed functions
+  --> dependent-fn-5-fe.bal:18:1
+   |
+18 | function withRest(int val, typedesc retTy = <>, int... rest) returns retTy = external; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

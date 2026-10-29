@@ -37,4 +37,28 @@ public function main() {
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (bad-expr-or-action)))))))
+          (bad-expr-or-action optional-field-access (tokens ("?." 19:19 19:21) (":" 19:24 19:25)))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> optional-field-qualified-underscore-e.bal:18:1
+   |
+18 |     record {int mod;}? value = ();
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     int? x = value?.mod:_; // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> optional-field-qualified-underscore-e.bal:19:1
+   |
+19 |     int? x = value?.mod:_; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | }
+   |
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> optional-field-qualified-underscore-e.bal:19:25
+   |
+19 |     int? x = value?.mod:_; // @error
+   |                         ^
+-- diagnostic-counts --
+1 '_' is a keyword, and may not be used as an identifier

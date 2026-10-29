@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+class Runner {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  run(int) -> int{
+    bb0 {
+      %4 = p;
+      %5 = ConstantLoad 1
+      %6 = %5;
+      %3 = + %4 %6;
+      %0 = %3;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Runner
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    v = %3;
+    %6 = ConstantLoad x
+    %7 = v is object { function run(int) returns int }
+    %8 = newMap {| x: boolean, never... |}{%6=%7}
+    r = %8;
+    %10 = ConstantLoad x
+    %11 = <object { function run(int) returns int }>(v)
+    %12 = ConstantLoad m
+    %13 = ConstantLoad 1
+    %14 = newMap {| m: int, x: object { function run(int) returns int }, never... |}{%10=%11, %12=%13}
+    c = %14;
+    %16 = println(r) -> bb5;
+  }
+  bb5 {
+    %17 = c is {| m: int, x: object { function run(int) returns int }, never... |}
+    %18 = %17;
+    %19 = println(%18) -> bb6;
+  }
+  bb6 {
+    %21 = ConstantLoad x
+    %20 = c[%21];
+    %22 = ConstantLoad 4
+    %23 = %22;
+    %24 = %20.run(%23) -> bb7;
+  }
+  bb7 {
+    %25 = %24;
+    %26 = println(%25) -> bb8;
+  }
+  bb8 {
+    %27 = v is object { function run(int) returns int }
+    %27 ? bb9 : bb12;
+  }
+  bb9 {
+    PushScopeFrame 5
+    %0 = ConstantLoad 4
+    %1 = %0;
+    %2 = (1, v).run(%1) -> bb10;
+  }
+  bb10 {
+    %3 = %2;
+    %4 = println(%3) -> bb11;
+  }
+  bb11 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}

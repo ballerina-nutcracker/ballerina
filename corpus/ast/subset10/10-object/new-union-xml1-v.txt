@@ -1,0 +1,95 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition XmlArg
+    (variable value (type
+      (value-type xml)))
+    (variable marker (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type xml)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref value))
+        (assignment
+          (field-based-access marker
+            (simple-var-ref self))
+          (simple-var-ref marker)))))
+  (class-definition StringArg
+    (variable value (type
+      (value-type xml)))
+    (variable marker (type
+      (value-type string)))
+    (function init (
+      (variable value (type
+        (value-type xml)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref value))
+        (assignment
+          (field-based-access marker
+            (simple-var-ref self))
+          (simple-var-ref marker)))))
+  (function show (
+    (variable v (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type XmlArg)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type StringArg)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-element-literal a
+              (xml-text-literal 1))))))
+      (var-def
+        (variable s (type
+          (union-type
+            (user-defined-type XmlArg)
+            (user-defined-type StringArg))) (expr
+          (new (
+            (xml-step-expression
+              (simple-var-ref x)
+              (xml-step-element-children
+                (xml-name-pattern-identifier a)))
+            (literal 1))))))
+      (expression-stmt
+        (invocation show (
+          (simple-var-ref s))))
+      (if
+        (type-test-expr is
+          (simple-var-ref s)
+          (user-defined-type XmlArg))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref s)))))
+          (expression-stmt
+            (invocation io println (
+              (field-based-access marker
+                (simple-var-ref s)))))) ())
+      (block-stmt))))

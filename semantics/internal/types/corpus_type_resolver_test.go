@@ -95,13 +95,12 @@ func (v *typeResolutionValidator) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	}
 
-	// Validate that all BLangExpression nodes have their determined type set.
 	// NEVER is a legitimate type for guaranteed-divergent expressions (e.g.
 	// `check newError()` or `checkpanic newError()` whose inner type is
 	// exactly `error`, so the non-error remainder is empty).
-	if expr, ok := node.(ast.BLangExpression); ok {
-		if semtypes.IsZero(expr.GetDeterminedType()) {
-			v.t.Errorf("expression %T at %v does not have determined type set", expr, expr.GetPosition())
+	if typed, ok := node.(ast.NodeWithType); ok {
+		if semtypes.IsZero(typed.Type()) {
+			v.t.Errorf("%T at %v does not have type set", typed, typed.GetPosition())
 		}
 	}
 

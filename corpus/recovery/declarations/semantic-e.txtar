@@ -66,3 +66,63 @@ function valid(DuplicateMembers value) returns int => value.surviving();
     (expr-function-body
       (invocation surviving expr:
         (simple-var-ref value) ()))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'missingInitializer'
+  --> semantic-e.bal:19:1
+   |
+19 | var missingInitializer; // @error semantic initializer requirement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | 
+   |
+
+error[SYNTAX_ERROR]: only object and error types can be distinct
+  --> semantic-e.bal:17:14
+   |
+17 | type Invalid distinct int; // @error semantic invalid distinct target
+   |              ^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: only object and error types can be distinct
+  --> semantic-e.bal:18:20
+   |
+18 | type NestedInvalid distinct record { int value; }; // @error semantic invalid distinct target
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: redeclared symbol 'init'
+  --> semantic-e.bal:23:1
+   |
+23 |     function init() {} // @error semantic duplicate initializer
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     function method() returns int => 1;
+   |
+
+error[SYNTAX_ERROR]: redeclared symbol 'method'
+  --> semantic-e.bal:25:1
+   |
+25 |     function method() returns int => 2; // @error semantic duplicate method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |     function surviving() returns int => self.method();
+   |
+
+error[SYNTAX_ERROR]: redeclared symbol 'method'
+  --> semantic-e.bal:32:1
+   |
+32 |     function method() returns int; // @error semantic duplicate method
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | };
+   |
+
+error[SYNTAX_ERROR]: redeclared symbol 'value'
+  --> semantic-e.bal:30:1
+   |
+30 |     int value; // @error semantic duplicate field
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |     function method() returns int;
+   |
+
+error[SYNTAX_ERROR]: var-declared module variable must have an initializer expression for type inference
+  --> semantic-e.bal:19:1
+   |
+19 | var missingInitializer; // @error semantic initializer requirement
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | 
+   |

@@ -6,7 +6,19 @@ error[SYNTAX_ERROR]: invalid xml name
 19 |     xml:ProcessingInstruction pe = xml `<pe ?>`; // @error
    |                                             ^
 
+error[SYNTAX_ERROR]: missing identifier
+  --> 2-e.bal:18:25
+   |
+18 |     xml e2 = xml `<test>`; // @error
+   |
+
 error[SYNTAX_ERROR]: missing lt token
+  --> 2-e.bal:18:25
+   |
+18 |     xml e2 = xml `<test>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing slash token
   --> 2-e.bal:18:25
    |
 18 |     xml e2 = xml `<test>`; // @error
