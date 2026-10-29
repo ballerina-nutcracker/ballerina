@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
@@ -66,15 +67,16 @@ func sshClientConfig(platform pal.Platform, ep *endpoint) (*ssh.ClientConfig, er
 			}
 		}
 	}
-	hostKeyCallback, err := hostKeyCallback(platform, ep)
+	hostKeyCallback, hostKeyAlgorithms, err := hostKeyCallback(platform, ep)
 	if err != nil {
 		return nil, err
 	}
 	return &ssh.ClientConfig{
-		User:            ep.username,
-		Auth:            auths,
-		HostKeyCallback: hostKeyCallback,
-		Timeout:         ep.connectTimeout,
+		User:              ep.username,
+		Auth:              auths,
+		HostKeyCallback:   hostKeyCallback,
+		HostKeyAlgorithms: hostKeyAlgorithms,
+		Timeout:           ep.connectTimeout,
 	}, nil
 }
 
@@ -112,10 +114,11 @@ func (e *keyAuthError) Error() string {
 func (e *keyAuthError) Unwrap() error { return e.cause }
 
 // hostKeyCallback enables strict checking only when the known_hosts file exists, as JSch does
-// with StrictHostKeyChecking; otherwise any server key is accepted.
-func hostKeyCallback(platform pal.Platform, ep *endpoint) (ssh.HostKeyCallback, error) {
+// with StrictHostKeyChecking; otherwise any server key is accepted. Like JSch's
+// prefer_known_host_key_types, the key types known for the host are negotiated first.
+func hostKeyCallback(platform pal.Platform, ep *endpoint) (ssh.HostKeyCallback, []string, error) {
 	if ep.knownHostsPath == "" {
-		return ssh.InsecureIgnoreHostKey(), nil //nolint:gosec
+		return ssh.InsecureIgnoreHostKey(), nil, nil //nolint:gosec
 	}
 	knownHostsPath := ep.knownHostsPath
 	if strings.HasPrefix(knownHostsPath, "~") {
@@ -123,13 +126,13 @@ func hostKeyCallback(platform pal.Platform, ep *endpoint) (ssh.HostKeyCallback, 
 	}
 	data, err := platform.FS.ReadFile(knownHostsPath)
 	if err != nil {
-		return ssh.InsecureIgnoreHostKey(), nil //nolint:gosec
+		return ssh.InsecureIgnoreHostKey(), nil, nil //nolint:gosec
 	}
 	entries, err := parseKnownHosts(data)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+	callback := func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 		candidates := []string{knownhosts.Normalize(hostname)}
 		if remote != nil {
 			candidates = append(candidates, knownhosts.Normalize(remote.String()))
@@ -140,7 +143,37 @@ func hostKeyCallback(platform pal.Platform, ep *endpoint) (ssh.HostKeyCallback, 
 			}
 		}
 		return fmt.Errorf("reject HostKey: %s", hostname)
-	}, nil
+	}
+	return callback, preferredHostKeyAlgorithms(entries, knownhosts.Normalize(ep.address())), nil
+}
+
+// preferredHostKeyAlgorithms lists the algorithms of the host's known keys ahead of the other
+// supported ones, or returns nil (Go's defaults) when the host has no known key.
+func preferredHostKeyAlgorithms(entries []knownHost, host string) []string {
+	var preferred []string
+	for _, entry := range entries {
+		if !entry.matches([]string{host}) {
+			continue
+		}
+		algorithms := []string{entry.key.Type()}
+		if entry.key.Type() == ssh.KeyAlgoRSA {
+			algorithms = []string{ssh.KeyAlgoRSASHA512, ssh.KeyAlgoRSASHA256, ssh.KeyAlgoRSA}
+		}
+		for _, algorithm := range algorithms {
+			if !slices.Contains(preferred, algorithm) {
+				preferred = append(preferred, algorithm)
+			}
+		}
+	}
+	if len(preferred) == 0 {
+		return nil
+	}
+	for _, algorithm := range ssh.SupportedAlgorithms().HostKeys {
+		if !slices.Contains(preferred, algorithm) {
+			preferred = append(preferred, algorithm)
+		}
+	}
+	return preferred
 }
 
 type knownHost struct {
