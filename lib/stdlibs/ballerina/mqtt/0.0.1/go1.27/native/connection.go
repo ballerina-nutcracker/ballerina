@@ -131,6 +131,7 @@ type connection struct {
 	state         connectionState
 	link          *activeLink
 	stopReconnect chan struct{}
+	halted        bool
 }
 
 func newConnection(platform pal.Platform, opts *connectionOptions, handlers connectionHandlers) *connection {
@@ -149,7 +150,7 @@ func (c *connection) connect() *mqttError {
 	c.state = stateConnecting
 	c.mu.Unlock()
 	if err := c.connectToAny(); err != nil {
-		c.setState(stateDisconnected)
+		c.connectFailed()
 		return err
 	}
 	return nil
@@ -161,6 +162,11 @@ func (c *connection) connectToAny() *mqttError {
 		link, err := c.connectTo(uri)
 		if err == nil {
 			c.mu.Lock()
+			if c.halted {
+				c.mu.Unlock()
+				c.closeLink(link)
+				return newReasonError(reasonClientClosed, nil)
+			}
 			c.link = link
 			c.state = stateConnected
 			c.mu.Unlock()
@@ -284,6 +290,10 @@ func (c *connection) monitor(link *activeLink) {
 
 func (c *connection) startReconnectCycle() {
 	c.mu.Lock()
+	if c.halted {
+		c.mu.Unlock()
+		return
+	}
 	stop := make(chan struct{})
 	c.stopReconnect = stop
 	c.mu.Unlock()
@@ -308,7 +318,7 @@ func (c *connection) reconnectCycle(stop chan struct{}) {
 		if err := c.connectToAny(); err == nil {
 			return
 		}
-		c.setState(stateDisconnected)
+		c.connectFailed()
 		if delay < c.opts.maxReconnectDelay {
 			delay = min(delay*2, c.opts.maxReconnectDelay)
 		}
@@ -320,6 +330,23 @@ func (c *connection) cancelReconnectCycleLocked() {
 		close(c.stopReconnect)
 		c.stopReconnect = nil
 	}
+}
+
+// connectFailed leaves the connecting state unless the connection was closed meanwhile.
+func (c *connection) connectFailed() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.state == stateConnecting {
+		c.state = stateDisconnected
+	}
+}
+
+// halt drops the connection and stops reconnecting for good, including an attempt in flight.
+func (c *connection) halt() {
+	c.mu.Lock()
+	c.halted = true
+	c.mu.Unlock()
+	c.disconnectForcibly()
 }
 
 func (c *connection) setState(s connectionState) {
@@ -525,7 +552,7 @@ func (c *connection) reconnect() *mqttError {
 	c.mu.Unlock()
 	go func() {
 		if err := c.connectToAny(); err != nil {
-			c.setState(stateDisconnected)
+			c.connectFailed()
 			if c.opts.automaticReconnect {
 				c.startReconnectCycle()
 			}

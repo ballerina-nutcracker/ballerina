@@ -209,27 +209,24 @@ func (m *mqttModule) listenerStart(ctx *extern.Context, args []values.BalValue) 
 
 func (m *mqttModule) listenerGracefulStop(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	ls := listenerOf(args[0].(*values.Object))
+	defer ls.stop()
 	if mErr := ls.conn.disconnect(); mErr != nil {
 		return toBalError(ctx, mErr)
 	}
-	if mErr := ls.conn.close(); mErr != nil {
-		return toBalError(ctx, mErr)
-	}
-	ls.stop()
-	return nil, nil
+	return result(ctx, ls.conn.close())
 }
 
 func (m *mqttModule) listenerImmediateStop(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	ls := listenerOf(args[0].(*values.Object))
+	defer ls.stop()
 	ls.conn.disconnectForcibly()
-	if mErr := ls.conn.close(); mErr != nil {
-		return toBalError(ctx, mErr)
-	}
-	ls.stop()
-	return nil, nil
+	return result(ctx, ls.conn.close())
 }
 
+// stop takes effect even when the stop call reports an error, so the listener cannot
+// reconnect and keep dispatching afterwards.
 func (ls *listenerState) stop() {
+	ls.conn.halt()
 	ls.setService(nil)
 	ls.events.close()
 }

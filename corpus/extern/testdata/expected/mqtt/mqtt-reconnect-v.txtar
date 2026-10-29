@@ -2,6 +2,8 @@
 intruder dropped: true
 resilient connected: true
 intruder disconnect: Client is disconnected
+stop while reconnecting: Client is disconnected
+usurper connected: true
 empty subscribe: The Server Disconnected the client.
 connected: false
 reconnect: ok

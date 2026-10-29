@@ -60,6 +60,20 @@ public function main() returns error? {
     check resilient->disconnect();
     check resilient->close();
 
+    // A gracefulStop that fails while the listener waits to reconnect still stops it, so it does
+    // not take the client ID back.
+    mqtt:Listener stopped = check new (BROKER_URL, "reconnect-v-stopped", "reconnect-v/stopped",
+        connectionConfig = {automaticReconnect: true, maxReconnectDelay: 1000});
+    mqtt:Client usurper = check new (BROKER_URL, "reconnect-v-stopped");
+    runtime:sleep(0.5);
+    r = stopped.gracefulStop();
+    io:println("stop while reconnecting: ", r is mqtt:Error ? r.message() : "ok"); // @output stop while reconnecting: Client is disconnected
+    runtime:sleep(2);
+    boolean usurperConnected = check usurper->isConnected();
+    io:println("usurper connected: ", usurperConnected); // @output usurper connected: true
+    check usurper->disconnect();
+    check usurper->close();
+
     // An empty SUBSCRIBE is a protocol violation; the client sends it like Paho Java does and
     // reports the server-initiated disconnect. The DISCONNECT reason code in the message depends
     // on the broker (Mosquitto sends 129, Malformed packet; mochi-mqtt sends 130, Protocol error).
