@@ -131,6 +131,10 @@ public function main() returns error? {
     io:println(first?.value); // @output [111,110,101,43,116,119,111]
     check chunks.close();
     check sftpClient->delete("/tree/c.txt");
+    ftp:Error? notEmpty = sftpClient->rmdir("/tree");
+    io:println(notEmpty is ftp:Error); // @output true
+    check sftpClient->delete("/tree/sub/a.txt");
+    check sftpClient->rmdir("/tree/sub");
     check sftpClient->rmdir("/tree");
     boolean treeExists = check sftpClient->exists("/tree");
     io:println(treeExists); // @output false

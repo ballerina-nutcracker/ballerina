@@ -193,7 +193,13 @@ public function main() returns error? {
     var r17 = c->delete("/moved/deep");
     show("delete dir", r17); // @output delete dir: Could not delete "ftp://ballerina:***@127.0.0.1:PORT/moved/deep".
     var r18 = c->rmdir("/moved");
-    show("rmdir", r18); // @output rmdir: ok
+    show("rmdir non-empty", r18); // @output rmdir non-empty: Could not delete "ftp://ballerina:***@127.0.0.1:PORT/moved".
+    boolean keptChild = check c->exists("/moved/deep/t.txt");
+    io:println(keptChild); // @output true
+    check c->delete("/moved/deep/t.txt");
+    check c->rmdir("/moved/deep");
+    var r18b = c->rmdir("/moved");
+    show("rmdir", r18b); // @output rmdir: ok
     boolean gone = check c->exists("/moved");
     io:println(gone); // @output false
     check c->mkdir("/empty/dir");
