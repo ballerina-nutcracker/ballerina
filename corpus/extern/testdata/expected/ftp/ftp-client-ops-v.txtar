@@ -22,6 +22,8 @@ putXml record: Failed to convert record to XML: converting a record to XML is no
 ftp://ballerina:ballerina@127.0.0.1:PORT/a/b/c.bin
 ftp://ballerina:***@127.0.0.1:PORT/a/b/c.bin
 ftp://ballerina:ballerina@127.0.0.1:PORT/ ftp file true
+ftp://ballerina:***@127.0.0.1:PORT/my%20dir/a%20b%231.txt ftp://ballerina:ballerina@127.0.0.1:PORT/my%20dir/a%20b%231.txt /my dir/a b#1.txt
+read spaced missing: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/my%20dir/no%20such.txt not found
 true 0 folder
 false
 isDirectory missing: /nope does not exist to check if it is a directory.
