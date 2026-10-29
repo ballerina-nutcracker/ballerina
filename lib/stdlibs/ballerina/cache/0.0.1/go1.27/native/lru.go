@@ -18,7 +18,8 @@ package native
 
 import (
 	"container/list"
-	"math"
+	"math/big"
+	"strconv"
 	"sync"
 	"sync/atomic"
 
@@ -26,36 +27,34 @@ import (
 )
 
 type lruCache struct {
-	mu             sync.Mutex
-	cleaning       atomic.Bool
-	capacity       int64
-	evictionFactor float64
+	mu            sync.Mutex
+	cleaning      atomic.Bool
+	capacity      int64
+	evictionCount int64
 	// Front is the least recently used entry.
 	order   *list.List
 	entries map[string]*list.Element
 }
 
 type cacheItem struct {
-	key     string
-	entry   *values.Map
+	key   string
+	entry *values.Map
+	// expTime is in Unix nanoseconds; math.MaxInt64 means the entry never expires.
 	expTime int64
 }
 
 func newLRUCache(capacity int64, evictionFactor float64) *lruCache {
 	return &lruCache{
-		capacity:       capacity,
-		evictionFactor: evictionFactor,
-		order:          list.New(),
-		entries:        make(map[string]*list.Element),
+		capacity:      capacity,
+		evictionCount: evictionCount(capacity, evictionFactor),
+		order:         list.New(),
+		entries:       make(map[string]*list.Element),
 	}
 }
 
 func (c *lruCache) put(key string, entry *values.Map, expTime int64) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if int64(len(c.entries)) >= c.capacity {
-		c.evictTo(c.capacity - c.evictionCount())
-	}
 	if elem, ok := c.entries[key]; ok {
 		item := elem.Value.(*cacheItem)
 		item.entry = entry
@@ -63,18 +62,26 @@ func (c *lruCache) put(key string, entry *values.Map, expTime int64) {
 		c.order.MoveToBack(elem)
 		return
 	}
+	if int64(len(c.entries)) >= c.capacity {
+		c.evictTo(c.capacity - c.evictionCount)
+	}
 	c.entries[key] = c.order.PushBack(&cacheItem{key: key, entry: entry, expTime: expTime})
 }
 
-// evictionCount matches jBallerina, which computes `capacity * evictionFactor` in 32-bit float arithmetic.
-func (c *lruCache) evictionCount() int64 {
-	product := float32(c.capacity) * float32(c.evictionFactor)
-	return int64(math.Ceil(float64(product)))
+// evictionCount computes ceil(capacity * evictionFactor) exactly from the factor's shortest decimal form, so
+// 100 * 0.07 is 7, and clamps it to [1, capacity] so the cache never exceeds its capacity.
+func evictionCount(capacity int64, evictionFactor float64) int64 {
+	product, _ := new(big.Rat).SetString(strconv.FormatFloat(evictionFactor, 'g', -1, 64))
+	product.Mul(product, new(big.Rat).SetInt64(capacity))
+	count := new(big.Int).Quo(product.Num(), product.Denom()).Int64()
+	if !product.IsInt() {
+		count++
+	}
+	return min(max(count, 1), capacity)
 }
 
-// evictTo clamps size at zero because float32 rounding can make evictionCount exceed the capacity.
 func (c *lruCache) evictTo(size int64) {
-	for int64(len(c.entries)) > max(size, 0) {
+	for int64(len(c.entries)) > size {
 		c.removeElement(c.order.Front())
 	}
 }
@@ -95,15 +102,16 @@ func (c *lruCache) get(key string, now int64) *values.Map {
 	return item.entry
 }
 
-// invalidate removes the entry for key and reports whether it was present, so concurrent calls remove it once.
-func (c *lruCache) invalidate(key string) bool {
+// invalidate removes the entry for key and reports whether it was live, so concurrent calls remove it once.
+func (c *lruCache) invalidate(key string, now int64) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	elem, ok := c.entries[key]
-	if ok {
-		c.removeElement(elem)
+	if !ok {
+		return false
 	}
-	return ok
+	c.removeElement(elem)
+	return !elem.Value.(*cacheItem).isExpired(now)
 }
 
 func (c *lruCache) removeAll() {
@@ -113,11 +121,19 @@ func (c *lruCache) removeAll() {
 	clear(c.entries)
 }
 
-func (c *lruCache) hasKey(key string) bool {
+// hasKey removes an expired entry and reports it as absent, as get does, without changing recency.
+func (c *lruCache) hasKey(key string, now int64) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	_, ok := c.entries[key]
-	return ok
+	elem, ok := c.entries[key]
+	if !ok {
+		return false
+	}
+	if elem.Value.(*cacheItem).isExpired(now) {
+		c.removeElement(elem)
+		return false
+	}
+	return true
 }
 
 func (c *lruCache) keys() []values.BalValue {
@@ -159,5 +175,5 @@ func (c *lruCache) removeElement(elem *list.Element) {
 }
 
 func (item *cacheItem) isExpired(now int64) bool {
-	return item.expTime != -1 && item.expTime <= now
+	return item.expTime <= now
 }

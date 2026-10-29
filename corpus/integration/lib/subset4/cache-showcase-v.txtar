@@ -6,6 +6,6 @@ Unsupported cache value '()' for the key: n.
 Cache entry from the given key: zz, is not available.
 2
 0
-true true false
+1 false 0
 0
 -- stderr --

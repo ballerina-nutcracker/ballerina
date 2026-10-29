@@ -31,8 +31,14 @@ function sizeAfterOverflow(int capacity, float evictionFactor) returns int|error
 }
 
 public function main() returns error? {
-    // Evicts ceil(capacity * evictionFactor) entries, computed in 32-bit float as jBallerina does.
+    // Evicts ceil(capacity * evictionFactor) entries, computed exactly from the decimal factor and clamped to [1, capacity].
     io:println(check sizeAfterOverflow(10, 0.3)); // @output 8
+    // 32-bit float arithmetic evicts one more entry in each of the next three (ballerina-platform/ballerina-library#9406).
+    io:println(check sizeAfterOverflow(50, 0.3)); // @output 36
+    io:println(check sizeAfterOverflow(100, 0.6)); // @output 41
+    io:println(check sizeAfterOverflow(100, 0.15)); // @output 86
+    io:println(check sizeAfterOverflow(10, 0.25)); // @output 8
+    io:println(check sizeAfterOverflow(3, 0.1)); // @output 3
     io:println(check sizeAfterOverflow(10, 0.1)); // @output 10
     io:println(check sizeAfterOverflow(3, 0.7)); // @output 1
     io:println(check sizeAfterOverflow(7, 0.2)); // @output 6
@@ -46,11 +52,12 @@ public function main() returns error? {
     check defaults.put("new", 1);
     io:println(defaults.size(), " ", defaults.keys()); // @output 7 ["k2","k3","k4","k5","k6","k7","new"]
 
+    // Overwriting a key in a full cache evicts nothing (ballerina-platform/ballerina-library#9401).
     cache:Cache c = new (capacity = 3, evictionFactor = 0.34);
     check fill(c, 3);
     _ = c.hasKey("k0");
     check c.put("k0", 99);
-    io:println(c.size(), " ", c.hasKey("k0"), " ", c.hasKey("k1"), " ", c.hasKey("k2")); // @output 2 true false true
+    io:println(c.size(), " ", c.hasKey("k0"), " ", c.hasKey("k1"), " ", c.hasKey("k2")); // @output 3 true true true
     io:println(check c.get("k0")); // @output 99
 
     cache:Cache d = new (capacity = 3, evictionFactor = 0.34);
@@ -58,7 +65,8 @@ public function main() returns error? {
     _ = check d.get("k0");
     check d.put("k1", 11);
     check d.put("x", 1);
-    io:println(d.keys()); // @output ["k0","k1","x"]
+    // Overwriting k1 evicts nothing here either (ballerina-platform/ballerina-library#9401).
+    io:println(d.keys()); // @output ["k1","x"]
 
     cache:Cache e = new (capacity = 3, evictionFactor = 0.34);
     check fill(e, 3);
@@ -72,7 +80,7 @@ public function main() returns error? {
     // A factor too small to evict anything still evicts one entry (ballerina-platform/ballerina-library#9400).
     cache:Cache tiny = new (capacity = 2, evictionFactor = 1.0E-300);
     check fill(tiny, 10);
-    io:println(tiny.size(), " ", tiny.keys()); // @output 3 ["k7","k8","k9"]
+    io:println(tiny.size(), " ", tiny.keys()); // @output 2 ["k8","k9"]
 
     // A capacity above the 32-bit range is not narrowed to 1 (ballerina-platform/ballerina-library#9403).
     cache:Cache huge = new (capacity = 4294967297);

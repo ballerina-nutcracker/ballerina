@@ -26,18 +26,25 @@ function sleepToFraction(decimal fraction) {
 
 public function main() returns error? {
     cache:Cache c = new (capacity = 10, defaultMaxAge = 1.5);
-    // Expiry compares whole seconds, so an entry expires within the second it is due in. Putting at
-    // x.0 leaves half a second of slack before "half" would be due in the next second.
-    sleepToFraction(0);
+    // Putting at x.1 makes a 0.5 second entry due at x.6; comparing whole seconds would expire it within second x (ballerina-platform/ballerina-library#9399).
+    sleepToFraction(0.1);
     check c.put("half", "v", 0.5);
-    check c.put("zero", "v", 0);
-    check c.put("negative", "v", -5);
     check c.put("long", "v", 100);
-    io:println(c.get("half") is cache:Error); // @output true
-    io:println(c.get("zero") is cache:Error, " ", c.get("negative") is cache:Error); // @output false false
-    runtime:sleep(2);
-    io:println(c.get("zero") is cache:Error, " ", c.get("negative") is cache:Error); // @output true true
+    runtime:sleep(0.2);
+    io:println(c.hasKey("half"), " ", c.get("half") is cache:Error); // @output true false
+    runtime:sleep(0.5);
+    // hasKey and invalidate treat an expired entry as absent (ballerina-platform/ballerina-library#9402).
+    io:println(c.size(), " ", c.hasKey("half"), " ", c.size()); // @output 2 false 1
+    check c.put("short", "v", 0.1);
+    runtime:sleep(0.3);
+    io:println(c.invalidate("short") is cache:Error); // @output true
     io:println(c.get("long") is cache:Error); // @output false
+
+    // A maxAge that is neither -1 nor positive is rejected (ballerina-platform/ballerina-library#9404).
+    cache:Error? zero = c.put("zero", "v", 0);
+    io:println(zero is cache:Error ? zero.message() : "ok"); // @output Unsupported max-age '0' for the key: zero. It must be -1 or positive.
+    io:println(c.put("negative", "v", -5) is cache:Error, " ", c.put("fraction", "v", -0.5) is cache:Error); // @output true true
+    io:println(c.hasKey("zero"), " ", c.hasKey("negative"), " ", c.hasKey("fraction")); // @output false false false
 
     cache:Cache distant = new (capacity = 10, defaultMaxAge = 10000000000, cleanupInterval = 10000000000);
     check distant.put("default", "v");
@@ -49,7 +56,8 @@ public function main() returns error? {
     check forever.put("b", "v", -1);
     check forever.put("c", "v", 1);
     runtime:sleep(2);
-    io:println(forever.size(), " ", forever.hasKey("c")); // @output 3 true
+    // hasKey treats the expired "c" as absent (ballerina-platform/ballerina-library#9402).
+    io:println(forever.size(), " ", forever.hasKey("c")); // @output 3 false
     io:println(forever.get("a") is cache:Error, " ", forever.get("c") is cache:Error); // @output false true
     io:println(forever.size()); // @output 2
 
