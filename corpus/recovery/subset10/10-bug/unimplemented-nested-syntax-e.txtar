@@ -32,11 +32,28 @@ public function main() {
       (error-type)
       (value-type null)))
     (block-function-body
-      (bad-stmt)))
+      (bad-stmt fail (tokens ("fail" 18:5 18:9) ("error" 18:10 18:15) ("(" 18:15 18:16) (";" 18:20 18:21)))))
   (function g () (
     (value-type null))
     (block-function-body
-      (bad-stmt)))
+      (bad-stmt variable-declaration (tokens ("[" 22:5 22:6) ("int" 22:6 22:9) ("," 22:9 22:10) ("int" 22:11 22:14) ("]" 22:14 22:15) ("[" 22:16 22:17) ("," 22:18 22:19) ("=" 22:22 22:23) ("[" 22:24 22:25) ("," 22:26 22:27) ("]" 22:29 22:30) (";" 22:30 22:31)))))
   (function main () (
     (value-type null))
     (block-function-body)))
+-- stderr --
+error[SYNTAX_ERROR]: missing close bracket token
+  --> unimplemented-nested-syntax-e.bal:22:22
+   |
+22 |     [int, int] [a, b = [1, 2]; // @error
+   |
+
+error[SYNTAX_ERROR]: missing close paren token
+  --> unimplemented-nested-syntax-e.bal:18:20
+   |
+18 |     fail error("x" ; // @error
+   |
+-- diagnostic-counts --
+0 transformFailStatement unimplemented
+0 binding pattern is not implemented
+1 missing close paren token
+1 missing close bracket token

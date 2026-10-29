@@ -1,0 +1,35 @@
+-- error-statement-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+public function main() {
+    error(); // @error
+}
+-- ast --
+(package
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (bad-stmt assignment (tokens ("error" 18:5 18:10) ("(" 18:10 18:11) (")" 18:11 18:12) (";" 18:12 18:13))))))
+-- stderr --
+error[SYNTAX_ERROR]: missing equal token
+  --> error-statement-e.bal:18:12
+   |
+18 |     error(); // @error
+   |
+-- diagnostic-counts --
+1 missing equal token
+0 binding-pattern assignment is not implemented

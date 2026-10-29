@@ -1,0 +1,7 @@
+-- stdout --
+{"v":[{"id":3},{"id":6}],"m":1}
+true
+{"inner":{"xs":[2,3]},"m":1}
+true
+true
+-- stderr --

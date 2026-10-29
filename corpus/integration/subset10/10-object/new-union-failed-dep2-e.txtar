@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> new-union-failed-dep2-e.bal:27:9
+   |
+27 | var s = true + 1; // @error the failed dependency reports only its own error
+   |         ^^^^^^^^

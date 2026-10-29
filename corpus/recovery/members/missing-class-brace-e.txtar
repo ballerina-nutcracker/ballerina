@@ -22,6 +22,7 @@ function valid() { C surviving; } // @error duplicate declaration after class re
 function independent(int value) returns int => value;
 -- ast --
 (package
+  (class-definition C)
   (function valid () (
     (value-type null))
     (block-function-body
@@ -44,5 +45,52 @@ function independent(int value) returns int => value;
       (value-type int)))) (
     (value-type int))
     (expr-function-body
-      (simple-var-ref value)))
-  (bad-top-level class))
+      (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> missing-class-brace-e.bal:19:32
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |
+
+error[SEMANTIC_ERROR]: redeclared symbol 'valid'
+  --> missing-class-brace-e.bal:19:14
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |              ^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'valid'
+  --> missing-class-brace-e.bal:20:10
+   |
+20 | function valid() { C surviving; } // @error duplicate declaration after class recovery
+   |          ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> missing-class-brace-e.bal:19:34
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |                                  ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'surviving'
+  --> missing-class-brace-e.bal:20:20
+   |
+20 | function valid() { C surviving; } // @error duplicate declaration after class recovery
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> missing-class-brace-e.bal:19:24
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |                        ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> missing-class-brace-e.bal:18:1
+   |
+18 |     ; // @error malformed member
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> missing-class-brace-e.bal:19:32
+   |
+19 |     function valid() { int x = ; int later = 2; } // @error missing initializer
+   |

@@ -56,3 +56,71 @@ function valid() returns int => 4;
     (value-type int))
     (expr-function-body
       (literal 4))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> operands-e.bal:18:18
+   |
+18 |     int unary = -; // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> operands-e.bal:19:21
+   |
+19 |     int binary = 1 +; // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> operands-e.bal:20:27
+   |
+20 |     int nested = (1 + (2 *)); // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'binary'
+  --> operands-e.bal:19:1
+   |
+19 |     int binary = 1 +; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     int nested = (1 + (2 *)); // @error
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> operands-e.bal:21:1
+   |
+21 |     int later = 3; // @error unused surviving sibling
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'nested'
+  --> operands-e.bal:20:1
+   |
+20 |     int nested = (1 + (2 *)); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     int later = 3; // @error unused surviving sibling
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'unary'
+  --> operands-e.bal:18:1
+   |
+18 |     int unary = -; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     int binary = 1 +; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> operands-e.bal:18:18
+   |
+18 |     int unary = -; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> operands-e.bal:19:21
+   |
+19 |     int binary = 1 +; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> operands-e.bal:20:27
+   |
+20 |     int nested = (1 + (2 *)); // @error
+   |

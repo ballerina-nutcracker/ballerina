@@ -1,0 +1,72 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable empty (type
+          (value-type xml)) (expr
+          (xml-sequence-literal))))
+      (var-def
+        (variable elements (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))) (expr
+          (xml-sequence-literal))))
+      (var-def
+        (variable missing (type
+          (value-type xml)) (expr
+          (invocation lang.xml map (
+            (invocation lang.xml elements (
+              (group-expr
+                (xml-element-literal a))
+              (literal <nil>)))
+            (lambda
+              (function $xmlStep$main$0 (
+                (variable $xmlStepItem)) ()
+                (expr-function-body
+                  (xml-filter-expression
+                    (invocation lang.xml getChildren (
+                      (simple-var-ref $xmlStepItem)))
+                    (xml-name-pattern-identifier b))))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref empty)
+            (constrained-type
+              (builtin-ref-type xml)
+              (value-type never))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref empty)
+            (constrained-type
+              (builtin-ref-type xml)
+              (user-defined-type xml Element))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref empty)
+            (user-defined-type xml Text)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref elements)
+            (constrained-type
+              (builtin-ref-type xml)
+              (value-type never))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref missing)
+            (constrained-type
+              (builtin-ref-type xml)
+              (value-type never))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref missing)
+            (constrained-type
+              (builtin-ref-type xml)
+              (user-defined-type xml Element)))))))))

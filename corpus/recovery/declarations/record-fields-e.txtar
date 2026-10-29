@@ -79,13 +79,13 @@ type Valid record {| int a; |};
 -- ast --
 (package
   (type-definition OpenMissingType
-    (bad-type))
+    (bad-type record (tokens ("record" 17:22 17:28) ("{" 17:29 17:30) (";" 18:6 18:7) ("int" 19:5 19:8) (";" 19:14 19:15) ("}" 20:1 20:2))))
   (type-definition OpenMissingTypeWithDefault
-    (bad-type))
+    (bad-type record (tokens ("record" 21:33 21:39) ("{" 21:40 21:41) ("=" 22:7 22:8) (";" 22:10 22:11) ("int" 23:5 23:8) (";" 23:14 23:15) ("}" 24:1 24:2))))
   (type-definition OpenMissingName
-    (bad-type))
+    (bad-type record (tokens ("record" 25:22 25:28) ("{" 25:29 25:30) ("int" 26:5 26:8) (";" 26:8 26:9) ("int" 27:5 27:8) (";" 27:14 27:15) ("}" 28:1 28:2))))
   (type-definition OpenMissingNameWithDefault
-    (bad-type))
+    (bad-type record (tokens ("record" 29:33 29:39) ("{" 29:40 29:41) ("int" 30:5 30:8) ("=" 30:9 30:10) (";" 30:12 30:13) ("int" 31:5 31:8) (";" 31:14 31:15) ("}" 32:1 32:2))))
   (type-definition OpenMissingDefault
     (record-type
       (field a
@@ -94,13 +94,13 @@ type Valid record {| int a; |};
       (field valid
         (value-type int))))
   (type-definition ClosedMissingType
-    (bad-type))
+    (bad-type record (tokens ("record" 37:24 37:30) ("{|" 37:31 37:33) (";" 38:6 38:7) ("int" 39:5 39:8) (";" 39:14 39:15) ("|}" 40:1 40:3))))
   (type-definition ClosedMissingTypeWithDefault
-    (bad-type))
+    (bad-type record (tokens ("record" 41:35 41:41) ("{|" 41:42 41:44) ("=" 42:7 42:8) (";" 42:10 42:11) ("int" 43:5 43:8) (";" 43:14 43:15) ("|}" 44:1 44:3))))
   (type-definition ClosedMissingName
-    (bad-type))
+    (bad-type record (tokens ("record" 45:24 45:30) ("{|" 45:31 45:33) ("int" 46:5 46:8) (";" 46:8 46:9) ("int" 47:5 47:8) (";" 47:14 47:15) ("|}" 48:1 48:3))))
   (type-definition ClosedMissingNameWithDefault
-    (bad-type))
+    (bad-type record (tokens ("record" 49:35 49:41) ("{|" 49:42 49:44) ("int" 50:5 50:8) ("=" 50:9 50:10) (";" 50:12 50:13) ("int" 51:5 51:8) (";" 51:14 51:15) ("|}" 52:1 52:3))))
   (type-definition ClosedMissingDefault
     (record-type
       (field a
@@ -109,13 +109,27 @@ type Valid record {| int a; |};
       (field valid
         (value-type int))))
   (type-definition OpenMissingSemicolon
-    (bad-type))
+    (record-type
+      (field a
+        (value-type int)
+        (literal 1))
+      (field valid
+        (value-type int))))
   (type-definition ClosedMissingSemicolon
-    (bad-type))
+    (record-type
+      (field a
+        (value-type int)
+        (literal 1))
+      (field valid
+        (value-type int))))
   (type-definition OpenInclusionMissingSemicolon
-    (bad-type))
+    (record-type
+      (field valid
+        (value-type int))))
   (type-definition ClosedInclusionMissingSemicolon
-    (bad-type))
+    (record-type
+      (field valid
+        (value-type int))))
   (type-definition MissingInclusionType
     (record-type
       (field valid
@@ -124,3 +138,127 @@ type Valid record {| int a; |};
     (record-type
       (field a
         (value-type int)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> record-fields-e.bal:34:13
+   |
+34 |     int a = ; // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> record-fields-e.bal:54:13
+   |
+54 |     int a = ; // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown type: MissingRecordBase
+  --> record-fields-e.bal:66:6
+   |
+66 |     *MissingRecordBase
+   |      ^^^^^^^^^^^^^^^^^
+67 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SEMANTIC_ERROR]: Unknown type: MissingRecordBase
+  --> record-fields-e.bal:70:6
+   |
+70 |     *MissingRecordBase
+   |      ^^^^^^^^^^^^^^^^^
+71 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SEMANTIC_ERROR]: type inclusion must be a user-defined type
+  --> record-fields-e.bal:74:6
+   |
+74 |     *; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:18:6
+   |
+18 |     a; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:22:7
+   |
+22 |     a = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:26:8
+   |
+26 |     int; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:30:9
+   |
+30 |     int = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:34:13
+   |
+34 |     int a = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:38:6
+   |
+38 |     a; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:42:7
+   |
+42 |     a = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:46:8
+   |
+46 |     int; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:50:9
+   |
+50 |     int = 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:54:13
+   |
+54 |     int a = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> record-fields-e.bal:74:6
+   |
+74 |     *; // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> record-fields-e.bal:59:1
+   |
+59 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> record-fields-e.bal:63:1
+   |
+63 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> record-fields-e.bal:67:1
+   |
+67 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> record-fields-e.bal:71:1
+   |
+71 |     int valid; // @error missing semicolon is reported at the next field
+   |

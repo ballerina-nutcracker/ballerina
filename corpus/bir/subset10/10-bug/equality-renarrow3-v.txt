@@ -1,0 +1,120 @@
+module $anon.. v 0.0.0;
+describe(boolean|int|string) -> string{
+  bb0 {
+    %2 = x is int|string
+    %2 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %1 = ConstantLoad a
+    %0 = == (1, x) %1;
+    %0 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 1
+    s = (2, x);
+    (2, %0) = s;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = ConstantLoad other
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+loopUntilA(int|string) -> string{
+  bb0 {
+    x = x0;
+    %3 = ConstantLoad 
+    seen = %3;
+    GOTO bb1;
+  }
+  bb1 {
+    %5 = x is string
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 2
+    %1 = ConstantLoad a
+    %0 = == (1, x) %1;
+    %0 ? bb4 : bb5;
+  }
+  bb3 {
+    %0 = seen;
+    return;
+  }
+  bb4 {
+    PushScopeFrame 3
+    s = (2, x);
+    %1 = + (2, seen) s;
+    (2, seen) = %1;
+    %2 = ConstantLoad 1
+    (2, x) = %2;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad a
+    (2, x) = %0;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb1;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = describe(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad  
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = describe(%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad  
+    %8 = ConstantLoad true
+    %9 = %8;
+    %10 = describe(%9) -> bb3;
+  }
+  bb3 {
+    %11 = println(%2,%3,%6,%7,%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad b
+    %13 = loopUntilA(%12) -> bb5;
+  }
+  bb5 {
+    %14 = ConstantLoad  
+    %15 = ConstantLoad a
+    %16 = loopUntilA(%15) -> bb6;
+  }
+  bb6 {
+    %17 = ConstantLoad  
+    %18 = ConstantLoad 1
+    %19 = %18;
+    %20 = loopUntilA(%19) -> bb7;
+  }
+  bb7 {
+    %21 = ConstantLoad |
+    %22 = println(%13,%14,%16,%17,%20,%21) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

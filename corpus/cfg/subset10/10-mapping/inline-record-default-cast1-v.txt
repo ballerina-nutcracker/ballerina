@@ -1,0 +1,42 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (record-type
+          (field a
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))))))
+    (var-def
+      (variable y (type
+        (value-type any)) (expr
+        (simple-var-ref value))))
+    (var-def
+      (variable mapping (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (type-conversion-expr
+              (simple-var-ref y)
+              (record-type
+                (field a
+                  (value-type int)
+                  (literal 1)))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref mapping)
+          (user-defined-type A)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref mapping))))
+  )
+)

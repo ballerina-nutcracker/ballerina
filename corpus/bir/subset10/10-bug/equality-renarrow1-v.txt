@@ -1,0 +1,108 @@
+module $anon.. v 0.0.0;
+paint("blue"|"green"|"red"|"yellow") -> "crimson"|"green"|"navy"|"yellow"{
+  bb0 {
+    %4 = ConstantLoad red
+    %3 = == color %4;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %5 = ConstantLoad crimson
+    %2 = %5;
+    GOTO bb3;
+  }
+  bb2 {
+    %8 = ConstantLoad blue
+    %7 = == color %8;
+    %7 ? bb4 : bb5;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    %9 = ConstantLoad navy
+    %6 = %9;
+    GOTO bb6;
+  }
+  bb5 {
+    %6 = color;
+    GOTO bb6;
+  }
+  bb6 {
+    %2 = %6;
+    GOTO bb3;
+  }
+}
+paintNotEqual("blue"|"green"|"red"|"yellow") -> "crimson"|"green"|"navy"|"yellow"{
+  bb0 {
+    %4 = ConstantLoad red
+    %3 = != color %4;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %7 = ConstantLoad blue
+    %6 = != color %7;
+    %6 ? bb4 : bb5;
+  }
+  bb2 {
+    %9 = ConstantLoad crimson
+    %2 = %9;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    %5 = color;
+    GOTO bb6;
+  }
+  bb5 {
+    %8 = ConstantLoad navy
+    %5 = %8;
+    GOTO bb6;
+  }
+  bb6 {
+    %2 = %5;
+    GOTO bb3;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad red
+    %2 = paint(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad  
+    %4 = ConstantLoad blue
+    %5 = paint(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad  
+    %7 = ConstantLoad green
+    %8 = paint(%7) -> bb3;
+  }
+  bb3 {
+    %9 = println(%2,%3,%5,%6,%8) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad red
+    %11 = paintNotEqual(%10) -> bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad  
+    %13 = ConstantLoad blue
+    %14 = paintNotEqual(%13) -> bb6;
+  }
+  bb6 {
+    %15 = ConstantLoad  
+    %16 = ConstantLoad yellow
+    %17 = paintNotEqual(%16) -> bb7;
+  }
+  bb7 {
+    %18 = println(%11,%12,%14,%15,%17) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

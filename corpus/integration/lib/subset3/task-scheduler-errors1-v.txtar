@@ -1,0 +1,23 @@
+-- stdout --
+0
+Invalid job id: 5
+Invalid job id: 5
+Invalid job id: 5
+true
+Cannot create the Scheduler.Thread count must be > 0
+Cannot create the Scheduler.Thread count must be > 0
+true
+Cannot create the Scheduler.JobStore class 'org.quartz.simpl.RAMJobStore' props could not be configured.
+true
+true
+2
+true
+The Scheduler has been shutdown.
+The Scheduler has been shutdown.
+The Scheduler has been shutdown.
+The Scheduler has been shutdown.
+The Scheduler has been shutdown.
+true
+true
+true 0
+-- stderr --

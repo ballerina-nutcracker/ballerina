@@ -1,0 +1,129 @@
+(package
+  (import-package ballerina io (as io))
+  (function show (
+    (variable v (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (function-type (
+                  (value-type xml)) (
+                  (array-type
+                    (value-type xml) dimensions: 1 ([]))))))
+              (value-type int))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (tuple-type
+              (function-type (
+                (value-type string)) (
+                (function-type (
+                  (value-type string)) (
+                  (array-type
+                    (value-type string) dimensions: 1 ([]))))))
+              (value-type int))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal a
+                (xml-text-literal 1))
+              (xml-element-literal b
+                (xml-text-literal 2)))))))
+      (var-def
+        (variable l (type
+          (union-type
+            (tuple-type
+              (function-type (
+                (value-type string)) (
+                (function-type (
+                  (value-type string)) (
+                  (array-type
+                    (value-type string) dimensions: 1 ([]))))))
+              (value-type int))
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (function-type (
+                  (value-type xml)) (
+                  (array-type
+                    (value-type xml) dimensions: 1 ([]))))))
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (lambda
+              (function $anonFunc$_0 (
+                (variable s)) ()
+                (expr-function-body
+                  (lambda
+                    (function $anonFunc$_1 (
+                      (variable t)) ()
+                      (expr-function-body
+                        (list-constructor-expr
+                          (invocation lang.xml map (
+                            (invocation lang.xml elements (
+                              (group-expr
+                                (binary-expr +
+                                  (simple-var-ref s)
+                                  (simple-var-ref t)))
+                              (literal <nil>)))
+                            (lambda
+                              (function $xmlStep$$anonFunc$_1$0 (
+                                (variable $xmlStepItem)) ()
+                                (expr-function-body
+                                  (xml-filter-expression
+                                    (invocation lang.xml getChildren (
+                                      (simple-var-ref $xmlStepItem)))
+                                    (xml-name-pattern-identifier a)))))))
+                          (invocation lang.xml map (
+                            (invocation lang.xml elements (
+                              (simple-var-ref t)
+                              (literal <nil>)))
+                            (lambda
+                              (function $xmlStep$$anonFunc$_1$1 (
+                                (variable $xmlStepItem)) ()
+                                (expr-function-body
+                                  (xml-filter-expression
+                                    (invocation lang.xml getChildren (
+                                      (simple-var-ref $xmlStepItem)))
+                                    (xml-name-pattern-identifier b))))))))))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation show (
+          (simple-var-ref l))))
+      (if
+        (type-test-expr is
+          (simple-var-ref l)
+          (tuple-type
+            (function-type (
+              (value-type xml)) (
+              (function-type (
+                (value-type xml)) (
+                (array-type
+                  (value-type xml) dimensions: 1 ([]))))))
+            (value-type int)))
+        (block-stmt
+          (var-def
+            (variable g (expr
+              (index-based-access
+                (simple-var-ref l)
+                (literal 0)))))
+          (var-def
+            (variable h (expr
+              (invocation g (
+                (simple-var-ref x))))))
+          (expression-stmt
+            (invocation io println (
+              (invocation h (
+                (simple-var-ref x))))))) ())
+      (block-stmt))))

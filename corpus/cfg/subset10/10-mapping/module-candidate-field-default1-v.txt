@@ -1,0 +1,38 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access f
+            (simple-var-ref r))
+          (user-defined-type B)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access g
+            (simple-var-ref r))
+          (user-defined-type B)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access h
+            (simple-var-ref r))
+          (user-defined-type B)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access i
+            (simple-var-ref r))
+          (user-defined-type A)))))
+  )
+)
+(name
+  (bb0 () ()
+    (return
+      (literal s))
+  )
+)

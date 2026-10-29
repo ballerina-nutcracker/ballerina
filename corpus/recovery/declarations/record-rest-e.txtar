@@ -21,18 +21,42 @@ type MissingType record {|
 |};
 type MissingSemicolon record {|
     int a;
-    MissingRestType...
+    MissingRestType... // @error unknown type
 |}; // @error missing semicolon is reported at the closing delimiter
 type Valid record {| int a; string...; |};
 -- ast --
 (package
   (type-definition MissingType
-    (bad-type))
+    (bad-type record (tokens ("record" 17:18 17:24) ("{|" 17:25 17:27) ("int" 18:5 18:8) (";" 18:10 18:11) ("|}" 20:1 20:3))))
   (type-definition MissingSemicolon
-    (bad-type))
+    (record-type
+      (field a
+        (value-type int))
+      (rest
+        (user-defined-type MissingRestType))))
   (type-definition Valid
     (record-type
       (field a
         (value-type int))
       (rest
         (value-type string)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: MissingRestType
+  --> record-rest-e.bal:23:1
+   |
+23 |     MissingRestType... // @error unknown type
+   |     ^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> record-rest-e.bal:19:1
+   |
+19 |     ...; // @error
+   |     ^^^^^^^^^^^^^^
+20 | |};
+   | ^^
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> record-rest-e.bal:24:1
+   |
+24 | |}; // @error missing semicolon is reported at the closing delimiter
+   |

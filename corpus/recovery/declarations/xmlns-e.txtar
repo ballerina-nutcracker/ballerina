@@ -16,16 +16,16 @@
 // under the License.
 
 xmlns "https://example.com/module" as moduleNS;
-xmlns "" as emptyNS; // @error
+xmlns "" as emptyNS;
 xmlns missingURI as missingNS; // @error
 xmlns "https://example.com/later" as laterNS;
 
 function recovered() returns int {
     xmlns "https://example.com/local" as localNS;
-    xmlns "" as emptyLocal; // @error
+    xmlns "" as emptyLocal;
     xmlns missingLocalURI as missingLocal; // @error
     xmlns "https://example.com/laterLocal" as laterLocal;
-    return probe("later"); // @error
+    return probe("later");
 }
 
 function probe(int value) returns int => value;
@@ -59,3 +59,15 @@ function probe(int value) returns int => value;
     (value-type int))
     (expr-function-body
       (simple-var-ref value))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingLocalURI
+  --> xmlns-e.bal:25:11
+   |
+25 |     xmlns missingLocalURI as missingLocal; // @error
+   |           ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: missingURI
+  --> xmlns-e.bal:19:7
+   |
+19 | xmlns missingURI as missingNS; // @error
+   |       ^^^^^^^^^^^

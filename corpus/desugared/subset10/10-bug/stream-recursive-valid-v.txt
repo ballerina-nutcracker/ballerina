@@ -1,0 +1,41 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition B
+    (stream-type
+      (union-type
+        (user-defined-type B)
+        (value-type int))))
+  (type-definition Rec
+    (record-type
+      (field s
+        (union-type
+          (stream-type
+            (union-type
+              (user-defined-type Rec)
+              (value-type int)))
+          (value-type null)))))
+  (function isNil (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref v)
+          (value-type null)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type Rec)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal s)
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isNil (
+            (index-based-access
+              (simple-var-ref r)
+              (literal s))))))))))

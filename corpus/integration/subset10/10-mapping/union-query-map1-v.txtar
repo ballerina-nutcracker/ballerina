@@ -1,0 +1,4 @@
+-- stdout --
+{"v":{"a":2,"b":4},"m":1}
+true
+-- stderr --

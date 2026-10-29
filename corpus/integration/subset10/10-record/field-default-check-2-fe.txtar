@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: 'check' in a default expression is not supported
+  --> field-default-check-2-fe.bal:24:13
+   |
+24 |     int v = check g(); // @error check-fail type is not a subtype of the field type; unimplemented until #1219
+   |             ^^^^^^^^^

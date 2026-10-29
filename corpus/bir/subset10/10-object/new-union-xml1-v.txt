@@ -1,0 +1,116 @@
+module $anon.. v 0.0.0;
+class XmlArg {
+  value xml
+  marker int
+
+  init(xml,int) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = value;
+      %5 = ConstantLoad marker
+      self[%5] = marker;
+      return;
+    }
+  }
+}
+class StringArg {
+  value xml
+  marker string
+
+  init(xml,string) -> nil{
+    bb0 {
+      %4 = ConstantLoad value
+      self[%4] = value;
+      %5 = ConstantLoad marker
+      self[%5] = marker;
+      return;
+    }
+  }
+}
+show(any) -> nil{
+  bb0 {
+    %2 = v is object { public function init(xml, int) returns nil; int marker; xml value }
+    %3 = %2;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = v is object { public function init(xml, string) returns nil; string marker; xml value }
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("a", %2)
+    %4 = newXMLElement("root", %3)
+    x = %4;
+    %6 = newObject $anon/.:XmlArg
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = elements(x,%8) -> bb1;
+  }
+  bb1 {
+    %10 = fp $anon/.:$xmlStep$main$0
+    %11 = map(%9,%10) -> bb2;
+  }
+  bb2 {
+    %12 = ConstantLoad 1
+    %13 = %6.init(%11,%12) -> bb3;
+  }
+  bb3 {
+    %15 = %13 is nil
+    %15 ? bb4 : bb5;
+  }
+  bb4 {
+    %14 = %6;
+    GOTO bb6;
+  }
+  bb5 {
+    %14 = %13;
+    GOTO bb6;
+  }
+  bb6 {
+    s = %14;
+    %17 = show(s) -> bb7;
+  }
+  bb7 {
+    %18 = s is object { public function init(xml, int) returns nil; int marker; xml value }
+    %18 ? bb8 : bb11;
+  }
+  bb8 {
+    PushScopeFrame 7
+    %1 = ConstantLoad value
+    %0 = (1, s)[%1];
+    %2 = println(%0) -> bb9;
+  }
+  bb9 {
+    %4 = ConstantLoad marker
+    %3 = (1, s)[%4];
+    %5 = %3;
+    %6 = println(%5) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}

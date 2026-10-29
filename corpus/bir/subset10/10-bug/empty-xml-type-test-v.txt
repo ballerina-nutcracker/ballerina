@@ -1,0 +1,61 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newXMLSequence{}
+    empty = %1;
+    %3 = newXMLSequence{}
+    elements = %3;
+    %5 = newXMLElement("a", ())
+    %6 = ConstantLoad <nil>
+    %7 = %6;
+    %8 = elements(%5,%7) -> bb1;
+  }
+  bb1 {
+    %9 = fp $anon/.:$xmlStep$main$0
+    %10 = map(%8,%9) -> bb2;
+  }
+  bb2 {
+    missing = %10;
+    %12 = empty is xml<never>
+    %13 = %12;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    %15 = empty is xml<xml:Element>
+    %16 = %15;
+    %17 = println(%16) -> bb4;
+  }
+  bb4 {
+    %18 = empty is xml:Text
+    %19 = %18;
+    %20 = println(%19) -> bb5;
+  }
+  bb5 {
+    %21 = elements is xml<never>
+    %22 = %21;
+    %23 = println(%22) -> bb6;
+  }
+  bb6 {
+    %24 = missing is xml<never>
+    %25 = %24;
+    %26 = println(%25) -> bb7;
+  }
+  bb7 {
+    %27 = missing is xml<xml:Element>
+    %28 = %27;
+    %29 = println(%28) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %0 = %3;
+    return;
+  }
+}

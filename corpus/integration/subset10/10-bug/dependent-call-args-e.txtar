@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected '[int:Unsigned8...]', got '"text"'
+  --> dependent-call-args-e.bal:20:19
+   |
+20 |     return depend("text"); // @error
+   |                   ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected '[int:Unsigned8...]', got '"text"'
+  --> dependent-call-args-e.bal:24:19
+   |
+24 |     return depend("text", json); // @error
+   |                   ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected '[int:Unsigned8...]', got '"text"'
+  --> dependent-call-args-e.bal:28:33
+   |
+28 |     return depend(t = json, b = "text"); // @error
+   |                                 ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'typedesc<anydata>', got '"text"'
+  --> dependent-call-args-e.bal:32:23
+   |
+32 |     return depend([], "text"); // @error
+   |                       ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'typedesc<anydata>', got 'typedesc<error>'
+  --> dependent-call-args-e.bal:38:23
+   |
+38 |     return depend([], Failure); // @error
+   |                       ^^^^^^^

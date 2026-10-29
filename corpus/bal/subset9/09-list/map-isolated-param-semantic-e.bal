@@ -17,8 +17,11 @@ function nonIsolated(int value) returns int {
     return value + 1;
 }
 
+isolated int lockCalls = 0;
+
 function invalidLockCall(int[] values) returns int {
     lock {
+        lockCalls += 1;
         return values.map(value => nonIsolated(value)).length(); // @error
     }
 }

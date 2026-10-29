@@ -20,7 +20,7 @@ client class Counter {
     }
 }
 
-int count = 0;
+isolated int count = 0;
 
 public function main() {
     Counter counter = new ();
