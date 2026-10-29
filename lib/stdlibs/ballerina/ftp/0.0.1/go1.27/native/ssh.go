@@ -113,9 +113,9 @@ func (e *keyAuthError) Error() string {
 
 func (e *keyAuthError) Unwrap() error { return e.cause }
 
-// hostKeyCallback enables strict checking only when the known_hosts file exists, as JSch does
-// with StrictHostKeyChecking; otherwise any server key is accepted. Like JSch's
-// prefer_known_host_key_types, the key types known for the host are negotiated first.
+// hostKeyCallback checks the server key strictly against the configured known_hosts file, and
+// accepts any key only when none is configured. Like JSch's prefer_known_host_key_types, the key
+// types known for the host are negotiated first.
 func hostKeyCallback(platform pal.Platform, ep *endpoint) (ssh.HostKeyCallback, []string, error) {
 	if ep.knownHostsPath == "" {
 		return ssh.InsecureIgnoreHostKey(), nil, nil //nolint:gosec
@@ -126,7 +126,7 @@ func hostKeyCallback(platform pal.Platform, ep *endpoint) (ssh.HostKeyCallback, 
 	}
 	data, err := platform.FS.ReadFile(knownHostsPath)
 	if err != nil {
-		return ssh.InsecureIgnoreHostKey(), nil, nil //nolint:gosec
+		return nil, nil, newError(kindError, "SFTP known_hosts file could not be read: "+knownHostsPath)
 	}
 	entries, err := parseKnownHosts(data)
 	if err != nil {

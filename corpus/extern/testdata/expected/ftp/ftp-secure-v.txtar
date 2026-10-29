@@ -10,7 +10,8 @@ ConnectionError
 No preferred auth method is specified in the SFTP client configurations
 connected
 ConnectionError
-connected
+Error
+true
 one+two
 ["c.txt","sub"]
 sftp 7 true

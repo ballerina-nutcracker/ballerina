@@ -20,6 +20,7 @@ package native
 import (
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -94,7 +95,7 @@ func (c *consumer) consume() (fileEvent, bool) {
 		}
 	}
 	scan := &pollScan{rootFiles: rootFiles, listed: map[string]struct{}{}}
-	c.handleDirectory(root, children, scan)
+	c.handleDirectory(root, children, scan, nil)
 	for logical := range c.reported {
 		if _, ok := scan.listed[logical]; !ok {
 			scan.event.deleted = append(scan.event.deleted, c.uri(logical))
@@ -111,7 +112,8 @@ type pollScan struct {
 	event     fileEvent
 }
 
-func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pollScan) {
+func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pollScan, ancestors [][]remoteEntry) {
+	ancestors = append(ancestors, children)
 	for _, child := range children {
 		if c.watch.pattern != nil && !c.watch.pattern.MatchString(child.name) {
 			continue
@@ -123,7 +125,10 @@ func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pol
 				c.keepReportedUnder(logical, scan)
 				continue
 			}
-			c.handleDirectory(logical, grandChildren, scan)
+			if child.isLink && listsSameAsAny(grandChildren, ancestors) {
+				continue
+			}
+			c.handleDirectory(logical, grandChildren, scan, ancestors)
 			continue
 		}
 		scan.listed[logical] = struct{}{}
@@ -137,6 +142,17 @@ func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pol
 		scan.event.added = append(scan.event.added, addedFile{logical: logical, entry: child})
 		c.reported[logical] = stamp
 	}
+}
+
+// listsSameAsAny reports whether a linked folder lists the same entries as a folder being scanned,
+// which makes it a link back into that folder; following it would repeat the scan without end.
+func listsSameAsAny(listing []remoteEntry, ancestors [][]remoteEntry) bool {
+	return slices.ContainsFunc(ancestors, func(ancestor []remoteEntry) bool {
+		return slices.EqualFunc(listing, ancestor, func(a, b remoteEntry) bool {
+			return a.name == b.name && a.isDir == b.isDir && a.isLink == b.isLink && a.size == b.size &&
+				a.modTime.Equal(b.modTime)
+		})
+	})
 }
 
 // keepReportedUnder treats the files reported under a folder that could not be listed as still
