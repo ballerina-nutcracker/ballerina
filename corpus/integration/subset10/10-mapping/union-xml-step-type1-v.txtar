@@ -1,0 +1,11 @@
+-- stdout --
+Elements
+{"v":<a>1</a><a>2</a>,"m":1}
+Any
+{"v":<a>1</a>text<a>2</a>,"m":1}
+[xml, int]
+[<a>1</a>text<a>2</a>,1]
+[function (xml) returns xml<xml:Element>, int]
+[function (xml) returns xml<xml:Element>, int]
+<a>1</a>
+-- stderr --

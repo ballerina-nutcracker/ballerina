@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> module-candidate-inner1-e.bal:33:9
+   |
+33 | A|B g = {y: {a: true}}; // @error no applicable inherent type
+   |         ^^^^^^^^^^^^^^

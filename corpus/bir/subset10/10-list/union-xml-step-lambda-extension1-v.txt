@@ -1,0 +1,471 @@
+module $anon.. v 0.0.0;
+kind(any) -> string{
+  bb0 {
+    %2 = v is {| m: int, v: xml, never... |}
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad A
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = (1, v) is {| m: string, v: xml, never... |}
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad B
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = (2, v) is {| m: float, v: xml, never... |}
+    %0 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad C
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = (3, v) is [xml, int, never...]
+    %0 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 1
+    %0 = ConstantLoad [xml, int]
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = (4, v) is [xml, string, never...]
+    %0 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 1
+    %0 = ConstantLoad [xml, string]
+    (5, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 1
+    %0 = (5, v) is [function(xml) returns [xml...], int, never...]
+    %0 ? bb11 : bb12;
+  }
+  bb11 {
+    PushScopeFrame 1
+    %0 = ConstantLoad [function (xml) returns xml[], int]
+    (6, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb12 {
+    PushScopeFrame 1
+    %0 = (6, v) is [function(xml, int) returns xml, int, never...]
+    %0 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 1
+    %0 = ConstantLoad [function (xml, int) returns xml, int]
+    (7, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb14 {
+    PushScopeFrame 1
+    %0 = ConstantLoad other
+    (7, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("b", %2)
+    %4 = newXMLElement("a", %3)
+    %5 = ConstantLoad 2
+    %6 = newXMLText(%5)
+    %7 = newXMLElement("b", %6)
+    %8 = newXMLElement("a", %7)
+    %9 = newXMLSequence{%4, %8}
+    %10 = newXMLElement("root", %9)
+    x = %10;
+    %12 = ConstantLoad v
+    %13 = ConstantLoad <nil>
+    %14 = %13;
+    %15 = elements(x,%14) -> bb1;
+  }
+  bb1 {
+    %16 = fp $anon/.:$xmlStep$main$0
+    %17 = map(%15,%16) -> bb2;
+  }
+  bb2 {
+    %18 = ConstantLoad m
+    %19 = ConstantLoad 1.5
+    %20 = newMap {| m: float, v: xml, never... |}{%12=%17, %18=%19}
+    m = %20;
+    %22 = kind(m) -> bb3;
+  }
+  bb3 {
+    %23 = println(%22) -> bb4;
+  }
+  bb4 {
+    %24 = println(m) -> bb5;
+  }
+  bb5 {
+    %25 = ConstantLoad <nil>
+    %26 = %25;
+    %27 = elements(x,%26) -> bb6;
+  }
+  bb6 {
+    %28 = fp $anon/.:$xmlStep$main$1
+    %29 = map(%27,%28) -> bb7;
+  }
+  bb7 {
+    %30 = ConstantLoad s
+    %31 = ConstantLoad 2
+    %32 = newArray [xml, string, never...][%31]{%29, %30}
+    l = %32;
+    %34 = kind(l) -> bb8;
+  }
+  bb8 {
+    %35 = println(%34) -> bb9;
+  }
+  bb9 {
+    %36 = println(l) -> bb10;
+  }
+  bb10 {
+    %37 = ConstantLoad <nil>
+    %38 = %37;
+    %39 = elements(x,%38) -> bb11;
+  }
+  bb11 {
+    %40 = fp $anon/.:$xmlStep$main$2
+    %41 = map(%39,%40) -> bb12;
+  }
+  bb12 {
+    %42 = ConstantLoad 1
+    %43 = ConstantLoad 2
+    %44 = newArray [xml, int, never...][%43]{%41, %42}
+    mapped = %44;
+    %46 = kind(mapped) -> bb13;
+  }
+  bb13 {
+    %47 = println(%46) -> bb14;
+  }
+  bb14 {
+    %48 = println(mapped) -> bb15;
+  }
+  bb15 {
+    %49 = fp $anon/.:$anonFunc$_1
+    %50 = ConstantLoad 1
+    %51 = ConstantLoad 2
+    %52 = newArray [function(xml) returns [xml...], int, never...][%51]{%49, %50}
+    nested = %52;
+    %54 = kind(nested) -> bb16;
+  }
+  bb16 {
+    %55 = println(%54) -> bb17;
+  }
+  bb17 {
+    %56 = nested is [function(xml) returns [xml...], int, never...]
+    %56 ? bb18 : bb21;
+  }
+  bb18 {
+    PushScopeFrame 5
+    %1 = ConstantLoad 0
+    %0 = (1, nested)[%1];
+    f = %0;
+    %3 = f((1, x)) -> bb19;
+  }
+  bb19 {
+    %4 = println(%3) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 8
+    %0 = closure_fp $anon/.:$anonFunc$_4
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = newArray [function(xml, int) returns xml, int, never...][%2]{%0, %1}
+    pair = %3;
+    %5 = kind(pair) -> bb22;
+  }
+  bb22 {
+    %6 = println(%5) -> bb23;
+  }
+  bb23 {
+    %7 = pair is [function(xml, int) returns xml, int, never...]
+    %7 ? bb24 : bb27;
+  }
+  bb24 {
+    PushScopeFrame 7
+    %1 = ConstantLoad 0
+    %0 = (1, pair)[%1];
+    g = %0;
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %5 = g((2, x),%4) -> bb25;
+  }
+  bb25 {
+    %6 = println(%5) -> bb26;
+  }
+  bb26 {
+    PopScopeFrame
+    GOTO bb27;
+  }
+  bb27 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(e,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$$anonFunc$_0$0
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$anonFunc$_1(xml) -> [xml...]{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(s,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$$anonFunc$_1$0
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = elements(s,%8) -> bb3;
+  }
+  bb3 {
+    %10 = fp $anon/.:$xmlStep$$anonFunc$_1$1
+    %11 = map(%9,%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad 2
+    %13 = newArray [xml...][%12]{%6, %11}
+    %0 = %13;
+    return;
+  }
+}
+$anonFunc$_2(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(e,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$$anonFunc$_2$0
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$anonFunc$_3(xml:Element) -> boolean{
+  bb0 {
+    %3 = ConstantLoad <nil>
+    %4 = %3;
+    %5 = elements(e,%4) -> bb1;
+  }
+  bb1 {
+    %6 = fp $anon/.:$xmlStep$$anonFunc$_3$0
+    %7 = map(%5,%6) -> bb2;
+  }
+  bb2 {
+    %8 = length(%7) -> bb3;
+  }
+  bb3 {
+    %9 = %8;
+    %10 = ConstantLoad 0
+    %11 = %10;
+    %2 = > %9 %11;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_4(xml,int) -> xml<xml:Element>{
+  bb0 {
+    %3 = ConstantLoad <nil>
+    %4 = %3;
+    %5 = elements(s,%4) -> bb1;
+  }
+  bb1 {
+    %6 = closure_fp $anon/.:$xmlStep$$anonFunc$_4$0
+    %7 = map(%5,%6) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_0$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_1$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = fp $anon/.:$anonFunc$_2
+    %5 = map(%3,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_1$1(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = fp $anon/.:$anonFunc$_3
+    %5 = filter(%3,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_2$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_3$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_4$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = (1, i);
+    %5 = $stepIndex(%3,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$1(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = $stepIndex(%3,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$main$2(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = fp $anon/.:$anonFunc$_0
+    %5 = map(%3,%4) -> bb2;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+}

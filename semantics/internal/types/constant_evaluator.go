@@ -756,7 +756,7 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 	if !ok {
 		return nil, false
 	}
-	targetType := expr.TypeDescriptor.GetDeterminedType()
+	targetType := expr.TypeDescriptor.Type()
 	converted, err := values.CastValue(e.resolver.typeContext(), value, targetType)
 	if err != nil {
 		return e.semanticFailure(constantCastDiagnostic(value, targetType, err).Error(), expr.GetPosition())

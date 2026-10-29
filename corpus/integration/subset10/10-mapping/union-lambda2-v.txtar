@@ -1,0 +1,6 @@
+-- stdout --
+{"inner":{"v":[2,3],"m":1},"tag":1}
+true true
+{"pair":[[10,20],1],"tag":"t"}
+true
+-- stderr --

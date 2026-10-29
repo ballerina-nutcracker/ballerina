@@ -1,0 +1,28 @@
+(depend
+)
+(inferredUnion
+  (bb0 () ()
+    (return
+      (invocation depend (
+        (list-constructor-expr
+          (literal 65))
+        (typedesc-expr))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal declared))))
+  )
+)
+(namedUnion
+  (bb0 () ()
+    (return
+      (invocation depend (
+        (list-constructor-expr
+          (literal 65))
+        (typedesc-expr
+          (builtin-ref-type json)))))
+  )
+)

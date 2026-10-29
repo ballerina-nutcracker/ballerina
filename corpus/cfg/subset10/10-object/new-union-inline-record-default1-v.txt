@@ -1,0 +1,69 @@
+(First
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (binary-expr +
+          (field-based-access a
+            (simple-var-ref value))
+          (simple-var-ref marker)))
+    )
+  )
+)
+(Second
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (binary-expr +
+          (field-based-access a
+            (simple-var-ref value))
+          (invocation lang.string length (
+            (simple-var-ref marker)))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (record-type
+          (field a
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 2))))))
+    (var-def
+      (variable y (type
+        (value-type any)) (expr
+        (simple-var-ref value))))
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type First)
+          (user-defined-type Second))) (expr
+        (new (
+          (type-conversion-expr
+            (simple-var-ref y)
+            (record-type
+              (field a
+                (value-type int)
+                (literal 1))))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref c)
+            (user-defined-type First))
+          (literal First)
+          (literal Second)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+  )
+)

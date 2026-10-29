@@ -1,0 +1,80 @@
+module $anon.. v 0.0.0;
+class Other {
+  x int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class C {
+  x int
+
+  init(object { public function init() returns nil; int x }) -> nil{
+    bb0 {
+      %3 = ConstantLoad 1
+      %4 = ConstantLoad x
+      o[%4] = %3;
+      %5 = ConstantLoad 2
+      %6 = ConstantLoad x
+      self[%6] = %5;
+      %7 = ConstantLoad 3
+      %8 = ConstantLoad x
+      o[%8] = %7;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Other
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    o = %3;
+    %6 = newObject $anon/.:C
+    %7 = %6.init(o) -> bb5;
+  }
+  bb5 {
+    %9 = %7 is nil
+    %9 ? bb6 : bb7;
+  }
+  bb6 {
+    %8 = %6;
+    GOTO bb8;
+  }
+  bb7 {
+    %8 = %7;
+    GOTO bb8;
+  }
+  bb8 {
+    c = %8;
+    %12 = ConstantLoad x
+    %11 = c[%12];
+    %13 = %11;
+    %14 = ConstantLoad  
+    %16 = ConstantLoad x
+    %15 = o[%16];
+    %17 = %15;
+    %18 = println(%13,%14,%17) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> inline-type-desc-default-mismatch1-e.bal:26:40
+   |
+26 |     A|B r = {x: v is record {| int a = "s"; |}}; // @error incompatible default
+   |                                        ^^^

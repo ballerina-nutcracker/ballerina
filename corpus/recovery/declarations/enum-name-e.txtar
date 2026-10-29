@@ -34,3 +34,9 @@ function useMember() returns string { return R; }
     (block-function-body
       (return
         (simple-var-ref R)))))
+-- stderr --
+error[SYNTAX_ERROR]: missing identifier
+  --> enum-name-e.bal:17:6
+   |
+17 | enum { R, B } // @error
+   |

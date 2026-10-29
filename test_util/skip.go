@@ -59,11 +59,6 @@ var WASMUnsupportedTests = []string{
 // "subset8/08-foo/bar-v.bal"). They are matched as suffixes against either a
 // relative test name or an absolute path.
 var UnsupportedTests = []string{
-	// Empty XML is represented as XMLText at runtime, so its iterator loses the
-	// statically inferred xml<never> constituent type at the extern boundary.
-	// https://github.com/ballerina-nutcracker/ballerina/issues/853
-	"subset10/10-xml-navigation/empty-iterator-static-type-v.bal",
-
 	// --- Needs constant folding ---
 	// https://github.com/ballerina-nutcracker/ballerina/issues/83
 
@@ -186,9 +181,6 @@ var UnsupportedTests = []string{
 	// 	https://github.com/ballerina-nutcracker/ballerina/issues/162
 	"subset8/08-list/10-e.bal",
 	"subset8/08-mapping/9-e.bal",
-
-	// rest param not supported in dependently typed functions
-	"subset8/08-function/dependent-fn-5-e.bal",
 }
 
 // IsUnsupported reports whether the given corpus test path is in

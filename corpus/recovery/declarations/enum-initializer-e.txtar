@@ -34,3 +34,15 @@ function useColour() returns Colour { return R; }
     (block-function-body
       (return
         (simple-var-ref R)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> enum-initializer-e.bal:17:29
+   |
+17 | public enum Colour { R, G = } // @error
+   |
+
+error[SYNTAX_ERROR]: missing expression
+  --> enum-initializer-e.bal:17:29
+   |
+17 | public enum Colour { R, G = } // @error
+   |

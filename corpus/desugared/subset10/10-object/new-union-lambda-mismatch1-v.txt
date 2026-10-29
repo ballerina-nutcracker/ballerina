@@ -1,0 +1,54 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition WithFn
+    (function init (
+      (variable callback (type
+        (function-type (
+          (value-type int)) (
+          (value-type int)))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callback))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition WithInt
+    (function init (
+      (variable value (type
+        (value-type int)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable w (type
+          (union-type
+            (user-defined-type WithFn)
+            (user-defined-type WithInt))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_0 (
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref v)
+                    (literal 1)))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref w)
+            (user-defined-type WithFn))))))))

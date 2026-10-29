@@ -1,0 +1,18 @@
+module $anon.. v 0.0.0;
+f() -> nil{
+  bb0 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = f() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad ok
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

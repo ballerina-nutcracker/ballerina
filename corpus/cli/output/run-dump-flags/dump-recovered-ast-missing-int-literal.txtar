@@ -8,7 +8,7 @@
       (var-def (position 18:1 19:1)
         (variable (position 18:1 19:1) x (type
           (finite-type (position 18:1 18:7)
-            (bad-expr-or-action (position 18:1 18:7)))) (expr
+            (bad-expr-or-action unary (position 18:1 18:7) (tokens ("-" 18:5 18:6))))) (expr
           (literal (position 18:11 18:12) 1)))))))
 error[SYNTAX_ERROR]: missing decimal integer literal
   --> missing-int-literal.bal:18:7

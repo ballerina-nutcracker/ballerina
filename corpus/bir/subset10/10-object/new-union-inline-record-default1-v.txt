@@ -1,0 +1,88 @@
+module $anon.. v 0.0.0;
+class First {
+  a int
+
+  init({| a: int, never... |},int) -> nil{
+    bb0 {
+      %6 = ConstantLoad a
+      %5 = value[%6];
+      %7 = %5;
+      %8 = marker;
+      %4 = + %7 %8;
+      %9 = ConstantLoad a
+      self[%9] = %4;
+      return;
+    }
+  }
+}
+class Second {
+  a int
+
+  init({| a: int, never... |},string) -> nil{
+    bb0 {
+      %6 = ConstantLoad a
+      %5 = value[%6];
+      %7 = %5;
+      %8 = length(marker) -> bb1;
+    }
+    bb1 {
+      %9 = %8;
+      %4 = + %7 %9;
+      %10 = ConstantLoad a
+      self[%10] = %4;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 2
+    %3 = newMap {| a: int, never... |}{%1=%2}
+    value = %3;
+    y = value;
+    %6 = newObject $anon/.:First
+    %7 = <{| a: int, never... |}>(y)
+    %8 = ConstantLoad 1
+    %9 = %6.init(%7,%8) -> bb1;
+  }
+  bb1 {
+    %11 = %9 is nil
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    %10 = %6;
+    GOTO bb4;
+  }
+  bb3 {
+    %10 = %9;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %10;
+    %14 = c is object { int a; public function init({| a: int, never... |}, int) returns nil }
+    %14 ? bb5 : bb6;
+  }
+  bb5 {
+    %15 = ConstantLoad First
+    %13 = %15;
+    GOTO bb7;
+  }
+  bb6 {
+    %16 = ConstantLoad Second
+    %13 = %16;
+    GOTO bb7;
+  }
+  bb7 {
+    %17 = println(%13) -> bb8;
+  }
+  bb8 {
+    %19 = ConstantLoad a
+    %18 = c[%19];
+    %20 = %18;
+    %21 = println(%20) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

@@ -17,9 +17,12 @@ isolated function makeResult() returns map<int> {
     return {answer: 42};
 }
 
+isolated int waits = 0;
+
 function waitForResult() returns map<int>|error {
     future<map<int>> result = start makeResult();
     lock {
+        waits += 1;
         return trap wait result; // @error action is not an isolated expression
     }
 }

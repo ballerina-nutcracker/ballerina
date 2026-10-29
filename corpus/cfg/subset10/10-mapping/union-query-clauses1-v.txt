@@ -1,0 +1,63 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable arr (type
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type string)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 3)
+          (literal a)
+          (literal 1)
+          (literal 2)
+          (literal b)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (query-expr
+              (from-clause
+                (var-def
+                  (variable x (type
+                    (union-type
+                      (value-type int)
+                      (value-type string)))))
+                (simple-var-ref arr))
+              (let-clause
+                (var-def
+                  (variable y (type
+                    (union-type
+                      (value-type int)
+                      (value-type string))) (expr
+                    (simple-var-ref x)))))
+              (where-clause
+                (type-test-expr is
+                  (simple-var-ref y)
+                  (value-type int)))
+              (order-by-clause
+                (order-key ascending
+                  (simple-var-ref y)))
+              (limit-clause
+                (literal 2))
+              (select-clause
+                (binary-expr *
+                  (simple-var-ref y)
+                  (literal 10)))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r)
+          (user-defined-type A)))))
+  )
+)

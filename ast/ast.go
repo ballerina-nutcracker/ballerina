@@ -48,14 +48,16 @@ type Location = diagnostics.Location
 
 type BLangNode interface {
 	Node
-	SetDeterminedType(ty semtypes.SemType)
 	SetPosition(pos diagnostics.Location)
 }
 
 type (
 	bLangNodeBase struct {
-		DeterminedType semtypes.SemType
-		pos            diagnostics.Location
+		pos diagnostics.Location
+	}
+
+	nodeWithTypeBase struct {
+		Ty semtypes.SemType
 	}
 
 	BLangAnnotation struct {
@@ -398,12 +400,8 @@ func (b *BLangAnnotation) IsConst() bool         { return b.flags.Has(model.Flag
 func (b *BLangService) IsPublic() bool        { return false }
 func (b *BLangMemberTypeDesc) IsPublic() bool { return false }
 
-func (b *bLangNodeBase) SetDeterminedType(ty semtypes.SemType) {
-	b.DeterminedType = ty
-}
-
-func (b *bLangNodeBase) GetDeterminedType() semtypes.SemType {
-	return b.DeterminedType
+func (b *nodeWithTypeBase) Type() semtypes.SemType {
+	return b.Ty
 }
 
 func (b *bLangNodeBase) GetPosition() diagnostics.Location {
@@ -810,7 +808,7 @@ func (b *BLangVariable) GetMarkdownDocumentationAttachment() *BLangMarkdownDocum
 
 func (b *BLangVariable) GetAssociatedType() semtypes.SemType {
 	if b.TypeNode() != nil {
-		return b.TypeNode().GetTypeData().Type
+		return b.TypeNode().Type()
 	}
 	return semtypes.SemType{}
 }
@@ -1021,6 +1019,8 @@ func (r *BLangReturnTypeDescriptor) IsGrouped() bool { return r.innerType().IsGr
 func (r *BLangReturnTypeDescriptor) SetTypeData(ty TypeData) { r.innerType().SetTypeData(ty) }
 
 func (r *BLangReturnTypeDescriptor) GetTypeData() TypeData { return r.innerType().GetTypeData() }
+
+func (r *BLangReturnTypeDescriptor) Type() semtypes.SemType { return r.innerType().Type() }
 
 func (r *BLangReturnTypeDescriptor) bTypeGetName() model.Name { return r.innerType().bTypeGetName() }
 

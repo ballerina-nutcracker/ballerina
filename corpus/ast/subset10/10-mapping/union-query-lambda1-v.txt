@@ -1,0 +1,62 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field v
+        (array-type
+          (value-type int) dimensions: 2 ([][])))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field v
+        (array-type
+          (value-type string) dimensions: 2 ([][])))
+      (field m
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (query-expr
+                (from-clause
+                  (var-def
+                    (variable x (type
+                      (value-type int))))
+                  (simple-var-ref arr))
+                (select-clause
+                  (invocation map expr:
+                    (simple-var-ref arr) (
+                    (lambda
+                      (function $anonFunc$_0 (
+                        (variable y)) ()
+                        (expr-function-body
+                          (binary-expr +
+                            (simple-var-ref x)
+                            (simple-var-ref y))))))))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (user-defined-type A))))))))

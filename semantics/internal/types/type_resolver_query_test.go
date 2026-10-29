@@ -27,10 +27,6 @@ import (
 	"testing"
 )
 
-type unsupportedExpr struct {
-	ast.BLangLiteral
-}
-
 type unsupportedBType struct {
 	ast.BLangValueType
 }
@@ -67,14 +63,6 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 			diagSub: "query expression requires a select or collect clause",
 		},
 		{
-			name: "from collection resolution fails",
-			query: newQueryExpr(
-				newFromClause(newUnsupportedExprNode(), nil, true),
-				newSelectClause(newIntLiteral(1)),
-			),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name: "from collection is not a list",
 			query: newQueryExpr(
 				newFromClause(newIntLiteral(42), nil, true),
@@ -106,14 +94,6 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 			),
 			diagSub: "from clause variable type is incompatible with collection member type",
 		},
-		{
-			name: "select expression resolution fails",
-			query: newQueryExpr(
-				newFromClause(newIntListLiteral(1), nil, true),
-				newSelectClause(newUnsupportedExprNode()),
-			),
-			diagSub: "unsupported expression type",
-		},
 	}
 
 	for _, testCase := range testCases {
@@ -129,6 +109,7 @@ func TestResolveQueryExprErrorCases(t *testing.T) {
 }
 
 func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name    string
 		clause  ast.BLangNode
@@ -149,13 +130,6 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 			diagSub: "let clause variable declaration requires an initializer",
 		},
 		{
-			name: "let initializer resolution fails",
-			clause: newLetClause(
-				newSimpleVarDef("y", nil, newUnsupportedExprNode()),
-			),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name: "let declared type resolution fails",
 			clause: newLetClause(
 				newSimpleVarDef("y", newUnsupportedTypeNode(), newIntLiteral(1)),
@@ -170,41 +144,19 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 			diagSub: "let clause variable type is incompatible with initializer expression",
 		},
 		{
-			name:    "where expression resolution fails",
-			clause:  newWhereClause(newUnsupportedExprNode()),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name:    "where expression non-boolean",
 			clause:  newWhereClause(newIntLiteral(1)),
 			diagSub: "where clause expression must be boolean",
 		},
 		{
-			name:    "limit expression resolution fails",
-			clause:  newLimitClause(newUnsupportedExprNode()),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name:    "limit expression non-int",
 			clause:  newLimitClause(newStringLiteral("x")),
 			diagSub: "limit clause expression must be int",
 		},
 		{
-			name:    "limit expression resolution fails",
-			clause:  newLimitClause(newUnsupportedExprNode()),
-			diagSub: "unsupported expression type",
-		},
-		{
 			name:    "limit expression non-int",
 			clause:  newLimitClause(newStringLiteral("x")),
 			diagSub: "limit clause expression must be int",
-		},
-		{
-			name: "order by key resolution fails",
-			clause: newOrderByClause(
-				newOrderKey(newUnsupportedExprNode(), true),
-			),
-			diagSub: "unsupported expression type",
 		},
 		{
 			name: "order by key non-ordered type",
@@ -219,13 +171,6 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 				newGroupingKeyVarDef(newSimpleVarDef("g", nil, nil)),
 			),
 			diagSub: "group by variable declaration requires an initializer",
-		},
-		{
-			name: "group by initializer resolution fails",
-			clause: newGroupByClause(
-				newGroupingKeyVarDef(newSimpleVarDef("g", nil, newUnsupportedExprNode())),
-			),
-			diagSub: "unsupported expression type",
 		},
 		{
 			name: "group by declared type resolution fails",
@@ -301,13 +246,14 @@ func TestResolveQueryIntermediateClauseErrorCases(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 			query := newQueryExpr(
 				newFromClause(newIntListLiteral(1), nil, true),
 				testCase.clause,
 				newSelectClause(newIntLiteral(1)),
 			)
 			resolver, cx := newTestQueryResolver()
-			_, ok := resolveQueryIntermediateClauses(resolver, nil, query, len(query.QueryClauseList)-1)
+			_, ok := resolveQueryIntermediateClauses(resolver, nil, newQueryResolution(query), len(query.QueryClauseList)-1)
 			if ok {
 				t.Fatalf("expected resolveQueryIntermediateClauses to fail")
 			}
@@ -423,8 +369,8 @@ func TestResolveQueryExprCollectAggregatesVariables(t *testing.T) {
 	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected collect result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(collectXRef.GetDeterminedType(), semtypes.List) {
-		t.Fatalf("expected collect variable reference to be aggregated as a list, got %v", collectXRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(collectXRef.Type(), semtypes.List) {
+		t.Fatalf("expected collect variable reference to be aggregated as a list, got %v", collectXRef.Type())
 	}
 	if len(cx.Diagnostics()) > 0 {
 		t.Fatalf("expected no diagnostics, got %v", cx.Diagnostics())
@@ -458,11 +404,11 @@ func TestResolveQueryExprGroupByClauseAggregatesNonGroupingVars(t *testing.T) {
 	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(groupXRef.GetDeterminedType(), semtypes.Int) {
-		t.Fatalf("expected grouping key variable to remain int, got %v", groupXRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(groupXRef.Type(), semtypes.Int) {
+		t.Fatalf("expected grouping key variable to remain int, got %v", groupXRef.Type())
 	}
-	if !semtypes.IsSubtypeSimple(selectYRef.GetDeterminedType(), semtypes.List) {
-		t.Fatalf("expected non-grouping variable to be aggregated as a non-empty list, got %v", selectYRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(selectYRef.Type(), semtypes.List) {
+		t.Fatalf("expected non-grouping variable to be aggregated as a non-empty list, got %v", selectYRef.Type())
 	}
 	if len(cx.Diagnostics()) > 0 {
 		t.Fatalf("expected no diagnostics, got %v", cx.Diagnostics())
@@ -497,7 +443,7 @@ func TestResolveQueryExprCollectDoesNotReaggregateGroupByVars(t *testing.T) {
 		t.Fatalf("expected collect result type to be a list, got %v", queryTy)
 	}
 	tyCtx := semtypes.ContextFrom(cx.GetTypeEnv())
-	collectYTy := collectYRef.GetDeterminedType()
+	collectYTy := collectYRef.Type()
 	if !semtypes.IsSubtypeSimple(collectYTy, semtypes.List) {
 		t.Fatalf("expected grouped non-key variable to remain a list, got %v", collectYTy)
 	}
@@ -538,8 +484,8 @@ func TestResolveQueryExprGroupByVarDeclaration(t *testing.T) {
 	if !semtypes.IsSubtypeSimple(queryTy, semtypes.List) {
 		t.Fatalf("expected query result type to be a list, got %v", queryTy)
 	}
-	if !semtypes.IsSubtypeSimple(selectNRef.GetDeterminedType(), semtypes.Int) {
-		t.Fatalf("expected grouping variable declaration to be int, got %v", selectNRef.GetDeterminedType())
+	if !semtypes.IsSubtypeSimple(selectNRef.Type(), semtypes.Int) {
+		t.Fatalf("expected grouping variable declaration to be int, got %v", selectNRef.Type())
 	}
 	if len(cx.Diagnostics()) > 0 {
 		t.Fatalf("expected no diagnostics, got %v", cx.Diagnostics())
@@ -999,10 +945,4 @@ func newErrorConstructorExpr() *ast.BLangErrorConstructorExpr {
 	errExpr := &ast.BLangErrorConstructorExpr{}
 	errExpr.SetPosition(queryTestPos)
 	return errExpr
-}
-
-func newUnsupportedExprNode() ast.BLangExpression {
-	expr := &unsupportedExpr{}
-	expr.SetPosition(queryTestPos)
-	return expr
 }

@@ -1,0 +1,5 @@
+-- stdout --
+true
+false
+{"v":<a>1</a><a>2</a>,"first":<a>1</a>,"got":<a>2</a>,"count":2,"m":1}
+-- stderr --
