@@ -40,7 +40,7 @@ func nextCallerID() string {
 	return strconv.FormatUint(callerIDCounter.Add(1), 10)
 }
 
-// connState is shared between the read loop and Caller.close so onClose is dispatched exactly once, whichever side closes first.
+// connState is shared between the read loop and Caller.close so onClose is dispatched at most once, whichever side closes first.
 type connState struct {
 	mu         sync.Mutex
 	conn       net.Conn
@@ -59,7 +59,7 @@ func (cs *connState) closeOnce(rt *runtime.Runtime, ctx *extern.Context) {
 	connSvcObj := cs.connSvcObj
 	cs.mu.Unlock()
 	if connSvcObj != nil {
-		invokeRemote(rt, ctx, connSvcObj, "onClose", func() []values.BalValue {
+		invokeRemote(rt, ctx, connSvcObj, onClose, func() []values.BalValue {
 			return []values.BalValue{connSvcObj}
 		})
 	}
@@ -183,7 +183,7 @@ func withPooledContext(rt *runtime.Runtime, fn func(ctx *extern.Context)) {
 }
 
 func dispatchOnError(rt *runtime.Runtime, ctx *extern.Context, connSvcObj *values.Object, tcpErr *values.Error) {
-	invokeRemote(rt, ctx, connSvcObj, "onError", func() []values.BalValue {
+	invokeRemote(rt, ctx, connSvcObj, onError, func() []values.BalValue {
 		return []values.BalValue{connSvcObj, tcpErr}
 	})
 }

@@ -175,17 +175,12 @@ func listenerGracefulStop(_ *extern.Context, args []values.BalValue) (values.Bal
 func listenerImmediateStop(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	state := stateOf(args[0].(*values.Object))
 	state.mu.Lock()
-	ln := state.ln
+	defer state.mu.Unlock()
 	state.stopped = true
-	conns := make([]net.Conn, 0, len(state.conns))
+	if state.ln != nil {
+		_ = state.ln.Close()
+	}
 	for c := range state.conns {
-		conns = append(conns, c)
-	}
-	state.mu.Unlock()
-	if ln != nil {
-		_ = ln.Close()
-	}
-	for _, c := range conns {
 		_ = c.Close()
 	}
 	return nil, nil
