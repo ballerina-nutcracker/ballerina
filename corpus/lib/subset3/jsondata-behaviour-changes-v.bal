@@ -53,4 +53,10 @@ public function main() {
     if r6 is string {
         io:println(r6.toBytes().toBase16()); // @output efbfbd7cf09f9880
     }
+    byte[] invalidUtf8 = [0x22, 0x61, 0xff, 0x62, 0x22];
+    stream<byte[], error?> s7 = [invalidUtf8].toStream();
+    string|jsondata:Error r7 = jsondata:parseStream(s7);
+    if r7 is string {
+        io:println(r7.toBytes().toBase16()); // @output 61efbfbd62
+    }
 }
