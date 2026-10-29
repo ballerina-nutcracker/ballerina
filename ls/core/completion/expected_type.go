@@ -36,9 +36,6 @@ func expectedTypeAt(c *cursor) (semtypes.SemType, bool) {
 			ty = c.sm.Context().SymbolType(variable.Symbol())
 		}
 		if semtypes.IsZero(ty) {
-			ty = variable.GetDeterminedType()
-		}
-		if semtypes.IsZero(ty) {
 			return semtypes.SemType{}, false
 		}
 		return ty, true

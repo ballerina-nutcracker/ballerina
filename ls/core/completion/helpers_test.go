@@ -13,13 +13,6 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-// Shared-helper unit tests for the two helpers this ticket ships but wires
-// to no handler yet (no invocation- or import-family handler exists to
-// drive them through a real LSP request): functionSignatureLabel and
-// moduleContentSymbols. expectedTypeCompatible (the third shared helper) is
-// already exercised transitively by the existing typed-initializer
-// completion fixtures via lexicalItems, so it gets no separate unit test
-// here.
 package completion
 
 import (

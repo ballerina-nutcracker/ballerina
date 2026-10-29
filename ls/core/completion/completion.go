@@ -26,28 +26,30 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
+// Request identifies a completion position; Offset is a byte offset in Text.
 type Request struct {
 	URI    workspace.DocumentURI
 	Text   string
 	Offset int
 }
 
+// AvailablePackage identifies a package offered for import completion.
 type AvailablePackage struct {
 	Organization string
 	Name         string
 }
 
+// Option configures a completion service.
 type Option func(*Service)
 
+// WithAvailablePackages sets the packages offered for import completion.
 func WithAvailablePackages(packages []AvailablePackage) Option {
 	return func(s *Service) {
 		s.packages = append([]AvailablePackage(nil), packages...)
 	}
 }
 
-// WithLogger injects the observability facade the service uses for the AST
-// debug dump (see WithASTDebugLogging). The default (unset) is
-// observability.NewNoop().
+// WithLogger sets the AST debug logger. A nil logger leaves it unchanged.
 func WithLogger(logger *observability.Logger) Option {
 	return func(s *Service) {
 		if logger != nil {
@@ -56,18 +58,15 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
-// WithASTDebugLogging turns on a per-request debug dump of the AST around
-// the completion cursor: the chain's root node, pretty-printed, with the
-// node dispatch() matched on bracketed by >>> <<<. This is a throwaway
-// diagnostic aid for iterating on completion dispatch, not a shipped
-// feature, so it's opt-in and off by default -- pair it with WithLogger to
-// actually see output (a noop logger discards it).
+// WithASTDebugLogging enables cursor AST logging through the WithLogger logger.
+// The default logger discards output.
 func WithASTDebugLogging() Option {
 	return func(s *Service) {
 		s.debugAST = true
 	}
 }
 
+// Service provides completion candidates from sealed compiler modules.
 type Service struct {
 	compiler *compile.CompilationService
 	packages []AvailablePackage
@@ -75,6 +74,7 @@ type Service struct {
 	debugAST bool
 }
 
+// New creates a completion service with the given compiler and options.
 func New(compiler *compile.CompilationService, options ...Option) *Service {
 	service := &Service{compiler: compiler, logger: observability.NewNoop()}
 	for _, option := range options {
@@ -83,6 +83,7 @@ func New(compiler *compile.CompilationService, options ...Option) *Service {
 	return service
 }
 
+// Complete returns candidates at req.Offset, clamped to the bounds of req.Text.
 func (s *Service) Complete(ctx stdcontext.Context, req Request) ([]protocol.CompletionItem, error) {
 	if req.Offset < 0 {
 		req.Offset = 0
@@ -109,7 +110,7 @@ func completeAt(req Request, sm compile.SealedModule, packages []AvailablePackag
 			items = emptyItems
 		}
 	}()
-	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageLocalTypeResolved {
+	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageSymbolResolved {
 		return emptyItems
 	}
 	c := newCursor(req, sm, packages)

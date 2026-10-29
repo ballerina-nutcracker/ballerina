@@ -15,27 +15,20 @@
 
 package completion
 
-import "github.com/ballerina-nutcracker/ballerina/ls/protocol"
+import (
+	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
+	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
+)
 
-// handler pairs a chain-context predicate with the candidate builder that
-// applies once matched. match inspects the cursor (typically its chain) and
-// returns a typed context value for build to use, so build never has to
-// redo match's own node inspection.
 type handler struct {
-	name  string
-	match func(*cursor) (any, bool)
-	build func(*cursor, any) []protocol.CompletionItem
+	syntaxOnly bool
+	name       string
+	match      func(*cursor) (any, bool)
+	build      func(*cursor, any) []protocol.CompletionItem
 }
 
-// handlers is ordered highest-priority (most specific node context) first.
-// dispatch walks it in order and returns the first match's build result --
-// no priority tiebreak, no registry/init() auto-registration (see the
-// completion-provider dispatch seam ADR). New per-family handlers land here
-// as they're built; this slice is the only thing that grows -- each
-// handler's own match/build logic lives in its own file.
+// The first match wins, even when it yields no candidates.
 var handlers = []handler{
-	// new per-family handlers land here as they're built, ordered
-	// highest-priority (most specific node context) first
 	typeDefinitionHandler,
 	enumDeclarationHandler,
 	fieldAccessHandler,
@@ -49,6 +42,9 @@ var handlers = []handler{
 
 func dispatch(c *cursor) []protocol.CompletionItem {
 	for _, h := range handlers {
+		if !h.syntaxOnly && c.sm.Stage() < compile.StageLocalTypeResolved {
+			continue
+		}
 		if ctx, ok := h.match(c); ok {
 			return h.build(c, ctx)
 		}

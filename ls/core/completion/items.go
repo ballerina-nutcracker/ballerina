@@ -91,12 +91,6 @@ func completionItemKind(kind model.SymbolKind) protocol.CompletionItemKind {
 	}
 }
 
-// functionSignatureLabel renders sig's parameter names as a plain
-// "(a, b, ...c)" string, for an invocation-family candidate's Detail field.
-// model.UntypedFunctionSignature (model/symbol.go) carries parameter names,
-// defaultability, and included-record metadata, but not per-parameter
-// types -- recovering those means decomposing the function's SemType, which
-// no consumer needs yet, so this formatter is names-only until one does.
 func functionSignatureLabel(sig model.UntypedFunctionSignature) string {
 	fixed := sig.FixedParamCount()
 	params := make([]string, 0, len(sig.ParamNames))

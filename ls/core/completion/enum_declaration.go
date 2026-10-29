@@ -67,7 +67,11 @@ func enumMemberConstantAt(c *cursor, declaration *ast.BLangTypeDefinition) bool 
 		return false
 	}
 	declarationPosition := declaration.GetPosition()
-	fileIndex := c.sm.Context().DiagnosticEnv().FileIndex(c.req.URI.Path())
+	name, ok := c.sm.NameOf(c.req.URI)
+	if !ok {
+		return false
+	}
+	fileIndex := c.sm.Context().DiagnosticEnv().FileIndex(name)
 	for _, constant := range c.sm.PackageNode().Constants {
 		if !constant.Flags().Has(model.FlagEnumMember) {
 			continue

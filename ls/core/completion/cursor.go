@@ -35,26 +35,18 @@ type cursor struct {
 }
 
 func newCursor(req Request, sm compile.SealedModule, packages []AvailablePackage) *cursor {
-	fileIndex := sm.Context().DiagnosticEnv().FileIndex(req.URI.Path())
+	name, _ := sm.NameOf(req.URI)
+	fileIndex := sm.Context().DiagnosticEnv().FileIndex(name)
 	c := &cursor{req: req, sm: sm, packages: packages, chain: nodeChainAtOffset(sm.PackageNode(), req.Offset, fileIndex)}
 	c.winnerNode, c.winnerMatched = nearestChainMatch(c)
 	return c
 }
 
-// winner returns the nearest (tail-to-head) chain node claimed by one of the
-// dispatch seam's migrated node-shape checks: field-access/invocation/
-// import/module-qualified-reference (the excluded-context family), block, or
-// module. Handlers for those families check this instead of independently
-// rescanning the whole chain themselves, which preserves classify()'s
-// original "nearest node wins" semantics: e.g. a block passed as a lambda
-// argument to a call must still win over the enclosing BLangInvocation, even
-// though both are present in the chain.
 func (c *cursor) winner() (ast.BLangNode, bool) {
 	return c.winnerNode, c.winnerMatched
 }
 
-// nearestChainMatch is classify()'s original single-pass walk, unchanged,
-// now returning the winning node instead of setting a cursorKind field.
+// Inner contexts take precedence, including blocks nested in invocations.
 func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
 	for i := len(c.chain) - 1; i >= 0; i-- {
 		switch node := c.chain[i].(type) {
@@ -89,14 +81,6 @@ func isBadTopLevel(node ast.BLangNode) bool {
 	return ok
 }
 
-// containsBadNode reports whether node's subtree has any recovered bad node
-// (a malformed signature/declaration the parser couldn't structurally place,
-// e.g. a BLangFunction with an unparseable parameter list). Recovered
-// top-level nodes assemble into a real typed node (BLangFunction,
-// BLangTypeDefinition, ...), not a BLangBadTopLevelNode, so isBadTopLevel
-// alone misses them: the cursor otherwise falls into that malformed node's
-// own (unusable) context instead of module level, and lexicalHandler's
-// fallback offers no keywords.
 func containsBadNode(node ast.BLangNode) bool {
 	d := &badNodeDetector{}
 	ast.Walk(d, node)

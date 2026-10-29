@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/excluded-contexts.bal",
+          "uri": "${root}/excluded-contexts.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -27,7 +27,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -36,7 +36,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/excluded-contexts.bal"
+          "uri": "${root}/excluded-contexts.bal"
         },
         "position": {
           "line": 4,
@@ -46,7 +46,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
@@ -55,7 +55,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/excluded-contexts.bal"
+          "uri": "${root}/excluded-contexts.bal"
         },
         "position": {
           "line": 5,
@@ -65,7 +65,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -98,7 +98,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/excluded-contexts.bal",
+        "uri": "${root}/excluded-contexts.bal",
         "diagnostics": [
           {
             "range": {

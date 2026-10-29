@@ -20,11 +20,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 )
 
-// dumpCursorAST logs the pretty-printed AST rooted at the cursor's nearest
-// chain node (the tightest enclosing node with a real position -- see
-// nodeChainAtOffset), with the node dispatch() actually matched on
-// (c.winnerNode) bracketed by >>> <<<. Only WithASTDebugLogging call sites
-// reach here, so this never runs on the hot path by default.
 func dumpCursorAST(logger *observability.Logger, c *cursor) {
 	if len(c.chain) == 0 {
 		return

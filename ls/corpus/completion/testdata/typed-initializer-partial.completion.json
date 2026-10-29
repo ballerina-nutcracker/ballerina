@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/typed-initializer-partial.bal",
+          "uri": "${root}/typed-initializer-partial.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -27,7 +27,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -36,7 +36,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/typed-initializer-partial.bal"
+          "uri": "${root}/typed-initializer-partial.bal"
         },
         "position": {
           "line": 3,
@@ -46,7 +46,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -79,7 +79,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/typed-initializer-partial.bal",
+        "uri": "${root}/typed-initializer-partial.bal",
         "diagnostics": []
       }
     },

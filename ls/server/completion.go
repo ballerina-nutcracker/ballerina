@@ -27,13 +27,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// textDocument/completion dispatch (ticket 35). The server owns only the
-// UTF-16 boundary and document-state plumbing: it resolves the request's
-// protocol.Position to a byte offset in the document's current text and hands
-// core the text and offset.
-// The completion logic itself — sealed-generation read, classification,
-// candidate selection, item construction — is core-owned
-// (ls/core/completion); this layer never imports compiler packages.
 func (s *Server) handleCompletion(ctx context.Context, message protocol.Message) trackedResult {
 	var params protocol.CompletionParams
 	if json.Unmarshal(message.Params, &params) != nil {
@@ -70,8 +63,7 @@ var (
 	snippetTabStop             = regexp.MustCompile(`\$\{\d+\}`)
 )
 
-// downgradeSnippetItems rewrites snippet items in place as plain text for
-// clients without snippet support (Java AbstractLSCompletionItem rules).
+// Only ${n:text} placeholders without braces in text and ${n} tab stops are handled.
 func downgradeSnippetItems(items []protocol.CompletionItem) {
 	for i := range items {
 		item := &items[i]
@@ -86,9 +78,8 @@ func downgradeSnippetItems(items []protocol.CompletionItem) {
 	}
 }
 
-// byteOffsetFromPosition converts a UTF-16 protocol.Position to a byte offset
-// in text (ls-ref's byteOffsetFromPosition): positions past the end clamp to
-// the document length.
+// Positions clamp to the line or document end; a position within a surrogate
+// pair resolves to the rune's starting byte.
 func byteOffsetFromPosition(text string, position protocol.Position) int {
 	line := 0
 	lineStart := 0

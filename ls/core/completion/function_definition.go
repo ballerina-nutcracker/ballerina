@@ -22,18 +22,15 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// functionDefinitionHandler offers the function keyword and function-definition
-// snippets when the cursor ends the partial name that follows both the isolated and
-// transactional qualifiers of a module-level definition, where the function
-// keyword is still missing.
 var functionDefinitionHandler = handler{
-	name:  "function-definition",
-	match: matchFunctionDefinition,
-	build: buildFunctionDefinition,
+	syntaxOnly: true,
+	name:       "function-definition",
+	match:      matchFunctionDefinition,
+	build:      buildFunctionDefinition,
 }
 
 func matchFunctionDefinition(c *cursor) (any, bool) {
-	node, ok := moduleLevelBadTopLevelAt(c)
+	node, ok := moduleLevelRecoveredDeclarationAt(c)
 	if !ok {
 		return nil, false
 	}
@@ -45,10 +42,16 @@ func matchFunctionDefinition(c *cursor) (any, bool) {
 	return nil, functionKeywordMissingAfterQualifiers(tokens, c.req.Offset-loc.StartOffset())
 }
 
-func moduleLevelBadTopLevelAt(c *cursor) (*ast.BLangBadTopLevelNode, bool) {
+func moduleLevelRecoveredDeclarationAt(c *cursor) (ast.BLangNode, bool) {
 	for i := len(c.chain) - 1; i > 0; i-- {
-		node, ok := c.chain[i].(*ast.BLangBadTopLevelNode)
-		if !ok {
+		node := c.chain[i]
+		switch node := node.(type) {
+		case *ast.BLangBadTopLevelNode:
+		case *ast.BLangVariable:
+			if _, badType := node.TypeNode().(*ast.BLangBadTypeNode); !badType {
+				continue
+			}
+		default:
 			continue
 		}
 		_, inModule := c.chain[i-1].(*ast.BLangPackage)

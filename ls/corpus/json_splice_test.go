@@ -22,11 +22,7 @@ import (
 	"testing"
 )
 
-// spliceTopLevelJSONField replaces the value bound to key at raw's top level
-// with newValue, leaving every other byte of raw -- key order, spacing,
-// every other field -- exactly as written. Unlike a decode/re-encode round
-// trip (which reformats the whole document and may reorder map keys), this
-// touches only the byte span of key's own value.
+// Splicing avoids the formatting and key-order changes of a decode/encode round trip.
 func spliceTopLevelJSONField(raw []byte, key string, newValue []byte) ([]byte, error) {
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	open, err := dec.Token()
@@ -68,8 +64,7 @@ func spliceTopLevelJSONField(raw []byte, key string, newValue []byte) ([]byte, e
 	return nil, fmt.Errorf("spliceTopLevelJSONField: key %q not found", key)
 }
 
-// skipToValue returns the offset of the first non-whitespace byte after the
-// colon following a key, given the byte offset right after the key token.
+// afterKey must be the byte offset immediately after a JSON key token.
 func skipToValue(raw []byte, afterKey int64) (int, error) {
 	colon := bytes.IndexByte(raw[afterKey:], ':')
 	if colon < 0 {

@@ -1,59 +1,34 @@
 // Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
 //
-// WSO2 LLC licenses this file to you under the Apache License,
-// Version 2.0 (the "License"); you may not use this file except in compliance
-// with the License.
-// You may obtain a copy of the License at
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an "AS IS"
+// BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing permissions
+// and limitations under the License.
 
 package corpus
 
 import (
 	"encoding/json"
+	"io/fs"
+	"os"
 	"slices"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
-	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 )
 
-func TestModuleLexicalCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/module-lexical.completion.json")
-}
-
-func TestCurrentGenerationAfterEditCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/current-generation-after-edit.completion.json")
-}
-
-func TestMalformedTopLevelSiblingCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/malformed-top-level-sibling.completion.json")
-}
-
-func TestExcludedContextsCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/excluded-contexts.completion.json")
-}
-
 func TestNoResolveOrEditsCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
+	t.Parallel()
 	fixturePath := "completion/testdata/no-resolve-or-edits.completion.json"
-	runTranscript(t, platform, fixturePath)
-	content, err := platform.FS.ReadFile(fixturePath)
+	runTranscript(t, fixturePath)
+	content, err := fs.ReadFile(os.DirFS("."), fixturePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,66 +49,6 @@ func TestNoResolveOrEditsCompletionCorpus(t *testing.T) {
 	}
 	got, ok := provider.TriggerCharacters.Value()
 	if !ok || !slices.Equal(got, want) {
-		t.Fatalf("completion trigger characters = %q, want %q", got, want)
+		t.Fatalf("completion trigger characters=%q, want %q", got, want)
 	}
-}
-
-func TestCancelledWaitRemainsUsableCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/cancelled-wait-remains-usable.completion.json")
-}
-
-func TestUnusableGenerationCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/unusable-generation.completion.json")
-}
-
-func TestBlockLexicalCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/block-lexical.completion.json")
-}
-
-func TestTypedInitializerValidCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/typed-initializer-valid.completion.json")
-}
-
-func TestTypedInitializerPartialCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/typed-initializer-partial.completion.json")
-}
-
-func TestUntypedInitializerUnknownCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/untyped-initializer-unknown.completion.json")
-}
-
-func TestTypedInitializerEmptyCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/typed-initializer-empty.completion.json")
-}
-
-func TestLambdaArgumentBlockCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/lambda-argument-block.completion.json")
-}
-
-func TestTypeDefinitionSnippetCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/type-definition-snippet.completion.json")
-}
-
-func TestTypeDefinitionSnippetPlainCompletionCorpus(t *testing.T) {
-	platform, cleanup := palnative.NewPlatform()
-	defer cleanup()
-	runTranscript(t, platform, "completion/testdata/type-definition-snippet-plain.completion.json")
 }

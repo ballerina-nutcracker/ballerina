@@ -66,9 +66,10 @@ func typeDefinitionSortText(primaryOffset, secondaryOffset int8) string {
 }
 
 var typeDefinitionHandler = handler{
-	name:  "type-definition",
-	match: matchTypeDefinition,
-	build: buildTypeDefinition,
+	syntaxOnly: true,
+	name:       "type-definition",
+	match:      matchTypeDefinition,
+	build:      buildTypeDefinition,
 }
 
 func matchTypeDefinition(c *cursor) (any, bool) {
@@ -105,12 +106,6 @@ func typeDefinitionQualifiedItems(c *cursor, alias string) []protocol.Completion
 	return set.items()
 }
 
-// typeDefinitionSymbolItem builds a type-position completion item for ref,
-// deriving its detail/relevance presentation from ref's own declared AST shape
-// (or, failing that, its model.Symbol's concrete kind) rather than a
-// rendered type signature -- pkgNode is the package ref's declaration lives
-// in (the local package, or an external projection's), used to locate ref's
-// own TypeDefinition/constant declaration by name.
 func typeDefinitionSymbolItem(c *cursor, pkgNode *ast.BLangPackage, ref model.SymbolRef, enumMember bool) protocol.CompletionItem {
 	ctx := c.sm.Context()
 	name := ctx.SymbolName(ref)
@@ -131,14 +126,6 @@ func typeDefinitionSymbolItem(c *cursor, pkgNode *ast.BLangPackage, ref model.Sy
 	return item
 }
 
-// typeDefinitionConstantItem fills in a constant's detail/relevance. A constant
-// declared in the file being edited gets the fixed "Singleton" placeholder
-// (its own value may not have finished resolving yet); otherwise its value
-// comes from the resolved semtype when available, falling back to reading
-// its own literal initializer directly off the AST (desugar-stage constant
-// folding, which alone would populate the semtype, is outside the LS
-// pipeline's stage ladder). Enum members use their own relevance tier,
-// apart from ordinary constants, matching Java's ENUM_MEMBER vs CONSTANT split.
 func typeDefinitionConstantItem(c *cursor, pkgNode *ast.BLangPackage, ref model.SymbolRef, name string, item protocol.CompletionItem, enumMember bool) protocol.CompletionItem {
 	switch {
 	case typeDefinitionCurrentDocumentSymbol(c, ref):
@@ -158,8 +145,6 @@ func typeDefinitionConstantItem(c *cursor, pkgNode *ast.BLangPackage, ref model.
 	return item
 }
 
-// constantLiteralDetail reads name's own literal initializer straight off
-// its BLangVariable declaration in pkgNode.Constants.
 func constantLiteralDetail(pkgNode *ast.BLangPackage, name string) string {
 	if pkgNode == nil {
 		return ""
@@ -174,10 +159,7 @@ func constantLiteralDetail(pkgNode *ast.BLangPackage, name string) string {
 		}
 		value := literal.GetOriginalValue()
 		if literal.GetLiteralKind() == ast.LiteralKindString && !strings.HasPrefix(value, "\"") {
-			// An enum member's constant is desugared from its bare
-			// identifier token (nodebuilder.transformEnumMemberWithVisibility),
-			// so its literal keeps a string kind but an unquoted original
-			// value; every other string literal already carries its quotes.
+			// Implicit enum-member string values lack source quotes.
 			return "\"" + value + "\""
 		}
 		return value
@@ -185,25 +167,12 @@ func constantLiteralDetail(pkgNode *ast.BLangPackage, name string) string {
 	return ""
 }
 
-// typeShape is a type-position symbol's structural presentation: the
-// completion item's detail text and relevance offsets. Both are derived from
-// AST node structure or a resolved model.Symbol's concrete kind -- never
-// from a rendered type signature.
 type typeShape struct {
 	detail          string
 	primaryOffset   int8
 	secondaryOffset int8
 }
 
-// classifyTypeSymbol derives ref's typeShape. Classes are identified through
-// the existing (context-level) class predicate since a class body is not a
-// TypeDefinition; everything else is classified from ref's own declared
-// type-descriptor AST, found by name in pkgNode or, failing that, in any
-// package c has an external projection for (a qualified candidate's own
-// declaration commonly lives in a different package than the one it was
-// reached through). When no declaration is found anywhere (a genuinely
-// implicit/unresolved compiler-provided symbol), the same classification falls back to ref's
-// concrete model.Symbol kind so the result is never blank.
 func classifyTypeSymbol(c *cursor, pkgNode *ast.BLangPackage, ref model.SymbolRef) typeShape {
 	ctx := c.sm.Context()
 	if ctx.SymbolIsClass(ref) {
@@ -219,11 +188,6 @@ func classifyTypeSymbol(c *cursor, pkgNode *ast.BLangPackage, ref model.SymbolRe
 	return classifyTypeDescriptor(ctx, owner, descriptor)
 }
 
-// findTypeDescriptorAnywhere looks up name's declared type descriptor in
-// pkgNode first, then in every package c carries an external projection for,
-// returning the package the match actually came from alongside it (needed so
-// a nested named-type reference inside that descriptor resolves against the
-// same package, not pkgNode).
 func findTypeDescriptorAnywhere(c *cursor, pkgNode *ast.BLangPackage, name string) (ast.TypeDescriptor, *ast.BLangPackage) {
 	if descriptor := findTypeDescriptor(pkgNode, name); descriptor != nil {
 		return descriptor, pkgNode
@@ -240,10 +204,6 @@ func findTypeDescriptorAnywhere(c *cursor, pkgNode *ast.BLangPackage, name strin
 	return nil, nil
 }
 
-// classifySymbolFallback classifies a type symbol that has no reachable
-// TypeDefinition/class declaration (an implicit compiler-provided symbol)
-// by the concrete Go type of its resolved model.Symbol -- still structural,
-// never a hardcoded name.
 func classifySymbolFallback(ctx *context.CompilerContext, ref model.SymbolRef) typeShape {
 	switch ctx.GetSymbol(ref).(type) {
 	case model.ClassSymbol:
@@ -259,13 +219,6 @@ func classifySymbolFallback(ctx *context.CompilerContext, ref model.SymbolRef) t
 	}
 }
 
-// classifyTypeDescriptor derives a typeShape from a type definition's own
-// AST descriptor node. Detail/relevance pairings mirror the destination Java
-// LS's TypeCompletionItemBuilder/SortingUtil: record, object and (bare or
-// detailed) error descriptors get their own structural relevance; everything else
-// -- map/typedesc constraints, basic types, function types, finite/singleton
-// types -- shares the default group, matching Java's unhandled-TypeDescKind
-// default case.
 func classifyTypeDescriptor(ctx *context.CompilerContext, pkgNode *ast.BLangPackage, descriptor ast.TypeDescriptor) typeShape {
 	switch node := descriptor.(type) {
 	case *ast.BLangRecordType:
@@ -297,14 +250,6 @@ func capitalizeTypeKind(kind ast.TypeKind) string {
 	return strings.ToUpper(text[:1]) + strings.ToLower(text[1:])
 }
 
-// classifyUnion derives a union type descriptor's shape. Its detail is
-// always "Union" (matching Java, whose detail text always names the outer
-// descriptor's own kind); its secondary relevance depends on whether every
-// flattened member shares one structural kind: error, record, and object use
-// their respective groups, any other uniform kind (including a union of
-// named type references, which are never resolved through to their own shape
-// -- see flattenUnionLeaves) uses the default group, and a mix of different
-// kinds uses the union group.
 func classifyUnion(ctx *context.CompilerContext, pkgNode *ast.BLangPackage, union *ast.BLangUnionTypeNode) typeShape {
 	leaves := flattenUnionLeaves(ctx, pkgNode, union)
 	secondaryOffset := typeDefinitionDefaultOffset
@@ -328,15 +273,7 @@ func classifyUnion(ctx *context.CompilerContext, pkgNode *ast.BLangPackage, unio
 	return typeShape{detail: "Union", primaryOffset: typeDefinitionOtherModuleOffset, secondaryOffset: secondaryOffset}
 }
 
-// flattenUnionLeaves returns one classification tag per flattened union
-// member. A nested BLangUnionTypeNode is always flattened. A named type
-// reference (BLangUserDefinedType) is flattened only when the type it names
-// is itself a union (so Error = Error1|Error2, where Error1 and Error2 are
-// themselves unions, flattens through them) -- the reference is never
-// resolved to its target's own shape otherwise, so a union of named error
-// aliases (Error1 = E1|E2) is a union of opaque references, not a union of
-// errors, matching Java (which only unwraps a TYPE_REFERENCE at the
-// completion item's own top level, never per union member).
+// Only union aliases are expanded; other named types retain the "ref" category.
 func flattenUnionLeaves(ctx *context.CompilerContext, pkgNode *ast.BLangPackage, descriptor ast.TypeDescriptor) []string {
 	if union, ok := descriptor.(*ast.BLangUnionTypeNode); ok {
 		leaves := flattenUnionLeaves(ctx, pkgNode, union.Lhs().TypeDescriptor)
@@ -352,10 +289,7 @@ func flattenUnionLeaves(ctx *context.CompilerContext, pkgNode *ast.BLangPackage,
 	return []string{unionLeafCategory(descriptor)}
 }
 
-// resolveNamedTypeDescriptor follows named's resolved symbol (identity, not
-// name text) to a type symbol and looks up its own declaration in pkgNode;
-// nil if named doesn't resolve to a type in pkgNode (including any
-// cross-package reference, which this deliberately never chases).
+// Named-type lookup is limited to pkgNode.
 func resolveNamedTypeDescriptor(ctx *context.CompilerContext, pkgNode *ast.BLangPackage, named *ast.BLangUserDefinedType) ast.TypeDescriptor {
 	ref := named.Symbol()
 	if ref.IsEmpty() || ctx.SymbolKind(ref) != model.SymbolKindType {
@@ -364,9 +298,7 @@ func resolveNamedTypeDescriptor(ctx *context.CompilerContext, pkgNode *ast.BLang
 	return findTypeDescriptor(pkgNode, ctx.SymbolName(ref))
 }
 
-// unionLeafCategory tags one (non-recursed) union member by its own AST node
-// kind, distinguishing basic types from each other by their TypeKind so
-// e.g. int|string is a heterogeneous mix, not a uniform "value type" group.
+// Keep basic types distinct so int|string is heterogeneous.
 func unionLeafCategory(descriptor ast.TypeDescriptor) string {
 	switch node := descriptor.(type) {
 	case *ast.BLangRecordType:
@@ -394,10 +326,6 @@ func unionLeafCategory(descriptor ast.TypeDescriptor) string {
 	}
 }
 
-// classifyConstrained distinguishes a map-constrained descriptor from a
-// typedesc-constrained one by the constrained type's own base-type kind
-// (map<T> vs typedesc<T> use the same wrapper node); any other constraint
-// base falls to the default group, matching Java's unhandled-kind default.
 func classifyConstrained(node *ast.BLangConstrainedType) typeShape {
 	switch safeConstraintKind(node) {
 	case ast.TypeKindTypeDesc:
@@ -409,10 +337,6 @@ func classifyConstrained(node *ast.BLangConstrainedType) typeShape {
 	}
 }
 
-// safeConstraintKind mirrors BLangConstrainedType.ConstraintKind()'s own
-// type-switch, but returns TypeKindNone for a constraint base it doesn't
-// recognize instead of panicking -- a presentation lookup must never crash
-// the request.
 func safeConstraintKind(node *ast.BLangConstrainedType) ast.TypeKind {
 	switch base := node.GetType().TypeDescriptor.(type) {
 	case *ast.BLangBuiltInRefTypeNode:
@@ -424,20 +348,12 @@ func safeConstraintKind(node *ast.BLangConstrainedType) ast.TypeKind {
 	}
 }
 
-// isEnumDescriptor reports whether descriptor is the shape the `enum`
-// keyword desugars to (nodebuilder's transformEnumDeclaration): every
-// flattened member is a name reference resolving, by symbol identity, to a
-// module-level constant -- the constant the enum member itself desugars to.
-// No other declaration produces this shape.
+// Enum descriptors consist of constant references, possibly joined by unions.
 func isEnumDescriptor(ctx *context.CompilerContext, descriptor ast.TypeDescriptor) bool {
 	refs, ok := enumConstantRefs(ctx, descriptor)
 	return ok && len(refs) > 0
 }
 
-// enumMemberNames returns the set of constant names in pkgNode that some
-// type definition's descriptor names as an enum member (see
-// isEnumDescriptor), so a constant symbol can be recognized as an enum
-// member without re-deriving its value.
 func enumMemberNames(ctx *context.CompilerContext, pkgNode *ast.BLangPackage) map[string]bool {
 	members := make(map[string]bool)
 	if pkgNode == nil {
@@ -455,10 +371,6 @@ func enumMemberNames(ctx *context.CompilerContext, pkgNode *ast.BLangPackage) ma
 	return members
 }
 
-// enumConstantRefs returns the constant symbol each flattened member of
-// descriptor names, or ok=false the moment any member isn't itself a name
-// reference resolving to a constant -- so an ordinary type union (of actual
-// types) is never mistaken for an enum.
 func enumConstantRefs(ctx *context.CompilerContext, descriptor ast.TypeDescriptor) ([]model.SymbolRef, bool) {
 	if union, ok := descriptor.(*ast.BLangUnionTypeNode); ok {
 		left, ok := enumConstantRefs(ctx, union.Lhs().TypeDescriptor)
@@ -482,10 +394,6 @@ func enumConstantRefs(ctx *context.CompilerContext, descriptor ast.TypeDescripto
 	return []model.SymbolRef{ref}, true
 }
 
-// findTypeDescriptor looks up name's own declared type descriptor among
-// pkgNode's type definitions (structural lookup by declared name/identity,
-// not by rendering or re-parsing anything); nil if name isn't a type
-// definition there (a class, or a symbol with no reachable declaration).
 func findTypeDescriptor(pkgNode *ast.BLangPackage, name string) ast.TypeDescriptor {
 	if pkgNode == nil {
 		return nil
@@ -555,6 +463,9 @@ func (f *typeDefinitionModuleContentFinder) VisitTypeData(*ast.TypeData) ast.Vis
 
 func typeDefinitionDescriptorItems(c *cursor) []protocol.CompletionItem {
 	set := newItemSet()
+	if item, ok := recoveredTypeDefinitionItem(c); ok {
+		set.add(item)
+	}
 	for _, item := range typeDefinitionScopeItems(c) {
 		set.add(item)
 	}
@@ -565,9 +476,6 @@ func typeDefinitionDescriptorItems(c *cursor) []protocol.CompletionItem {
 		set.add(item)
 	}
 	for _, item := range typeDefinitionQualifiedPrefixItems(c) {
-		set.add(item)
-	}
-	if item, ok := recoveredTypeDefinitionItem(c); ok {
 		set.add(item)
 	}
 	items := set.items()
@@ -681,7 +589,8 @@ func typeDefinitionHasTopLevelToken(tokens []typeDefinitionToken, text string) b
 
 func typeDefinitionCurrentDocumentSymbol(c *cursor, ref model.SymbolRef) bool {
 	location := c.sm.Context().SymbolLocation(ref)
-	return c.sm.Context().DiagnosticEnv().FileName(location) == c.req.URI.Path()
+	name, ok := c.sm.NameOf(c.req.URI)
+	return ok && c.sm.Context().DiagnosticEnv().FileName(location) == name
 }
 
 func typeDefinitionPackageItems(c *cursor) []protocol.CompletionItem {

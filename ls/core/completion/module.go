@@ -20,10 +20,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
-// moduleHandler offers module-level keywords and snippets plus lexically-visible module
-// symbols when the cursor sits directly among a module's top-level nodes
-// (not inside any narrower construct) -- migrated from classify()'s
-// kindModule case verbatim.
 var moduleHandler = handler{
 	name:  "module",
 	match: matchModule,

@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/type-definition-snippet-plain.bal",
+          "uri": "${root}/type-definition-snippet-plain.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -27,7 +27,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -36,7 +36,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/type-definition-snippet-plain.bal"
+          "uri": "${root}/type-definition-snippet-plain.bal"
         },
         "position": {
           "line": 0,
@@ -46,7 +46,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -79,7 +79,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/type-definition-snippet-plain.bal",
+        "uri": "${root}/type-definition-snippet-plain.bal",
         "diagnostics": [
           {
             "range": {
@@ -120,6 +120,12 @@
       "jsonrpc": "2.0",
       "id": 2,
       "result": [
+        {
+          "label": "Foo",
+          "kind": 7,
+          "sortText": "066",
+          "insertText": "Foo"
+        },
         {
           "label": "any",
           "kind": 25,

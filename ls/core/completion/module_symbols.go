@@ -17,24 +17,7 @@ package completion
 
 import "github.com/ballerina-nutcracker/ballerina/model"
 
-// moduleContentSymbols looks up the ExportedSymbolSpace bound to prefix (an
-// import alias, e.g. the `io` in `io:println`) by walking outward from
-// scope through its enclosing parents -- the same Main/Prefix/Parent shapes
-// scope.go's walkScope already switches over, including walkScope's
-// PackageScope fallback (a *model.PackageScope has no Prefix of its own; it
-// delegates to its Virtual *model.ModuleScope, same as
-// model.PackageScope.GetPrefixedSymbol does). This is the module/QName
-// content-lookup helper for the import/module-qualified-reference family
-// (today's no-op importHandler, excluded.go): once a per-provider ticket
-// builds real candidates there, it can range over
-// space.PublicMainSymbols() on the result. Returns ok=false if prefix isn't
-// bound to an import anywhere in scope's chain.
-//
-// Known gap: unlike model.ModuleScope.GetPrefixedSymbol, this does not retry
-// prefix through model's unexported mapToLangPrefixIfNeeded table, so
-// lang-lib prefixes (e.g. `int:sum`, `string:...`) that rely on that
-// built-in aliasing won't resolve here. No consumer needs it yet; revisit if
-// model exports an equivalent.
+// Prefixes are matched verbatim, without ModuleScope.GetPrefixedSymbol's langlib mapping.
 func moduleContentSymbols(scope model.Scope, prefix string) (model.ExportedSymbolSpace, bool) {
 	for scope != nil {
 		switch s := scope.(type) {

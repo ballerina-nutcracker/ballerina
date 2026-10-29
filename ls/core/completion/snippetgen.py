@@ -112,7 +112,7 @@ def decode(src: str) -> dict[str, dict[str, str]]:
 
 
 def go_quote(s: str) -> str:
-    """Quote s as a Go interpreted string literal, like strconv.Quote."""
+    """Quote s as a Go interpreted string literal."""
     parts = []
     for ch in s:
         if ch in GO_ESCAPES:

@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/unresolvable-dependency.bal",
+          "uri": "${root}/unresolvable-dependency.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -27,7 +27,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -36,7 +36,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/unresolvable-dependency.bal"
+          "uri": "${root}/unresolvable-dependency.bal"
         },
         "position": {
           "line": 4,
@@ -46,7 +46,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -79,12 +79,12 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/unresolvable-dependency.bal",
+        "uri": "${root}/unresolvable-dependency.bal",
         "diagnostics": [
           {
             "range": {
               "start": {
-                "line": 5,
+                "line": 4,
                 "character": 0
               },
               "end": {
@@ -95,7 +95,7 @@
             "severity": 1,
             "code": "SYNTAX_ERROR",
             "source": "ballerina",
-            "message": "missing semicolon token"
+            "message": "invalid expression statement"
           }
         ]
       }

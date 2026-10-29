@@ -18,7 +18,7 @@
       "method": "textDocument/didOpen",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/cancelled-wait-remains-usable.bal",
+          "uri": "${root}/cancelled-wait-remains-usable.bal",
           "languageId": "ballerina",
           "version": 1,
           "text": "${source}"
@@ -31,7 +31,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/cancelled-wait-remains-usable.bal"
+          "uri": "${root}/cancelled-wait-remains-usable.bal"
         },
         "position": {
           "line": 1,
@@ -48,12 +48,12 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flush",
+      "method": "$test/flush",
       "params": {}
     },
     {
@@ -62,7 +62,7 @@
       "method": "textDocument/completion",
       "params": {
         "textDocument": {
-          "uri": "file:///workspace/cancelled-wait-remains-usable.bal"
+          "uri": "${root}/cancelled-wait-remains-usable.bal"
         },
         "position": {
           "line": 1,
@@ -72,7 +72,7 @@
     },
     {
       "jsonrpc": "2.0",
-      "method": "$pal/flushRequests",
+      "method": "$test/flushRequests",
       "params": {}
     }
   ],
@@ -113,7 +113,7 @@
       "jsonrpc": "2.0",
       "method": "textDocument/publishDiagnostics",
       "params": {
-        "uri": "file:///workspace/cancelled-wait-remains-usable.bal",
+        "uri": "${root}/cancelled-wait-remains-usable.bal",
         "diagnostics": []
       }
     },
