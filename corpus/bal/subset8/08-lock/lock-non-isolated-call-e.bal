@@ -17,6 +17,7 @@
 import ballerina/io;
 
 public int a = 0;
+isolated int b = 0;
 
 function foo() {
     a += 1;
@@ -24,6 +25,7 @@ function foo() {
 
 function readAndBump() returns int {
     lock {
+        b += 1;
         // JBalelrina don't detect this as an error but spec specifically says:
         // "A function or method can be called in the lock statement only if the type of the function is isolated."
         foo(); // @error

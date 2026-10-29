@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for list constructor
+  --> union-lambda2-e.bal:19:38
+   |
+19 |     [int[], int]|[string[], int] r = [arr.map(x => x > 1), 1]; // @error
+   |                                      ^^^^^^^^^^^^^^^^^^^^^^^^

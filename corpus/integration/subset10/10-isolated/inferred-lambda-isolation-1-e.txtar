@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> inferred-lambda-isolation-1-e.bal:38:24
+   |
+38 |     _ = apply(x => x + counter + 1); // @error reads mutable module state
+   |                        ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> inferred-lambda-isolation-1-e.bal:41:41
+   |
+41 | final IsolatedFn moduleLevel = v => v + counter; // @error reads mutable module state
+   |                                         ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> inferred-lambda-isolation-1-e.bal:43:47
+   |
+43 | function defaultParam(IsolatedFn f = x => x + counter) returns int { // @error reads mutable module state
+   |                                               ^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> inferred-lambda-isolation-1-e.bal:49:29
+   |
+49 |     IsolatedFn g = v => v + arr[0]; // @error captures a mutable local
+   |                             ^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> inferred-lambda-isolation-1-e.bal:33:25
+   |
+33 |     IsolatedFn g = v => nonIsolated(v); // @error calls a non-isolated function
+   |                         ^^^^^^^^^^^^^^

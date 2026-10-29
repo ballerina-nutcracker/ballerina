@@ -1,0 +1,62 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    $desugar$0 = arr;
+    %7 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %7;
+    %9 = ConstantLoad 0
+    %10 = newArray list[%9]{}
+    $desugar$2 = %10;
+    %13 = ConstantLoad 0
+    $desugar$3 = %13;
+    GOTO bb2;
+  }
+  bb2 {
+    %16 = $desugar$3;
+    %17 = $desugar$1;
+    %15 = < %16 %17;
+    %15 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$2),%5) -> bb5;
+  }
+  bb4 {
+    %18 = ConstantLoad 1
+    %19 = ConstantLoad 2
+    %20 = newArray [[int...], int, never...][%19]{$desugar$2, %18}
+    list = %20;
+    %22 = println(list) -> bb6;
+  }
+  bb5 {
+    %8 = (1, $desugar$3);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$3) = %7;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %23 = list is [[int...], int, never...]
+    %24 = %23;
+    %25 = println(%24) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

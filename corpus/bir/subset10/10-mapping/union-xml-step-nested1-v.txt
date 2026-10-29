@@ -1,0 +1,79 @@
+module $anon.. v 0.0.0;
+show(any) -> nil{
+  bb0 {
+    %2 = v is {| m: int, v: [xml, int, never...]|[xml, string, never...], never... |}
+    %3 = %2;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = v is {| m: string, v: [xml, int, never...]|[xml, string, never...], never... |}
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+showInner(any) -> nil{
+  bb0 {
+    %2 = v is [xml, int, never...]
+    %3 = %2;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = v is [xml, string, never...]
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("a", %2)
+    %4 = newXMLElement("root", %3)
+    x = %4;
+    %6 = ConstantLoad v
+    %7 = ConstantLoad <nil>
+    %8 = %7;
+    %9 = elements(x,%8) -> bb1;
+  }
+  bb1 {
+    %10 = fp $anon/.:$xmlStep$main$0
+    %11 = map(%9,%10) -> bb2;
+  }
+  bb2 {
+    %12 = ConstantLoad 1
+    %13 = ConstantLoad 2
+    %14 = newArray [xml, int, never...][%13]{%11, %12}
+    %15 = ConstantLoad m
+    %16 = ConstantLoad 1
+    %17 = newMap {| m: int, v: [xml, int, never...]|[xml, string, never...], never... |}{%6=%14, %15=%16}
+    m = %17;
+    %19 = show(m) -> bb3;
+  }
+  bb3 {
+    %21 = ConstantLoad v
+    %20 = m[%21];
+    %22 = showInner(%20) -> bb4;
+  }
+  bb4 {
+    %23 = println(m) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}

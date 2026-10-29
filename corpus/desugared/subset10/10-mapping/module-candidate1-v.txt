@@ -1,0 +1,30 @@
+(package
+  (import-package ballerina io (as io))
+  (variable g (type
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref g)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal s))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g)
+            (user-defined-type B))))))))

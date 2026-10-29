@@ -1,0 +1,11 @@
+-- stdout --
+limited: 3
+terminate: 1
+continue: 3
+fixedRetry: 3
+exponentialRetry: 4
+unboundedRetry: 3
+recovered: 2
+cappedRetry: 1
+slowRetry: 1
+-- stderr --

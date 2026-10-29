@@ -24,6 +24,13 @@ function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
 function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length();
 -- ast --
 (package
+  (function missingComma (
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))) (
+    (value-type null))
+    (block-function-body))
   (function missingFirstType (
     (variable (bad-identifier) (type
       (user-defined-type a)))
@@ -40,14 +47,25 @@ function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length
     (block-function-body))
   (function leadingComma (
     (variable a (type
-      (bad-type)))) (
+      (bad-type builtin (tokens ("int" 20:25 20:28)))))) (
     (value-type null))
     (block-function-body))
   (function trailingComma (
     (variable a (type
       (value-type int)))
     (variable (bad-identifier) (type
-      (bad-type)))) (
+      (bad-type simple-reference)))) (
+    (value-type null))
+    (block-function-body))
+  (function mixed (
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type string)) (expr
+      (simple-var-ref (bad-identifier))))
+    (variable c (type
+      (value-type int)) (expr
+      (literal 1)))) (
     (value-type null))
     (block-function-body))
   (function valid (
@@ -63,6 +81,136 @@ function valid(int a, int b = 1, int... rest) returns int => a + b + rest.length
           (simple-var-ref a)
           (simple-var-ref b))
         (invocation length expr:
-          (simple-var-ref rest) ()))))
-  (bad-top-level function)
-  (bad-top-level function))
+          (simple-var-ref rest) ())))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> params-e.bal:22:34
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown type: a
+  --> params-e.bal:18:27
+   |
+18 | function missingFirstType(a, int b) {} // @error
+   |                           ^
+
+error[SEMANTIC_ERROR]: Unknown type: b
+  --> params-e.bal:19:35
+   |
+19 | function missingSecondType(int a, b) {} // @error
+   |                                   ^
+
+error[SEMANTIC_ERROR]: Unknown type: d
+  --> params-e.bal:22:47
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                               ^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> params-e.bal:17:23
+   |
+17 | function missingComma(int a int b) {} // @error
+   |                       ^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> params-e.bal:19:28
+   |
+19 | function missingSecondType(int a, b) {} // @error
+   |                            ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> params-e.bal:20:23
+   |
+20 | function leadingComma(, int a) {} // @error
+   |                       ^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> params-e.bal:21:24
+   |
+21 | function trailingComma(int a, ) {} // @error
+   |                        ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'a'
+  --> params-e.bal:22:16
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> params-e.bal:17:29
+   |
+17 | function missingComma(int a int b) {} // @error
+   |                             ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> params-e.bal:18:30
+   |
+18 | function missingFirstType(a, int b) {} // @error
+   |                              ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'b'
+  --> params-e.bal:22:23
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                       ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'c'
+  --> params-e.bal:22:36
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                    ^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> params-e.bal:20:23
+   |
+20 | function leadingComma(, int a) {} // @error
+   |                       ^^^^^^
+
+error[SYNTAX_ERROR]: missing comma token
+  --> params-e.bal:17:29
+   |
+17 | function missingComma(int a int b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing ellipsis token
+  --> params-e.bal:22:48
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> params-e.bal:18:28
+   |
+18 | function missingFirstType(a, int b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> params-e.bal:19:36
+   |
+19 | function missingSecondType(int a, b) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> params-e.bal:21:31
+   |
+21 | function trailingComma(int a, ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> params-e.bal:22:34
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> params-e.bal:21:31
+   |
+21 | function trailingComma(int a, ) {} // @error
+   |
+
+error[SYNTAX_ERROR]: parameter after the rest parameter
+  --> params-e.bal:22:48
+   |
+22 | function mixed(int a, string b = , int c = 1, d, int... ) {} // @error
+   |                                                ^^^^^^^^^

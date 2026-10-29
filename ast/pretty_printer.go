@@ -307,13 +307,13 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangXMLNS:
 		p.printXMLNS(t)
 	case *BLangBadTopLevelNode:
-		p.printLeafNode("bad-top-level " + t.recoveredKind.String())
+		p.printRecoveredNode("bad-top-level", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadStmt:
-		p.printLeafNode("bad-stmt")
+		p.printRecoveredNode("bad-stmt", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadExprOrAction:
-		p.printLeafNode("bad-expr-or-action")
+		p.printRecoveredNode("bad-expr-or-action", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadTypeNode:
-		p.printLeafNode("bad-type")
+		p.printRecoveredNode("bad-type", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadIdentifier:
 		p.printLeafNode("bad-identifier")
 	default:
@@ -329,6 +329,19 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 func (p *PrettyPrinter) printLeafNode(kind string) {
 	p.StartNode()
 	p.PrintString(kind)
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printRecoveredNode(name, kind string, tokens []RecoveredToken) {
+	p.StartNode()
+	p.PrintString(name + " " + kind)
+	if len(tokens) > 0 {
+		p.PrintString("(tokens")
+		for _, token := range tokens {
+			p.PrintString(fmt.Sprintf("(%q %s)", token.Text(), p.sourceRange(token.GetPosition())))
+		}
+		p.printSticky(")")
+	}
 	p.EndNode()
 }
 
@@ -503,17 +516,7 @@ func (p *PrettyPrinter) PrintString(str string) {
 func (p *PrettyPrinter) printPendingNodeLocation() {
 	location := p.pendingNodeLocation
 	if diagnostics.LocationHasSource(location) {
-		if p.DiagnosticEnv == nil {
-			panic("DiagnosticEnv is required to print AST node locations")
-		}
-		fmt.Fprintf(
-			&p.buffer,
-			" (position %d:%d %d:%d)",
-			p.DiagnosticEnv.StartLine(location)+1,
-			p.DiagnosticEnv.StartColumn(location)+1,
-			p.DiagnosticEnv.EndLine(location)+1,
-			p.DiagnosticEnv.EndColumn(location)+1,
-		)
+		fmt.Fprintf(&p.buffer, " (position %s)", p.sourceRange(location))
 		return
 	}
 	if diagnostics.IsLocationEmpty(location) {
@@ -525,6 +528,19 @@ func (p *PrettyPrinter) printPendingNodeLocation() {
 		return
 	}
 	p.buffer.WriteString(" (position synthetic)")
+}
+
+func (p *PrettyPrinter) sourceRange(location diagnostics.Location) string {
+	if p.DiagnosticEnv == nil {
+		panic("DiagnosticEnv is required to print AST node locations")
+	}
+	return fmt.Sprintf(
+		"%d:%d %d:%d",
+		p.DiagnosticEnv.StartLine(location)+1,
+		p.DiagnosticEnv.StartColumn(location)+1,
+		p.DiagnosticEnv.EndLine(location)+1,
+		p.DiagnosticEnv.EndColumn(location)+1,
+	)
 }
 
 func (p *PrettyPrinter) printPackageID(packageID *model.PackageID) {
@@ -1281,8 +1297,8 @@ func (p *PrettyPrinter) printTypeTestExpr(node *BLangTypeTestExpr) {
 	}
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
-	if node.Type.TypeDescriptor != nil {
-		p.PrintInner(node.Type.TypeDescriptor.(BLangNode))
+	if node.TestedType.TypeDescriptor != nil {
+		p.PrintInner(node.TestedType.TypeDescriptor.(BLangNode))
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -2094,8 +2110,8 @@ func (p *PrettyPrinter) printConstrainedType(node *BLangConstrainedType) {
 	p.StartNode()
 	p.PrintString("constrained-type")
 	p.indentLevel++
-	if node.Type.TypeDescriptor != nil {
-		p.PrintInner(node.Type.TypeDescriptor.(BLangNode))
+	if node.BaseType.TypeDescriptor != nil {
+		p.PrintInner(node.BaseType.TypeDescriptor.(BLangNode))
 	}
 	if node.Constraint.TypeDescriptor != nil {
 		p.PrintInner(node.Constraint.TypeDescriptor.(BLangNode))

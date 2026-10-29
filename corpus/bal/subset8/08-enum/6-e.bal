@@ -19,6 +19,6 @@ import ballerina/io;
 public enum Color {
     RED,
     123, // @error
-    ,
+    , // @error
     BLUE
 }

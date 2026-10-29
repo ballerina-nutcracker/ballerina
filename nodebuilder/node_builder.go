@@ -85,7 +85,31 @@ func newNodeBuilder(cx *context.CompilerContext, rangeOf rangeFn) *nodeBuilder {
 	return nodeBuilder
 }
 
+// expectToken checks a token whose kind and presence are fixed by its slot. A missing keyword or punctuation
+// token is reported but accepted, so the enclosing node is still built.
 func (n *nodeBuilder) expectToken(tok st.Token) bool {
+	if isRecoverableMissingToken(tok) {
+		n.reportMissingToken(tok)
+		return true
+	}
+	return n.expectSignificantToken(tok)
+}
+
+func isRecoverableMissingToken(tok st.Token) bool {
+	return tok != nil && tok.IsMissing() && isKeywordOrPunctuation(tok.Kind())
+}
+
+func (n *nodeBuilder) reportMissingToken(tok st.Token) {
+	if tok.HasDiagnostics() {
+		n.reportTokenDiagnostics(tok)
+		return
+	}
+	n.cx.SyntaxError(fmt.Sprintf("expected '%s'", tokenText(tok.Kind())), n.getPosition(tok))
+}
+
+// expectSignificantToken checks a token whose kind, text or presence decides the AST that is built; any failure,
+// including a missing token, fails the enclosing node.
+func (n *nodeBuilder) expectSignificantToken(tok st.Token) bool {
 	if tok == nil {
 		n.internalError("missing required token", nil)
 		return false
@@ -103,6 +127,10 @@ func (n *nodeBuilder) expectToken(tok st.Token) bool {
 
 func (n *nodeBuilder) expectOptionalToken(tok st.Token) bool {
 	return tok == nil || n.expectToken(tok)
+}
+
+func (n *nodeBuilder) expectOptionalSignificantToken(tok st.Token) bool {
+	return tok == nil || n.expectSignificantToken(tok)
 }
 
 func (n *nodeBuilder) expectNode(node st.NonTerminalNode) bool {
@@ -135,7 +163,7 @@ func (n *nodeBuilder) rejectNode(node st.Node, message string) {
 		n.internalError("missing required node", nil)
 		return
 	case st.Token:
-		if !n.expectToken(node) {
+		if !n.expectSignificantToken(node) {
 			return
 		}
 	case st.NonTerminalNode:
@@ -153,9 +181,9 @@ func tokenText(kind st.SyntaxKind) string {
 	return kind.String()
 }
 
-func (n *nodeBuilder) expectTokens(tokens st.NodeList[st.Token]) bool {
+func (n *nodeBuilder) expectSignificantTokens(tokens st.NodeList[st.Token]) bool {
 	for tok := range tokens.Iterator() {
-		if !n.expectToken(tok) {
+		if !n.expectSignificantToken(tok) {
 			return false
 		}
 	}
@@ -173,7 +201,7 @@ func (n *nodeBuilder) transformTopLevel(node st.Node) ast.TopLevelNode {
 	topLevel, ok := n.transformTopLevelKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadTopLevelNode{})
+			return ast.NewBLangBadTopLevelNode(diagnostics.NewBuiltinLocation(), ast.BadTopLevelNodeMissing, nil)
 		}
 		return n.badTopLevel(node)
 	}
@@ -214,7 +242,7 @@ func (n *nodeBuilder) transformStatement(node st.StatementNode) ast.StatementNod
 	stmt, ok := n.transformStatementKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadStmt{})
+			return ast.NewBLangBadStmt(diagnostics.NewBuiltinLocation(), ast.BadStmtMissing, nil)
 		}
 		return n.badStmt(node)
 	}
@@ -277,7 +305,7 @@ func (n *nodeBuilder) transformActionOrExpr(node st.Node) ast.BLangActionOrExpre
 	actionOrExpr, ok := n.transformActionOrExprKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadExprOrAction{})
+			return ast.NewBLangBadExprOrAction(diagnostics.NewBuiltinLocation(), ast.BadExprMissing, nil)
 		}
 		return n.badExprOrAction(node)
 	}
@@ -320,7 +348,7 @@ func (n *nodeBuilder) transformExpr(node st.Node) ast.BLangExpression {
 	expr, ok := n.transformExprKind(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadExprOrAction{})
+			return ast.NewBLangBadExprOrAction(diagnostics.NewBuiltinLocation(), ast.BadExprMissing, nil)
 		}
 		return n.badExprOrAction(node)
 	}
@@ -434,7 +462,7 @@ func (n *nodeBuilder) transformType(node st.Node) ast.BType {
 	typeNode, ok := n.transformTypeInner(node)
 	if !ok {
 		if node == nil {
-			return missingNode(&ast.BLangBadTypeNode{})
+			return ast.NewBLangBadTypeNode(diagnostics.NewBuiltinLocation(), ast.BadTypeMissing, nil)
 		}
 		return n.badTypeNode(node)
 	}
@@ -835,7 +863,7 @@ func (n *nodeBuilder) addMarkdownDocumentationLine(b *markdownDocumentationBuild
 		return n.transformCodeBlock(&b.documentationLines, codeBlockNode)
 	default:
 		if tok, ok := singleDocLine.(st.Token); ok {
-			return n.expectToken(tok)
+			return n.expectSignificantToken(tok)
 		}
 		if nonTerminal, ok := singleDocLine.(st.NonTerminalNode); ok {
 			return n.expectNode(nonTerminal)
@@ -856,7 +884,7 @@ func (n *nodeBuilder) deprecationLineText(docElements st.NodeList[st.Node]) (str
 			}
 			continue
 		}
-		if !n.expectToken(token) {
+		if !n.expectSignificantToken(token) {
 			return "", false
 		}
 		if i == 0 {
@@ -960,9 +988,9 @@ func (n *nodeBuilder) transformVarTypeKeyword(typeNode st.Node) bool {
 	case nil:
 		return true
 	case *st.BuiltinSimpleNameReferenceNode:
-		return n.expectNode(typeNode) && n.expectToken(typeNode.Name())
+		return n.expectNode(typeNode) && n.expectSignificantToken(typeNode.Name())
 	case st.Token:
-		return n.expectToken(typeNode)
+		return n.expectSignificantToken(typeNode)
 	default:
 		n.internalError(fmt.Sprintf("unexpected var type node %T", typeNode), typeNode)
 		return false
@@ -994,7 +1022,7 @@ func (n *nodeBuilder) transformNilTypeDescriptor(nilTypeDescriptorNode *st.NilTy
 
 // createBuiltInTypeNodeFromToken handles built-in type keywords that appear as bare tokens (e.g. `map`).
 func (n *nodeBuilder) createBuiltInTypeNodeFromToken(token st.Token) (ast.BType, bool) {
-	if !n.expectToken(token) {
+	if !n.expectSignificantToken(token) {
 		return nil, false
 	}
 	return n.createBuiltInType(token, token.Text())
@@ -1274,7 +1302,7 @@ func (n *nodeBuilder) literalText(literal st.Node) (string, st.SyntaxKind, bool)
 		}
 		return "", st.NIL_LITERAL, true
 	case st.Token:
-		if !n.expectToken(literal) {
+		if !n.expectSignificantToken(literal) {
 			return "", 0, false
 		}
 		return literal.Text(), literal.Kind(), true
@@ -1410,7 +1438,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) *ast.BL
 
 	if eofToken := modulePartNode.EofToken(); !n.expectToken(eofToken) {
 		if eofToken == nil {
-			compilationUnit.AddTopLevelNode(missingNode(&ast.BLangBadTopLevelNode{}))
+			compilationUnit.AddTopLevelNode(ast.NewBLangBadTopLevelNode(diagnostics.NewBuiltinLocation(), ast.BadTopLevelNodeMissing, nil))
 		} else {
 			compilationUnit.AddTopLevelNode(n.badTopLevel(eofToken))
 		}
@@ -1431,7 +1459,7 @@ func (n *nodeBuilder) transformModulePart(modulePartNode *st.ModulePart) *ast.BL
 func (n *nodeBuilder) functionQualifierFlags(qualifierList st.NodeList[st.Token]) (model.Flag, bool) {
 	var flags model.Flag
 	for qualifier := range qualifierList.Iterator() {
-		if !n.expectToken(qualifier) {
+		if !n.expectSignificantToken(qualifier) {
 			return 0, false
 		}
 		switch qualifier.Kind() {
@@ -1693,7 +1721,7 @@ func (n *nodeBuilder) transformListenerDeclaration(listenerDeclarationNode *st.L
 		return nil, false
 	}
 	visQual := listenerDeclarationNode.VisibilityQualifier()
-	if !n.expectOptionalToken(visQual) || !n.expectToken(listenerDeclarationNode.ListenerKeyword()) {
+	if !n.expectOptionalSignificantToken(visQual) || !n.expectToken(listenerDeclarationNode.ListenerKeyword()) {
 		return nil, false
 	}
 
@@ -1742,7 +1770,7 @@ func (n *nodeBuilder) transformTypeDefinition(typeDefinitionNode *st.TypeDefinit
 		return nil, false
 	}
 	visibility := typeDefinitionNode.VisibilityQualifier()
-	if !n.expectOptionalToken(visibility) || !n.expectToken(typeDefinitionNode.TypeKeyword()) {
+	if !n.expectOptionalSignificantToken(visibility) || !n.expectToken(typeDefinitionNode.TypeKeyword()) {
 		return nil, false
 	}
 	identifierNode := n.transformIdentifier(typeDefinitionNode.TypeName())
@@ -1837,7 +1865,7 @@ func (n *nodeBuilder) serviceQualifierFlags(node *st.ServiceDeclarationNode) (mo
 	var flags model.Flag
 	quals := node.Qualifiers()
 	for qual := range quals.Iterator() {
-		if !n.expectToken(qual) {
+		if !n.expectSignificantToken(qual) {
 			return 0, false
 		}
 		if qual.Kind() == st.ISOLATED_KEYWORD {
@@ -1866,7 +1894,7 @@ func (n *nodeBuilder) populateServiceAttachPoint(service *ast.BLangService, node
 			n.cx.InternalError("unexpected node in service attach point", n.getPosition(seg))
 			return false
 		}
-		if !n.expectToken(tok) {
+		if !n.expectSignificantToken(tok) {
 			return false
 		}
 		switch tok.Kind() {
@@ -2013,7 +2041,7 @@ func (n *nodeBuilder) transformConstantDeclaration(constantDeclarationNode *st.C
 		return nil, false
 	}
 	visibility := constantDeclarationNode.VisibilityQualifier()
-	if !n.expectOptionalToken(visibility) || !n.expectToken(constantDeclarationNode.ConstKeyword()) {
+	if !n.expectOptionalSignificantToken(visibility) || !n.expectToken(constantDeclarationNode.ConstKeyword()) {
 		return nil, false
 	}
 	var typeNode ast.BType
@@ -2056,7 +2084,7 @@ type paramParts struct {
 // expectParamTokenBefore checks the `*` of an included record parameter. The parser leaves the slot empty when
 // it could not parse one, and then reports the error inside the parameter's type.
 func (n *nodeBuilder) expectParamTokenBefore(parts paramParts) bool {
-	return parts.kind != st.INCLUDED_RECORD_PARAM || n.expectOptionalToken(parts.asterisk)
+	return parts.kind != st.INCLUDED_RECORD_PARAM || n.expectOptionalSignificantToken(parts.asterisk)
 }
 
 // expectParamTokenAfter checks the token that follows the type of a rest parameter.
@@ -2179,13 +2207,13 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 
 func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode, pos diagnostics.Location) (model.Flag, bool) {
 	visibility := node.VisibilityQualifier()
-	if !n.expectOptionalToken(visibility) {
+	if !n.expectOptionalSignificantToken(visibility) {
 		return 0, false
 	}
 	flags := publicFlag(visibility)
 	qualifiers := node.Qualifiers()
 	for qualifier := range qualifiers.Iterator() {
-		if !n.expectToken(qualifier) {
+		if !n.expectSignificantToken(qualifier) {
 			return 0, false
 		}
 		switch qualifier.Kind() {
@@ -2214,7 +2242,7 @@ func (n *nodeBuilder) transformAnnotationDeclaration(annotationDeclarationNode *
 	}
 	visibility := annotationDeclarationNode.VisibilityQualifier()
 	constKeyword := annotationDeclarationNode.ConstKeyword()
-	if !n.expectOptionalToken(visibility) || !n.expectOptionalToken(constKeyword) ||
+	if !n.expectOptionalSignificantToken(visibility) || !n.expectOptionalSignificantToken(constKeyword) ||
 		!n.expectToken(annotationDeclarationNode.AnnotationKeyword()) {
 		return nil, false
 	}
@@ -2258,7 +2286,7 @@ func (n *nodeBuilder) transformAnnotationDeclaration(annotationDeclarationNode *
 
 func (n *nodeBuilder) createAnnotationAttachPoint(annotationAttachPointNode *st.AnnotationAttachPointNode) (ast.AttachPoint, bool) {
 	sourceKeyword := annotationAttachPointNode.SourceKeyword()
-	if !n.expectNode(annotationAttachPointNode) || !n.expectOptionalToken(sourceKeyword) {
+	if !n.expectNode(annotationAttachPointNode) || !n.expectOptionalSignificantToken(sourceKeyword) {
 		return ast.AttachPoint{}, false
 	}
 	parts := []string{}
@@ -2371,7 +2399,7 @@ func (n *nodeBuilder) transformEnumDeclaration(enumDeclarationNode *st.EnumDecla
 		return nil, false
 	}
 	qualifier := enumDeclarationNode.Qualifier()
-	if !n.expectOptionalToken(qualifier) || !n.expectToken(enumDeclarationNode.EnumKeywordToken()) {
+	if !n.expectOptionalSignificantToken(qualifier) || !n.expectToken(enumDeclarationNode.EnumKeywordToken()) {
 		return nil, false
 	}
 	publicQualifier := qualifier != nil && qualifier.Kind() == st.PUBLIC_KEYWORD
@@ -2491,7 +2519,7 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 		return nil, false
 	}
 	visibility := classDefinitionNode.VisibilityQualifier()
-	if !n.expectOptionalToken(visibility) {
+	if !n.expectOptionalSignificantToken(visibility) {
 		return nil, false
 	}
 	flags, ok := n.classQualifierFlags(classDefinitionNode.ClassTypeQualifiers())
@@ -2525,7 +2553,7 @@ func (n *nodeBuilder) transformClassDefinition(classDefinitionNode *st.ClassDefi
 func (n *nodeBuilder) classQualifierFlags(qualifiers st.NodeList[st.Token]) (model.Flag, bool) {
 	var flags model.Flag
 	for qualifier := range qualifiers.Iterator() {
-		if !n.expectToken(qualifier) {
+		if !n.expectSignificantToken(qualifier) {
 			return 0, false
 		}
 		switch qualifier.Kind() {
@@ -2556,7 +2584,7 @@ func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) (*ast
 		return nil, false
 	}
 	vis := objectField.VisibilityQualifier()
-	if !n.expectOptionalToken(vis) {
+	if !n.expectOptionalSignificantToken(vis) {
 		return nil, false
 	}
 	var flags model.Flag
@@ -2567,7 +2595,7 @@ func (n *nodeBuilder) transformClassField(objectField *st.ObjectFieldNode) (*ast
 	}
 	qualifiers := objectField.QualifierList()
 	for qualifier := range qualifiers.Iterator() {
-		if !n.expectToken(qualifier) {
+		if !n.expectSignificantToken(qualifier) {
 			return nil, false
 		}
 		if qualifier.Kind() == st.FINAL_KEYWORD {
@@ -2616,7 +2644,7 @@ func (n *nodeBuilder) transformResourcePathParameter(resourcePathParameterNode *
 		return nil, false
 	}
 	seg.ParamType = n.transformType(td)
-	if !n.expectOptionalToken(resourcePathParameterNode.EllipsisToken()) {
+	if !n.expectOptionalSignificantToken(resourcePathParameterNode.EllipsisToken()) {
 		return nil, false
 	}
 	if nameTok := resourcePathParameterNode.ParamName(); nameTok != nil {
@@ -2676,7 +2704,7 @@ func (n *nodeBuilder) createResourcePathSegments(pathNodes st.NodeList[st.Node])
 			}
 			segments = append(segments, *param)
 		case st.Token:
-			if !n.expectToken(node) {
+			if !n.expectSignificantToken(node) {
 				return nil, false
 			}
 			switch node.Kind() {
@@ -2735,6 +2763,9 @@ func (n *nodeBuilder) transformAssignmentStatement(assignmentStatementNode *st.A
 		if nonTerminal, ok := varRef.(st.NonTerminalNode); ok && !n.expectNode(nonTerminal) {
 			return nil, false
 		}
+		if !n.expectSignificantToken(assignmentStatementNode.EqualsToken()) {
+			return nil, false
+		}
 		n.unimplemented("binding-pattern assignment is not implemented", varRef)
 		return nil, false
 	}
@@ -2756,7 +2787,7 @@ func (n *nodeBuilder) transformCompoundAssignmentStatement(compoundAssignmentStm
 	}
 	lhsExpr := ast.NewBLangAssignmentLExpr(n.transformExpr(compoundAssignmentStmtNode.LhsExpression()), true)
 	binaryOperator := compoundAssignmentStmtNode.BinaryOperator()
-	if !n.expectToken(binaryOperator) || !n.expectToken(compoundAssignmentStmtNode.EqualsToken()) {
+	if !n.expectSignificantToken(binaryOperator) || !n.expectToken(compoundAssignmentStmtNode.EqualsToken()) {
 		return nil, false
 	}
 	rhsExpr := n.transformActionOrExpr(compoundAssignmentStmtNode.RhsExpression())
@@ -2780,7 +2811,7 @@ func (n *nodeBuilder) transformVariableDeclaration(variableDeclarationNode *st.V
 		return nil, false
 	}
 	finalKeyword := variableDeclarationNode.FinalKeyword()
-	if !n.expectOptionalToken(finalKeyword) {
+	if !n.expectOptionalSignificantToken(finalKeyword) {
 		return nil, false
 	}
 	varNode, ok := n.createBLangVarDef(
@@ -3377,7 +3408,7 @@ func (n *nodeBuilder) transformBinaryExpression(binaryExpression *st.BinaryExpre
 		n.cx.InternalError("binary expression is missing an operator token", n.getPosition(binaryExpression))
 		return nil, false
 	}
-	if !n.expectToken(operator) {
+	if !n.expectSignificantToken(operator) {
 		return nil, false
 	}
 	rhsExpr := n.transformExpr(binaryExpression.RhsExpr())
@@ -3395,7 +3426,7 @@ func (n *nodeBuilder) transformBinaryExpression(binaryExpression *st.BinaryExpre
 
 func (n *nodeBuilder) transformCheckExpression(checkExpression *st.CheckExpressionNode) (ast.BLangExpression, bool) {
 	checkKeyword := checkExpression.CheckKeyword()
-	if !n.expectNode(checkExpression) || !n.expectToken(checkKeyword) {
+	if !n.expectNode(checkExpression) || !n.expectSignificantToken(checkKeyword) {
 		return nil, false
 	}
 	pos := n.getPosition(checkExpression)
@@ -3563,7 +3594,7 @@ func (n *nodeBuilder) transformComputedNameField(computedNameField *st.ComputedN
 
 func (n *nodeBuilder) addSpecificField(mappingConstructor *ast.BLangMappingConstructorExpr, specificField *st.SpecificFieldNode) bool {
 	readonlyKeyword := specificField.ReadonlyKeyword()
-	if !n.expectNode(specificField) || !n.expectOptionalToken(readonlyKeyword) {
+	if !n.expectNode(specificField) || !n.expectOptionalSignificantToken(readonlyKeyword) {
 		return false
 	}
 	fieldName := specificField.FieldName()
@@ -3656,7 +3687,7 @@ func (n *nodeBuilder) transformTypeofExpression(typeofExpression *st.TypeofExpre
 
 func (n *nodeBuilder) transformUnaryExpression(unaryExpression *st.UnaryExpressionNode) (ast.BLangExpression, bool) {
 	unaryOperator := unaryExpression.UnaryOperator()
-	if !n.expectNode(unaryExpression) || !n.expectToken(unaryOperator) {
+	if !n.expectNode(unaryExpression) || !n.expectSignificantToken(unaryOperator) {
 		return nil, false
 	}
 	pos := n.getPosition(unaryExpression)
@@ -3727,7 +3758,7 @@ func (n *nodeBuilder) transformTypeTestExpression(typeTestExpression *st.TypeTes
 	}
 	expr := n.transformExpr(typeTestExpression.Expression())
 	isKeyword := typeTestExpression.IsKeyword()
-	if !n.expectToken(isKeyword) {
+	if !n.expectSignificantToken(isKeyword) {
 		return nil, false
 	}
 	return ast.NewBLangTypeTestExpr(
@@ -3863,7 +3894,7 @@ func (n *nodeBuilder) transformLetVariableDeclaration(letVariableDeclarationNode
 
 func (n *nodeBuilder) transformTemplateExpression(templateExpression *st.TemplateExpressionNode) (ast.BLangExpression, bool) {
 	typeToken := templateExpression.Type()
-	if !n.expectNode(templateExpression) || !n.expectOptionalToken(typeToken) {
+	if !n.expectNode(templateExpression) || !n.expectOptionalSignificantToken(typeToken) {
 		return nil, false
 	}
 	pos := n.getPosition(templateExpression)
@@ -4168,7 +4199,7 @@ func (n *nodeBuilder) flattenXMLTemplateContent(content st.NodeList[st.Node], ki
 type xmlTemplateYield = func(xmlTemplateToken, *xmlTemplateDiagnostic) bool
 
 func (n *nodeBuilder) yieldXMLTemplateText(token st.Token, yield xmlTemplateYield) bool {
-	if !n.expectToken(token) {
+	if !n.expectSignificantToken(token) {
 		return yield(xmlTemplateToken{}, xmlTemplateFailure)
 	}
 	return yield(newXMLTemplateTextToken(token.Text()), nil)
@@ -4414,7 +4445,7 @@ func (n *nodeBuilder) xmlProcessingInstructionData(x *st.XMLProcessingInstructio
 			}
 			continue
 		}
-		if !n.expectToken(tok) {
+		if !n.expectSignificantToken(tok) {
 			return "", false
 		}
 		dataText.WriteString(tok.Text())
@@ -4633,7 +4664,7 @@ func (n *nodeBuilder) buildStringTemplateExpr(node *st.TemplateExpressionNode, p
 	for child := range content.Iterator() {
 		switch c := child.(type) {
 		case st.Token:
-			if !n.expectToken(c) {
+			if !n.expectSignificantToken(c) {
 				return nil, false
 			}
 			if c.Kind() != st.TEMPLATE_STRING {
@@ -4821,7 +4852,7 @@ func (n *nodeBuilder) transformXMLText(xMLTextNode *st.XMLTextNode) (*ast.BLangX
 	text := &ast.BLangXMLTextLiteral{}
 	text.SetPosition(n.getPosition(xMLTextNode))
 	content := xMLTextNode.Content()
-	if !n.expectToken(content) {
+	if !n.expectSignificantToken(content) {
 		return nil, false
 	}
 	text.Body = content.Text()
@@ -4864,7 +4895,7 @@ func (n *nodeBuilder) transformXMLAttributeValue(xMLAttributeValue *st.XMLAttrib
 			n.cx.Unimplemented("xml attribute value interpolation not yet supported", n.getPosition(child))
 			return nil, false
 		}
-		if !n.expectToken(tok) {
+		if !n.expectSignificantToken(tok) {
 			return nil, false
 		}
 		b.WriteString(tok.Text())
@@ -5125,7 +5156,7 @@ func (n *nodeBuilder) transformLetClause(letClauseNode *st.LetClauseNode) (*ast.
 
 func (n *nodeBuilder) transformJoinClause(joinClauseNode *st.JoinClauseNode) (*ast.BLangJoinClause, bool) {
 	outerKeyword := joinClauseNode.OuterKeyword()
-	if !n.expectNode(joinClauseNode) || !n.expectOptionalToken(outerKeyword) || !n.expectToken(joinClauseNode.JoinKeyword()) {
+	if !n.expectNode(joinClauseNode) || !n.expectOptionalSignificantToken(outerKeyword) || !n.expectToken(joinClauseNode.JoinKeyword()) {
 		return nil, false
 	}
 	bindingPatternNode := joinClauseNode.TypedBindingPattern()
@@ -5206,7 +5237,7 @@ func (n *nodeBuilder) transformQueryExpression(queryExpression *st.QueryExpressi
 
 	if constructType := queryExpression.QueryConstructType(); constructType != nil {
 		keyword := constructType.Keyword()
-		if !n.expectNode(constructType) || !n.expectToken(keyword) || !n.expectKeySpecifier(constructType.KeySpecifier()) {
+		if !n.expectNode(constructType) || !n.expectSignificantToken(keyword) || !n.expectKeySpecifier(constructType.KeySpecifier()) {
 			return nil, false
 		}
 		switch keyword.Text() {
@@ -5332,7 +5363,7 @@ func (n *nodeBuilder) transformOrderKey(orderKeyNode *st.OrderKeyNode) (*ast.BLa
 	orderKey.SetPosition(n.getPosition(orderKeyNode))
 	orderKey.Expression = n.transformExpr(orderKeyNode.Expression())
 	dir := orderKeyNode.OrderDirection()
-	if !n.expectOptionalToken(dir) {
+	if !n.expectOptionalSignificantToken(dir) {
 		return nil, false
 	}
 	orderKey.IsDescending = dir != nil && dir.Kind() == st.DESCENDING_KEYWORD
@@ -5344,9 +5375,7 @@ func (n *nodeBuilder) transformGroupByClause(groupByClauseNode *st.GroupByClause
 		!n.expectToken(groupByClauseNode.ByKeyword()) {
 		return nil, false
 	}
-	groupByClause := &ast.BLangGroupByClause{
-		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
-	}
+	groupByClause := &ast.BLangGroupByClause{}
 	groupByClause.SetPosition(n.getPosition(groupByClauseNode))
 	groupingKeys := groupByClauseNode.GroupingKey()
 	for node, separator := range groupingKeys.SeparatedElements() {
@@ -5765,7 +5794,7 @@ func (n *nodeBuilder) transformXMLIdentifier(token st.Token) ast.IdentifierNode 
 func (n *nodeBuilder) createXMLAtomicNamePattern(node st.Node) (ast.BLangAtomicNamePattern, bool) {
 	switch node := node.(type) {
 	case st.Token:
-		if !n.expectToken(node) {
+		if !n.expectSignificantToken(node) {
 			return ast.BLangAtomicNamePattern{}, false
 		}
 		if node.Kind() != st.ASTERISK_TOKEN {
@@ -5822,7 +5851,7 @@ func (n *nodeBuilder) transformXMLStepExpression(node *st.XMLStepExpressionNode)
 
 	switch start := node.XmlStepStart().(type) {
 	case st.Token:
-		if !n.expectToken(start) {
+		if !n.expectSignificantToken(start) {
 			return nil, false
 		}
 		if start.Kind() != st.SLASH_ASTERISK_TOKEN {
@@ -6033,7 +6062,7 @@ func (n *nodeBuilder) createResourceAccessSegment(node st.Node) (ast.BLangResour
 		n.cx.Unimplemented("resource access rest segments are not yet supported", n.getPosition(node))
 		return ast.BLangResourceAccessSegment{}, false
 	case st.Token:
-		if !n.expectToken(node) {
+		if !n.expectSignificantToken(node) {
 			return ast.BLangResourceAccessSegment{}, false
 		}
 		if node.Kind() != st.IDENTIFIER_TOKEN {
@@ -6064,7 +6093,7 @@ func (n *nodeBuilder) transformComputedResourceAccessSegment(node *st.ComputedRe
 
 func (n *nodeBuilder) objectTypeQualifiers(objectType *ast.BLangObjectType, qualifiers st.NodeList[st.Token]) bool {
 	for q := range qualifiers.Iterator() {
-		if !n.expectToken(q) {
+		if !n.expectSignificantToken(q) {
 			return false
 		}
 		switch q.Kind() {
@@ -6133,7 +6162,7 @@ func (n *nodeBuilder) addObjectTypeField(objectType *ast.BLangObjectType, object
 		return false
 	}
 	vis := objectField.VisibilityQualifier()
-	if !n.expectOptionalToken(vis) || !n.expectTokens(objectField.QualifierList()) {
+	if !n.expectOptionalSignificantToken(vis) || !n.expectSignificantTokens(objectField.QualifierList()) {
 		return false
 	}
 	fieldType := n.transformType(objectField.TypeName())
@@ -6170,7 +6199,7 @@ type methodQualifiers struct {
 func (n *nodeBuilder) objectMethodQualifiers(qualifiers st.NodeList[st.Token]) (methodQualifiers, bool) {
 	result := methodQualifiers{kind: ast.ObjectMemberKindMethod}
 	for q := range qualifiers.Iterator() {
-		if !n.expectToken(q) {
+		if !n.expectSignificantToken(q) {
 			return result, false
 		}
 		switch q.Kind() {
@@ -6306,7 +6335,7 @@ func (n *nodeBuilder) transformFunctionTypeSignature(funcSignature *st.FunctionS
 func (n *nodeBuilder) transformRecordTypeDescriptor(recordTypeDescriptorNode *st.RecordTypeDescriptorNode) (*ast.BLangRecordType, bool) {
 	bodyStartDelimiter := recordTypeDescriptorNode.BodyStartDelimiter()
 	if !n.expectNode(recordTypeDescriptorNode) || !n.expectToken(recordTypeDescriptorNode.RecordKeyword()) ||
-		!n.expectToken(bodyStartDelimiter) {
+		!n.expectSignificantToken(bodyStartDelimiter) {
 		return nil, false
 	}
 	recordType := &ast.BLangRecordType{}
@@ -6382,13 +6411,13 @@ func (n *nodeBuilder) transformRecordField(recordField *st.RecordFieldNode) (ast
 		return ast.BField{}, false
 	}
 	readonlyKeyword := recordField.ReadonlyKeyword()
-	if !n.expectOptionalToken(readonlyKeyword) {
+	if !n.expectOptionalSignificantToken(readonlyKeyword) {
 		return ast.BField{}, false
 	}
 	fieldType := n.transformType(recordField.TypeName())
 	fieldNameToken := recordField.FieldName()
 	questionMarkToken := recordField.QuestionMarkToken()
-	if !n.expectToken(fieldNameToken) || !n.expectOptionalToken(questionMarkToken) || !n.expectToken(recordField.SemicolonToken()) {
+	if !n.expectToken(fieldNameToken) || !n.expectOptionalSignificantToken(questionMarkToken) || !n.expectToken(recordField.SemicolonToken()) {
 		return ast.BField{}, false
 	}
 	fieldName, _ := normalizedIdentifierValue(fieldNameToken.Text())
@@ -6413,7 +6442,7 @@ func (n *nodeBuilder) transformRecordFieldWithDefaultValue(recordFieldDV *st.Rec
 		return ast.BField{}, false
 	}
 	readonlyKeyword := recordFieldDV.ReadonlyKeyword()
-	if !n.expectOptionalToken(readonlyKeyword) {
+	if !n.expectOptionalSignificantToken(readonlyKeyword) {
 		return ast.BField{}, false
 	}
 	fieldType := n.transformType(recordFieldDV.TypeName())
@@ -6472,7 +6501,7 @@ func (n *nodeBuilder) transformMapTypeDescriptor(mapTypeDescriptorNode *st.MapTy
 		return nil, false
 	}
 	constrainedType := &ast.BLangConstrainedType{
-		Type:       ast.TypeData{TypeDescriptor: refType},
+		BaseType:   ast.TypeData{TypeDescriptor: refType},
 		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(refType.GetPosition())
@@ -6583,7 +6612,7 @@ func (n *nodeBuilder) transformFunctionTypeDescriptor(functionTypeDescriptorNode
 	var flags model.Flag
 	qualifierList := functionTypeDescriptorNode.QualifierList()
 	for token := range qualifierList.Iterator() {
-		if !n.expectToken(token) {
+		if !n.expectSignificantToken(token) {
 			return nil, false
 		}
 		switch token.Kind() {
@@ -6849,7 +6878,7 @@ func (n *nodeBuilder) transformFutureTypeDescriptor(node *st.ParameterizedTypeDe
 		return nil, false
 	}
 	constrainedType := &ast.BLangConstrainedType{
-		Type:       ast.TypeData{TypeDescriptor: base},
+		BaseType:   ast.TypeData{TypeDescriptor: base},
 		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(pos)
@@ -6873,7 +6902,7 @@ func (n *nodeBuilder) transformTypedescTypeDescriptor(node *st.ParameterizedType
 	base := &ast.BLangValueType{}
 	base.SetPosition(n.getPosition(node))
 	base.TypeKind = ast.TypeKindTypeDesc
-	constrainedType.Type = ast.TypeData{TypeDescriptor: base}
+	constrainedType.BaseType = ast.TypeData{TypeDescriptor: base}
 	constrainedType.Constraint = ast.TypeData{TypeDescriptor: constraint}
 	return constrainedType, true
 }
@@ -6896,7 +6925,7 @@ func (n *nodeBuilder) transformXMLTypeDescriptor(parameterizedTypeDescriptorNode
 	}
 	refType.SetPosition(pos)
 	constrainedType := &ast.BLangConstrainedType{
-		Type:       ast.TypeData{TypeDescriptor: refType},
+		BaseType:   ast.TypeData{TypeDescriptor: refType},
 		Constraint: ast.TypeData{TypeDescriptor: constraint},
 	}
 	constrainedType.SetPosition(pos)
@@ -6958,7 +6987,7 @@ func (n *nodeBuilder) addReferencesAndReturnDocumentationText(references *[]ast.
 			}
 			docText.WriteString(text)
 		case st.Token:
-			if !n.expectToken(element) {
+			if !n.expectSignificantToken(element) {
 				return "", false
 			}
 			if element.Kind() == st.DOCUMENTATION_DESCRIPTION {
@@ -7064,7 +7093,7 @@ func (n *nodeBuilder) transformDocumentationBacktickContent(backtickContent st.N
 		// reaching here means ballerina name reference is syntactically invalid.
 		// therefore, set hasParserWarnings to true. so that,
 		// doc analyzer will avoid further checks on this.
-		if tok, ok := backtickContent.(st.Token); ok && !n.expectToken(tok) {
+		if tok, ok := backtickContent.(st.Token); ok && !n.expectSignificantToken(tok) {
 			return false
 		}
 		bLangRefDoc.HasParserWarnings = true
@@ -7106,7 +7135,7 @@ func (n *nodeBuilder) transformDocumentationBacktickContent(backtickContent st.N
 		bLangRefDoc.Qualifier = typeQualifier
 	default:
 		if tok, ok := backtickContent.(st.Token); ok {
-			return n.expectToken(tok)
+			return n.expectSignificantToken(tok)
 		}
 		if nonTerminal, ok := backtickContent.(st.NonTerminalNode); ok {
 			return n.expectNode(nonTerminal)
@@ -7133,8 +7162,8 @@ func (n *nodeBuilder) transformCodeBlock(documentationLines *[]ast.BLangMarkdown
 	startLineHashToken := codeBlockNode.StartLineHashToken()
 	startBacktick := codeBlockNode.StartBacktick()
 	langAttribute := codeBlockNode.LangAttribute()
-	if !n.expectNode(codeBlockNode) || !n.expectToken(startLineHashToken) || !n.expectToken(startBacktick) ||
-		!n.expectOptionalToken(langAttribute) {
+	if !n.expectNode(codeBlockNode) || !n.expectToken(startLineHashToken) || !n.expectSignificantToken(startBacktick) ||
+		!n.expectOptionalSignificantToken(langAttribute) {
 		return false
 	}
 
@@ -7269,14 +7298,15 @@ func createUserDefinedType(pos diagnostics.Location, pkgAlias ast.BLangIdentifie
 }
 
 func (n *nodeBuilder) badTopLevel(node st.Node) *ast.BLangBadTopLevelNode {
-	return ast.NewBLangBadTopLevelNode(n.getPosition(node), badTopLevelKind(node))
+	return ast.NewBLangBadTopLevelNode(n.getPosition(node), n.badTopLevelKind(node), n.recoveredTokens(node))
 }
 
-func badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
+func (n *nodeBuilder) badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
 	switch node.Kind() {
 	case st.IMPORT_DECLARATION:
 		return ast.BadTopLevelNodeImport
-	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION, st.METHOD_DECLARATION:
+	case st.FUNCTION_DEFINITION, st.OBJECT_METHOD_DEFINITION, st.RESOURCE_ACCESSOR_DEFINITION, st.METHOD_DECLARATION,
+		st.RESOURCE_ACCESSOR_DECLARATION:
 		return ast.BadTopLevelNodeFunction
 	case st.TYPE_DEFINITION:
 		return ast.BadTopLevelNodeTypeDefinition
@@ -7300,27 +7330,279 @@ func badTopLevelKind(node st.Node) ast.BadTopLevelNodeKind {
 		return ast.BadTopLevelNodeField
 	case st.TYPE_REFERENCE:
 		return ast.BadTopLevelNodeTypeInclusion
+	case st.EOF_TOKEN:
+		return ast.BadTopLevelNodeTrailingTokens
 	default:
-		return ast.BadTopLevelNodeUnknown
+		n.internalError(fmt.Sprintf("badTopLevelKind: unclassified node kind %s", node.Kind()), node)
+		return ast.BadTopLevelNodeMissing
 	}
 }
 
 func (n *nodeBuilder) badStmt(node st.Node) *ast.BLangBadStmt {
-	bad := &ast.BLangBadStmt{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadStmt(n.getPosition(node), n.badStmtKind(node), n.recoveredTokens(node))
+}
+
+func (n *nodeBuilder) badStmtKind(node st.Node) ast.BadStmtKind {
+	switch node.(type) {
+	case *st.AssignmentStatementNode:
+		return ast.BadStmtAssignment
+	case *st.CompoundAssignmentStatementNode:
+		return ast.BadStmtCompoundAssignment
+	case *st.VariableDeclarationNode:
+		return ast.BadStmtVariableDeclaration
+	case *st.BlockStatementNode:
+		return ast.BadStmtBlock
+	case *st.BreakStatementNode:
+		return ast.BadStmtBreak
+	case *st.FailStatementNode:
+		return ast.BadStmtFail
+	case *st.ExpressionStatementNode:
+		return ast.BadStmtExpression
+	case *st.ContinueStatementNode:
+		return ast.BadStmtContinue
+	case *st.IfElseStatementNode:
+		return ast.BadStmtIfElse
+	case *st.WhileStatementNode:
+		return ast.BadStmtWhile
+	case *st.PanicStatementNode:
+		return ast.BadStmtPanic
+	case *st.ReturnStatementNode:
+		return ast.BadStmtReturn
+	case *st.LocalTypeDefinitionStatementNode:
+		return ast.BadStmtLocalTypeDefinition
+	case *st.LockStatementNode:
+		return ast.BadStmtLock
+	case *st.ForkStatementNode:
+		return ast.BadStmtFork
+	case *st.ForEachStatementNode:
+		return ast.BadStmtForEach
+	case *st.XMLNamespaceDeclarationNode:
+		return ast.BadStmtXMLNamespace
+	case *st.TransactionStatementNode:
+		return ast.BadStmtTransaction
+	case *st.RollbackStatementNode:
+		return ast.BadStmtRollback
+	case *st.RetryStatementNode:
+		return ast.BadStmtRetry
+	case *st.MatchStatementNode:
+		return ast.BadStmtMatch
+	case *st.DoStatementNode:
+		return ast.BadStmtDo
+	default:
+		n.internalError(fmt.Sprintf("badStmtKind: unclassified node type %T", node), node)
+		return ast.BadStmtMissing
+	}
 }
 
 func (n *nodeBuilder) badExprOrAction(node st.Node) *ast.BLangBadExprOrAction {
-	bad := &ast.BLangBadExprOrAction{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadExprOrAction(n.getPosition(node), n.badExprKind(node), n.recoveredTokens(node))
+}
+
+func (n *nodeBuilder) badExprKind(node st.Node) ast.BadExprKind {
+	switch node := node.(type) {
+	case *st.RemoteMethodCallActionNode:
+		return ast.BadExprRemoteMethodCallAction
+	case *st.ClientResourceAccessActionNode:
+		return ast.BadExprClientResourceAccessAction
+	case *st.StartActionNode:
+		return ast.BadExprStartAction
+	case *st.WaitActionNode:
+		return ast.BadExprWaitAction
+	case *st.QueryActionNode:
+		return ast.BadExprQueryAction
+	case *st.AsyncSendActionNode:
+		return ast.BadExprAsyncSendAction
+	case *st.SyncSendActionNode:
+		return ast.BadExprSyncSendAction
+	case *st.ReceiveActionNode:
+		return ast.BadExprReceiveAction
+	case *st.CommitActionNode:
+		return ast.BadExprCommitAction
+	case *st.FlushActionNode:
+		return ast.BadExprFlushAction
+	case *st.BracedExpressionNode:
+		if node.Kind() == st.BRACED_ACTION {
+			return ast.BadExprBracedAction
+		}
+	}
+	kind := node.Kind()
+	switch {
+	case isSimpleLiteral(kind):
+		return ast.BadExprSimpleLiteral
+	case kind == st.SIMPLE_NAME_REFERENCE || kind == st.QUALIFIED_NAME_REFERENCE || kind == st.IDENTIFIER_TOKEN:
+		return ast.BadExprVarRef
+	case isType(kind):
+		return ast.BadExprTypedesc
+	}
+	switch node.(type) {
+	case *st.BracedExpressionNode:
+		return ast.BadExprBraced
+	case *st.BinaryExpressionNode:
+		return ast.BadExprBinary
+	case *st.CheckExpressionNode:
+		return ast.BadExprCheck
+	case *st.FieldAccessExpressionNode:
+		return ast.BadExprFieldAccess
+	case *st.FunctionCallExpressionNode:
+		return ast.BadExprFunctionCall
+	case *st.MethodCallExpressionNode:
+		return ast.BadExprMethodCall
+	case *st.MappingConstructorExpressionNode:
+		return ast.BadExprMappingConstructor
+	case *st.IndexedExpressionNode:
+		return ast.BadExprIndexed
+	case *st.TypeofExpressionNode:
+		return ast.BadExprTypeof
+	case *st.UnaryExpressionNode:
+		return ast.BadExprUnary
+	case *st.InferredTypedescDefaultNode:
+		return ast.BadExprInferredTypedescDefault
+	case *st.ObjectConstructorExpressionNode:
+		return ast.BadExprObjectConstructor
+	case *st.TypeTestExpressionNode:
+		return ast.BadExprTypeTest
+	case *st.TrapExpressionNode:
+		return ast.BadExprTrap
+	case *st.ListConstructorExpressionNode:
+		return ast.BadExprListConstructor
+	case *st.TypeCastExpressionNode:
+		return ast.BadExprTypeCast
+	case *st.TableConstructorExpressionNode:
+		return ast.BadExprTableConstructor
+	case *st.LetExpressionNode:
+		return ast.BadExprLet
+	case *st.TemplateExpressionNode:
+		return ast.BadExprTemplate
+	case *st.ExplicitAnonymousFunctionExpressionNode:
+		return ast.BadExprExplicitAnonymousFunction
+	case *st.ImplicitAnonymousFunctionExpressionNode:
+		return ast.BadExprImplicitAnonymousFunction
+	case *st.ExplicitNewExpressionNode:
+		return ast.BadExprExplicitNew
+	case *st.ImplicitNewExpressionNode:
+		return ast.BadExprImplicitNew
+	case *st.QueryExpressionNode:
+		return ast.BadExprQuery
+	case *st.AnnotAccessExpressionNode:
+		return ast.BadExprAnnotAccess
+	case *st.OptionalFieldAccessExpressionNode:
+		return ast.BadExprOptionalFieldAccess
+	case *st.ConditionalExpressionNode:
+		return ast.BadExprConditional
+	case *st.TransactionalExpressionNode:
+		return ast.BadExprTransactional
+	case *st.ByteArrayLiteralNode:
+		return ast.BadExprByteArrayLiteral
+	case *st.XMLFilterExpressionNode:
+		return ast.BadExprXMLFilter
+	case *st.XMLStepExpressionNode:
+		return ast.BadExprXMLStep
+	case *st.RequiredExpressionNode:
+		return ast.BadExprRequired
+	case *st.ErrorConstructorExpressionNode:
+		return ast.BadExprErrorConstructor
+	case *st.NaturalExpressionNode:
+		return ast.BadExprNatural
+	case *st.PositionalArgumentNode:
+		return ast.BadExprPositionalArgument
+	case *st.NamedArgumentNode:
+		return ast.BadExprNamedArgument
+	case *st.RestArgumentNode:
+		return ast.BadExprRestArgument
+	case *st.WildcardBindingPatternNode:
+		return ast.BadExprWildcardBindingPattern
+	case *st.BasicLiteralNode:
+		return ast.BadExprBasicLiteral
+	default:
+		n.internalError(fmt.Sprintf("badExprKind: unclassified node type %T", node), node)
+		return ast.BadExprMissing
+	}
 }
 
 func (n *nodeBuilder) badTypeNode(node st.Node) *ast.BLangBadTypeNode {
-	bad := &ast.BLangBadTypeNode{}
-	bad.SetPosition(n.getPosition(node))
-	return bad
+	return ast.NewBLangBadTypeNode(n.getPosition(node), n.badTypeKind(node), n.recoveredTokens(node))
+}
+
+func (n *nodeBuilder) badTypeKind(node st.Node) ast.BadTypeKind {
+	switch node := node.(type) {
+	case *st.BuiltinSimpleNameReferenceNode:
+		return ast.BadTypeBuiltin
+	case *st.NilTypeDescriptorNode:
+		return ast.BadTypeNil
+	case *st.QualifiedNameReferenceNode:
+		return ast.BadTypeQualifiedReference
+	case *st.SimpleNameReferenceNode:
+		return ast.BadTypeSimpleReference
+	case *st.ObjectTypeDescriptorNode:
+		return ast.BadTypeObject
+	case *st.RecordTypeDescriptorNode:
+		return ast.BadTypeRecord
+	case *st.OptionalTypeDescriptorNode:
+		return ast.BadTypeOptional
+	case *st.MapTypeDescriptorNode:
+		return ast.BadTypeMap
+	case *st.UnionTypeDescriptorNode:
+		return ast.BadTypeUnion
+	case *st.StreamTypeDescriptorNode:
+		return ast.BadTypeStream
+	case *st.TableTypeDescriptorNode:
+		return ast.BadTypeTable
+	case *st.FunctionTypeDescriptorNode:
+		return ast.BadTypeFunction
+	case *st.TupleTypeDescriptorNode:
+		return ast.BadTypeTuple
+	case *st.ParenthesisedTypeDescriptorNode:
+		return ast.BadTypeParenthesised
+	case *st.IntersectionTypeDescriptorNode:
+		return ast.BadTypeIntersection
+	case *st.SingletonTypeDescriptorNode:
+		return ast.BadTypeSingleton
+	case *st.ArrayTypeDescriptorNode:
+		return ast.BadTypeArray
+	case *st.TypeReferenceTypeDescNode:
+		return ast.BadTypeTypeReference
+	case *st.DistinctTypeDescriptorNode:
+		return ast.BadTypeDistinct
+	case *st.ParameterizedTypeDescriptorNode:
+		return ast.BadTypeParameterized
+	case st.Token:
+		if node.Kind() == st.IDENTIFIER_TOKEN {
+			return ast.BadTypeSimpleReference
+		}
+		return ast.BadTypeBuiltin
+	default:
+		n.internalError(fmt.Sprintf("badTypeKind: unclassified node type %T", node), node)
+		return ast.BadTypeMissing
+	}
+}
+
+// recoveredTokens collects, in source order, the keyword and punctuation tokens present in the source span of node.
+// Token positions never include minutiae, whichever range the builder uses for nodes.
+func (n *nodeBuilder) recoveredTokens(node st.Node) []ast.RecoveredToken {
+	var tokens []ast.RecoveredToken
+	var visit func(st.Node)
+	visit = func(node st.Node) {
+		switch node := node.(type) {
+		case nil:
+		case st.Token:
+			if node.IsMissing() || !isKeywordOrPunctuation(node.Kind()) {
+				return
+			}
+			textRange := node.TextRange()
+			pos := diagnostics.NewLocation(n.de(), getFileName(node), textRange.StartOffset, textRange.EndOffset)
+			tokens = append(tokens, ast.NewRecoveredToken(pos, node.Kind().StrValue()))
+		case st.NonTerminalNode:
+			for child := range node.ChildNodes() {
+				visit(child)
+			}
+		}
+	}
+	visit(node)
+	return tokens
+}
+
+func isKeywordOrPunctuation(kind st.SyntaxKind) bool {
+	return kind < st.TYPE_DOC_REFERENCE_TOKEN
 }
 
 func (n *nodeBuilder) badIdentifier(token st.Token) *ast.BLangBadIdentifier {

@@ -1,0 +1,69 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-element-literal root
+          (xml-element-literal a
+            (xml-text-literal 1))))))
+    (var-def
+      (variable m (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (list-constructor-expr
+              (xml-step-expression
+                (simple-var-ref x)
+                (xml-step-element-children
+                  (xml-name-pattern-identifier a)))
+              (literal 1)))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation show (
+        (simple-var-ref m))))
+    (expression-stmt
+      (invocation showInner (
+        (field-based-access v
+          (simple-var-ref m)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+  )
+)
+(show
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type A)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type B)))))
+  )
+)
+(showInner
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (tuple-type
+            (value-type xml)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (tuple-type
+            (value-type xml)
+            (value-type string))))))
+  )
+)

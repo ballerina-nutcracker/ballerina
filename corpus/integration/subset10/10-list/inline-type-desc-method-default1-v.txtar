@@ -1,0 +1,5 @@
+-- stdout --
+true
+5
+[true,"s"]
+-- stderr --

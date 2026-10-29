@@ -20,11 +20,12 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
+| [task](../../lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md)               | 15 | 1 | 1 | 88% |
 | [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **245** | **31** | **64** | **72%** |
+| **Total**                                         | **260** | **32** | **65** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -110,6 +111,19 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 
 - **`createDecimal()` — improved entropy precision.** jBallerina delegates to `java.security.SecureRandom.nextFloat()`, which returns a Java 32-bit `float` (24 bits of mantissa) widened to a 64-bit Ballerina `float`. The Go-native version reads 53 bits from `crypto/rand`, producing a full-precision IEEE 754 `float64`. The range [0.0, 1.0) is preserved; values have higher randomness quality.
 - **`createIntInRange()` — corrected range distribution.** The jBallerina formula `startRange + int(rand × (endRange−1−startRange))` never produces `endRange−1` due to an off-by-one in the original implementation. The Go-native version uses `math/rand/v2.Int64N(endRange−startRange) + startRange`, which correctly produces uniform values across the full `[startRange, endRange)` range per the documented specification.
+
+### task
+
+- **`task:Service` declares `execute` as `public` (breaking change).** jBallerina declares `execute` without `public` and accepts a service in another module implementing it, which contradicts the language specification (a method's visibility region is part of its shape); the Go-native version declares `public isolated function execute() returns error?`, so a task service must declare its `execute` method `public` — services written for jBallerina need that one-word change. This is intended (agreed on [#1146](https://github.com/ballerina-nutcracker/ballerina/issues/1146)): jBallerina rejects the `public` form (`service declaration does not implement all required constructs`, verified on 2201.14.1 with `ballerina/task` 2.11.4), so a task service cannot be written to compile on both runtimes.
+- **Errors print without the native error form.** jBallerina creates scheduler errors in Java, so `io:println(err)` shows `error("Invalid job id: 5")`; the Go-native version creates them in Ballerina, so the same error prints as `error Error ("Invalid job id: 5")` — the message, the `task:Error` type and `is` checks are identical.
+- **Pausing or resuming all jobs before any job was scheduled returns an error.** jBallerina panics with a `NullPointerException` because no scheduler exists yet; the Go-native version returns a `task:Error` with the message `The Scheduler has been shutdown.`.
+- **An out-of-range job id returns an error.** jBallerina panics with an integer-overflow `ArithmeticException` when a `JobId` outside the 32-bit range is paused, resumed or unscheduled; the Go-native version returns `Invalid job id: <id>`.
+- **A service attached with an empty name array gets a generated name.** jBallerina panics with `IndexOutOfRange` when `Listener.attach` receives `[]`, which is what `service / on taskListener` passes; the Go-native version falls back to a random UUID, as it does for `()`.
+- **Job ids never collide.** jBallerina draws a random id below 1,000,000 and scheduling fails if it is already taken; the Go-native version draws again until the id is unused.
+- **Running jobs are listed in ascending id order.** jBallerina returns them in hash-map order; the Go-native version sorts them — the order was never specified.
+- **The skipped-trigger log uses Go's zone abbreviation.** The `LOG_AND_IGNORE` message prints the trigger start time in Java's `Date.toString` layout; the Go-native version uses the same layout with the zone abbreviation from the Go time zone database, which can differ (for example `+0530` instead of `IST`).
+- **A panic in a listener service is reported as a single line.** jBallerina prints an uncaught-exception stack trace from the virtual thread running the service; the Go-native version recovers the panic and prints `error: <message>` to stderr.
+- **Non-isolated jobs run concurrently.** jBallerina runs a job whose class or `execute` method is not isolated under the runtime's lock for non-isolated strands; the Go-native version runs every execution on its own strand, like `http` resources — use isolated jobs and `lock` statements for shared state.
 
 ### time
 

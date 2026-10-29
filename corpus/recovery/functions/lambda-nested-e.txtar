@@ -25,12 +25,12 @@ function nestedBodies() {
         if after is int {
             var enclosing = function() returns int {
                 consumeFunction(function() returns int => before + missingNested); // @error
-                consume(after); // @error capture after nested failure in enclosing context
+                consume(after);
                 return 1;
             };
-            consume(enclosing()); // @error expression value must be assigned
-            consume(before); // @error nested capture propagated
-            consume(after); // @error enclosing capture context restored
+            consume(enclosing());
+            consume(before);
+            consume(after);
         }
     }
 }
@@ -105,3 +105,9 @@ function nestedBodies() {
                   (simple-var-ref after))))) ())
           (block-stmt)) ())
       (block-stmt))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: missingNested
+  --> lambda-nested-e.bal:26:68
+   |
+26 |                 consumeFunction(function() returns int => before + missingNested); // @error
+   |                                                                    ^^^^^^^^^^^^^

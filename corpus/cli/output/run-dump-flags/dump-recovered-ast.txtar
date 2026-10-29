@@ -38,7 +38,7 @@
         (variable (position 29:1 30:1) x (type
           (value-type (position 29:1 29:9) int)) (expr
           (simple-var-ref (position 29:13 29:13) (bad-identifier)))))))
-  (bad-top-level unknown (position 31:1 31:81)))
+  (bad-top-level trailing-tokens (position 31:1 31:81)))
 error[SYNTAX_ERROR]: missing identifier
   --> recovered-ast.bal:17:4
    |

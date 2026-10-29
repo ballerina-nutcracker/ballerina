@@ -23,3 +23,15 @@ enum Colour { G = } // @error
     (simple-var-ref (bad-identifier))))
   (type-definition Colour enum
     (user-defined-type G)))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> enum-empty-e.bal:17:19
+   |
+17 | enum Colour { G = } // @error
+   |
+
+error[SYNTAX_ERROR]: missing expression
+  --> enum-empty-e.bal:17:19
+   |
+17 | enum Colour { G = } // @error
+   |

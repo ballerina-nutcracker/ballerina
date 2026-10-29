@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: wildcard binding pattern type must be a subtype of 'any'
+  --> module-wildcard-error-1-e.bal:17:1
+   |
+17 | error _ = error("x"); // @error
+   | ^^^^^^^^^^^^^^^^^^^^^

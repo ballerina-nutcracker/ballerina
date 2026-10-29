@@ -29,12 +29,75 @@ function unsupported() {
     transaction {} // @error
 }
 -- ast --
-(package
+(compilation-unit
+(package-id $anon . 0.0.0)
   (function main () (
     (value-type null))
     (block-function-body
-      (bad-stmt)))
+      (bad-stmt transaction (tokens ("transaction" 18:5 18:16) ("{" 18:17 18:18) ("int" 19:9 19:12) ("=" 19:15 19:16) (";" 19:17 19:18) ("int" 20:9 20:12) ("=" 20:15 20:16) (";" 20:17 20:18) ("int" 21:9 21:12) ("=" 21:15 21:16) (";" 21:22 21:23) ("int" 22:9 22:12) ("=" 22:17 22:18) (";" 22:24 22:25) ("int" 23:9 23:12) ("=" 23:15 23:16) (";" 23:20 23:21) ("}" 24:5 24:6)))))
   (function unsupported () (
     (value-type null))
     (block-function-body
-      (bad-stmt))))
+      (bad-stmt transaction (tokens ("transaction" 28:5 28:16) ("{" 28:17 28:18) ("}" 28:18 28:19))))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> unimplemented-multiline-syntax-e.bal:21:19
+   |
+21 |         int z = 1 @ @; // @error
+   |                   ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> unimplemented-multiline-syntax-e.bal:21:21
+   |
+21 |         int z = 1 @ @; // @error
+   |                     ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> unimplemented-multiline-syntax-e.bal:22:21
+   |
+22 |         int lex = 1 $ $; // @error
+   |                     ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> unimplemented-multiline-syntax-e.bal:22:23
+   |
+22 |         int lex = 1 $ $; // @error
+   |                       ^
+
+error[SYNTAX_ERROR]: missing binary operator
+  --> unimplemented-multiline-syntax-e.bal:23:19
+   |
+23 |         int w = 0xG; // @error
+   |
+
+error[SYNTAX_ERROR]: missing hex number after hex indicator
+  --> unimplemented-multiline-syntax-e.bal:23:17
+   |
+23 |         int w = 0xG; // @error
+   |                 ^^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> unimplemented-multiline-syntax-e.bal:19:17
+   |
+19 |         int x = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> unimplemented-multiline-syntax-e.bal:20:17
+   |
+20 |         int y = ; // @error
+   |
+
+fatal[UNIMPLEMENTED_ERROR]: transformTransactionStatement unimplemented
+  --> unimplemented-multiline-syntax-e.bal:28:1
+   |
+28 |     transaction {} // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+29 | }
+   |
+-- diagnostic-counts --
+4 invalid token
+2 missing identifier
+1 missing binary operator
+1 missing hex number after hex indicator
+1 transformTransactionStatement unimplemented

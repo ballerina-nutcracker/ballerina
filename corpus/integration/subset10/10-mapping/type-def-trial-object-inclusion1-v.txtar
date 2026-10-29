@@ -1,0 +1,3 @@
+-- stdout --
+{"typeInclusion":{"x":false},"classInclusion":{"x":false}}
+-- stderr --

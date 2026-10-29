@@ -1,0 +1,47 @@
+(first
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (binary-expr >
+          (invocation lang.array length (
+            (simple-var-ref xs)))
+          (literal 0))
+        (index-based-access
+          (simple-var-ref xs)
+          (literal 0))
+        (literal 0)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation first (
+            (query-expr
+              (from-clause
+                (var-def
+                  (variable x (type
+                    (value-type int))))
+                (list-constructor-expr
+                  (literal 3)
+                  (literal 4)))
+              (select-clause
+                (binary-expr +
+                  (simple-var-ref x)
+                  (literal 1))))))))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)

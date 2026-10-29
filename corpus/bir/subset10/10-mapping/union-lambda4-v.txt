@@ -1,0 +1,83 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad a
+    %3 = ConstantLoad 2
+    %4 = ConstantLoad 3
+    %5 = newArray [int|string...][%4]{%1, %2, %3}
+    mixed = %5;
+    %7 = ConstantLoad v
+    %8 = fp $anon/.:$anonFunc$_0
+    %9 = map(mixed,%8) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad m
+    %11 = ConstantLoad 1
+    %12 = newMap {| m: int, v: [int...], never... |}{%7=%9, %10=%11}
+    r = %12;
+    %14 = println(r) -> bb2;
+  }
+  bb2 {
+    %15 = ConstantLoad 1
+    %16 = ConstantLoad 2
+    %17 = ConstantLoad 3
+    %18 = ConstantLoad 3
+    %19 = newArray [int...][%18]{%15, %16, %17}
+    arr = %19;
+    %21 = ConstantLoad v
+    %22 = fp $anon/.:$anonFunc$_1
+    %23 = map(arr,%22) -> bb3;
+  }
+  bb3 {
+    %24 = ConstantLoad m
+    %25 = ConstantLoad 1
+    %26 = newMap {| m: int, v: [0|1...], never... |}{%21=%23, %24=%25}
+    c = %26;
+    %28 = println(c) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$anonFunc$_0(int|string) -> int{
+  bb0 {
+    %3 = x is int
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %2 = x;
+    GOTO bb3;
+  }
+  bb2 {
+    %4 = ConstantLoad 0
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_1(int) -> 0|1{
+  bb0 {
+    %4 = x;
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = == %4 %6;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %2 = x;
+    GOTO bb3;
+  }
+  bb2 {
+    %7 = ConstantLoad 0
+    %2 = %7;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}

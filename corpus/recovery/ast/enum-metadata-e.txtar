@@ -85,3 +85,15 @@ public enum Sound {
     (union-type (position 32:1 37:1)
       (user-defined-type (position 34:1 34:7) OK)
       (user-defined-type (position 35:1 35:10) GOOD))))
+-- stderr --
+error[SYNTAX_ERROR]: missing expression
+  --> enum-metadata-e.bal:30:1
+   |
+30 | } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> enum-metadata-e.bal:21:14
+   |
+21 |     BROKEN = , // @error
+   |

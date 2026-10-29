@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'value'
+  --> decls.bal:16:1
+   |
+16 | int value = 7; // @error
+   | ^^^^^^^^^^^^^^

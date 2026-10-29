@@ -1,0 +1,76 @@
+(isolatedFn
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable r (type
+                  (constrained-type
+                    (builtin-ref-type future)
+                    (value-type int))) (expr
+                  (start-action isolated
+                    (invocation isolatedFn (
+                      (literal 42)))))))
+              (return
+                (check-panicked-expr
+                  (single-wait-action
+                    (simple-var-ref r))))))))))
+    (var-def
+      (variable g (type
+        (function-type () (
+          (value-type int)))) (expr
+        (simple-var-ref f))))
+    (compound-assignment +
+      (simple-var-ref counter)
+      (literal 1))
+    (assignment
+      (simple-var-ref g)
+      (lambda
+        (function $anonFunc$_1 () (
+          (value-type int))
+          (block-function-body
+            (return
+              (invocation isolatedFn (
+                (literal 7))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation g ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (invocation isolatedFn (
+            (literal 42)))))))
+    (return
+      (check-panicked-expr
+        (single-wait-action
+          (simple-var-ref r))))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (return
+      (invocation isolatedFn (
+        (literal 7))))
+  )
+)
