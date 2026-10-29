@@ -567,6 +567,11 @@ func (tr *traversal) convertValue(ti typeInfo, v values.BalValue, recursive bool
 		return nil, valueUnmapped, nil
 	case kindRecord, kindMap, kindArray, kindTuple, kindUnsupported:
 		return nil, valueUnmapped, invalidExpectedTypeError(tr.t.typeName(ti.ty))
+	case kindFinite:
+		if tr.t.contains(ti.ty, v) {
+			return v, valueMapped, nil
+		}
+		return nil, valueUnmapped, nil
 	}
 	if !isCompatible(ti.kind, v) {
 		return nil, valueUnmapped, nil
