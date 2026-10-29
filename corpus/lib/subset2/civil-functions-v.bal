@@ -28,6 +28,8 @@ public function main() returns error? {
     time:Seconds diff = time:utcDiffSeconds(later, base);
     io:println(diff == 3600.0d); // @output true
     io:println(time:utcAddSeconds([0, 0.5], 10000000000.75)); // @output [10000000001,0.25]
+    time:Utc|error overflow = trap time:utcAddSeconds([1, 0], 9223372036854775807);
+    io:println(overflow is error); // @output true
 
     // dateValidate: valid date
     time:Error? valid = time:dateValidate({year: 2024, month: 6, day: 15});

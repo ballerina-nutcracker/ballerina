@@ -74,11 +74,15 @@ func decimalToNanos(d *decimal.Decimal) int64 {
 
 // addSeconds adds whole seconds and the fraction separately, as jBallerina's utcAddSeconds does,
 // because a time.Duration overflows past about 292 years.
-func addSeconds(t time.Time, seconds *decimal.Decimal) time.Time {
+func addSeconds(t time.Time, seconds *decimal.Decimal) (time.Time, error) {
 	whole, _ := seconds.Floor()
 	frac, _ := seconds.Sub(whole)
-	wholeSec, _, _ := whole.Int64()
-	return time.Unix(t.Unix()+wholeSec, int64(t.Nanosecond())).Add(time.Duration(decimalToNanos(frac)))
+	wholeSec, ok, _ := whole.Int64()
+	sum := t.Unix() + wholeSec
+	if !ok || (wholeSec > 0 && sum < t.Unix()) || (wholeSec < 0 && sum > t.Unix()) {
+		return time.Time{}, fmt.Errorf("NumberConversionError: adding %s seconds overflows the time range", seconds.FormatBallerina())
+	}
+	return time.Unix(sum, int64(t.Nanosecond())).Add(time.Duration(decimalToNanos(frac))), nil
 }
 
 // nanosToFrac converts nanoseconds to a Ballerina Seconds fraction [0,1).
@@ -507,7 +511,10 @@ func initTimeModule(rt *runtime.Runtime) {
 			seconds, _ := args[1].(*decimal.Decimal)
 			t := utcToGoTime(utc)
 			if seconds != nil {
-				t = addSeconds(t, seconds)
+				var err error
+				if t, err = addSeconds(t, seconds); err != nil {
+					return nil, err
+				}
 			}
 			return goTimeToUtc(utcTy, ctx.TypeCtx(), t), nil
 		})
