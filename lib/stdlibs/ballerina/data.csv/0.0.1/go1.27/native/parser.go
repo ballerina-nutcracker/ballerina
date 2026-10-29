@@ -92,8 +92,9 @@ type parser struct {
 	arraySize              int
 	rows                   []values.BalValue
 
+	// skipLines and skipErr are cfg.skipDataRows, which every row consults.
 	skipLines skipSet
-	skipReady bool
+	skipErr   error
 
 	failSafe *failSafeLogger
 	// recovering is set while the rest of a line that raised a tolerated error is discarded.
@@ -108,6 +109,7 @@ type parser struct {
 }
 
 func newParser(cfg *config, t *typer, shape *rowShape, rootSize int, failSafe *failSafeLogger) *parser {
+	skipLines, skipErr := cfg.skipDataRows()
 	p := &parser{
 		cfg:                   cfg,
 		t:                     t,
@@ -120,6 +122,8 @@ func newParser(cfg *config, t *typer, shape *rowShape, rootSize int, failSafe *f
 		fieldNames:            make(map[string]*recordField),
 		isCurrentCsvNodeEmpty: true,
 		failSafe:              failSafe,
+		skipLines:             skipLines,
+		skipErr:               skipErr,
 	}
 	if shape.kind == kindRecord {
 		p.fieldHierarchy = shape.remainingFields()
@@ -701,13 +705,8 @@ func (p *parser) updateLineAndColumnIndexesWithoutRowIndexes() {
 }
 
 func (p *parser) isSkipped(rowIndex int) (bool, error) {
-	if !p.skipReady {
-		skip, err := p.cfg.skipDataRows()
-		if err != nil {
-			return false, err
-		}
-		p.skipLines = skip
-		p.skipReady = true
+	if p.skipErr != nil {
+		return false, p.skipErr
 	}
 	return p.skipLines.contains(int64(rowIndex)), nil
 }
