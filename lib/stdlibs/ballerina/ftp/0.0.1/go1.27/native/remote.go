@@ -73,11 +73,13 @@ func connectURL(ep *endpoint, p string) string {
 	return s
 }
 
-// vfsURI renders a file URI the way VFS GenericFileName does: the default port is dropped and
-// an empty password leaves no `:`.
+// vfsURI renders a file URI the way VFS GenericFileName does: the default port is dropped, an
+// empty password leaves no `:`, and the path escapes only `%`, space and `#`.
 func vfsURI(ep *endpoint, p string, masked bool) string {
-	return vfsRootURI(ep, masked) + strings.TrimPrefix(p, "/")
+	return vfsRootURI(ep, masked) + vfsPathEscaper.Replace(strings.TrimPrefix(p, "/"))
 }
+
+var vfsPathEscaper = strings.NewReplacer("%", "%25", " ", "%20", "#", "%23")
 
 func vfsRootURI(ep *endpoint, masked bool) string {
 	var b strings.Builder
