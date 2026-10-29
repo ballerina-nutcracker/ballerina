@@ -19,10 +19,10 @@ class Counter {
     bb0 {
       %4 = ConstantLoad 
       %5 = ConstantLoad label
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       %6 = ConstantLoad 0
       %7 = ConstantLoad count
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       %9 = count;
       %10 = ConstantLoad 0
       %11 = %10;
@@ -40,9 +40,9 @@ class Counter {
     bb2 {
       PushScopeFrame 2
       %0 = ConstantLoad label
-      (1, self)[%0] = (1, label);
+      (1, self)[%0] = (1, label) (unsafe);
       %1 = ConstantLoad count
-      (1, self)[%1] = (1, count);
+      (1, self)[%1] = (1, count) (unsafe);
       PopScopeFrame
       return;
     }

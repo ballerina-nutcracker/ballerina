@@ -73,12 +73,12 @@ func TestDecimalNilGuards(t *testing.T) {
 func TestGetStoredLocationFallback(t *testing.T) {
 	t.Parallel()
 	// No "$location" field: falls back to UTC.
-	empty := values.NewObject(semtypes.Object, nil, nil, nil, nil)
+	empty := values.NewObject(semtypes.Object, nil, nil, nil, nil, nil)
 	if loc := getStoredLocation(empty); loc != time.UTC {
 		t.Errorf("getStoredLocation(no field) = %v, want UTC", loc)
 	}
 	// "$location" holding a wrong type: falls back to UTC.
-	wrongType := values.NewObject(semtypes.Object, map[string]values.BalValue{"$location": "not-a-location"}, nil, nil, nil)
+	wrongType := values.NewObject(semtypes.Object, map[string]values.BalValue{"$location": "not-a-location"}, nil, nil, nil, nil)
 	if loc := getStoredLocation(wrongType); loc != time.UTC {
 		t.Errorf("getStoredLocation(wrong type) = %v, want UTC", loc)
 	}

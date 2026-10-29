@@ -6,9 +6,9 @@ class Fixed {
   init([int, int, never...],int,nil) -> nil{
     bb0 {
       %5 = ConstantLoad values
-      self[%5] = values;
+      self[%5] = values (unsafe);
       %6 = ConstantLoad length
-      self[%6] = length;
+      self[%6] = length (unsafe);
       _ = pushed;
       return;
     }
@@ -20,7 +20,7 @@ class Text {
   init(string,int,nil) -> nil{
     bb0 {
       %5 = ConstantLoad values
-      self[%5] = values;
+      self[%5] = values (unsafe);
       _ = length;
       _ = pushed;
       return;

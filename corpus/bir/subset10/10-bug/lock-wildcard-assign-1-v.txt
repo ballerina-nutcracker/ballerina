@@ -28,7 +28,7 @@ class Holder {
       %4 = ConstantLoad 2
       %5 = newArray [int...][%4]{%2, %3}
       %6 = ConstantLoad f
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       return;
     }
   }

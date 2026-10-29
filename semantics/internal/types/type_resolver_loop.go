@@ -129,6 +129,14 @@ func (l *loopTypeResolver) functionSignatureByRef(ref model.FunctionSignatureRef
 	return l.parentResolver.functionSignatureByRef(ref)
 }
 
+func (l *loopTypeResolver) objectSignatureRef(owner model.SymbolRef) (model.ObjectSignatureRef, bool) {
+	return l.parentResolver.objectSignatureRef(owner)
+}
+
+func (l *loopTypeResolver) associateObjectSignature(owner model.SymbolRef, ref model.ObjectSignatureRef) bool {
+	return l.parentResolver.associateObjectSignature(owner, ref)
+}
+
 func (l *loopTypeResolver) compilerContext() *context.CompilerContext {
 	return l.parentResolver.compilerContext()
 }

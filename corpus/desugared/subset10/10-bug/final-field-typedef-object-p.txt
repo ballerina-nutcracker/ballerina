@@ -1,0 +1,42 @@
+(package
+  (type-definition O
+    (object-type
+      (field a
+        (value-type int))
+      (field b
+        (value-type int))))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal b))
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type O)) (expr
+          (new
+            (user-defined-type C) ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref o)
+          (literal a))
+        (literal 3))
+      (assignment
+        (index-based-access
+          (simple-var-ref o)
+          (literal b))
+        (literal 4)))))

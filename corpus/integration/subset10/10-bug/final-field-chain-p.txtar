@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: cannot update 'final' object field 'a'
+        at main(final-field-chain-p.bal:26)

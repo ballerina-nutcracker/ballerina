@@ -1,0 +1,23 @@
+(package
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (expr
+          (new
+            (user-defined-type C) ()))))
+      (assignment
+        (index-based-access
+          (simple-var-ref c)
+          (literal a))
+        (literal 2)))))

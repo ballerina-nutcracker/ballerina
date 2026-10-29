@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-self-alias-e.bal:21:9
+   |
+21 |         other.a = 5; // @error final field written through another reference
+   |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-self-alias-e.bal:26:9
+   |
+26 |         other.a = 6; // @error final field written through another reference
+   |         ^^^^^^^

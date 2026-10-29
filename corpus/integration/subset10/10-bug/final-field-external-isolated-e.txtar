@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-isolated-e.bal:22:5
+   |
+22 |     c.a = 2; // @error final field of an isolated class
+   |     ^^^

@@ -748,6 +748,8 @@ func (ms *compilationUnitSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTy
 	var symbol model.Symbol
 	var signatureRef model.FunctionSignatureRef
 	hasUntypeFunctionSignature := false
+	var objectSignatureRef model.ObjectSignatureRef
+	hasObjectSignature := false
 	switch ty := typeDef.GetTypeData().TypeDescriptor.(type) {
 	case *ast.BLangRecordType:
 		symbol = new(model.NewRecordSymbol(name, isPublic, typeDef.Name.GetPosition()))
@@ -780,6 +782,7 @@ func (ms *compilationUnitSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTy
 		}
 		ty.SetSymbol(symRef)
 		signatureRef, hasUntypeFunctionSignature = ms.moduleResolver.ctx.FunctionSignatureRef(symRef)
+		objectSignatureRef, hasObjectSignature = ms.moduleResolver.ctx.ObjectSignatureRef(symRef)
 		switch ms.moduleResolver.ctx.GetSymbol(symRef).(type) {
 		case *model.RecordSymbol:
 			symbol = new(model.NewRecordSymbol(name, isPublic, typeDef.Name.GetPosition()))
@@ -816,6 +819,9 @@ func (ms *compilationUnitSymbolResolver) allocateTypeSymbol(typeDef *ast.BLangTy
 	}
 	if hasUntypeFunctionSignature {
 		associateFunctionSignatureRef(ms.moduleResolver.ctx, symRef, signatureRef, typeDef.GetPosition())
+	}
+	if hasObjectSignature {
+		associateObjectSignatureRef(ms.moduleResolver.ctx, symRef, objectSignatureRef, typeDef.GetPosition())
 	}
 }
 
@@ -993,6 +999,7 @@ func (ms *compilationUnitSymbolResolver) allocateClassSymbol(classDef *ast.BLang
 	symRef := lookup.ref
 	classDef.SetSymbol(symRef)
 	ms.moduleResolver.classDefns[symRef] = classDef
+	allocateClassObjectSignature(ms.moduleResolver.ctx, symRef, classDef)
 	if classDef.IsDistinct() {
 		symbol.SetDistinctTypeIDs([]int{ms.moduleResolver.ctx.DistinctTypeID(symRef)})
 		registerLangLibDistinctTypeSymbol(ms, classDef.Name.GetValue(), symRef, classDef.GetPosition())
@@ -1689,6 +1696,7 @@ func resolveForeach(bs *blockSymbolResolver, n *ast.BLangForeach) bool {
 type inclusionMemberForSymbolResolution struct {
 	name     string
 	isPublic bool
+	isFinal  bool
 }
 
 // resolveObjectInclusions update the AST node references with correct symbol references. Will add semantic errors if the type
@@ -1746,6 +1754,7 @@ func resolveObjectInclusions(resolver symbolResolver, unresolvedInclusions []*as
 				includedFields = append(includedFields, inclusionMemberForSymbolResolution{
 					name:     fd.MemberName(),
 					isPublic: fd.IsPublic(),
+					isFinal:  fd.IsFinal(),
 				})
 			}
 		}
@@ -1846,6 +1855,7 @@ func collectTransitiveFields(ctx *context.CompilerContext, inclusions []model.Sy
 				result = append(result, inclusionMemberForSymbolResolution{
 					name:     fd.MemberName(),
 					isPublic: fd.IsPublic(),
+					isFinal:  fd.IsFinal(),
 				})
 			}
 		}
@@ -1882,6 +1892,7 @@ func collectTransitiveFieldsFromClassDefn(ctx *context.CompilerContext, defn *as
 		directFields = append(directFields, inclusionMemberForSymbolResolution{
 			name:     name,
 			isPublic: field.IsPublic(),
+			isFinal:  field.IsFinal(),
 		})
 	}
 	return collectTransitiveFields(ctx, defn.Inclusions, directFields, localTypeDefns, localClassDefns)
@@ -1921,6 +1932,61 @@ func resolveServiceDefinition(ms *compilationUnitSymbolResolver, svc *ast.BLangS
 	return ok
 }
 
+// allocateClassObjectSignature gives the class an object signature holding the
+// final fields it declares; resolveClassDefinition adds the included ones.
+func allocateClassObjectSignature(ctx *context.CompilerContext, symRef model.SymbolRef, classDef *ast.BLangClassDefinition) {
+	var finalFields []string
+	for _, field := range classDef.Fields {
+		if field.IsFinal() {
+			finalFields = append(finalFields, field.GetName().GetValue())
+		}
+	}
+	associateObjectSignatureRef(ctx, symRef, ctx.AllocateObjectSignature(finalFields), classDef.GetPosition())
+}
+
+// associateObjectSignatureFromTypeDescriptor copies the signature of the class
+// a type descriptor names to owner. Only a descriptor that is a single class
+// reference, directly or through an alias, has one.
+// setClassFinalFields sets the final fields of the class's signature to the
+// declared ones plus the included ones that no declared field overrides.
+func setClassFinalFields(ctx *context.CompilerContext, classDef *ast.BLangClassDefinition, includedFields []inclusionMemberForSymbolResolution) {
+	ref, ok := ctx.ObjectSignatureRef(classDef.Symbol())
+	if !ok {
+		return
+	}
+	declared := make(map[string]struct{}, len(classDef.Fields))
+	var finalFields []string
+	for _, field := range classDef.Fields {
+		name := field.GetName().GetValue()
+		declared[name] = struct{}{}
+		if field.IsFinal() {
+			finalFields = append(finalFields, name)
+		}
+	}
+	for _, included := range includedFields {
+		if _, overridden := declared[included.name]; !overridden && included.isFinal {
+			finalFields = append(finalFields, included.name)
+		}
+	}
+	ctx.UpdateObjectSignatureFinalFields(ref, finalFields)
+}
+
+func associateObjectSignatureFromTypeDescriptor(r symbolResolver, owner model.SymbolRef, typeNode any) {
+	ty, ok := typeNode.(*ast.BLangUserDefinedType)
+	if owner.IsEmpty() || !ok {
+		return
+	}
+	if ref, found := r.GetCtx().ObjectSignatureRef(ty.Symbol()); found {
+		associateObjectSignatureRef(r.GetCtx(), owner, ref, ty.GetPosition())
+	}
+}
+
+func associateObjectSignatureRef(ctx *context.CompilerContext, owner model.SymbolRef, ref model.ObjectSignatureRef, pos diagnostics.Location) {
+	if !ctx.AssociateObjectSignature(owner, ref) {
+		ctx.InternalError("object signature already set", pos)
+	}
+}
+
 func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLangClassDefinition) bool {
 	className := classDef.Name.GetValue()
 	ok := true
@@ -1936,6 +2002,7 @@ func resolveClassDefinition(ms *compilationUnitSymbolResolver, classDef *ast.BLa
 	inclusions, positions, includedFields, inclusionsOk := resolveObjectInclusions(ms, classDef.PopUnresolvedInclusions())
 	ok = inclusionsOk && ok
 	classDef.Inclusions, classDef.InclusionPositions = inclusions, positions
+	setClassFinalFields(ms.moduleResolver.ctx, classDef, includedFields)
 	var methodTargetScope methodSymbolTargetScope
 	if !owner.IsEmpty() {
 		networkClassSym, _ := ms.moduleResolver.ctx.GetSymbol(owner).(*model.NetworkClassSymbol)
@@ -2207,6 +2274,7 @@ func resolveTypeDefinition(r *compilationUnitSymbolResolver, n *ast.BLangTypeDef
 	}
 	if typeDescriptor != nil {
 		ok = associateFunctionSignatureFromTypeDescriptor(r, n.Symbol(), typeDescriptor, n.GetPosition()) && ok
+		associateObjectSignatureFromTypeDescriptor(r, n.Symbol(), typeDescriptor)
 	}
 	return ok
 }
@@ -2239,6 +2307,7 @@ func resolveVariableDeclaredType(r symbolResolver, variable *ast.BLangVariable, 
 	if typeNode := variable.TypeNode(); typeNode != nil {
 		ok = resolveTypeDesc(r, typeNode) && ok
 		ok = associateFunctionSignatureFromTypeDescriptor(r, owner, typeNode, variable.GetPosition()) && ok
+		associateObjectSignatureFromTypeDescriptor(r, owner, typeNode)
 	}
 	return ok
 }

@@ -18,7 +18,7 @@ class DummyObject {
     bb0 {
       %2 = ConstantLoad TestConstantDocumentation
       %3 = ConstantLoad testConst
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

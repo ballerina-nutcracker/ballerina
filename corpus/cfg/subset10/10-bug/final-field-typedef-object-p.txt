@@ -1,0 +1,17 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type O)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (assignment
+      (field-based-access a
+        (simple-var-ref o))
+      (literal 3))
+    (assignment
+      (field-based-access b
+        (simple-var-ref o))
+      (literal 4))
+  )
+)

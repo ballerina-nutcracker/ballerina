@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-e.bal:24:5
+   |
+24 |     c.a = 2; // @error final field written outside the class
+   |     ^^^
+
+error[SEMANTIC_ERROR]: cannot update 'final' object field 'a'
+  --> final-field-external-e.bal:25:5
+   |
+25 |     c.a = 3; // @error final field written outside the class
+   |     ^^^

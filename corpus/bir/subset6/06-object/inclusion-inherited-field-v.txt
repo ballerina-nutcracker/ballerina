@@ -1,5 +1,7 @@
 module $anon.. v 0.0.0;
 class Bar {
+  x int
+  y string
   z int
 
   getX() -> int{
@@ -15,16 +17,16 @@ class Bar {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad z
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad 42
       %5 = ConstantLoad x
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       %6 = ConstantLoad hello
       %7 = ConstantLoad y
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       %8 = ConstantLoad 1
       %9 = ConstantLoad z
-      self[%9] = %8;
+      self[%9] = %8 (unsafe);
       return;
     }
   }

@@ -22,6 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/context/internal/capturegroups"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/functionsignatures"
+	"github.com/ballerina-nutcracker/ballerina/context/internal/objectsignatures"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -104,6 +105,7 @@ type CompilerEnvironment struct {
 	typeEnv                    semtypes.Env
 	underlyingSymbol           sync.Map
 	functionSignatures         functionsignatures.Store
+	objectSignatures           objectsignatures.Store
 	captureGroups              capturegroups.Store
 	distinctTypes              distinctTypeTracker
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
@@ -352,6 +354,30 @@ func (c *CompilerEnvironment) GetFunctionSignatureByRef(ref model.FunctionSignat
 	return c.functionSignatures.GetByRef(ref)
 }
 
+func (c *CompilerEnvironment) AllocateObjectSignature(finalFields []string) model.ObjectSignatureRef {
+	return c.objectSignatures.Allocate(finalFields)
+}
+
+func (c *CompilerEnvironment) AssociateObjectSignature(sym model.SymbolRef, ref model.ObjectSignatureRef) bool {
+	return c.objectSignatures.Associate(sym, ref)
+}
+
+func (c *CompilerEnvironment) ObjectSignatureRef(sym model.SymbolRef) (model.ObjectSignatureRef, bool) {
+	return c.objectSignatures.Ref(sym)
+}
+
+func (c *CompilerEnvironment) UpdateObjectSignatureFinalFields(ref model.ObjectSignatureRef, finalFields []string) {
+	c.objectSignatures.UpdateFinalFields(ref, finalFields)
+}
+
+func (c *CompilerEnvironment) GetObjectSignature(owner model.SymbolRef) (model.UntypedObjectSignature, bool) {
+	return c.objectSignatures.Get(owner)
+}
+
+func (c *CompilerEnvironment) GetObjectSignatureByRef(ref model.ObjectSignatureRef) model.UntypedObjectSignature {
+	return c.objectSignatures.GetByRef(ref)
+}
+
 func (c *CompilerEnvironment) UnnarrowedSymbol(symbol model.SymbolRef) model.SymbolRef {
 	if underlying, ok := c.underlyingSymbol.Load(symbol); ok {
 		return underlying.(model.SymbolRef)
@@ -495,6 +521,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		anonFuncCount:              make(map[*model.PackageID]int),
 		packageInterner:            model.DefaultPackageIDInterner,
 		functionSignatures:         functionsignatures.NewStore(),
+		objectSignatures:           objectsignatures.NewStore(),
 		captureGroups:              capturegroups.NewStore(),
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),

@@ -1,0 +1,49 @@
+(C
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (literal 2))
+    )
+  )
+)
+(P
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access a
+          (simple-var-ref self))
+        (literal 1))
+    )
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable x (type
+        (union-type
+          (user-defined-type P)
+          (user-defined-type C))) (expr
+        (new
+          (user-defined-type C) ()))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (user-defined-type C))
+  )
+  (bb1 (bb0) (bb2)
+    (assignment
+      (field-based-access a
+        (simple-var-ref x))
+      (literal 5))
+    (compound-assignment +
+      (field-based-access a
+        (simple-var-ref x))
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref x)))))
+  )
+  (bb2 (bb1) ())
+)

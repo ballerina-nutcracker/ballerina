@@ -11,10 +11,10 @@ class NumberIterator {
       %5 = ConstantLoad 3
       %6 = newArray [int...][%5]{%2, %3, %4}
       %7 = ConstantLoad items
-      self[%7] = %6;
+      self[%7] = %6 (unsafe);
       %8 = ConstantLoad 0
       %9 = ConstantLoad idx
-      self[%9] = %8;
+      self[%9] = %8 (unsafe);
       return;
     }
   }
@@ -50,7 +50,7 @@ class NumberIterator {
       %9 = ConstantLoad 1
       %10 = %9;
       %11 = + %8 %10;
-      (1, self)[%6] = %11;
+      (1, self)[%6] = %11 (unsafe);
       %12 = ConstantLoad value
       %13 = newMap {| value: int, never... |}{%12=val}
       (1, %0) = %13;

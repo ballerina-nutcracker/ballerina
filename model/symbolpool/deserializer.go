@@ -29,12 +29,13 @@ import (
 )
 
 type symbolReader struct {
-	r               *bytes.Reader
-	cp              []string
-	tp              *semtypes.TypePool
-	env             *context.CompilerEnvironment
-	externalRefKeys []serializedSymbolRefKey
-	sigHandles      []model.FunctionSignatureRef
+	r                *bytes.Reader
+	cp               []string
+	tp               *semtypes.TypePool
+	env              *context.CompilerEnvironment
+	externalRefKeys  []serializedSymbolRefKey
+	sigHandles       []model.FunctionSignatureRef
+	objectSigHandles []model.ObjectSignatureRef
 }
 
 func Unmarshal(env *context.CompilerEnvironment, data []byte) (model.ExportedSymbolSpace, error) {
@@ -175,12 +176,54 @@ func (sr *symbolReader) readSymbolSpace() *model.SymbolSpace {
 	pkgID := sr.readPackageIdentifier()
 	space := sr.env.NewSymbolSpace(*pkgID)
 	sr.readFunctionSignatureTable(space)
+	sr.readObjectSignatureTable()
 	opaque := model.OpaqueSymbols(space.Pkg)
 	for i := int64(0); i < count; i++ {
 		sr.readSymbol(space, opaque)
 	}
+	sr.readObjectSignatureAssociations(space)
 
 	return space
+}
+
+func (sr *symbolReader) readObjectSignatureTable() {
+	var count int64
+	read(sr.r, &count)
+	if count < 0 {
+		panic(fmt.Sprintf("invalid object signature count: %d", count))
+	}
+	sr.objectSigHandles = make([]model.ObjectSignatureRef, count)
+	for i := range sr.objectSigHandles {
+		var finalCount int64
+		read(sr.r, &finalCount)
+		if finalCount < 0 {
+			panic(fmt.Sprintf("invalid final field count: %d", finalCount))
+		}
+		finalFields := make([]string, finalCount)
+		for j := range finalFields {
+			finalFields[j] = sr.readStringCP()
+		}
+		sr.objectSigHandles[i] = sr.env.AllocateObjectSignature(finalFields)
+	}
+}
+
+func (sr *symbolReader) readObjectSignatureAssociations(space *model.SymbolSpace) {
+	var count int64
+	read(sr.r, &count)
+	if count < 0 {
+		panic(fmt.Sprintf("invalid object signature association count: %d", count))
+	}
+	for i := int64(0); i < count; i++ {
+		owner := sr.readSymbolRef(space)
+		var index int64
+		read(sr.r, &index)
+		if index < 0 || index >= int64(len(sr.objectSigHandles)) {
+			panic(fmt.Sprintf("invalid object signature index: %d", index))
+		}
+		if !sr.env.AssociateObjectSignature(owner, sr.objectSigHandles[index]) {
+			panic(fmt.Sprintf("conflicting object signature association: %d", index))
+		}
+	}
 }
 
 func (sr *symbolReader) readMappingDefaults(space *model.SymbolSpace) {

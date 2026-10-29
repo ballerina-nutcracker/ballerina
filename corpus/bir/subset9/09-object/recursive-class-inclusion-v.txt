@@ -7,15 +7,17 @@ class Node {
     bb0 {
       %2 = ConstantLoad 1
       %3 = ConstantLoad id
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad <nil>
       %5 = ConstantLoad next
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       return;
     }
   }
 }
 class Child {
+  id int
+  next nil|object { public int id; public function init() returns nil; nil|... next }
 
   init() -> nil{
     bb0 {

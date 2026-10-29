@@ -85,6 +85,8 @@ type typeResolver interface {
 	updateFunctionSignatureIncludedRecords(ref model.FunctionSignatureRef, includedRecords []*model.IncludedRecordMetadata)
 	functionSignature(owner model.SymbolRef) (model.UntypedFunctionSignature, bool)
 	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
+	objectSignatureRef(owner model.SymbolRef) (model.ObjectSignatureRef, bool)
+	associateObjectSignature(owner model.SymbolRef, ref model.ObjectSignatureRef) bool
 	compilerContext() *context.CompilerContext
 
 	// Import management
@@ -342,6 +344,14 @@ func (t *packageTypeResolver) functionSignatureByRef(ref model.FunctionSignature
 	return t.ctx.GetFunctionSignatureByRef(ref)
 }
 
+func (t *packageTypeResolver) objectSignatureRef(owner model.SymbolRef) (model.ObjectSignatureRef, bool) {
+	return t.ctx.ObjectSignatureRef(owner)
+}
+
+func (t *packageTypeResolver) associateObjectSignature(owner model.SymbolRef, ref model.ObjectSignatureRef) bool {
+	return t.ctx.AssociateObjectSignature(owner, ref)
+}
+
 func (t *packageTypeResolver) compilerContext() *context.CompilerContext {
 	return t.ctx
 }
@@ -536,6 +546,14 @@ func (f *functionTypeResolver) functionSignature(owner model.SymbolRef) (model.U
 
 func (f *functionTypeResolver) functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature {
 	return f.parentResolver.functionSignatureByRef(ref)
+}
+
+func (f *functionTypeResolver) objectSignatureRef(owner model.SymbolRef) (model.ObjectSignatureRef, bool) {
+	return f.parentResolver.objectSignatureRef(owner)
+}
+
+func (f *functionTypeResolver) associateObjectSignature(owner model.SymbolRef, ref model.ObjectSignatureRef) bool {
+	return f.parentResolver.associateObjectSignature(owner, ref)
 }
 
 func (f *functionTypeResolver) compilerContext() *context.CompilerContext {
@@ -4383,6 +4401,7 @@ func resolveTypeTestExpr(t typeResolver, chain *binding, e *ast.BLangTypeTestExp
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
+	associateTypeTestObjectSignature(t, effect.ifTrue.narrowedSymbol, e.TestedType.TypeDescriptor, e.GetPosition())
 	if e.IsNegation() {
 		effect.ifTrue, effect.ifFalse = effect.ifFalse, effect.ifTrue
 		functionSignatures.ifTrue, functionSignatures.ifFalse = functionSignatures.ifFalse, functionSignatures.ifTrue
@@ -4415,6 +4434,21 @@ func typeTestFunctionSignatureRefs(t typeResolver, typeDescriptor ast.TypeDescri
 		ref, _ = t.functionSignatureRef(ty.Symbol())
 	}
 	return typeTestFunctionSignatures{ifTrue: ref}, true
+}
+
+// associateTypeTestObjectSignature gives the narrowed symbol of the branch
+// inside the tested type the signature of the class the type names, when it
+// names a single one.
+func associateTypeTestObjectSignature(t typeResolver, inside model.SymbolRef, typeDescriptor ast.TypeDescriptor, pos diagnostics.Location) {
+	ty, ok := typeDescriptor.(*ast.BLangUserDefinedType)
+	if !ok {
+		return
+	}
+	if ref, found := t.objectSignatureRef(ty.Symbol()); found {
+		if !t.associateObjectSignature(inside, ref) {
+			t.internalError("object signature already set", pos)
+		}
+	}
 }
 
 func associateTypeTestFunctionSignature(t typeResolver, narrowed model.SymbolRef, ref model.FunctionSignatureRef, pos diagnostics.Location) bool {

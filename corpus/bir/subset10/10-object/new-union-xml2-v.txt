@@ -8,9 +8,9 @@ class IntArg {
       %9 = ConstantLoad 6
       %10 = newArray [xml...][%9]{children, all, descendants, indexed, filtered, called}
       %11 = ConstantLoad values
-      self[%11] = %10;
+      self[%11] = %10 (unsafe);
       %12 = ConstantLoad marker
-      self[%12] = marker;
+      self[%12] = marker (unsafe);
       return;
     }
   }
@@ -24,9 +24,9 @@ class StringArg {
       %9 = ConstantLoad 6
       %10 = newArray [xml...][%9]{children, all, descendants, indexed, filtered, called}
       %11 = ConstantLoad values
-      self[%11] = %10;
+      self[%11] = %10 (unsafe);
       %12 = ConstantLoad marker
-      self[%12] = marker;
+      self[%12] = marker (unsafe);
       return;
     }
   }

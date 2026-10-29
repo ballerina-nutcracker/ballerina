@@ -5,7 +5,7 @@ class Bar {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = value;
+      self[%3] = value (unsafe);
       return;
     }
   }
@@ -30,7 +30,7 @@ class Foo {
   init(object { public function init(int) returns nil; int value }) -> nil{
     bb0 {
       %3 = ConstantLoad bar
-      self[%3] = bar;
+      self[%3] = bar (unsafe);
       return;
     }
   }

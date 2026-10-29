@@ -6,7 +6,7 @@ class Emit {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad n
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -38,7 +38,7 @@ class Emit {
       %6 = %5;
       %3 = + %4 %6;
       %7 = ConstantLoad n
-      (1, self)[%7] = %3;
+      (1, self)[%7] = %3 (unsafe);
       %8 = ConstantLoad value
       %9 = newMap {| value: int, never... |}{%8=current}
       (1, %0) = %9;

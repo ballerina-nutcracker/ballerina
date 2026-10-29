@@ -10,7 +10,7 @@ class Holder {
       PushScopeFrame 2
       %0 = ConstantLoad 1
       %1 = ConstantLoad x
-      (1, self)[%1] = %0;
+      (1, self)[%1] = %0 (unsafe);
       PopScopeFrame
       GOTO bb3;
     }

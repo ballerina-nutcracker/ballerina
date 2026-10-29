@@ -6,7 +6,7 @@ class FailingIterator {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad idx
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -40,7 +40,7 @@ class FailingIterator {
       %6 = ConstantLoad 1
       %7 = %6;
       %8 = + %5 %7;
-      (1, self)[%3] = %8;
+      (1, self)[%3] = %8 (unsafe);
       %9 = ConstantLoad value
       %10 = newMap {| value: int, never... |}{%9=val}
       (1, %0) = %10;

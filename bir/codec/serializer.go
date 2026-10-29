@@ -120,6 +120,7 @@ func (bw *birWriter) writeClassDef(buf *bytes.Buffer, classDef *bir.BIRClassDef)
 	for _, field := range classDef.Fields {
 		bw.writeStringCPEntry(buf, field.Name)
 		bw.writeType(buf, field.Ty)
+		write(buf, field.Final)
 	}
 	var methodNames []string
 	for name := range classDef.VTable {

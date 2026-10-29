@@ -1,0 +1,24 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type C)
+          (value-type null))) (expr
+        (new
+          (user-defined-type C) ()))))
+    (type-test-expr is
+      (simple-var-ref c)
+      (value-type null))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal <nil>))
+  )
+  (bb2 (bb0) ()
+    (assignment
+      (field-based-access a
+        (simple-var-ref c))
+      (literal 2))
+  )
+)
