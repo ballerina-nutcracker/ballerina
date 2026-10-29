@@ -351,7 +351,7 @@ func (m *ftpModule) dispatchContent(ctx *extern.Context, state *listenerState, s
 		}
 		content = m.contentStream(r)
 	} else {
-		data, err := withRetry(m.rt.Platform(), state.retry, "fetchContent", func() ([]byte, error) {
+		data, err := withRetry(ctx, state.retry, "fetchContent", func() ([]byte, error) {
 			return remote.readAll(f.logical)
 		})
 		if err != nil {

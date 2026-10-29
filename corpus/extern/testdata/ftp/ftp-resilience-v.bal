@@ -36,6 +36,15 @@ function scrub(string message) returns string {
     return result;
 }
 
+int ticks = 0;
+
+function ticker() {
+    foreach int _ in 0 ..< 20 {
+        ticks += 1;
+        runtime:sleep(0.02);
+    }
+}
+
 function connect(ftp:CircuitBreakerConfig? circuitBreaker = (), ftp:RetryConfig? retryConfig = ())
         returns ftp:Client|ftp:Error {
     ftp:ClientConfiguration config = {
@@ -91,6 +100,17 @@ public function main() returns error? {
     io:println(busyMessage.indexOf("Operation 'getText' failed after 2 retry attempts: ") == 0); // @output true
     io:println(busyReplies()); // @output 3
     check busy->close();
+
+    ftp:Client slowBusy = check new ({
+        host: "127.0.0.1",
+        port: busyPort(),
+        retryConfig: {count: 2, interval: 0.3, backOffFactor: 1.0}
+    });
+    future<()> tick = start ticker();
+    var slowText = slowBusy->getText("/busy.txt");
+    io:println(slowText is ftp:AllRetryAttemptsFailedError, " ", ticks >= 10); // @output true true
+    check wait tick;
+    check slowBusy->close();
 
     ftp:CircuitBreakerConfig breaker = {
         rollingWindow: {requestVolumeThreshold: 2, timeWindow: 10, bucketSize: 1},

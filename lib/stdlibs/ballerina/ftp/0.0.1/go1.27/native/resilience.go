@@ -28,21 +28,25 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ballerina-nutcracker/ballerina/platform/pal"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/values"
 	"github.com/pkg/sftp"
 )
 
-func sleep(platform pal.Platform, d time.Duration) {
-	done := make(chan struct{})
-	platform.Time.AfterFunc(d, func() { close(done) })
-	<-done
+// sleep hands the thread back on every pass, as lang.runtime sleep does, so other strands on the
+// same thread keep running during a backoff.
+func sleep(ctx *extern.Context, d time.Duration) {
+	clock := ctx.Env.Platform.Time
+	deadline := clock.MonotonicNow() + d
+	for clock.MonotonicNow() < deadline {
+		<-ctx.Yield()
+	}
 }
 
 // withRetry runs op once and then up to count more times, waiting interval seconds before the
 // first retry and multiplying the wait by backOffFactor (capped at maxWaitInterval) after that.
 // Only transient failures are retried (ballerina-platform/ballerina-library#9385).
-func withRetry[T any](platform pal.Platform, settings *retrySettings, name string, op func() (T, error)) (T, error) {
+func withRetry[T any](ctx *extern.Context, settings *retrySettings, name string, op func() (T, error)) (T, error) {
 	result, err := op()
 	if err == nil || settings == nil || !isRetryable(err) {
 		return result, err
@@ -52,7 +56,7 @@ func withRetry[T any](platform pal.Platform, settings *retrySettings, name strin
 		if attempt > 1 {
 			wait = math.Min(wait*settings.backOffFactor, settings.maxWaitInterval)
 		}
-		sleep(platform, time.Duration(int64(wait*1000))*time.Millisecond)
+		sleep(ctx, time.Duration(int64(wait*1000))*time.Millisecond)
 		result, err = op()
 		if err == nil || !isRetryable(err) {
 			return result, err
