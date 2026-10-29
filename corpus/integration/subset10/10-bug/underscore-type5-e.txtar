@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> underscore-type5-e.bal:17:31
+   |
+17 | type MissingColon transaction _; // @error
+   |                               ^
+
 error[SYNTAX_ERROR]: intervening whitespaces are not allowed
   --> underscore-type5-e.bal:17:31
    |

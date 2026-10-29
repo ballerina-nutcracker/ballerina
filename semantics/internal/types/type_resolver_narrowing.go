@@ -31,7 +31,7 @@ const (
 )
 
 type binding struct {
-	// ref is the underlying symbol we are narrowing. This is never a narrowed symbol
+	// ref is the base symbol this entry applies to. This is never a narrowed symbol
 	ref            model.SymbolRef
 	narrowedSymbol model.SymbolRef
 	prev           *binding
@@ -199,6 +199,19 @@ func narrowSymbol(t typeResolver, underlying model.SymbolRef, ty semtypes.SemTyp
 	narrowedSymbol := t.createNarrowedSymbol(underlying)
 	t.setSymbolType(narrowedSymbol, ty)
 	return narrowedSymbol
+}
+
+// narrowByType splits the current type of ref, which may be a narrowed symbol, by ty: the true outcome narrows the
+// base symbol to the part inside ty and the false outcome to the rest.
+func narrowByType(t typeResolver, chain *binding, ref model.SymbolRef, ty semtypes.SemType) expressionEffect {
+	symbolTy := t.symbolType(ref)
+	base := t.unnarrowedSymbol(ref)
+	trueSym := narrowSymbol(t, base, semtypes.Intersect(symbolTy, ty))
+	falseSym := narrowSymbol(t, base, semtypes.Diff(symbolTy, ty))
+	return expressionEffect{
+		ifTrue:  &binding{ref: base, narrowedSymbol: trueSym, prev: chain},
+		ifFalse: &binding{ref: base, narrowedSymbol: falseSym, prev: chain},
+	}
 }
 
 func unnarrowSymbol(t typeResolver, chain *binding, symbol model.SymbolRef) statementEffect {

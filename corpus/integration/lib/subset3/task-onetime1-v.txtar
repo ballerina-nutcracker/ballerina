@@ -1,0 +1,15 @@
+-- stdout --
+true
+once: 1 false
+true
+held while paused: 0 true
+held after resume: 1
+true
+Invalid time:
+true
+Couldn't convert given time to milli seconds:
+1893456000500
+1893456000000
+1893436200000
+1893456000002
+-- stderr --

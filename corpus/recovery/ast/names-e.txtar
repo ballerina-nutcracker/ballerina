@@ -39,10 +39,10 @@ function valid() {}
           (simple-var-ref (position 18:9 18:14) value)))
       (assignment (position 19:1 20:1)
         (simple-var-ref (position 19:1 19:7) x)
-        (bad-expr-or-action (position 19:9 19:21)))
+        (bad-expr-or-action optional-field-access (position 19:9 19:21) (tokens ("?." 19:14 19:16) (":" 19:19 19:20))))
       (assignment (position 20:1 21:1)
         (simple-var-ref (position 20:1 20:7) x)
-        (bad-expr-or-action (position 20:9 20:22)))
+        (bad-expr-or-action optional-field-access (position 20:9 20:22) (tokens ("?." 20:14 20:16) (":" 20:19 20:20))))
       (assignment (position 21:1 22:1)
         (simple-var-ref (position 21:1 21:7) x)
         (remote-method-call (position 21:9 21:17) (bad-identifier) expr:
@@ -82,3 +82,51 @@ function valid() {}
   (function (position 28:1 29:1) valid () (
     (value-type (position <built-in>) null))
     (block-function-body (position 28:18 29:1))))
+-- stderr --
+error[SYNTAX_ERROR]: '_' cannot be used as an identifier
+  --> names-e.bal:25:10
+   |
+25 |     x = (_)=>1; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:18:16
+   |
+18 |     x = value?.'_; // @error
+   |                ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:19:20
+   |
+19 |     x = value?.mod:_; // @error
+   |                    ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:20:20
+   |
+20 |     x = value?.mod:'_; // @error
+   |                    ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:21:13
+   |
+21 |     x = ep->'_(); // @error
+   |             ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:22:15
+   |
+22 |     C a = new(_ = 1); // @error
+   |               ^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:23:17
+   |
+23 |     C b = new C('_ = 1); // @error
+   |                 ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> names-e.bal:24:22
+   |
+24 |     x = function(int _) returns int => 1; // @error
+   |                      ^

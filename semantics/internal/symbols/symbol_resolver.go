@@ -47,7 +47,6 @@ const (
 type varStatusTracker interface {
 	markInit(sym model.SymbolRef, pos diagnostics.Location)
 	markUsed(sym model.SymbolRef)
-	getUnused() []varDeclInfo
 }
 
 type varDeclInfo struct {
@@ -125,13 +124,13 @@ type (
 		defaultCounter int
 		serviceCounter int
 		moduleNodes    moduleAstNodeHolder
+		varTracker     varTracker
 	}
 
 	compilationUnitSymbolResolver struct {
 		moduleResolver *moduleSymbolResolver
 		scope          *model.ModuleScope
 		usedPrefixes   map[string]bool
-		varTracker     varTracker
 	}
 
 	blockSymbolResolver struct {
@@ -160,17 +159,14 @@ func markInit(resolver symbolResolver, name string, symbol model.SymbolRef, pos 
 }
 
 func (r *compilationUnitSymbolResolver) markInit(sym model.SymbolRef, pos diagnostics.Location) {
-	r.varTracker.markInit(sym, pos)
+	r.moduleResolver.varTracker.markInit(sym, pos)
 }
 
 func (r *compilationUnitSymbolResolver) markUsed(sym model.SymbolRef) {
-	if r.varTracker.isTracked(sym) {
-		r.varTracker.markUsed(sym)
+	tracker := &r.moduleResolver.varTracker
+	if tracker.isTracked(sym) {
+		tracker.markUsed(sym)
 	}
-}
-
-func (r *compilationUnitSymbolResolver) getUnused() []varDeclInfo {
-	return r.varTracker.getUnused()
 }
 
 func (r *blockSymbolResolver) markInit(sym model.SymbolRef, pos diagnostics.Location) {
@@ -246,6 +242,7 @@ func newModuleSymbolResolver(ctx *context.CompilerContext, pkgID model.PackageID
 		packageSymbols: make(map[string]model.SymbolRef),
 		prevPos:        make(map[string]prevPos),
 		prevAnnotPos:   make(map[string]prevPos),
+		varTracker:     varTracker{varIndex: make(map[model.SymbolRef]int)},
 		moduleNodes: moduleAstNodeHolder{
 			typeDefns:  make(map[string]moduleAstNode[*ast.BLangTypeDefinition]),
 			classDefns: make(map[string]moduleAstNode[*ast.BLangClassDefinition]),
@@ -700,9 +697,9 @@ func Resolve(
 		processCompilationUnitXMLNS(resolver, cu)
 		resolveCompilationUnit(resolver, cu)
 		reportUnusedImports(resolver, compilationUnitImports(cu))
-		reportUnusedVariables(cx, resolver.getUnused())
 		maps.Copy(importedSymbols, cuImports.imports)
 	}
+	reportUnusedVariables(cx, moduleResolver.varTracker.getUnused())
 
 	mainSpaces := make([]*model.SymbolSpace, 0, len(cuResolvers)+1)
 	annotationSpaces := make([]*model.SymbolSpace, 0, len(cuResolvers)+1)
@@ -1513,7 +1510,6 @@ func defineFunctionTypeParam(paramScope model.Scope, param *ast.BLangFunctionTyp
 	paramScope.AddSymbol(name, &symbol)
 	ref, _ := paramScope.GetSymbol(name)
 	param.SymbolRef = ref
-	param.Name.SetDeterminedType(semtypes.Never)
 	return true
 }
 
@@ -1632,6 +1628,10 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 	}
 	current := resolver
 	for current != nil {
+		switch current.node.(type) {
+		case *ast.BLangClassDefinition, *ast.BLangService:
+			return name == "self"
+		}
 		// Issue here is mapping constructor treats some of it's keys as simple variable ref; which is wrong but since they are variable they have symbols
 		// and we have to resolve them. But they are not real variables
 		if _, isMappingScope := current.node.(*ast.BLangMappingConstructorExpr); !isMappingScope {
@@ -2671,7 +2671,7 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 		return ok
 	case *ast.BLangTypeTestExpr:
 		ok := resolveOptionalExpr(r, n.Expr)
-		return resolveTypeData(r, &n.Type) && ok
+		return resolveTypeData(r, &n.TestedType) && ok
 	case *ast.BLangVarRef:
 		return referSimpleVariableReference(r, n)
 	case *ast.BLangConstRef:
@@ -2689,8 +2689,6 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 		rootNeeds := map[string]model.SymbolRef{}
 		ok := resolveXMLElementLiteralNamespaces(r, r.GetScope(), n, rootNeeds)
 		return mergeNamespaces(r, n, rootNeeds) && ok
-	case *ast.BLangXMLAttribute:
-		return resolveOptionalExpr(r, n.Value)
 	case *ast.BLangXMLPILiteral, *ast.BLangXMLCommentLiteral, *ast.BLangXMLTextLiteral:
 		return true
 	case *ast.BLangXMLFilterExpression:
@@ -2898,7 +2896,7 @@ func resolveTypeDesc(r symbolResolver, td ast.TypeDescriptor) bool {
 	case *ast.BLangErrorTypeNode:
 		return resolveTypeData(r, &n.DetailType)
 	case *ast.BLangConstrainedType:
-		ok := resolveTypeData(r, &n.Type)
+		ok := resolveTypeData(r, &n.BaseType)
 		return resolveTypeData(r, &n.Constraint) && ok
 	case *ast.BLangStreamType:
 		ok := resolveTypeData(r, &n.ValueType)

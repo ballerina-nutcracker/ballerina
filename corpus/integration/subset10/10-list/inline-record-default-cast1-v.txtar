@@ -1,0 +1,4 @@
+-- stdout --
+true
+[{"a":2},1]
+-- stderr --

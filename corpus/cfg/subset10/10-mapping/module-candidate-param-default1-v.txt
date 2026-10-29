@@ -1,0 +1,32 @@
+(count
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(f
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref p)
+        (user-defined-type B)))
+  )
+)
+(g
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref p)
+        (user-defined-type A)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation f ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation g ( <default>)))))
+  )
+)

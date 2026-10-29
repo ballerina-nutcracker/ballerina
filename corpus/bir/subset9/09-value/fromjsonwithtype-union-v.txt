@@ -203,8 +203,8 @@ main() -> nil|error{
     GOTO bb41;
   }
   bb41 {
-    anyMap = %85;
-    %90 = println(anyMap) -> bb42;
+    anydataMap = %85;
+    %90 = println(anydataMap) -> bb42;
   }
   bb42 {
     %91 = ConstantLoad <nil>

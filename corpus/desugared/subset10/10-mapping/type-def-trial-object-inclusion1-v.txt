@@ -1,0 +1,81 @@
+(package
+  (import-package ballerina io (as io))
+  (variable v (type
+    (value-type readonly)))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type boolean))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition R
+    (record-type
+      (field typeInclusion
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-test-expr is
+              (simple-var-ref v)
+              (object-type)))))
+      (field classInclusion
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-test-expr is
+              (simple-var-ref v)
+              (object-type)))))))
+  (type-definition O
+    (object-type
+      (field a
+        (value-type int))))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref v)
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-test-expr is
+              (simple-var-ref v)
+              (object-type)))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-test-expr is
+              (simple-var-ref v)
+              (object-type))))))))

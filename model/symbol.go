@@ -890,6 +890,8 @@ func mapToLangPrefixIfNeeded(prefix string) string {
 		return "lang.boolean"
 	case "decimal":
 		return "lang.decimal"
+	case "error":
+		return "lang.error"
 	case "float":
 		return "lang.float"
 	case "array":

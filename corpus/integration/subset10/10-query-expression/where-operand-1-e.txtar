@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> where-operand-1-e.bal:22:15
+   |
+22 |         where x + "a" > 0 // @error where expression fails to resolve
+   |               ^^^^^^^

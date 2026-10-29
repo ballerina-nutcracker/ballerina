@@ -49,3 +49,10 @@ func ListenerAttachPointBound(cx semtypes.Context) semtypes.SemType {
 	stringArr := listDefn.Define(cx.Env(), nil, semtypes.ListRest(semtypes.String))
 	return semtypes.Union(stringArr, semtypes.Union(semtypes.String, semtypes.Nil))
 }
+
+// ListenerInitExpectedType returns the type a listener initializer may have
+// when the listener is declared as listenerTy. The initializer may also
+// evaluate to an error, on which module init panics.
+func ListenerInitExpectedType(listenerTy semtypes.SemType) semtypes.SemType {
+	return semtypes.Union(listenerTy, semtypes.Error)
+}

@@ -1,0 +1,13 @@
+-- stdout --
+paused: 0 0 0 0
+wait catches up: true
+ignore skips missed: true
+final: 12 12
+forever wait fired all: true
+forever ignore skipped: true
+pauseAll: true 0 true
+resumeAll: true true
+before reconfigure: 3
+after reconfigure: 8 false
+0
+-- stderr --

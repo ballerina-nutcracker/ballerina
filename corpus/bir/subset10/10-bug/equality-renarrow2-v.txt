@@ -1,0 +1,162 @@
+module $anon.. v 0.0.0;
+size(string) -> error|"large"|"medium"|"small"|"xlarge"{
+  bb0 {
+    %4 = ConstantLoad xl
+    %3 = == s %4;
+    %2 = %3;
+    %3 ? bb2 : bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad xlarge
+    %5 = == s %6;
+    %2 = %5;
+    GOTO bb2;
+  }
+  bb2 {
+    %2 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad xlarge
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 8
+    %3 = ConstantLoad small
+    %2 = == (1, s) %3;
+    %1 = %2;
+    %2 ? bb6 : bb5;
+  }
+  bb5 {
+    %5 = ConstantLoad medium
+    %4 = == (1, s) %5;
+    %1 = %4;
+    GOTO bb6;
+  }
+  bb6 {
+    %0 = %1;
+    %1 ? bb8 : bb7;
+  }
+  bb7 {
+    %7 = ConstantLoad large
+    %6 = == (1, s) %7;
+    %0 = %6;
+    GOTO bb8;
+  }
+  bb8 {
+    %0 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (2, %0) = (2, s);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unknown
+    %1 = newError error(%0)
+    (2, %0) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+sizeNotEqual(string) -> error|"large"|"medium"|"small"|"xlarge"{
+  bb0 {
+    %4 = ConstantLoad xl
+    %3 = != s %4;
+    %2 = %3;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %6 = ConstantLoad xlarge
+    %5 = != s %6;
+    %2 = %5;
+    GOTO bb2;
+  }
+  bb2 {
+    %2 ? bb3 : bb10;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %3 = ConstantLoad small
+    %2 = != (1, s) %3;
+    %1 = %2;
+    %2 ? bb4 : bb5;
+  }
+  bb4 {
+    %5 = ConstantLoad medium
+    %4 = != (1, s) %5;
+    %1 = %4;
+    GOTO bb5;
+  }
+  bb5 {
+    %0 = %1;
+    %1 ? bb6 : bb7;
+  }
+  bb6 {
+    %7 = ConstantLoad large
+    %6 = != (1, s) %7;
+    %0 = %6;
+    GOTO bb7;
+  }
+  bb7 {
+    %0 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 2
+    %0 = ConstantLoad unknown
+    %1 = newError error(%0)
+    (2, %0) = %1;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb9 {
+    PushScopeFrame 0
+    (2, %0) = (2, s);
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb10 {
+    PushScopeFrame 1
+    %0 = ConstantLoad xlarge
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad medium
+    %2 = size(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad  
+    %4 = ConstantLoad xl
+    %5 = size(%4) -> bb2;
+  }
+  bb2 {
+    %6 = println(%2,%3,%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad large
+    %8 = sizeNotEqual(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad  
+    %10 = ConstantLoad xlarge
+    %11 = sizeNotEqual(%10) -> bb5;
+  }
+  bb5 {
+    %12 = println(%8,%9,%11) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

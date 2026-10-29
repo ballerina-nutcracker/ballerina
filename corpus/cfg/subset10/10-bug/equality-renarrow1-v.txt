@@ -1,0 +1,57 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation paint (
+          (literal red)))
+        (literal  )
+        (invocation paint (
+          (literal blue)))
+        (literal  )
+        (invocation paint (
+          (literal green))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation paintNotEqual (
+          (literal red)))
+        (literal  )
+        (invocation paintNotEqual (
+          (literal blue)))
+        (literal  )
+        (invocation paintNotEqual (
+          (literal yellow))))))
+  )
+)
+(paint
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (binary-expr ==
+          (simple-var-ref color)
+          (literal red))
+        (literal crimson)
+        (ternary-expr
+          (binary-expr ==
+            (simple-var-ref color)
+            (literal blue))
+          (literal navy)
+          (simple-var-ref color))))
+  )
+)
+(paintNotEqual
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (binary-expr !=
+          (simple-var-ref color)
+          (literal red))
+        (group-expr
+          (ternary-expr
+            (binary-expr !=
+              (simple-var-ref color)
+              (literal blue))
+            (simple-var-ref color)
+            (literal navy)))
+        (literal crimson)))
+  )
+)

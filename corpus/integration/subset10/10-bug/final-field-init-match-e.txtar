@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final field 's'
+  --> final-field-init-match-e.bal:25:17
+   |
+25 |                 self.s = "a"; // @error possibly assigned already
+   |                 ^^^^^^

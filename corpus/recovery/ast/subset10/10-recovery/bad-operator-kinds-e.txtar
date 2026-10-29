@@ -1,0 +1,135 @@
+-- bad-operator-kinds-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+type Optional int $ ?; // @error
+type Union int $ | string; // @error
+type Intersection int $ & readonly; // @error
+function operators() {
+    any binary = 1 $ + 2; // @error
+    any checked = $ check foo(); // @error
+    any typeOf = $ typeof data; // @error
+    any unary = $ !flag; // @error
+    any tested = data $ is int; // @error
+    any trapped = $ trap foo(); // @error
+    any annotation = data $ .@tag; // @error
+}
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (type-definition (position 1:1 18:1) Optional
+    (bad-type optional (position 17:15 17:22) (tokens ("int" 17:15 17:18) ("?" 17:21 17:22))))
+  (type-definition (position 18:1 19:1) Union
+    (bad-type union (position 18:12 18:26) (tokens ("int" 18:12 18:15) ("|" 18:18 18:19) ("string" 18:20 18:26))))
+  (type-definition (position 19:1 20:1) Intersection
+    (bad-type intersection (position 19:19 19:35) (tokens ("int" 19:19 19:22) ("&" 19:25 19:26) ("readonly" 19:27 19:35))))
+  (function (position 20:1 29:1) operators () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 20:22 29:1)
+      (var-def (position 21:1 22:1)
+        (variable (position 21:1 22:1) binary (type
+          (value-type (position 21:1 21:9) any)) (expr
+          (bad-expr-or-action binary (position 21:18 21:25) (tokens ("+" 21:22 21:23))))))
+      (var-def (position 22:1 23:1)
+        (variable (position 22:1 23:1) checked (type
+          (value-type (position 22:1 22:9) any)) (expr
+          (bad-expr-or-action check (position 22:19 22:32) (tokens ("check" 22:21 22:26) ("(" 22:30 22:31) (")" 22:31 22:32))))))
+      (var-def (position 23:1 24:1)
+        (variable (position 23:1 24:1) typeOf (type
+          (value-type (position 23:1 23:9) any)) (expr
+          (bad-expr-or-action typeof (position 23:18 23:31) (tokens ("typeof" 23:20 23:26))))))
+      (var-def (position 24:1 25:1)
+        (variable (position 24:1 25:1) unary (type
+          (value-type (position 24:1 24:9) any)) (expr
+          (bad-expr-or-action unary (position 24:17 24:24) (tokens ("!" 24:19 24:20))))))
+      (var-def (position 25:1 26:1)
+        (variable (position 25:1 26:1) tested (type
+          (value-type (position 25:1 25:9) any)) (expr
+          (bad-expr-or-action type-test (position 25:18 25:31) (tokens ("is" 25:25 25:27) ("int" 25:28 25:31))))))
+      (var-def (position 26:1 27:1)
+        (variable (position 26:1 27:1) trapped (type
+          (value-type (position 26:1 26:9) any)) (expr
+          (bad-expr-or-action trap (position 26:19 26:31) (tokens ("trap" 26:21 26:25) ("(" 26:29 26:30) (")" 26:30 26:31))))))
+      (var-def (position 27:1 28:1)
+        (variable (position 27:1 28:1) (bad-identifier) (type
+          (value-type (position 27:1 27:9) any)) (expr
+          (bad-expr-or-action annot-access (position 27:22 27:34) (tokens (".@" 27:29 27:31)))))))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:17:19
+   |
+17 | type Optional int $ ?; // @error
+   |                   ^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:18:16
+   |
+18 | type Union int $ | string; // @error
+   |                ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:19:23
+   |
+19 | type Intersection int $ & readonly; // @error
+   |                       ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:21:20
+   |
+21 |     any binary = 1 $ + 2; // @error
+   |                    ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:22:19
+   |
+22 |     any checked = $ check foo(); // @error
+   |                   ^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:23:18
+   |
+23 |     any typeOf = $ typeof data; // @error
+   |                  ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:24:17
+   |
+24 |     any unary = $ !flag; // @error
+   |                 ^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:25:23
+   |
+25 |     any tested = data $ is int; // @error
+   |                       ^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:26:19
+   |
+26 |     any trapped = $ trap foo(); // @error
+   |                   ^^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:27:27
+   |
+27 |     any annotation = data $ .@tag; // @error
+   |                           ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> bad-operator-kinds-e.bal:27:9
+   |
+27 |     any annotation = data $ .@tag; // @error
+   |         ^^^^^^^^^^^

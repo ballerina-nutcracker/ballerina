@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server; the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener; the new `ballerina/mime` module for MIME media types, entities, and multipart bodies; and the new `ballerina/constraint` package, providing constraint annotations and `constraint:validate` for run-time validation.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/constraint` package, providing constraint annotations and `constraint:validate` for run-time validation.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -297,6 +297,21 @@ Types: `mime:MediaType`, `mime:ContentDisposition`, `mime:Entity` (class); `mime
 | Multipart bodies | `setBodyParts`/`getBodyParts` — `message/*` bodies return a `ParserError`; jBallerina silently returns an empty array for these instead |
 | `base64Encode`/`base64Decode`/`base64EncodeBlob`/`base64DecodeBlob` | Accept `string`, `byte[]`, or an `io:ReadableByteChannel` (read fully, result handed back as a freshly-constructed channel; charset does not apply to the channel form, matching jBallerina) |
 
+## [task](https://github.com/ballerina-platform/module-ballerina-task/blob/master/docs/spec/spec.md)
+
+Scheduling of `task:Job` objects once or at a fixed interval, with the error and waiting policies and job management of jBallerina's Quartz-based scheduler.
+
+Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:WaitingPolicy`, `task:Service`, `task:RetryConfiguration`, `task:Listener` (class), `task:Error`.
+
+| Function | Notes |
+|---|---|
+| `scheduleOneTimeJob(job, triggerTime)` | Runs the job once at a future `time:Civil`; a panic in `execute` is logged and ignored |
+| `scheduleJobRecurByFrequency(job, interval, maxCount?, startTime?, endTime?, taskPolicy?)` | Runs the job every `interval` seconds, optionally bounded by a count and a start/end window |
+| `pauseJob` / `resumeJob` / `pauseAllJobs` / `resumeAllJobs` | A resumed job applies its waiting policy to the runs it missed: `WAIT` fires them all, `IGNORE` and `LOG_AND_IGNORE` skip them |
+| `unscheduleJob` / `getRunningJobs` | Unscheduling the last job shuts the scheduler down; running jobs are listed in ascending id order |
+| `configureWorkerPool(workerCount?, waitingTime?)` | `waitingTime` is how late a run may be before the waiting policy treats it as missed |
+| `getTimeInMillies(time)` | Epoch milliseconds of a future `time:Civil` |
+| `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |
 ## [constraint](https://github.com/ballerina-platform/module-ballerina-constraint/blob/master/docs/spec/spec.md)
 
 Types: `constraint:Error`, `constraint:ValidationError`, `constraint:TypeConversionError`, `constraint:DateOption`, and the constraint record types for each annotation.

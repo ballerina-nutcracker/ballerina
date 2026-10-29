@@ -77,6 +77,7 @@ func (v *walkTestVisitor) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	case *ast.BLangVariable:
 		v.checkSymbolLocation(n)
+		v.checkSymbolType(n)
 	case *ast.BLangFunction:
 		name := n.Name.GetValue()
 		if name == "init" || name == desugar.StartFunctionName || name == desugar.GracefulStopFunctionName || name == desugar.ImmediateStopFunctionName {
@@ -95,6 +96,12 @@ func (v *walkTestVisitor) checkSymbolLocation(node ast.NodeWithSymbol) {
 	symbol := v.cx.GetSymbol(node.Symbol())
 	if !diagnostics.LocationHasSource(symbol.Location()) {
 		v.t.Errorf("symbol with missing source location: %s", symbol.Name())
+	}
+}
+
+func (v *walkTestVisitor) checkSymbolType(node ast.NodeWithSymbol) {
+	if semtypes.IsZero(v.cx.SymbolType(node.Symbol())) {
+		v.t.Errorf("symbol with no type: %s", v.cx.GetSymbol(node.Symbol()).Name())
 	}
 }
 

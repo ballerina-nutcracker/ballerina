@@ -1,0 +1,56 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Other
+    (variable x (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 0)))))
+  (class-definition C
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable o (type
+        (user-defined-type Other)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref o)
+            (literal x))
+          (literal 1))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 2))
+        (assignment
+          (index-based-access
+            (simple-var-ref o)
+            (literal x))
+          (literal 3)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Other)) (expr
+          (new ()))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new (
+            (simple-var-ref o))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal x))
+          (literal  )
+          (index-based-access
+            (simple-var-ref o)
+            (literal x))))))))
