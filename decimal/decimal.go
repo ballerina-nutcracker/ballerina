@@ -237,9 +237,7 @@ func (a *Decimal) Rem(b *Decimal) (*Decimal, *Error) {
 
 // remLargeQuotient returns a % b when the integer quotient a / b has more
 // digits than the decimal128 precision, which apd reports as
-// DivisionImpossible. It requires exp(a) > exp(b). The spec still requires a
-// result [https://ballerina.io/spec/lang/master/#section_6.23], and it is exact
-// because its coefficient is smaller than coeff(b).
+// DivisionImpossible. It requires exp(a) > exp(b).
 func (a *Decimal) remLargeQuotient(b *Decimal) (*Decimal, *Error) {
 	shift := apd.NewBigInt(int64(a.v.Exponent) - int64(b.v.Exponent))
 	out := &Decimal{}
