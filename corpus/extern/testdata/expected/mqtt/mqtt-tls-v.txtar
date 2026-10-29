@@ -1,6 +1,7 @@
 -- stdout --
 tls: published to tls-v/t
 tls 1.3: published to tls-v/t
+tls 1.1: published to tls-v/t
 unknown protocol version: published to tls-v/t
 mtls: published to tls-v/t
 mtls ignores password of a plain key: published to tls-v/t

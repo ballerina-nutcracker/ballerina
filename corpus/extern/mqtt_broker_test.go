@@ -45,12 +45,14 @@ type mqttListenerSpec struct {
 	scheme       string
 	clientAuth   tls.ClientAuthType
 	requireLogin bool
+	tlsVersion   uint16
 }
 
 var mqttListenerSpecs = []mqttListenerSpec{
 	{id: "anon", scheme: "tcp"},
 	{id: "password", scheme: "tcp", requireLogin: true},
 	{id: "tls", scheme: "ssl", clientAuth: tls.VerifyClientCertIfGiven},
+	{id: "tls11", scheme: "ssl", clientAuth: tls.VerifyClientCertIfGiven, tlsVersion: tls.VersionTLS11},
 	{id: "mtls", scheme: "ssl", clientAuth: tls.RequireAndVerifyClientCert},
 	{id: "mtls-password", scheme: "ssl", clientAuth: tls.RequireAndVerifyClientCert, requireLogin: true},
 }
@@ -73,7 +75,7 @@ func startMqttBroker(t *testing.T) map[string]string {
 	for _, spec := range mqttListenerSpecs {
 		config := listeners.Config{ID: spec.id, Address: "127.0.0.1:0"}
 		if spec.scheme == "ssl" {
-			config.TLSConfig = mqttServerTLSConfig(t, spec.clientAuth)
+			config.TLSConfig = mqttServerTLSConfig(t, spec)
 		}
 		listener := listeners.NewTCP(config)
 		if err := server.AddListener(listener); err != nil {
@@ -101,7 +103,7 @@ func closeMqttBroker(server *mochi.Server) {
 	}
 }
 
-func mqttServerTLSConfig(t *testing.T, clientAuth tls.ClientAuthType) *tls.Config {
+func mqttServerTLSConfig(t *testing.T, spec mqttListenerSpec) *tls.Config {
 	t.Helper()
 	serverCert, err := tls.LoadX509KeyPair(filepath.Join(mqttCertsDir, "server.crt"), filepath.Join(mqttCertsDir, "server.key"))
 	if err != nil {
@@ -115,12 +117,17 @@ func mqttServerTLSConfig(t *testing.T, clientAuth tls.ClientAuthType) *tls.Confi
 	if !clientCAs.AppendCertsFromPEM(clientCA) {
 		t.Fatalf("parsing mqtt client certificate")
 	}
-	return &tls.Config{
+	config := &tls.Config{
 		Certificates: []tls.Certificate{serverCert},
-		ClientAuth:   clientAuth,
+		ClientAuth:   spec.clientAuth,
 		ClientCAs:    clientCAs,
 		MinVersion:   tls.VersionTLS12,
 	}
+	if spec.tlsVersion != 0 {
+		config.MinVersion = spec.tlsVersion
+		config.MaxVersion = spec.tlsVersion
+	}
+	return config
 }
 
 // mqttBrokerHook admits every client on anonymous listeners and only the test user on

@@ -267,6 +267,7 @@ func parseSecureSocket(platform pal.Platform, secureSocket *values.Map) (*pal.TL
 		version, _ := mapString(protocol, "version")
 		if v, known := tlsVersions[version]; known {
 			tlsConfig.MaxVersion = v
+			tlsConfig.MinVersion = min(v, tls.VersionTLS12)
 		}
 	}
 	return tlsConfig, nil

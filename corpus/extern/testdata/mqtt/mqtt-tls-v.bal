@@ -16,7 +16,7 @@
 // under the License.
 
 // Runs against the in-process broker started by corpus/extern/mqtt_test.go, which has a TLS, a
-// mutual TLS and a mutual TLS with credentials listener. Paths are relative to corpus/extern.
+// TLS 1.1 only, a mutual TLS and a mutual TLS with credentials listener. Paths are relative to corpus/extern.
 import ballerina/crypto;
 import ballerina/io;
 import ballerina/mqtt;
@@ -24,6 +24,7 @@ import ballerina/mqtt;
 isolated function brokerUrl(string listenerId) returns string = external;
 
 final string TLS_URL = brokerUrl("tls");
+final string TLS11_URL = brokerUrl("tls11");
 final string MTLS_URL = brokerUrl("mtls");
 final string MTLS_PASSWORD_URL = brokerUrl("mtls-password");
 
@@ -51,6 +52,8 @@ public function main() returns error? {
     check connect("tls", TLS_URL, "tls-v-1", {secureSocket: {cert: SERVER_CERT}}); // @output tls: published to tls-v/t
     // @output tls 1.3: published to tls-v/t
     check connect("tls 1.3", TLS_URL, "tls-v-2", {secureSocket: {cert: SERVER_CERT, protocol: {name: mqtt:TLS, version: "1.3"}}});
+    // @output tls 1.1: published to tls-v/t
+    check connect("tls 1.1", TLS11_URL, "tls-v-18", {secureSocket: {cert: SERVER_CERT, protocol: {name: mqtt:TLS, version: "1.1"}}});
     // @output unknown protocol version: published to tls-v/t
     check connect("unknown protocol version", TLS_URL, "tls-v-3", {secureSocket: {cert: SERVER_CERT, protocol: {name: mqtt:SSL, version: "9"}}});
     // @output mtls: published to tls-v/t
