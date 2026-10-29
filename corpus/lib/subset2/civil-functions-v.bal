@@ -27,6 +27,7 @@ public function main() returns error? {
     time:Utc later = time:utcAddSeconds(base, 3600.0d);
     time:Seconds diff = time:utcDiffSeconds(later, base);
     io:println(diff == 3600.0d); // @output true
+    io:println(time:utcAddSeconds([0, 0.5], 10000000000.75)); // @output [10000000001,0.25]
 
     // dateValidate: valid date
     time:Error? valid = time:dateValidate({year: 2024, month: 6, day: 15});
