@@ -1,0 +1,144 @@
+module $anon.. v 0.0.0;
+class XmlFn {
+  f function(xml) returns xml
+
+  init(function(xml) returns xml) -> nil{
+    bb0 {
+      %3 = ConstantLoad f
+      self[%3] = f;
+      return;
+    }
+  }
+}
+class IntFn {
+  f function(int) returns xml
+
+  init(function(int) returns xml) -> nil{
+    bb0 {
+      %3 = ConstantLoad f
+      self[%3] = f;
+      return;
+    }
+  }
+}
+kind(any) -> string{
+  bb0 {
+    %3 = v is object { function(xml) returns xml f; public function init(function(xml) returns xml) returns nil }
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad XmlFn
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %6 = v is object { function(int) returns xml f; public function init(function(int) returns xml) returns nil }
+    %6 ? bb4 : bb5;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    %7 = ConstantLoad IntFn
+    %5 = %7;
+    GOTO bb6;
+  }
+  bb5 {
+    %8 = ConstantLoad neither
+    %5 = %8;
+    GOTO bb6;
+  }
+  bb6 {
+    %2 = %5;
+    GOTO bb3;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("a", %2)
+    %4 = ConstantLoad 2
+    %5 = newXMLText(%4)
+    %6 = newXMLElement("a", %5)
+    %7 = newXMLSequence{%3, %6}
+    %8 = newXMLElement("root", %7)
+    x = %8;
+    %10 = newObject $anon/.:XmlFn
+    %11 = fp $anon/.:$anonFunc$_0
+    %12 = %10.init(%11) -> bb1;
+  }
+  bb1 {
+    %14 = %12 is nil
+    %14 ? bb2 : bb3;
+  }
+  bb2 {
+    %13 = %10;
+    GOTO bb4;
+  }
+  bb3 {
+    %13 = %12;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %13;
+    %16 = kind(c) -> bb5;
+  }
+  bb5 {
+    %17 = println(%16) -> bb6;
+  }
+  bb6 {
+    %18 = c is object { function(xml) returns xml f; public function init(function(xml) returns xml) returns nil }
+    %18 ? bb7 : bb10;
+  }
+  bb7 {
+    PushScopeFrame 5
+    %1 = ConstantLoad f
+    %0 = (1, c)[%1];
+    f = %0;
+    %3 = f((1, x)) -> bb8;
+  }
+  bb8 {
+    %4 = println(%3) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    GOTO bb10;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(xml) -> xml<xml:Element>{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(s,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$$anonFunc$_0$0
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_0$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = $stepIndex(%3,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}

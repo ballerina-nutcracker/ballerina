@@ -68,7 +68,6 @@ func testSemanticAnalysis(t *testing.T, testCase test_util.TestCase) {
 		t.Fatalf("compiler context has errors for %s: %v", testCase.InputPath, cx.Diagnostics())
 	}
 
-	// Validate that all expressions have determinedTypes set
 	validator := &semanticAnalysisValidator{t: t, ctx: cx}
 	ast.Walk(validator, result.Package)
 
@@ -97,14 +96,12 @@ func (v *semanticAnalysisValidator) Visit(node ast.BLangNode) ast.Visitor {
 		return nil
 	}
 
-	// Validate determinedType is set on every expression node. NEVER is a
-	// legitimate type for guaranteed-divergent expressions (e.g.
+	// NEVER is a legitimate type for guaranteed-divergent expressions (e.g.
 	// `check newError()` whose inner type is exactly `error`), so we only
 	// flag the unset case.
-	if _, ok := node.(ast.BLangExpression); ok {
-		if semtypes.IsZero(node.GetDeterminedType()) {
-			v.t.Errorf("determinedType not set for expression %T at %v",
-				node, node.GetPosition())
+	if typed, ok := node.(ast.NodeWithType); ok {
+		if semtypes.IsZero(typed.Type()) {
+			v.t.Errorf("type not set for %T at %v", typed, typed.GetPosition())
 		}
 	}
 

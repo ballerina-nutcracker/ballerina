@@ -18,6 +18,7 @@ package types_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -29,12 +30,14 @@ import (
 
 const noSurvivorSource = `
 class First {
-    function init(any literal, any langLib, any streamNext, any lax, any test, any cast, any list, any mapping, int marker) {
+    function init(any literal, any langLib, any streamNext, any lax, any test, any cast, any list, any mapping, any query, int marker) {
+        any[] _ = [literal, langLib, streamNext, lax, test, cast, list, mapping, query, marker];
     }
 }
 
 class Second {
-    function init(any literal, any langLib, any streamNext, any lax, any test, any cast, any list, any mapping, string marker) {
+    function init(any literal, any langLib, any streamNext, any lax, any test, any cast, any list, any mapping, any query, string marker) {
+        any[] _ = [literal, langLib, streamNext, lax, test, cast, list, mapping, query, marker];
     }
 }
 
@@ -43,11 +46,13 @@ public function main() returns error? {
     stream<int> s = arr.toStream();
     json j = {a: 1};
     any x = 1;
-    First|Second _ = new (1.5, arr.length(), s.next(), check j.a, x is int, <int>x, [2.5, ...arr], {k: 3.5}, true);
+    First|Second _ = new (1.5, arr.length(), s.next(), check j.a, x is int, <int>x, [2.5, ...arr], {k: 3.5},
+        from int q in arr let int w = q + 1 where w > 1 select w, true);
 }
 `
 
-// A rejected trial's unresolved symbol and lowering metadata is not observable in corpus output.
+// A rejected trial's unresolved symbol and lowering metadata is not observable in corpus output, and neither are the
+// compiler-context types of the declarations under it (the query's from and let variables).
 func TestEphemeralTrialLeavesASTUnchanged(t *testing.T) {
 	t.Parallel()
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
@@ -60,21 +65,30 @@ func TestEphemeralTrialLeavesASTUnchanged(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pipeline failed: %v", err)
 	}
-	if !cx.HasDiagnostics() {
-		t.Fatalf("expected the new expression to have no suitable object type")
+	if !hasDiagnosticContaining(cx, "failed to find a suitable object type") {
+		t.Fatalf("expected the new expression to have no suitable object type, got %v", cx.Diagnostics())
 	}
 	finder := &newExpressionFinder{}
 	ast.Walk(finder, result.Package)
 	if finder.expr == nil {
 		t.Fatalf("new expression not found")
 	}
-	if len(finder.expr.ArgsExprs) != 9 {
+	if len(finder.expr.ArgsExprs) != 10 {
 		t.Fatalf("expected the arguments to stay unlowered, got %d", len(finder.expr.ArgsExprs))
 	}
-	checker := &unresolvedChecker{t: t}
+	checker := &unresolvedChecker{t: t, cx: cx}
 	for _, arg := range finder.expr.ArgsExprs {
 		ast.Walk(checker, arg)
 	}
+}
+
+func hasDiagnosticContaining(cx *context.CompilerContext, substr string) bool {
+	for _, diag := range cx.Diagnostics() {
+		if strings.Contains(diag.Message(), substr) {
+			return true
+		}
+	}
+	return false
 }
 
 type newExpressionFinder struct {
@@ -95,17 +109,24 @@ func (f *newExpressionFinder) Visit(node ast.BLangNode) ast.Visitor {
 func (f *newExpressionFinder) VisitTypeData(_ *ast.TypeData) ast.Visitor { return f }
 
 type unresolvedChecker struct {
-	t *testing.T
+	t  *testing.T
+	cx *context.CompilerContext
 }
 
 func (c *unresolvedChecker) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
 		return nil
 	}
-	if !semtypes.IsZero(node.GetDeterminedType()) {
-		c.t.Errorf("%T at %v has a determined type", node, node.GetPosition())
+	if typed, ok := node.(ast.NodeWithType); ok && !semtypes.IsZero(typed.Type()) {
+		if _, bad := node.(*ast.BLangBadExprOrAction); !bad {
+			c.t.Errorf("%T at %v has a type", node, node.GetPosition())
+		}
 	}
 	switch n := node.(type) {
+	case *ast.BLangVariable:
+		c.checkSymbolUntyped(n)
+	case *ast.BLangFunction:
+		c.checkSymbolUntyped(n)
 	case *ast.BLangNumericLiteral:
 		c.checkLiteralValue(&n.BLangLiteral)
 	case *ast.BLangLiteral:
@@ -122,7 +143,7 @@ func (c *unresolvedChecker) Visit(node ast.BLangNode) ast.Visitor {
 			c.t.Errorf("field access at %v is marked lax", n.GetPosition())
 		}
 	case *ast.BLangTypeTestExpr:
-		if !semtypes.IsZero(n.Type.Type) {
+		if !semtypes.IsZero(n.TestedType.Type) {
 			c.t.Errorf("type test at %v has a resolved type", n.GetPosition())
 		}
 	case *ast.BLangListConstructorExpr:
@@ -142,6 +163,17 @@ func (c *unresolvedChecker) VisitTypeData(typeData *ast.TypeData) ast.Visitor {
 		c.t.Errorf("type data %+v has a resolved type", typeData)
 	}
 	return c
+}
+
+// checkSymbolUntyped asserts a declaration under the arguments has no compiler-context type. Reference nodes are
+// not checked: their symbols are typed before the trial.
+func (c *unresolvedChecker) checkSymbolUntyped(node ast.BNodeWithSymbol) {
+	if !ast.SymbolIsSet(node) {
+		return
+	}
+	if !semtypes.IsZero(c.cx.SymbolType(node.Symbol())) {
+		c.t.Errorf("%T at %v has a symbol type", node, node.GetPosition())
+	}
 }
 
 func (c *unresolvedChecker) checkLiteralValue(lit *ast.BLangLiteral) {

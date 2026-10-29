@@ -1,0 +1,141 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Inner1
+    (record-type
+      (field v
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (field m
+        (value-type int))))
+  (type-definition Inner2
+    (record-type
+      (field v
+        (array-type
+          (value-type string) dimensions: 1 ([])))
+      (field m
+        (value-type string))))
+  (type-definition Outer1
+    (record-type
+      (field inner
+        (union-type
+          (user-defined-type Inner1)
+          (user-defined-type Inner2)))
+      (field tag
+        (value-type int))))
+  (type-definition Outer2
+    (record-type
+      (field inner
+        (union-type
+          (user-defined-type Inner1)
+          (user-defined-type Inner2)))
+      (field tag
+        (value-type string))))
+  (type-definition Pair1
+    (record-type
+      (field pair
+        (union-type
+          (tuple-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type int))
+          (tuple-type
+            (array-type
+              (value-type string) dimensions: 1 ([]))
+            (value-type string))))
+      (field tag
+        (value-type int))))
+  (type-definition Pair2
+    (record-type
+      (field pair
+        (union-type
+          (tuple-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type int))
+          (tuple-type
+            (array-type
+              (value-type string) dimensions: 1 ([]))
+            (value-type string))))
+      (field tag
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable o (type
+          (union-type
+            (user-defined-type Outer1)
+            (user-defined-type Outer2))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal inner)
+              (mapping-constructor-expr
+                (key-value
+                  (literal v)
+                  (invocation lang.array map (
+                    (simple-var-ref arr)
+                    (lambda
+                      (function $anonFunc$_0 (
+                        (variable x)) ()
+                        (expr-function-body
+                          (binary-expr +
+                            (simple-var-ref x)
+                            (literal 1))))))))
+                (key-value
+                  (literal m)
+                  (literal 1))))
+            (key-value
+              (literal tag)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref o)
+            (user-defined-type Outer1))
+          (literal  )
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref o)
+              (literal inner))
+            (user-defined-type Inner1)))))
+      (var-def
+        (variable p (type
+          (union-type
+            (user-defined-type Pair1)
+            (user-defined-type Pair2))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal pair)
+              (list-constructor-expr
+                (invocation lang.array map (
+                  (simple-var-ref arr)
+                  (lambda
+                    (function $anonFunc$_1 (
+                      (variable x)) ()
+                      (expr-function-body
+                        (binary-expr *
+                          (simple-var-ref x)
+                          (literal 10)))))))
+                (literal 1)))
+            (key-value
+              (literal tag)
+              (literal t))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref p)
+            (user-defined-type Pair2))))))))

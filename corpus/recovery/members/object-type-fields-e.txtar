@@ -41,25 +41,65 @@ function valid() returns int => 1;
     (object-type
       (field valid
         (value-type int))
-      (bad-top-level field)))
+      (bad-top-level field (tokens (";" 18:6 18:7)))))
   (type-definition MissingName
     (object-type
       (field valid
         (value-type int))
-      (bad-top-level field)))
+      (bad-top-level field (tokens ("int" 22:5 22:8) (";" 22:8 22:9)))))
   (type-definition MissingSemicolon
     (object-type
-      (field valid
+      (field missingSemicolon
         (value-type int))
-      (bad-top-level field)))
+      (field valid
+        (value-type int))))
   (type-definition InclusionMissingSemicolon
     (object-type
       (field valid
-        (value-type int))
-      (bad-top-level type-inclusion)))
+        (value-type int))))
   (type-definition MissingCloseBrace
-    (bad-type))
+    (object-type
+      (field a
+        (value-type int))))
   (function valid () (
     (value-type int))
     (expr-function-body
       (literal 1))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: MissingObjectBase
+  --> object-type-fields-e.bal:30:6
+   |
+30 |     *MissingObjectBase
+   |      ^^^^^^^^^^^^^^^^^
+31 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> object-type-fields-e.bal:35:1
+   |
+35 | ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-fields-e.bal:18:6
+   |
+18 |     x; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-fields-e.bal:22:8
+   |
+22 |     int; // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> object-type-fields-e.bal:27:1
+   |
+27 |     int valid; // @error missing semicolon is reported at the next field
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> object-type-fields-e.bal:31:1
+   |
+31 |     int valid; // @error missing semicolon is reported at the next field
+   |

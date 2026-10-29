@@ -41,10 +41,10 @@
         (union-type
           (value-type int)
           (value-type null)))))
-  (type-definition AnyMap
+  (type-definition AnydataMap
     (constrained-type
       (builtin-ref-type map)
-      (value-type any)))
+      (value-type anydata)))
   (function main () (
     (union-type
       (error-type)
@@ -189,14 +189,14 @@
               (literal a)
               (literal 1))))))
       (var-def
-        (variable anyMap (type
-          (user-defined-type AnyMap)) (expr
+        (variable anydataMap (type
+          (user-defined-type AnydataMap)) (expr
           (checked-expr
             (invocation fromJsonWithType expr:
               (simple-var-ref openMap) (
-              (simple-var-ref AnyMap)))))))
+              (simple-var-ref AnydataMap)))))))
       (expression-stmt
         (invocation io println (
-          (simple-var-ref anyMap))))
+          (simple-var-ref anydataMap))))
       (return
         (literal <nil>)))))

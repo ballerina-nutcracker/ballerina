@@ -70,12 +70,17 @@ function valid() returns int => 1;
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level field)))
+      (bad-top-level field (tokens ("function" 18:5 18:13) ("(" 18:14 18:15) ("int" 18:15 18:18) (")" 18:20 18:21) ("returns" 18:22 18:29) ("int" 18:30 18:33) (";" 18:33 18:34)))))
   (type-definition MissingComma
     (object-type
+      (method-decl m (
+        (param a
+          (value-type int))
+        (param b
+          (value-type int))) (
+        (value-type null)))
       (method-decl valid () (
-        (value-type int)))
-      (bad-top-level function)))
+        (value-type int)))))
   (type-definition MissingParamName
     (object-type
       (method-decl m (
@@ -108,7 +113,7 @@ function valid() returns int => 1;
     (object-type
       (method-decl m (
         (param a
-          (bad-type))) (
+          (bad-type builtin (tokens ("int" 38:18 38:21))))) (
         (value-type null)))
       (method-decl valid () (
         (value-type int)))))
@@ -118,7 +123,7 @@ function valid() returns int => 1;
         (param a
           (value-type int))
         (param (bad-identifier)
-          (bad-type))) (
+          (bad-type simple-reference))) (
         (value-type null)))
       (method-decl valid () (
         (value-type int)))))
@@ -132,26 +137,156 @@ function valid() returns int => 1;
         (value-type int)))))
   (type-definition Mixed
     (object-type
+      (method-decl m (
+        (param a
+          (value-type int))
+        (param b
+          (value-type string))
+        (param c
+          (value-type int))) (
+        (value-type null)))
       (method-decl valid () (
-        (value-type int)))
-      (bad-top-level function)))
+        (value-type int)))))
   (type-definition MissingReturnType
     (object-type
       (method-decl m () (
-        (bad-type)))
+        (bad-type simple-reference)))
       (method-decl valid () (
         (value-type int)))))
   (type-definition MissingReturnsKeyword
     (object-type
       (method-decl valid () (
         (value-type int)))
-      (bad-top-level function)))
+      (bad-top-level function (tokens ("function" 58:5 58:13) ("(" 58:15 58:16) (")" 58:16 58:17) (";" 58:21 58:22)))))
   (type-definition MissingSemicolon
     (object-type
-      (method-decl valid () (
+      (method-decl m () (
         (value-type int)))
-      (bad-top-level function)))
+      (method-decl valid () (
+        (value-type int)))))
   (function valid () (
     (value-type int))
     (expr-function-body
       (literal 1))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> object-type-methods-e.bal:46:24
+   |
+46 |     function m(int x = ); // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> object-type-methods-e.bal:50:34
+   |
+50 |     function m(int a, string b = , int c = 1, d, int... ); // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown type: a
+  --> object-type-methods-e.bal:30:16
+   |
+30 |     function m(a, int b); // @error
+   |                ^
+
+error[SEMANTIC_ERROR]: Unknown type: b
+  --> object-type-methods-e.bal:34:23
+   |
+34 |     function m(int a, b); // @error
+   |                       ^
+
+error[SEMANTIC_ERROR]: Unknown type: d
+  --> object-type-methods-e.bal:50:47
+   |
+50 |     function m(int a, string b = , int c = 1, d, int... ); // @error
+   |                                               ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> object-type-methods-e.bal:38:16
+   |
+38 |     function m(, int a); // @error
+   |                ^^^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> object-type-methods-e.bal:58:18
+   |
+58 |     function m() int; // @error
+   |                  ^^^^^^^^^^^^^^
+59 |     function valid() returns int;
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> object-type-methods-e.bal:22:22
+   |
+22 |     function m(int a int b); // @error
+   |
+
+error[SYNTAX_ERROR]: missing ellipsis token
+  --> object-type-methods-e.bal:50:48
+   |
+50 |     function m(int a, string b = , int c = 1, d, int... ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:18:33
+   |
+18 |     function (int a) returns int; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:26:20
+   |
+26 |     function m(int ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:30:17
+   |
+30 |     function m(a, int b); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:34:24
+   |
+34 |     function m(int a, b); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:42:23
+   |
+42 |     function m(int a, ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:46:24
+   |
+46 |     function m(int x = ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> object-type-methods-e.bal:50:34
+   |
+50 |     function m(int a, string b = , int c = 1, d, int... ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> object-type-methods-e.bal:63:1
+   |
+63 |     function valid() returns int; // @error missing semicolon is reported at the next method
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> object-type-methods-e.bal:42:23
+   |
+42 |     function m(int a, ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> object-type-methods-e.bal:54:25
+   |
+54 |     function m() returns; // @error
+   |
+
+error[SYNTAX_ERROR]: parameter after the rest parameter
+  --> object-type-methods-e.bal:50:48
+   |
+50 |     function m(int a, string b = , int c = 1, d, int... ); // @error
+   |                                                ^^^^^^^^^

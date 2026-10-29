@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> query-var-capture-2-e.bal:21:58
+   |
+21 |         select isolated function () returns int { return xs.length(); }; // @error
+   |                                                          ^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> query-var-capture-2-e.bal:27:58
+   |
+27 |         select isolated function () returns int { return ys.length(); }; // @error
+   |                                                          ^^

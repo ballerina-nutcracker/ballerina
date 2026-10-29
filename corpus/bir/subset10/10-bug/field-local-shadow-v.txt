@@ -1,0 +1,366 @@
+module $anon.. v 0.0.0;
+class Buffer {
+  lexeme string
+  count int
+  item int
+  value int
+  values int
+
+  capture() -> [int...]{
+    bb0 {
+      %2 = ConstantLoad 3
+      count = %2;
+      %4 = closure_fp $anon/.:$anonFunc$_0
+      next = %4;
+      %6 = next() -> bb1;
+    }
+    bb1 {
+      result = %6;
+      %9 = ConstantLoad count
+      %8 = self[%9];
+      %10 = ConstantLoad 3
+      %11 = newArray [int...][%10]{result, count, %8}
+      %0 = %11;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad abc
+      %3 = ConstantLoad lexeme
+      self[%3] = %2;
+      %4 = ConstantLoad 0
+      %5 = ConstantLoad count
+      self[%5] = %4;
+      %6 = ConstantLoad 0
+      %7 = ConstantLoad item
+      self[%7] = %6;
+      %8 = ConstantLoad 0
+      %9 = ConstantLoad value
+      self[%9] = %8;
+      %10 = ConstantLoad 0
+      %11 = ConstantLoad values
+      self[%11] = %10;
+      %12 = ConstantLoad 2
+      count = %12;
+      %14 = ConstantLoad count
+      self[%14] = count;
+      return;
+    }
+  }
+
+  lambdas() -> int{
+    bb0 {
+      %2 = closure_fp $anon/.:$anonFunc$_1
+      required = %2;
+      %4 = closure_fp $anon/.:$anonFunc$_2
+      rest = %4;
+      %7 = ConstantLoad 5
+      %8 = %7;
+      %9 = required(%8) -> bb1;
+    }
+    bb1 {
+      %10 = %9;
+      %11 = ConstantLoad 1
+      %12 = %11;
+      %13 = ConstantLoad 2
+      %14 = %13;
+      %15 = rest(%12,%14) -> bb2;
+    }
+    bb2 {
+      %16 = %15;
+      %6 = + %10 %16;
+      %0 = %6;
+      return;
+    }
+  }
+
+  loop() -> int{
+    bb0 {
+      %2 = ConstantLoad 0
+      total = %2;
+      %4 = ConstantLoad 1
+      %5 = ConstantLoad 2
+      %6 = ConstantLoad 2
+      %7 = newArray [int, int, never...][%6]{%4, %5}
+      $desugar$0 = %7;
+      %9 = ConstantLoad 0
+      $desugar$1 = %9;
+      %11 = length($desugar$0) -> bb1;
+    }
+    bb1 {
+      $desugar$2 = %11;
+      GOTO bb2;
+    }
+    bb2 {
+      %14 = $desugar$1;
+      %15 = $desugar$2;
+      %13 = < %14 %15;
+      %13 ? bb3 : bb4;
+    }
+    bb3 {
+      PushScopeFrame 15
+      %0 = (1, $desugar$0)[(1, $desugar$1)];
+      item = %0;
+      %3 = (1, total);
+      %4 = item;
+      %2 = + %3 %4;
+      (1, total) = %2;
+      %5 = ConstantLoad item
+      %6 = (1, self)[%5];
+      %7 = %6;
+      %8 = ConstantLoad 10
+      %9 = %8;
+      %10 = + %7 %9;
+      (1, self)[%5] = %10;
+      %12 = (1, $desugar$1);
+      %13 = ConstantLoad 1
+      %14 = %13;
+      %11 = + %12 %14;
+      (1, $desugar$1) = %11;
+      PopScopeFrame
+      GOTO bb2;
+    }
+    bb4 {
+      %17 = total;
+      %19 = ConstantLoad item
+      %18 = self[%19];
+      %20 = %18;
+      %16 = + %17 %20;
+      %0 = %16;
+      return;
+    }
+  }
+
+  take() -> string{
+    bb0 {
+      %3 = ConstantLoad lexeme
+      %2 = self[%3];
+      lexeme = %2;
+      %5 = ConstantLoad 
+      %6 = ConstantLoad lexeme
+      self[%6] = %5;
+      %0 = lexeme;
+      return;
+    }
+  }
+}
+class Parent {
+  inherited int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 7
+      %3 = ConstantLoad inherited
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class Child {
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 7
+      %3 = ConstantLoad inherited
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  read() -> int{
+    bb0 {
+      %2 = ConstantLoad 9
+      inherited = %2;
+      %5 = inherited;
+      %7 = ConstantLoad inherited
+      %6 = self[%7];
+      %8 = %6;
+      %4 = + %5 %8;
+      %0 = %4;
+      return;
+    }
+  }
+}
+class Resource {
+  count int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 8
+      %3 = ConstantLoad count
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  resource get value Resource.$resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 2
+      count = %2;
+      %5 = count;
+      %7 = ConstantLoad count
+      %6 = self[%7];
+      %8 = %6;
+      %4 = + %5 %8;
+      %0 = %4;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Buffer
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    buffer = %3;
+    %7 = ConstantLoad count
+    %6 = buffer[%7];
+    %8 = %6;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %10 = buffer.take() -> bb6;
+  }
+  bb6 {
+    %11 = println(%10) -> bb7;
+  }
+  bb7 {
+    %14 = ConstantLoad lexeme
+    %13 = buffer[%14];
+    %15 = ConstantLoad 
+    %12 = == %13 %15;
+    %16 = %12;
+    %17 = println(%16) -> bb8;
+  }
+  bb8 {
+    %18 = buffer.capture() -> bb9;
+  }
+  bb9 {
+    %19 = println(%18) -> bb10;
+  }
+  bb10 {
+    %20 = buffer.lambdas() -> bb11;
+  }
+  bb11 {
+    %21 = %20;
+    %22 = println(%21) -> bb12;
+  }
+  bb12 {
+    %23 = buffer.loop() -> bb13;
+  }
+  bb13 {
+    %24 = %23;
+    %25 = println(%24) -> bb14;
+  }
+  bb14 {
+    %26 = newObject $anon/.:Child
+    %27 = %26.init() -> bb15;
+  }
+  bb15 {
+    %29 = %27 is nil
+    %29 ? bb16 : bb17;
+  }
+  bb16 {
+    %28 = %26;
+    GOTO bb18;
+  }
+  bb17 {
+    %28 = %27;
+    GOTO bb18;
+  }
+  bb18 {
+    child = %28;
+    %31 = child.read() -> bb19;
+  }
+  bb19 {
+    %32 = %31;
+    %33 = println(%32) -> bb20;
+  }
+  bb20 {
+    %34 = newObject $anon/.:Resource
+    %35 = %34.init() -> bb21;
+  }
+  bb21 {
+    %37 = %35 is nil
+    %37 ? bb22 : bb23;
+  }
+  bb22 {
+    %36 = %34;
+    GOTO bb24;
+  }
+  bb23 {
+    %36 = %35;
+    GOTO bb24;
+  }
+  bb24 {
+    clientValue = %36;
+    %39 = ConstantLoad value
+    %40 = clientValue->[%39].get() -> bb25;
+  }
+  bb25 {
+    result = %40;
+    %42 = result;
+    %43 = println(%42) -> bb26;
+  }
+  bb26 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %2 = (1, count);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    (1, count) = %1;
+    %5 = ConstantLoad count
+    %6 = (1, self)[%5];
+    %7 = %6;
+    %8 = ConstantLoad 10
+    %9 = %8;
+    %10 = + %7 %9;
+    (1, self)[%5] = %10;
+    %0 = (1, count);
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = value;
+    %5 = ConstantLoad value
+    %4 = (1, self)[%5];
+    %6 = %4;
+    %2 = + %3 %6;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_2([int...]...) -> int{
+  bb0 {
+    %3 = length(values) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %6 = ConstantLoad values
+    %5 = (1, self)[%6];
+    %7 = %5;
+    %2 = + %4 %7;
+    %0 = %2;
+    return;
+  }
+}

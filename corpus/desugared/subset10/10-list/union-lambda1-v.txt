@@ -1,0 +1,79 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable r (type
+          (union-type
+            (tuple-type
+              (array-type
+                (value-type int) dimensions: 1 ([]))
+              (value-type int))
+            (tuple-type
+              (array-type
+                (value-type string) dimensions: 1 ([]))
+              (value-type string)))) (expr
+          (list-constructor-expr
+            (invocation lang.array map (
+              (simple-var-ref arr)
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable x)) ()
+                  (expr-function-body
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal 1)))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (tuple-type
+              (array-type
+                (value-type int) dimensions: 1 ([]))
+              (value-type int))))))
+      (var-def
+        (variable r2 (type
+          (union-type
+            (tuple-type
+              (array-type
+                (value-type int) dimensions: 1 ([]))
+              (value-type int))
+            (tuple-type
+              (array-type
+                (value-type boolean) dimensions: 1 ([]))
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (invocation lang.array map (
+              (simple-var-ref arr)
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable x)) ()
+                  (expr-function-body
+                    (binary-expr >
+                      (simple-var-ref x)
+                      (literal 1)))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r2))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r2)
+            (tuple-type
+              (array-type
+                (value-type boolean) dimensions: 1 ([]))
+              (value-type int)))))))))

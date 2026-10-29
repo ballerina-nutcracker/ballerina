@@ -1,0 +1,125 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    %6 = ConstantLoad v
+    $desugar$0 = arr;
+    %8 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %8;
+    %10 = ConstantLoad 0
+    %11 = newArray list[%10]{}
+    $desugar$2 = %11;
+    %14 = ConstantLoad 0
+    $desugar$3 = %14;
+    GOTO bb2;
+  }
+  bb2 {
+    %17 = $desugar$3;
+    %18 = $desugar$1;
+    %16 = < %17 %18;
+    %16 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 12
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %1 = ConstantLoad id
+    %3 = (1, x);
+    %4 = ConstantLoad 3
+    %5 = %4;
+    %2 = * %3 %5;
+    %6 = newMap {| id: int, never... |}{%1=%2}
+    %7 = push((1, $desugar$2),%6) -> bb5;
+  }
+  bb4 {
+    %19 = ConstantLoad m
+    %20 = ConstantLoad 1
+    %21 = newMap {| m: int, v: [{| id: int, never... |}...], never... |}{%6=$desugar$2, %19=%20}
+    r = %21;
+    %23 = println(r) -> bb6;
+  }
+  bb5 {
+    %9 = (1, $desugar$3);
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %8 = + %9 %11;
+    (1, $desugar$3) = %8;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %24 = r is {| m: int, v: [{| id: int, never... |}...], never... |}
+    %25 = %24;
+    %26 = println(%25) -> bb7;
+  }
+  bb7 {
+    %27 = ConstantLoad inner
+    %28 = ConstantLoad xs
+    $desugar$4 = arr;
+    %30 = length($desugar$4) -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %30;
+    %32 = ConstantLoad 0
+    %33 = newArray list[%32]{}
+    $desugar$6 = %33;
+    %36 = ConstantLoad 0
+    $desugar$7 = %36;
+    GOTO bb9;
+  }
+  bb9 {
+    %39 = $desugar$7;
+    %40 = $desugar$5;
+    %38 = < %39 %40;
+    %38 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$4)[(1, $desugar$7)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$6),%5) -> bb12;
+  }
+  bb11 {
+    %41 = newMap {| xs: [int...], never... |}{%28=$desugar$6}
+    %42 = ConstantLoad m
+    %43 = ConstantLoad 1
+    %44 = newMap {| inner: {| xs: [int...], never... |}|{| xs: [string...], never... |}, m: int, never... |}{%27=%41, %42=%43}
+    o = %44;
+    %46 = println(o) -> bb13;
+  }
+  bb12 {
+    %8 = (1, $desugar$7);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$7) = %7;
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb13 {
+    %47 = o is {| inner: {| xs: [int...], never... |}|{| xs: [string...], never... |}, m: int, never... |}
+    %48 = %47;
+    %49 = println(%48) -> bb14;
+  }
+  bb14 {
+    %51 = ConstantLoad inner
+    %50 = o[%51];
+    %52 = %50 is {| xs: [int...], never... |}
+    %53 = %52;
+    %54 = println(%53) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+}

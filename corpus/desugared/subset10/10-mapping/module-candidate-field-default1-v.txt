@@ -1,0 +1,119 @@
+(package
+  (import-package ballerina io (as io))
+  (variable n (type
+    (value-type int)))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition R
+    (record-type
+      (field f
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal s))))
+      (field g
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (invocation name ()))))
+      (field h
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal c))))
+      (field i
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (simple-var-ref n))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref n)
+        (literal 1))))
+  (function name () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal s))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref r)
+              (literal f))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref r)
+              (literal g))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref r)
+              (literal h))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref r)
+              (literal i))
+            (user-defined-type A)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal s))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (invocation name ()))))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal c))))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (simple-var-ref n)))))))

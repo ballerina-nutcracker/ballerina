@@ -1,0 +1,17 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: transformObjectConstructorExpression unimplemented
+  --> field-local-shadow-object-fe.bal:21:13
+   |
+21 |     var o = object { // @error object constructors are not implemented
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |         function m() returns int {
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |             int x = 2; // @error outer local x remains in scope
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |             return x;
+   |             ^^^^^^^^^
+25 |         }
+   |         ^
+26 |     };
+   |     ^

@@ -17,7 +17,8 @@
 package types
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
@@ -26,6 +27,20 @@ type ephemeralState struct {
 	// unimplementedReported records that a trial reported an unimplemented error. Compilation fails on that
 	// diagnostic, so a new expression whose trials all failed does not add its own.
 	unimplementedReported bool
+	// symbolTypes shadows the compiler context's symbol types while a trial runs. It is non-nil exactly while
+	// depth > 0 and is shared by every trial in the nesting: a trial writes a symbol's type before reading it, so
+	// stale entries from sibling candidates or inner trials are overwritten before they can be read.
+	symbolTypes map[model.SymbolRef]semtypes.SemType
+}
+
+func (s *ephemeralState) lookupSymbolType(ref model.SymbolRef) (semtypes.SemType, bool) {
+	ty, ok := s.symbolTypes[ref]
+	return ty, ok
+}
+
+// setSymbolType records a trial-local symbol type. Callers guarantee depth > 0, so the map exists.
+func (s *ephemeralState) setSymbolType(ref model.SymbolRef, ty semtypes.SemType) {
+	s.symbolTypes[ref] = ty
 }
 
 func noteEphemeralUnimplemented(t typeResolver) {
@@ -52,9 +67,15 @@ func enterEphemeral(t typeResolver) func() {
 	if state == nil {
 		return func() {}
 	}
+	if state.depth == 0 {
+		state.symbolTypes = make(map[model.SymbolRef]semtypes.SemType)
+	}
 	state.depth++
 	return func() {
 		state.depth--
+		if state.depth == 0 {
+			state.symbolTypes = nil
+		}
 	}
 }
 
@@ -69,9 +90,10 @@ const (
 )
 
 // selectCandidate runs trial for each candidate while t is ephemeral and returns the only candidate whose trial
-// succeeded. A trial resolves roots against its candidate without committing anything, so the caller resolves roots
-// again, for real, against the selected candidate.
-func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExpression, trial func(C) bool) (C, candidateOutcome) {
+// succeeded. A trial resolves the expression's operands against its candidate without committing anything except
+// the XML step lowering (see resolveXMLStepExpr), so the caller resolves them again, for real, against the selected
+// candidate.
+func selectCandidate[C any](t typeResolver, candidates []C, trial func(C) bool) (C, candidateOutcome) {
 	var selected C
 	state := resolverEphemeralState(t)
 	if len(candidates) < 2 || state == nil {
@@ -80,7 +102,7 @@ func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExp
 	}
 	outerUnimplemented := state.unimplementedReported
 	state.unimplementedReported = false
-	survivors := runTrials(t, candidates, roots, trial)
+	survivors := runTrials(t, candidates, trial)
 	unimplemented := state.unimplementedReported
 	state.unimplementedReported = outerUnimplemented || unimplemented
 	switch {
@@ -95,15 +117,12 @@ func selectCandidate[C any](t typeResolver, candidates []C, roots []ast.BLangExp
 	}
 }
 
-func runTrials[C any](t typeResolver, candidates []C, roots []ast.BLangExpression, trial func(C) bool) []C {
+func runTrials[C any](t typeResolver, candidates []C, trial func(C) bool) []C {
 	exitEphemeral := enterEphemeral(t)
 	defer exitEphemeral()
 	var survivors []C
 	for _, candidate := range candidates {
-		checkUnchanged := assertUnchanged(t, roots)
-		ok := trial(candidate)
-		checkUnchanged()
-		if ok {
+		if trial(candidate) {
 			survivors = append(survivors, candidate)
 		}
 	}

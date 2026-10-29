@@ -1,0 +1,86 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition R
+    (record-type
+      (field f
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal s))))
+      (field g
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (invocation name ()))))
+      (field h
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (simple-var-ref S))))
+      (field i
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (simple-var-ref n))))))
+  (function name () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal s))))
+  (variable n (type
+    (value-type int)) (expr
+    (literal 1)))
+  (const S () (
+    (literal c)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access f
+              (simple-var-ref r))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access g
+              (simple-var-ref r))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access h
+              (simple-var-ref r))
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access i
+              (simple-var-ref r))
+            (user-defined-type A))))))))
