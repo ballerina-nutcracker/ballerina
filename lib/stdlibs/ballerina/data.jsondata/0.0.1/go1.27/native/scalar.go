@@ -81,14 +81,11 @@ func (t *typer) convertStringToken(value string, ty semtypes.SemType) (values.Ba
 
 // convertNonStringToken converts the text of a JSON number, boolean or null token.
 func (t *typer) convertNonStringToken(value string, ty semtypes.SemType) (values.BalValue, error) {
-	typeName := t.typeName(ty)
 	switch {
-	case value == "":
-		return nil, incompatibleTypeError(typeName, value)
-	case value[0] == 't' && value != "true", value[0] == 'f' && value != "false", value[0] == 'n' && value != "null":
-		return nil, incompatibleTypeError(typeName, value)
-	case !strings.ContainsRune("tfn+-0123456789", rune(value[0])):
-		return nil, incompatibleTypeError(typeName, value)
+	case value == "",
+		value[0] == 't' && value != "true", value[0] == 'f' && value != "false", value[0] == 'n' && value != "null",
+		!strings.ContainsRune("tfn+-0123456789", rune(value[0])):
+		return nil, incompatibleTypeError(t.typeName(ty), value)
 	}
 	return t.convertNonStringValue(value, ty)
 }
