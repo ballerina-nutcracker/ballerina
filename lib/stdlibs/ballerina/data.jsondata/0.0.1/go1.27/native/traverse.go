@@ -45,11 +45,12 @@ type traverser struct {
 	restTypes      []restEntry
 	// fieldNames is jBallerina's field-name deque, oldest entry first.
 	fieldNames []string
-	rootArray  typeInfo
+	// renameRoot is set when target is the root value, so the outermost record gets the `@jsondata:Name` overrides.
+	renameRoot bool
 }
 
-func traverse(t *typer, opts projection, json values.BalValue, target semtypes.SemType) (values.BalValue, error) {
-	tr := &traverser{typer: t, projection: opts}
+func traverse(t *typer, opts projection, json values.BalValue, target semtypes.SemType, renameRoot bool) (values.BalValue, error) {
+	tr := &traverser{typer: t, projection: opts, renameRoot: renameRoot}
 	return tr.traverseJSON(json, target)
 }
 
@@ -63,7 +64,7 @@ func (tr *traverser) traverseJSON(json values.BalValue, target semtypes.SemType)
 		if _, ok := json.(*values.Map); !ok {
 			return nil, incompatibleTypeError(tr.typeName(target), formatMessageArg(json))
 		}
-		fields, err := tr.recordFields(ti)
+		fields, err := tr.recordFields(ti, tr.renameRoot && len(tr.fieldHierarchy) == 0)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +74,6 @@ func (tr *traverser) traverseJSON(json values.BalValue, target semtypes.SemType)
 		if _, ok := json.(*values.List); !ok {
 			return nil, incompatibleTypeError(tr.typeName(target), formatMessageArg(json))
 		}
-		tr.rootArray = ti
 		return tr.traverseMapOrArray(json, tr.newListBuilder(ti), ti)
 	case kindUnion:
 		return tr.traverseUnion(json, ti)
@@ -166,9 +166,13 @@ func (tr *traverser) traverseMapOrArray(json values.BalValue, node any, ti typeI
 func (tr *traverser) traverseMapValue(json *values.Map, node *mappingBuilder) (values.BalValue, error) {
 	for _, key := range json.Keys() {
 		value, _ := json.Get(key)
-		field := tr.fieldHierarchy[len(tr.fieldHierarchy)-1].remove(key)
+		fields := tr.fieldHierarchy[len(tr.fieldHierarchy)-1]
+		field := fields.remove(key)
 		if field == nil {
 			if rest := tr.restTypes[len(tr.restTypes)-1]; rest.ok {
+				if fields.isRenamed(key) {
+					return nil, duplicateFieldError(key)
+				}
 				if err := tr.addRestField(rest.ty, key, value, node); err != nil {
 					return nil, err
 				}
@@ -223,7 +227,7 @@ func (tr *traverser) checkRequiredFields(remaining *fieldSet, node *mappingBuild
 }
 
 func (tr *traverser) traverseArrayValue(json *values.List, node *listBuilder) (values.BalValue, error) {
-	atomic := tr.rootArray.list
+	atomic := node.atomic
 	fixedLength := atomic.FixedLength()
 	hasRest := !semtypes.IsNever(atomic.Rest())
 	if !hasRest && !tr.allowDataProjection && json.Len() > fixedLength {

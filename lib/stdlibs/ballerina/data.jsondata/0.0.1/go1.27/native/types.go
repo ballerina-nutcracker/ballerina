@@ -86,9 +86,16 @@ type recordField struct {
 }
 
 // fieldSet holds the record fields that have not been seen in the JSON yet, keyed by their JSON key.
+// renamed holds the names of the fields read from a different JSON key, which cannot be rest fields.
 type fieldSet struct {
-	byKey map[string]*recordField
-	order []string
+	byKey   map[string]*recordField
+	order   []string
+	renamed map[string]struct{}
+}
+
+func (fs *fieldSet) isRenamed(name string) bool {
+	_, ok := fs.renamed[name]
+	return ok
 }
 
 func (fs *fieldSet) remove(key string) *recordField {
@@ -111,7 +118,7 @@ func (fs *fieldSet) remaining() []*recordField {
 }
 
 func emptyFieldSet() *fieldSet {
-	return &fieldSet{byKey: make(map[string]*recordField)}
+	return &fieldSet{byKey: make(map[string]*recordField), renamed: make(map[string]struct{})}
 }
 
 // typer answers the type questions the jBallerina implementation answers through its runtime type API.
@@ -341,17 +348,19 @@ func (t *typer) typeName(ty semtypes.SemType) string {
 }
 
 // recordFields lists the fields of a record keyed by their JSON key. Only the target type's own fields can
-// carry a `@jsondata:Name` override, since annotations of nested types do not reach native code.
-func (t *typer) recordFields(ti typeInfo) (*fieldSet, error) {
+// carry a `@jsondata:Name` override, since annotations of nested types do not reach native code, so the
+// overrides apply only to the root value and not to a nested record of the same shape.
+func (t *typer) recordFields(ti typeInfo, isRoot bool) (*fieldSet, error) {
 	fs := emptyFieldSet()
 	renames := t.rootFieldKeys
-	if !semtypes.IsSameType(t.tc, ti.ty, t.root) {
+	if !isRoot || !semtypes.IsSameType(t.tc, ti.ty, t.root) {
 		renames = nil
 	}
 	for _, name := range ti.mapping.FieldNames() {
 		key := name
-		if renamed, ok := renames[name]; ok {
+		if renamed, ok := renames[name]; ok && renamed != name {
 			key = renamed
+			fs.renamed[name] = struct{}{}
 		}
 		if _, exists := fs.byKey[key]; exists {
 			return nil, duplicateFieldError(key)

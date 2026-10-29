@@ -89,7 +89,7 @@ public function main() {
     stream<byte[], error?> s5 = new (new FailingBlocks());
     json|error r5 = trap jsondata:parseStream(s5, {}, json);
     show(r5);
-    // @output error: invalid JSON document
+    // @output error: stream failure
     byte[][] noBlocks = [];
     stream<byte[], error?> s6 = noBlocks.toStream();
     json|error r6 = trap jsondata:parseStream(s6, {}, json);

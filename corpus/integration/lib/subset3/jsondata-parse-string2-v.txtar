@@ -1,0 +1,17 @@
+-- stdout --
+{"xs":[1,0,2]} 3
+[[1],[2],[3]]
+[["a"],["b"],5]
+{"a":[[1],[2]],"b":5}
+[{"a":1},2]
+[{"a":1},"s"]
+[[[1],[2]],"x",[[3]]]
+error: duplicate field 'title'
+error: duplicate field 'title'
+error: duplicate field 'title'
+{"title":"z","other":1}
+{"title":"a","next":{"title":"b","next":null}}
+{"title":"a","next":{"title":"b","next":null}}
+error: network reset
+true
+-- stderr --

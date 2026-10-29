@@ -53,37 +53,49 @@ func parseAsType(cache *typeCache, ctx *extern.Context, args []values.BalValue) 
 	opts, _ := args[1].(*values.Map)
 	td, _ := args[2].(*values.TypeDesc)
 	t := newTyperFor(cache, ctx, td)
-	result, err := traverse(t, readProjection(opts), args[0], t.root)
+	result, err := traverse(t, readProjection(opts), args[0], t.root, true)
 	return toResult(ctx, result, err)
 }
 
 func parseString(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(string)
-	return parseText(cache, ctx, input, args[1], args[2])
+	return parseText(cache, ctx, utf16FromString(input), args[1], args[2])
 }
 
 func parseBytes(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(*values.List)
-	return parseText(cache, ctx, string(input.ToByteSlice()), args[1], args[2])
+	return parseText(cache, ctx, utf16FromBytes(input.ToByteSlice()), args[1], args[2])
 }
 
-// parseStream reads the whole byte-block stream before parsing. As in jBallerina, an error from the stream
-// ends the input rather than being reported.
+// parseStream reads the whole byte-block stream before parsing. Unlike jBallerina, which treats an error from
+// the stream as the end of the input, an error from the stream is returned as a jsondata:Error.
 func parseStream(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	byteStream, _ := args[0].(*values.Stream)
 	var input []byte
 	for {
-		record, ok := byteStream.Next().(*values.Map)
+		next := byteStream.Next()
+		if streamErr, ok := next.(*values.Error); ok {
+			return streamError(ctx, streamErr)
+		}
+		record, ok := next.(*values.Map)
 		if !ok {
 			break
 		}
 		block, _ := record.Get("value")
 		input = append(input, block.(*values.List).ToByteSlice()...)
 	}
-	return parseText(cache, ctx, string(input), args[1], args[2])
+	return parseText(cache, ctx, utf16FromBytes(input), args[1], args[2])
 }
 
-func parseText(cache *typeCache, ctx *extern.Context, input string, optsArg, tdArg values.BalValue) (values.BalValue, error) {
+func streamError(ctx *extern.Context, cause *values.Error) (values.BalValue, error) {
+	result, err := toResult(ctx, nil, &jsonError{message: cause.Message})
+	if jsonErr, ok := result.(*values.Error); ok {
+		jsonErr.Cause = cause
+	}
+	return result, err
+}
+
+func parseText(cache *typeCache, ctx *extern.Context, input []uint16, optsArg, tdArg values.BalValue) (values.BalValue, error) {
 	opts, _ := optsArg.(*values.Map)
 	td, _ := tdArg.(*values.TypeDesc)
 	t := newTyperFor(cache, ctx, td)

@@ -111,7 +111,6 @@ func (sm *stateMachine) initRootMapValue() (*mappingBuilder, error) {
 	case kindAnydata:
 		return sm.newAnydataMappingBuilder(), nil
 	case kindUnion:
-		sm.pushContext(contextMap)
 		sm.unionDepth++
 		sm.pushFieldNames()
 		return sm.newJSONMappingBuilder(), nil
@@ -123,7 +122,7 @@ func (sm *stateMachine) initRootMapValue() (*mappingBuilder, error) {
 func (sm *stateMachine) initRootArrayValue() (*listBuilder, error) {
 	sm.pushContext(contextArray)
 	expected := *sm.peekExpectedType()
-	if kind := sm.classify(expected).kind; kind == kindJSON || kind == kindAnydata {
+	if kind := sm.classify(expected).kind; kind == kindJSON || kind == kindAnydata || kind == kindUnion {
 		sm.arrayIndexes = append(sm.arrayIndexes, 0)
 	}
 	return sm.initArrayValue(expected)
@@ -140,7 +139,6 @@ func (sm *stateMachine) initArrayValue(expected semtypes.SemType) (*listBuilder,
 		return sm.newAnydataListBuilder(), nil
 	case kindUnion:
 		sm.unionDepth++
-		sm.arrayIndexes = append(sm.arrayIndexes, 0)
 		return sm.newJSONListBuilder(), nil
 	default:
 		return nil, invalidTypeError(sm.typeName(expected), "list type")
@@ -165,7 +163,7 @@ func (sm *stateMachine) checkTypeAndCreateMappingValue(expected semtypes.SemType
 	ti := sm.classify(expected)
 	switch ti.kind {
 	case kindRecord, kindMap:
-		fields, err := sm.mappingFields(ti)
+		fields, err := sm.mappingFields(ti, false)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +176,6 @@ func (sm *stateMachine) checkTypeAndCreateMappingValue(expected semtypes.SemType
 		sm.updateExpectedType(emptyFieldSet(), &expected)
 		return sm.newAnydataMappingBuilder(), nil
 	case kindUnion:
-		sm.pushContext(contextMap)
 		sm.unionDepth++
 		sm.pushFieldNames()
 		return sm.newJSONMappingBuilder(), nil
@@ -281,17 +278,21 @@ func (sm *stateMachine) memberType(expected *semtypes.SemType, index int) (*semt
 func (sm *stateMachine) handleFieldName(jsonFieldName string) error {
 	if sm.jsonFieldDepth == 0 && sm.unionDepth == 0 {
 		visited := sm.visitedFieldHierarchy[len(sm.visitedFieldHierarchy)-1]
+		fields := sm.fieldHierarchy[len(sm.fieldHierarchy)-1]
 		sm.currentField = visited[jsonFieldName]
 		if sm.currentField == nil {
-			sm.currentField = sm.fieldHierarchy[len(sm.fieldHierarchy)-1].remove(jsonFieldName)
+			sm.currentField = fields.remove(jsonFieldName)
 		}
 		var fieldType *semtypes.SemType
 		if sm.currentField == nil {
 			fieldType = sm.restTypes[len(sm.restTypes)-1]
+			if fieldType != nil && fields.isRenamed(jsonFieldName) {
+				return duplicateFieldError(jsonFieldName)
+			}
 		} else {
+			visited[jsonFieldName] = sm.currentField
 			jsonFieldName = sm.currentField.name
 			fieldType = &sm.currentField.ty
-			visited[jsonFieldName] = sm.currentField
 		}
 		sm.expectedTypes = append(sm.expectedTypes, fieldType)
 		if !sm.allowDataProjection && fieldType == nil {
@@ -330,7 +331,18 @@ func (sm *stateMachine) processValue(isString bool) error {
 func (sm *stateMachine) convertAndUpdateCurrentNode(value string, ty semtypes.SemType, isString bool) (any, error) {
 	current := sm.currentNode
 	if sm.nilAsOptionalField && !sm.isNilable(ty) && value == "null" && sm.currentField != nil && sm.currentField.optional {
-		return nil, nil
+		list, ok := current.(*listBuilder)
+		if !ok {
+			return nil, nil
+		}
+		// jBallerina leaves the member's filler value in place of a null member of an optional field's list.
+		index := sm.arrayIndexes[len(sm.arrayIndexes)-1]
+		if filler, ok := values.FillerValue(sm.tc, ty); ok {
+			if list.accepts(index) {
+				list.set(index, filler)
+			}
+			return current, nil
+		}
 	}
 
 	var converted values.BalValue
@@ -370,23 +382,29 @@ func (sm *stateMachine) checkNullAndUpdateCurrentNode(value any) {
 	}
 }
 
+// checkUnionAndFinalizeNonArrayObject and checkUnionAndFinalizeArrayObject pop the structure's expected type
+// unless it is inside a union-typed structure that is still being read, whose members push no expected type.
 func (sm *stateMachine) checkUnionAndFinalizeNonArrayObject() (parserState, error) {
+	var state parserState
+	var err error
 	if sm.unionDepth > 0 {
 		sm.popFieldNames()
-		return sm.finalizeObject()
+		state, err = sm.finalizeObject()
+	} else {
+		state, err = sm.finalizeNonArrayObject()
 	}
-	state, err := sm.finalizeNonArrayObject()
-	sm.popExpectedType()
+	if sm.unionDepth == 0 {
+		sm.popExpectedType()
+	}
 	return state, err
 }
 
 func (sm *stateMachine) checkUnionAndFinalizeArrayObject() (parserState, error) {
 	sm.arrayIndexes = sm.arrayIndexes[:len(sm.arrayIndexes)-1]
-	if sm.unionDepth > 0 {
-		return sm.finalizeObject()
-	}
 	state, err := sm.finalizeObject()
-	sm.popExpectedType()
+	if sm.unionDepth == 0 {
+		sm.popExpectedType()
+	}
 	return state, err
 }
 
@@ -473,5 +491,5 @@ func (sm *stateMachine) verifyAndConvertToUnion(node any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return traverse(sm.typer, sm.projection, json, *sm.peekExpectedType())
+	return traverse(sm.typer, sm.projection, json, *sm.peekExpectedType(), false)
 }

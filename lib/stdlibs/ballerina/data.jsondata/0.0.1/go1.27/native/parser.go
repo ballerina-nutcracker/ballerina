@@ -25,6 +25,7 @@ import (
 	"errors"
 	"strconv"
 	"unicode/utf16"
+	"unicode/utf8"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -123,9 +124,29 @@ type stateMachine struct {
 	unionDepth            int
 }
 
-func parse(t *typer, opts projection, input string, target semtypes.SemType) (values.BalValue, error) {
+func parse(t *typer, opts projection, input []uint16, target semtypes.SemType) (values.BalValue, error) {
 	sm := &stateMachine{typer: t, projection: opts, line: 1}
-	return sm.execute(utf16.Encode([]rune(input)), target)
+	return sm.execute(input, target)
+}
+
+// utf16FromString and utf16FromBytes decode UTF-8 straight into UTF-16 code units; an invalid byte becomes
+// U+FFFD. A UTF-16 encoding never has more code units than the UTF-8 encoding has bytes.
+func utf16FromString(input string) []uint16 {
+	buff := make([]uint16, 0, len(input))
+	for _, r := range input {
+		buff = utf16.AppendRune(buff, r)
+	}
+	return buff
+}
+
+func utf16FromBytes(input []byte) []uint16 {
+	buff := make([]uint16, 0, len(input))
+	for len(input) > 0 {
+		r, size := utf8.DecodeRune(input)
+		buff = utf16.AppendRune(buff, r)
+		input = input[size:]
+	}
+	return buff
 }
 
 func (sm *stateMachine) execute(buff []uint16, target semtypes.SemType) (values.BalValue, error) {
@@ -133,7 +154,7 @@ func (sm *stateMachine) execute(buff []uint16, target semtypes.SemType) (values.
 	switch ti.kind {
 	case kindRecord, kindMap:
 		sm.expectedTypes = append(sm.expectedTypes, &target)
-		fields, err := sm.mappingFields(ti)
+		fields, err := sm.mappingFields(ti, true)
 		if err != nil {
 			return nil, err
 		}
@@ -171,9 +192,9 @@ func (sm *stateMachine) execute(buff []uint16, target semtypes.SemType) (values.
 	return sm.materialize(sm.currentNode)
 }
 
-func (sm *stateMachine) mappingFields(ti typeInfo) (*fieldSet, error) {
+func (sm *stateMachine) mappingFields(ti typeInfo, isRoot bool) (*fieldSet, error) {
 	if ti.kind == kindRecord {
-		return sm.recordFields(ti)
+		return sm.recordFields(ti, isRoot)
 	}
 	return emptyFieldSet(), nil
 }
