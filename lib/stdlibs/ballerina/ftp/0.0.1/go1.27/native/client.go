@@ -519,8 +519,12 @@ func (m *ftpModule) getFirst(ctx *extern.Context, args []values.BalValue) (value
 		return m.errorResult(ctx, err)
 	}
 	state.mu.Lock()
+	previous := state.legacyStream
 	state.legacyStream = r
 	state.mu.Unlock()
+	if previous != nil {
+		_ = previous.Close()
+	}
 	return m.nextLegacyChunk(state)
 }
 
@@ -535,7 +539,16 @@ func (m *ftpModule) nextLegacyChunk(state *clientState) (values.BalValue, error)
 	if len(data) > 0 {
 		return m.readonlyChunk(data), nil
 	}
-	if err != nil && err != io.EOF {
+	state.mu.Lock()
+	if state.legacyStream == r {
+		state.legacyStream = nil
+	}
+	state.mu.Unlock()
+	closeErr := r.Close()
+	if err == io.EOF {
+		err = closeErr
+	}
+	if err != nil {
 		return values.NewErrorWithMessage("Error occurred while reading the file: " + err.Error()), nil
 	}
 	return nil, nil
