@@ -715,6 +715,8 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 		}
 	}
 	if wireContentType != "" {
+		// The body parts were re-encoded, so a Content-Length copied from a backend no longer holds.
+		w.Header().Del("Content-Length")
 		w.Header().Set("Content-Type", wireContentType)
 	}
 	// WriteHeader must be called before writing the body; once body bytes

@@ -8,4 +8,6 @@ multipart/mixed; boundary=zz
 own boundary
 500
 failed to encode multipart body: bogus-cs
+hello
+replaced
 -- stderr --

@@ -93,10 +93,9 @@ func MultipartBoundary(contentType string) (baseType, boundary string, isComposi
 // every part header verbatim and transfer-decoding each part body. A part without a
 // Content-Type header is left without one, as in jBallerina.
 //
-// A missing boundary is a ParserError, and so is non-empty data holding no part, which
-// jBallerina reports as a missing start boundary. Empty data decodes to no parts.
-// jBallerina decodes only a byte-channel body (an inbound HTTP body or
-// setFileAsEntityBody) and returns an empty Entity[] for a setByteArray body.
+// A missing boundary is an error, and so is non-empty data holding no part, which
+// jBallerina reports as a missing start boundary. Empty data decodes to no parts; callers
+// decide whether an empty body is an error.
 func DecodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values.List, error) {
 	if boundary == "" {
 		return nil, fmt.Errorf("no boundary parameter found in Content-Type")

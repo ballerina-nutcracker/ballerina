@@ -58,6 +58,25 @@ service /multiparts on new http:Listener(19500) {
         return resp;
     }
 
+    resource function post form(http:Request req) returns string|error {
+        map<string> params = check req.getFormParams();
+        req.setPayload(params);
+        return req.getTextPayload();
+    }
+
+    resource function get unlabelled() returns string|error {
+        mime:Entity part = new;
+        part.setText("no content type");
+        http:Request outbound = new;
+        outbound.setBodyParts([part]);
+        outbound.removeHeader("content-type");
+        return upstream->post("/multiparts/echo", outbound);
+    }
+
+    resource function get notEntities() returns any[] {
+        return [1, 2];
+    }
+
     resource function post echo(http:Request req) returns string|error {
         mime:Entity[] parts = check req.getBodyParts();
         return string `${req.getContentType()} count=${parts.length()} 1:${check parts[0].getText()}`;
@@ -105,4 +124,18 @@ public function testMain() returns error? {
     io:println(check r.getHeader("x-same-parts")); // @output true
     string edited = check r.getTextPayload();
     io:println(edited.includes(" count=2 1:edited part")); // @output true
+
+    http:Request form = new;
+    form.setTextPayload("a=1&b=2", "application/x-www-form-urlencoded");
+    r = check c->post("/multiparts/form", form);
+    io:println(check r.getTextPayload()); // @output {"a":"1","b":"2"}
+
+    string unlabelled = check c->get("/multiparts/unlabelled");
+    io:println(unlabelled.indexOf("multipart/form-data; boundary=") == 0); // @output true
+    io:println(unlabelled.includes(" count=1 1:no content type")); // @output true
+
+    r = check c->get("/multiparts/notEntities");
+    io:println(r.statusCode); // @output 500
+    map<json> notEntitiesBody = <map<json>>check r.getJsonPayload();
+    io:println(notEntitiesBody["message"]); // @output failed to serialize resource return value: failed to encode multipart body: member 0 is not a mime:Entity
 }

@@ -18,6 +18,7 @@ package native
 
 import (
 	"bytes"
+	"cmp"
 	"compress/flate"
 	"compress/gzip"
 	"context"
@@ -368,6 +369,7 @@ var requestMethodKeyCache = makeMethodKeys("ballerina/http:Request.", []string{
 	"setContentType", "getContentType", "getTextPayload", "getJsonPayload", "getXmlPayload",
 	"getBinaryPayload",
 	"getHeader", "getHeaders", "hasHeader", "getQueryParams", "getQueryParamValue", "getQueryParamValues",
+	"setPayload", "getFormParams",
 })
 
 func requestMethodKeys() map[string]string { return requestMethodKeyCache }
@@ -433,9 +435,7 @@ func initHttpModule(rt *runtime.Runtime) {
 				if err != nil {
 					return nil, 0, "", err
 				}
-				if wireCT != "" {
-					setRequestHeader(req, "content-type", wireCT, ctx.TypeCtx())
-				}
+				setRequestHeader(req, "content-type", wireCT, ctx.TypeCtx())
 				return bytes.NewReader(data), int64(len(data)), wireCT, nil
 			}
 			buf := holder.materialize()
@@ -931,11 +931,9 @@ func initHttpModule(rt *runtime.Runtime) {
 				}
 				bodyReader = bytes.NewReader(data)
 				forwardContentLength = int64(len(data))
-				if contentType != "" {
-					contentType = wireCT
-					reqHeaders["content-type"] = []string{contentType}
-					setRequestHeader(reqObj, "content-type", contentType, ctx.TypeCtx())
-				}
+				contentType = wireCT
+				reqHeaders["content-type"] = []string{contentType}
+				setRequestHeader(reqObj, "content-type", contentType, ctx.TypeCtx())
 			} else if ok {
 				if stream := holder.takeStream(); stream != nil {
 					bodyReader = stream
@@ -1845,7 +1843,7 @@ var responseMethodKeyCache = makeMethodKeys("ballerina/http:Response.", []string
 	"setHeader", "addHeader", "removeHeader", "removeAllHeaders",
 	"setContentType", "getContentType", "getTextPayload", "getJsonPayload", "getXmlPayload",
 	"getBinaryPayload",
-	"hasHeader", "getHeader", "getHeaders", "getHeaderNames",
+	"hasHeader", "getHeader", "getHeaders", "getHeaderNames", "setPayload",
 })
 
 func responseMethodKeys() map[string]string { return responseMethodKeyCache }
@@ -1932,12 +1930,18 @@ func withBoundary(contentType, boundary string) string {
 }
 
 // encodeMultipartBody serializes a mime:Entity[] for the wire, using the boundary in
-// contentType or generating one, and returns contentType carrying the boundary used.
+// contentType or generating one, and returns contentType carrying the boundary used. An empty
+// contentType defaults to multipart/form-data so the receiver is always told the boundary.
 func encodeMultipartBody(ctx *extern.Context, list *values.List, contentType string) (data []byte, wireContentType string, err error) {
 	parts := make([]*values.Object, list.Len())
 	for i := range parts {
-		parts[i] = list.Get(i).(*values.Object)
+		part, ok := list.Get(i).(*values.Object)
+		if !ok {
+			return nil, "", fmt.Errorf("failed to encode multipart body: member %d is not a mime:Entity", i)
+		}
+		parts[i] = part
 	}
+	contentType = cmp.Or(contentType, "multipart/form-data")
 	_, boundary, _ := mimenative.MultipartBoundary(contentType)
 	data, usedBoundary, err := mimenative.EncodeMultipart(ctx, parts, boundary)
 	if err != nil {
