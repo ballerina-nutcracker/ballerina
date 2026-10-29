@@ -16,7 +16,8 @@
 
 import ballerina/io;
 
+const boolean c = {a: 1} == {a: 1};
+
 public function main() {
-    decimal d = 0x12; // @error
-    io:println(d);
+    io:println(c); // @output true
 }
