@@ -48,8 +48,18 @@ type SingletonUnion record {|
     Inner|Color c;
 |};
 
+type SameSingletonUnion record {|
+    Inner|"none" p;
+|};
+
 type RecordOrInt record {|
     Inner|int i;
+|};
+
+type NumericSingletonUnion record {|
+    Inner|1.5 f;
+    Inner|2.5d d;
+    Inner|1.5 g;
 |};
 
 type A record {|
@@ -125,6 +135,17 @@ public function main() {
     show(splitTraversed);
     // @output {"b":"x &amp; yz"}
 
+    // Unions with a singleton or enum member are classified once and reused across parses.
+    foreach int _ in 0 ..< 2 {
+        both("<x><p><name>a</name></p><c><name>b</name></c></x>", SingletonUnion);
+    }
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    both("<x><p><name>c</name></p></x>", SameSingletonUnion);
+    // @output {"p":{"name":"c"}}
+    // @output {"p":{"name":"c"}}
     // A record member that fails on text leaves none of its fields behind for the next member; jBallerina fails
     // both runs with a NullPointerException message (ballerina-platform/ballerina-library#9426).
     both("<x><i>5</i></x>", RecordOrInt);
@@ -133,4 +154,11 @@ public function main() {
     both("<x><p>none</p><c>RED</c></x>", SingletonUnion);
     // @output {"p":"none","c":"RED"}
     // @output {"p":"none","c":"RED"}
+    foreach int _ in 0 ..< 2 {
+        both("<x><f><name>a</name></f><d><name>b</name></d><g><name>c</name></g></x>", NumericSingletonUnion);
+    }
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
 }

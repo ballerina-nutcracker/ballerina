@@ -18,8 +18,11 @@ package native
 
 import (
 	"fmt"
+	"math"
 	"strings"
+	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -107,15 +110,17 @@ var scalarBasicTypes = []struct {
 // typer answers the type questions the jBallerina implementation answers through its runtime type API.
 type typer struct {
 	tc         semtypes.Context
+	cache      *typeCache
 	jsonTy     semtypes.SemType
 	anydataTy  semtypes.SemType
 	root       semtypes.SemType
 	rootAnnots typeAnnotations
 }
 
-func newTyper(tc semtypes.Context, root semtypes.SemType, rootAnnots typeAnnotations) *typer {
+func newTyper(cache *typeCache, tc semtypes.Context, root semtypes.SemType, rootAnnots typeAnnotations) *typer {
 	return &typer{
 		tc:         tc,
+		cache:      cache,
 		jsonTy:     semtypes.CreateJSON(tc),
 		anydataTy:  semtypes.CreateAnydata(tc),
 		root:       root,
@@ -123,7 +128,162 @@ func newTyper(tc semtypes.Context, root semtypes.SemType, rootAnnots typeAnnotat
 	}
 }
 
+// typeCache holds, per runtime, the classification of each structured type and the map and array types
+// defined over each constraint. Classifying a mapping or list type and defining a type both mint runtime
+// atoms that stay live, so doing either per parsed value makes every later parse slower.
+type typeCache struct {
+	mu       sync.Mutex
+	interner *semtypes.SemTypeInterner
+	infos    typeKeyed[typeInfo]
+	maps     typeKeyed[semtypes.SemType]
+	arrays   typeKeyed[semtypes.SemType]
+}
+
+// typeKeyed keys interner-recognisable types by handle; the rest, such as byte or a union with a singleton
+// member, are bucketed by their singleton values and matched by type equality within a bucket.
+type typeKeyed[V any] struct {
+	byHandle map[semtypes.InternHandle]V
+	others   map[singletonKey][]typeEntry[V]
+}
+
+type typeEntry[V any] struct {
+	key   semtypes.SemType
+	value V
+}
+
+// singletonKey records the value a type's int, float, decimal and string parts each consist of, when the
+// part is a single value; a part with several values, such as a two-member enum, adds nothing to the key.
+// Equal types have equal parts, so they always share a key.
+type singletonKey struct {
+	intValue    int64
+	floatBits   uint64
+	decimalBits uint64
+	stringValue string
+	hasInt      bool
+	hasFloat    bool
+	hasDecimal  bool
+	hasString   bool
+}
+
+func singletonKeyOf(ty semtypes.SemType) singletonKey {
+	var key singletonKey
+	basic := semtypes.WidenToBasicTypes(ty)
+	if v, ok := singleValueOf(ty, basic, semtypes.Int); ok {
+		key.intValue, key.hasInt = v.(int64)
+	}
+	if v, ok := singleValueOf(ty, basic, semtypes.Float); ok {
+		var f float64
+		f, key.hasFloat = v.(float64)
+		key.floatBits = floatKeyBits(f)
+	}
+	if v, ok := singleValueOf(ty, basic, semtypes.Decimal); ok {
+		var d *decimal.Decimal
+		if d, key.hasDecimal = v.(*decimal.Decimal); key.hasDecimal {
+			key.decimalBits = floatKeyBits(d.Float64())
+		}
+	}
+	if v, ok := singleValueOf(ty, basic, semtypes.String); ok {
+		key.stringValue, key.hasString = v.(string)
+	}
+	return key
+}
+
+func singleValueOf(ty, basic, part semtypes.SemType) (any, bool) {
+	if !semtypes.ContainsBasicType(basic, part) {
+		return nil, false
+	}
+	shape := semtypes.SingleShape(semtypes.Intersect(ty, part))
+	if !shape.IsPresent() {
+		return nil, false
+	}
+	return shape.Get().Value, true
+}
+
+// floatKeyBits gives values that may be the same shape, such as 0.0 and -0.0 or any two NaNs, one key.
+func floatKeyBits(f float64) uint64 {
+	switch {
+	case f == 0:
+		return 0
+	case math.IsNaN(f):
+		return math.Float64bits(math.NaN())
+	}
+	return math.Float64bits(f)
+}
+
+func newTypeKeyed[V any]() typeKeyed[V] {
+	return typeKeyed[V]{
+		byHandle: make(map[semtypes.InternHandle]V),
+		others:   make(map[singletonKey][]typeEntry[V]),
+	}
+}
+
+func newTypeCache() *typeCache {
+	return &typeCache{
+		interner: semtypes.NewSemtypeInterner(),
+		infos:    newTypeKeyed[typeInfo](),
+		maps:     newTypeKeyed[semtypes.SemType](),
+		arrays:   newTypeKeyed[semtypes.SemType](),
+	}
+}
+
+func getOrCompute[V any](c *typeCache, tc semtypes.Context, entries *typeKeyed[V], key semtypes.SemType,
+	compute func(semtypes.SemType) V) V {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !internable(key) {
+		return lookupOrCompute(tc, entries, key, compute)
+	}
+	handle := c.interner.Intern(key)
+	if value, ok := entries.byHandle[handle]; ok {
+		return value
+	}
+	value := compute(key)
+	entries.byHandle[handle] = value
+	return value
+}
+
+func lookupOrCompute[V any](tc semtypes.Context, entries *typeKeyed[V], key semtypes.SemType,
+	compute func(semtypes.SemType) V) V {
+	bucketKey := singletonKeyOf(key)
+	bucket := entries.others[bucketKey]
+	for _, e := range bucket {
+		if semtypes.IsSameType(tc, e.key, key) {
+			return e.value
+		}
+	}
+	value := compute(key)
+	entries.others[bucketKey] = append(bucket, typeEntry[V]{key: key, value: value})
+	return value
+}
+
+var valueBasicTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String}
+
+// internable reports whether the interner can recognise a copy of ty: it never matches a proper subtype of
+// a value type.
+func internable(ty semtypes.SemType) bool {
+	basic := semtypes.WidenToBasicTypes(ty)
+	for _, valueTy := range valueBasicTypes {
+		if semtypes.ContainsBasicType(basic, valueTy) && !semtypes.IsSubtypeSimple(valueTy, ty) {
+			return false
+		}
+	}
+	return true
+}
+
+// classifyMints reports whether classifying ty mints atoms, which only its mapping and list parts do.
+func classifyMints(ty semtypes.SemType) bool {
+	basic := semtypes.WidenToBasicTypes(ty)
+	return semtypes.ContainsBasicType(basic, semtypes.Mapping) || semtypes.ContainsBasicType(basic, semtypes.List)
+}
+
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
+	if !classifyMints(ty) {
+		return t.classifyType(ty)
+	}
+	return getOrCompute(t.cache, t.tc, &t.cache.infos, ty, t.classifyType)
+}
+
+func (t *typer) classifyType(ty semtypes.SemType) typeInfo {
 	if semtypes.IsSameType(t.tc, ty, t.jsonTy) {
 		return typeInfo{kind: kindJSON, ty: ty}
 	}
@@ -255,16 +415,28 @@ func (t *typer) decompose(ty semtypes.SemType) []semtypes.SemType {
 // isSimpleType reports whether a value of the type is never a structure. A recursive
 // reference adds no member that the enclosing type does not already have.
 func (t *typer) isSimpleType(ty semtypes.SemType) bool {
-	return t.isSimple(ty, map[string]bool{})
+	return t.isSimple(ty, map[any]bool{})
 }
 
-func (t *typer) isSimple(ty semtypes.SemType, visiting map[string]bool) bool {
-	key := semtypes.ToString(t.tc, ty)
-	if visiting[key] {
-		return true
+// cycleKey identifies a classified array or union, the only kinds a recursive type cycles through.
+func cycleKey(ti typeInfo) any {
+	if ti.kind == kindArray {
+		return ti.list
 	}
-	visiting[key] = true
+	if ti.kind == kindUnion && len(ti.members) > 0 {
+		return &ti.members[0]
+	}
+	return nil
+}
+
+func (t *typer) isSimple(ty semtypes.SemType, visiting map[any]bool) bool {
 	ti := t.classify(ty)
+	if key := cycleKey(ti); key != nil {
+		if visiting[key] {
+			return true
+		}
+		visiting[key] = true
+	}
 	switch ti.kind {
 	case kindJSON, kindAnydata, kindMap, kindRecord, kindXML, kindXMLElement, kindXMLText, kindXMLOther,
 		kindUnsupported:
@@ -319,16 +491,17 @@ func (t *typer) containsUnion(ty semtypes.SemType, visiting map[string]bool) boo
 }
 
 func (t *typer) isSupportedType(ty semtypes.SemType) bool {
-	return t.isSupported(ty, map[string]bool{})
+	return t.isSupported(ty, map[any]bool{})
 }
 
-func (t *typer) isSupported(ty semtypes.SemType, visiting map[string]bool) bool {
-	key := semtypes.ToString(t.tc, ty)
-	if visiting[key] {
-		return false
-	}
-	visiting[key] = true
+func (t *typer) isSupported(ty semtypes.SemType, visiting map[any]bool) bool {
 	ti := t.classify(ty)
+	if key := cycleKey(ti); key != nil {
+		if visiting[key] {
+			return false
+		}
+		visiting[key] = true
+	}
 	switch ti.kind {
 	case kindNil, kindInt, kindByte, kindIntSubtype, kindFloat, kindDecimal, kindBoolean, kindString, kindRecord,
 		kindMap, kindJSON, kindAnydata, kindFinite, kindXML, kindXMLElement, kindXMLText:
@@ -367,13 +540,17 @@ func (t *typer) contains(ty semtypes.SemType, v values.BalValue) bool {
 }
 
 func (t *typer) mapType(constraint semtypes.SemType) semtypes.SemType {
-	md := semtypes.NewMappingDefinition()
-	return md.Define(t.tc.Env(), nil, constraint)
+	return getOrCompute(t.cache, t.tc, &t.cache.maps, constraint, func(constraint semtypes.SemType) semtypes.SemType {
+		md := semtypes.NewMappingDefinition()
+		return md.Define(t.tc.Env(), nil, constraint)
+	})
 }
 
 func (t *typer) arrayType(element semtypes.SemType) semtypes.SemType {
-	ld := semtypes.NewListDefinition()
-	return ld.Define(t.tc.Env(), nil, semtypes.ListRest(element))
+	return getOrCompute(t.cache, t.tc, &t.cache.arrays, element, func(element semtypes.SemType) semtypes.SemType {
+		ld := semtypes.NewListDefinition()
+		return ld.Define(t.tc.Env(), nil, semtypes.ListRest(element))
+	})
 }
 
 // mapTypeFromConstraint returns the map type built for a rest field of the given constraint: the constraint
