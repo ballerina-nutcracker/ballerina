@@ -271,6 +271,17 @@ func startSFTPServer(t *testing.T, clientKey ssh.PublicKey) (int64, ssh.PublicKe
 		},
 	}
 	config.AddHostKey(hostSigner)
+	// Go clients prefer ECDSA, so known_hosts holding only the ed25519 key checks that the
+	// client negotiates the known key type.
+	ecdsaPriv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ecdsaSigner, err := ssh.NewSignerFromKey(ecdsaPriv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	config.AddHostKey(ecdsaSigner)
 	ln := listenLoopback(t)
 	t.Cleanup(func() { _ = ln.Close() })
 	handlers := sftp.InMemHandler()
