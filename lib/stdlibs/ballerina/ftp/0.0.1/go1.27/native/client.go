@@ -86,8 +86,8 @@ func (s *clientState) fetch(p string) ([]byte, error) {
 
 // fetchConverted runs fetch and convert together under the retry policy: jBallerina retries
 // conversion failures as well, but only the transfer counts towards the circuit breaker.
-func fetchConverted[T any](m *ftpModule, s *clientState, name, p string, convert func([]byte) (T, error)) (T, error) {
-	return withRetry(m.rt.Platform(), s.retry, name, func() (T, error) {
+func fetchConverted[T any](ctx *extern.Context, s *clientState, name, p string, convert func([]byte) (T, error)) (T, error) {
+	return withRetry(ctx, s.retry, name, func() (T, error) {
 		data, err := s.fetch(p)
 		if err != nil {
 			var zero T
@@ -192,7 +192,7 @@ func (m *ftpModule) initEndpoint(ctx *extern.Context, args []values.BalValue) (v
 
 func (m *ftpModule) getBytes(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	p := args[1].(string)
-	data, err := fetchConverted(m, clientArg(args), "getBytes", p, func(d []byte) ([]byte, error) { return d, nil })
+	data, err := fetchConverted(ctx, clientArg(args), "getBytes", p, func(d []byte) ([]byte, error) { return d, nil })
 	if err != nil {
 		return m.errorResult(ctx, err)
 	}
@@ -201,7 +201,7 @@ func (m *ftpModule) getBytes(ctx *extern.Context, args []values.BalValue) (value
 
 func (m *ftpModule) getText(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	p := args[1].(string)
-	text, err := fetchConverted(m, clientArg(args), "getText", p, func(d []byte) (string, error) {
+	text, err := fetchConverted(ctx, clientArg(args), "getText", p, func(d []byte) (string, error) {
 		return decodeUTF8(d), nil
 	})
 	if err != nil {
@@ -216,7 +216,7 @@ func targetType(arg values.BalValue) semtypes.SemType {
 
 func (m *ftpModule) getJson(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	state, p, target := clientArg(args), args[1].(string), targetType(args[2])
-	value, err := fetchConverted(m, state, "getJson", p, func(d []byte) (values.BalValue, error) {
+	value, err := fetchConverted(ctx, state, "getJson", p, func(d []byte) (values.BalValue, error) {
 		return bindJSON(ctx.TypeCtx(), m.types, d, target, p, state.lax)
 	})
 	if err != nil {
@@ -227,7 +227,7 @@ func (m *ftpModule) getJson(ctx *extern.Context, args []values.BalValue) (values
 
 func (m *ftpModule) getXml(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	p, target := args[1].(string), targetType(args[2])
-	value, err := fetchConverted(m, clientArg(args), "getXml", p, func(d []byte) (values.BalValue, error) {
+	value, err := fetchConverted(ctx, clientArg(args), "getXml", p, func(d []byte) (values.BalValue, error) {
 		return bindXML(ctx.TypeCtx(), d, target, p)
 	})
 	if err != nil {
