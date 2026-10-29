@@ -42,6 +42,11 @@ public function main() returns error? {
     io:println(check sizeAfterOverflow(5, 0.01)); // @output 5
     io:println(check sizeAfterOverflow(1, 0.25)); // @output 1
 
+    cache:Cache defaults = new (capacity = 8);
+    check fill(defaults, 8);
+    check defaults.put("new", 1);
+    io:println(defaults.size(), " ", defaults.keys()); // @output 7 ["k2","k3","k4","k5","k6","k7","new"]
+
     cache:Cache c = new (capacity = 3, evictionFactor = 0.34);
     check fill(c, 3);
     _ = c.hasKey("k0");
