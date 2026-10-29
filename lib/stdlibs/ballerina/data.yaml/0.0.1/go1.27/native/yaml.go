@@ -210,24 +210,28 @@ func (types *yamlTypes) parseInput(ctx *extern.Context, input string, optsArg, t
 }
 
 // fieldRenames maps YAML keys to field names for the fields of the target record that carry a Name
-// annotation. As in jBallerina, the first annotation whose name ends with "Name" supplies the key. The
-// annotations are only available when the typedesc names the record type itself.
+// annotation of this module. The annotations are only available when the typedesc names the record type
+// itself.
 func fieldRenames(ctx *extern.Context, td *values.TypeDesc) map[string]string {
 	annotations, _ := ctx.TypeAnnotations(td)
 	renames := make(map[string]string)
 	for field, fieldAnnotations := range annotations.Fields {
 		for key, value := range fieldAnnotations {
 			config, ok := value.(*values.Map)
-			if !ok || !strings.HasSuffix(key, "Name") {
+			if !ok || !isNameAnnotation(key) {
 				continue
 			}
 			if name, ok := config.Get("value"); ok {
 				renames[fmt.Sprint(name)] = field
-				break
 			}
 		}
 	}
 	return renames
+}
+
+// isNameAnnotation reports whether key, of the form org/package:version:name, is this module's Name.
+func isNameAnnotation(key string) bool {
+	return strings.HasPrefix(key, orgName+"/"+moduleName+":") && strings.HasSuffix(key, ":Name")
 }
 
 func createError(ctx *extern.Context, message string) (values.BalValue, error) {

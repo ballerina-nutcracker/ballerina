@@ -110,6 +110,12 @@ func (e *yamlError) Error() string {
 		formatJavaInt(int64(e.column)) + "'"
 }
 
+// maxNestingDepth bounds flow and block collection nesting, as libyaml and go-yaml do.
+const (
+	maxNestingDepth   = 10000
+	nestingDepthError = "exceeded max depth of 10000"
+)
+
 type scanner struct {
 	input []rune
 	pos   mark
@@ -275,8 +281,8 @@ func (s *scanner) fetchMoreTokens() error {
 			if err := s.staleSimpleKeys(); err != nil {
 				return err
 			}
-			for _, key := range s.simpleKeys {
-				if key.possible && key.tokenNumber == s.tokensParsed {
+			for i := len(s.simpleKeys) - 1; i >= 0 && s.simpleKeys[i].tokenNumber >= s.tokensParsed; i-- {
+				if s.simpleKeys[i].possible && s.simpleKeys[i].tokenNumber == s.tokensParsed {
 					needMore = true
 					break
 				}
@@ -427,8 +433,10 @@ func (s *scanner) scanToNextToken() error {
 	}
 }
 
+// staleSimpleKeys walks only the innermost keys whose tokens are still queued: a possible key always is,
+// and token numbers never decrease towards the innermost flow level.
 func (s *scanner) staleSimpleKeys() error {
-	for i := range s.simpleKeys {
+	for i := len(s.simpleKeys) - 1; i >= 0 && s.simpleKeys[i].tokenNumber >= s.tokensParsed; i-- {
 		key := &s.simpleKeys[i]
 		if key.possible && (key.mark.line < s.pos.line || key.mark.index+1024 < s.pos.index) {
 			if key.required {
@@ -464,19 +472,23 @@ func (s *scanner) removeSimpleKey() error {
 
 // rollIndent opens a block collection when column is deeper than the current indentation; tokenNumber
 // is the position in the queue where the start token goes (-1 appends it).
-func (s *scanner) rollIndent(column, tokenNumber int, kind tokenKind, m mark) {
+func (s *scanner) rollIndent(column, tokenNumber int, kind tokenKind, m mark) error {
 	if s.flowLevel > 0 || s.indent >= column {
-		return
+		return nil
+	}
+	if len(s.indents) >= maxNestingDepth {
+		return s.errorAt(nestingDepthError, m)
 	}
 	s.indents = append(s.indents, s.indent)
 	s.indent = column
 	tok := token{kind: kind, start: m}
 	if tokenNumber == -1 {
 		s.emit(tok)
-		return
+		return nil
 	}
 	i := tokenNumber - s.tokensParsed
 	s.tokens = append(s.tokens[:i], append([]token{tok}, s.tokens[i:]...)...)
+	return nil
 }
 
 // unrollIndent closes the block collections deeper than column. A line that dedents to a column between
@@ -538,7 +550,10 @@ func (s *scanner) fetchFlowCollectionStart(kind tokenKind) error {
 	if err := s.saveSimpleKey(); err != nil {
 		return err
 	}
-	s.simpleKeys = append(s.simpleKeys, simpleKey{})
+	if s.flowLevel >= maxNestingDepth {
+		return s.errorHere(nestingDepthError)
+	}
+	s.simpleKeys = append(s.simpleKeys, simpleKey{tokenNumber: s.tokensParsed + len(s.tokens)})
 	s.flowLevel++
 	s.simpleKeyAllowed = true
 	start := s.pos
@@ -585,7 +600,9 @@ func (s *scanner) fetchBlockEntry() error {
 		}
 		return s.errorHere("invalid yaml document")
 	}
-	s.rollIndent(s.pos.column, -1, tokenBlockSequenceStart, s.pos)
+	if err := s.rollIndent(s.pos.column, -1, tokenBlockSequenceStart, s.pos); err != nil {
+		return err
+	}
 	if err := s.removeSimpleKey(); err != nil {
 		return err
 	}
@@ -602,7 +619,9 @@ func (s *scanner) fetchKey() error {
 			s.skip()
 			return s.errorHere("invalid yaml document")
 		}
-		s.rollIndent(s.pos.column, -1, tokenBlockMappingStart, s.pos)
+		if err := s.rollIndent(s.pos.column, -1, tokenBlockMappingStart, s.pos); err != nil {
+			return err
+		}
 	}
 	if err := s.removeSimpleKey(); err != nil {
 		return err
@@ -623,7 +642,9 @@ func (s *scanner) fetchValue() error {
 		}
 		i := key.tokenNumber - s.tokensParsed
 		s.tokens = append(s.tokens[:i], append([]token{{kind: tokenKey, start: key.mark}}, s.tokens[i:]...)...)
-		s.rollIndent(key.mark.column, key.tokenNumber, tokenBlockMappingStart, key.mark)
+		if err := s.rollIndent(key.mark.column, key.tokenNumber, tokenBlockMappingStart, key.mark); err != nil {
+			return err
+		}
 		key.possible = false
 		s.simpleKeyAllowed = false
 	} else {
@@ -631,7 +652,9 @@ func (s *scanner) fetchValue() error {
 			if !s.simpleKeyAllowed {
 				return s.misplacedValueError()
 			}
-			s.rollIndent(s.pos.column, -1, tokenBlockMappingStart, s.pos)
+			if err := s.rollIndent(s.pos.column, -1, tokenBlockMappingStart, s.pos); err != nil {
+				return err
+			}
 		}
 		s.simpleKeyAllowed = s.flowLevel == 0
 	}
