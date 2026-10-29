@@ -20,6 +20,7 @@ package native
 import (
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -37,16 +38,22 @@ type fileEvent struct {
 	deleted []string
 }
 
-// consumer polls one watched directory, following RemoteFileSystemConsumer: every file that
-// passes the filters is reported as added on every poll, and a file is reported as deleted when
-// it was reported before but is no longer listed. As there, processed gains a copy of a file's
-// URI on every poll that reports it, so a deletion is reported once per such poll.
+// fileStamp is what identifies a version of a reported file.
+type fileStamp struct {
+	size    int64
+	modTime int64
+}
+
+// consumer polls one watched directory and reports a file once when it first passes the filters,
+// again only when its size or modification time changes, and once when it is gone. jBallerina
+// reports every file on every poll and each deletion once per poll that reported the file
+// (ballerina-library#9288, #9380).
 type consumer struct {
-	platform  pal.Platform
-	remote    *remoteClient
-	watch     watchConfig
-	mu        sync.Mutex
-	processed []string
+	platform pal.Platform
+	remote   *remoteClient
+	watch    watchConfig
+	mu       sync.Mutex
+	reported map[string]fileStamp
 }
 
 func (m *ftpModule) newConsumer(state *listenerState, watch watchConfig, failurePrefix string) (*consumer, error) {
@@ -65,7 +72,7 @@ func (m *ftpModule) newConsumer(state *listenerState, watch watchConfig, failure
 		return nil, newError(kindError, "FTP listener path \""+maskURLPassword(connectURL(state.ep, normalizeServicePath(watch.path)))+
 			"\" does not refer to a folder on the remote file system.")
 	}
-	return &consumer{platform: platform, remote: remote, watch: watch}, nil
+	return &consumer{platform: platform, remote: remote, watch: watch, reported: map[string]fileStamp{}}, nil
 }
 
 func (c *consumer) uri(logical string) string {
@@ -77,7 +84,7 @@ func (c *consumer) consume() (fileEvent, bool) {
 	defer c.mu.Unlock()
 	root := cleanPath(c.watch.path)
 	children, err := c.remote.sess.readDir(c.remote.serverPath(root))
-	if err != nil || len(children) == 0 {
+	if err != nil {
 		return fileEvent{}, false
 	}
 	rootFiles := make([]string, 0, len(children))
@@ -86,24 +93,25 @@ func (c *consumer) consume() (fileEvent, bool) {
 			rootFiles = append(rootFiles, child.name)
 		}
 	}
-	var event fileEvent
-	current := map[string]struct{}{}
-	c.handleDirectory(root, children, rootFiles, &event, current)
-	if len(c.processed) != len(current) {
-		kept := c.processed[:0]
-		for _, p := range c.processed {
-			if _, listed := current[p]; listed {
-				kept = append(kept, p)
-			} else {
-				event.deleted = append(event.deleted, p)
-			}
+	scan := &pollScan{rootFiles: rootFiles, listed: map[string]struct{}{}}
+	c.handleDirectory(root, children, scan)
+	for logical := range c.reported {
+		if _, ok := scan.listed[logical]; !ok {
+			scan.event.deleted = append(scan.event.deleted, c.uri(logical))
+			delete(c.reported, logical)
 		}
-		c.processed = kept
 	}
-	return event, len(event.added) > 0 || len(event.deleted) > 0
+	sort.Strings(scan.event.deleted)
+	return scan.event, len(scan.event.added) > 0 || len(scan.event.deleted) > 0
 }
 
-func (c *consumer) handleDirectory(dir string, children []remoteEntry, rootFiles []string, event *fileEvent, current map[string]struct{}) {
+type pollScan struct {
+	rootFiles []string
+	listed    map[string]struct{}
+	event     fileEvent
+}
+
+func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pollScan) {
 	for _, child := range children {
 		if c.watch.pattern != nil && !c.watch.pattern.MatchString(child.name) {
 			continue
@@ -111,18 +119,33 @@ func (c *consumer) handleDirectory(dir string, children []remoteEntry, rootFiles
 		logical := path.Join(dir, child.name)
 		if child.isDir {
 			grandChildren, err := c.remote.sess.readDir(c.remote.serverPath(logical))
-			if err == nil && len(grandChildren) > 0 {
-				c.handleDirectory(logical, grandChildren, rootFiles, event, current)
+			if err != nil {
+				c.keepReportedUnder(logical, scan)
+				continue
 			}
+			c.handleDirectory(logical, grandChildren, scan)
 			continue
 		}
-		uri := c.uri(logical)
-		current[uri] = struct{}{}
-		if !c.passesAgeFilter(child) || !c.passesDependencies(child.name, rootFiles) {
+		scan.listed[logical] = struct{}{}
+		stamp := fileStamp{size: child.size, modTime: child.modTime.UnixMilli()}
+		if previous, ok := c.reported[logical]; ok && previous == stamp {
 			continue
 		}
-		event.added = append(event.added, addedFile{logical: logical, entry: child})
-		c.processed = append(c.processed, uri)
+		if !c.passesAgeFilter(child) || !c.passesDependencies(child.name, scan.rootFiles) {
+			continue
+		}
+		scan.event.added = append(scan.event.added, addedFile{logical: logical, entry: child})
+		c.reported[logical] = stamp
+	}
+}
+
+// keepReportedUnder treats the files reported under a folder that could not be listed as still
+// present, so a failed listing is not mistaken for deletions.
+func (c *consumer) keepReportedUnder(dir string, scan *pollScan) {
+	for logical := range c.reported {
+		if strings.HasPrefix(logical, dir+"/") {
+			scan.listed[logical] = struct{}{}
+		}
 	}
 }
 

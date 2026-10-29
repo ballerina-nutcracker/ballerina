@@ -98,6 +98,19 @@ function waitForOutbox(int target) {
     }
 }
 
+function waitForChanges(int target) {
+    foreach int _ in 0 ..< 200 {
+        int seen;
+        lock {
+            seen = changes;
+        }
+        if seen >= target {
+            return;
+        }
+        runtime:sleep(0.05);
+    }
+}
+
 function inboxCount() returns int {
     lock {
         return inboxChanges;
@@ -182,16 +195,9 @@ public function main() returns error? {
     });
     check watcher.attach(new CountingService());
     check watcher.'start();
-    foreach int _ in 0 ..< 100 {
-        int seen;
-        lock {
-            seen = changes;
-        }
-        if seen >= 2 {
-            break;
-        }
-        runtime:sleep(0.05);
-    }
+    waitForChanges(1);
+    check lax->putText("/home/second.txt", "2");
+    waitForChanges(2);
     check watcher.detach(new CountingService());
     lock {
         io:println(changes >= 2); // @output true
@@ -213,11 +219,15 @@ public function main() returns error? {
     waitForOutbox(1);
     io:println(inboxCount() >= 1); // @output true
     check paths.detach(new InboxService());
-    waitForOutbox(outboxCount() + 2);
+    int outboxAtDetach = outboxCount();
+    check lax->putText("/outbox/c.txt", "c");
+    waitForOutbox(outboxAtDetach + 1);
     int inboxAfterDetach = inboxCount();
     int outboxAfterDetach = outboxCount();
-    waitForOutbox(outboxAfterDetach + 2);
-    io:println(outboxCount() >= outboxAfterDetach + 2); // @output true
+    check lax->putText("/inbox/d.txt", "d");
+    check lax->putText("/outbox/e.txt", "e");
+    waitForOutbox(outboxAfterDetach + 1);
+    io:println(outboxCount() >= outboxAfterDetach + 1); // @output true
     io:println(inboxCount() == inboxAfterDetach); // @output true
     check paths.detach(new InboxService());
     check paths.gracefulStop();
