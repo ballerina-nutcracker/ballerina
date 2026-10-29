@@ -66,7 +66,7 @@ func (tr *traverser) traverseJSON(json values.BalValue, target semtypes.SemType)
 	switch ti.kind {
 	case kindRecord:
 		if _, ok := json.(*values.Map); !ok {
-			return nil, incompatibleTypeError(tr.typeName(target), formatMessageArg(json))
+			return nil, tr.incompatibleTypeErrorFor(target, json)
 		}
 		fields, err := tr.recordFields(ti)
 		if err != nil {
@@ -76,7 +76,7 @@ func (tr *traverser) traverseJSON(json values.BalValue, target semtypes.SemType)
 		return tr.traverseMapOrArray(json, tr.newMappingBuilder(ti), ti)
 	case kindList:
 		if _, ok := json.(*values.List); !ok {
-			return nil, incompatibleTypeError(tr.typeName(target), formatMessageArg(json))
+			return nil, tr.incompatibleTypeErrorFor(target, json)
 		}
 		return tr.traverseMapOrArray(json, tr.newListBuilder(ti), ti)
 	case kindUnion:
@@ -129,7 +129,7 @@ func (tr *traverser) traverseUnion(json values.BalValue, ti typeInfo) (values.Ba
 			tr.fieldNames = tr.fieldNames[extra:]
 		}
 	}
-	return nil, incompatibleTypeError(tr.typeName(ti.ty), formatMessageArg(json))
+	return nil, tr.incompatibleTypeErrorFor(ti.ty, json)
 }
 
 // orderedMembers tries a member the value already belongs to before one that needs a numeric conversion.
@@ -167,7 +167,7 @@ func (tr *traverser) traverseMapOrArray(json values.BalValue, node any, ti typeI
 		tr.popRestType()
 	}
 	if len(tr.fieldNames) == 0 {
-		return nil, incompatibleTypeError(tr.typeName(ti.ty), formatMessageArg(json))
+		return nil, tr.incompatibleTypeErrorFor(ti.ty, json)
 	}
 	return nil, invalidTypeForFieldError(tr.currentFieldPath())
 }
@@ -280,9 +280,20 @@ func (tr *traverser) convertToBasicType(json values.BalValue, target semtypes.Se
 		return converted, nil
 	}
 	if len(tr.fieldNames) == 0 {
-		return nil, incompatibleTypeError(tr.typeName(target), javaValueOf(json))
+		return nil, lazyJSONError(func() string {
+			return incompatibleTypeError(tr.typeName(target), javaValueOf(json)).message
+		})
 	}
-	return nil, incompatibleValueForFieldError(javaValueOf(json), tr.typeName(target), tr.currentFieldPath())
+	fieldPath := tr.currentFieldPath()
+	return nil, lazyJSONError(func() string {
+		return incompatibleValueForFieldError(javaValueOf(json), tr.typeName(target), fieldPath).message
+	})
+}
+
+func (tr *traverser) incompatibleTypeErrorFor(target semtypes.SemType, json values.BalValue) *jsonError {
+	return lazyJSONError(func() string {
+		return incompatibleTypeError(tr.typeName(target), formatMessageArg(json)).message
+	})
 }
 
 func (tr *traverser) currentFieldPath() string {
