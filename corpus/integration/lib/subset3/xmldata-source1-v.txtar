@@ -10,4 +10,8 @@ E: stream failure
 true
 true
 E: failed to parse xml
+{"name":"Ké","age":40}
+{"name":"E","age":5}
+{"name":"F","age":6}
+{"p":{"n":1}}
 -- stderr --

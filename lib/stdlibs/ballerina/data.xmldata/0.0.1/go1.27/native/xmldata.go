@@ -19,6 +19,7 @@ package native
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -91,6 +92,7 @@ func parseStream(cache *typeCache, ctx *extern.Context, args []values.BalValue) 
 }
 
 func parseText(cache *typeCache, ctx *extern.Context, input string, optsArg, tdArg values.BalValue) (values.BalValue, error) {
+	input = strings.TrimPrefix(input, "\uFEFF")
 	opts, _ := optsArg.(*values.Map)
 	td, _ := tdArg.(*values.TypeDesc)
 	t := newTyperFor(cache, ctx, td)

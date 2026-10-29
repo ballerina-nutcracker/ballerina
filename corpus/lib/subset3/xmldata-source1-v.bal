@@ -50,6 +50,10 @@ type JsonValue record {|
     json value;
 |};
 
+type PersonOrCount record {|
+    Person|record {|int n;|} p;
+|};
+
 function chunk(byte[] bytes, int 'start, int end) returns byte[] {
     byte[] result = [];
     foreach int i in 'start ..< end {
@@ -111,4 +115,19 @@ public function main() {
     JsonValue|xmldata:Error rootText = xmldata:parseString("<r>hello</r>", {textFieldName: "value"});
     show(rootText);
     // @output E: failed to parse xml
+
+    byte[] bom = [0xEF, 0xBB, 0xBF];
+    Person|xmldata:Error bomBytes = xmldata:parseBytes([...bom, ...personBytes]);
+    show(bomBytes);
+    // @output {"name":"Ké","age":40}
+    Person|xmldata:Error bomString = xmldata:parseString("\u{FEFF}<p><name>E</name><age>5</age></p>");
+    show(bomString);
+    // @output {"name":"E","age":5}
+    stream<byte[], error?> bomStream = [bom, "<p><name>F</name><age>6</age></p>".toBytes()].toStream();
+    Person|xmldata:Error bomStreamed = xmldata:parseStream(bomStream);
+    show(bomStreamed);
+    // @output {"name":"F","age":6}
+    PersonOrCount|xmldata:Error bomUnion = xmldata:parseBytes([...bom, ..."<r><p><n>1</n></p></r>".toBytes()]);
+    show(bomUnion);
+    // @output {"p":{"n":1}}
 }
