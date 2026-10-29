@@ -34,4 +34,6 @@ c:
 {"name":"a"}
 {"name":"a"}
 {"name":"Ann"}
+{"name":"Ann"}
+required field 'name' not present in YAML
 -- stderr --
