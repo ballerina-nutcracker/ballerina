@@ -169,6 +169,8 @@ public function main() returns error? {
     show("subscription qos 3", r); // @output subscription qos 3: Invalid QoS value: 3. Allowed values are 0, 1 and 2 (mqtt:Error=true)
     r = c->subscribe(["#", "+", "validation-v/+/x/#"]);
     show("valid filters", r); // @output valid filters: ok
+    r = c->subscribe(["validation-v/allowed", "denied/t"]);
+    show("unauthorized filter", r); // @output unauthorized filter: Not authorized. (mqtt:Error=true)
 
     mqtt:Client|mqtt:Error willClient = new (BROKER_URL, "validation-v-will", willDetails = {
         destinationTopic: "validation-v/will/#",

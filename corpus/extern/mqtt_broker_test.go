@@ -25,6 +25,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -152,8 +153,9 @@ func (h *mqttBrokerHook) OnConnectAuthenticate(cl *mochi.Client, pk packets.Pack
 	return string(pk.Connect.Username) == mqttUsername && bytes.Equal(pk.Connect.Password, []byte(mqttUserPassword))
 }
 
-func (h *mqttBrokerHook) OnACLCheck(*mochi.Client, string, bool) bool {
-	return true
+// OnACLCheck rejects subscriptions to the denied/ topics with SUBACK reason Not authorized.
+func (h *mqttBrokerHook) OnACLCheck(_ *mochi.Client, topic string, write bool) bool {
+	return write || !strings.HasPrefix(topic, "denied/")
 }
 
 // OnDisconnect holds back a taken-over client until mochi marks it as taken over. Otherwise

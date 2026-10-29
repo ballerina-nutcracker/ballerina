@@ -407,7 +407,11 @@ func (c *connection) subscribe(subscriptions []paho.SubscribeOptions) *mqttError
 	}
 	ctx, cancel := link.operationContext()
 	defer cancel()
-	if _, err := link.client.Subscribe(ctx, &paho.Subscribe{Subscriptions: subscriptions}); err != nil {
+	suback, err := link.client.Subscribe(ctx, &paho.Subscribe{Subscriptions: subscriptions})
+	if err != nil {
+		if suback != nil {
+			return failedReasonError(suback.Reasons, err)
+		}
 		return c.operationError(link, err)
 	}
 	return nil
@@ -424,15 +428,32 @@ func (c *connection) unsubscribe(subscriptions []paho.SubscribeOptions) *mqttErr
 	}
 	ctx, cancel := link.operationContext()
 	defer cancel()
-	if _, err := link.client.Unsubscribe(ctx, &paho.Unsubscribe{Topics: topics}); err != nil {
+	unsuback, err := link.client.Unsubscribe(ctx, &paho.Unsubscribe{Topics: topics})
+	if err != nil {
+		if unsuback != nil {
+			return failedReasonError(unsuback.Reasons, err)
+		}
 		return c.operationError(link, err)
 	}
 	return nil
 }
 
+// failedReasonError reports the first failure reason code of a SUBACK or UNSUBACK.
+func failedReasonError(reasons []byte, cause error) *mqttError {
+	for _, code := range reasons {
+		if code >= 0x80 {
+			return newReasonError(int(code), cause)
+		}
+	}
+	return newErrorWithCause(cause.Error(), cause)
+}
+
 // operationError reports a failed publish/subscribe with the reason the connection dropped,
 // as Paho Java does, when the failure was caused by the connection going away.
 func (c *connection) operationError(link *activeLink, err error) *mqttError {
+	if errors.Is(err, paho.ErrInvalidArguments) {
+		return newErrorWithCause(err.Error(), err)
+	}
 	select {
 	case <-link.client.Done():
 		link.awaitLossReason()

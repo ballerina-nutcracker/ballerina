@@ -9,6 +9,7 @@ misplaced #: Invalid usage of multi-level wildcard in topic string: validation-v
 + not a level: Invalid usage of single-level wildcard in topic string 'validation-v/a+'! (mqtt:Error=true)
 subscription qos 3: Invalid QoS value: 3. Allowed values are 0, 1 and 2 (mqtt:Error=true)
 valid filters: ok
+unauthorized filter: Not authorized. (mqtt:Error=true)
 will topic: The topic name MUST NOT contain any wildcard characters (#+) (mqtt:Error=true)
 will qos: Invalid QoS value: 5. Allowed values are 0, 1 and 2 (mqtt:Error=true)
 negative keep alive: Invalid keep alive interval: -1. Allowed values are 0 to 65535 (mqtt:Error=true)
