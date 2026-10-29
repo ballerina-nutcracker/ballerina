@@ -1,10 +1,13 @@
 -- stdout --
+true false
+2 false 1
 true
-false false
-true true
 false
+Unsupported max-age '0' for the key: zero. It must be -1 or positive.
+true true
+false false false
 v v
-3 true
+3 false
 false true
 2
 1 ["kept"]
