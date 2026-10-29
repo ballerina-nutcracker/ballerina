@@ -20,7 +20,6 @@ package native
 
 import (
 	"math"
-	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -30,9 +29,11 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-// jsonInferenceOrder is the member order FromString tries for json and anydata targets.
-var jsonInferenceOrder = []semtypes.SemType{
-	semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.Nil, semtypes.Boolean, semtypes.String,
+// jsonConversionOrder is the order FromString tries the members of json and anydata targets in.
+var jsonConversionOrder = []typeInfo{
+	{kind: kindNil, ty: semtypes.Nil}, {kind: kindInt, ty: semtypes.Int}, {kind: kindFloat, ty: semtypes.Float},
+	{kind: kindDecimal, ty: semtypes.Decimal}, {kind: kindBoolean, ty: semtypes.Boolean},
+	{kind: kindString, ty: semtypes.String},
 }
 
 // localeSymbols are the java.text.DecimalFormatSymbols that FromString's number parsing depends on.
@@ -85,11 +86,7 @@ func (c *converter) isNullValue(value string) bool {
 }
 
 // fromString is FromString.fromStringWithType; anydata is converted as json, as CsvCreator does.
-func (c *converter) fromString(value string, ty semtypes.SemType) (values.BalValue, bool) {
-	return c.fromStringWithInfo(value, c.t.classify(ty))
-}
-
-func (c *converter) fromStringWithInfo(value string, ti typeInfo) (values.BalValue, bool) {
+func (c *converter) fromString(value string, ti typeInfo) (values.BalValue, bool) {
 	switch ti.kind {
 	case kindInt:
 		return c.parseInt(value)
@@ -120,32 +117,20 @@ func (c *converter) fromStringWithInfo(value string, ti typeInfo) (values.BalVal
 	case kindFinite:
 		return c.toSingleton(value, ti)
 	case kindUnion:
-		return c.toUnion(value, ti.members)
+		return c.toUnion(value, ti.conversionOrder)
 	case kindJSON, kindAnydata:
-		return c.toUnion(value, jsonInferenceOrder)
+		return c.toUnion(value, jsonConversionOrder)
 	}
 	return nil, false
 }
 
-// toUnion tries the members of a union with nil first and the others in order, as FromString does.
-func (c *converter) toUnion(value string, members []semtypes.SemType) (values.BalValue, bool) {
-	ordered := slices.Clone(members)
-	slices.SortStableFunc(ordered, func(a, b semtypes.SemType) int {
-		return nilRank(a) - nilRank(b)
-	})
-	for _, member := range ordered {
+func (c *converter) toUnion(value string, conversionOrder []typeInfo) (values.BalValue, bool) {
+	for _, member := range conversionOrder {
 		if converted, ok := c.fromString(value, member); ok {
 			return converted, true
 		}
 	}
 	return nil, false
-}
-
-func nilRank(ty semtypes.SemType) int {
-	if semtypes.IsSubtypeSimple(ty, semtypes.Nil) {
-		return 0
-	}
-	return 1
 }
 
 // toSingleton matches value against the singletons of a finite type: the text must equal the
@@ -155,7 +140,7 @@ func (c *converter) toSingleton(value string, ti typeInfo) (values.BalValue, boo
 		if semtypes.IsEmpty(c.t.tc, semtypes.Intersect(ti.ty, basic.ty)) {
 			continue
 		}
-		converted, ok := c.fromStringWithInfo(value, typeInfo{kind: basic.kind, ty: basic.ty})
+		converted, ok := c.fromString(value, typeInfo{kind: basic.kind, ty: basic.ty})
 		if ok && c.t.contains(ti.ty, converted) && javaValueOf(converted) == value {
 			return converted, true
 		}

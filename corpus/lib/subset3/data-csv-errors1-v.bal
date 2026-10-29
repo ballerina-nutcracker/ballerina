@@ -44,10 +44,17 @@ public function main() {
     io:println(csv:parseString("a,,b\n1,2,3", {}, Strings));
     io:println(csv:parseString("a,b\n1,x", {header: 5}, Rows));
     io:println(csv:parseString("a,b", {header: ()}, Rows));
+    // A quoted header row that ends the input leaves a row that was never created.
+    io:println(csv:parseString("\"a\",\"b\"", {}, Strings));
     // Values that do not fit the target are reported with their value.
     io:println(csv:transform([{"a": 2.5}], {}, StringRows));
     io:println(csv:transform([{"a": 1234.5678d}], {}, StringRows));
     io:println(csv:transform([{"a": 1234567}], {}, StringRows));
+    // Floats are grouped in full and rounded half-even on their exact binary value.
+    io:println(csv:transform([{"a": 1.0e20}], {}, StringRows));
+    io:println(csv:transform([{"a": -float:Infinity}], {}, StringRows));
+    io:println(csv:transform([{"a": 0.0005}], {}, StringRows));
+    io:println(csv:transform([{"a": 0.1235}], {}, StringRows));
     io:println(csv:transform([{"a": true}], {}, MixedUnion));
     io:println(csv:transform([{"a": "x"}], {}, MixedUnion));
     // With failSafe, a union member that fails on a row is logged to the log file and the next member is tried.
@@ -64,9 +71,14 @@ public function main() {
 // @output error Error ("provided header row is empty")
 // @output error Error ("provided header row is empty")
 // @output error Error ("no matching header value is found for the required field 'a'")
+// @output error {ballerina/lang.array}InherentTypeViolation ("incompatible types: expected 'string[]', found '()'",message="incompatible types: expected 'string[]', found '()'")
 // @output error Error ("no mapping type found for value '2.5' in key 'a'")
 // @output error Error ("no mapping type found for value '1234.5678' in key 'a'")
 // @output error Error ("no mapping type found for value '1,234,567' in key 'a'")
+// @output error Error ("no mapping type found for value '100,000,000,000,000,000,000' in key 'a'")
+// @output error Error ("no mapping type found for value '-∞' in key 'a'")
+// @output error Error ("no mapping type found for value '0.001' in key 'a'")
+// @output error Error ("no mapping type found for value '0.123' in key 'a'")
 // @output error Error ("expected type cannot contains types other than basic types, 'int[]' not allowed")
 // @output [{"a":"x"}]
 // @output [{"a":1}]

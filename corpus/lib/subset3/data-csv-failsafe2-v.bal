@@ -53,6 +53,15 @@ public function main() returns error? {
     io:println(unionRows);
     check printRows(log3);
 
+    // A tolerated error on the last row is logged once, with or without a final line break.
+    string log4 = check file:joinPath(dir, "rows4.log");
+    csv:FailSafeOptions fs4 = {enableConsoleLogs: false, fileOutputMode: {filePath: log4, contentType: csv:METADATA}};
+    rows = csv:parseString("a,b\n1,2\n3,4", {skipLines: "3-1", failSafe: fs4});
+    io:println(rows);
+    rows = csv:parseString("a,b\n1,2\n", {skipLines: "3-1", failSafe: fs4});
+    io:println(rows);
+    check printRows(log4);
+
     check file:remove(dir, file:RECURSIVE);
 }
 
@@ -66,3 +75,8 @@ public function main() returns error? {
 // @output [{"a":1,"b":"x"},{"a":3,"b":"z"}]
 // @output "location":{"row":3,"column":3},"message":"invalid number of headers"}
 // @output "location":{"row":2,"column":1},"message":"no mapping type found for value 'x' in key 'a'"}
+// @output []
+// @output []
+// @output "location":{"row":2,"column":1},"message":"invalid range for the skipLines field. Start value must be less than or equal to end value."}
+// @output "location":{"row":3,"column":1},"message":"invalid range for the skipLines field. Start value must be less than or equal to end value."}
+// @output "location":{"row":2,"column":1},"message":"invalid range for the skipLines field. Start value must be less than or equal to end value."}

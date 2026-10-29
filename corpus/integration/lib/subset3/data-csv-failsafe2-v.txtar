@@ -9,4 +9,9 @@
 [{"a":1,"b":"x"},{"a":3,"b":"z"}]
 "location":{"row":3,"column":3},"message":"invalid number of headers"}
 "location":{"row":2,"column":1},"message":"no mapping type found for value 'x' in key 'a'"}
+[]
+[]
+"location":{"row":2,"column":1},"message":"invalid range for the skipLines field. Start value must be less than or equal to end value."}
+"location":{"row":3,"column":1},"message":"invalid range for the skipLines field. Start value must be less than or equal to end value."}
+"location":{"row":2,"column":1},"message":"invalid range for the skipLines field. Start value must be less than or equal to end value."}
 -- stderr --
