@@ -59,12 +59,10 @@ var WASMUnsupportedTests = []string{
 // "subset8/08-foo/bar-v.bal"). They are matched as suffixes against either a
 // relative test name or an absolute path.
 var UnsupportedTests = []string{
-	// --- Needs constant folding ---
-	// https://github.com/ballerina-nutcracker/ballerina/issues/83
-
-	// pure literal fold + reachability of always-false branch.
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1457
+	// relational and ==/!= on singleton operands are not singleton-typed, so the
+	// always-false branch is not reported as unreachable.
 	"subset8/08-bitwise/complement3-e.bal",
-	"subset8/08-const/1-e.bal",
 	"subset8/08-const/7-e.bal",
 	"subset8/08-const/8-e.bal",
 	"subset8/08-const/9-e.bal",
@@ -72,34 +70,42 @@ var UnsupportedTests = []string{
 	"subset8/08-const/11-e.bal",
 	"subset8/08-const/12-e.bal",
 	"subset8/08-const/13-e.bal",
-	"subset8/08-const/14-e.bal",
-	"subset8/08-const/15-e.bal",
 	"subset8/08-const/16-e.bal",
 	"subset8/08-const/17-e.bal",
 	"subset8/08-const/18-e.bal",
-	"subset8/08-const/7-v.bal",
-	"subset8/08-const/8-v.bal",
-	"subset8/08-const/10-v.bal",
-	"subset8/08-float/5-e.bal",
 	"subset8/08-float/7-e.bal",
-	"subset8/08-narrowing/unreach3-e.bal",
-	"subset8/08-narrowing/unreach4-e.bal",
-	"subset8/08-singleton/nil1-e.bal",
-	"subset8/08-singleton/stringconcat1-e.bal",
-	"subset8/08-string/1-e.bal",
-	"subset8/08-string/5-e.bal",
-
-	// singleton narrowing + fold + reachability.
+	"subset8/08-match/19-e.bal",
 	"subset8/08-narrowing/2-e.bal",
 	"subset8/08-narrowing/4-e.bal",
 	"subset8/08-narrowing/6-e.bal",
 	"subset8/08-narrowing/8-e.bal",
-	"subset8/08-narrowing/10-e.bal",
 	"subset8/08-narrowing/12-e.bal",
 	"subset8/08-narrowing/15-e.bal",
+	"subset8/08-narrowing/unreach3-e.bal",
+	"subset8/08-narrowing/unreach4-e.bal",
 	"subset8/08-singleton/decimal2-e.bal",
 	"subset8/08-singleton/decimal4-e.bal",
 	"subset8/08-singleton/decimal5-e.bal",
+	"subset8/08-singleton/nil1-e.bal",
+	"subset8/08-singleton/not1-e.bal",
+	"subset8/08-singleton/string1-e.bal",
+	"subset8/08-singleton/stringconcat1-e.bal",
+	"subset8/08-string/1-e.bal",
+	"subset8/08-string/5-e.bal",
+
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1262
+	// multiplicative and bitwise ops are not singleton-typed.
+	"subset8/08-const/14-e.bal",
+	"subset8/08-const/15-e.bal",
+	"subset8/08-equal/3-e.bal",
+	"subset8/08-equal/4-e.bal",
+	"subset8/08-equal/5-e.bal",
+	"subset8/08-float/5-e.bal",
+
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1130
+	// a type cast is typed as its target type instead of the intersection with
+	// the operand's (singleton) type.
+	"subset8/08-narrowing/10-e.bal",
 	"subset8/08-singleton/decimal6-e.bal",
 	"subset8/08-singleton/decimal7-e.bal",
 	"subset8/08-singleton/decimal8-e.bal",
@@ -108,32 +114,19 @@ var UnsupportedTests = []string{
 	"subset8/08-singleton/decimal11-e.bal",
 	"subset8/08-singleton/decimal12-e.bal",
 	"subset8/08-singleton/decimal13-e.bal",
-	"subset8/08-singleton/not1-e.bal",
-	"subset8/08-singleton/string1-e.bal",
 
-	// match-arm reachability after discriminator fold/narrowing.
-	"subset8/08-match/7-e.bal",
-	"subset8/08-match/19-e.bal",
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1333
+	"subset8/08-const/8-v.bal",
+	"subset8/08-const/10-v.bal",
 
-	// disjoint-singleton == / != diagnostic.
-	"subset8/08-equal/3-e.bal",
-	"subset8/08-equal/4-e.bal",
-	"subset8/08-equal/5-e.bal",
-
-	// numeric literal range / typed-cast overflow.
-	"subset8/08-const/22-e.bal",
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1054
 	"subset8/08-const/23-e.bal",
-	"subset8/08-decimal/const5-e.bal",
-	"subset8/08-decimal/const6-e.bal",
-	"subset8/08-hex/decimal1-e.bal",
-	"subset8/08-typecast/8-e.bal",
 
-	// const declaration requires singleton-shaped RHS.
-	"subset8/08-list/6-e.bal",
-	"subset8/08-list/17-e.bal",
-	"subset8/08-mapping/6-e.bal",
-	"subset8/08-mapping/7-e.bal",
-
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1492
+	// errors from compile-time evaluation of singleton-typed expressions
+	// surface as runtime panics instead of compile errors.
+	"subset8/08-const/4-e.bal",
+	"subset8/08-const/5-e.bal",
 	"subset8/08-decimal/add2-e.bal",
 	"subset8/08-decimal/add3-e.bal",
 	"subset8/08-decimal/add4-e.bal",
@@ -157,11 +150,14 @@ var UnsupportedTests = []string{
 	"subset8/08-decimal/toint4-e.bal",
 	"subset8/08-decimal/toint5-e.bal",
 	"subset8/08-decimal/toint6-e.bal",
+	"subset8/08-typecast/8-e.bal",
 
-	"subset8/08-const/4-e.bal",
-	"subset8/08-const/5-e.bal",
-	"subset8/08-const/6-e.bal",
-	// ----- End of constant folding -----
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1494
+	// list/mapping constant declarations are accepted; the tests expect an error.
+	"subset8/08-list/6-e.bal",
+	"subset8/08-list/17-e.bal",
+	"subset8/08-mapping/6-e.bal",
+	"subset8/08-mapping/7-e.bal",
 
 	// ----- Float-related skips -----
 	// BIR type-tests use plain `float` instead of the singleton union `Special`, so
@@ -171,7 +167,7 @@ var UnsupportedTests = []string{
 
 	// ----- End float-related skips -----
 
-	// https://github.com/ballerina-nutcracker/ballerina/issues/283
+	// https://github.com/ballerina-nutcracker/ballerina/issues/1493
 	"subset8/08-future/fieldexpr1-v.bal",
 	// https://github.com/ballerina-nutcracker/ballerina/issues/442
 	"subset8/08-future/main-v.bal",
