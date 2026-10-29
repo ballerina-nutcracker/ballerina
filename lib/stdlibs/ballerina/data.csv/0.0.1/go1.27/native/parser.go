@@ -68,6 +68,10 @@ type parser struct {
 	// units, as jBallerina's does.
 	line   int
 	column int
+	// afterCR is set when the previous character was a CR, and lineEnd when the current character ends a
+	// line under the lineTerminator option.
+	afterCR bool
+	lineEnd bool
 	// lineNumber counts the rows and lines processed so far, including the header.
 	lineNumber  int
 	columnIndex int
@@ -150,11 +154,13 @@ func newParser(cfg *config, t *typer, shape *rowShape, rootSize int, failSafe *f
 // feed runs one character through the machine. A tolerated failSafe error discards the rest of the
 // offending line and resumes with the next row.
 func (p *parser) feed(ch rune) error {
+	p.lineEnd = ch == '\n' && (p.cfg.lfEndsLine || p.cfg.crlfEndsLine && p.afterCR)
+	p.afterCR = ch == '\r'
 	p.trackLine(ch)
 	p.lineRecovered = false
 	if p.recovering {
 		p.processLocation(ch)
-		if ch == '\n' {
+		if p.lineEnd {
 			return p.endRecovery()
 		}
 		return nil
@@ -170,7 +176,7 @@ func (p *parser) feed(ch rune) error {
 	p.pendingColumn = p.columnIndex
 	p.pendingLine = p.line
 	p.resetAfterError()
-	if ch == '\n' {
+	if p.lineEnd {
 		p.pendingLine--
 		p.lineRecovered = true
 		return p.logPending(p.previousLine)
@@ -209,7 +215,7 @@ func (p *parser) finish() error {
 }
 
 func (p *parser) trackLine(ch rune) {
-	if ch == '\n' {
+	if p.lineEnd {
 		p.previousLine = string(p.currentLine)
 		p.currentLine = p.currentLine[:0]
 		return
@@ -286,7 +292,7 @@ func (p *parser) transition(ch rune) error {
 }
 
 func (p *parser) isNewLineOrEof(ch rune) bool {
-	return ch == endOfInput || ch == '\n'
+	return ch == endOfInput || p.lineEnd
 }
 
 func isWhitespace(ch rune) bool {
@@ -364,7 +370,7 @@ func (p *parser) headerQuote(ch rune) error {
 		p.state = stateRowEnd
 		return p.handleEndOfTheRow(true)
 	}
-	if ch == '\r' {
+	if ch == '\r' && p.isQuoteClosed {
 		return nil
 	}
 	switch {
@@ -562,7 +568,7 @@ func (p *parser) stringQuote(ch rune) error {
 		p.state = stateRowEnd
 		return p.handleEndOfTheRow(false)
 	}
-	if ch == '\r' {
+	if ch == '\r' && p.isQuoteClosed {
 		return nil
 	}
 	switch {
