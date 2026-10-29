@@ -67,7 +67,7 @@ underlying limitation doesn't get silently rediscovered by the next person who h
 
 ## jBallerina bugs
 
-A `jBallerina bug` row from the Step 5 behaviour table is tracked at **https://github.com/ballerina-platform/ballerina-library/issues** with the labels `Type/Bug` and `module/<name>`. The same draft-don't-file rule applies: hand the draft to the developer, and run `gh issue create` only with their direct confirmation for that specific issue. Search the repo for an existing issue first.
+A `jBallerina bug` row from the Step 5 behaviour table is tracked at **https://github.com/ballerina-platform/ballerina-library/issues** with the labels `Type/Bug` and `module/<name>`. Search the repo for an existing issue first; if one covers the bug, link it and don't file a duplicate. Otherwise the same draft-don't-file rule applies: hand the draft to the developer, and run `gh issue create` only with their direct confirmation for that specific issue (or let them file it). Either way, the fix isn't complete until **Notable Behavioural Changes** carries the real issue link — never a placeholder.
 
 Use the repo's bug-report sections:
 

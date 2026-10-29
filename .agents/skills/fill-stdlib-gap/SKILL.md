@@ -52,7 +52,7 @@ Do not assume you know what a jBallerina feature does from prior training. Imple
 
 ## 3. Quick parity check
 
-Produce a focused 3-column table for the touched surface only:
+Produce a focused 4-column table for the touched surface only:
 
 | Feature | Risk | Classification | Resolution |
 |---|---|---|---|
@@ -65,7 +65,7 @@ If `docs/spec/spec.md` exists: check every behavioural claim it makes about the 
 Rules:
 - **Avoidable** divergences — fix during Step 4.
 - **Unavoidable** divergences — record in the README under **Notable Behavioural Changes** during Step 5.
-- **jBallerina bugs** (jBallerina contradicts its spec or API docs, or is clearly defective; see the defect patterns in `../add-stdlib-support/references/parity-risks.md`) — confirm the classification with the user, implement the correct behaviour, record it under **Notable Behavioural Changes** with the upstream issue link, and draft the upstream issue per `../add-stdlib-support/references/reporting-limitations.md`. Don't write a corpus `@output` that asserts the bug.
+- **jBallerina bugs** (jBallerina contradicts its spec or API docs, or is clearly defective; see the defect patterns in `../add-stdlib-support/references/parity-risks.md`) — confirm the classification with the user, implement the correct behaviour, and record it under **Notable Behavioural Changes** with the upstream issue link. Get that link per `../add-stdlib-support/references/reporting-limitations.md`: link an existing issue if one is found, otherwise draft one, file it once the user confirms, and use its real link. The fix isn't complete without that link, and never file a duplicate. Don't write a corpus `@output` that asserts the bug.
 - **A genuine bug** — either in this stdlib's own previously-`Supported` behaviour, or in a stdlib it depends on, rather than a new architectural constraint — isn't just an "unavoidable" row: also follow `../add-stdlib-support/references/reporting-limitations.md` to get it tracked upstream.
 
 If every row is "No risk identified", say so and move on.

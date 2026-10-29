@@ -116,7 +116,7 @@ Add a row to the behaviour table for every behavioural claim the spec makes abou
 
 - **Avoidable** divergences (resolvable in the Go layer) — fix before merging.
 - **Unavoidable** divergences (architectural Go/JVM constraint) — record in the README under **Notable Behavioural Changes** *before* implementing.
-- **jBallerina bugs** — implement the correct behaviour, record it in the README under **Notable Behavioural Changes** with the upstream issue link, and draft an issue for `ballerina-platform/ballerina-library` per `references/reporting-limitations.md`. Verify the bug on jBallerina with the **`run-jballerina`** skill first; the draft carries that probe as its reproduction.
+- **jBallerina bugs** — implement the correct behaviour, and record it in the README under **Notable Behavioural Changes** with the upstream issue link for `ballerina-platform/ballerina-library`. Get that link per `references/reporting-limitations.md`: link an existing issue if one is found, otherwise draft one, file it once the user confirms, and use its real link. The fix isn't complete without that link, and never file a duplicate. Verify the bug on jBallerina with the **`run-jballerina`** skill first; the draft carries that probe as its reproduction.
 - **A divergence traced to an actual bug in a dependency stdlib** (not an architectural constraint, and not already a catalogued gap) — don't just record it as unavoidable; also follow `references/reporting-limitations.md` to get it tracked upstream.
 - Do not proceed to Step 6 without a complete behaviour table, even if every row says "No risk identified."
 
@@ -263,7 +263,7 @@ Before declaring done, check every box:
 ### Parity & contract
 - [ ] Every Step 5 behaviour-table row classified `match` verified against jBallerina for at least one representative input, via the **`run-jballerina`** skill.
 - [ ] Every unavoidable divergence recorded in **Notable Behavioural Changes**.
-- [ ] Every `jBallerina bug` row reproduced on jBallerina, agreed with the user, recorded in **Notable Behavioural Changes** with its upstream issue link (or a placeholder until the developer files it), and its upstream issue drafted.
+- [ ] Every `jBallerina bug` row reproduced on jBallerina, agreed with the user, recorded in **Notable Behavioural Changes** with the real link to an existing or newly filed upstream issue (no placeholder).
 - [ ] No corpus test asserts behaviour classified as a `jBallerina bug`.
 - [ ] **Run the `validate-stdlib-contract` skill on the new package — the verdict must be PASS** (or PASS with notes, each note reviewed). This is the final public-interface gate.
 - [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every in-scope behavioural claim it makes matches the shipped Go implementation exactly. Any mismatch found during implementation (not just at Step 5's planning stage) has been resolved — implementation fixed, or the divergence explicitly documented — not left unreconciled.
@@ -289,4 +289,4 @@ Summarise:
 - The measured `native/` coverage % from Step 8's verify command.
 - The `validate-stdlib-contract` verdict.
 - Which `corpus/lib/subset<N>/` the tests were added to (new or existing) and confirmation `doc/library/subset<N>.md` was updated.
-- Any language-limitation, dependency-bug or jBallerina-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it.
+- Any language-limitation or dependency-bug issue drafted per `references/reporting-limitations.md`, and whether the developer filed it, plus the upstream issue linked for each jBallerina bug.
