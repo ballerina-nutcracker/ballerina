@@ -1834,9 +1834,9 @@ func removeTransportOwnedHeaders(headers map[string][]string) {
 	}
 }
 
-// onlyTrailers reports whether a TE header is the `trailers` value that HTTP/2 permits (RFC 9113 §8.2.2).
+// onlyTrailers reports whether a TE header is the single `trailers` value that Go's HTTP/2 server accepts (RFC 9113 §8.2.2).
 func onlyTrailers(vals []string) bool {
-	return !slices.ContainsFunc(vals, func(v string) bool { return !strings.EqualFold(strings.TrimSpace(v), "trailers") })
+	return slices.Equal(vals, []string{"trailers"})
 }
 
 func mergeHeaderArgs(headers map[string][]string, hdrMap *values.Map) {

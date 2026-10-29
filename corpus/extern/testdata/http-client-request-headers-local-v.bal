@@ -44,6 +44,23 @@ public function main() returns error? {
     string te = check c->post("/echo", teReq);
     io:println(te); // @output text/plain [te] []
 
+    // A single TE: trailers is kept; the server rejects the request without it.
+    http:Request trailersReq = new;
+    trailersReq.setTextPayload("hi");
+    trailersReq.setHeader("TE", "trailers");
+    trailersReq.setHeader("X-Test", "te-kept");
+    string trailers = check c->post("/echo", trailersReq);
+    io:println(trailers); // @output text/plain [te-kept] []
+
+    // TE values HTTP/2 rejects, a mixed-case or repeated trailers, are dropped.
+    http:Request mixedReq = new;
+    mixedReq.setTextPayload("hi");
+    mixedReq.setHeader("TE", "Trailers");
+    mixedReq.addHeader("TE", "trailers");
+    mixedReq.setHeader("X-Test", "te-mixed");
+    string mixed = check c->post("/echo", mixedReq);
+    io:println(mixed); // @output text/plain [te-mixed] []
+
     // A string[] header argument is appended to the request's own values.
     http:Request putReq = new;
     putReq.setTextPayload("hi");

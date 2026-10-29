@@ -2,6 +2,8 @@
 text/plain [post] []
 text/plain [hop] []
 text/plain [te] []
+text/plain [te-kept] []
+text/plain [te-mixed] []
 text/plain [] [a b c d]
 text/plain [arg] [kept]
 application/custom [delete] []
