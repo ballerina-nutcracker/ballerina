@@ -250,8 +250,12 @@ func (a *Decimal) remLargeQuotient(b *Decimal) (*Decimal, *Error) {
 	out.v.Coeff.Rem(&out.v.Coeff, &b.v.Coeff)
 	out.v.Exponent = b.v.Exponent
 	out.v.Negative = a.v.Negative
-	if e := validate(out, 0); e != nil {
+	cond, err := context.Round(&out.v, &out.v)
+	if e := validate(out, cond); e != nil {
 		return nil, e
+	}
+	if err != nil {
+		return nil, &Error{Kind: ErrInvalid}
 	}
 	return out, nil
 }
