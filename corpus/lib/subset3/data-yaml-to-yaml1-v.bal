@@ -67,6 +67,11 @@ public function main() {
     show(yaml:toYamlString({parent: {child: 1}}, {indentationPolicy: 0}));
     show(yaml:toYamlString({a: {}}, {indentationPolicy: 0}));
     show(yaml:toYamlString([{}], {indentationPolicy: 0}));
+    // The schema decides which plain strings would be read as null, a boolean or a number.
+    string[] words = ["true", "True", "null", "~", "1", "1.5", "+12", "0x1F", ".inf", "a: b"];
+    show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:FAILSAFE_SCHEMA}));
+    show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:JSON_SCHEMA}));
+    show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:CORE_SCHEMA}));
 }
 
 // @output name: Central Library
@@ -189,4 +194,10 @@ public function main() {
 // @output a: {}
 // @output --
 // @output - {}
+// @output --
+// @output [true, True, null, ~, 1, 1.5, +12, 0x1F, .inf, "a: b"]
+// @output --
+// @output ["true", True, "null", ~, "1", "1.5", +12, 0x1F, .inf, "a: b"]
+// @output --
+// @output ["true", "True", "null", "~", "1", "1.5", "+12", "0x1F", ".inf", "a: b"]
 // @output --
