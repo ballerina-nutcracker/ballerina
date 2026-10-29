@@ -1,0 +1,14 @@
+-- stdout --
+-1
+5
+true
+workflow panicked
+true
+declined 2
+FAILED
+unknown activity argument: divisor
+true
+true
+true
+true
+-- stderr --

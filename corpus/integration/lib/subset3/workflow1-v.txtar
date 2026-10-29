@@ -1,0 +1,9 @@
+-- stdout --
+true
+RUNNING
+true
+o-1 charged 15 by ann
+o-2 declined by bob
+COMPLETED
+o-2 declined by bob
+-- stderr --
