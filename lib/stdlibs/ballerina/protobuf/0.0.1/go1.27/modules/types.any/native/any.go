@@ -46,9 +46,6 @@ const (
 // nanosPerSec is 1,000,000,000 as a decimal constant used for ns <-> seconds conversion.
 var nanosPerSec = decimal.FromInt64(1_000_000_000)
 
-// decimalZero is the zero decimal, used for sign tests.
-var decimalZero = decimal.FromInt64(0)
-
 // anyTypes holds the semtypes built in a runtime's type env at module init. Each runtime
 // owns its own instance, since semtypes are only valid within the env that created them.
 type anyTypes struct {
@@ -289,7 +286,7 @@ func (types *anyTypes) wireMessageToValue(ctx *extern.Context, suffix string, ra
 // seconds part does not fit in an int64, since google.protobuf.Duration/Timestamp both store
 // seconds as int64.
 func decimalToSecNano(sec *decimal.Decimal) (int64, int32, error) {
-	intSecDec := truncateTowardZero(sec)
+	intSecDec, _ := sec.Truncate()
 	intSec, ok, _ := intSecDec.Int64()
 	if !ok {
 		return 0, 0, fmt.Errorf("seconds value %s does not fit in an int64", sec.String())
@@ -298,20 +295,6 @@ func decimalToSecNano(sec *decimal.Decimal) (int64, int32, error) {
 	nanosDec, _ := fracDec.Mul(nanosPerSec)
 	nanosInt, _, _ := nanosDec.Int64()
 	return intSec, int32(nanosInt), nil
-}
-
-// truncateTowardZero discards sec's fractional part, so the result never exceeds sec
-// in magnitude and keeps sec's sign. Floor/Ceiling cannot fail here: they only report an
-// error on overflow, and a decimal128 value that is already integral (as any value at the
-// extremes of its representable exponent range necessarily is) never needs to grow past
-// that range to round to itself.
-func truncateTowardZero(sec *decimal.Decimal) *decimal.Decimal {
-	if sec.Cmp(decimalZero) < 0 {
-		out, _ := sec.Ceiling()
-		return out
-	}
-	out, _ := sec.Floor()
-	return out
 }
 
 // secNanoToDecimal combines whole seconds and nanoseconds into a Ballerina Seconds decimal.
