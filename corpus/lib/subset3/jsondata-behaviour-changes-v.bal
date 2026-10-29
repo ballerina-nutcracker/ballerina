@@ -17,8 +17,8 @@
 import ballerina/data.jsondata;
 import ballerina/io;
 
-// Inputs on which jBallerina panics (see "Notable Behavioural Changes" in the data.jsondata README); this
-// port returns a jsondata:Error for each of them instead.
+// Inputs that jBallerina mishandles (see "Notable Behavioural Changes" in the data.jsondata README); this
+// port returns a jsondata:Error for most of them instead.
 type Pair record {|
     int a;
     int b;
@@ -56,7 +56,35 @@ public function main() {
     byte[] invalidUtf8 = [0x22, 0x61, 0xff, 0x62, 0x22];
     stream<byte[], error?> s7 = [invalidUtf8].toStream();
     string|jsondata:Error r7 = jsondata:parseStream(s7);
-    if r7 is string {
-        io:println(r7.toBytes().toBase16()); // @output 61efbfbd62
+    show(r7);
+    // @output true invalid UTF-8 byte at offset 2
+    string|jsondata:Error r8 = jsondata:parseBytes(invalidUtf8);
+    show(r8);
+    // @output true invalid UTF-8 byte at offset 2
+    foreach string input in ["01", "-01", "00", "01.5", "[01]", "{\"a\":01}"] {
+        json|jsondata:Error r9 = jsondata:parseString(input);
+        show(r9);
     }
+    // @output true 'leading zero in number '01'' at line: '1' column: '4'
+    // @output true 'leading zero in number '-01'' at line: '1' column: '5'
+    // @output true 'leading zero in number '00'' at line: '1' column: '4'
+    // @output true 'leading zero in number '01.5'' at line: '1' column: '6'
+    // @output true 'leading zero in number '01'' at line: '1' column: '5'
+    // @output true 'leading zero in number '01'' at line: '1' column: '9'
+    json|jsondata:Error r10 = jsondata:parseBytes("[1,01]".toBytes());
+    show(r10);
+    // @output true 'leading zero in number '01'' at line: '1' column: '8'
+    stream<byte[], error?> s11 = ["{\"a\":-00.5}".toBytes()].toStream();
+    json|jsondata:Error r11 = jsondata:parseStream(s11);
+    show(r11);
+    // @output true 'leading zero in number '-00.5'' at line: '1' column: '12'
+    foreach string input in ["0", "-0", "0.5", "[0,-0.5]", "{\"a\":0e1}"] {
+        json|jsondata:Error r12 = jsondata:parseString(input);
+        show(r12);
+    }
+    // @output 0
+    // @output 0
+    // @output 0.5
+    // @output [0,-0.5]
+    // @output {"a":0.0}
 }

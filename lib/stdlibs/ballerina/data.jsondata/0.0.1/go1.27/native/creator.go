@@ -307,6 +307,9 @@ func (sm *stateMachine) handleFieldName(jsonFieldName string) error {
 
 func (sm *stateMachine) processValue(isString bool) error {
 	value := sm.value()
+	if !isString && hasLeadingZero(value) {
+		return &parseException{message: "leading zero in number '" + value + "'"}
+	}
 	var expected semtypes.SemType
 	switch {
 	case sm.unionDepth > 0 && isString:
@@ -326,6 +329,12 @@ func (sm *stateMachine) processValue(isString bool) error {
 	}
 	sm.checkNullAndUpdateCurrentNode(converted)
 	return nil
+}
+
+// hasLeadingZero reports a number token that RFC 8259 forbids, such as 01 or -00.5; jBallerina accepts them.
+func hasLeadingZero(token string) bool {
+	digits := strings.TrimPrefix(token, "-")
+	return len(digits) > 1 && digits[0] == '0' && digits[1] >= '0' && digits[1] <= '9'
 }
 
 func (sm *stateMachine) convertAndUpdateCurrentNode(value string, ty semtypes.SemType, isString bool) (any, error) {

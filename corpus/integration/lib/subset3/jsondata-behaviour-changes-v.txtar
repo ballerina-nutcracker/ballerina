@@ -5,5 +5,19 @@ true incompatible expected type 'decimal' for value '1e6145'
 true invalid JSON document
 true required field 'a' not present in JSON
 efbfbd7cf09f9880
-61efbfbd62
+true invalid UTF-8 byte at offset 2
+true invalid UTF-8 byte at offset 2
+true 'leading zero in number '01'' at line: '1' column: '4'
+true 'leading zero in number '-01'' at line: '1' column: '5'
+true 'leading zero in number '00'' at line: '1' column: '4'
+true 'leading zero in number '01.5'' at line: '1' column: '6'
+true 'leading zero in number '01'' at line: '1' column: '5'
+true 'leading zero in number '01'' at line: '1' column: '9'
+true 'leading zero in number '01'' at line: '1' column: '8'
+true 'leading zero in number '-00.5'' at line: '1' column: '12'
+0
+0
+0.5
+[0,-0.5]
+{"a":0.0}
 -- stderr --

@@ -64,7 +64,7 @@ func parseString(cache *typeCache, ctx *extern.Context, args []values.BalValue) 
 
 func parseBytes(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	input, _ := args[0].(*values.List)
-	return parseText(cache, ctx, utf16FromBytes(input.ToByteSlice()), args[1], args[2])
+	return parseUTF8(cache, ctx, input.ToByteSlice(), args[1], args[2])
 }
 
 // parseStream reads the whole byte-block stream before parsing. Unlike jBallerina, which treats an error from
@@ -84,7 +84,7 @@ func parseStream(cache *typeCache, ctx *extern.Context, args []values.BalValue) 
 		block, _ := record.Get("value")
 		input = append(input, block.(*values.List).ToByteSlice()...)
 	}
-	return parseText(cache, ctx, utf16FromBytes(input), args[1], args[2])
+	return parseUTF8(cache, ctx, input, args[1], args[2])
 }
 
 func streamError(ctx *extern.Context, cause *values.Error) (values.BalValue, error) {
@@ -93,6 +93,14 @@ func streamError(ctx *extern.Context, cause *values.Error) (values.BalValue, err
 		jsonErr.Cause = cause
 	}
 	return result, err
+}
+
+func parseUTF8(cache *typeCache, ctx *extern.Context, input []byte, optsArg, tdArg values.BalValue) (values.BalValue, error) {
+	text, err := utf16FromBytes(input)
+	if err != nil {
+		return toResult(ctx, nil, err)
+	}
+	return parseText(cache, ctx, text, optsArg, tdArg)
 }
 
 func parseText(cache *typeCache, ctx *extern.Context, input []uint16, optsArg, tdArg values.BalValue) (values.BalValue, error) {

@@ -129,8 +129,8 @@ func parse(t *typer, opts projection, input []uint16, target semtypes.SemType) (
 	return sm.execute(input, target)
 }
 
-// utf16FromString and utf16FromBytes decode UTF-8 straight into UTF-16 code units; an invalid byte becomes
-// U+FFFD. A UTF-16 encoding never has more code units than the UTF-8 encoding has bytes.
+// utf16FromString and utf16FromBytes decode UTF-8 straight into UTF-16 code units. A UTF-16 encoding never
+// has more code units than the UTF-8 encoding has bytes.
 func utf16FromString(input string) []uint16 {
 	buff := make([]uint16, 0, len(input))
 	for _, r := range input {
@@ -139,14 +139,18 @@ func utf16FromString(input string) []uint16 {
 	return buff
 }
 
-func utf16FromBytes(input []byte) []uint16 {
+// utf16FromBytes rejects a byte sequence that is not valid UTF-8; jBallerina replaces or drops it.
+func utf16FromBytes(input []byte) ([]uint16, error) {
 	buff := make([]uint16, 0, len(input))
-	for len(input) > 0 {
-		r, size := utf8.DecodeRune(input)
+	for offset := 0; offset < len(input); {
+		r, size := utf8.DecodeRune(input[offset:])
+		if r == utf8.RuneError && size == 1 {
+			return nil, newJSONError("invalid UTF-8 byte at offset %d", offset)
+		}
 		buff = utf16.AppendRune(buff, r)
-		input = input[size:]
+		offset += size
 	}
-	return buff
+	return buff, nil
 }
 
 func (sm *stateMachine) execute(buff []uint16, target semtypes.SemType) (values.BalValue, error) {
