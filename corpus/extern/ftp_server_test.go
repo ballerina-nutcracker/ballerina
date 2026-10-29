@@ -328,7 +328,8 @@ func serveSFTP(conn net.Conn, config *ssh.ServerConfig, handlers sftp.Handlers) 
 }
 
 // startBusyFTPServer starts a server that accepts logins but answers every other command with a
-// 421 reply, so each read fails transiently; it counts the replies it sent.
+// 421 reply, so each read fails transiently; it counts the replies it sent. It closes the
+// connection after the reply, except for the user "linger".
 func startBusyFTPServer(t *testing.T) (int64, *atomic.Int64) {
 	t.Helper()
 	ln := listenLoopback(t)
@@ -356,10 +357,12 @@ func serveBusyFTP(conn net.Conn, busyReplies *atomic.Int64) {
 		return
 	}
 	lines := bufio.NewScanner(conn)
+	linger := false
 	for lines.Scan() {
-		command, _, _ := strings.Cut(lines.Text(), " ")
+		command, argument, _ := strings.Cut(lines.Text(), " ")
 		switch strings.ToUpper(command) {
 		case "USER":
+			linger = argument == "linger"
 			reply("331 password required")
 		case "PASS":
 			reply("230 logged in")
@@ -373,7 +376,9 @@ func serveBusyFTP(conn net.Conn, busyReplies *atomic.Int64) {
 		default:
 			busyReplies.Add(1)
 			reply("421 Service not available, closing control connection")
-			return
+			if !linger {
+				return
+			}
 		}
 	}
 }

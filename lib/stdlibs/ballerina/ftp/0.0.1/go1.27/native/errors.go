@@ -19,6 +19,7 @@ package native
 
 import (
 	"errors"
+	"net/textproto"
 	"regexp"
 	"strconv"
 	"strings"
@@ -67,16 +68,21 @@ type balCause struct {
 
 func (c *balCause) Error() string { return c.value.Message }
 
-// ftpCodePattern mirrors FtpErrorCodeAnalyzer: the first 3-digit word in the message is taken
-// as the reply code, even when it belongs to something else such as an IP address.
 var ftpCodePattern = regexp.MustCompile(`\b([1-5]\d{2})\b`)
 
-func extractFtpCode(message string) (int, bool) {
-	m := ftpCodePattern.FindStringSubmatch(message)
-	if m == nil {
+// ftpReplyCode prefers the code of a server reply in the cause chain. Otherwise it takes the last
+// 3-digit word of the message, as a reply is appended after any address such as 127.0.0.1; jBallerina
+// takes the first (ballerina-library#9383).
+func ftpReplyCode(message string, cause error) (int, bool) {
+	var reply *textproto.Error
+	if errors.As(cause, &reply) {
+		return reply.Code, true
+	}
+	matches := ftpCodePattern.FindAllStringSubmatch(message, -1)
+	if len(matches) == 0 {
 		return 0, false
 	}
-	code, _ := strconv.Atoi(m[1])
+	code, _ := strconv.Atoi(matches[len(matches)-1][1])
 	return code, true
 }
 
@@ -102,7 +108,7 @@ func fullMessage(message string, cause error) string {
 
 // classify maps an untyped failure to an error kind by its reply code.
 func classify(message string, cause error) errorKind {
-	code, ok := extractFtpCode(fullMessage(message, cause))
+	code, ok := ftpReplyCode(fullMessage(message, cause), cause)
 	if !ok {
 		return kindError
 	}
