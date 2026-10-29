@@ -76,8 +76,8 @@ Support Levels:
 | Write XML | Partially Supported | `putXml` writes `xml` values. Converting a record needs `data.xmldata` and returns an `ftp:Error` |
 | Write CSV | Supported | `putCsv` with `string[][]` or `record {}[]`; the header and quoting rules match jBallerina |
 | Write from streams | Supported | `putBytesAsStream`, `putCsvAsStream`. A record stream written with `APPEND` gets no header row, as `putCsv` (ballerina-platform/ballerina-library#9385); jBallerina 2.22.0 writes one |
-| File and directory management | Supported | `mkdir`, `rmdir`, `delete`, `rename`, `move`, `copy`, `exists`, `size`, `list`, `isDirectory`. `list` order is unspecified. `rmdir` removes a non-empty folder with its contents and `copy` of a folder creates an empty folder, as jBallerina does; spec section 3.4 says `rmdir` fails on a non-empty folder |
-| Deprecated untyped operations | Supported | `get`, `put` (including ZIP compression) and `append`. ZIP naming follows jBallerina (ballerina-platform/ballerina-library#9382) |
+| File and directory management | Supported | `mkdir`, `rmdir`, `delete`, `rename`, `move`, `copy`, `exists`, `size`, `list`, `isDirectory`. `list` order is unspecified. `copy` of a folder creates an empty folder, as jBallerina does. `rmdir` and `delete` fail on a non-empty folder; see Notable Behavioural Changes |
+| Deprecated untyped operations | Supported | `get`, `put` (including ZIP compression) and `append`. The ZIP archive name differs from jBallerina's; see Notable Behavioural Changes |
 | Retry | Supported | `retryConfig` retries only transient failures of a whole-file read: 4xx server replies and broken or unreachable connections. Other errors, such as `FileNotFoundError` and `ContentBindingError`, return at once, as intended per ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 retries every error |
 | Circuit breaker | Supported | `circuitBreaker` with rolling windows, failure categories and the `HALF_OPEN` trial |
 | Close | Supported | `close` |
@@ -89,7 +89,7 @@ Support Levels:
 | Listener initialization and lifecycle | Supported | `start`, `attach`, `detach`, `gracefulStop`, `immediateStop`, `poll`. Polling runs on a `task:Listener`. `detach` removes only that service and `attach` accepts a `string[]` name, as intended per ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 stops polling for every service on `detach` and ignores `attach` with a `string[]` name |
 | Service configuration | Supported | `@ftp:ServiceConfig` per service, or the deprecated listener-level `path`, `fileNamePattern`, `fileAgeFilter` and `fileDependencyConditions`. Configuration errors surface at `attach`, as in jBallerina (ballerina-platform/ballerina-library#9385) |
 | File filtering | Supported | File name patterns, age filters and dependency conditions; patterns use Go regular expressions (see Notable Behavioural Changes) |
-| Change detection | Supported | As in jBallerina, every file that passes the filters is reported on every poll, a deleted file is reported once for each poll that reported it, deletions are not reported once the directory is empty, and listener paths and URIs carry the password (ballerina-platform/ballerina-library#9380, #9381, #9286, #9288) |
+| Change detection | Supported | A file is reported when it first passes the filters and again when its size or modification time changes, and a deletion is reported once. Reported paths and URIs carry no credentials; see Notable Behavioural Changes |
 | Format-specific content handlers | Partially Supported | `onFile` (`byte[]` or a byte stream), `onFileText`, `onFileJson` and `onFileXml` with `xml` content are supported. `onFileCsv` and `onFileXml` with a record type need `data.csv`/`data.xmldata` and are rejected at `attach` |
 | Per-handler routing and post-processing actions | Not Yet Supported | `@ftp:FunctionConfig` (`fileNamePattern`, `afterProcess`, `afterError`) needs method annotations at runtime, blocked by ballerina-nutcracker/ballerina#1360 and #1361 |
 | Deletion handlers | Supported | `onFileDelete`, `onFileDeleted` |
@@ -105,7 +105,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | Module-level error types | Supported | `ftp:Error` and its distinct subtypes. `ContentBindingError` is declared through a private named distinct type (ballerina-nutcracker/ballerina#617); its subtyping is unchanged |
-| Reply-code error classification | Supported | Follows jBallerina, including taking the first 3-digit token of the message (ballerina-platform/ballerina-library#9383) |
+| Reply-code error classification | Supported | Uses the code of the server reply; see Notable Behavioural Changes |
 
 ### Notable Behavioural Changes
 
@@ -117,4 +117,9 @@ Support Levels:
 - **File permissions in FileInfo.** jBallerina reports SFTP readability, writability and executability for the connected user; the Go-native version reports the owner permission bits.
 - **Handler failure output.** jBallerina prints a stack trace when a listener handler fails or a file cannot be read; the Go-native version prints `error: <message>` to stderr.
 - **Deleting a non-empty folder.** jBallerina's `delete` returns `()` and leaves a non-empty folder in place; the Go-native version returns an `ftp:Error` — spec section 3.4 requires an error when the operation fails.
+- **Credentials in file URIs.** jBallerina puts the plaintext password in `FileInfo.path`, `uri` and `rootURI` (listener handlers and `list`), in the deleted-file paths of `onFileDelete`, `onFileDeleted` and `WatchEvent.deletedFiles`, and in a listener `ContentBindingError`'s `filePath`; the Go-native version leaves the user and password out of these URIs (`ftp://host:port/path`), while `friendlyURI` and `publicURIString` keep `user:***@` (ballerina-platform/ballerina-library#9381, #9286).
+- **Change detection.** jBallerina reports every file that passes the filters on every poll, reports a deleted file once for each poll that reported it, and reports no deletion once the watched directory is empty; the Go-native version reports a file once, again only when its size or modification time changes, and each deletion once, including the last file of a directory — the 2.22.0 spec describes added files as new or modified (ballerina-platform/ballerina-library#9288, #9380).
+- **Reply-code classification.** jBallerina takes the first 3-digit word of an error message as the FTP reply code, so `127` of `127.0.0.1` hides a `421` reply; the Go-native version uses the code of the server reply, and otherwise the last 3-digit word of the message (ballerina-platform/ballerina-library#9383).
+- **ZIP archive name.** jBallerina's `put` with `ftp:ZIP` cuts the whole path at its last dot, so `/v1.2/report` uploads to `/v1.zip` and a path without a dot panics; the Go-native version replaces the extension of the file name, or appends `.zip` when it has none (ballerina-platform/ballerina-library#9382).
+- **Removing a non-empty folder.** jBallerina's `rmdir` deletes a non-empty folder with everything inside it; the Go-native version returns an `ftp:Error` and leaves the folder in place — spec section 3.4 of 2.22.0 says `rmdir` fails on a non-empty folder (ballerina-platform/ballerina-library#9410).
 - **Transport error causes.** jBallerina reports connection and transfer failures with commons-vfs and JSch messages; the Go-native version keeps the same outer messages and error types but the underlying cause text comes from the Go network, FTP and SSH libraries.
