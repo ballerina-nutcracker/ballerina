@@ -89,6 +89,14 @@ func TestTcpServiceLocalClose(t *testing.T) {
 	runExtern(t, fileCase("tcp-service/tcp-svc-local-close-v"), newTcpPal(), nil)
 }
 
+// TestTcpServiceCloseInOnConnect verifies that a connection closed before
+// onConnect returns dispatches onClose once on the returned service.
+func TestTcpServiceCloseInOnConnect(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	runExtern(t, fileCase("tcp-service/tcp-svc-close-in-onconnect-v"), newTcpPal(), nil)
+}
+
 // TestTcpServicePanic verifies that a panic in onBytes or onConnect, or an
 // error returned from onBytes, is logged instead of crashing the interpreter.
 func TestTcpServicePanic(t *testing.T) {

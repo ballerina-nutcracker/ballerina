@@ -48,6 +48,12 @@ type connState struct {
 	connSvcObj *values.Object // set once onConnect resolves; nil until then
 }
 
+func dispatchOnClose(rt *runtime.Runtime, ctx *extern.Context, connSvcObj *values.Object) {
+	invokeRemote(rt, ctx, connSvcObj, onClose, func() []values.BalValue {
+		return []values.BalValue{connSvcObj}
+	})
+}
+
 // closeOnce dispatches onClose before closing the socket, so the peer only observes the close after onClose has run.
 func (cs *connState) closeOnce(rt *runtime.Runtime, ctx *extern.Context) {
 	cs.mu.Lock()
@@ -59,9 +65,7 @@ func (cs *connState) closeOnce(rt *runtime.Runtime, ctx *extern.Context) {
 	connSvcObj := cs.connSvcObj
 	cs.mu.Unlock()
 	if connSvcObj != nil {
-		invokeRemote(rt, ctx, connSvcObj, onClose, func() []values.BalValue {
-			return []values.BalValue{connSvcObj}
-		})
+		dispatchOnClose(rt, ctx, connSvcObj)
 	}
 	_ = cs.conn.Close()
 }
@@ -291,7 +295,15 @@ func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object
 		h.connSvcObj = connSvcObj
 		cs.mu.Lock()
 		cs.connSvcObj = connSvcObj
+		closedDuringOnConnect := cs.closed
 		cs.mu.Unlock()
+		if closedDuringOnConnect {
+			// The earlier closeOnce saw no connection service, so this is the only onClose for the connection.
+			withPooledContext(rt, func(ctx *extern.Context) {
+				dispatchOnClose(rt, ctx, connSvcObj)
+			})
+			return
+		}
 	}
 	h.readLoop(rt, types)
 }
