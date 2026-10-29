@@ -53,7 +53,7 @@ func parseAsType(cache *typeCache, ctx *extern.Context, args []values.BalValue) 
 	opts, _ := args[1].(*values.Map)
 	td, _ := args[2].(*values.TypeDesc)
 	t := newTyperFor(cache, ctx, td)
-	result, err := traverse(t, readProjection(opts), args[0], t.root, true)
+	result, err := traverse(t, readProjection(opts), args[0], t.root)
 	return toResult(ctx, result, err)
 }
 

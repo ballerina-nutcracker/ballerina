@@ -154,7 +154,7 @@ func (sm *stateMachine) execute(buff []uint16, target semtypes.SemType) (values.
 	switch ti.kind {
 	case kindRecord, kindMap:
 		sm.expectedTypes = append(sm.expectedTypes, &target)
-		fields, err := sm.mappingFields(ti, true)
+		fields, err := sm.mappingFields(ti)
 		if err != nil {
 			return nil, err
 		}
@@ -192,9 +192,9 @@ func (sm *stateMachine) execute(buff []uint16, target semtypes.SemType) (values.
 	return sm.materialize(sm.currentNode)
 }
 
-func (sm *stateMachine) mappingFields(ti typeInfo, isRoot bool) (*fieldSet, error) {
+func (sm *stateMachine) mappingFields(ti typeInfo) (*fieldSet, error) {
 	if ti.kind == kindRecord {
-		return sm.recordFields(ti, isRoot)
+		return sm.recordFields(ti)
 	}
 	return emptyFieldSet(), nil
 }

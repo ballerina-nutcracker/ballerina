@@ -1,5 +1,9 @@
 -- stdout --
 {"xs":[1,0,2]} 3
+{"xs":[1]}
+{"xs":[1,0,0,4]}
+{"rows":[[1]]}
+{"rows":[[1],[],[3]]}
 [[1],[2],[3]]
 [["a"],["b"],5]
 {"a":[[1],[2]],"b":5}
@@ -10,8 +14,8 @@ error: duplicate field 'title'
 error: duplicate field 'title'
 error: duplicate field 'title'
 {"title":"z","other":1}
-{"title":"a","next":{"title":"b","next":null}}
-{"title":"a","next":{"title":"b","next":null}}
+{"val":1,"next":{"val":2,"next":null}}
+{"val":1,"next":{"val":2,"next":null}}
 error: network reset
 true
 -- stderr --

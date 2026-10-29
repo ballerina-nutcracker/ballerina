@@ -347,13 +347,13 @@ func (t *typer) typeName(ty semtypes.SemType) string {
 	return name
 }
 
-// recordFields lists the fields of a record keyed by their JSON key. Only the target type's own fields can
-// carry a `@jsondata:Name` override, since annotations of nested types do not reach native code, so the
-// overrides apply only to the root value and not to a nested record of the same shape.
-func (t *typer) recordFields(ti typeInfo, isRoot bool) (*fieldSet, error) {
+// recordFields lists the fields of a record keyed by their JSON key. Only the target type's `@jsondata:Name`
+// overrides reach native code; they apply to every record of the target's shape, so a recursive reference
+// to the target is renamed too.
+func (t *typer) recordFields(ti typeInfo) (*fieldSet, error) {
 	fs := emptyFieldSet()
 	renames := t.rootFieldKeys
-	if !isRoot || !semtypes.IsSameType(t.tc, ti.ty, t.root) {
+	if !semtypes.IsSameType(t.tc, ti.ty, t.root) {
 		renames = nil
 	}
 	for _, name := range ti.mapping.FieldNames() {
@@ -392,16 +392,24 @@ func (b *mappingBuilder) build(t *typer) *values.Map {
 }
 
 type listBuilder struct {
+	tc     semtypes.Context
 	ty     semtypes.SemType
 	atomic *semtypes.ListAtomicType
 	items  []values.BalValue
 }
 
+// set pads the members skipped before index with their filler values, as setting a member past the end of a
+// jBallerina array does. Only a member whose type has a filler value is ever skipped.
 func (b *listBuilder) set(index int, v values.BalValue) {
-	for len(b.items) <= index {
-		b.items = append(b.items, nil)
+	for i := len(b.items); i < index; i++ {
+		filler, _ := values.FillerValue(b.tc, b.atomic.MemberAtInnerVal(i))
+		b.items = append(b.items, filler)
 	}
-	b.items[index] = v
+	if index < len(b.items) {
+		b.items[index] = v
+	} else {
+		b.items = append(b.items, v)
+	}
 }
 
 // accepts reports whether index is within the list type, so a value at that index is kept rather than
@@ -433,11 +441,11 @@ func (t *typer) newJSONMappingBuilder() *mappingBuilder {
 }
 
 func (t *typer) newListBuilder(ti typeInfo) *listBuilder {
-	return &listBuilder{ty: ti.ty, atomic: ti.list}
+	return &listBuilder{tc: t.tc, ty: ti.ty, atomic: ti.list}
 }
 
 func (t *typer) newJSONListBuilder() *listBuilder {
-	return &listBuilder{ty: t.jsonListTy, atomic: t.jsonList}
+	return &listBuilder{tc: t.tc, ty: t.jsonListTy, atomic: t.jsonList}
 }
 
 func (t *typer) newAnydataMappingBuilder() *mappingBuilder {
@@ -445,5 +453,5 @@ func (t *typer) newAnydataMappingBuilder() *mappingBuilder {
 }
 
 func (t *typer) newAnydataListBuilder() *listBuilder {
-	return &listBuilder{ty: t.anydataListTy, atomic: t.anydataList}
+	return &listBuilder{tc: t.tc, ty: t.anydataListTy, atomic: t.anydataList}
 }

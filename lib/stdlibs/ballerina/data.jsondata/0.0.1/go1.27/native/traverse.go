@@ -45,12 +45,10 @@ type traverser struct {
 	restTypes      []restEntry
 	// fieldNames is jBallerina's field-name deque, oldest entry first.
 	fieldNames []string
-	// renameRoot is set when target is the root value, so the outermost record gets the `@jsondata:Name` overrides.
-	renameRoot bool
 }
 
-func traverse(t *typer, opts projection, json values.BalValue, target semtypes.SemType, renameRoot bool) (values.BalValue, error) {
-	tr := &traverser{typer: t, projection: opts, renameRoot: renameRoot}
+func traverse(t *typer, opts projection, json values.BalValue, target semtypes.SemType) (values.BalValue, error) {
+	tr := &traverser{typer: t, projection: opts}
 	return tr.traverseJSON(json, target)
 }
 
@@ -64,7 +62,7 @@ func (tr *traverser) traverseJSON(json values.BalValue, target semtypes.SemType)
 		if _, ok := json.(*values.Map); !ok {
 			return nil, incompatibleTypeError(tr.typeName(target), formatMessageArg(json))
 		}
-		fields, err := tr.recordFields(ti, tr.renameRoot && len(tr.fieldHierarchy) == 0)
+		fields, err := tr.recordFields(ti)
 		if err != nil {
 			return nil, err
 		}

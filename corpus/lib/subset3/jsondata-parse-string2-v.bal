@@ -25,20 +25,19 @@ type Ints record {|
     int[] xs?;
 |};
 
+type Grid record {|
+    int[][] rows?;
+|};
+
 type Open record {
     @jsondata:Name {value: "t"}
     string title;
 };
 
-type Book record {|
-    @jsondata:Name {value: "t"}
-    string title;
-    Other? next;
-|};
-
-type Other record {|
-    string title;
-    Other? next;
+type Node record {|
+    @jsondata:Name {value: "v"}
+    int val;
+    Node? next;
 |};
 
 class TruncatedBlocks {
@@ -71,6 +70,19 @@ public function main() {
         io:println(n1, " ", sum);
     }
     // @output {"xs":[1,0,2]} 3
+    jsondata:Options nilAsOptional = {allowDataProjection: {nilAsOptionalField: true}};
+    Ints|error n2 = jsondata:parseString("{\"xs\":[1,null]}", nilAsOptional);
+    show(n2);
+    // @output {"xs":[1]}
+    Ints|error n3 = jsondata:parseString("{\"xs\":[1,null,null,4]}", nilAsOptional);
+    show(n3);
+    // @output {"xs":[1,0,0,4]}
+    Grid|error n4 = jsondata:parseString("{\"rows\":[[1,null],null]}", nilAsOptional, Grid);
+    show(n4);
+    // @output {"rows":[[1]]}
+    Grid|error n5 = jsondata:parseString("{\"rows\":[[1,null],null,[3]]}", nilAsOptional, Grid);
+    show(n5);
+    // @output {"rows":[[1],[],[3]]}
 
     (int[]|string)[]|error u1 = jsondata:parseString("[[1],[2],[3]]");
     show(u1);
@@ -104,12 +116,12 @@ public function main() {
     show(r4);
     // @output {"title":"z","other":1}
 
-    Book|error b1 = jsondata:parseString("{\"t\":\"a\",\"next\":{\"title\":\"b\",\"next\":null}}", {}, Book);
+    Node|error b1 = jsondata:parseString("{\"v\":1,\"next\":{\"v\":2,\"next\":null}}", {}, Node);
     show(b1);
-    // @output {"title":"a","next":{"title":"b","next":null}}
-    Book|error b2 = jsondata:parseAsType({"t": "a", "next": {"title": "b", "next": ()}}, {}, Book);
+    // @output {"val":1,"next":{"val":2,"next":null}}
+    Node|error b2 = jsondata:parseAsType({"v": 1, "next": {"v": 2, "next": ()}}, {}, Node);
     show(b2);
-    // @output {"title":"a","next":{"title":"b","next":null}}
+    // @output {"val":1,"next":{"val":2,"next":null}}
 
     stream<byte[], error?> s1 = new (new TruncatedBlocks());
     int|error s = jsondata:parseStream(s1, {}, int);

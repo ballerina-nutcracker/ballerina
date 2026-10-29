@@ -163,7 +163,7 @@ func (sm *stateMachine) checkTypeAndCreateMappingValue(expected semtypes.SemType
 	ti := sm.classify(expected)
 	switch ti.kind {
 	case kindRecord, kindMap:
-		fields, err := sm.mappingFields(ti, false)
+		fields, err := sm.mappingFields(ti)
 		if err != nil {
 			return nil, err
 		}
@@ -331,16 +331,11 @@ func (sm *stateMachine) processValue(isString bool) error {
 func (sm *stateMachine) convertAndUpdateCurrentNode(value string, ty semtypes.SemType, isString bool) (any, error) {
 	current := sm.currentNode
 	if sm.nilAsOptionalField && !sm.isNilable(ty) && value == "null" && sm.currentField != nil && sm.currentField.optional {
-		list, ok := current.(*listBuilder)
-		if !ok {
+		if _, ok := current.(*listBuilder); !ok {
 			return nil, nil
 		}
-		// jBallerina leaves the member's filler value in place of a null member of an optional field's list.
-		index := sm.arrayIndexes[len(sm.arrayIndexes)-1]
-		if filler, ok := values.FillerValue(sm.tc, ty); ok {
-			if list.accepts(index) {
-				list.set(index, filler)
-			}
+		// Like jBallerina, a null member of an optional field's list is skipped; a later member pads the gap.
+		if _, ok := values.FillerValue(sm.tc, ty); ok {
 			return current, nil
 		}
 	}
@@ -491,5 +486,5 @@ func (sm *stateMachine) verifyAndConvertToUnion(node any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return traverse(sm.typer, sm.projection, json, *sm.peekExpectedType(), false)
+	return traverse(sm.typer, sm.projection, json, *sm.peekExpectedType())
 }
