@@ -34,6 +34,24 @@ type NilableRecord record {|
     record {| string x; |}? r;
 |};
 
+type Inner record {|
+    string name;
+|};
+
+enum Color {
+    RED,
+    GREEN
+}
+
+type SingletonUnion record {|
+    Inner|"none" p;
+    Inner|Color c;
+|};
+
+type SameSingletonUnion record {|
+    Inner|"none" p;
+|};
+
 type A record {|
     int a;
 |};
@@ -106,4 +124,16 @@ public function main() {
     B|xmldata:Error splitTraversed = xmldata:parseAsType(checkpanic xml:fromString("<x><b>x &amp; y<!--c-->z</b></x>"));
     show(splitTraversed);
     // @output {"b":"x &amp; yz"}
+
+    // Unions with a singleton or enum member are classified once and reused across parses.
+    foreach int _ in 0 ..< 2 {
+        both("<x><p><name>a</name></p><c><name>b</name></c></x>", SingletonUnion);
+    }
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    // @output {"p":{"name":"a"},"c":{"name":"b"}}
+    both("<x><p><name>c</name></p></x>", SameSingletonUnion);
+    // @output {"p":{"name":"c"}}
+    // @output {"p":{"name":"c"}}
 }

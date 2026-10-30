@@ -132,65 +132,57 @@ func newTyper(cache *typeCache, tc semtypes.Context, root semtypes.SemType, root
 type typeCache struct {
 	mu       sync.Mutex
 	interner *semtypes.SemTypeInterner
-	infos    map[semtypes.InternHandle]typeInfo
-	maps     definedTypes
-	arrays   definedTypes
+	infos    typeKeyed[typeInfo]
+	maps     typeKeyed[semtypes.SemType]
+	arrays   typeKeyed[semtypes.SemType]
 }
 
-// definedTypes keys interner-recognisable constraints by handle; the rest, such as byte, are few per
-// program and are matched by type equality.
-type definedTypes struct {
-	byHandle map[semtypes.InternHandle]semtypes.SemType
-	others   []definedType
+// typeKeyed keys interner-recognisable types by handle; the rest, such as byte or a union with a singleton
+// member, are few per program and are matched by type equality.
+type typeKeyed[V any] struct {
+	byHandle map[semtypes.InternHandle]V
+	others   []typeEntry[V]
 }
 
-type definedType struct {
-	constraint semtypes.SemType
-	defined    semtypes.SemType
+type typeEntry[V any] struct {
+	key   semtypes.SemType
+	value V
+}
+
+func newTypeKeyed[V any]() typeKeyed[V] {
+	return typeKeyed[V]{byHandle: make(map[semtypes.InternHandle]V)}
 }
 
 func newTypeCache() *typeCache {
 	return &typeCache{
 		interner: semtypes.NewSemtypeInterner(),
-		infos:    make(map[semtypes.InternHandle]typeInfo),
-		maps:     definedTypes{byHandle: make(map[semtypes.InternHandle]semtypes.SemType)},
-		arrays:   definedTypes{byHandle: make(map[semtypes.InternHandle]semtypes.SemType)},
+		infos:    newTypeKeyed[typeInfo](),
+		maps:     newTypeKeyed[semtypes.SemType](),
+		arrays:   newTypeKeyed[semtypes.SemType](),
 	}
 }
 
-func (c *typeCache) getOrClassify(ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
+func getOrCompute[V any](c *typeCache, tc semtypes.Context, entries *typeKeyed[V], key semtypes.SemType,
+	compute func(semtypes.SemType) V) V {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	handle := c.interner.Intern(ty)
-	if ti, ok := c.infos[handle]; ok {
-		return ti
-	}
-	ti := classify(ty)
-	c.infos[handle] = ti
-	return ti
-}
-
-func (c *typeCache) getOrDefine(tc semtypes.Context, types *definedTypes, constraint semtypes.SemType,
-	define func(semtypes.SemType) semtypes.SemType) semtypes.SemType {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if !internable(constraint) {
-		for _, d := range types.others {
-			if semtypes.IsSameType(tc, d.constraint, constraint) {
-				return d.defined
+	if !internable(key) {
+		for _, e := range entries.others {
+			if semtypes.IsSameType(tc, e.key, key) {
+				return e.value
 			}
 		}
-		defined := define(constraint)
-		types.others = append(types.others, definedType{constraint: constraint, defined: defined})
-		return defined
+		value := compute(key)
+		entries.others = append(entries.others, typeEntry[V]{key: key, value: value})
+		return value
 	}
-	handle := c.interner.Intern(constraint)
-	if defined, ok := types.byHandle[handle]; ok {
-		return defined
+	handle := c.interner.Intern(key)
+	if value, ok := entries.byHandle[handle]; ok {
+		return value
 	}
-	defined := define(constraint)
-	types.byHandle[handle] = defined
-	return defined
+	value := compute(key)
+	entries.byHandle[handle] = value
+	return value
 }
 
 var valueBasicTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String}
@@ -214,10 +206,10 @@ func classifyMints(ty semtypes.SemType) bool {
 }
 
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
-	if !classifyMints(ty) || !internable(ty) {
+	if !classifyMints(ty) {
 		return t.classifyType(ty)
 	}
-	return t.cache.getOrClassify(ty, t.classifyType)
+	return getOrCompute(t.cache, t.tc, &t.cache.infos, ty, t.classifyType)
 }
 
 func (t *typer) classifyType(ty semtypes.SemType) typeInfo {
@@ -445,14 +437,14 @@ func (t *typer) contains(ty semtypes.SemType, v values.BalValue) bool {
 }
 
 func (t *typer) mapType(constraint semtypes.SemType) semtypes.SemType {
-	return t.cache.getOrDefine(t.tc, &t.cache.maps, constraint, func(constraint semtypes.SemType) semtypes.SemType {
+	return getOrCompute(t.cache, t.tc, &t.cache.maps, constraint, func(constraint semtypes.SemType) semtypes.SemType {
 		md := semtypes.NewMappingDefinition()
 		return md.Define(t.tc.Env(), nil, constraint)
 	})
 }
 
 func (t *typer) arrayType(element semtypes.SemType) semtypes.SemType {
-	return t.cache.getOrDefine(t.tc, &t.cache.arrays, element, func(element semtypes.SemType) semtypes.SemType {
+	return getOrCompute(t.cache, t.tc, &t.cache.arrays, element, func(element semtypes.SemType) semtypes.SemType {
 		ld := semtypes.NewListDefinition()
 		return ld.Define(t.tc.Env(), nil, semtypes.ListRest(element))
 	})

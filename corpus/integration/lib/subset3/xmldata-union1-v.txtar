@@ -20,4 +20,10 @@ E: field 'r' cannot be converted
 true
 {"b":"x &amp; yz"}
 {"b":"x &amp; yz"}
+{"p":{"name":"a"},"c":{"name":"b"}}
+{"p":{"name":"a"},"c":{"name":"b"}}
+{"p":{"name":"a"},"c":{"name":"b"}}
+{"p":{"name":"a"},"c":{"name":"b"}}
+{"p":{"name":"c"}}
+{"p":{"name":"c"}}
 -- stderr --
