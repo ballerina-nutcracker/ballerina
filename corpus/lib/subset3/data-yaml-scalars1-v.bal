@@ -47,6 +47,14 @@ type OptionalName record {|
     string name?;
 |};
 
+type OptionalAge record {|
+    int age?;
+|};
+
+type NilableAge record {|
+    int? age;
+|};
+
 type Signed8Field record {|
     int:Signed8 a;
 |};
@@ -54,6 +62,10 @@ type Signed8Field record {|
 type ByteField record {|
     byte a;
 |};
+
+type OneOrString (1|"1")[];
+
+type TrueOrString (true|"true"|()|"null")[];
 
 function show(anydata|error value) {
     if value is error {
@@ -84,6 +96,14 @@ public function main() {
     show(yaml:parseString("[\"true\", 'True', \"~\"]", {}, Strings));
     show(yaml:parseString("name: 'null'", {allowDataProjection: {nilAsOptionalField: true}}, OptionalName));
     show(yaml:parseString("name: null", {allowDataProjection: {nilAsOptionalField: true}}, OptionalName));
+    // A string scalar binds to a string singleton before converting to another singleton (ballerina-platform/ballerina-library#9424).
+    show(yaml:parseString("[1, '1', \"1\"]", {}, OneOrString));
+    show(yaml:parseString("[true, \"true\", null, 'null']", {}, TrueOrString));
+    // A quoted null is a string, so it is not () for a nilable or optional int (ballerina-platform/ballerina-library#9424).
+    show(yaml:parseString("age: null", {}, NilableAge));
+    show(yaml:parseString("age: \"null\"", {}, NilableAge));
+    show(yaml:parseString("age: null", {allowDataProjection: {nilAsOptionalField: true}}, OptionalAge));
+    show(yaml:parseString("age: \"null\"", {allowDataProjection: {nilAsOptionalField: true}}, OptionalAge));
     // Values that do not convert are errors, not panics (ballerina-platform/ballerina-library#9665), naming the member type rather than json (ballerina-platform/ballerina-library#9668).
     show(yaml:parseString("[x]", {}, Ints));
     show(yaml:parseString("[1.5]", {}, Ints));
@@ -130,6 +150,12 @@ public function main() {
 // @output ["true","True","~"]
 // @output {"name":"null"}
 // @output {}
+// @output [1,"1","1"]
+// @output [true,"true",null,"null"]
+// @output {"age":null}
+// @output incompatible value 'null' for type 'int?' in field 'age'
+// @output {}
+// @output incompatible value 'null' for type 'int' in field 'age'
 // @output incompatible expected type 'int' for value 'x'
 // @output incompatible expected type 'int' for value '1.5'
 // @output incompatible expected type 'int' for value '9223372036854775808'
