@@ -64,7 +64,7 @@ func (c *coalescingConn) Write(p []byte) (int, error) {
 func (c *coalescingConn) Close() error {
 	c.mu.Lock()
 	// tls.Conn.Close expires the write deadline before closing the transport.
-	_ = c.Conn.SetWriteDeadline(time.Time{})
+	_ = c.SetWriteDeadline(time.Time{})
 	_, _ = c.Conn.Write(c.pending.Bytes())
 	c.mu.Unlock()
 	return c.Conn.Close()
