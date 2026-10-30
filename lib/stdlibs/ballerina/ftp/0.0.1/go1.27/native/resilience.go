@@ -373,6 +373,9 @@ func categorizeNetworkFailure(err error) (failureCategory, bool) {
 		case "dial":
 			return categoryConnection, true
 		case "read", "write":
+			if opErr.Timeout() {
+				return categoryConnection, true
+			}
 			return categoryTransient, true
 		}
 	}
