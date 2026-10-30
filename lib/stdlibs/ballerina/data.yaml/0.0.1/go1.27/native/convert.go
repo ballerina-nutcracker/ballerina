@@ -15,7 +15,8 @@
 // under the License.
 
 // The converter binds composed YAML nodes to the expected type with the rules of jBallerina's composer:
-// scalar text is converted by the target type rather than by YAML schema resolution.
+// scalar text is converted by the target type rather than by YAML schema resolution. A quoted, block or
+// !!str scalar is a string, so json, anydata and union targets bind it to a string member first.
 
 package native
 
@@ -117,7 +118,7 @@ func (c *converter) convertScalar(n *node, ti typeInfo, sc scope) (values.BalVal
 		}
 		return nil, c.incompatible(n.value, ti.ty, sc)
 	}
-	if converted, ok := c.fromString(n.value, ti); ok {
+	if converted, ok := c.fromString(n.value, ti, n.str); ok {
 		return converted, nil
 	}
 	return nil, c.incompatible(n.value, ti.ty, sc)
@@ -131,7 +132,7 @@ func isNullNode(n *node) bool {
 	case n.hasTyped:
 		return n.typed == nil
 	}
-	return n.empty || n.value == "null"
+	return n.empty || !n.str && n.value == "null"
 }
 
 func (c *converter) convertMapping(n *node, ti typeInfo, sc scope) (values.BalValue, error) {
@@ -251,8 +252,9 @@ func (c *converter) convertToList(items []*node, shape rowShape, sc scope) (valu
 	return builder.build(c.t)
 }
 
-// fromString is jBallerina's Values.fromStringWithType: it converts scalar text to the target type.
-func (c *converter) fromString(text string, ti typeInfo) (values.BalValue, bool) {
+// fromString is jBallerina's Values.fromStringWithType: it converts scalar text to the target type. str
+// marks text that YAML resolves to a string, which binds to a string even if the schema reserves the word.
+func (c *converter) fromString(text string, ti typeInfo, str bool) (values.BalValue, bool) {
 	switch ti.kind {
 	case kindInt:
 		return parseJavaLong(text)
@@ -269,7 +271,7 @@ func (c *converter) fromString(text string, ti typeInfo) (values.BalValue, bool)
 	case kindChar:
 		return text, len([]rune(text)) == 1
 	case kindString:
-		return text, !c.options.schema.reservesWord(text)
+		return text, str || !c.options.schema.reservesWord(text)
 	case kindBoolean:
 		switch text {
 		case "true":
@@ -281,11 +283,11 @@ func (c *converter) fromString(text string, ti typeInfo) (values.BalValue, bool)
 	case kindNil:
 		return nil, text == "null"
 	case kindFinite:
-		return c.toSingleton(text, ti)
+		return c.toSingleton(text, ti, str)
 	case kindUnion:
-		return c.toUnion(text, ti.members)
+		return c.toUnion(text, ti.members, str)
 	case kindJSON, kindAnydata:
-		return c.toUnion(text, jsonMemberTypes)
+		return c.toUnion(text, jsonMemberTypes, str)
 	}
 	return nil, false
 }
@@ -299,23 +301,27 @@ var unionPriority = map[typeKind]int{
 	kindInt: 0, kindFloat: 1, kindDecimal: 2, kindNil: 3, kindBoolean: 4, kindJSON: 5, kindString: 6,
 }
 
-func (c *converter) toUnion(text string, members []semtypes.SemType) (values.BalValue, bool) {
+func (c *converter) toUnion(text string, members []semtypes.SemType, str bool) (values.BalValue, bool) {
 	infos := make([]typeInfo, len(members))
 	for i, member := range members {
 		infos[i] = c.t.classify(member)
 	}
 	slices.SortStableFunc(infos, func(a, b typeInfo) int {
-		return priorityOf(a) - priorityOf(b)
+		return priorityOf(a, str) - priorityOf(b, str)
 	})
 	for _, info := range infos {
-		if converted, ok := c.fromString(text, info); ok {
+		if converted, ok := c.fromString(text, info, str); ok {
 			return converted, true
 		}
 	}
 	return nil, false
 }
 
-func priorityOf(ti typeInfo) int {
+// priorityOf orders union members; a string scalar tries the members that can hold a string first.
+func priorityOf(ti typeInfo, str bool) int {
+	if str && (ti.kind == kindString || ti.kind == kindJSON || ti.kind == kindAnydata) {
+		return -1
+	}
 	if p, ok := unionPriority[ti.kind]; ok {
 		return p
 	}
@@ -324,12 +330,12 @@ func priorityOf(ti typeInfo) int {
 
 // toSingleton matches text against the singletons of a finite type: the text must equal the singleton's
 // string form and convert to the singleton's own type.
-func (c *converter) toSingleton(text string, ti typeInfo) (values.BalValue, bool) {
+func (c *converter) toSingleton(text string, ti typeInfo, str bool) (values.BalValue, bool) {
 	for _, basic := range scalarBasicTypes {
 		if semtypes.IsEmpty(c.t.tc, semtypes.Intersect(ti.ty, basic.ty)) {
 			continue
 		}
-		converted, ok := c.fromString(text, typeInfo{kind: basic.kind, ty: basic.ty})
+		converted, ok := c.fromString(text, typeInfo{kind: basic.kind, ty: basic.ty}, str)
 		if ok && c.t.contains(ti.ty, converted) && javaValueOf(converted) == text {
 			return converted, true
 		}
