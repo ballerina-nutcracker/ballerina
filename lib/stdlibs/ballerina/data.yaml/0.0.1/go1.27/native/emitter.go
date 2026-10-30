@@ -308,8 +308,10 @@ func isControl(r rune) bool {
 
 // needsQuotes reports whether a string written as a plain scalar would be read back differently: it is
 // empty, has leading or trailing white space or control characters, starts with an indicator or the
-// document-end marker, contains ": " or " #", or the schema would resolve it to null, a boolean or a
-// number. Inside a flow collection a flow indicator anywhere in the string also needs quotes.
+// document-end marker, contains ": " or " #", or would be read as null, a boolean or a number: the
+// reader converts null, true, false and Java number forms in every schema, and the core schema adds its
+// own words and number forms. Inside a flow collection a flow indicator anywhere in the string also
+// needs quotes.
 func needsQuotes(text string, schema yamlSchema) bool {
 	if text == "" || strings.ContainsFunc(text, isControl) || strings.TrimSpace(text) != text {
 		return true
@@ -323,23 +325,15 @@ func needsQuotes(text string, schema yamlSchema) bool {
 	if strings.Contains(text, ": ") || strings.Contains(text, " #") || strings.HasSuffix(text, ":") {
 		return true
 	}
-	if schema.reservesWord(text) {
+	if schema.reservesWord(text) || schemaJSON.reservesWord(text) || isJavaNumber(text) {
 		return true
 	}
-	switch schema {
-	case schemaJSON:
-		return jsonSchemaNumber.MatchString(text)
-	case schemaCore:
-		return isCoreSchemaNumber(text)
-	}
-	return false
+	return schema == schemaCore && coreSchemaNumber.MatchString(text)
 }
 
-// isCoreSchemaNumber reports whether the core schema, or jBallerina's number parsing, reads text as a number.
-func isCoreSchemaNumber(text string) bool {
-	if coreSchemaNumber.MatchString(text) {
-		return true
-	}
+// isJavaNumber reports whether the reader converts text to a number for a json or anydata target, which
+// it does in every schema.
+func isJavaNumber(text string) bool {
 	if _, ok := parseJavaLong(text); ok {
 		return true
 	}
@@ -347,9 +341,6 @@ func isCoreSchemaNumber(text string) bool {
 	return ok
 }
 
-// coreSchemaNumber matches the YAML 1.2 core schema int and float forms, which also cover the JSON schema.
+// coreSchemaNumber matches the YAML 1.2 core schema int and float forms.
 var coreSchemaNumber = regexp.MustCompile(`^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+|` +
 	`[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$`)
-
-// jsonSchemaNumber matches the YAML 1.2 JSON schema int and float forms.
-var jsonSchemaNumber = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.[0-9]*)?(?:[eE][-+]?[0-9]+)?$`)
