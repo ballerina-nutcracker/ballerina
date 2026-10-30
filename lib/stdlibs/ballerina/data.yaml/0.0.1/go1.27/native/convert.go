@@ -269,7 +269,7 @@ func (c *converter) fromString(text string, ti typeInfo) (values.BalValue, bool)
 	case kindChar:
 		return text, len([]rune(text)) == 1
 	case kindString:
-		return text, c.isSchemaString(text)
+		return text, !c.options.schema.reservesWord(text)
 	case kindBoolean:
 		switch text {
 		case "true":
@@ -292,18 +292,6 @@ func (c *converter) fromString(text string, ti typeInfo) (values.BalValue, bool)
 
 var jsonMemberTypes = []semtypes.SemType{
 	semtypes.Nil, semtypes.Boolean, semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String,
-}
-
-// isSchemaString reports whether the schema lets text be a string: the JSON schema reserves null, true
-// and false, and the core schema also their capitalised forms and ~.
-func (c *converter) isSchemaString(text string) bool {
-	switch c.options.schema {
-	case schemaJSON:
-		return text != "null" && text != "true" && text != "false"
-	case schemaCore:
-		return !isAnyOf(text, "null", "Null", "NULL", "~", "true", "True", "TRUE", "false", "False", "FALSE")
-	}
-	return true
 }
 
 // unionPriority is jBallerina's TYPE_PRIORITY_ORDER; other members follow in their own order.
