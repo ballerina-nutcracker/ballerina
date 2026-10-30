@@ -141,12 +141,16 @@ func (a *analyzer) validateRequiredFields(current *mapNode) error {
 			continue
 		}
 		if ti := a.classify(field.ty); ti.kind == kindArray {
-			if ti.size != -1 {
-				if _, ok := current.get(field.runtimeName).(*arrayNode); !ok {
-					return arraySizeMismatchError()
-				}
+			if ti.size == -1 {
+				continue
 			}
-			continue
+			switch current.get(field.runtimeName).(type) {
+			case *arrayNode:
+				continue
+			case nil:
+			default:
+				return arraySizeMismatchError()
+			}
 		}
 		if !field.optional {
 			return requiredFieldNotPresentError(field.name)

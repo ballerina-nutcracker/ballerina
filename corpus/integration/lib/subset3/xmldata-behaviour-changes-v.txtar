@@ -10,5 +10,9 @@ field 'a' cannot be converted into the type 'xml'
 array size is not compatible with the expected size
 array size is not compatible with the expected size
 {"p":[{"name":"x"},{"name":"y"}]}
+{"title":"t"}
+{"title":"t"}
+required field 'p' not present in XML
+required field 'p' not present in XML
 stream failure
 -- stderr --

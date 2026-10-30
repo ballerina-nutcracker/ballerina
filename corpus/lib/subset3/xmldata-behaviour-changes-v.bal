@@ -43,6 +43,11 @@ type Pair record {|
     Person[2] p;
 |};
 
+type OptionalPair record {|
+    string title;
+    Person[2] p?;
+|};
+
 class FailingAfterDocument {
     int count = 0;
 
@@ -110,6 +115,20 @@ public function main() {
     Pair|xmldata:Error full = xmldata:parseString("<r><p><name>x</name></p><p><name>y</name></p></r>");
     io:println(full is xmldata:Error ? full.message() : full);
     // @output {"p":[{"name":"x"},{"name":"y"}]}
+
+    // jBallerina's parseAsType fails with an internal error when a fixed-length array field is absent.
+    OptionalPair|xmldata:Error optionalParsed = xmldata:parseString("<r><title>t</title></r>");
+    io:println(optionalParsed is xmldata:Error ? optionalParsed.message() : optionalParsed);
+    // @output {"title":"t"}
+    OptionalPair|xmldata:Error optionalTraversed = xmldata:parseAsType(xml `<r><title>t</title></r>`);
+    io:println(optionalTraversed is xmldata:Error ? optionalTraversed.message() : optionalTraversed);
+    // @output {"title":"t"}
+    Pair|xmldata:Error absentParsed = xmldata:parseString("<r/>");
+    io:println(absentParsed is xmldata:Error ? absentParsed.message() : absentParsed);
+    // @output required field 'p' not present in XML
+    Pair|xmldata:Error absentTraversed = xmldata:parseAsType(xml `<r/>`);
+    io:println(absentTraversed is xmldata:Error ? absentTraversed.message() : absentTraversed);
+    // @output required field 'p' not present in XML
 
     // jBallerina returns the stream's own error; this port returns an xmldata:Error with its message.
     stream<byte[], error?> failing = new (new FailingAfterDocument());
