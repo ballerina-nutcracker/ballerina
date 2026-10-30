@@ -79,7 +79,7 @@ Always `|---|---|---|`. Never wide-padded column separators.
 - **Format**: bullet list with a bold header followed by a period, then a sentence. Example: `- **Title.** jBallerina does X; the Go-native version does Y — reason.`
 - **Content**: permanent divergences of two kinds:
   - Architectural Go-level constraints that cannot be resolved in the `native/` layer.
-  - Fixes of jBallerina bugs, where the port deliberately implements the correct behaviour (see `add-stdlib-support` Step 5). Each one links its `ballerina-platform/ballerina-library` issue.
+  - Fixes of jBallerina bugs, where the port deliberately implements the correct behaviour (see `add-stdlib-support` Step 5). New or edited entries link their `ballerina-platform/ballerina-library` issue.
 - **Do not include**:
   - Temporary language gaps that will be fixed when the interpreter gains the feature (e.g. `distinct` error subtypes, `readonly &` intersections, `stream` type, XML, full `typedesc` parameter handling). These belong in the support table as `Not Yet Supported` or `Partially Supported`.
   - Entries that say "identical" or "matching" — if the behaviour is identical, it is not a change.
