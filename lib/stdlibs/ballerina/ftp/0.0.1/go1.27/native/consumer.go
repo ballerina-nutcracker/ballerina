@@ -39,22 +39,16 @@ type fileEvent struct {
 	deleted []string
 }
 
-// fileStamp is what identifies a version of a reported file.
-type fileStamp struct {
-	size    int64
-	modTime int64
-}
-
-// consumer polls one watched directory and reports a file once when it first passes the filters,
-// again only when its size or modification time changes, and once when it is gone. jBallerina
-// reports every file on every poll and each deletion once per poll that reported the file
-// (ballerina-library#9288, #9380).
+// consumer polls one watched directory. As in jBallerina, every file that passes the filters is
+// reported as added on every poll (ballerina-library#9385). A reported file that is no longer
+// listed is reported deleted once, also when the directory has become empty; jBallerina repeats
+// it and skips an empty directory (ballerina-library#9288, #9380).
 type consumer struct {
 	platform pal.Platform
 	remote   *remoteClient
 	watch    watchConfig
 	mu       sync.Mutex
-	reported map[string]fileStamp
+	reported map[string]struct{}
 }
 
 func (m *ftpModule) newConsumer(state *listenerState, watch watchConfig, failurePrefix string) (*consumer, error) {
@@ -73,7 +67,7 @@ func (m *ftpModule) newConsumer(state *listenerState, watch watchConfig, failure
 		return nil, newError(kindError, "FTP listener path \""+maskURLPassword(connectURL(state.ep, normalizeServicePath(watch.path)))+
 			"\" does not refer to a folder on the remote file system.")
 	}
-	return &consumer{platform: platform, remote: remote, watch: watch, reported: map[string]fileStamp{}}, nil
+	return &consumer{platform: platform, remote: remote, watch: watch, reported: map[string]struct{}{}}, nil
 }
 
 func (c *consumer) uri(logical string) string {
@@ -132,15 +126,11 @@ func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pol
 			continue
 		}
 		scan.listed[logical] = struct{}{}
-		stamp := fileStamp{size: child.size, modTime: child.modTime.UnixMilli()}
-		if previous, ok := c.reported[logical]; ok && previous == stamp {
-			continue
-		}
 		if !c.passesAgeFilter(child) || !c.passesDependencies(child.name, scan.rootFiles) {
 			continue
 		}
 		scan.event.added = append(scan.event.added, addedFile{logical: logical, entry: child})
-		c.reported[logical] = stamp
+		c.reported[logical] = struct{}{}
 	}
 }
 

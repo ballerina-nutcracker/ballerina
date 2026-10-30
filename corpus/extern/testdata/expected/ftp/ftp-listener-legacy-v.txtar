@@ -1,11 +1,10 @@
 -- stdout --
 caller sees a.txt true
 change added=["/watch/a.txt","/watch/sub/inner.txt"] deleted=0
-0
 caller sees a.txt true
-change added=["/watch/sub/inner.txt"] deleted=0
+change added=["/watch/a.txt","/watch/sub/inner.txt"] deleted=0
 caller sees a.txt false
-change added=[] deleted=1
+change added=["/watch/sub/inner.txt"] deleted=1
 change deleted ftp://127.0.0.1:PORT/watch/a.txt
 onFileDeleted 1
 caller sees a.txt false
@@ -17,7 +16,11 @@ dep any_one
 dep data_1.csv
 dep data_1.marker
 dep x.flag
+dep any_one
 dep count_one
+dep data_1.csv
+dep data_1.marker
+dep x.flag
 dep y.flag
 Duplicate path '/aged' in @ftp:ServiceConfig. Each service must monitor a unique path.
 All services attached to a listener must use @ftp:ServiceConfig annotation when any service uses it. The new service is missing the annotation.
