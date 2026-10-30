@@ -34,3 +34,19 @@ func (t SemType) some() basicTypeBitSet {
 func (t SemType) subtypeDataList() []properSubtypeData {
 	return t.dataList
 }
+
+// InstanceKey identifies a SemType's representation: copies of one value share a key, but equal types
+// built separately do not, so it serves only as a cache key in front of a type-equality check.
+type InstanceKey struct {
+	allBits  basicTypeBitSet
+	someBits basicTypeBitSet
+	data     *properSubtypeData
+}
+
+func (t SemType) InstanceKey() InstanceKey {
+	key := InstanceKey{allBits: t.allBits, someBits: t.someBits}
+	if len(t.dataList) > 0 {
+		key.data = &t.dataList[0]
+	}
+	return key
+}

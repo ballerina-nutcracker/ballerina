@@ -138,10 +138,11 @@ type typeCache struct {
 }
 
 // typeKeyed keys interner-recognisable types by handle; the rest, such as byte or a union with a singleton
-// member, are few per program and are matched by type equality.
+// member, are matched by type equality once per representation and then found by instance.
 type typeKeyed[V any] struct {
-	byHandle map[semtypes.InternHandle]V
-	others   []typeEntry[V]
+	byHandle   map[semtypes.InternHandle]V
+	byInstance map[semtypes.InstanceKey]V
+	others     []typeEntry[V]
 }
 
 type typeEntry[V any] struct {
@@ -150,7 +151,10 @@ type typeEntry[V any] struct {
 }
 
 func newTypeKeyed[V any]() typeKeyed[V] {
-	return typeKeyed[V]{byHandle: make(map[semtypes.InternHandle]V)}
+	return typeKeyed[V]{
+		byHandle:   make(map[semtypes.InternHandle]V),
+		byInstance: make(map[semtypes.InstanceKey]V),
+	}
 }
 
 func newTypeCache() *typeCache {
@@ -167,13 +171,12 @@ func getOrCompute[V any](c *typeCache, tc semtypes.Context, entries *typeKeyed[V
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if !internable(key) {
-		for _, e := range entries.others {
-			if semtypes.IsSameType(tc, e.key, key) {
-				return e.value
-			}
+		instance := key.InstanceKey()
+		if value, ok := entries.byInstance[instance]; ok {
+			return value
 		}
-		value := compute(key)
-		entries.others = append(entries.others, typeEntry[V]{key: key, value: value})
+		value := lookupOrCompute(tc, entries, key, compute)
+		entries.byInstance[instance] = value
 		return value
 	}
 	handle := c.interner.Intern(key)
@@ -182,6 +185,18 @@ func getOrCompute[V any](c *typeCache, tc semtypes.Context, entries *typeKeyed[V
 	}
 	value := compute(key)
 	entries.byHandle[handle] = value
+	return value
+}
+
+func lookupOrCompute[V any](tc semtypes.Context, entries *typeKeyed[V], key semtypes.SemType,
+	compute func(semtypes.SemType) V) V {
+	for _, e := range entries.others {
+		if semtypes.IsSameType(tc, e.key, key) {
+			return e.value
+		}
+	}
+	value := compute(key)
+	entries.others = append(entries.others, typeEntry[V]{key: key, value: value})
 	return value
 }
 
