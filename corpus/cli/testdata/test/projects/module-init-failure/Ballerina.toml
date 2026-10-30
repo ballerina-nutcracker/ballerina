@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "initfailmod"
+version = "0.1.0"

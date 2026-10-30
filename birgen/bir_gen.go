@@ -419,6 +419,8 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 			return nil
 		}
 		birPkg.InitFunction = initFunc
+		// Not registered under its normal lookup key — see
+		// TestTestCommand_BeforeHookNamedInit for why.
 	}
 	for _, function := range ast.Functions {
 		if _, isOpaque := ctx.GetSymbol(function.Symbol()).(*model.OpaqueFunctionSymbol); isOpaque {

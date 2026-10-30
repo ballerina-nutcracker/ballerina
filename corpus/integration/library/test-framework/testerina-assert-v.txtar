@@ -1,0 +1,6 @@
+-- stdout --
+caught: custom failure
+typeMismatchCaught: true
+stringMismatchCaught: true
+all assertions completed
+-- stderr --

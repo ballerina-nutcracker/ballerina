@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "rerunfailedinvalidjson"
+version = "0.1.0"

@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "rejectflags"
+version = "0.1.0"

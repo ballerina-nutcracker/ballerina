@@ -17,8 +17,10 @@
 package projects
 
 import (
+	"fmt"
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -35,7 +37,7 @@ type PackageCompilation struct {
 	diagnosticResult      DiagnosticResult
 	compilerEnv           *context.CompilerEnvironment
 	compileOnce           sync.Once
-	compilerPluginManager any // TODO(P6): CompilerPluginManager once plugin system is migrated
+	compilerPluginManager *compilerPluginResolver
 }
 
 // newPackageCompilation creates a PackageCompilation and triggers compilation.
@@ -51,7 +53,6 @@ func newPackageCompilation(rootPkgCtx *packageContext, compilationOptions Compil
 
 	compilation.compile()
 
-	// TODO(P6): CompilerPluginManager.from(compilation)
 	// TODO(P6): Run code analyzers if project has updated only
 
 	return compilation
@@ -86,6 +87,17 @@ func (c *PackageCompilation) compileModulesInternal() {
 		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
 			for _, docCtx := range moduleCtx.srcDocContextMap {
 				de.RegisterFile(docCtx.registrationKey(), docCtx.getTextDocument())
+			}
+			// Test documents only need registering when their syntax trees actually
+			// flow into compilation (SkipTests(false), i.e. `bal test` — see
+			// resolveTypesAndSymbols/parseDocumentsParallel). Otherwise nodebuilder
+			// never produces a position needing this file's index, and `bal build`/
+			// `bal run` (SkipTests(true), the default) must not register unrelated
+			// files as a side effect.
+			if !moduleCtx.project.BuildOptions().SkipTests() {
+				for _, docCtx := range moduleCtx.testDocContextMap {
+					de.RegisterFile(docCtx.registrationKey(), docCtx.getTextDocument())
+				}
 			}
 		}
 
@@ -142,45 +154,116 @@ func (c *PackageCompilation) compileModulesInternal() {
 			return
 		}
 
-		// Phase 2: local node resolution, semantic analysis, CFG, desugar, BIR
-		// (parallel - no cross-module dependencies).
-		// Each goroutine has panic recovery to convert panics to diagnostics.
-		var wg sync.WaitGroup
-		var panicsMu sync.Mutex
-		var panics []any
-		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
-			if moduleCtx.getCompilationState() != moduleCompilationStateLoadedFromSources {
-				continue
-			}
-			wg.Add(1)
-			go func(m *moduleContext) {
-				defer wg.Done()
-				defer func() {
-					if r := recover(); r != nil {
-						panicsMu.Lock()
-						panics = append(panics, r)
-						panicsMu.Unlock()
-					}
-				}()
-				analyzeAndDesugar(m)
-			}(moduleCtx)
+		modules := c.packageResolution.topologicallySortedModuleList
+		// Phase 2: local node resolution, semantic analysis, and CFG analysis.
+		runModulePhase(modules, analyzeAndCreateCFG)
+		if modulesHaveErrors(modules) {
+			c.collectModuleDiagnostics(&allDiagnostics)
+			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
+			return
 		}
-		wg.Wait()
 
-		// Re-panic if any Phase 2 goroutine panicked.
-		// This preserves the original behavior where semantic errors cause panics.
-		if len(panics) > 0 {
-			// TODO: report diagnostics for panics instead of crashing the process.
-			panic(panics[0])
+		// Phase 3: compiler plugins. This is a package-wide barrier before desugaring.
+		c.compilerPluginManager = newCompilerPluginResolver(modules)
+		if modulesHaveErrors(modules) {
+			c.collectModuleDiagnostics(&allDiagnostics)
+			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
+			return
 		}
+		runModulePhase(modules, func(module *moduleContext) {
+			c.runCompilerPlugins(module)
+		})
+		if modulesHaveErrors(modules) {
+			c.collectModuleDiagnostics(&allDiagnostics)
+			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
+			return
+		}
+
+		// Phase 4: desugar only after every module completed plugins without errors.
+		runModulePhase(modules, desugarModule)
 
 		// Collect diagnostics from all modules
 		c.collectModuleDiagnostics(&allDiagnostics)
 	}
 
-	// TODO(P6): Run plugin code analysis (runPluginCodeAnalysis)
-
 	c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
+}
+
+func runModulePhase(modules []*moduleContext, phase func(*moduleContext)) {
+	var wg sync.WaitGroup
+	var panicsMu sync.Mutex
+	var panics []any
+	for _, module := range modules {
+		if module.getCompilationState() != moduleCompilationStateLoadedFromSources {
+			continue
+		}
+		wg.Add(1)
+		go func(module *moduleContext) {
+			defer wg.Done()
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					panicsMu.Lock()
+					panics = append(panics, recovered)
+					panicsMu.Unlock()
+				}
+			}()
+			phase(module)
+		}(module)
+	}
+	wg.Wait()
+	if len(panics) > 0 {
+		panic(panics[0])
+	}
+}
+
+func modulesHaveErrors(modules []*moduleContext) bool {
+	for _, module := range modules {
+		if module.compilerCtx != nil && module.compilerCtx.HasErrors() {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *PackageCompilation) runCompilerPlugins(module *moduleContext) {
+	if !runsCompilerPlugins(module) {
+		return
+	}
+	plugins := c.compilerPluginManager.pluginsFor(module)
+	if len(plugins) == 0 {
+		return
+	}
+	module.compilerCtx.StartStage(context.StageCompilerPlugin)
+	defer module.compilerCtx.EndStage()
+	for _, resolved := range plugins {
+		exported, ok := c.rootPackageContext.project.Environment().publicSymbols[resolved.provider.exported]
+		if !ok {
+			module.compilerCtx.InternalError(
+				fmt.Sprintf("compiler plugin symbol space not found for %s/%s", resolved.provider.org, resolved.provider.pkg),
+				resolved.position.position,
+			)
+			return
+		}
+		transformed, err := resolved.plugin.PackageTransformer(module.compilerCtx, exported, module.bLangPkg)
+		if err != nil {
+			module.compilerCtx.InternalError(
+				fmt.Sprintf("compiler plugin %s/%s:%s failed: %v", resolved.provider.org, resolved.provider.pkg, resolved.declaration.function, err),
+				resolved.position.position,
+			)
+			return
+		}
+		if transformed == nil {
+			module.compilerCtx.InternalError(
+				fmt.Sprintf("compiler plugin %s/%s:%s returned a nil package", resolved.provider.org, resolved.provider.pkg, resolved.declaration.function),
+				resolved.position.position,
+			)
+			return
+		}
+		module.bLangPkg = transformed
+		if module.compilerCtx.HasErrors() {
+			return
+		}
+	}
 }
 
 // collectModuleDiagnostics appends per-module compilation diagnostics to dst,
@@ -224,6 +307,18 @@ func (c *PackageCompilation) DiagnosticEnv() *diagnostics.DiagnosticEnv {
 func (c *PackageCompilation) SemanticModel(moduleID ModuleID) any {
 	// TODO(P6): Return *SemanticModel once the type is implemented.
 	return nil
+}
+
+// ModuleAST returns the compiled AST for the given module, for tooling that
+// needs direct access ahead of a real SemanticModel (e.g. bal test's
+// annotation-discovery step). Returns nil if the module doesn't exist or
+// hasn't reached a compiled state.
+func (c *PackageCompilation) ModuleAST(moduleID ModuleID) *ast.BLangPackage {
+	modCtx := c.rootPackageContext.getModuleContext(moduleID)
+	if modCtx == nil {
+		return nil
+	}
+	return modCtx.getBLangPackage()
 }
 
 // CodeActionManager returns the code action manager.
@@ -277,9 +372,7 @@ func (c *PackageCompilation) getPackageContext() *packageContext {
 }
 
 // getCompilerPluginManager returns the compiler plugin manager.
-// TODO(P6): Return CompilerPluginManager once the type is implemented.
-// Java source: PackageCompilation.compilerPluginManager()
-func (c *PackageCompilation) getCompilerPluginManager() any {
+func (c *PackageCompilation) getCompilerPluginManager() *compilerPluginResolver {
 	return c.compilerPluginManager
 }
 

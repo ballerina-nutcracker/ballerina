@@ -1,0 +1,18 @@
+-- stdout --
+	[fail] [after test function for the test]:
+	    divide by zero
+		
+		
+		[pass] test1
+		[pass] test3
+
+
+		2 passing
+		0 failing
+		1 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

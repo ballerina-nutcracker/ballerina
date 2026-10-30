@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid CompilerPlugin.toml for testorg/pkgb: plugin entry 2 duplicates Validate at after-semantics
+  --> pkga/modules/util/util.bal:17:1
+   |
+17 | import testorg/pkgb;
+   | ^^^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

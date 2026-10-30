@@ -1,0 +1,13 @@
+-- stdout --
+GRACEFUL_STOP_HANDLER_RAN
+		[pass] testSomething
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0

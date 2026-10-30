@@ -1,0 +1,3 @@
+[[plugin]]
+stage = "after-semantics"
+function = "ValidateService"

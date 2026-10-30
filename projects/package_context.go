@@ -26,15 +26,16 @@ import (
 // packageContext holds internal state for a Package.
 // It manages module contexts and package-level metadata.
 type packageContext struct {
-	project              Project
-	packageID            PackageID
-	packageManifest      PackageManifest
-	compilationOptions   CompilationOptions
-	moduleContextMap     map[ModuleID]*moduleContext
-	moduleIDs            []ModuleID
-	defaultModuleContext *moduleContext       // cached default module
-	ballerinaTomlContext *tomlDocumentContext // Ballerina.toml context (nil if not present)
-	readmeMdContext      *mdDocumentContext   // readme context (nil if not present)
+	project                   Project
+	packageID                 PackageID
+	packageManifest           PackageManifest
+	compilationOptions        CompilationOptions
+	moduleContextMap          map[ModuleID]*moduleContext
+	moduleIDs                 []ModuleID
+	defaultModuleContext      *moduleContext       // cached default module
+	ballerinaTomlContext      *tomlDocumentContext // Ballerina.toml context (nil if not present)
+	readmeMdContext           *mdDocumentContext   // readme context (nil if not present)
+	compilerPluginTomlContext *tomlDocumentContext // CompilerPlugin.toml context (nil if not present)
 
 	// Lazy-initialized fields (thread-safe via sync.Once, matching documentContext pattern).
 	packageCompilation     *PackageCompilation
@@ -72,6 +73,10 @@ func newPackageContext(project Project, packageConfig PackageConfig, compilation
 	if packageConfig.HasBallerinaToml() {
 		ballerinaTomlCtx = newTomlDocumentContext(packageConfig.BallerinaToml())
 	}
+	var compilerPluginTomlCtx *tomlDocumentContext
+	if packageConfig.hasCompilerPluginToml() {
+		compilerPluginTomlCtx = newTomlDocumentContext(packageConfig.CompilerPluginToml())
+	}
 
 	// Create mdDocumentContext for the readme if present
 	var readmeMdCtx *mdDocumentContext
@@ -80,15 +85,16 @@ func newPackageContext(project Project, packageConfig PackageConfig, compilation
 	}
 
 	return &packageContext{
-		project:              project,
-		packageID:            packageConfig.PackageID(),
-		packageManifest:      packageConfig.PackageManifest(),
-		compilationOptions:   compilationOptions,
-		moduleContextMap:     moduleContextMap,
-		moduleIDs:            moduleIDs,
-		defaultModuleContext: defaultModuleCtx,
-		ballerinaTomlContext: ballerinaTomlCtx,
-		readmeMdContext:      readmeMdCtx,
+		project:                   project,
+		packageID:                 packageConfig.PackageID(),
+		packageManifest:           packageConfig.PackageManifest(),
+		compilationOptions:        compilationOptions,
+		moduleContextMap:          moduleContextMap,
+		moduleIDs:                 moduleIDs,
+		defaultModuleContext:      defaultModuleCtx,
+		ballerinaTomlContext:      ballerinaTomlCtx,
+		readmeMdContext:           readmeMdCtx,
+		compilerPluginTomlContext: compilerPluginTomlCtx,
 	}
 }
 
@@ -102,6 +108,7 @@ func newPackageContextFromMaps(
 	moduleContextMap map[ModuleID]*moduleContext,
 	ballerinaTomlContext *tomlDocumentContext,
 	readmeMdContext *mdDocumentContext,
+	compilerPluginTomlContext *tomlDocumentContext,
 ) *packageContext {
 	// Ensure moduleContextMap is initialized to prevent nil map panics
 	if moduleContextMap == nil {
@@ -119,15 +126,16 @@ func newPackageContextFromMaps(
 	}
 
 	return &packageContext{
-		project:              project,
-		packageID:            packageID,
-		packageManifest:      packageManifest,
-		compilationOptions:   compilationOptions,
-		moduleContextMap:     moduleContextMap,
-		moduleIDs:            moduleIDs,
-		defaultModuleContext: defaultModuleContext,
-		ballerinaTomlContext: ballerinaTomlContext,
-		readmeMdContext:      readmeMdContext,
+		project:                   project,
+		packageID:                 packageID,
+		packageManifest:           packageManifest,
+		compilationOptions:        compilationOptions,
+		moduleContextMap:          moduleContextMap,
+		moduleIDs:                 moduleIDs,
+		defaultModuleContext:      defaultModuleContext,
+		ballerinaTomlContext:      ballerinaTomlContext,
+		readmeMdContext:           readmeMdContext,
+		compilerPluginTomlContext: compilerPluginTomlContext,
 	}
 }
 
@@ -242,6 +250,11 @@ func (p *packageContext) getReadmeMdContext() *mdDocumentContext {
 	return p.readmeMdContext
 }
 
+// getCompilerPluginTomlContext returns the CompilerPlugin.toml context, or nil if not present.
+func (p *packageContext) getCompilerPluginTomlContext() *tomlDocumentContext {
+	return p.compilerPluginTomlContext
+}
+
 // moduleDependencyGraph returns the module dependency graph for this package.
 // The graph contains only modules within this package (not external dependencies).
 // For source packages, it analyzes imports. For bala packages, it returns a simple
@@ -321,5 +334,6 @@ func (p *packageContext) duplicate(project Project) *packageContext {
 		moduleContextMap,
 		p.ballerinaTomlContext, // Ballerina.toml is immutable, can share reference
 		p.readmeMdContext,      // readme is immutable, can share reference
+		p.compilerPluginTomlContext,
 	)
 }

@@ -255,6 +255,16 @@ func normalizeIntegrationStderr(stderr string) string {
 	return strings.Join(diagnostics, "\n\n") + "\n"
 }
 
+// testExecutionTimePattern mirrors test_util/testharness's own copy — see
+// its doc comment. Duplicated here (like normalizeIntegrationStderr/
+// logTimestampPattern above) because bir_reserialization_test.go's
+// comparison is a separate, non-testharness-based path in this package.
+var testExecutionTimePattern = regexp.MustCompile(`Test execution time : \S+s`)
+
+func normalizeIntegrationStdout(stdout string) string {
+	return testExecutionTimePattern.ReplaceAllString(stdout, "Test execution time : <DURATION>s")
+}
+
 func isTestSkipped(tc test_util.TestCase) bool {
 	return isSkipKey(filepath.ToSlash(tc.Name))
 }
@@ -272,11 +282,12 @@ func isProjectTestSkipped(dirName string) bool {
 }
 
 func evaluateTestResult(expectedStdout, expectedStderr, actualStdout, actualStderr string) testResult {
+	normalizedActualStdout := normalizeIntegrationStdout(actualStdout)
 	stderrMatch := expectedStderr == normalizeIntegrationStderr(actualStderr)
 	return testResult{
-		success:        actualStdout == expectedStdout && stderrMatch,
+		success:        normalizedActualStdout == expectedStdout && stderrMatch,
 		expectedStdout: expectedStdout,
-		actualStdout:   actualStdout,
+		actualStdout:   normalizedActualStdout,
 		expectedStderr: expectedStderr,
 		actualStderr:   actualStderr,
 	}

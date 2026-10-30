@@ -1,0 +1,24 @@
+-- stdout --
+
+Running tests for module 'multimodpkg'
+		[pass] testDefaultModule
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'multimodpkg.submod'
+		[pass] testSubmodule
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0

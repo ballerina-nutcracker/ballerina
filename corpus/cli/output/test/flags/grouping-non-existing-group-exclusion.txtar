@@ -1,0 +1,34 @@
+-- stdout --
+
+	testFunc4: has failed.
+
+
+	testFunc5: has failed.
+
+		[pass] testFunc1
+		[pass] testFunc2
+		[pass] testFunc3
+		[pass] testFunc6
+
+		[fail] testFunc4:
+
+		    errorMessage
+			
+			
+
+		[fail] testFunc5:
+
+		    errorMessage
+			
+			
+
+
+		4 passing
+		2 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

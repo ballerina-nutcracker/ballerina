@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "rerun_failed"
+version = "0.1.0"

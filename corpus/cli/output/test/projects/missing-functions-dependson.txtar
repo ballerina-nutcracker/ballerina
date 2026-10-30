@@ -1,0 +1,14 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: nonExisting
+ --> main_test.bal:4:17
+  |
+
+ballerina: compilation contains errors
+
+USAGE:
+    test [<source-file.bal> | <package-dir>]
+
+For more information try 'bal test --help'
+-- exitcode --
+1

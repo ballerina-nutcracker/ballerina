@@ -13,6 +13,8 @@ use (
 	./compiler-tools/benchmark-http
 	./compiler-tools/tree-gen
 	./compiler-tools/walkpurity
+	./compilerplugin
+	./compilerpluginregistry
 	./context
 	./decimal
 	./desugar
@@ -27,6 +29,8 @@ use (
 	./semantics
 	./semtypes
 	./st
+	./testplan
+	./testrunner
 	./tools
 	./values
 )
@@ -42,6 +46,10 @@ replace github.com/ballerina-nutcracker/ballerina/birgen v0.7.0 => ./birgen
 replace github.com/ballerina-nutcracker/ballerina/cli v0.7.0 => ./cli
 
 replace github.com/ballerina-nutcracker/ballerina/common v0.7.0 => ./common
+
+replace github.com/ballerina-nutcracker/ballerina/compilerplugin v0.7.0 => ./compilerplugin
+
+replace github.com/ballerina-nutcracker/ballerina/compilerpluginregistry v0.7.0 => ./compilerpluginregistry
 
 replace github.com/ballerina-nutcracker/ballerina/context v0.7.0 => ./context
 
@@ -70,6 +78,10 @@ replace github.com/ballerina-nutcracker/ballerina/semantics v0.7.0 => ./semantic
 replace github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0 => ./semtypes
 
 replace github.com/ballerina-nutcracker/ballerina/st v0.7.0 => ./st
+
+replace github.com/ballerina-nutcracker/ballerina/testplan v0.7.0 => ./testplan
+
+replace github.com/ballerina-nutcracker/ballerina/testrunner v0.7.0 => ./testrunner
 
 replace github.com/ballerina-nutcracker/ballerina/tools v0.7.0 => ./tools
 

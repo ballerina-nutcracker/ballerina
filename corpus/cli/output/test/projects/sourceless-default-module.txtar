@@ -1,0 +1,25 @@
+-- stdout --
+
+Running tests for module 'sourcelessmods.module1'
+		[pass] test1
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'sourcelessmods.module2'
+		[pass] test2
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+warning: no compiler-plugin TestPlan for testorg/sourcelessmods; treating as no discovered tests
+-- exitcode --
+0
