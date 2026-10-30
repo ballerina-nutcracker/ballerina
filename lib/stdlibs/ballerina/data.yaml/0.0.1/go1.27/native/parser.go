@@ -44,8 +44,10 @@ type node struct {
 	// tagged null from no tagged value.
 	typed    any
 	hasTyped bool
-	items    []*node
-	pairs    []pair
+	// str marks a scalar that YAML 1.2 resolves to a string: a quoted or block scalar, or one tagged !!str.
+	str   bool
+	items []*node
+	pairs []pair
 	// size caches expandedSize; zero means not yet computed.
 	size int
 }
@@ -301,7 +303,7 @@ func (p *parser) parseNode(block, indentlessSequence bool) (*node, error) {
 		if _, err := p.next(); err != nil {
 			return nil, err
 		}
-		n = &node{kind: nodeScalar, value: tok.value}
+		n = &node{kind: nodeScalar, value: tok.value, str: tok.style != stylePlain}
 	case tok.kind == tokenFlowSequenceStart:
 		n, err = p.parseFlowSequence()
 	case tok.kind == tokenFlowMappingStart:
@@ -393,15 +395,16 @@ func expandedSize(n *node) int {
 	return n.size
 }
 
-// castData applies an explicit tag the way jBallerina does: !!str, !!seq and !!map keep the node,
+// castData applies an explicit tag: !!str marks the scalar a string, !!seq and !!map keep the node,
 // !!int, !!float, !!bool and !!null resolve the scalar with the schema's rules, and any other tag, or
-// any of those under the failsafe schema, is not supported.
+// any of those under the failsafe schema, is not supported, as in jBallerina.
 func (p *parser) castData(n *node, tag string) error {
 	if !strings.HasPrefix(tag, coreTagPrefix) {
 		return p.s.errorHere("tag schema not supported")
 	}
 	switch name := strings.TrimPrefix(tag, coreTagPrefix); {
 	case name == "str" && n.kind == nodeScalar && !n.empty:
+		n.str = true
 		return nil
 	case name == "seq" && n.kind == nodeSequence, name == "map" && n.kind == nodeMapping:
 		return nil

@@ -9,7 +9,12 @@
 [1,"x","1.5"]
 [true,"x"]
 ["a"]
-[1,1.5,null,true,"text",123,1e20,12,"0x1F",".inf"]
+[1,1.5,null,true,"text","123",1e20,12,"0x1F",".inf"]
+{"a":"1","b":"1.","c":"true","d":"null","e":"~","f":"12\n","g":"3","h":4}
+["1","x",2]
+["true","True","~"]
+{"name":"null"}
+{}
 incompatible expected type 'int' for value 'x'
 incompatible expected type 'int' for value '1.5'
 incompatible expected type 'int' for value '9223372036854775808'

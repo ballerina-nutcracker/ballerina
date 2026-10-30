@@ -43,6 +43,10 @@ type StringOrBoolean (string|boolean)[];
 
 type Anydata anydata[];
 
+type OptionalName record {|
+    string name?;
+|};
+
 function show(anydata|error value) {
     if value is error {
         io:println(value.message());
@@ -52,7 +56,7 @@ function show(anydata|error value) {
 }
 
 public function main() {
-    // Untagged scalars are converted by the expected type, quoted or not.
+    // Explicit types convert untagged scalars, quoted or not.
     show(yaml:parseString("[1, +2, -3, 007, \"4\"]", {}, Ints));
     show(yaml:parseString("[1, 1.5, 1e3, 1., .5, Infinity, -0.0, 0x1p3, \"2.5\"]", {}, Floats));
     show(yaml:parseString("[1.50, 1e3, 12345678901234567890.123456789]", {}, Decimals));
@@ -63,8 +67,14 @@ public function main() {
     show(yaml:parseString("[1, x, 1.5]", {}, IntOrString));
     show(yaml:parseString("[true, x]", {}, StringOrBoolean));
     show(yaml:parseString("[a]", {}, Chars));
-    // json and anydata infer int, float, nil, boolean and string in that order.
+    // json and anydata infer int, float, nil, boolean and string in that order for plain scalars.
     show(yaml:parseString("[1, 1.5, null, true, text, \"123\", 99999999999999999999, +12, 0x1F, .inf]", {}, Anydata));
+    // A quoted, block or !!str scalar is a string for json, anydata, unions and reserved words.
+    show(yaml:parseString("a: '1'\nb: \"1.\"\nc: \"true\"\nd: 'null'\ne: '~'\nf: |\n  12\ng: !!str 3\nh: 4", {}, json));
+    show(yaml:parseString("['1', \"x\", 2]", {}, IntOrString));
+    show(yaml:parseString("[\"true\", 'True', \"~\"]", {}, Strings));
+    show(yaml:parseString("name: 'null'", {allowDataProjection: {nilAsOptionalField: true}}, OptionalName));
+    show(yaml:parseString("name: null", {allowDataProjection: {nilAsOptionalField: true}}, OptionalName));
     // Values that do not convert are errors.
     show(yaml:parseString("[x]", {}, Ints));
     show(yaml:parseString("[1.5]", {}, Ints));
@@ -99,7 +109,12 @@ public function main() {
 // @output [1,"x","1.5"]
 // @output [true,"x"]
 // @output ["a"]
-// @output [1,1.5,null,true,"text",123,1e20,12,"0x1F",".inf"]
+// @output [1,1.5,null,true,"text","123",1e20,12,"0x1F",".inf"]
+// @output {"a":"1","b":"1.","c":"true","d":"null","e":"~","f":"12\n","g":"3","h":4}
+// @output ["1","x",2]
+// @output ["true","True","~"]
+// @output {"name":"null"}
+// @output {}
 // @output incompatible expected type 'int' for value 'x'
 // @output incompatible expected type 'int' for value '1.5'
 // @output incompatible expected type 'int' for value '9223372036854775808'
