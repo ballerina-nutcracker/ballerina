@@ -114,13 +114,7 @@ func discover(pkg *ast.BLangPackage) *testplan.TestPlan {
 
 	p := &testplan.TestPlan{}
 	for _, fn := range pkg.Functions {
-		// jballerina silently ignores @test:* annotations on a function
-		// outside the module's tests/ directory (PathVerificationTest's
-		// own repro confirms this: no diagnostic, the function just isn't
-		// treated as a test). Before model.FlagTestable existed on this
-		// node, this loop had no way to tell such a function apart from a
-		// real test — any @test:Config-annotated function anywhere in the
-		// compiled package, including main.bal, was discovered and run.
+		// jballerina silently ignores @test:* annotations outside tests/.
 		if !fn.IsTestable() {
 			continue
 		}

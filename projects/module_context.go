@@ -257,13 +257,8 @@ func parseModule(moduleCtx *moduleContext) {
 	// `bal build`/`bal run` leave it at its default (true) and never compile
 	// test sources.
 	includeTestTrees := !moduleCtx.project.BuildOptions().SkipTests()
-	// A single-file project (`bal test somefile.bal`) has no tests/
-	// directory at all — the one file plays both roles, so its functions
-	// must be discoverable as tests too, unlike a real project's main.bal
-	// (see discover.go's model.FlagTestable check, and the regression this
-	// guards: a @test:Config function outside tests/ must stay silently
-	// ignored for a real project, but single-file mode has no "outside" to
-	// speak of).
+	// A single-file project has no tests/ dir — its one file plays both
+	// roles, so its functions must be testable too.
 	treatSourceAsTestable := includeTestTrees && moduleCtx.project.Kind() == ProjectKindSingleFile
 	syntaxTrees := parseDocumentsParallel(
 		compilerCtx,

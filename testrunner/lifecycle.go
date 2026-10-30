@@ -168,13 +168,8 @@ func (r *runner) run() RunReport {
 		}
 		t := r.byName[name]
 		if !t.Enable {
-			// A disabled test is excluded entirely, not counted as skipped —
-			// confirmed against jballerina directly: it runs zero times and
-			// doesn't appear in the pass/fail/skip counts at all. Appending a
-			// Skip Result here was a real bug: naming only a disabled test via
-			// --tests showed "0 passing/0 failing/1 skipped" instead of "No
-			// tests found", and any run including a disabled test inflated
-			// the skipped count by one.
+			// A disabled test is excluded entirely, not counted as skipped
+			// (matches jballerina).
 			continue
 		}
 		results = append(results, r.executeOne(t)...)

@@ -25,14 +25,7 @@ import (
 type SyntaxTree struct {
 	RootNode Node
 	filePath string
-	// IsTest is true when this tree was parsed from a module's tests/
-	// directory. Propagated onto the BLangCompilationUnit built from it
-	// (see projects.buildCompilationUnits), so declarations originating
-	// from test sources can be told apart from the module's regular
-	// sources after parseDocumentsParallel merges both into one list —
-	// a distinction otherwise lost, since a test document's registration
-	// key/file name is just its bare file name, identical in shape to a
-	// non-test document's.
+	// IsTest is true if parsed from a module's tests/ directory.
 	IsTest       bool
 	textDocument text.TextDocument
 	// lineRange    LineRange

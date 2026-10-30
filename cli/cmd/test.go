@@ -521,16 +521,8 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		return 1, nil
 	}
 
-	// --list-groups mirrors execute.bal#startSuite's own early branch exactly
-	// — it short-circuits before any execution or report-writing happens at
-	// all, using GroupStatusRegistry.getGroupsList's semantics: every group
-	// named by *any discovered* test (enabled or not — incrementTotalTest
-	// counts both), in discovery order, deduplicated. --tests/--groups/
-	// --disable-groups/--rerun-failed/--code-coverage/--test-report are all
-	// ignored here (found as a real bug: this previously narrowed the list to
-	// whatever --groups/--tests also selected, instead of always listing
-	// everything), matching TestCommand.java's own warning for exactly this
-	// combination.
+	// --list-groups lists every discovered group and short-circuits,
+	// ignoring other selection flags (matches jballerina).
 	if opts.listGroups {
 		if listGroupsOtherFlagsWarning(opts) {
 			_, _ = fmt.Fprint(os.Stdout, "\nWarning: Other flags are skipped when list-groups flag is provided.\n\n")
@@ -548,14 +540,9 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		return 0, nil
 	}
 
-	// Build and run against the included subset only, not every test the
-	// plugin discovered — found as a real bug: validating the full plan here
-	// meant a --tests/--groups selection could fail over a disabled
-	// dependency or cycle belonging to some unrelated, unselected test
-	// elsewhere in the module. Safe to narrow like this because included is
-	// already transitively closed over dependsOn (testfilter.Select's
-	// closeDependsOn), so every dependency any included test actually
-	// references is guaranteed to still be present in the filtered plan.
+	// Build/run against the included subset only, so a --tests/--groups
+	// selection can't fail over an unselected test's bad dependency.
+	// Safe: included is already closed over dependsOn (testfilter.Select).
 	selected := filterPlan(discovered, included)
 	graph, err := testplan.BuildGraph(selected)
 	if err != nil {
@@ -657,16 +644,8 @@ func filterPlan(plan *testplan.TestPlan, included map[string]bool) *testplan.Tes
 	return filtered
 }
 
-// testGroupsList ports register.bal's GroupStatusRegistry.getGroupsList:
-// every group named by an included test, deduplicated, in first-seen order
-// — "included" here, not "enabled", matching incrementTotalTest(group,
-// enabled) always incrementing totalTests regardless of the enabled flag.
-// included == nil means no restriction — every discovered test counts,
-// which is what --list-groups needs (see its call site): registration in
-// jballerina's own engine happens unconditionally for every discovered test
-// regardless of --tests/--groups/--disable-groups, only effectiveEnable
-// differs based on those, so the group list itself is never filtered by
-// them either.
+// testGroupsList lists every group named by an included test, deduplicated,
+// in first-seen order. included == nil means no restriction.
 func testGroupsList(plan *testplan.TestPlan, included map[string]bool) []string {
 	seen := make(map[string]bool)
 	var groups []string
@@ -696,11 +675,8 @@ func printGroupsList(w io.Writer, groups []string) {
 	_, _ = fmt.Fprintln(w, "\t["+strings.Join(groups, ", ")+"]")
 }
 
-// listGroupsIgnoresOtherFlags mirrors TestCommand.java's own warning
-// condition exactly (listGroups && (rerunTests || coverage || testReport ||
-// groupList || disableGroupList || testList)) — --list-groups always lists
-// every group and ignores every other selection flag, warning the user
-// rather than silently narrowing the list the way this port previously did.
+// listGroupsOtherFlagsWarning reports whether any selection flag is set
+// alongside --list-groups, which jballerina warns about and ignores.
 func listGroupsOtherFlagsWarning(opts *testCmdOptions) bool {
 	return opts.rerunFailed || opts.codeCoverage || opts.testReport ||
 		opts.groups != "" || opts.disableGroups != "" || opts.tests != ""
