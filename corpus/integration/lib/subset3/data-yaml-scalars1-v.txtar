@@ -15,6 +15,12 @@
 ["true","True","~"]
 {"name":"null"}
 {}
+[1,"1","1"]
+[true,"true",null,"null"]
+{"age":null}
+incompatible value 'null' for type 'int?' in field 'age'
+{}
+incompatible value 'null' for type 'int' in field 'age'
 incompatible expected type 'int' for value 'x'
 incompatible expected type 'int' for value '1.5'
 incompatible expected type 'int' for value '9223372036854775808'
