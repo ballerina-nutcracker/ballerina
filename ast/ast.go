@@ -215,11 +215,8 @@ type (
 		Name          string
 		Scope         model.Scope
 		packageID     *model.PackageID
-		// IsTest mirrors st.SyntaxTree.IsTest — true when this unit was
-		// built from a module's tests/ directory. Set by
-		// projects.buildCompilationUnits; read by nodebuilder when
-		// assembling BLangPackage, to mark top-level declarations from
-		// test sources with model.FlagTestable.
+		// IsTest mirrors st.SyntaxTree.IsTest: true if built from a tests/
+		// directory. Used by nodebuilder to set model.FlagTestable.
 		IsTest bool
 	}
 

@@ -188,16 +188,8 @@ func TestTestCommand_NoTestsFound(t *testing.T) {
 
 // TestTestCommand_IgnoresTestConfigOutsideTestsDir matches jballerina's
 // PathVerificationTest#verifyTestsOutsidePath: a @test:Config function
-// sitting in default-module source (outside tests/) must be silently
-// ignored, not discovered and run. Found as a real bug — the compiler
-// plugin's discovery had no way to tell a test document's functions apart
-// from a regular document's (both compile into the same flat
-// ast.BLangPackage.Functions list), so any @test:Config-annotated function
-// anywhere in the compiled package, including main.bal, was treated as a
-// real test. Fixed via model.FlagTestable, set on a function's AST node
-// only when it originates from a module's tests/ directory (see
-// ast.BLangCompilationUnit.IsTest / st.SyntaxTree.IsTest and
-// discover.go's IsTestable check).
+// outside tests/ must be silently ignored, not run. Fixed via
+// model.FlagTestable, set only on functions from a tests/ source.
 func TestTestCommand_IgnoresTestConfigOutsideTestsDir(t *testing.T) {
 	dir := t.TempDir()
 	toml := "[package]\norg = \"testorg\"\nname = \"outsidepath\"\nversion = \"0.1.0\"\n"
@@ -962,22 +954,14 @@ service /echo on new http:Listener(20292) {
 // ---------------------------------------------------------------------------
 // SelectedFunctionTest (jballerina single-file-tests/single-test-execution)
 //
-// All 6 Java methods are now ported here. The other 4
-// (testSingleFunctionExecution, testDependentFunctionExecution,
-// testMultipleFunctionExecution, testDisabledFunctionExecution) were
-// originally blocked by a real, confirmed bug: runTestsForModule called
-// testplan.BuildGraph(discovered) on every discovered test in the module,
-// not just the --tests-selected subset, so a --tests selection failed with
-// the unrelated testDependentDisabledFunc/testDisabledFunc
-// disabled-dependency error even though neither function was selected. Now
-// fixed via the filterPlan helper (applied before BuildGraph/testrunner.Run
-// in runTestsForModule) — see TestTestCommand_SelectedFunction_* below.
+// All 6 Java methods ported. 4 of them needing --tests selection were
+// blocked by a real bug (BuildGraph validated the whole module, not just
+// the selection) — fixed via filterPlan.
 // ---------------------------------------------------------------------------
 
-// writeSelectedFunctionFixture is a direct port of jballerina's
-// single-test-execution.bal: testFunc (independent), testFunc2 (dependsOn
-// testFunc), testDisabledFunc (enable:false), and testDependentDisabledFunc
-// (dependsOn testDisabledFunc).
+// writeSelectedFunctionFixture ports jballerina's single-test-execution.bal:
+// testFunc, testFunc2 (dependsOn testFunc), testDisabledFunc
+// (enable:false), testDependentDisabledFunc (dependsOn testDisabledFunc).
 func writeSelectedFunctionFixture(t *testing.T) string {
 	t.Helper()
 	return writeTestFixture(t, "selectedfunction", `import ballerina/test;
@@ -1038,11 +1022,9 @@ func TestTestCommand_SelectedFunction_NonExistingFunctionExecution(t *testing.T)
 }
 
 // TestTestCommand_SelectedFunction_DependentDisabledFunctionExecution
-// matches jballerina's
-// SelectedFunctionTest#testDependentDisabledFunctionExecution: --tests
-// naming a function that itself dependsOn a disabled function pulls the
-// disabled dependency in transitively, reproducing the same
-// disabled-dependency error running the whole suite would hit.
+// matches jballerina's testDependentDisabledFunctionExecution: --tests on a
+// function depending on a disabled one still hits the disabled-dependency
+// error.
 func TestTestCommand_SelectedFunction_DependentDisabledFunctionExecution(t *testing.T) {
 	dir := writeSelectedFunctionFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests", "testDependentDisabledFunc")
@@ -1055,11 +1037,8 @@ func TestTestCommand_SelectedFunction_DependentDisabledFunctionExecution(t *test
 }
 
 // TestTestCommand_SelectedFunction_SingleFunctionExecution matches
-// jballerina's SelectedFunctionTest#testSingleFunctionExecution: --tests
-// testFunc runs only that one independent function. Previously blocked by
-// the BuildGraph-validates-the-whole-module bug described above (unrelated
-// to testFunc itself, but a --tests selection still validated the whole
-// module's graph, including the disabled-dependency pair).
+// jballerina's testSingleFunctionExecution: --tests testFunc runs only
+// that function.
 func TestTestCommand_SelectedFunction_SingleFunctionExecution(t *testing.T) {
 	dir := writeSelectedFunctionFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testFunc")
@@ -1075,9 +1054,8 @@ func TestTestCommand_SelectedFunction_SingleFunctionExecution(t *testing.T) {
 }
 
 // TestTestCommand_SelectedFunction_DependentFunctionExecution matches
-// jballerina's SelectedFunctionTest#testDependentFunctionExecution: --tests
-// testFunc2 auto-includes its dependency testFunc via dependsOn's
-// transitive closure.
+// jballerina's testDependentFunctionExecution: --tests testFunc2
+// auto-includes its dependency testFunc.
 func TestTestCommand_SelectedFunction_DependentFunctionExecution(t *testing.T) {
 	dir := writeSelectedFunctionFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testFunc2")
@@ -1114,9 +1092,8 @@ func TestTestCommand_SelectedFunction_MultipleFunctionExecution(t *testing.T) {
 }
 
 // TestTestCommand_SelectedFunction_DisabledFunctionExecution matches
-// jballerina's SelectedFunctionTest#testDisabledFunctionExecution: naming a
-// disabled function explicitly via --tests is a no-op, not an override —
-// the disabled test still doesn't run, so nothing matches at all.
+// jballerina's testDisabledFunctionExecution: naming a disabled function
+// via --tests is a no-op, not an override.
 func TestTestCommand_SelectedFunction_DisabledFunctionExecution(t *testing.T) {
 	dir := writeSelectedFunctionFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testDisabledFunc")
@@ -1131,16 +1108,9 @@ func TestTestCommand_SelectedFunction_DisabledFunctionExecution(t *testing.T) {
 // ---------------------------------------------------------------------------
 // negative/SkipTestsTestCase (jballerina single-file-tests/skip-tests)
 //
-// Each fixture below is a direct port of the corresponding jballerina .bal
-// file, with one mechanical change: "int i = 12/0;"/"int b = 2/0;" (an
-// intentionally-unused local used purely to throw at runtime) is renamed to
-// "int _ = ...": this port's compiler treats an unused local as a hard
-// SEMANTIC_ERROR (compile failure) rather than jballerina's warning — a
-// known, intentional divergence already covered by its own Java test class
-// (negative/UnusedVarWithErrorTestCase) — so the original fixture text
-// doesn't even compile here. "_" is this port's own, equally-intentional
-// unused-variable opt-out (model.IGNORE), so the fixture's runtime behavior
-// (a function that panics with divide-by-zero) is unchanged.
+// Direct ports, with one mechanical change: an intentionally-unused local
+// ("int i = 12/0;") is renamed to "_", since this port treats an unused
+// local as a compile error, not a warning.
 // ---------------------------------------------------------------------------
 
 // TestTestCommand_SkipTests_WhenDependsOnFunctionFails matches jballerina's
@@ -1196,9 +1166,8 @@ public function test5() {
 }
 
 // TestTestCommand_SkipTests_WhenBeforeFails matches jballerina's
-// negative/SkipTestsTestCase#testSkipWhenBeforeFails: a per-test before:
-// hook failing skips only that test (and its dependents); independent
-// tests still run.
+// testSkipWhenBeforeFails: a before: hook failing skips only that test and
+// its dependents.
 func TestTestCommand_SkipTests_WhenBeforeFails(t *testing.T) {
 	dir := writeTestFixture(t, "skipbeforefails", `import ballerina/test;
 
@@ -1293,9 +1262,8 @@ public function test3() {
 }
 
 // TestTestCommand_SkipTests_WhenBeforeEachFails matches jballerina's
-// negative/SkipTestsTestCase#testSkipWhenBeforeEachFails: a global
-// beforeEach failing skips every test (beforeEach itself only ever attempted
-// via each test's own invocation, so this is a sticky skip-everything).
+// testSkipWhenBeforeEachFails: a failing global beforeEach skips every
+// test.
 func TestTestCommand_SkipTests_WhenBeforeEachFails(t *testing.T) {
 	dir := writeTestFixture(t, "skipbeforeeachfails", `import ballerina/test;
 
@@ -1336,9 +1304,8 @@ public function test3() {
 }
 
 // TestTestCommand_SkipTests_WhenAfterEachFails matches jballerina's
-// negative/SkipTestsTestCase#testSkipWhenAfterEachFails: a global afterEach
-// failing on the first test skips every subsequent test, but the first
-// test's own pass stands.
+// testSkipWhenAfterEachFails: a failing global afterEach skips every
+// subsequent test, but not the one that triggered it.
 func TestTestCommand_SkipTests_WhenAfterEachFails(t *testing.T) {
 	dir := writeTestFixture(t, "skipaftereachfails", `import ballerina/test;
 
@@ -1382,9 +1349,8 @@ public function test3() {
 }
 
 // TestTestCommand_SkipTests_WhenBeforeSuiteFails matches jballerina's
-// negative/SkipTestsTestCase#testSkipWhenBeforeSuiteFails: a failing
-// BeforeSuite skips every test and every non-alwaysRun AfterSuite, but an
-// alwaysRun AfterSuite still runs.
+// testSkipWhenBeforeSuiteFails: a failing BeforeSuite skips every test and
+// non-alwaysRun AfterSuite.
 func TestTestCommand_SkipTests_WhenBeforeSuiteFails(t *testing.T) {
 	dir := writeTestFixture(t, "skipbeforesuitefails", `import ballerina/test;
 
@@ -1453,9 +1419,8 @@ public function test3() {
 }
 
 // TestTestCommand_SkipTests_WhenBeforeGroupsFails matches jballerina's
-// negative/SkipTestsTestCase#testSkipWhenBeforeGroupsFails: a failing
-// BeforeGroups skips that group's tests/hooks/AfterGroups, but tests
-// outside the failing group are unaffected.
+// testSkipWhenBeforeGroupsFails: a failing BeforeGroups skips only its own
+// group.
 func TestTestCommand_SkipTests_WhenBeforeGroupsFails(t *testing.T) {
 	dir := writeTestFixture(t, "skipbeforegroupsfails", `import ballerina/test;
 
@@ -1528,13 +1493,9 @@ function testFunction5() {
 // ---------------------------------------------------------------------------
 // DisableTestsTestCase (jballerina single-file-tests/disabled-tests)
 //
-// Both Java methods are now ported here. testDisablingTests was originally
-// blocked by a real, confirmed bug: a merely-disabled (enable:false) test
-// that isn't anyone's dependency was still counted towards the "X skipped"
-// summary (testrunner/lifecycle.go's run() appended a Skip Result for it),
-// whereas jballerina excludes it from the report entirely (0 skipped). Now
-// fixed: run() just `continue`s over a disabled test with no Result appended
-// at all — see TestTestCommand_DisableTests_DisablingTests below.
+// Both methods ported. testDisablingTests was blocked by a real bug: a
+// disabled test was counted as "skipped" instead of excluded entirely —
+// now fixed.
 // ---------------------------------------------------------------------------
 
 // TestTestCommand_DisableTests_WithDependsOn matches jballerina's
@@ -1573,14 +1534,9 @@ function testFunction3() {
 }
 
 // TestTestCommand_DisableTests_DisablingTests matches jballerina's
-// DisableTestsTestCase#testDisablingTests: a direct port of
-// disable-test.bal — enable:false/enable:true/no-field(defaults true), plus
-// 3 annotation-syntax edge cases that must still parse and disable the test
-// correctly: a string-keyed field ("enable": false), a comment inside the
-// annotation body, and a space between @ and test:Config. Only
-// testDisableFunc2 (enable:true) and testDisableFunc3 (no enable field)
-// should run; the other 4 are disabled and must be excluded entirely, not
-// counted as skipped.
+// testDisablingTests: enable:false/true/default, plus 3 annotation-syntax
+// edge cases that must still parse correctly. Disabled tests must be
+// excluded entirely, not counted as skipped.
 func TestTestCommand_DisableTests_DisablingTests(t *testing.T) {
 	dir := writeTestFixture(t, "disabletest", `import ballerina/test;
 
@@ -1719,23 +1675,14 @@ public function test2() {
 // GroupingTest (jballerina single-file-tests/grouping +
 // project-based-tests/group-test)
 //
-// All 15 Java methods are now ported here. afterGroupsWithDisabledTest was
-// originally blocked by the same merely-disabled-test-counted-as-skipped bug
-// as DisableTestsTestCase#testDisablingTests above, now fixed.
-// testListGroupsWithOtherFlags was blocked by a separate, real, confirmed
-// bug: --list-groups combined with --groups/--tests/--disable-groups
-// computed the group list from the *filtered* set of tests instead of
-// ignoring the other flags entirely (jballerina lists every group regardless
-// of any other flag, plus prints an "Other flags are skipped..." warning
-// this port never printed at all). Both now fixed — see
-// TestTestCommand_Grouping_AfterGroupsWithDisabledTest and
-// TestTestCommand_Grouping_ListGroupsWithOtherFlags below.
+// All 15 methods ported. Two were blocked by now-fixed bugs: a disabled
+// test counted as skipped, and --list-groups narrowing its list instead of
+// ignoring other flags.
 // ---------------------------------------------------------------------------
 
-// writeGroupingFixture is a direct port of jballerina's groups-test.bal:
-// testFunc1/2/3 share overlapping groups g1-g4 and always pass, testFunc4
-// (group g5) and testFunc5 (group g6) always fail, and testFunc6 has no
-// group at all.
+// writeGroupingFixture ports jballerina's groups-test.bal: testFunc1-3
+// share groups g1-g4 and pass, testFunc4/5 (g5/g6) always fail,
+// testFunc6 has no group.
 func writeGroupingFixture(t *testing.T) string {
 	t.Helper()
 	return writeTestFixture(t, "grouping", `import ballerina/test;
@@ -1821,9 +1768,7 @@ func TestTestCommand_Grouping_MultipleGroupExecution(t *testing.T) {
 }
 
 // TestTestCommand_Grouping_SingleGroupExclusion matches jballerina's
-// GroupingTest#testSingleGroupExclusion: --disable-groups g5 runs
-// everything except g5's test (which fails anyway, so excluding it drops
-// the one failure).
+// testSingleGroupExclusion: --disable-groups g5 excludes g5's failing test.
 func TestTestCommand_Grouping_SingleGroupExclusion(t *testing.T) {
 	dir := writeGroupingFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--disable-groups", "g5")
@@ -1870,9 +1815,8 @@ func TestTestCommand_Grouping_NonExistingGroupInclusion(t *testing.T) {
 }
 
 // TestTestCommand_Grouping_NonExistingGroupExclusion matches jballerina's
-// GroupingTest#testNonExistingGroupExclusion: --disable-groups g10 (no test
-// belongs to it) is a no-op — every test still runs, including the two
-// that fail on their own.
+// testNonExistingGroupExclusion: --disable-groups g10 (no match) is a
+// no-op.
 func TestTestCommand_Grouping_NonExistingGroupExclusion(t *testing.T) {
 	dir := writeGroupingFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--disable-groups", "g10")
@@ -1930,9 +1874,8 @@ function testFunc6 () {
 `
 
 // TestTestCommand_Grouping_ListingOfSingleTestGroups matches jballerina's
-// GroupingTest#testListingOfSingleTestGroups: --list-groups against a
-// standalone .bal file prints every group discovered, deduplicated, in
-// discovery order.
+// testListingOfSingleTestGroups: --list-groups lists every discovered
+// group.
 func TestTestCommand_Grouping_ListingOfSingleTestGroups(t *testing.T) {
 	dir := t.TempDir()
 	balFile := writeStandaloneFixture(t, dir, "groups-test.bal", groupingBalSource)
@@ -1960,10 +1903,8 @@ func TestTestCommand_Grouping_ListingOfTestGroups(t *testing.T) {
 }
 
 // TestTestCommand_Grouping_BeforeGroupsAfterGroups1 matches jballerina's
-// GroupingTest#beforeGroupsAfterGroups1: BeforeGroups/AfterGroups run
-// exactly once around a single group's tests, interleaved correctly with
-// suite/each/before/after hooks (the fixture's own AfterSuite assertion
-// pins the exact interleaving order).
+// beforeGroupsAfterGroups1: BeforeGroups/AfterGroups run exactly once
+// around a group, correctly interleaved with other hooks.
 func TestTestCommand_Grouping_BeforeGroupsAfterGroups1(t *testing.T) {
 	dir := writeTestFixture(t, "beforegroupsaftergroups1", `import ballerina/test;
 
@@ -2033,9 +1974,8 @@ function afterSuiteFunc() {
 }
 
 // TestTestCommand_Grouping_BeforeGroupsAfterGroups2 matches jballerina's
-// GroupingTest#beforeGroupsAfterGroups2: a shared AfterGroups across two
-// overlapping groups still runs exactly once, after the last test of
-// either group (the fixture's own AfterSuite assertion pins the order).
+// beforeGroupsAfterGroups2: a shared AfterGroups across two groups runs
+// exactly once, after the last test of either.
 func TestTestCommand_Grouping_BeforeGroupsAfterGroups2(t *testing.T) {
 	dir := writeTestFixture(t, "beforegroupsaftergroups2", `import ballerina/test;
 
@@ -2108,9 +2048,8 @@ function afterSuiteFunc() {
 }
 
 // TestTestCommand_Grouping_FailedBeforeGroupTest matches jballerina's
-// GroupingTest#failedBeforeGroupTest: a panicking BeforeGroups skips only
-// its own group's tests/AfterGroups; other groups and group-less tests are
-// unaffected.
+// failedBeforeGroupTest: a panicking BeforeGroups skips only its own
+// group.
 func TestTestCommand_Grouping_FailedBeforeGroupTest(t *testing.T) {
 	dir := writeTestFixture(t, "failedbeforegroup", `import ballerina/test;
 
@@ -2337,11 +2276,8 @@ function afterSuiteFunc() {
 }
 
 // TestTestCommand_Grouping_AfterGroupsWithDisabledTest matches jballerina's
-// GroupingTest#afterGroupsWithDisabledTest: an AfterGroups hook for a group
-// still fires correctly when that group's last-registered member is
-// disabled (enable:false) — the disabled member is excluded entirely, so
-// the group's AfterGroups fires after its last *enabled* member instead.
-// Direct port of after-groups-with-disabled-test.bal.
+// afterGroupsWithDisabledTest: a group's AfterGroups still fires correctly
+// when its last member is disabled.
 func TestTestCommand_Grouping_AfterGroupsWithDisabledTest(t *testing.T) {
 	dir := writeTestFixture(t, "aftergroupsdisabled", `import ballerina/test;
 
@@ -2407,9 +2343,8 @@ function afterSuiteFunc() {
 }
 
 // TestTestCommand_Grouping_ListGroupsWithOtherFlags matches jballerina's
-// GroupingTest#testListGroupsWithOtherFlags: --groups g1 --list-groups still
-// lists every group discovered (not narrowed to g1's own groups), plus
-// prints the "Other flags are skipped" warning.
+// testListGroupsWithOtherFlags: --groups g1 --list-groups still lists every
+// group and prints the "other flags skipped" warning.
 func TestTestCommand_Grouping_ListGroupsWithOtherFlags(t *testing.T) {
 	dir := t.TempDir()
 	balFile := writeStandaloneFixture(t, dir, "groups-test.bal", groupingBalSource)
@@ -2428,28 +2363,12 @@ func TestTestCommand_Grouping_ListGroupsWithOtherFlags(t *testing.T) {
 // ---------------------------------------------------------------------------
 // RerunFailedTest (jballerina project-based-tests/rerun-failed-tests[-...])
 //
-// 4 of the 5 Java methods are ported here as genuinely passing, via two real
-// sequential `bal test` invocations against the same fixture directory
-// (matching TestTestCommand_RerunFailedOnlyRunsPreviousFailures's own
-// pattern) — this branch has a real `bal test` CLI, so no seeding trick is
-// needed.
-//
-// testRerunFailedTestWithoutAnInitialRun is NOT ported: a real, newly
-// confirmed divergence. jballerina reports a missing rerun_test.json (no
-// prior `bal test` run at all) with its own distinct message, "error while
-// running failed tests : No previous test executions found.", separate from
-// the "Invalid failed test data. Please run `bal test` command." message it
-// uses for a malformed file or a missing module key. This port's
-// testfilter.ErrInvalidRerunData (see select.go) deliberately collapses all
-// three conditions (missing file, malformed JSON, missing module entry) into
-// one message — confirmed via a clean repro (--rerun-failed against a
-// package with no target/rerun_test.json at all; see this file's final
-// report) that this port prints "Invalid failed test data..." here too,
-// where jballerina would print "No previous test executions found.". Not
-// fixed here per the "do not paper over a divergence" rule — reported
-// instead. The existing TestTestCommand_Golden_RerunFailedNoPriorRun golden
-// test already locks in this port's current (diverging) message; flagged
-// here rather than silently duplicated.
+// 4 of 5 methods ported via real two-invocation `bal test` runs.
+// testRerunFailedTestWithoutAnInitialRun is a known, unfixed divergence:
+// jballerina gives a distinct "no previous test executions" message for a
+// missing rerun_test.json; this port reuses the "Invalid failed test data"
+// message it also gives for a malformed file
+// (TestTestCommand_Golden_RerunFailedNoPriorRun pins this).
 // ---------------------------------------------------------------------------
 
 // writeRerunFailedFixture is a direct port of jballerina's
@@ -2481,10 +2400,9 @@ function testFunctionFail2() {
 `)
 }
 
-// TestTestCommand_RerunFailed_FullTest matches jballerina's
-// RerunFailedTest#testFullTest: a full (unfiltered) run of a project with 2
-// passing/2 failing tests exits non-zero and writes target/rerun_test.json
-// listing just the 2 failures.
+// TestTestCommand_RerunFailed_FullTest matches jballerina's testFullTest: a
+// full run with 2 passing/2 failing writes rerun_test.json with the 2
+// failures.
 func TestTestCommand_RerunFailed_FullTest(t *testing.T) {
 	dir := writeRerunFailedFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir)
@@ -2519,9 +2437,8 @@ func TestTestCommand_RerunFailed_FullTest(t *testing.T) {
 }
 
 // TestTestCommand_RerunFailed_RerunFailedTest matches jballerina's
-// RerunFailedTest#testRerunFailedTest: following a failing full run,
-// --rerun-failed re-executes only the 2 previously-failed tests (which fail
-// again, being unconditional failures) — 0 passing/2 failing.
+// testRerunFailedTest: --rerun-failed re-executes only the previously
+// failed tests.
 func TestTestCommand_RerunFailed_RerunFailedTest(t *testing.T) {
 	dir := writeRerunFailedFixture(t)
 	if _, _, _, err := executeTestCommand(t, dir); err == nil {
@@ -2564,10 +2481,8 @@ func TestTestCommand_RerunFailed_WithInvalidRunTestJson(t *testing.T) {
 }
 
 // TestTestCommand_RerunFailed_WithMissingModuleNameInRunTestJson matches
-// jballerina's RerunFailedTest#testRerunFailedTestWithMissingModuleNameInRunTestJson:
-// a syntactically-valid rerun_test.json with no entry for this module (a
-// wrong/missing module key) also produces the "Invalid failed test data"
-// error.
+// jballerina's testRerunFailedTestWithMissingModuleNameInRunTestJson: a
+// rerun_test.json missing this module's entry also errors.
 func TestTestCommand_RerunFailed_WithMissingModuleNameInRunTestJson(t *testing.T) {
 	dir := writeRerunFailedFixture(t)
 	targetDir := filepath.Join(dir, "target")
@@ -2591,36 +2506,11 @@ func TestTestCommand_RerunFailed_WithMissingModuleNameInRunTestJson(t *testing.T
 // ---------------------------------------------------------------------------
 // DataProviderTest (jballerina project-based-tests/data-providers)
 //
-// All 16 addable-now Java methods are ported here as genuinely passing,
-// against a direct port of data-providers/tests/new-data-provider-tests.bal
-// (plus its modules/module1/tests/module1_test.bal) — two mechanical changes
-// only: "int a = 9/0;" (an intentionally-unused local used purely to throw
-// at runtime) is renamed to "int _ = 9/0;" for the same reason documented
-// above SkipTestsTestCase's fixtures (this port treats an unused local as a
-// hard compile error, not a warning), and testFunction3's otherwise-unused
-// value2 parameter gets a trivial "string _ = value2;" reference for the
-// same reason (this port also treats an unused function parameter as a hard
-// compile error, which jballerina does not).
-//
-// 4 of the 16 — testValidDataProviderCase, testDataProviderWithMixedType,
-// testCodeFragmentKeys, testCodeFragmentKeysWithWildCard — all use
-// jballerina's own "--tests name#'key'" single-quoted sub-key convention
-// (used whenever a key needs disambiguating, e.g. from the top-level
-// comma-separated --tests list), which once relied on a real, now-fixed
-// divergence: testrunner.ParseSubKeyFilters didn't unwrap the quotes,
-// leaving the literal quote characters in the recorded filter so it never
-// matched an unquoted row key — see TestSubKeyFilters_QuotedKey (git history
-// has the prior, diverging version of that test, TestSubKeyFilters_QuotedKeyDivergence,
-// for the original repro). testCodeFragmentKeys/testCodeFragmentKeysWithWildCard's
-// special-character keys are additionally percent-encoded via
-// native.EscapeSpecialCharacters before being placed in the --tests argument,
-// exactly as a real CLI user must do for a key containing a delimiter
-// character (comma, quote, etc.) — see those tests' own doc comments.
-// testArrayDataRerunFailedTest (a 17th addable-now method, not counted in the
-// "16" above since it needs a two-invocation golden scenario rather than a
-// single executeTestCommand call) is ported separately, as a golden test —
-// see TestTestCommand_Golden_RerunFailedWithArrayDataProvider in
-// test_golden_test.go.
+// All 16 addable-now methods ported, plus testArrayDataRerunFailedTest as a
+// golden test (TestTestCommand_Golden_RerunFailedWithArrayDataProvider). 2
+// mechanical changes: unused locals/params renamed/referenced to satisfy
+// this port's stricter compile checks. 4 methods needed the quoted-sub-key
+// fix in TestSubKeyFilters_QuotedKey.
 // ---------------------------------------------------------------------------
 
 // dataProviderMainTestSource is a direct, line-for-line port of
@@ -3036,11 +2926,8 @@ function dataGenMod1() returns string[][] | error{
 }
 `
 
-// writeDataProviderFixture is a direct port of jballerina's data-providers
-// project: a default module (dataProviderMainTestSource) plus a module1
-// submodule (dataProviderModule1TestSource), matching the real fixture's
-// shape closely enough that --tests selections scoped to either module
-// behave the same way (e.g. testMultiModuleSingleTestExec below).
+// writeDataProviderFixture ports jballerina's data-providers project: a
+// default module plus a module1 submodule.
 func writeDataProviderFixture(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -3087,10 +2974,9 @@ func TestTestCommand_DataProvider_ValidDataProvider(t *testing.T) {
 	}
 }
 
-// TestTestCommand_DataProvider_ValidDataProviderWithFail matches jballerina's
-// DataProviderTest#testValidDataProviderWithFail: --tests intDataProviderTest
-// runs the int data provider's 3 rows — Case1 (1+2 != 4) and Case2 (10+20 !=
-// 31) both fail, only Case3 (5+6 == 11) passes.
+// TestTestCommand_DataProvider_ValidDataProviderWithFail matches
+// jballerina's testValidDataProviderWithFail: 2 of 3 int-provider rows
+// fail.
 func TestTestCommand_DataProvider_ValidDataProviderWithFail(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests", "intDataProviderTest")
@@ -3111,11 +2997,9 @@ func TestTestCommand_DataProvider_ValidDataProviderWithFail(t *testing.T) {
 }
 
 // TestTestCommand_DataProvider_ValidDataProviderCaseWithoutQuotes matches
-// jballerina's DataProviderTest#testValidDataProviderCaseWithoutQuotes:
-// --tests "dataproviders:jsonDataProviderTest#json1" (module-qualified,
-// unquoted sub-key) selects just that one row. See
-// TestTestCommand_DataProvider_ValidDataProviderCase below for the
-// single-quoted form (testValidDataProviderCase).
+// jballerina's testValidDataProviderCaseWithoutQuotes: an unquoted,
+// module-qualified sub-key selects one row. See
+// TestTestCommand_DataProvider_ValidDataProviderCase for the quoted form.
 func TestTestCommand_DataProvider_ValidDataProviderCaseWithoutQuotes(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "dataproviders:jsonDataProviderTest#json1")
@@ -3134,11 +3018,8 @@ func TestTestCommand_DataProvider_ValidDataProviderCaseWithoutQuotes(t *testing.
 }
 
 // TestTestCommand_DataProvider_ValidDataProviderCase matches jballerina's
-// DataProviderTest#testValidDataProviderCase: --tests
-// "dataproviders:jsonDataProviderTest#'json1'" (module-qualified, SINGLE-QUOTED
-// sub-key — jballerina's own disambiguation convention) selects the same one
-// row as the unquoted form above. Exercises testrunner.ParseSubKeyFilters'
-// quote-stripping (see TestSubKeyFilters_QuotedKey).
+// testValidDataProviderCase: the single-quoted sub-key form, exercising
+// ParseSubKeyFilters' quote-stripping.
 func TestTestCommand_DataProvider_ValidDataProviderCase(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "dataproviders:jsonDataProviderTest#'json1'")
@@ -3156,12 +3037,11 @@ func TestTestCommand_DataProvider_ValidDataProviderCase(t *testing.T) {
 	}
 }
 
-// TestTestCommand_DataProvider_DataProviderWithMixedTypeWithoutQuotes matches
-// jballerina's DataProviderTest#testDataProviderWithMixedTypeWithoutQuotes:
-// --tests "testFunction1#CaseNew*" (unquoted wildcard sub-key) selects the
-// 2 rows whose keys start with "CaseNew" (not "Case3"). See
-// TestTestCommand_DataProvider_DataProviderWithMixedType below for the
-// single-quoted form (testDataProviderWithMixedType).
+// TestTestCommand_DataProvider_DataProviderWithMixedTypeWithoutQuotes
+// matches jballerina's testDataProviderWithMixedTypeWithoutQuotes: an
+// unquoted wildcard sub-key selects 2 rows. See
+// TestTestCommand_DataProvider_DataProviderWithMixedType for the quoted
+// form.
 func TestTestCommand_DataProvider_DataProviderWithMixedTypeWithoutQuotes(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testFunction1#CaseNew*")
@@ -3181,12 +3061,9 @@ func TestTestCommand_DataProvider_DataProviderWithMixedTypeWithoutQuotes(t *test
 	}
 }
 
-// TestTestCommand_DataProvider_DataProviderWithMixedType matches jballerina's
-// DataProviderTest#testDataProviderWithMixedType: --tests
-// "testFunction1#'CaseNew*'" (SINGLE-QUOTED wildcard sub-key) selects the
-// same 2 rows as the unquoted form above. Exercises
-// testrunner.ParseSubKeyFilters' quote-stripping combined with wildcard
-// matching (see TestSubKeyFilters_QuotedKey).
+// TestTestCommand_DataProvider_DataProviderWithMixedType matches
+// jballerina's testDataProviderWithMixedType: the single-quoted wildcard
+// sub-key form.
 func TestTestCommand_DataProvider_DataProviderWithMixedType(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testFunction1#'CaseNew*'")
@@ -3207,9 +3084,8 @@ func TestTestCommand_DataProvider_DataProviderWithMixedType(t *testing.T) {
 }
 
 // TestTestCommand_DataProvider_WithSpecialKeys matches jballerina's
-// DataProviderTest#testWithSpecialKeys: a data-provider key containing a
-// literal '#' itself ("Case#1" etc.) round-trips correctly — --tests
-// testFunction2 (no sub-key filter at all) runs all 3 rows.
+// testWithSpecialKeys: a data-provider key containing a literal '#'
+// round-trips correctly.
 func TestTestCommand_DataProvider_WithSpecialKeys(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testFunction2")
@@ -3226,11 +3102,8 @@ func TestTestCommand_DataProvider_WithSpecialKeys(t *testing.T) {
 	}
 }
 
-// codeFragmentKeys are testFunction3/dataGen9's 7 map keys (direct port of
-// new-data-provider-tests.bal's dataGen9, byte-for-byte — each key's exact
-// characters, including embedded quotes/backslash/backtick/control
-// characters, were extracted from the Ballerina source's own string-literal
-// escapes, not re-derived from the Java test's percent-encoded CLI literals).
+// codeFragmentKeys are testFunction3/dataGen9's 7 map keys, a byte-for-byte
+// port of dataGen9.
 var codeFragmentKeys = []string{
 	"`'\"\\a\"\"",
 	"\"\\u{D7FF}\"\"\t\"",
@@ -3241,10 +3114,8 @@ var codeFragmentKeys = []string{
 	`map<any> v = { "x": 1 };`,
 }
 
-// codeFragmentKeysWithWildCard are the same 7 keys, each with exactly one
-// character replaced by a literal '*' wildcard — direct port of jballerina's
-// testCodeFragmentKeysWithWildCard's own percent-encoded CLI literals,
-// decoded.
+// codeFragmentKeysWithWildCard are the same 7 keys with one character each
+// replaced by a '*' wildcard.
 var codeFragmentKeysWithWildCard = []string{
 	"`'\"\\*\"\"",
 	"\"\\u{D7FF}\"*\t\"",
@@ -3256,18 +3127,8 @@ var codeFragmentKeysWithWildCard = []string{
 }
 
 // TestTestCommand_DataProvider_CodeFragmentKeys matches jballerina's
-// DataProviderTest#testCodeFragmentKeys (7 sub-cases): each of testFunction3's
-// 7 special-character map keys (backtick/quote/backslash/control-character/
-// operator combinations) round-trips correctly through a single-quoted
-// "--tests testFunction3#'<escaped-key>'" filter — exercising
-// testrunner.ParseSubKeyFilters' quote-stripping (TestSubKeyFilters_QuotedKey)
-// together with native.EscapeSpecialCharacters' percent-encoding of the
-// special characters themselves (TestSubKeyFilters_MatchesSpecialCharacterKey).
-// Like a real CLI user, the key is percent-encoded with
-// native.EscapeSpecialCharacters before being placed in the --tests argument
-// — a raw, un-encoded special character (e.g. the comma in case5's
-// "a:x(c,d)...") would otherwise be ambiguous with --tests's own
-// comma-separated-list syntax.
+// testCodeFragmentKeys (7 sub-cases): special-character keys round-trip
+// through a percent-encoded, single-quoted --tests filter.
 func TestTestCommand_DataProvider_CodeFragmentKeys(t *testing.T) {
 	for i, key := range codeFragmentKeys {
 		t.Run(fmt.Sprintf("case%d", i), func(t *testing.T) {
@@ -3285,10 +3146,8 @@ func TestTestCommand_DataProvider_CodeFragmentKeys(t *testing.T) {
 }
 
 // TestTestCommand_DataProvider_CodeFragmentKeysWithWildCard matches
-// jballerina's DataProviderTest#testCodeFragmentKeysWithWildCard (7
-// sub-cases): same as TestTestCommand_DataProvider_CodeFragmentKeys, but each
-// key is filtered via a wildcarded variant (one character replaced by '*'),
-// still uniquely matching its one row.
+// jballerina's testCodeFragmentKeysWithWildCard (7 sub-cases): same, with a
+// '*' wildcard in each key.
 func TestTestCommand_DataProvider_CodeFragmentKeysWithWildCard(t *testing.T) {
 	for i, key := range codeFragmentKeysWithWildCard {
 		t.Run(fmt.Sprintf("case%d", i), func(t *testing.T) {
@@ -3305,10 +3164,9 @@ func TestTestCommand_DataProvider_CodeFragmentKeysWithWildCard(t *testing.T) {
 	}
 }
 
-// TestTestCommand_DataProvider_ArrayDataProviderWithFail matches jballerina's
-// DataProviderTest#testArrayDataProviderWithFail: --tests
-// intArrayDataProviderTest runs the int[][] (tuple-of-tuple, index-keyed)
-// data provider's 3 rows, 2 of which fail.
+// TestTestCommand_DataProvider_ArrayDataProviderWithFail matches
+// jballerina's testArrayDataProviderWithFail: 2 of 3 tuple-provider rows
+// fail.
 func TestTestCommand_DataProvider_ArrayDataProviderWithFail(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests", "intArrayDataProviderTest")
@@ -3328,11 +3186,9 @@ func TestTestCommand_DataProvider_ArrayDataProviderWithFail(t *testing.T) {
 	}
 }
 
-// TestTestCommand_DataProvider_MultiModuleSingleTestExec matches jballerina's
-// DataProviderTest#testMultiModuleSingleTestExec: --tests
-// "stringDataProviderMod1Test#1" (no module qualifier) runs module1's data
-// provider row keyed "1" and only that row, in only that module — the
-// default module reports "No tests found", module1 reports 1 passing.
+// TestTestCommand_DataProvider_MultiModuleSingleTestExec matches
+// jballerina's testMultiModuleSingleTestExec: an unqualified sub-key
+// selects module1's row only.
 func TestTestCommand_DataProvider_MultiModuleSingleTestExec(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, cobraStdout, stderr, err := executeTestCommand(t, dir, "--tests", "stringDataProviderMod1Test#1")
@@ -3354,9 +3210,8 @@ func TestTestCommand_DataProvider_MultiModuleSingleTestExec(t *testing.T) {
 }
 
 // TestTestCommand_DataProvider_MapValueDataProvider matches jballerina's
-// DataProviderTest#testMapValueDataProvider: --tests testGetState runs a
-// record-shaped (Feed[][]) array-of-array data provider's 2 rows, one
-// passing and one failing (wrong responseCode).
+// testMapValueDataProvider: a record-shaped data provider, one row passing
+// one failing.
 func TestTestCommand_DataProvider_MapValueDataProvider(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests", "testGetState")
@@ -3375,10 +3230,8 @@ func TestTestCommand_DataProvider_MapValueDataProvider(t *testing.T) {
 }
 
 // TestTestCommand_DataProvider_ValidDataProviderWithBeforeAfterFunctions
-// matches jballerina's
-// DataProviderTest#testValidDataProviderWithBeforeAfterFunctions: --tests
-// testExecutionOfBeforeAfter auto-includes its dependency testDividingValues
-// (a 5-row data provider with per-row before:/after: hooks), all passing.
+// matches jballerina's testValidDataProviderWithBeforeAfterFunctions: a
+// 5-row data provider with per-row before:/after: hooks, all passing.
 func TestTestCommand_DataProvider_ValidDataProviderWithBeforeAfterFunctions(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, stderr, err := executeTestCommand(t, dir, "--tests", "testExecutionOfBeforeAfter")
@@ -3394,14 +3247,8 @@ func TestTestCommand_DataProvider_ValidDataProviderWithBeforeAfterFunctions(t *t
 }
 
 // TestTestCommand_DataProvider_ValidDataProviderWithBeforeFailing matches
-// jballerina's DataProviderTest#testValidDataProviderWithBeforeFailing:
-// --tests "testDividingValuesWithBeforeFailing,testExecutionOfBeforeFailing"
-// — the per-row before: hook fails on exactly one of 5 rows (3rd
-// iteration), which is reported Skip; the other 4 rows pass, and the
-// (independent, not dependsOn) testExecutionOfBeforeFailing's own tally
-// assertion also passes. The command still exits non-zero overall: a hook
-// failure counts towards the exit code (testrunner.Summarize) even though
-// it produced 0 failing Results, only a HookFailure plus a Skip.
+// jballerina's testValidDataProviderWithBeforeFailing: a before: hook
+// failing on one of 5 rows is Skip, not failure; exit is still non-zero.
 func TestTestCommand_DataProvider_ValidDataProviderWithBeforeFailing(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests",
@@ -3424,13 +3271,8 @@ func TestTestCommand_DataProvider_ValidDataProviderWithBeforeFailing(t *testing.
 }
 
 // TestTestCommand_DataProvider_ValidDataProviderWithAfterFailing matches
-// jballerina's DataProviderTest#testValidDataProviderWithAfterFailing:
-// --tests "testDividingValuesWithAfterFailing,testExecutionOfAfterFailing" —
-// the per-row after: hook itself fails on one of 5 rows, but (unlike a
-// before: failure) that doesn't change the row's own already-recorded
-// pass — all 5 rows plus the dependent assertion all pass. The command
-// still exits non-zero overall: the after: hook's own HookFailure counts
-// towards the exit code (testrunner.Summarize) even with 0 failing Results.
+// jballerina's testValidDataProviderWithAfterFailing: an after: hook
+// failing doesn't change the row's own pass; exit is still non-zero.
 func TestTestCommand_DataProvider_ValidDataProviderWithAfterFailing(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests",
@@ -3446,14 +3288,10 @@ func TestTestCommand_DataProvider_ValidDataProviderWithAfterFailing(t *testing.T
 	}
 }
 
-// TestTestCommand_DataProvider_DataProviderSingleFailure matches jballerina's
-// DataProviderTest#testDataProviderSingleFailure: --tests
-// testExecutionOfDataValueFailing auto-includes its dependency
-// testDividingValuesNegative (a 5-row provider where one row divides by
-// zero inside the test body itself, not a hook) — that one row fails, but
-// since a data-driven test's dependents are never skip-cascaded (see
-// lifecycle.go's executeDataDriven doc comment), the dependent's own tally
-// assertion still passes.
+// TestTestCommand_DataProvider_DataProviderSingleFailure matches
+// jballerina's testDataProviderSingleFailure: one failing row doesn't
+// skip-cascade to the dependent test (data-driven dependents aren't
+// cascaded).
 func TestTestCommand_DataProvider_DataProviderSingleFailure(t *testing.T) {
 	dir := writeDataProviderFixture(t)
 	stdout, _, _, err := executeTestCommand(t, dir, "--tests", "testExecutionOfDataValueFailing")
@@ -3475,27 +3313,14 @@ func TestTestCommand_DataProvider_DataProviderSingleFailure(t *testing.T) {
 // negative/InvalidDataProviderTestCase (jballerina
 // single-file-tests/invalid-data-providers)
 //
-// Only testEmptyDataProvider is ported here, matching the checklist: the
-// other 3 methods in this class (testInvalidDataProvider/2,
-// testInvalidTupleDataProvider) are GAP-BLOCKED on a separate, already
-// tracked bug (a data-provider/test-function argument-type mismatch crashes
-// the process with a raw Go panic rather than a clean test failure — see
-// TestTestCommand_DataProvider_ArgMismatchDoesNotCrash above and TODO.md).
-// testEmptyDataProvider is a distinct, compile-time scenario (the
-// dataProvider field's declared return type itself doesn't match the
-// expected DataProviderReturnType shape) with no such blocker.
+// Only testEmptyDataProvider is ported; the other 3 are GAP-BLOCKED on a
+// separate tracked bug (argument-type mismatch panics instead of failing
+// cleanly — see TestTestCommand_DataProvider_ArgMismatchDoesNotCrash).
 // ---------------------------------------------------------------------------
 
-// TestTestCommand_InvalidDataProvider_EmptyDataProvider matches jballerina's
-// negative/InvalidDataProviderTestCase#testEmptyDataProvider: a dataProvider
-// field referencing a function whose return type doesn't match the expected
-// DataProviderReturnType shape (here, int[] instead of a tuple/record
-// array or map-of-tuple) is a compile-time error, not a runtime one.
-// Direct port of empty-data-provider-test.bal, with one mechanical change:
-// each test function's otherwise-unused "int i" parameter gets a trivial
-// "int _ = i;" reference, since this port (unlike jballerina) treats an
-// unused function parameter as a hard compile error — the same reason
-// SkipTestsTestCase's fixtures above rename unused locals to "_".
+// TestTestCommand_InvalidDataProvider_EmptyDataProvider matches
+// jballerina's testEmptyDataProvider: a dataProvider whose return type
+// doesn't match the expected shape is a compile-time error.
 func TestTestCommand_InvalidDataProvider_EmptyDataProvider(t *testing.T) {
 	dir := t.TempDir()
 	balFile := writeStandaloneFixture(t, dir, "empty-data-provider-test.bal", `import ballerina/test;
@@ -3536,29 +3361,13 @@ function provider2() returns int[]{
 // assertions-behavioral-types, before-after, before-each-after-each,
 // depends-on, annotations, async)
 //
-// 5 of the 6 Java methods are ported here as genuinely passing, each against
-// a direct port of its own jballerina fixture project.
-//
-// testAnnotations is NOT ported: a real, newly confirmed divergence.
-// annotations/tests/config-test.bal declares a user-level `function init()`
-// and references it from a `before:` hook (`@test:Config{ before: init }`).
-// jballerina runs it like any other ordinary function reference. This port
-// fails to look it up at test-execution time ("function init not found"),
-// confirmed via a clean minimal repro (see this file's final report): a
-// user-defined function literally named "init", used as a before: hook,
-// cannot be found by runtime.LookupFunction even though the exact same
-// fixture's other before:/after:/dependsOn/dataProvider mechanisms (proven
-// independently by testBeforeAfter/testBeforeEachAfterEach/testDependsOn/
-// testValidDataProviderWithBeforeAfterFunctions above) all work correctly.
-// Not fixed here per the "do not paper over a divergence" rule.
+// All 6 Java methods ported, each against a direct port of its own
+// jballerina fixture project.
 // ---------------------------------------------------------------------------
 
 // TestTestCommand_BasicCases_AssertBehavioralTypes matches jballerina's
-// BasicCasesTest#testAssertBehavioralTypes: a direct port of
-// assertions-behavioral-types/tests/assert-test-behavioral-types.bal —
-// assertExactEquals/assertNotExactEquals (reference identity) on objects,
-// object arrays, and records containing objects, 12 independent tests, all
-// passing.
+// testAssertBehavioralTypes: assertExactEquals/assertNotExactEquals
+// (reference identity) across 12 independent tests.
 func TestTestCommand_BasicCases_AssertBehavioralTypes(t *testing.T) {
 	dir := writeTestFixture(t, "behavioraltypes", `import ballerina/test;
 
@@ -3705,10 +3514,8 @@ function testAssertObjectRecordNotEqualsNegative() {
 }
 
 // TestTestCommand_BasicCases_BeforeAfter matches jballerina's
-// BasicCasesTest#testBeforeAfter: a direct port of
-// before-after/tests/before-after-func.bal — a per-test before:/after: hook
-// pair plus a dependsOn, with the dependent test asserting the exact
-// execution order via string concatenation.
+// testBeforeAfter: a before:/after: pair plus dependsOn, asserting exact
+// execution order.
 func TestTestCommand_BasicCases_BeforeAfter(t *testing.T) {
 	dir := writeTestFixture(t, "beforeafter", `import ballerina/test;
 
@@ -3747,10 +3554,8 @@ public function testFunc2() {
 }
 
 // TestTestCommand_BasicCases_BeforeEachAfterEach matches jballerina's
-// BasicCasesTest#testBeforeEachAfterEach: a direct port of
-// before-each-after-each/tests/before-each-after-each.bal — global
-// @test:BeforeEach/@test:AfterEach hooks plus a 3-deep dependsOn chain, each
-// dependent asserting the exact cumulative interleaving order.
+// testBeforeEachAfterEach: global BeforeEach/AfterEach plus a 3-deep
+// dependsOn chain, asserting exact interleaving order.
 func TestTestCommand_BasicCases_BeforeEachAfterEach(t *testing.T) {
 	dir := writeTestFixture(t, "beforeeachaftereach", `import ballerina/test;
 
@@ -3794,13 +3599,9 @@ public function testFunc3() {
 	}
 }
 
-// TestTestCommand_BasicCases_DependsOn matches jballerina's
-// BasicCasesTest#testDependsOn: a direct port of all 3 of
-// depends-on/tests/*.bal, compiled together as one module (cross-file
-// dependsOn references, like testWithBefore1 depending on test4 defined in
-// a different file, are resolved at the module level, not per-file) — a
-// linear dependsOn chain, a before:+dependsOn combination, and a data
-// provider plus its dependent, 12 tests total, all passing.
+// TestTestCommand_BasicCases_DependsOn matches jballerina's testDependsOn:
+// a linear dependsOn chain, a before:+dependsOn combination, and a data
+// provider plus its dependent, compiled as one module.
 func TestTestCommand_BasicCases_DependsOn(t *testing.T) {
 	dir := t.TempDir()
 	toml := "[package]\norg = \"testorg\"\nname = \"dependson\"\nversion = \"0.1.0\"\n"
@@ -3926,9 +3727,7 @@ function testAddingValuesDependant() {
 }
 
 // TestTestCommand_BasicCases_AsyncInvocation matches jballerina's
-// BasicCasesTest#testAsyncInvocation: a direct port of async/main.bal +
-// async/tests/main_test.bal — start/wait on a remote (->) method call,
-// against both a main-module client class and a test-file-local one.
+// testAsyncInvocation: start/wait on a remote method call.
 func TestTestCommand_BasicCases_AsyncInvocation(t *testing.T) {
 	dir := writeTestFixture(t, "asyncinvocation", `import ballerina/test;
 
@@ -3978,62 +3777,21 @@ public function testAsyncRemoteFunctionTest() returns (error?) {
 	}
 }
 
-// TestTestCommand_BeforeHookNamedInitNotFound documents a real divergence
-// found while porting BasicCasesTest#testAnnotations: a user-defined function
-// literally named "init", referenced from a before:/after: hook, cannot be
-// found by runtime.LookupFunction at test-execution time, even though it
-// compiles fine and every other before:/after:/dependsOn mechanism in an
-// otherwise-identical fixture works correctly. jballerina runs it like any
-// other ordinary function reference. This assertion pins the current
-// (diverging) behavior rather than papering over it.
-//
-// This was investigated in depth and is NOT a simple "forgot to register it"
-// oversight: a module-level function literally named init() compiles, in
-// this port, to the SAME combined bir.BIRFunction that also runs the
-// module's global-variable initializers (desugar.go#desugarInitFn prepends
-// each global var's init expression as a statement onto the user's own
-// init() body, then desugars the whole merged sequence as one function —
-// see body.Stmts = append(initStmts, body.Stmts...)). This differs from
-// jballerina, which keeps "run the global var initializers" and "run the
-// user's init() body" as two logically separate steps, so re-invoking
-// init() by name later only re-runs the user's own statements.
-//
-// An earlier attempt at this fix did register the combined function under
-// its normal lookup key (birgen.GenBir, now reverted — see git history), so
-// a before:/after: hook naming "init" WOULD resolve and run — but running it
-// silently re-executes every global variable's initializer too, resetting
-// ALL of the module's global state back to its declared initial values
-// first. Confirmed via a live repro: a before:init hook on one test
-// silently reset an entirely unrelated global variable mutated by a
-// completely separate, already-passed dependsOn chain elsewhere in the same
-// module, corrupting its later assertion — a silent wrong-answer bug, strictly
-// worse than this pinned, loud "function init not found" error. Properly
-// fixing this requires separating the global-var-initializer prologue from
-// the user-authored init() body as two distinct bir.BIRFunctions in
-// desugar.go/birgen — out of scope here; reverted rather than shipped. This
-// also means BasicCasesTest#testAnnotations (which needs a working
-// before:init hook) remains un-ported.
+// TestTestCommand_BeforeHookNamedInitNotFound pins a real divergence: a
+// before:/after: hook named "init" isn't found by runtime.LookupFunction,
+// even though jballerina treats it as an ordinary function reference. Root
+// cause: this port compiles a user init() into the SAME bir.BIRFunction
+// that also runs the module's global-var initializers, so registering it
+// for by-name lookup (tried, then reverted) would silently re-run those
+// initializers too, corrupting unrelated global state — confirmed via a
+// live repro. Properly fixing this needs separating the two as distinct
+// bir.BIRFunctions in desugar/birgen; out of scope here.
 //
 // TestTestCommand_BasicCases_Annotations matches jballerina's
-// BasicCasesTest#testAnnotations: a direct port of the "annotations" fixture
-// project (tests/config-test.bal + tests/data-provider-test.bal, no main.bal
-// in the real fixture — a trivial one is added here per this file's usual
-// convention, already separately proven not to change test-discovery
-// behavior by the SourcelessTestExecutionTests ports above). Exercises
-// combined before:/after:/dependsOn: interplay alongside 3 unrelated
-// dataProvider: functions in a second file in the same tests/ directory. One
-// mechanical change from the real fixture: the before:/after: hook function
-// jballerina names "init" is renamed "setI" here — the test's actual
-// purpose is the before:/after:/dependsOn: annotation interplay, not
-// specifically that the hook function happens to be named "init", and a
-// function named "init" hits the unrelated, already-pinned divergence
-// documented on TestTestCommand_BeforeHookNamedInitNotFound above (this
-// port merges the global-var-initializer prologue into any function
-// literally named init(), so calling it by name resets every global
-// variable, not just the ones it touches — observable here too, since
-// config-test.bal declares other globals (j, k) alongside i). 9 plain tests
-// (config-test.bal) + 3+1+1 = 5 data-driven rows (data-provider-test.bal's 3
-// functions) = 14 passing.
+// testAnnotations: before:/after:/dependsOn: interplay plus 3 unrelated
+// dataProvider: functions in a second file. One mechanical change: the
+// hook jballerina names "init" is renamed "setI" to avoid the divergence
+// above (the test's purpose is the annotation interplay, not the name).
 func TestTestCommand_BasicCases_Annotations(t *testing.T) {
 	dir := t.TempDir()
 	toml := "[package]\norg = \"testorg\"\nname = \"annotations\"\nversion = \"0.1.0\"\n"

@@ -167,9 +167,7 @@ func TestRun_PassSkipAndOrder(t *testing.T) {
 	}
 
 	byName := resultsByName(results)
-	// testDisabled is excluded entirely, not reported as skipped — confirmed
-	// against jballerina directly: a disabled test runs zero times and isn't
-	// counted at all, not even as a skip.
+	// testDisabled is excluded entirely, not reported as skipped.
 	if _, ok := byName["testDisabled"]; ok {
 		t.Errorf("expected testDisabled to be excluded entirely, got a result: %+v", byName["testDisabled"])
 	}
