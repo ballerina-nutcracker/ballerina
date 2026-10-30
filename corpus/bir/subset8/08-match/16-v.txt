@@ -54,7 +54,7 @@ foo(any) -> int{
   }
   bb1 {
     %10 = ConstantLoad 1
-    %11 = unknown %10;
+    %11 = - %10;
     %0 = %11;
     return;
   }

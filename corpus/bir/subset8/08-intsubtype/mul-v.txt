@@ -36,7 +36,7 @@ main() -> nil{
   }
   bb3 {
     %29 = ConstantLoad 2147483647
-    %30 = unknown %29;
+    %30 = - %29;
     d = %30;
     %33 = d;
     %34 = a;

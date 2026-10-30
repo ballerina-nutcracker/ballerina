@@ -51,12 +51,12 @@ main() -> nil{
     %40 = println(%39) -> bb5;
   }
   bb5 {
-    %41 = unknown v1 v1;
+    %41 = === v1 v1;
     %42 = %41;
     %43 = println(%42) -> bb6;
   }
   bb6 {
-    %44 = unknown v1 v2;
+    %44 = === v1 v2;
     %45 = %44;
     %46 = println(%45) -> bb7;
   }

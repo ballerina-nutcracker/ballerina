@@ -5,7 +5,7 @@ main() -> nil{
     %2 = ConstantLoad 0
     %3 = %2;
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = slice(%1,%3,%6) -> bb1;
   }

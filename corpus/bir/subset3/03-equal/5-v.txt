@@ -7,21 +7,21 @@ main() -> nil{
     x = %3;
     %6 = ConstantLoad 1
     %7 = %6;
-    %5 = unknown x %7;
+    %5 = === x %7;
     %8 = %5;
     %9 = println(%8) -> bb1;
   }
   bb1 {
     %11 = ConstantLoad true
     %12 = %11;
-    %10 = unknown x %12;
+    %10 = !== x %12;
     %13 = %10;
     %14 = println(%13) -> bb2;
   }
   bb2 {
     %16 = ConstantLoad <nil>
     %17 = %16;
-    %15 = unknown x %17;
+    %15 = === x %17;
     %18 = %15;
     %19 = println(%18) -> bb3;
   }

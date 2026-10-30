@@ -1,0 +1,136 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (value-type byte)) (expr
+        (literal 5))))
+    (var-def
+      (variable r (expr
+        (unary-expr -
+          (simple-var-ref b)))))
+    (assignment
+      (simple-var-ref r)
+      (literal 1000))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (var-def
+      (variable c (expr
+        (unary-expr ~
+          (simple-var-ref b)))))
+    (assignment
+      (simple-var-ref c)
+      (unary-expr -
+        (literal 9000)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable s (type
+        (user-defined-type int Signed8)) (expr
+        (unary-expr -
+          (literal 128)))))
+    (var-def
+      (variable p (type
+        (user-defined-type int Signed8)) (expr
+        (unary-expr +
+          (simple-var-ref s)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (unary-expr -
+          (simple-var-ref s)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n))))
+    (var-def
+      (variable nb (type
+        (union-type
+          (value-type byte)
+          (value-type null))) (expr
+        (literal 7))))
+    (var-def
+      (variable m (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (unary-expr -
+          (simple-var-ref nb)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (var-def
+      (variable q (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (unary-expr ~
+          (simple-var-ref nb)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref q))))
+    (var-def
+      (variable f (type
+        (union-type
+          (finite-type
+            (literal 1))
+          (finite-type
+            (literal 2)))) (expr
+        (literal 1))))
+    (var-def
+      (variable g (expr
+        (unary-expr -
+          (simple-var-ref f)))))
+    (assignment
+      (simple-var-ref g)
+      (literal 5))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref g))))
+    (var-def
+      (variable z (type
+        (value-type byte)) (expr
+        (unary-expr ~
+          (group-expr
+            (unary-expr -
+              (literal 1)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref z))))
+    (var-def
+      (variable k (type
+        (finite-type
+          (unary-expr -
+            (literal 5)))) (expr
+        (unary-expr -
+          (simple-var-ref B)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref k))))
+    (var-def
+      (variable bf (type
+        (union-type
+          (value-type byte)
+          (value-type float))) (expr
+        (literal 5))))
+    (var-def
+      (variable w (expr
+        (unary-expr -
+          (simple-var-ref bf)))))
+    (assignment
+      (simple-var-ref w)
+      (literal 1000))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref w))))
+    (assignment
+      (simple-var-ref w)
+      (literal 2.5))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref w))))
+  )
+)

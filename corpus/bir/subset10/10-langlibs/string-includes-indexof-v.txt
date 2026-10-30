@@ -178,7 +178,7 @@ main() -> nil{
     %109 = ConstantLoad abc
     %110 = ConstantLoad x
     %111 = ConstantLoad 5
-    %112 = unknown %111;
+    %112 = - %111;
     %113 = %112;
     %114 = indexOf(%109,%110,%113) -> bb34;
   }

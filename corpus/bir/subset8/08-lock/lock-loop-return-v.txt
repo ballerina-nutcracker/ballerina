@@ -57,7 +57,7 @@ bump() -> int{
   }
   bb8 {
     %1 = ConstantLoad 1
-    %2 = unknown %1;
+    %2 = - %1;
     %0 = %2;
     return;
   }

@@ -42,9 +42,9 @@ main() -> nil{
   bb3 {
     %35 = ConstantLoad 10
     %36 = ConstantLoad 1
-    %37 = unknown %36;
+    %37 = - %36;
     %38 = ConstantLoad 1
-    %39 = unknown %38;
+    %39 = - %38;
     %40 = ConstantLoad 3
     %41 = newArray [int, int, int, never...][%40]{%35, %37, %39}
     %42 = ConstantLoad 0

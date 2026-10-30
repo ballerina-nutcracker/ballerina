@@ -15,7 +15,7 @@ locationIdOrMissing(nil|{| id: int, name: string, never... |}) -> int{
   bb2 {
     PushScopeFrame 2
     %0 = ConstantLoad 1
-    %1 = unknown %0;
+    %1 = - %0;
     (1, %0) = %1;
     PopScopeFrame
     return;
