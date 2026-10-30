@@ -253,8 +253,12 @@ func (c *converter) convertToList(items []*node, shape rowShape, sc scope) (valu
 }
 
 // fromString is jBallerina's Values.fromStringWithType: it converts scalar text to the target type. str
-// marks text that YAML resolves to a string, which binds to a string even if the schema reserves the word.
+// marks text that YAML resolves to a string, which binds to any string the type holds, including a string
+// singleton or a word the schema reserves, before the text is converted to another type.
 func (c *converter) fromString(text string, ti typeInfo, str bool) (values.BalValue, bool) {
+	if str && c.t.contains(ti.ty, text) {
+		return text, true
+	}
 	switch ti.kind {
 	case kindInt:
 		return parseJavaLong(text)
@@ -271,7 +275,7 @@ func (c *converter) fromString(text string, ti typeInfo, str bool) (values.BalVa
 	case kindChar:
 		return text, len([]rune(text)) == 1
 	case kindString:
-		return text, str || !c.options.schema.reservesWord(text)
+		return text, !c.options.schema.reservesWord(text)
 	case kindBoolean:
 		switch text {
 		case "true":
@@ -281,7 +285,7 @@ func (c *converter) fromString(text string, ti typeInfo, str bool) (values.BalVa
 		}
 		return nil, false
 	case kindNil:
-		return nil, text == "null"
+		return nil, !str && text == "null"
 	case kindFinite:
 		return c.toSingleton(text, ti, str)
 	case kindUnion:
@@ -307,7 +311,7 @@ func (c *converter) toUnion(text string, members []semtypes.SemType, str bool) (
 		infos[i] = c.t.classify(member)
 	}
 	slices.SortStableFunc(infos, func(a, b typeInfo) int {
-		return priorityOf(a, str) - priorityOf(b, str)
+		return priorityOf(a) - priorityOf(b)
 	})
 	for _, info := range infos {
 		if converted, ok := c.fromString(text, info, str); ok {
@@ -317,11 +321,7 @@ func (c *converter) toUnion(text string, members []semtypes.SemType, str bool) (
 	return nil, false
 }
 
-// priorityOf orders union members; a string scalar tries the members that can hold a string first.
-func priorityOf(ti typeInfo, str bool) int {
-	if str && (ti.kind == kindString || ti.kind == kindJSON || ti.kind == kindAnydata) {
-		return -1
-	}
+func priorityOf(ti typeInfo) int {
 	if p, ok := unionPriority[ti.kind]; ok {
 		return p
 	}
