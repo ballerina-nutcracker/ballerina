@@ -1,0 +1,107 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A () (
+    (literal 5)))
+  (const B () (
+    (type-test-expr is
+      (simple-var-ref A)
+      (value-type int))))
+  (const C () (
+    (type-test-expr !is
+      (simple-var-ref A)
+      (value-type string))))
+  (const D () (
+    (type-test-expr is
+      (literal s)
+      (value-type int))))
+  (const E () (
+    (binary-expr &&
+      (group-expr
+        (type-test-expr is
+          (simple-var-ref A)
+          (union-type
+            (value-type int)
+            (value-type string))))
+      (unary-expr !
+        (group-expr
+          (type-test-expr is
+            (simple-var-ref A)
+            (value-type float)))))))
+  (const F () (
+    (type-test-expr is
+      (literal 1.5)
+      (union-type
+        (value-type int)
+        (value-type float)))))
+  (const G () (
+    (type-test-expr is
+      (literal <nil>)
+      (value-type null))))
+  (const H () (
+    (type-test-expr is
+      (list-constructor-expr
+        (literal 1)
+        (literal 2))
+      (array-type
+        (value-type int) dimensions: 1 ([])))))
+  (const I () (
+    (type-test-expr !is
+      (mapping-constructor-expr
+        (key-value
+          (literal a)
+          (literal 1)))
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type string)))))
+  (const J () (
+    (type-test-expr is
+      (list-constructor-expr
+        (literal 1)
+        (literal 2))
+      (value-type readonly))))
+  (const K () (
+    (type-test-expr is
+      (literal 2.5d)
+      (value-type decimal))))
+  (const L () (
+    (type-test-expr is
+      (simple-var-ref B)
+      (finite-type
+        (literal true)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref E))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref F))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref G))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref H))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref I))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref J))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref K))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref L)))))))

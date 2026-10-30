@@ -51,6 +51,8 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 		return isConstantExpression(t, e.Expression)
 	case *ast.BLangGroupExpr:
 		return isConstantExpression(t, e.Expression)
+	case *ast.BLangTypeTestExpr:
+		return isConstantExpression(t, e.Expr)
 	case *ast.BLangBinaryExpr:
 		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
 			return offender, false
@@ -199,6 +201,8 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 		return e.evaluateBinaryExpression(expr)
 	case *ast.BLangTypeConversionExpr:
 		return e.evaluateTypeConversion(expr)
+	case *ast.BLangTypeTestExpr:
+		return e.evaluateTypeTest(expr)
 	case *ast.BLangTemplateExpr:
 		return e.evaluateStringTemplate(expr)
 	case *ast.BLangXMLTemplateExpr:
@@ -762,6 +766,15 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 		return e.semanticFailure(constantCastDiagnostic(value, targetType, err).Error(), expr.GetPosition())
 	}
 	return converted, true
+}
+
+func (e *constantExpressionEvaluator) evaluateTypeTest(expr *ast.BLangTypeTestExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(expr.Expr)
+	if !ok {
+		return nil, false
+	}
+	matches := semtypes.IsSubtype(e.resolver.typeContext(), values.SemTypeForValue(value), expr.Type.Type)
+	return matches != expr.IsNegation(), true
 }
 
 func constantCastDiagnostic(value values.BalValue, targetType semtypes.SemType, err error) error {

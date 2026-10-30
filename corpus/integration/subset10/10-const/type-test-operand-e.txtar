@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> type-test-operand-e.bal:17:12
+   |
+17 | const X = (1 / 0) is int; // @error
+   |            ^^^^^

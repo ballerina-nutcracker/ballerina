@@ -1,0 +1,37 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref E))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref F))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref G))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref H))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref I))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref J))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref K))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref L))))
+  )
+)
