@@ -32,11 +32,8 @@ import (
 )
 
 // TestRun_ReportEndToEnd compiles and runs the real "failing" fixture, then
-// feeds the resulting RunReport through WriteConsoleReport — a sanity cross-
-// check that the live pipeline (compile -> plugin -> Run -> report) produces
-// the same assertion-failure format the byte-exact golden tests in
-// report_test.go verify against hand-built RunReports, not just a
-// hand-constructed stand-in.
+// checks the live pipeline produces the same report format report_test.go's
+// golden tests verify against hand-built RunReports.
 func TestRun_ReportEndToEnd(t *testing.T) {
 	rt, plan := compileAndRun(t, "failing")
 	graph, err := testplan.BuildGraph(plan)
@@ -72,11 +69,8 @@ func TestRun_ReportEndToEnd(t *testing.T) {
 	}
 }
 
-// compileAndRun compiles testdata/name, lets the ballerina/test compiler
-// plugin fire as part of that same compilation (populating testplan's
-// stash), and returns a runtime ready for direct invocation — the real
-// pipeline this package's Run is meant to sit at the end of, not a
-// hand-constructed stand-in.
+// compileAndRun compiles testdata/name (letting the real compiler plugin
+// populate testplan's stash) and returns a runtime ready for invocation.
 func compileAndRun(t *testing.T, name string) (*runtime.Runtime, *testplan.TestPlan) {
 	t.Helper()
 
@@ -229,13 +223,8 @@ func TestRun_FailedAssertionReportsFailWithMessage(t *testing.T) {
 	t.Logf("testFails message: %q", failed.Message)
 }
 
-// TestRun_BeforeSuiteFailureSkipsEverything mirrors
-// executeBeforeSuiteFunctions's handleBeforeSuiteOutput semantics exactly:
-// a failed BeforeSuite sets shouldSkip (skipping every test) and
-// shouldAfterSuiteSkip (gating AfterSuite hooks on their own alwaysRun
-// flag). Both AfterSuite hooks are engineered to fail if actually invoked,
-// so seeing (or not seeing) their failure recorded is direct proof of
-// whether each one ran.
+// TestRun_BeforeSuiteFailureSkipsEverything confirms a failed BeforeSuite
+// skips every test and gates AfterSuite hooks on their own alwaysRun flag.
 func TestRun_BeforeSuiteFailureSkipsEverything(t *testing.T) {
 	rt, plan := compileAndRun(t, "beforesuitefails")
 	graph, err := testplan.BuildGraph(plan)
@@ -272,10 +261,8 @@ func TestRun_BeforeSuiteFailureSkipsEverything(t *testing.T) {
 	}
 }
 
-// TestRun_BeforeEachFailureIsSticky mirrors handleBeforeEachOutput: once a
-// BeforeEach hook fails, the global shouldSkip flag is set and never
-// cleared — every remaining test is skipped, including the one whose
-// BeforeEach attempt caused the failure in the first place.
+// TestRun_BeforeEachFailureIsSticky confirms a failed BeforeEach sets a
+// shouldSkip flag that's never cleared — every remaining test skips too.
 func TestRun_BeforeEachFailureIsSticky(t *testing.T) {
 	rt, plan := compileAndRun(t, "beforeeachfails")
 	graph, err := testplan.BuildGraph(plan)
@@ -306,13 +293,9 @@ func TestRun_BeforeEachFailureIsSticky(t *testing.T) {
 	}
 }
 
-// TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest mirrors
-// handleBeforeGroupOutput + GroupStatusRegistry.firstExecuted: a
-// BeforeGroups hook only ever fires once per group (on the first test
-// processed in it), so its failure only marks *that* test skipped — a
-// second test in the same group is unaffected and runs normally. This is
-// the one asymmetric, easy-to-get-wrong behavior in the whole lifecycle;
-// confirmed directly against the real engine's code, not assumed.
+// TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest confirms BeforeGroups
+// fires once per group (first test only), so its failure skips only that
+// test — a second test in the same group runs normally.
 func TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest(t *testing.T) {
 	rt, plan := compileAndRun(t, "beforegroupfails")
 	graph, err := testplan.BuildGraph(plan)
@@ -340,10 +323,8 @@ func TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest(t *testing.T) {
 	}
 }
 
-// TestRun_FailedDependencyCascadesSkip confirms a test that actually fails
-// (not just one statically disabled, which testplan.BuildGraph already
-// rejects at graph-build time) causes its dependents to be skipped rather
-// than run — finishTestExecution's shouldSkipDependents path.
+// TestRun_FailedDependencyCascadesSkip confirms a failing test's dependents
+// are skipped rather than run.
 func TestRun_FailedDependencyCascadesSkip(t *testing.T) {
 	rt, plan := compileAndRun(t, "dependsonfails")
 	graph, err := testplan.BuildGraph(plan)
@@ -362,11 +343,9 @@ func TestRun_FailedDependencyCascadesSkip(t *testing.T) {
 	}
 }
 
-// TestRun_MapDataProviderRowsAndNoDependentCascade mirrors
-// executeDataDrivenTestSet for a map<[...]>-shaped data provider: each key
-// becomes its own "name#key" Result, and — unlike the single-test path — a
-// dependent of a data-driven test is never skip-cascaded even though one of
-// testSquare's rows (three: 3*3 != 10) fails.
+// TestRun_MapDataProviderRowsAndNoDependentCascade confirms each map key
+// becomes its own "name#key" Result, and a dependent of a data-driven test
+// is never skip-cascaded even when one row fails.
 func TestRun_MapDataProviderRowsAndNoDependentCascade(t *testing.T) {
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
@@ -422,13 +401,9 @@ func TestRun_TupleDataProviderRowsKeyedByIndex(t *testing.T) {
 	}
 }
 
-// TestRun_DataProviderFailureShortCircuitsBeforeHooks mirrors
-// isTestReadyToExecute's diagnostics check: when the data provider function
-// itself panics, the whole test is reported failed under its bare name (no
-// "#key" suffix) and its entire hook lifecycle — including BeforeEach — is
-// skipped, not merely one row of it. beforeEachCount (incremented by the
-// fixture's BeforeEach) proves BeforeEach was attempted exactly once, for
-// testZNormal, never for testProviderFails.
+// TestRun_DataProviderFailureShortCircuitsBeforeHooks confirms a panicking
+// data provider fails the whole test under its bare name and skips its
+// entire hook lifecycle, including BeforeEach.
 func TestRun_DataProviderFailureShortCircuitsBeforeHooks(t *testing.T) {
 	rt, plan := compileAndRun(t, "dataproviderpanics")
 	graph, err := testplan.BuildGraph(plan)
@@ -458,12 +433,9 @@ func TestRun_DataProviderFailureShortCircuitsBeforeHooks(t *testing.T) {
 	}
 }
 
-// TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades mirrors
-// executeNonDataDrivenTest: a per-test before: hook failure reports the test
-// itself Skip (not Fail) *without ever invoking the test body* — proven via
-// testABodyRan, a module-level flag the fixture's testZCheckSideEffect reads
-// right after testA runs — and still cascades skip to testB, testA's
-// dependent, the same as any other pre-skip.
+// TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades confirms a
+// failing before: hook Skips the test without invoking its body, and still
+// cascades skip to its dependent.
 func TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades(t *testing.T) {
 	rt, plan := compileAndRun(t, "beforetestfails")
 	graph, err := testplan.BuildGraph(plan)
@@ -496,12 +468,9 @@ func TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades(t *testing.T) {
 	}
 }
 
-// TestRun_AfterTestFailureCascadesSkipDespitePassing mirrors
-// executeNonDataDrivenTest's `executeAfterFunction(testFunction) || failed`:
-// a per-test after: hook failure does not change the test's own recorded
-// Result (testA still reports Pass — its body genuinely succeeded) but does
-// still cascade skip to dependents, exactly as if the test itself had
-// failed.
+// TestRun_AfterTestFailureCascadesSkipDespitePassing confirms a failing
+// after: hook doesn't change the test's own Pass result but still cascades
+// skip to dependents.
 func TestRun_AfterTestFailureCascadesSkipDespitePassing(t *testing.T) {
 	rt, plan := compileAndRun(t, "aftertestfails")
 	graph, err := testplan.BuildGraph(plan)
@@ -530,12 +499,9 @@ func TestRun_AfterTestFailureCascadesSkipDespitePassing(t *testing.T) {
 	}
 }
 
-// TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName mirrors
-// prepareDataDrivenTest: a per-test before: hook is attempted independently
-// for every data row (not once for the whole test, unlike BeforeEach), and
-// a failure reports that row Skip under the test's *bare* name — the
-// "#key" suffix is dropped on this path in the original engine too
-// (ResultData.suffix defaults to ""), ported exactly.
+// TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName confirms a
+// before: hook is attempted independently per row, and a failure reports
+// that row Skip under the test's bare name, not "name#key".
 func TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName(t *testing.T) {
 	rt, plan := compileAndRun(t, "dataproviderbeforefails")
 	graph, err := testplan.BuildGraph(plan)
@@ -569,13 +535,8 @@ func TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName(t *testing.T) 
 	}
 }
 
-// TestRun_SubKeyFilterExactMatch mirrors the real
-// testerina-dataprovider-subkey-filter-v corpus fixture: --tests
-// "testSquare#one" runs only that one row — the others aren't reported at
-// all (not even Skip), matching skipDataDrivenTest's plain `return` with no
-// reportData call. included deliberately excludes testDependent so this
-// test isn't accidentally treated as having an enabled dependent (see
-// TestRun_SubKeyFilterBypassedByEnabledDependent below).
+// TestRun_SubKeyFilterExactMatch confirms --tests "testSquare#one" runs only
+// that row — the others aren't reported at all, not even Skip.
 func TestRun_SubKeyFilterExactMatch(t *testing.T) {
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
@@ -595,10 +556,9 @@ func TestRun_SubKeyFilterExactMatch(t *testing.T) {
 	}
 }
 
-// TestRun_SubKeyFilterMultipleKeys mirrors the real
-// testerina-dataprovider-multi-subkey-filter-v corpus fixture:
-// "testSquare#one,testSquare#three" must accumulate both suffixes under the
-// one "testSquare" entry (not have the second overwrite the first).
+// TestRun_SubKeyFilterMultipleKeys confirms
+// "testSquare#one,testSquare#three" accumulates both suffixes under one
+// entry, rather than the second overwriting the first.
 func TestRun_SubKeyFilterMultipleKeys(t *testing.T) {
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
@@ -654,12 +614,9 @@ func TestRun_SubKeyFilterWildcard(t *testing.T) {
 	}
 }
 
-// TestRun_SubKeyFilterBypassedByEnabledDependent mirrors
-// skipDataDrivenTest's nestedEnabledDependentsAvailable escape hatch: when a
-// test transitively depending on the data-driven test is itself enabled and
-// included, the sub-key restriction is ignored entirely and every row runs
-// — testUsesAll (dependsOn testSquare) is included here alongside a
-// "testSquare#one" filter, so both "one" and "two" must still run.
+// TestRun_SubKeyFilterBypassedByEnabledDependent confirms a sub-key
+// restriction is ignored entirely (every row runs) when a test transitively
+// depending on the data-driven test is itself enabled and included.
 func TestRun_SubKeyFilterBypassedByEnabledDependent(t *testing.T) {
 	rt, plan := compileAndRun(t, "subkeydependentbypass")
 	graph, err := testplan.BuildGraph(plan)
@@ -684,14 +641,9 @@ func TestRun_SubKeyFilterBypassedByEnabledDependent(t *testing.T) {
 	}
 }
 
-// TestRun_EmptyDataProviderRunsNothing covers a validly-shaped data
-// provider that returns zero rows: the test function is discovered and
-// included, but no sub-case ever expands, so the run produces no Result at
-// all and the console reporter falls through to "No tests found" — exactly
-// what the old engine did (startSuite reported "No tests found", not
-// "0 passing / 0 failing / 0 skipped").
-//
-// Ported from the deleted corpus fixture testerina-empty-dataprovider-v.
+// TestRun_EmptyDataProviderRunsNothing confirms a validly-shaped data
+// provider returning zero rows produces no Result, falling through to a
+// "No tests found" report rather than "0 passing/0 failing/0 skipped".
 func TestRun_EmptyDataProviderRunsNothing(t *testing.T) {
 	rt, plan := compileAndRun(t, "emptydataprovider")
 	graph, err := testplan.BuildGraph(plan)
@@ -718,15 +670,9 @@ func TestRun_EmptyDataProviderRunsNothing(t *testing.T) {
 	}
 }
 
-// TestRun_DataProviderErrorAndFunctionValues covers data rows whose
-// elements are not plain scalars: a Ballerina `error` value and a
-// `function` value, both passed straight through as test arguments.
-// listArgs extracts row elements as opaque values.BalValue without
-// inspecting them, so these work for the same reason ints do — but that
-// was previously assumed rather than tested.
-//
-// Ported from the deleted corpus fixture
-// testerina-dataprovider-error-function-values-v.
+// TestRun_DataProviderErrorAndFunctionValues confirms data rows with
+// non-scalar elements (an `error` value, a `function` value) pass straight
+// through as test arguments, not just ints.
 func TestRun_DataProviderErrorAndFunctionValues(t *testing.T) {
 	rt, plan := compileAndRun(t, "dataprovidervaluetypes")
 	graph, err := testplan.BuildGraph(plan)

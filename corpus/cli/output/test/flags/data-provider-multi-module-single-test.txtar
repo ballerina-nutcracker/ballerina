@@ -1,0 +1,17 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+	No tests found
+
+Running tests for module 'dataproviders.module1'
+		[pass] stringDataProviderMod1Test#1
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0

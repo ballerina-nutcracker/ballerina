@@ -1,0 +1,30 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+
+	testGetState:1 has failed.
+
+		[pass] testGetState#0
+
+		[fail] testGetState#1:
+
+		    Assertion Failed!
+			 
+			expected: '20'
+			actual	: '200'
+			
+			
+
+
+		1 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'dataproviders.module1'
+	No tests found
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

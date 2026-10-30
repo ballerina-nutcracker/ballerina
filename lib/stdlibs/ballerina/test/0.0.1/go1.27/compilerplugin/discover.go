@@ -15,23 +15,9 @@
 // under the License.
 
 // Package compilerplugin discovers @test:* annotated functions as a real
-// compiler plugin (PR #921) — the sole producer of a testplan.TestPlan
-// (cli/cmd/test.go's own direct caller, testrunner.Run, depends only on
-// that package's stable contract, not on how a plan was produced). An
-// earlier, separate pre-compilation AST walk (cli/internal/testdiscovery)
-// existed alongside this package for a time, to prove the plugin produced
-// field-identical results before cli/cmd/test.go's wiring switched over to
-// it exclusively; it's since been retired (see the implementation plan's
-// Phase 3.4 notes) — this package was never able to import it anyway,
-// since Go's internal/ visibility rules close cli/internal off to anything
-// outside the cli module, which is also why testplan itself lives at the
-// repo root rather than under cli/internal.
-//
-// ProcessTests discovers and validates — it never transforms the AST. It
-// stashes what it finds in testplan's process-local store rather than
-// returning it, since a PackageTransformer's only output channel is the
-// (here, unchanged) AST plus an error; see the design doc's "Go talking to
-// Go doesn't need a contract" finding for why that's sufficient.
+// compiler plugin — the sole producer of a testplan.TestPlan. ProcessTests
+// discovers and validates only; it stashes the result in testplan's
+// process-local store rather than transforming or returning it.
 package compilerplugin
 
 import (
@@ -60,16 +46,8 @@ func ProcessTests(compilerCtx *context.CompilerContext, _ model.ExportedSymbolSp
 }
 
 // validateDependsOn reports a compile error for any dependsOn entry that
-// doesn't name another @test:Config function in the same module.
-//
-// Confirmed this is a real, not hypothetical, gap: running `bal test`
-// against a dependsOn referencing a plain, non-@test:Config function fails
-// at runtime with the opaque "The dependent test function is either
-// disabled or not included." — register.bal's TestRegistry.getTestFunction
-// only resolves against functions that were themselves registered via
-// registerTestConfig, which only happens for @test:Config-annotated
-// functions. This turns that runtime failure into a compile-time one with a
-// message that actually names the function.
+// doesn't name another @test:Config function in the same module — turning
+// an otherwise opaque runtime failure into a compile-time one.
 func validateDependsOn(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, plan *testplan.TestPlan) {
 	testNames := make(map[string]bool, len(plan.Tests))
 	for _, t := range plan.Tests {
@@ -103,9 +81,7 @@ func moduleKey(pkg *ast.BLangPackage) testplan.ModuleKey {
 }
 
 // discover walks every top-level function in pkg and extracts @test:*
-// annotation metadata — unreachable from the now-retired
-// cli/internal/testdiscovery.Discover this once mirrored (see the package
-// doc comment), so implemented directly here instead.
+// annotation metadata.
 func discover(pkg *ast.BLangPackage) *testplan.TestPlan {
 	if pkg == nil {
 		return &testplan.TestPlan{}

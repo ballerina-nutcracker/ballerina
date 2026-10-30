@@ -1,0 +1,23 @@
+-- stdout --
+		[pass] testAssertObjectArrayEquals
+		[pass] testAssertObjectArrayEqualsNegative
+		[pass] testAssertObjectArrayNotEquals
+		[pass] testAssertObjectArrayNotEqualsNegative
+		[pass] testAssertObjectEquals
+		[pass] testAssertObjectEqualsNegative
+		[pass] testAssertObjectNotEquals
+		[pass] testAssertObjectNotEqualsNegative
+		[pass] testAssertObjectRecordEquals
+		[pass] testAssertObjectRecordEqualsNegative
+		[pass] testAssertObjectRecordNotEquals
+		[pass] testAssertObjectRecordNotEqualsNegative
+
+
+		12 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0

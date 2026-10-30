@@ -1,0 +1,22 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+		[pass] testDividingValues#0
+		[pass] testDividingValues#1
+		[pass] testDividingValues#2
+		[pass] testDividingValues#3
+		[pass] testDividingValues#4
+		[pass] testExecutionOfBeforeAfter
+
+
+		6 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'dataproviders.module1'
+	No tests found
+-- stderr --
+-- exitcode --
+0

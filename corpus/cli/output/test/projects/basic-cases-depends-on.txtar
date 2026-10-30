@@ -1,0 +1,23 @@
+-- stdout --
+		[pass] test1
+		[pass] testAddingValues#0
+		[pass] testAddingValues#1
+		[pass] testAddingValues#2
+		[pass] test2
+		[pass] test3
+		[pass] test4
+		[pass] testAddingValuesDependant
+		[pass] testWithBefore1
+		[pass] testWithBefore2
+		[pass] testWithBefore3
+		[pass] testWithBefore4
+
+
+		12 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0

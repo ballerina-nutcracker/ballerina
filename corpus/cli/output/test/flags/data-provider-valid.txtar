@@ -1,0 +1,18 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+		[pass] jsonDataProviderTest#json1
+		[pass] jsonDataProviderTest#json2
+
+
+		2 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'dataproviders.module1'
+	No tests found
+-- stderr --
+-- exitcode --
+0

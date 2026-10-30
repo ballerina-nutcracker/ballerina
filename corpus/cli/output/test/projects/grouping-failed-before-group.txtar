@@ -1,0 +1,19 @@
+-- stdout --
+	[fail] beforeGroupsFunc1[before groups function for the test]:
+	    Failed before group for g1
+		
+		
+		[pass] testFunction
+		[pass] testFunction4
+		[pass] testFunction5
+
+
+		3 passing
+		0 failing
+		2 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

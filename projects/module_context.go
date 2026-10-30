@@ -444,11 +444,9 @@ func collectExplicitImports(compilationUnits []*ast.BLangCompilationUnit, defaul
 	return imports
 }
 
-// parseDocumentsParallel parses source and test documents in parallel.
-// Returns syntax trees from source documents, plus test documents too when
-// includeTestTrees is set (otherwise test docs are parsed — so diagnostics in
-// them still surface — but their trees are dropped, matching normal build/run
-// behavior where test sources never need to compile).
+// parseDocumentsParallel parses source and test documents in parallel,
+// returning test trees too only when includeTestTrees is set (otherwise
+// test docs are still parsed for diagnostics, but their trees are dropped).
 func parseDocumentsParallel(
 	compilerCtx *context.CompilerContext,
 	srcDocIDs []DocumentID,
