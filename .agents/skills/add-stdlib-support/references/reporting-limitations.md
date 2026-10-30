@@ -14,7 +14,7 @@ worked on — they're one of:
   is `Supported`.
 - **A bug in the jBallerina reference implementation** — jBallerina's behaviour contradicts its spec or API docs, or is clearly defective, and the port implements the correct behaviour instead (see `add-stdlib-support` Step 5). These are tracked in the upstream library repo, not this one; see "jBallerina bugs" below.
 
-Both are worth tracking independently of whatever local workaround this port ends up taking, so the
+All three are worth tracking independently of whatever local workaround this port ends up taking, so the
 underlying limitation doesn't get silently rediscovered by the next person who hits it.
 
 ## What NOT to report here

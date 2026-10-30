@@ -155,6 +155,7 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] `doc/library/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed), and the repo-root `README.md` coverage summary matches its Total footer.
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] Any unavoidable divergence or jBallerina bug fix is in **Notable Behavioural Changes**, bug fixes with their upstream issue link.
+- [ ] Every `jBallerina bug` row reproduced on jBallerina and agreed with the user; no corpus test asserts it, and each corrected `@output` cites its upstream issue in a comment.
 - [ ] **Run the `validate-stdlib-contract` skill on this package** (at minimum, review its diff output for the touched surface) — the verdict must be PASS, or PASS with notes that you have reviewed.
 - [ ] If a new `import ballerina/<dep>` was added to the `.bal` source: `Dependencies.toml` updated with the new entry and `dependencies = [...]` field.
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.

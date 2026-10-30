@@ -105,7 +105,7 @@ The script cannot check these; confirm each is YES:
 - [ ] Every `Supported` row's Comments cell is either empty or a *meaningful* caveat
 - [ ] If the module declares a module-level error type (e.g. `io:Error`), the table has a row tracking it with an accurate status — `Partially Supported` with a `distinct` comment when the type ships as a plain alias, `Not Yet Supported` when it isn't declared at all
 - [ ] No bullet describes behaviour identical to jBallerina
-- [ ] Every bullet that fixes a jBallerina bug links its upstream issue
+- [ ] Every jBallerina bug-fix bullet this change adds or edits links its upstream issue (existing unlinked bullets are not retroactively failed)
 - [ ] No Comments cell justifies a behaviour only with "as in jBallerina" when that behaviour is a known jBallerina bug
 - [ ] No bullet describes a temporary language gap (`distinct`, `readonly &`, `stream`, etc.) — those belong in the support table
 - [ ] No bullet describes a future feature's potential divergence

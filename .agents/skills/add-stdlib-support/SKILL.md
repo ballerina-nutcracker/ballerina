@@ -264,7 +264,7 @@ Before declaring done, check every box:
 - [ ] Every Step 5 behaviour-table row classified `match` verified against jBallerina for at least one representative input, via the **`run-jballerina`** skill.
 - [ ] Every unavoidable divergence recorded in **Notable Behavioural Changes**.
 - [ ] Every `jBallerina bug` row reproduced on jBallerina, agreed with the user, recorded in **Notable Behavioural Changes** with the real link to an existing or newly filed upstream issue (no placeholder).
-- [ ] No corpus test asserts behaviour classified as a `jBallerina bug`.
+- [ ] No corpus test asserts behaviour classified as a `jBallerina bug`, and each `@output` that differs from jBallerina because of a fix cites its upstream issue in a comment.
 - [ ] **Run the `validate-stdlib-contract` skill on the new package — the verdict must be PASS** (or PASS with notes, each note reviewed). This is the final public-interface gate.
 - [ ] If `docs/spec/spec.md` exists in the jBallerina reference root: every in-scope behavioural claim it makes matches the shipped Go implementation exactly. Any mismatch found during implementation (not just at Step 5's planning stage) has been resolved — implementation fixed, or the divergence explicitly documented — not left unreconciled.
 
