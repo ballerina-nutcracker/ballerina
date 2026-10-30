@@ -85,9 +85,7 @@ func isRetryable(err error) bool {
 		return isServiceUnavailableCode(reply.Code)
 	}
 	var netErr net.Error
-	if errors.As(err, &netErr) || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) ||
-		errors.Is(err, net.ErrClosed) || errors.Is(err, sftp.ErrSSHFxConnectionLost) ||
-		errors.Is(err, sftp.ErrSSHFxNoConnection) {
+	if _, ok := categorizeNetworkFailure(err); ok || errors.As(err, &netErr) {
 		return true
 	}
 	category, ok := categorize(err)
