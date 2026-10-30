@@ -330,7 +330,9 @@ func testNativeRunner_EmbeddedOnlyProjectNoRebuild(t *testing.T, cli *balCLI) {
 // twice: the first run must build the interpreter (cold), the second must
 // hit loadCachedRunner's fingerprint cache and skip the rebuild.
 func testNativeRunner_ColdBuildAndCacheHit(t *testing.T, cli *balCLI) {
-	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+	repoRoot, coverDir := cli.repoRoot, cli.coverDir
+	balBin := filepath.Join(t.TempDir(), cliIntegrationBalExecutableName(false))
+	copyLauncherFile(t, cli.relBin, balBin)
 
 	// Temp Ballerina home with the testdata native packages in its central cache.
 	tempHome := t.TempDir()

@@ -68,7 +68,7 @@ public function main() {
     io:println(infVal.toBalString()); // @output float:Infinity
 
     float negInfVal = -1.0 / 0.0;
-    io:println(negInfVal.toBalString()); // @output float:-Infinity
+    io:println(negInfVal.toBalString()); // @output -float:Infinity
 
     decimal d1 = 345.2425341;
     io:println(d1.toBalString()); // @output 345.2425341d

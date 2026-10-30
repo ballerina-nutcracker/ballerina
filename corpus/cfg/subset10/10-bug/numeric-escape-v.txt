@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (literal ퟿))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (literal ))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (literal 􏿿))))))
+    (expression-stmt
+      (invocation io println (
+        (literal A))))
+    (expression-stmt
+      (invocation io println (
+        (literal \u{D800}))))
+  )
+)

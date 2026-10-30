@@ -1,0 +1,15 @@
+-- stdout --
+{"messageId":5,"topic":"client-v/a"}
+{"messageId":6,"topic":"client-v/d"}
+client-v/a one qos=1 retained=false duplicate=false id=1 properties={}
+client-v/d two qos=2 retained=false duplicate=false id=2 properties={}
+client-v/e three qos=0 retained=false duplicate=false id=0 properties={}
+client-v/b capped qos=1 retained=false duplicate=false id=3 properties={"responseTopic":"client-v/reply","correlationData":[1,2]}
+client-v/wild/1/x wild qos=1 retained=false duplicate=false id=4 properties={}
+client-v/retained kept qos=1 retained=true duplicate=false id=5 properties={}
+client-v/retained  qos=1 retained=false duplicate=false id=6 properties={}
+shared
+Stream is closed. Therefore, no operations are allowed further on the stream.
+still open
+from strand
+-- stderr --

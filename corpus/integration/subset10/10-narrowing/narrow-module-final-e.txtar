@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int|string
+  --> narrow-module-final-e.bal:25:20
+   |
+25 |         string s = finalVar; // @error a final module variable cannot be narrowed
+   |                    ^^^^^^^^
