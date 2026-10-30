@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: foreach collection must have an iteration completion type of nil
+  --> 3-e.bal:40:24
+   |
+40 |     foreach int val in f { // @error completion type includes error
+   |                        ^

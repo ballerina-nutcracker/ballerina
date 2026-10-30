@@ -19,8 +19,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 var unicodeCodepointPattern = regexp.MustCompile(`\\(\\*)u\{([a-fA-F0-9]+)\}`)
@@ -121,36 +119,4 @@ func unescapeBackslashEscapes(s string) string {
 		b.WriteByte(s[i])
 	}
 	return b.String()
-}
-
-// validateUnicodePoints validates unicode escape sequences
-func validateUnicodePoints(text string, pos diagnostics.Location) {
-	matches := unicodeCodepointPattern.FindAllStringSubmatch(text, -1)
-	for _, match := range matches {
-		if len(match) < 3 {
-			continue
-		}
-		leadingBackSlashes := match[1]
-		if isEscapedNumericEscape(leadingBackSlashes) {
-			continue
-		}
-
-		hexCodePoint := match[2]
-		decimalCodePoint, err := strconv.ParseInt(hexCodePoint, 16, 32)
-		if err != nil {
-			continue
-		}
-
-		const minUnicode = 0xD800
-		const middleLimitUnicode = 0xDFFF
-		const maxUnicode = 0x10FFFF
-
-		if (decimalCodePoint >= minUnicode && decimalCodePoint <= middleLimitUnicode) ||
-			decimalCodePoint > maxUnicode {
-			offset := len(leadingBackSlashes) + len("\\u{")
-			_ = offset
-			_ = hexCodePoint
-			_ = pos
-		}
-	}
 }

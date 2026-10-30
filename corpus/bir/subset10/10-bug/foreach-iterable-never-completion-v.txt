@@ -1,0 +1,137 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> {| value: int, never... |}{
+    bb0 {
+      %2 = ConstantLoad n
+      %3 = self[%2];
+      %4 = %3;
+      %5 = ConstantLoad 1
+      %6 = %5;
+      %7 = + %4 %6;
+      self[%2] = %7;
+      %8 = ConstantLoad value
+      %10 = ConstantLoad n
+      %9 = self[%10];
+      %11 = newMap {| value: int, never... |}{%8=%9}
+      %0 = %11;
+      return;
+    }
+  }
+}
+class Naturals {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  iterator() -> object { public function init() returns nil; int n; public isolated function next() returns {| value: int, never... |} }{
+    bb0 {
+      %2 = newObject $anon/.:Counter
+      %3 = %2.init() -> bb1;
+    }
+    bb1 {
+      %5 = %3 is nil
+      %5 ? bb2 : bb3;
+    }
+    bb2 {
+      %4 = %2;
+      GOTO bb4;
+    }
+    bb3 {
+      %4 = %3;
+      GOTO bb4;
+    }
+    bb4 {
+      %0 = %4;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Naturals
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    naturals = %3;
+    $desugar$0 = naturals;
+    %7 = $desugar$0.iterator() -> bb5;
+  }
+  bb5 {
+    $desugar$2 = %7;
+    GOTO bb6;
+  }
+  bb6 {
+    %9 = ConstantLoad true
+    %9 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$2).next() -> bb9;
+  }
+  bb8 {
+    return;
+  }
+  bb9 {
+    $desugar$4 = %0;
+    %2 = $desugar$4 is nil
+    %2 ? bb10 : bb11;
+  }
+  bb10 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb11 {
+    %4 = ConstantLoad value
+    %3 = $desugar$4[%4];
+    i = %3;
+    %7 = i;
+    %8 = ConstantLoad 3
+    %9 = %8;
+    %6 = > %7 %9;
+    %6 ? bb12 : bb13;
+  }
+  bb12 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb13 {
+    PushScopeFrame 2
+    %0 = (1, i);
+    %1 = println(%0) -> bb14;
+  }
+  bb14 {
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb6;
+  }
+}

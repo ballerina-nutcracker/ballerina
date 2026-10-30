@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad ퟿
+    %2 = length(%1) -> bb1;
+  }
+  bb1 {
+    %3 = %2;
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad 
+    %6 = length(%5) -> bb3;
+  }
+  bb3 {
+    %7 = %6;
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 􏿿
+    %10 = length(%9) -> bb5;
+  }
+  bb5 {
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad A
+    %14 = println(%13) -> bb7;
+  }
+  bb7 {
+    %15 = ConstantLoad \u{D800}
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
