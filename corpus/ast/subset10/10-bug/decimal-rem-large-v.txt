@@ -1,0 +1,159 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const C1 (
+    (value-type decimal)) (
+    (binary-expr %
+      (literal 1E+40d)
+      (literal 3d))))
+  (const C2 (
+    (value-type decimal)) (
+    (binary-expr %
+      (unary-expr -
+        (literal 1E+40d))
+      (literal 1.1d))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d1 (type
+          (value-type decimal)) (expr
+          (literal 1E+35d))))
+      (var-def
+        (variable d2 (type
+          (value-type decimal)) (expr
+          (literal 7d))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (unary-expr -
+          (literal 1E+40d)))
+      (assignment
+        (simple-var-ref d2)
+        (literal 3d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+40d))
+      (assignment
+        (simple-var-ref d2)
+        (unary-expr -
+          (literal 3d)))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (unary-expr -
+          (literal 1E+40d)))
+      (assignment
+        (simple-var-ref d2)
+        (unary-expr -
+          (literal 3d)))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (unary-expr -
+          (literal 1E+40d)))
+      (assignment
+        (simple-var-ref d2)
+        (literal 2d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+40d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1.10d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+39d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 3E+2d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.0E32d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1E-2d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+6144d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 9999999999999999999999999999999999d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d2)
+        (literal 7.000000000000000000000000000000000E-6143d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 9.999999999999999999999999999999999E6144d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 1.23E-6100d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (assignment
+        (simple-var-ref d1)
+        (literal 1E+34d))
+      (assignment
+        (simple-var-ref d2)
+        (literal 7d))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr %
+            (simple-var-ref d1)
+            (simple-var-ref d2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C2)))))))

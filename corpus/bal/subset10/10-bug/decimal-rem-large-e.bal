@@ -16,6 +16,8 @@
 
 import ballerina/io;
 
+const decimal C = 1E+6144d % 1.000000000000000000000000000000001E-6143d; // @error
+
 public function main() {
-    io:println(9.999999999999999999999999999999998E6144d % 1E-2d); // @error
+    io:println(C);
 }

@@ -148,8 +148,6 @@ var UnsupportedTests = []string{
 	"subset8/08-decimal/mul3-e.bal",
 	"subset8/08-decimal/mul4-e.bal",
 	"subset8/08-decimal/mul5-e.bal",
-	"subset8/08-decimal/rem3-e.bal",
-	"subset8/08-decimal/rem4-e.bal",
 	"subset8/08-decimal/sub2-e.bal",
 	"subset8/08-decimal/sub3-e.bal",
 	"subset8/08-decimal/toint2-e.bal",

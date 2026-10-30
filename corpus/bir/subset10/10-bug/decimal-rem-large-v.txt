@@ -1,0 +1,151 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1E+35
+    d1 = %1;
+    %3 = ConstantLoad 7
+    d2 = %3;
+    %6 = d1;
+    %7 = d2;
+    %5 = % %6 %7;
+    %8 = %5;
+    %9 = println(%8) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad 1E+40
+    %11 = unknown %10;
+    d1 = %11;
+    %12 = ConstantLoad 3
+    d2 = %12;
+    %14 = d1;
+    %15 = d2;
+    %13 = % %14 %15;
+    %16 = %13;
+    %17 = println(%16) -> bb2;
+  }
+  bb2 {
+    %18 = ConstantLoad 1E+40
+    d1 = %18;
+    %19 = ConstantLoad 3
+    %20 = unknown %19;
+    d2 = %20;
+    %22 = d1;
+    %23 = d2;
+    %21 = % %22 %23;
+    %24 = %21;
+    %25 = println(%24) -> bb3;
+  }
+  bb3 {
+    %26 = ConstantLoad 1E+40
+    %27 = unknown %26;
+    d1 = %27;
+    %28 = ConstantLoad 3
+    %29 = unknown %28;
+    d2 = %29;
+    %31 = d1;
+    %32 = d2;
+    %30 = % %31 %32;
+    %33 = %30;
+    %34 = println(%33) -> bb4;
+  }
+  bb4 {
+    %35 = ConstantLoad 1E+40
+    %36 = unknown %35;
+    d1 = %36;
+    %37 = ConstantLoad 2
+    d2 = %37;
+    %39 = d1;
+    %40 = d2;
+    %38 = % %39 %40;
+    %41 = %38;
+    %42 = println(%41) -> bb5;
+  }
+  bb5 {
+    %43 = ConstantLoad 1E+40
+    d1 = %43;
+    %44 = ConstantLoad 1.10
+    d2 = %44;
+    %46 = d1;
+    %47 = d2;
+    %45 = % %46 %47;
+    %48 = %45;
+    %49 = println(%48) -> bb6;
+  }
+  bb6 {
+    %50 = ConstantLoad 1E+39
+    d1 = %50;
+    %51 = ConstantLoad 3E+2
+    d2 = %51;
+    %53 = d1;
+    %54 = d2;
+    %52 = % %53 %54;
+    %55 = %52;
+    %56 = println(%55) -> bb7;
+  }
+  bb7 {
+    %57 = ConstantLoad 9.0E+32
+    d1 = %57;
+    %58 = ConstantLoad 0.01
+    d2 = %58;
+    %60 = d1;
+    %61 = d2;
+    %59 = % %60 %61;
+    %62 = %59;
+    %63 = println(%62) -> bb8;
+  }
+  bb8 {
+    %64 = ConstantLoad 1E+6144
+    d1 = %64;
+    %65 = ConstantLoad 9999999999999999999999999999999999
+    d2 = %65;
+    %67 = d1;
+    %68 = d2;
+    %66 = % %67 %68;
+    %69 = %66;
+    %70 = println(%69) -> bb9;
+  }
+  bb9 {
+    %71 = ConstantLoad 7.000000000000000000000000000000000E-6143
+    d2 = %71;
+    %73 = d1;
+    %74 = d2;
+    %72 = % %73 %74;
+    %75 = %72;
+    %76 = println(%75) -> bb10;
+  }
+  bb10 {
+    %77 = ConstantLoad 9.999999999999999999999999999999999E+6144
+    d1 = %77;
+    %78 = ConstantLoad 1.23E-6100
+    d2 = %78;
+    %80 = d1;
+    %81 = d2;
+    %79 = % %80 %81;
+    %82 = %79;
+    %83 = println(%82) -> bb11;
+  }
+  bb11 {
+    %84 = ConstantLoad 1E+34
+    d1 = %84;
+    %85 = ConstantLoad 7
+    d2 = %85;
+    %87 = d1;
+    %88 = d2;
+    %86 = % %87 %88;
+    %89 = %86;
+    %90 = println(%89) -> bb12;
+  }
+  bb12 {
+    %91 = ConstantLoad 1
+    %92 = %91;
+    %93 = println(%92) -> bb13;
+  }
+  bb13 {
+    %94 = ConstantLoad -1.0
+    %95 = %94;
+    %96 = println(%95) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+}

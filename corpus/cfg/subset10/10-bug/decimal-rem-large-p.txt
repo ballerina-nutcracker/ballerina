@@ -3,11 +3,11 @@
     (var-def
       (variable d1 (type
         (value-type decimal)) (expr
-        (literal 9.0E+32))))
+        (literal 1E+6144))))
     (var-def
       (variable d2 (type
         (value-type decimal)) (expr
-        (literal 0.01))))
+        (literal 1.000000000000000000000000000000001E-6143))))
     (expression-stmt
       (invocation io println (
         (binary-expr %
