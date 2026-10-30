@@ -167,4 +167,22 @@ public function main() returns error? {
     var stillClosed = selective->exists("/missing.txt");
     io:println(stillClosed); // @output false
     check selective->close();
+
+    ftp:Client dropped = check new ({
+        host: "127.0.0.1",
+        port: busyPort(),
+        auth: {credentials: {username: "drop", password: "x"}},
+        circuitBreaker: {
+            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 10, bucketSize: 5},
+            failureThreshold: 0.0,
+            failureCategories: [ftp:TRANSIENT_ERROR]
+        }
+    });
+    var droppedText = dropped->getText("/busy.txt");
+    io:println(droppedText is ftp:Error); // @output true
+    var afterDrop = dropped->exists("/busy.txt");
+    io:println(afterDrop is ftp:CircuitBreakerOpenError); // @output true
+    // The server has dropped the connection, so closing may fail.
+    error? closeResult = dropped->close();
+    io:println(closeResult is () || closeResult is ftp:Error); // @output true
 }
