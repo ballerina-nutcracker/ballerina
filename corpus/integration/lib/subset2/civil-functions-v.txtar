@@ -2,8 +2,10 @@
 true
 true
 [10000000001,0.25]
-true
-true
+NumberOverflow
+NumberOverflow
+NumberOverflow
+NumberConversionError
 [9223372036854775807,0.25]
 true
 true

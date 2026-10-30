@@ -81,8 +81,11 @@ func addSeconds(t time.Time, seconds *decimal.Decimal) (time.Time, error) {
 	nanos := int64(t.Nanosecond()) + decimalToNanos(frac)
 	sum := t.Unix() + wholeSec
 	carried := sum + nanos/1_000_000_000
-	if !ok || (wholeSec > 0 && sum < t.Unix()) || (wholeSec < 0 && sum > t.Unix()) || carried < sum {
-		return time.Time{}, fmt.Errorf("NumberConversionError: adding %s seconds overflows the time range", seconds.FormatBallerina())
+	if !ok {
+		return time.Time{}, fmt.Errorf("NumberConversionError: %s seconds is out of the int range", seconds.FormatBallerina())
+	}
+	if (wholeSec > 0 && sum < t.Unix()) || (wholeSec < 0 && sum > t.Unix()) || carried < sum {
+		return time.Time{}, fmt.Errorf("NumberOverflow: adding %s seconds overflows the time range", seconds.FormatBallerina())
 	}
 	return time.Unix(carried, nanos%1_000_000_000), nil
 }

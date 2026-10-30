@@ -28,10 +28,10 @@ public function main() returns error? {
     time:Seconds diff = time:utcDiffSeconds(later, base);
     io:println(diff == 3600.0d); // @output true
     io:println(time:utcAddSeconds([0, 0.5], 10000000000.75)); // @output [10000000001,0.25]
-    time:Utc|error overflow = trap time:utcAddSeconds([1, 0], 9223372036854775807);
-    io:println(overflow is error); // @output true
-    time:Utc|error carryOverflow = trap time:utcAddSeconds([9223372036854775807, 0.5], 0.75);
-    io:println(carryOverflow is error); // @output true
+    io:println(addSecondsErrorKind([1, 0], 9223372036854775807)); // @output NumberOverflow
+    io:println(addSecondsErrorKind([9223372036854775807, 0.5], 0.75)); // @output NumberOverflow
+    io:println(addSecondsErrorKind([-9223372036854775807 - 1, 0.5], -0.25)); // @output NumberOverflow
+    io:println(addSecondsErrorKind([0, 0], -9223372036854775808.5)); // @output NumberConversionError
     io:println(time:utcAddSeconds([9223372036854775806, 0.5], 0.75)); // @output [9223372036854775807,0.25]
 
     // dateValidate: valid date
@@ -68,4 +68,13 @@ public function main() returns error? {
     io:println(parsed.year);  // @output 2021
     io:println(parsed.month); // @output 4
     io:println(parsed.day);   // @output 12
+}
+
+function addSecondsErrorKind(time:Utc utc, decimal seconds) returns string {
+    time:Utc|error result = trap time:utcAddSeconds(utc, seconds);
+    if result is time:Utc {
+        return "no error";
+    }
+    string message = result.message();
+    return message.includes("NumberOverflow") ? "NumberOverflow" : message.includes("NumberConversionError") ? "NumberConversionError" : message;
 }
