@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable crlf (type
+        (value-type string)) (expr
+        (string-template-literal
+          (template-string "a\nb")))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (simple-var-ref crlf))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string toBytes (
+          (simple-var-ref crlf))))))
+    (var-def
+      (variable cr (type
+        (value-type string)) (expr
+        (string-template-literal
+          (template-string "c\nd")))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string length (
+          (simple-var-ref cr))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.string toBytes (
+          (simple-var-ref cr))))))
+  )
+)
