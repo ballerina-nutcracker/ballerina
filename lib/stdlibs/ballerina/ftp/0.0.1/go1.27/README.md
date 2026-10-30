@@ -79,7 +79,7 @@ Support Levels:
 | File and directory management | Supported | `mkdir`, `rmdir`, `delete`, `rename`, `move`, `copy`, `exists`, `size`, `list`, `isDirectory`. `list` order is unspecified. `size` reports sizes of 2 GiB and more in full. `copy` of a folder creates an empty folder, as jBallerina does. `rmdir` and `delete` fail on a non-empty folder; see Notable Behavioural Changes |
 | Deprecated untyped operations | Supported | `get`, `put` (including ZIP compression) and `append`. The ZIP archive name differs from jBallerina's; see Notable Behavioural Changes |
 | Retry | Supported | `retryConfig` retries only transient failures of a whole-file read: 4xx server replies and broken or unreachable connections. Other errors, such as `FileNotFoundError` and `ContentBindingError`, return at once, as intended per ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 retries every error |
-| Circuit breaker | Supported | `circuitBreaker` with rolling windows, failure categories and the `HALF_OPEN` trial |
+| Circuit breaker | Supported | `circuitBreaker` with rolling windows, failure categories and the `HALF_OPEN` trial. A failure is counted also when its request spans buckets; see Notable Behavioural Changes |
 | Close | Supported | `close` |
 
 ### Listener and Caller
@@ -125,4 +125,5 @@ Support Levels:
 - **Unreadable known_hosts file.** jBallerina logs a warning and connects without host key verification when the `sftpSshKnownHosts` file does not exist; the Go-native version fails the SFTP connection with an `ftp:Error` (ballerina-platform/ballerina-library#9421).
 - **File size.** jBallerina's `size` narrows the size to 32 bits, so a 3 GiB file reports `-1073741824` while `list` reports `3221225472`; the Go-native version returns the full size from both (ballerina-platform/ballerina-library#9420).
 - **Symbolic link loops in listener scans.** jBallerina follows a symbolic link back into the folder being scanned again at every level, so a watched folder holding such links reports no files; the Go-native version does not follow a linked folder that lists the same entries as a folder being scanned (ballerina-platform/ballerina-library#9422).
+- **Circuit breaker failures across buckets.** jBallerina counts a failure in the bucket where the request ends but leaves the bucket where it started as the last one used, so the next window update clears a failure that ended in a later bucket and the circuit may never open; the Go-native version counts every failure (ballerina-platform/ballerina-library#TBD-cb-bucket).
 - **Transport error causes.** jBallerina reports connection and transfer failures with commons-vfs and JSch messages; the Go-native version keeps the same outer messages and error types but the underlying cause text comes from the Go network, FTP and SSH libraries.

@@ -17,5 +17,7 @@ true
 here
 true
 true
+true
+true
 false
 -- stderr --

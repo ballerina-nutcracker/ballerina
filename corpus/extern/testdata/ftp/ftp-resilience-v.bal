@@ -143,6 +143,19 @@ public function main() returns error? {
     io:println(closedAgain); // @output true
     check guarded->close();
 
+    // With 1 ms buckets each request ends in a later bucket than it started in.
+    ftp:Client fineGrained = check connect({
+        rollingWindow: {requestVolumeThreshold: 2, timeWindow: 10, bucketSize: 0.001},
+        failureThreshold: 0.4,
+        failureCategories: [ftp:ALL_ERRORS]
+    });
+    check fineGrained->putText("/present.txt", "here");
+    var spanned = fineGrained->getText("/missing.txt");
+    io:println(spanned is ftp:FileNotFoundError); // @output true
+    var tripped = fineGrained->exists("/present.txt");
+    io:println(tripped is ftp:CircuitBreakerOpenError); // @output true
+    check fineGrained->close();
+
     ftp:CircuitBreakerConfig connectionOnly = {
         rollingWindow: {requestVolumeThreshold: 1, timeWindow: 10, bucketSize: 5},
         failureThreshold: 0.0,
