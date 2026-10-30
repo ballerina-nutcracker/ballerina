@@ -185,4 +185,29 @@ public function main() returns error? {
     // The server has dropped the connection, so closing may fail.
     error? closeResult = dropped->close();
     io:println(closeResult is () || closeResult is ftp:Error); // @output true
+
+    // A socket timeout on a hung server is a connection failure, as the FailureCategory docs state.
+    io:println(opensOnHang(ftp:TRANSIENT_ERROR)); // @output false
+    io:println(opensOnHang(ftp:CONNECTION_ERROR)); // @output true
+}
+
+function opensOnHang(ftp:FailureCategory category) returns boolean|error {
+    ftp:Client hung = check new ({
+        host: "127.0.0.1",
+        port: busyPort(),
+        auth: {credentials: {username: "hang", password: "x"}},
+        socketConfig: {ftpSocketTimeout: 1, ftpDataTimeout: 1},
+        circuitBreaker: {
+            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 10, bucketSize: 5},
+            failureThreshold: 0.0,
+            failureCategories: [category]
+        }
+    });
+    string|ftp:Error text = hung->getText("/busy.txt");
+    if text !is ftp:Error {
+        return error("expected a timeout");
+    }
+    boolean|ftp:Error after = hung->exists("/busy.txt");
+    ftp:Error? closed = hung->close();
+    return after is ftp:CircuitBreakerOpenError && (closed is () || closed is ftp:Error);
 }
