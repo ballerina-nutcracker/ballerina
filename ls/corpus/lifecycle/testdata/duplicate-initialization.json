@@ -1,0 +1,83 @@
+{
+  "source": "session.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "publishDiagnostics": {
+              "versionSupport": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": "again",
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "publishDiagnostics": {
+              "versionSupport": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/session.bal",
+          "languageId": "ballerina",
+          "version": 7,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": "again",
+      "error": {
+        "code": -32600,
+        "message": "already initialized"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/session.bal",
+        "version": 7,
+        "diagnostics": []
+      }
+    }
+  ]
+}

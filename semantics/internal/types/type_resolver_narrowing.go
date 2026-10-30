@@ -18,6 +18,7 @@ package types
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -91,19 +92,21 @@ type statementEffect struct {
 }
 
 // canNarrow reports whether a conditional refinement of ref applies at this
-// point. Constants, final bindings and parameters cannot be reassigned, so they
-// stay eligible. A mutable module binding is never eligible, because any call can
-// reassign it. A mutable local stops being eligible once a capture entry that
-// contains it is on the chain. A narrowed copy inherits the flags of the symbol
-// it copies, so eligibility is read from the original declaration.
+// point. Only local variables and parameters can be narrowed, so module-level
+// variables, constants and functions are never eligible. Final locals and
+// parameters cannot be reassigned, so they stay eligible. A mutable local stops
+// being eligible once a capture entry that contains it is on the chain. A
+// narrowed copy inherits the flags of the symbol it copies, so eligibility is
+// read from the original declaration.
 func canNarrow(t typeResolver, chain *binding, ref model.SymbolRef) bool {
-	if isStableDeclaration(t, ref) {
-		return true
-	}
 	ref = t.unnarrowedSymbol(ref)
 	cx := t.compilerContext()
-	if metadata, _ := cx.ValueSymbolMetadata(ref); metadata.TopLevel {
+	metadata, isValue := cx.ValueSymbolMetadata(ref)
+	if !isValue || metadata.TopLevel {
 		return false
+	}
+	if isStableMetadata(metadata) {
+		return true
 	}
 	for c := chain; c != nil; c = c.prev {
 		if c.isCaptureEntry() && cx.CaptureGroupContains(c.captures, ref) {
@@ -113,18 +116,15 @@ func canNarrow(t typeResolver, chain *binding, ref model.SymbolRef) bool {
 	return true
 }
 
-// isStableDeclaration reports whether ref names a declaration nothing can
-// reassign, so neither a capture nor the module policy can invalidate a
-// refinement of it.
+// isStableDeclaration reports whether ref names a final or parameter declaration,
+// which nothing can reassign, so no capture can invalidate a refinement of it.
 func isStableDeclaration(t typeResolver, ref model.SymbolRef) bool {
-	metadata, isValue := t.compilerContext().ValueSymbolMetadata(t.unnarrowedSymbol(ref))
-	if !isValue {
-		// A non-value symbol, such as a module function named in
-		// `foo is function () returns int`, is a constant, so capture semantics
-		// can be safely ignored for it.
-		return true
-	}
-	return metadata.Const || metadata.Final || metadata.Parameter
+	metadata, _ := t.compilerContext().ValueSymbolMetadata(t.unnarrowedSymbol(ref))
+	return isStableMetadata(metadata)
+}
+
+func isStableMetadata(metadata context.ValueSymbolMetadata) bool {
+	return metadata.Final || metadata.Parameter
 }
 
 // lookupBinding returns the effective symbol for a base symbol at the current
