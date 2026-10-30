@@ -288,7 +288,7 @@ func (cb *circuitBreaker) recordRequestStart() {
 }
 
 // recordFailure marks the failure's bucket as used, so the failure of a request that ran into a
-// later bucket is not cleared as stale; jBallerina loses it (ballerina-library#TBD-cb-bucket).
+// later bucket is not cleared as stale; jBallerina loses it (ballerina-library#9423).
 func (cb *circuitBreaker) recordFailure() {
 	cb.prepareRollingWindow()
 	current := cb.currentBucket()
