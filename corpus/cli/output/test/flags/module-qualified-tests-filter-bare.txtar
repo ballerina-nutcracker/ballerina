@@ -1,0 +1,15 @@
+-- stdout --
+
+Running tests for module 'modquantestmod.submod'
+		[pass] testInSubmod
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+warning: no compiler-plugin TestPlan for testorg/modquantestmod; treating as no discovered tests
+-- exitcode --
+0

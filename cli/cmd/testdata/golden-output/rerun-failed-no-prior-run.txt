@@ -1,3 +1,0 @@
-error: error while running failed tests : Invalid failed test data. Please run `bal test` command.
-ballerina: there are test failures
-exit status 1

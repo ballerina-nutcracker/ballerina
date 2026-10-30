@@ -1,0 +1,33 @@
+-- stdout --
+
+Running tests for package 'passing'
+		[pass] testGood
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for package 'failing'
+
+	testBad: has failed.
+
+
+		[fail] testBad:
+
+		    boom
+			
+			
+
+
+		0 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

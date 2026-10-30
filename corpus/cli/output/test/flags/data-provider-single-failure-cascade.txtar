@@ -1,0 +1,31 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+
+	testDividingValuesNegative:2 has failed.
+
+		[pass] testDividingValuesNegative#0
+		[pass] testDividingValuesNegative#1
+		[pass] testDividingValuesNegative#3
+		[pass] testDividingValuesNegative#4
+		[pass] testExecutionOfDataValueFailing
+
+		[fail] testDividingValuesNegative#2:
+
+		    divide by zero
+			
+			
+
+
+		5 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'dataproviders.module1'
+	No tests found
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

@@ -23,26 +23,13 @@ import (
 )
 
 // SubKeyFilters maps a data-driven test's base name to the raw sub-key
-// patterns requested for it via "name#key" --tests entries — e.g. parsing
-// "testSquare#one,testSquare#three" yields {"testSquare": {"one", "three"}}.
-// A test absent from this map has no sub-key restriction at all: every data
-// row runs, matching filter.bal#skipDataDrivenTest returning false when
-// isFilterSubTestsContains(functionName) is false.
-//
-// This is the one piece of filter.bal's filterKeyBasedTests this package
-// needs to re-derive from the raw --tests string; everything else (module
-// qualifiers, by-name/wildcard matching, enable/group gating) is already
-// decided upstream (cli/internal/testfilter.Select), whose result is
-// `included` by the time Run sees it. It isn't reused directly here because
-// cli/internal/testfilter lives under cli/internal — Go's internal/
-// visibility rule blocks this root-module package from importing it, the
-// same reason testplan lives at the repo root instead of under cli/internal.
+// patterns requested via "name#key" --tests entries. A test absent from
+// this map has no sub-key restriction: every data row runs.
 type SubKeyFilters map[string][]string
 
 // ParseSubKeyFilters extracts sub-key filters from a raw, comma-separated
-// --tests value, ported from filterKeyBasedTests's suffix-accumulation (a
-// test named more than once, e.g. "testSquare#one,testSquare#three",
-// accumulates every suffix under the one entry, not just the last).
+// --tests value. A test named more than once accumulates every suffix under
+// the one entry, not just the last.
 func ParseSubKeyFilters(tests string) SubKeyFilters {
 	filters := make(SubKeyFilters)
 	for _, entry := range strings.Split(tests, ",") {
@@ -80,15 +67,9 @@ func (f SubKeyFilters) matches(name, key string) bool {
 	if !ok {
 		return true
 	}
-	// skipDataDrivenTest escapes BOTH sides before comparing, and this port
-	// must too: a row key containing a delimiter character (a comma, a
-	// quote) cannot be typed literally on a command line, so the user
-	// supplies it percent-encoded (`--tests 'fn#a%2Cb%22c'`) while the key
-	// itself is the raw string `a,b"c`. Escaping both normalizes them to
-	// the same form. Omitting this silently matched nothing for any such
-	// key — a real regression this port shipped with until the behavior was
-	// re-derived from the deleted testerina-dataprovider-special-char-key-v
-	// fixture; see TestSubKeyFilters_MatchesSpecialCharacterKey.
+	// Both sides must be escaped: a row key with a delimiter (comma, quote)
+	// can't be typed literally on the CLI, so the user percent-encodes it
+	// while the raw key stays unescaped. Escaping both normalizes them.
 	escapedKey := native.EscapeSpecialCharacters(key)
 	for _, k := range keys {
 		escapedFilter := native.EscapeSpecialCharacters(k)
@@ -107,11 +88,9 @@ func (f SubKeyFilters) matches(name, key string) bool {
 	return false
 }
 
-// hasEnabledDependent ports skipDataDrivenTest's nestedEnabledDependentsAvailable
-// bypass: a sub-key filter on a data-driven test is ignored entirely if any
-// test transitively depending on it (at any depth) is actually going to run
-// — matching the real engine's rationale that a dependent may need every
-// row's side effects, not just the ones named via --tests.
+// hasEnabledDependent reports whether a sub-key filter should be ignored
+// entirely because a test transitively depending on it (at any depth) will
+// actually run — a dependent may need every row's side effects.
 func (r *runner) hasEnabledDependent(name string) bool {
 	seen := make(map[string]bool)
 	queue := append([]string(nil), r.graph.Dependents[name]...)

@@ -1,0 +1,26 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+	[fail] [before test function for the test]:
+	    divide by zero
+		
+		
+		[pass] testDividingValuesWithBeforeFailing#0
+		[pass] testDividingValuesWithBeforeFailing#1
+		[pass] testDividingValuesWithBeforeFailing#3
+		[pass] testDividingValuesWithBeforeFailing#4
+		[pass] testExecutionOfBeforeFailing
+
+
+		5 passing
+		0 failing
+		1 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'dataproviders.module1'
+	No tests found
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

@@ -1,0 +1,6 @@
+-- stdout --
+	No tests found
+-- stderr --
+warning: no compiler-plugin TestPlan for testorg/notests; treating as no discovered tests
+-- exitcode --
+0

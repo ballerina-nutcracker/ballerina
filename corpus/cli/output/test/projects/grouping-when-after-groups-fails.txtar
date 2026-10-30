@@ -1,0 +1,21 @@
+-- stdout --
+	[fail] afterGroupsFunc1[after test group function for the test]:
+	    divide by zero
+		
+		
+		[pass] testFunction
+		[pass] testFunction2
+		[pass] testFunction3
+		[pass] testFunction4
+		[pass] testFunction5
+
+
+		5 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

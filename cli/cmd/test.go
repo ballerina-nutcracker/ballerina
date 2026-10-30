@@ -41,11 +41,9 @@ import (
 )
 
 // invalidRerunDataMessage is the user-facing wording for an unusable
-// --rerun-failed rerun_test.json. It lives here, in the CLI layer that
-// prints it, rather than inside testfilter.ErrInvalidRerunData: it must
-// match jballerina byte-for-byte (it's pinned by the rerun-failed golden
-// fixtures), and a Go error string carrying that trailing period would
-// violate staticcheck's ST1005.
+// --rerun-failed rerun_test.json, matching jballerina byte-for-byte. Lives
+// here rather than in testfilter.ErrInvalidRerunData: a Go error string
+// carrying this trailing period would violate staticcheck's ST1005.
 const invalidRerunDataMessage = "error while running failed tests : Invalid failed test data. Please run `bal test` command."
 
 type testCmdOptions struct {
@@ -272,12 +270,9 @@ func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 	return finishStandaloneTestRun(cmd, absBaseDir, exitCode, pkgResult, err)
 }
 
-// finishStandaloneTestRun applies runTestsForProject's result the same way
-// for both call sites that treat a run as one self-contained package (a
-// plain non-workspace invocation, and "bal test" invoked from inside one
-// workspace member's own directory): write that package's own
-// test_results.json if requested, then translate a non-zero suite exit
-// code into the usual "there are test failures" command error.
+// finishStandaloneTestRun writes the package's test_results.json if
+// requested, then translates a non-zero suite exit code into the usual
+// "there are test failures" command error.
 func finishStandaloneTestRun(cmd *cobra.Command, projectDir string, exitCode int, pkgResult *packageTestResult, err error) error {
 	if err != nil {
 		return err
@@ -295,16 +290,9 @@ func finishStandaloneTestRun(cmd *cobra.Command, projectDir string, exitCode int
 	return nil
 }
 
-// runTestsForWorkspace runs every member package's tests in turn, matching
-// jballerina's behavior: unlike a genuine load/compile error (which aborts
-// immediately, since something is actually broken), one member's test
-// failures don't stop the rest from running — every member gets a chance to
-// report its own results, and the workspace's overall exit status reflects
-// whether *any* member failed.
-//
-// Each member is tested via a freshly-reloaded workspace (like build.go's
-// buildNativeStub/buildOneProject loop) so each gets its own independent
-// CompilerEnvironment rather than sharing one across members.
+// runTestsForWorkspace runs every member's tests in turn (a failing member
+// doesn't stop the rest), each via a freshly-reloaded workspace so members
+// get independent CompilerEnvironments. Exit reflects whether any member failed.
 func runTestsForWorkspace(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writer, fsys fs.FS,
 	loadPath string, workspace *projects.WorkspaceProject, workspaceAbsRoot, ballerinaEnvPath string,
 	buildOpts *projects.BuildOptions) error {
@@ -365,29 +353,9 @@ func runTestsForWorkspace(cmd *cobra.Command, opts *testCmdOptions, stderr io.Wr
 	return nil
 }
 
-// runTestsForProject compiles project's package once (test sources
-// included), then runs each of its modules' tests in turn — almost always
-// just the default module, but a package can have named submodules under
-// modules/ too. Each module gets its own independent glue-injection +
-// recompile + fresh runtime + setTestOptions/register/startSuite sequence
-// (mirroring runTestsForWorkspace's per-member isolation): ballerina/test's
-// registries are shared module-level state within its own module, so
-// running two user-modules' tests through one shared runtime would
-// accumulate both modules' registrations into a single combined report
-// instead of jballerina's actual per-module reports (and per-module
-// `--tests mod:name` filtering couldn't work at all). Returns the combined
-// exit code (0 only if every module with tests passed) separately from any
-// error.
-//
-// Confirmed via a real multi-module package fixture (2026-09-09, see
-// CHECKPOINT.md) that before this, only the default module's tests ever ran
-// — a submodule's tests were silently never discovered at all, reporting
-// "No tests found" / exit 0 instead of actually running them.
-// runTestsForProject's third return value is the package's aggregated test
-// report data (nil unless opts.testReport is set and at least one module
-// actually ran tests) — the caller decides whether to write it standalone
-// (a single package) or fold it into a workspace-wide report (see
-// writeTestResultsReport's callers in runTest/runTestsForWorkspace).
+// runTestsForProject compiles the package once, runs each module's tests
+// with its own fresh runtime, and returns the combined exit code plus the
+// package's aggregated report (nil unless --test-report and tests ran).
 func runTestsForProject(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writer, fsys fs.FS,
 	project projects.Project, projectDir string) (int, *packageTestResult, error) {
 	pkg := project.CurrentPackage()
@@ -430,12 +398,8 @@ func runTestsForProject(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 	return exitCode, &result, nil
 }
 
-// runTestsForModules runs every module that has discovered tests, matching
-// jballerina's own per-module report semantics (see runTestsForProject's
-// doc comment for why each module needs its own runTestsForModule call
-// rather than sharing one runtime). A module with zero discovered tests is
-// skipped entirely — no header, no report — rather than running it through
-// startSuite() just to print "No tests found" for each empty module.
+// runTestsForModules runs every module that has discovered tests. A module
+// with zero discovered tests is skipped entirely — no header, no report.
 func runTestsForModules(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writer, fsys fs.FS,
 	project projects.Project, compilation *projects.PackageCompilation,
 	modules []*projects.Module, projectDir string) (int, error) {
@@ -465,12 +429,8 @@ func runTestsForModules(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 	return 0, nil
 }
 
-// discoverTests reads the compiler plugin's stashed TestPlan for module —
-// populated during the same compilation that already ran (see
-// lib/stdlibs/ballerina/test's compilerplugin package). Discovery has no
-// other producer: there is no AST-walk fallback to reach for if the stash is
-// somehow empty — a missing stash is reported loudly and treated as "no
-// tests discovered" rather than silently continuing as if that were normal.
+// discoverTests reads the compiler plugin's stashed TestPlan for module. A
+// missing stash is reported loudly, not silently treated as normal.
 func discoverTests(stderr io.Writer, module *projects.Module) *testplan.TestPlan {
 	key := testplan.ModuleKey{
 		Org:    module.PackageInstance().PackageOrg().Value(),
@@ -484,14 +444,9 @@ func discoverTests(stderr io.Writer, module *projects.Module) *testplan.TestPlan
 	return &testplan.TestPlan{}
 }
 
-// runTestsForModule discovers @test:* functions in one module and runs that
-// module's suite in-process via its own fresh runtime and testrunner.Run —
-// no generated registration glue, no recompilation, no ballerina/test
-// registries involved at all. This is the design's whole point: "the test
-// runtime does not have a main," so there's nothing to register with — only
-// direct invocation of whatever testplan.BuildGraph's order calls for.
-// Returns the suite's own exit code (0 = all passed) separately from any
-// error.
+// runTestsForModule runs one module's test suite in-process via its own
+// fresh runtime and testrunner.Run — no generated glue, no registration.
+// Returns the suite's own exit code (0 = all passed) separately from error.
 func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writer, fsys fs.FS,
 	project projects.Project, compilation *projects.PackageCompilation,
 	module *projects.Module, projectDir string) (int, error) {
