@@ -78,11 +78,13 @@ func addSeconds(t time.Time, seconds *decimal.Decimal) (time.Time, error) {
 	whole, _ := seconds.Floor()
 	frac, _ := seconds.Sub(whole)
 	wholeSec, ok, _ := whole.Int64()
+	nanos := int64(t.Nanosecond()) + decimalToNanos(frac)
 	sum := t.Unix() + wholeSec
-	if !ok || (wholeSec > 0 && sum < t.Unix()) || (wholeSec < 0 && sum > t.Unix()) {
+	carried := sum + nanos/1_000_000_000
+	if !ok || (wholeSec > 0 && sum < t.Unix()) || (wholeSec < 0 && sum > t.Unix()) || carried < sum {
 		return time.Time{}, fmt.Errorf("NumberConversionError: adding %s seconds overflows the time range", seconds.FormatBallerina())
 	}
-	return time.Unix(sum, int64(t.Nanosecond())).Add(time.Duration(decimalToNanos(frac))), nil
+	return time.Unix(carried, nanos%1_000_000_000), nil
 }
 
 // nanosToFrac converts nanoseconds to a Ballerina Seconds fraction [0,1).
