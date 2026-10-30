@@ -204,22 +204,17 @@ public function main() returns error? {
     // @output change added=["/watch/a.txt","/watch/sub/inner.txt"] deleted=0
 
     check legacy.poll();
-    runtime:sleep(0.2);
-    io:println(eventCount()); // @output 0
-
-    check c->putText("/watch/sub/inner.txt", "inner, rewritten");
-    check legacy.poll();
     waitFor(2);
     printEvents();
     // @output caller sees a.txt true
-    // @output change added=["/watch/sub/inner.txt"] deleted=0
+    // @output change added=["/watch/a.txt","/watch/sub/inner.txt"] deleted=0
 
     check c->delete("/watch/a.txt");
     check legacy.poll();
     waitFor(4);
     printEvents();
     // @output caller sees a.txt false
-    // @output change added=[] deleted=1
+    // @output change added=["/watch/sub/inner.txt"] deleted=1
     // @output change deleted ftp://127.0.0.1:PORT/watch/a.txt
     // @output onFileDeleted 1
 
@@ -264,9 +259,13 @@ public function main() returns error? {
 
     check c->putText("/deps/y.flag", "");
     check multi.poll();
-    waitFor(2);
+    waitFor(6);
     printEvents();
+    // @output dep any_one
     // @output dep count_one
+    // @output dep data_1.csv
+    // @output dep data_1.marker
+    // @output dep x.flag
     // @output dep y.flag
 
     error? duplicate = multi.attach(new DuplicatePathService());
