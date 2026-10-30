@@ -175,11 +175,11 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BL
 	}
 }
 
-// validateIsolatedClassField: a public field of an isolated object must be
-// final and of a readonly type.
+// validateIsolatedClassField: a non-private field of an isolated object must
+// be final and of a readonly type.
 func validateIsolatedClassField(cx scope.Context, field *ast.BLangVariable) {
-	if field.IsPublic() && !scope.IsImmutableField(cx, field) {
-		cx.SemanticErr("public field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly\"", field.GetPosition())
+	if !field.IsPrivate() && !scope.IsImmutableField(cx, field) {
+		cx.SemanticErr("non-private field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly\"", field.GetPosition())
 	}
 }
 
