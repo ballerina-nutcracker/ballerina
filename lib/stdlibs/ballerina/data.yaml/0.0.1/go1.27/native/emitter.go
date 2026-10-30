@@ -323,21 +323,20 @@ func needsQuotes(text string, schema yamlSchema) bool {
 	if strings.Contains(text, ": ") || strings.Contains(text, " #") || strings.HasSuffix(text, ":") {
 		return true
 	}
+	if schema.reservesWord(text) {
+		return true
+	}
 	switch schema {
 	case schemaJSON:
-		return isAnyOf(text, "null", "true", "false") || jsonSchemaNumber.MatchString(text)
+		return jsonSchemaNumber.MatchString(text)
 	case schemaCore:
-		return isCoreSchemaNonString(text)
+		return isCoreSchemaNumber(text)
 	}
 	return false
 }
 
-// isCoreSchemaNonString reports whether the core schema, or jBallerina's number parsing, reads text as
-// something other than a string.
-func isCoreSchemaNonString(text string) bool {
-	if isAnyOf(text, "null", "Null", "NULL", "~", "true", "True", "TRUE", "false", "False", "FALSE") {
-		return true
-	}
+// isCoreSchemaNumber reports whether the core schema, or jBallerina's number parsing, reads text as a number.
+func isCoreSchemaNumber(text string) bool {
 	if coreSchemaNumber.MatchString(text) {
 		return true
 	}
