@@ -499,9 +499,12 @@ func startJailFTPServer(t *testing.T) int64 {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer big.Close()
 	// A sparse file reports a size above the 32-bit range without using the disk space.
 	if err := big.Truncate(3 << 30); err != nil {
+		_ = big.Close()
+		t.Fatal(err)
+	}
+	if err := big.Close(); err != nil {
 		t.Fatal(err)
 	}
 	fs := jailFs{afero.NewBasePathFs(afero.NewOsFs(), root)}
