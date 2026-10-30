@@ -1,0 +1,150 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 2.675)) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (unary-expr -
+                (literal 2.675))) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 0.15)) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 0.35)) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 0.45)) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (unary-expr -
+                (literal 0.45))) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 9.995)) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 9.96)) (
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 1.005)) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 0.125)) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 0.375)) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (unary-expr -
+                (literal 0.125))) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 1250.0)) (
+            (unary-expr -
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 1350.0)) (
+            (unary-expr -
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (unary-expr -
+                (literal 1350.0))) (
+            (unary-expr -
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 6.0e307)) (
+            (unary-expr -
+              (literal 308)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 4e307)) (
+            (unary-expr -
+              (literal 308)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 1.7e308)) (
+            (unary-expr -
+              (literal 308)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.7e308))) (
+            (unary-expr -
+              (literal 308)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 5e-324)) (
+            (literal 323))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 5e-324)) (
+            (literal 324))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation round expr:
+            (group-expr
+              (literal 5e-324)) (
+            (literal 1073)))))))))
