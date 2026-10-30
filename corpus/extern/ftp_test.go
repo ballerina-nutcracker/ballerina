@@ -69,7 +69,9 @@ func runFtp(t *testing.T, name string) {
 	externs = append(externs, testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "busyReplies",
 		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) { return f.busyReplies.Load(), nil }})
 	externs = append(externs, testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "ftpConnections",
-		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) { return f.ftpDriver.connections.Load(), nil }})
+		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) {
+			return f.ftpDriver.connections.Load(), nil
+		}})
 	runExtern(t, fileCase("ftp/"+name), &ftpPal{TestPal: testharness.NewTestPal()}, externs)
 }
 
