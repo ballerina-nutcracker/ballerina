@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns int, got function(int|string) returns int|string
+  --> narrow-module-function-e.bal:26:40
+   |
+26 |         function (int) returns int g = foo; // @error a module function cannot be narrowed
+   |                                        ^^^

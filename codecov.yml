@@ -1,6 +1,11 @@
 github_checks:
   annotations: true
 
+# These files are generated from the LSP spec. Their lines get test coverage only when the related LS APIs are implemented. The large spec reduces the overall Codecov coverage percentage. These files are excluded from coverage and will move out of this repository in the future.
+ignore:
+  - "ls/protocol/json_generated.go"
+  - "ls/protocol/types_generated.go"
+
 coverage:
   range: "60...80"
   status:
