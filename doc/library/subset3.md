@@ -418,7 +418,7 @@ Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:Wa
 | `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |
 ## [data.jsondata](https://github.com/ballerina-platform/module-ballerina-data.jsondata)
 
-Type-directed JSON conversion. The parse functions take an inferred `typedesc<anydata>` target and return `t|jsondata:Error`; the text parsers convert while they read, with jBallerina's rules for numbers, escapes and error positions.
+Type-directed JSON conversion. The parse functions take an inferred `typedesc<anydata>` target and return `t|jsondata:Error`; the text parsers convert while they read, with jBallerina's error positions. Unlike jBallerina, they reject a number with a leading zero and invalid UTF-8 input, and replace an unpaired surrogate escape with U+FFFD (see the package README).
 
 | Function | Notes |
 |---|---|
