@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected 2, got int|string
+  --> main.bal:29:17
+   |
+29 |         2 two = data:pinned; // @error an imported final module variable cannot be narrowed
+   |                 ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected 2, got int|string
+  --> main.bal:34:25
+   |
+34 |             2 matched = data:pinned; // @error an imported final module variable cannot be narrowed
+   |                         ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns int, got function(int|string) returns int|string
+  --> main.bal:39:40
+   |
+39 |         function (int) returns int f = data:convert; // @error an imported module function cannot be narrowed
+   |                                        ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int|string
+  --> main.bal:25:20
+   |
+25 |         string s = data:pinned; // @error an imported final module variable cannot be narrowed
+   |                    ^^^^^^^^^^^

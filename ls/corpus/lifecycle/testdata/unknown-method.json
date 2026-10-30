@@ -1,0 +1,46 @@
+{
+  "source": "",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": "unknown",
+      "method": "unknown/method",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": "unknown",
+      "error": {
+        "code": -32601,
+        "message": "method not found"
+      }
+    }
+  ]
+}

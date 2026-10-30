@@ -1,6 +1,0 @@
--- stdout --
-0
-1
--- stderr --
-error: iterator failed
-        at main(3-p.bal:42)
