@@ -347,6 +347,9 @@ func categorize(err error) (failureCategory, bool) {
 			return category, true
 		}
 	}
+	if category, ok := categorizeNetworkFailure(err); ok {
+		return category, true
+	}
 	typed := asFtpError(err)
 	messages := []string{typed.message}
 	if typed.cause != nil {
@@ -359,6 +362,25 @@ func categorize(err error) (failureCategory, bool) {
 		if category, ok := categorizeMessage(message); ok {
 			return category, true
 		}
+	}
+	return "", false
+}
+
+// categorizeNetworkFailure classifies socket failures by operation rather than by message text,
+// which differs by platform (a reset reads "forcibly closed by the remote host" on Windows).
+func categorizeNetworkFailure(err error) (failureCategory, bool) {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		switch opErr.Op {
+		case "dial":
+			return categoryConnection, true
+		case "read", "write":
+			return categoryTransient, true
+		}
+	}
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed) ||
+		errors.Is(err, sftp.ErrSSHFxConnectionLost) || errors.Is(err, sftp.ErrSSHFxNoConnection) {
+		return categoryTransient, true
 	}
 	return "", false
 }
