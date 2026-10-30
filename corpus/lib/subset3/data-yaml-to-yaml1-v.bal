@@ -87,6 +87,14 @@ public function main() {
     show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:FAILSAFE_SCHEMA}));
     show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:JSON_SCHEMA}));
     show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:CORE_SCHEMA}));
+    // Quoted strings read back as the same strings into json (ballerina-platform/ballerina-library#9669, #9424).
+    map<json> quoted = {a: "1", b: "1.", c: "true", d: "null", e: "0x1F", f: 1};
+    foreach boolean flowStyle in [false, true] {
+        string|error written = yaml:toYamlString(quoted, {flowStyle});
+        if written is string {
+            io:println(yaml:parseString(written, {}, json));
+        }
+    }
 }
 
 // @output name: Central Library
@@ -217,3 +225,5 @@ public function main() {
 // @output --
 // @output ["true", "True", "null", "~", "1", "1.5", "+12", "0x1F", ".inf", "a: b"]
 // @output --
+// @output {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
+// @output {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}

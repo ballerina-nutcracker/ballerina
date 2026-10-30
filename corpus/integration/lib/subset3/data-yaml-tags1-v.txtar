@@ -1,9 +1,9 @@
 -- stdout --
 [31,15,12,1.0,Infinity,-Infinity,true,null]
 NaN
-123
-["123"]
 bar
+true
+["123"]
 [1,2]
 {"a":1}
 [12,true,null]

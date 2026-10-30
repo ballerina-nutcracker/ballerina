@@ -33,10 +33,11 @@ public function main() {
     // Core schema tags.
     show(yaml:parseString("[!!int 0x1F, !!int 0o17, !!int \"12\", !!float 1, !!float .inf, !!float -.Inf, !!bool True, !!null ~]"));
     show(yaml:parseString("!!float .NaN"));
-    // !!str has no effect: the expected type still decides.
-    show(yaml:parseString("!!str 123"));
-    show(yaml:parseString("[!!str 123]", {}, Strings));
     show(yaml:parseString("!<tag:yaml.org,2002:str> bar"));
+    // A !!str scalar is a string for json (ballerina-platform/ballerina-library#9424).
+    json|yaml:Error strTagged = yaml:parseString("!!str 123");
+    show(strTagged is string);
+    show(yaml:parseString("[!!str 123]", {}, Strings));
     // !!seq and !!map are accepted on matching collections (ballerina-platform/ballerina-library#9673).
     show(yaml:parseString("!!seq [1, 2]"));
     show(yaml:parseString("!!map {a: 1}"));
@@ -72,9 +73,9 @@ public function main() {
 
 // @output [31,15,12,1.0,Infinity,-Infinity,true,null]
 // @output NaN
-// @output 123
-// @output ["123"]
 // @output bar
+// @output true
+// @output ["123"]
 // @output [1,2]
 // @output {"a":1}
 // @output [12,true,null]
