@@ -23,6 +23,7 @@ package native
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"unicode/utf16"
 	"unicode/utf8"
@@ -100,6 +101,10 @@ func throwExpected(chars ...string) error {
 
 var errInvalidDocument = errors.New("invalid JSON document")
 
+func unpairedSurrogateError(code uint16) error {
+	return &parseException{message: fmt.Sprintf("unpaired surrogate escape '\\u%04X'", code)}
+}
+
 type stateMachine struct {
 	*typer
 	projection
@@ -109,6 +114,7 @@ type stateMachine struct {
 	nodes                 []any
 	hexBuilder            []uint16
 	charBuff              []uint16
+	pendingHighSurrogate  uint16
 	index                 int
 	line                  int
 	column                int
@@ -448,6 +454,9 @@ func (sm *stateMachine) fieldName(buff []uint16, i, count int) (parserState, err
 	for ; i < count; i++ {
 		ch := buff[i]
 		sm.processLocation(ch)
+		if err := sm.checkSurrogatePaired(ch != charBackslash); err != nil {
+			return state, err
+		}
 		switch ch {
 		case charQuote:
 			if err := sm.handleFieldName(sm.value()); err != nil {
@@ -522,6 +531,9 @@ func (sm *stateMachine) stringContent(buff []uint16, i, count int, source parser
 	for ; i < count; i++ {
 		ch := buff[i]
 		sm.processLocation(ch)
+		if err := sm.checkSurrogatePaired(ch != charBackslash); err != nil {
+			return state, err
+		}
 		switch ch {
 		case charQuote:
 			next, err := sm.endString(source)
@@ -746,6 +758,9 @@ func (sm *stateMachine) escapedCharacter(buff []uint16, i, count int, source par
 	if i < count {
 		ch := buff[i]
 		sm.processLocation(ch)
+		if err := sm.checkSurrogatePaired(ch != 'u'); err != nil {
+			return state, err
+		}
 		state = source
 		switch ch {
 		case '"':
@@ -786,14 +801,41 @@ func (sm *stateMachine) unicodeHex(buff []uint16, i, count int, source parserSta
 		sm.hexBuilder = append(sm.hexBuilder, ch)
 		if len(sm.hexBuilder) >= 4 {
 			code, _ := strconv.ParseUint(string(utf16.Decode(sm.hexBuilder)), 16, 16)
-			sm.appendChar(uint16(code))
 			sm.hexBuilder = sm.hexBuilder[:0]
+			if err := sm.appendEscapedCodeUnit(uint16(code)); err != nil {
+				return state, err
+			}
 			state = source
 			break
 		}
 	}
 	sm.index = i + 1
 	return state, nil
+}
+
+// appendEscapedCodeUnit rejects a \u escape that leaves a UTF-16 surrogate unpaired; jBallerina keeps it in
+// the string.
+func (sm *stateMachine) appendEscapedCodeUnit(code uint16) error {
+	isLow := code >= 0xDC00 && code <= 0xDFFF
+	switch {
+	case sm.pendingHighSurrogate != 0 && !isLow:
+		return unpairedSurrogateError(sm.pendingHighSurrogate)
+	case sm.pendingHighSurrogate == 0 && isLow:
+		return unpairedSurrogateError(code)
+	case code >= 0xD800 && code <= 0xDBFF:
+		sm.pendingHighSurrogate = code
+	default:
+		sm.pendingHighSurrogate = 0
+	}
+	sm.appendChar(code)
+	return nil
+}
+
+func (sm *stateMachine) checkSurrogatePaired(breaksPair bool) error {
+	if breaksPair && sm.pendingHighSurrogate != 0 {
+		return unpairedSurrogateError(sm.pendingHighSurrogate)
+	}
+	return nil
 }
 
 func isHexDigit(ch uint16) bool {

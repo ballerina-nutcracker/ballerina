@@ -4,7 +4,17 @@ true incompatible expected type 'json' for value ''
 true incompatible expected type 'decimal' for value '1e6145'
 true invalid JSON document
 true required field 'a' not present in JSON
-efbfbd7cf09f9880
+true 'unpaired surrogate escape '\uD83D'' at line: '1' column: '8'
+true 'unpaired surrogate escape '\uDC00'' at line: '1' column: '7'
+true 'unpaired surrogate escape '\uD800'' at line: '1' column: '13'
+true 'unpaired surrogate escape '\uD800'' at line: '1' column: '8'
+true 'unpaired surrogate escape '\uDE00'' at line: '1' column: '7'
+true 'unpaired surrogate escape '\uD800'' at line: '1' column: '9'
+true 'unpaired surrogate escape '\uD800'' at line: '1' column: '8'
+true 'unpaired surrogate escape '\uDC00'' at line: '1' column: '12'
+true 'unpaired surrogate escape '\uD800'' at line: '1' column: '9'
+true 'unpaired surrogate escape '\uD800'' at line: '1' column: '10'
+1 f09f9880
 true invalid UTF-8 byte at offset 2
 true invalid UTF-8 byte at offset 2
 true 'leading zero in number '01'' at line: '1' column: '4'

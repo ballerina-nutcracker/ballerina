@@ -49,9 +49,32 @@ public function main() {
     Pair|jsondata:Error r5 = jsondata:parseString("{}");
     show(r5);
     // @output true required field 'a' not present in JSON
-    string|jsondata:Error r6 = jsondata:parseString("\"\\ud83d|\\ud83d\\ude00\"");
-    if r6 is string {
-        io:println(r6.toBytes().toBase16()); // @output efbfbd7cf09f9880
+    foreach string input in ["\"\\ud83d\"", "\"\\uDC00\"", "\"\\uD800\\u0041\"", "\"\\uD800x\"", "\"\\uDE00\\uD83D\"", "\"\\uD800\\n\""] {
+        json|jsondata:Error r6 = jsondata:parseString(input);
+        show(r6);
+    }
+    // @output true 'unpaired surrogate escape '\uD83D'' at line: '1' column: '8'
+    // @output true 'unpaired surrogate escape '\uDC00'' at line: '1' column: '7'
+    // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '13'
+    // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '8'
+    // @output true 'unpaired surrogate escape '\uDE00'' at line: '1' column: '7'
+    // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '9'
+    string|jsondata:Error r6s = jsondata:parseString("\"\\uD800\"");
+    show(r6s);
+    // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '8'
+    record {|string a;|}|jsondata:Error r6r = jsondata:parseBytes("{\"a\":\"\\uDC00\"}".toBytes());
+    show(r6r);
+    // @output true 'unpaired surrogate escape '\uDC00'' at line: '1' column: '12'
+    map<string>|jsondata:Error r6k = jsondata:parseString("{\"\\uD800\":\"x\"}");
+    show(r6k);
+    // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '9'
+    stream<byte[], error?> s6 = ["[\"a\\uD800\"]".toBytes()].toStream();
+    string[]|jsondata:Error r6t = jsondata:parseStream(s6);
+    show(r6t);
+    // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '10'
+    string|jsondata:Error r6p = jsondata:parseBytes("\"\\uD83D\\uDE00\"".toBytes());
+    if r6p is string {
+        io:println(r6p.length(), " ", r6p.toBytes().toBase16()); // @output 1 f09f9880
     }
     byte[] invalidUtf8 = [0x22, 0x61, 0xff, 0x62, 0x22];
     stream<byte[], error?> s7 = [invalidUtf8].toStream();
