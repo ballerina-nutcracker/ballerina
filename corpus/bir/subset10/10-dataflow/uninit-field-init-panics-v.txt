@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+class Foo {
+  a int
+  b int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad always
+      %3 = newError error(%2)
+      panic %3;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad ok
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
