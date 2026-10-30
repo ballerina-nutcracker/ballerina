@@ -60,10 +60,11 @@ type typeInfo struct {
 	conversionOrder []typeInfo
 }
 
-// isBasic is CsvUtils.isBasicType: the member types transform accepts inside a union.
+// isBasic is CsvUtils.isBasicType: the member types transform accepts inside a union. Unlike
+// jBallerina, a finite member such as "A"|"B" or an enum is accepted (ballerina-library#9411).
 func (ti typeInfo) isBasic() bool {
 	switch ti.kind {
-	case kindRecord, kindMap, kindArray, kindTuple, kindFinite, kindUnsupported:
+	case kindRecord, kindMap, kindArray, kindTuple, kindUnsupported:
 		return false
 	}
 	return true
