@@ -1,0 +1,92 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition AppError
+    (error-type))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable root (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal root))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation cause expr:
+              (simple-var-ref root) ())
+            (value-type null)))))
+      (var-def
+        (variable mid (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal mid)
+            (simple-var-ref root))))))
+      (var-def
+        (variable top (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal top)
+            (simple-var-ref mid))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation error message (
+            (simple-var-ref top))))))
+      (var-def
+        (variable cause (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation error cause (
+            (simple-var-ref top))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref cause)
+          (error-type))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation message expr:
+                (simple-var-ref cause) ()))))
+          (var-def
+            (variable inner (type
+              (union-type
+                (error-type)
+                (value-type null))) (expr
+              (invocation cause expr:
+                (simple-var-ref cause) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref inner)
+              (error-type))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation message expr:
+                    (simple-var-ref inner) ()))))) ())
+          (block-stmt)) ())
+      (block-stmt
+        (var-def
+          (variable app (type
+            (user-defined-type AppError)) (expr
+            (error-constructor-expr
+              (user-defined-type AppError) (
+              (literal app)
+              (simple-var-ref top))))))
+        (var-def
+          (variable appCause (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (invocation cause expr:
+              (simple-var-ref app) ()))))
+        (expression-stmt
+          (invocation io println (
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref appCause)
+                (error-type))
+              (invocation message expr:
+                (simple-var-ref appCause) ())
+              (literal none)))))))))

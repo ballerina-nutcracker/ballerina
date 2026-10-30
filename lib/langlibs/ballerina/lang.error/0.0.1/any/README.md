@@ -6,7 +6,7 @@ Support status of the `lang.error` lang library functions against the public fun
 
 | Feature/API | Support Status | Comments |
 |---|---|---|
-| cause | Not Yet Supported | Not declared |
+| cause | Supported | |
 | detail | Not Yet Supported | Not declared |
 | message | Supported | |
 | stackTrace | Not Yet Supported | Not declared |
