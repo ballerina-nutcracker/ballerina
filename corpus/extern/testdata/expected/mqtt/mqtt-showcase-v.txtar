@@ -1,0 +1,11 @@
+-- stdout --
+connected: true
+delivered to: showcase/request
+client got: pong to ping on showcase/request qos=1 retained=false
+correlation: id-1
+after close: Stream is closed. Therefore, no operations are allowed further on the stream.
+connected: false
+reconnected: true
+close while connected: Client is connected
+connect failed: Unable to connect to server
+-- stderr --

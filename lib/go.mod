@@ -14,6 +14,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0
+	github.com/eclipse/paho.golang v0.23.0
 	github.com/go-ldap/ldap/v3 v3.4.13
 	golang.org/x/crypto v0.52.0
 	golang.org/x/text v0.37.0

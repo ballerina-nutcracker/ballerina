@@ -1,0 +1,24 @@
+-- stdout --
+echo a qos=1
+echo b qos=0
+re: q1 correlation=c-1
+onComplete listener-v/replies
+respond failed: Response topic is not set
+onError method onMessage not found
+onError onMessage panicked on p
+respond: Client is not connected, complete: Client is not connected
+onComplete after detach listener-v/detach-replies
+retained-echo kept
+retained-echo after
+detach: ok
+detach again: ok
+echo c qos=1
+detach: ok
+gracefulStop after detach: ok
+gracefulStop: ok
+gracefulStop again: Client is closed
+immediateStop: ok
+gracefulStop panicking: ok
+gracefulStop detaching: ok
+immediateStop unattached: ok
+-- stderr --

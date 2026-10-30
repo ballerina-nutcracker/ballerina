@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrow-module-final-forms-e.bal:24:13
+   |
+24 |     int a = finalVar is int ? finalVar : 0; // @error a final module variable cannot be narrowed
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrow-module-final-forms-e.bal:27:17
+   |
+27 |         int b = finalVar; // @error a final module variable cannot be narrowed
+   |                 ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrow-module-final-forms-e.bal:32:17
+   |
+32 |         int c = finalVar; // @error a final module variable cannot be narrowed
+   |                 ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> narrow-module-final-forms-e.bal:36:17
+   |
+36 |         int d = finalVar; // @error a final module variable cannot be narrowed
+   |                 ^^^^^^^^

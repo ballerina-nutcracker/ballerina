@@ -1,0 +1,43 @@
+{
+  "source": "",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": "bad",
+      "method": "initialize",
+      "params": {
+        "capabilities": false
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": "bad",
+      "error": {
+        "code": -32602,
+        "message": "invalid initialize parameters"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    }
+  ]
+}
