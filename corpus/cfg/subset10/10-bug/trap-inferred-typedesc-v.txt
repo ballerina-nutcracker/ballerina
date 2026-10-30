@@ -1,0 +1,151 @@
+(convert
+  (bb0 () ()
+    (trap-expr
+      (invocation lang.value cloneWithType (
+        (simple-var-ref v)
+        (typedesc-expr))))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable v (type
+        (value-type anydata)) (expr
+        (literal abc))))
+    (var-def
+      (variable a (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref v)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (error-type)))))
+    (var-def
+      (variable w (type
+        (value-type anydata)) (expr
+        (literal 42))))
+    (var-def
+      (variable b (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref w)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (var-def
+      (variable c (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (trap-expr
+          (trap-expr
+            (invocation lang.value cloneWithType (
+              (simple-var-ref v)
+              (typedesc-expr))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable d (type
+        (union-type
+          (union-type
+            (value-type int)
+            (value-type string))
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref v)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+    (var-def
+      (variable m (type
+        (value-type anydata)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type R)
+          (error-type))) (expr
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref m)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation show (
+        (trap-expr
+          (invocation lang.value cloneWithType (
+            (simple-var-ref w)
+            (typedesc-expr)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation convert (
+            (simple-var-ref v)))
+          (error-type)))))
+    (var-def
+      (variable l (type
+        (union-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (error-type))) (expr
+        (trap-expr
+          (list-constructor-expr
+            (literal 1))))))
+    (type-test-expr is
+      (simple-var-ref l)
+      (array-type
+        (value-type int) dimensions: 1 ([])))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref l)
+        (literal 2))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref l))))
+    (var-def
+      (variable f (type
+        (union-type
+          (value-type float)
+          (error-type))) (expr
+        (trap-expr
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+  )
+)
+(show
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref v)
+            (error-type))
+          (literal error)
+          (invocation lang.value toString (
+            (simple-var-ref v)))))))
+  )
+)

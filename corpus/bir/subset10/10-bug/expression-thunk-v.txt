@@ -110,7 +110,7 @@ main() -> nil{
   }
   bb1 {
     %2 = ConstantLoad 0
-    %3 = newArray [int, int...][%2]{}
+    %3 = newArray [int...][%2]{}
     $desugar$0 = %3;
     %5 = ConstantLoad 0
     %6 = %5;
@@ -415,7 +415,7 @@ main() -> nil{
   }
   bb57 {
     %125 = ConstantLoad 0
-    %126 = newArray [int, int...][%125]{}
+    %126 = newArray [int...][%125]{}
     $desugar$20 = %126;
     %128 = ConstantLoad 0
     %129 = %128;

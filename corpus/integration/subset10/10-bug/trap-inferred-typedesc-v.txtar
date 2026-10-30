@@ -1,0 +1,11 @@
+-- stdout --
+true
+42
+abc
+abc
+{"x":1}
+42
+true
+[1,2]
+1.0
+-- stderr --

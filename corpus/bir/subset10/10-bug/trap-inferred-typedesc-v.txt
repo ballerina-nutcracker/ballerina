@@ -1,0 +1,219 @@
+module $anon.. v 0.0.0;
+show(int|error) -> nil{
+  bb0 {
+    %3 = v is error
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad error
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %5 = toString(v) -> bb4;
+  }
+  bb3 {
+    %6 = println(%2) -> bb5;
+  }
+  bb4 {
+    %2 = %5;
+    GOTO bb3;
+  }
+  bb5 {
+    return;
+  }
+}
+convert(anydata) -> int|error{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad typedesc
+    %4 = cloneWithType(v,%3) -> bb2;
+  }
+  bb2 {
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %2
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad abc
+    v = %1;
+    GOTO bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad typedesc
+    %5 = cloneWithType(v,%4) -> bb2;
+  }
+  bb2 {
+    %3 = %5;
+    GOTO bb3;
+  }
+  bb3 {
+    a = %3;
+    %7 = a is error
+    %8 = %7;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    %10 = ConstantLoad 42
+    w = %10;
+    GOTO bb5;
+  }
+  bb5 {
+    %13 = ConstantLoad typedesc
+    %14 = cloneWithType(w,%13) -> bb6;
+  }
+  bb6 {
+    %12 = %14;
+    GOTO bb7;
+  }
+  bb7 {
+    b = %12;
+    %16 = println(b) -> bb8;
+  }
+  bb8 {
+    GOTO bb9;
+  }
+  bb9 {
+    GOTO bb10;
+  }
+  bb10 {
+    %19 = ConstantLoad typedesc
+    %20 = cloneWithType(v,%19) -> bb11;
+  }
+  bb11 {
+    %18 = %20;
+    GOTO bb12;
+  }
+  bb12 {
+    %17 = %18;
+    GOTO bb13;
+  }
+  bb13 {
+    c = %17;
+    %22 = println(c) -> bb14;
+  }
+  bb14 {
+    GOTO bb15;
+  }
+  bb15 {
+    %24 = ConstantLoad typedesc
+    %25 = cloneWithType(v,%24) -> bb16;
+  }
+  bb16 {
+    %23 = %25;
+    GOTO bb17;
+  }
+  bb17 {
+    d = %23;
+    %27 = println(d) -> bb18;
+  }
+  bb18 {
+    %28 = ConstantLoad x
+    %29 = ConstantLoad 1
+    %30 = newMap {| anydata... |}{%28=%29}
+    m = %30;
+    GOTO bb19;
+  }
+  bb19 {
+    %33 = ConstantLoad typedesc
+    %34 = cloneWithType(m,%33) -> bb20;
+  }
+  bb20 {
+    %32 = %34;
+    GOTO bb21;
+  }
+  bb21 {
+    r = %32;
+    %36 = println(r) -> bb22;
+  }
+  bb22 {
+    GOTO bb23;
+  }
+  bb23 {
+    %38 = ConstantLoad typedesc
+    %39 = cloneWithType(w,%38) -> bb24;
+  }
+  bb24 {
+    %37 = %39;
+    GOTO bb25;
+  }
+  bb25 {
+    %40 = show(%37) -> bb26;
+  }
+  bb26 {
+    %41 = convert(v) -> bb27;
+  }
+  bb27 {
+    %42 = %41 is error
+    %43 = %42;
+    %44 = println(%43) -> bb28;
+  }
+  bb28 {
+    GOTO bb29;
+  }
+  bb29 {
+    %46 = ConstantLoad 1
+    %47 = ConstantLoad 1
+    %48 = newArray [int...][%47]{%46}
+    %45 = %48;
+    GOTO bb30;
+  }
+  bb30 {
+    l = %45;
+    %50 = l is [int...]
+    %50 ? bb31 : bb33;
+  }
+  bb31 {
+    PushScopeFrame 3
+    %0 = ConstantLoad 2
+    %1 = %0;
+    %2 = push((1, l),%1) -> bb32;
+  }
+  bb32 {
+    PopScopeFrame
+    GOTO bb33;
+  }
+  bb33 {
+    PushScopeFrame 5
+    %0 = println((1, l)) -> bb34;
+  }
+  bb34 {
+    GOTO bb35;
+  }
+  bb35 {
+    %2 = ConstantLoad 1
+    %1 = %2;
+    GOTO bb36;
+  }
+  bb36 {
+    f = %1;
+    %4 = println(f) -> bb37;
+  }
+  bb37 {
+    PopScopeFrame
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %3
+    [bb5, bb6] -> bb7, %12
+    [bb10, bb11] -> bb12, %18
+    [bb9, bb12] -> bb13, %17
+    [bb15, bb16] -> bb17, %23
+    [bb19, bb20] -> bb21, %32
+    [bb23, bb24] -> bb25, %37
+    [bb29, bb29] -> bb30, %45
+    [bb35, bb35] -> bb36, %1
+  }
+}

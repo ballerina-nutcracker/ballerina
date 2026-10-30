@@ -3872,7 +3872,7 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangCheckPanickedExpr:
 		return resolved(resolveCheckedExpr(t, chain, &e.BLangCheckedExpr, expectedType))
 	case *ast.BLangTrapExpr:
-		return resolved(resolveTrapExpr(t, chain, e))
+		return resolved(resolveTrapExpr(t, chain, e, expectedType))
 	case *ast.BLangNamedArgsExpression:
 		result, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
 		if !ok {
@@ -4524,8 +4524,8 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 	return resultTy, defaultExpressionEffect(chain), true
 }
 
-func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semtypes.SemType, expressionEffect, bool) {
-	exprResult, ok := resolveActionOrExpression(t, chain, e.Expr, semtypes.SemType{})
+func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	exprResult, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
