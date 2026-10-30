@@ -52,6 +52,18 @@ func schemaOf(v values.BalValue) yamlSchema {
 	return schemaCore
 }
 
+// reservesWord reports whether the schema reads text as null or a boolean rather than a string: the JSON
+// schema reserves null, true and false, and the core schema also their capitalised forms and ~.
+func (s yamlSchema) reservesWord(text string) bool {
+	switch s {
+	case schemaJSON:
+		return isAnyOf(text, "null", "true", "false")
+	case schemaCore:
+		return isAnyOf(text, "null", "Null", "NULL", "~", "true", "True", "TRUE", "false", "False", "FALSE")
+	}
+	return false
+}
+
 type readOptions struct {
 	schema                    yamlSchema
 	allowAnchorRedefinition   bool
