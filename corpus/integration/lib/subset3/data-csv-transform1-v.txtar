@@ -22,6 +22,11 @@ error {ballerina/lang.value}ConversionError ("'\"xy\"' value cannot be converted
 error Error ("value 'z' in index '0' is not compatible with array type '(\"x\"|\"y\")'")
 [{"grade":"B","level":2,"color":"GREEN"}]
 error Error ("no mapping type found for value '3' in key 'level'")
+[{"grade":"A"},{"grade":null}]
+error Error ("no mapping type found for value 'C' in key 'grade'")
+[{"color":"RED"}]
+[{"n":2},{"n":"x"}]
+error Error ("no mapping type found for value '3' in key 'n'")
 [{"a":"1"}]
 error Error ("expected a array type, found 'int[]' ")
 [{"a":1}]
