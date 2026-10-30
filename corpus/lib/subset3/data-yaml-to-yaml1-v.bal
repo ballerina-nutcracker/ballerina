@@ -67,11 +67,16 @@ public function main() {
     show(yaml:toYamlString({parent: {child: 1}}, {indentationPolicy: 0}));
     show(yaml:toYamlString({a: {}}, {indentationPolicy: 0}));
     show(yaml:toYamlString([{}], {indentationPolicy: 0}));
-    // The schema decides which plain strings would be read as null, a boolean or a number.
-    string[] words = ["true", "True", "null", "~", "1", "1.5", "+12", "0x1F", ".inf", "a: b"];
-    show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:FAILSAFE_SCHEMA}));
-    show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:JSON_SCHEMA}));
-    show(yaml:toYamlString(words, {flowStyle: true, schema: yaml:CORE_SCHEMA}));
+    // Words the reader converts in every schema are quoted; the core schema also quotes its own forms.
+    string[] words = ["true", "True", "null", "~", "1", "1.5", "+12", "Infinity", "0x1p3", "0x1F", ".inf", "a: b"];
+    yaml:YAMLSchema[] schemas = [yaml:FAILSAFE_SCHEMA, yaml:JSON_SCHEMA, yaml:CORE_SCHEMA];
+    foreach yaml:YAMLSchema schema in schemas {
+        string|error written = yaml:toYamlString(words, {flowStyle: true, schema});
+        show(written);
+        if written is string {
+            io:println(yaml:parseString(written, {schema}, json));
+        }
+    }
     // Quoted strings read back as the same strings into json.
     map<json> quoted = {a: "1", b: "1.", c: "true", d: "null", e: "0x1F", f: 1};
     foreach boolean flowStyle in [false, true] {
@@ -203,11 +208,14 @@ public function main() {
 // @output --
 // @output - {}
 // @output --
-// @output [true, True, null, ~, 1, 1.5, +12, 0x1F, .inf, "a: b"]
+// @output ["true", True, "null", ~, "1", "1.5", "+12", "Infinity", "0x1p3", 0x1F, .inf, "a: b"]
 // @output --
-// @output ["true", True, "null", ~, "1", "1.5", +12, 0x1F, .inf, "a: b"]
+// @output ["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+// @output ["true", True, "null", ~, "1", "1.5", "+12", "Infinity", "0x1p3", 0x1F, .inf, "a: b"]
 // @output --
-// @output ["true", "True", "null", "~", "1", "1.5", "+12", "0x1F", ".inf", "a: b"]
+// @output ["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+// @output ["true", "True", "null", "~", "1", "1.5", "+12", "Infinity", "0x1p3", "0x1F", ".inf", "a: b"]
 // @output --
+// @output ["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
 // @output {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
 // @output {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}

@@ -120,12 +120,15 @@ a: {}
 --
 - {}
 --
-[true, True, null, ~, 1, 1.5, +12, 0x1F, .inf, "a: b"]
+["true", True, "null", ~, "1", "1.5", "+12", "Infinity", "0x1p3", 0x1F, .inf, "a: b"]
 --
-["true", True, "null", ~, "1", "1.5", +12, 0x1F, .inf, "a: b"]
+["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+["true", True, "null", ~, "1", "1.5", "+12", "Infinity", "0x1p3", 0x1F, .inf, "a: b"]
 --
-["true", "True", "null", "~", "1", "1.5", "+12", "0x1F", ".inf", "a: b"]
+["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+["true", "True", "null", "~", "1", "1.5", "+12", "Infinity", "0x1p3", "0x1F", ".inf", "a: b"]
 --
+["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
 {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
 {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
 -- stderr --
