@@ -43,3 +43,42 @@ func TestMappingAtomicTypeRest(t *testing.T) {
 		})
 	}
 }
+
+func TestMappingAtomicTypeFields(t *testing.T) {
+	env := CreateTypeEnv()
+	cx := ContextFrom(env)
+	md := NewMappingDefinition()
+	fields := []Field{
+		{name: "name", typeOf: String},
+		{name: "age", typeOf: Int, optional: true},
+	}
+	atomic := ToMappingAtomicType(cx, md.Define(env, fields, Boolean))
+	if atomic == nil {
+		t.Fatal("expected a mapping atomic type")
+	}
+	if got := atomic.FieldNames(); len(got) != 2 || got[0] != "age" || got[1] != "name" {
+		t.Errorf("got field names %v expected [age name]", got)
+	}
+	innerVals := []struct {
+		field    string
+		expected SemType
+	}{
+		{"name", String},
+		{"age", Int},
+		{"other", Boolean},
+	}
+	for _, tt := range innerVals {
+		if got := atomic.FieldInnerVal(tt.field); !IsSameType(cx, got, tt.expected) {
+			t.Errorf("FieldInnerVal(%q): got %s expected %s", tt.field, ToString(cx, got), ToString(cx, tt.expected))
+		}
+	}
+	if !IsSameType(cx, CellInnerVal(atomic.FieldCell("other")), atomic.Rest()) {
+		t.Error("FieldCell of an undeclared field should be the rest cell")
+	}
+	optional := map[string]bool{"name": false, "age": true, "other": true}
+	for field, expected := range optional {
+		if got := atomic.IsOptional(cx, field); got != expected {
+			t.Errorf("IsOptional(%q): got %v expected %v", field, got, expected)
+		}
+	}
+}
