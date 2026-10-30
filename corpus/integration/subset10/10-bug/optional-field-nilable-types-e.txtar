@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field base access is not allowed for optional field 'a' whose type includes nil, use optional field access instead
+  --> optional-field-nilable-types-e.bal:27:14
+   |
+27 |     any x1 = r.a; // @error
+   |              ^^^
+
+error[SEMANTIC_ERROR]: field base access is not allowed for optional field 'b' whose type includes nil, use optional field access instead
+  --> optional-field-nilable-types-e.bal:28:15
+   |
+28 |     json x2 = r.b; // @error
+   |               ^^^
+
+error[SEMANTIC_ERROR]: field base access is not allowed for optional field 'c' whose type includes nil, use optional field access instead
+  --> optional-field-nilable-types-e.bal:29:13
+   |
+29 |     () x3 = r.c; // @error
+   |             ^^^
+
+error[SEMANTIC_ERROR]: field base access is not allowed for optional field 'd' whose type includes nil, use optional field access instead
+  --> optional-field-nilable-types-e.bal:30:22
+   |
+30 |     int|string? x4 = r.d; // @error
+   |                      ^^^

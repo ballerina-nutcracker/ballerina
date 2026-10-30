@@ -6649,6 +6649,10 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 		var ok bool
 		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, expr.IsLexpr())
 		if !ok {
+			if !expr.IsLexpr() && optionalFieldIncludesNil(tyCtx, mappingTy, key) {
+				t.semanticError(fmt.Sprintf("field base access is not allowed for optional field '%s' whose type includes nil, use optional field access instead", key), expr.GetPosition())
+				return expressionResult{}, false
+			}
 			t.semanticError("field base access is only possible for declared fields", expr.GetPosition())
 			return expressionResult{}, false
 		}
@@ -6766,15 +6770,23 @@ func reportReadonlyMutation(t typeResolver, tyCtx semtypes.Context, containerTy 
 	t.semanticError(fmt.Sprintf("cannot mutate readonly field '%s'", key), loc)
 }
 
+func optionalFieldIncludesNil(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string) bool {
+	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, semtypes.StringConst(key))
+	return semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) && semtypes.ContainsUndef(memberTy) && semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef))
+}
+
 func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, isLexpr bool) (semtypes.SemType, bool) {
 	keyTy := semtypes.StringConst(key)
 	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, keyTy)
 	if !semtypes.ContainsUndef(memberTy) {
 		return memberTy, true
 	}
-	// I think the correct thing to check is if any has an "optional" field by the name but spec if very specific in
-	// same any declared feild (without optional qualifier)
+	// A read of an optional field is rewritten to an optional access only if some declared field has that name and
+	// the member type does not include nil, otherwise an absent field and a field holding () look the same.
 	if !isLexpr && semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
+		if optionalFieldIncludesNil(tyCtx, containerExprTy, key) {
+			return semtypes.SemType{}, false
+		}
 		return semtypes.Union(semtypes.Diff(memberTy, semtypes.Undef), semtypes.Nil), true
 	}
 	if isLexpr && semtypes.AllMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
