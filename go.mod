@@ -24,9 +24,13 @@ require (
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667
+	github.com/fclairamb/ftpserverlib v0.32.4
 	github.com/go-ldap/ldap/v3 v3.4.13
+	github.com/pkg/sftp v1.13.12
+	github.com/spf13/afero v1.15.0
+	golang.org/x/crypto v0.54.0
+	golang.org/x/tools v0.47.0
 	github.com/mochi-mqtt/server/v2 v2.7.9
-	golang.org/x/tools v0.44.0
 )
 
 require (
@@ -36,12 +40,13 @@ require (
 	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/jlaffaye/ftp v0.2.4 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 )
 
 require github.com/fsnotify/fsnotify v1.10.1

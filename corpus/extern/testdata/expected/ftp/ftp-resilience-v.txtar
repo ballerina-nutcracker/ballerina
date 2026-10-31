@@ -1,0 +1,28 @@
+-- stdout --
+Error: Failed to read file: ftp://ballerina:***@127.0.0.1:PORT/missing.txt not found
+true
+true
+true
+true
+fine
+true
+true
+3
+true
+true true
+true
+CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
+true
+true
+here
+true
+true
+true
+true
+false
+true
+true
+true
+false
+true
+-- stderr --

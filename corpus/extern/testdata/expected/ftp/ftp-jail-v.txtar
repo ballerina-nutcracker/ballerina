@@ -1,0 +1,13 @@
+-- stdout --
+true
+outside
+true
+true
+["in.txt"]
+inside
+written
+outside
+3221225472
+[3221225472]
+["/looped/a.txt"]
+-- stderr --

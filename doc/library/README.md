@@ -11,6 +11,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
+| [ftp](../../lib/stdlibs/ballerina/ftp/0.0.1/go1.27/README.md)                | 24 | 7 | 6 | 65% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **304** | **38** | **77** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -53,6 +54,28 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **`gracefulStop()` also releases the OS watch.** jBallerina's `gracefulStop()` is a no-op that leaves the directory-watching thread running until process exit; the Go-native version closes the underlying OS watch deterministically on either `gracefulStop()` or `immediateStop()`, since a single long-lived process here may create and stop many listeners (e.g. across test runs) rather than one listener per JVM process.
 - **`copy` follows symlinked directories into their contents.** Without `NO_FOLLOW_LINKS`, jBallerina copies a symlink to a directory, whether it is the source itself or an entry inside a copied tree, as an empty directory: it treats the source as a directory but walks the tree without following links. The Go-native version copies the target directory's full contents instead, and fails with an error if following links would loop back to a directory already being copied. With `NO_FOLLOW_LINKS` both versions copy the link itself.
 - **`attach()` returns its validation error instead of panicking.** jBallerina's directory listener throws the "at least a single resource required" validation failure as an uncaught exception, observable in Ballerina only via `trap`. The Go-native version returns it through `attach()`'s documented `error?` return type.
+
+### ftp
+
+- **FTPS data channel protection.** jBallerina negotiates the `dataChannelProtection` level (`CLEAR`, `PRIVATE`, `SAFE`, `CONFIDENTIAL`); the Go-native version always negotiates `PROT P` (`PRIVATE`) — the Go FTP client offers no other level.
+- **FTPS key and trust stores.** jBallerina reads JKS and PKCS12 stores; the Go-native version reads PKCS12 stores and PEM certificate files only — Go has no JKS reader.
+- **SFTP compression and GSSAPI.** jBallerina negotiates `sftpCompression` and can authenticate with `GSSAPI_WITH_MIC`; the Go-native version always transfers uncompressed and skips `GSSAPI_WITH_MIC` — the Go SSH library supports neither.
+- **SFTP session timeout.** jBallerina applies `sftpSessionTimeout` as the SSH socket timeout; the Go-native version applies only `connectTimeout` to SFTP connections.
+- **Regular expressions.** jBallerina compiles file name and dependency patterns as Java regular expressions; the Go-native version uses Go regular expressions, which reject look-around and back-references, and reports invalid patterns with Go's error text.
+- **File permissions in FileInfo.** jBallerina reports SFTP readability, writability and executability for the connected user; the Go-native version reports the owner permission bits.
+- **Handler failure output.** jBallerina prints a stack trace when a listener handler fails or a file cannot be read; the Go-native version prints `error: <message>` to stderr.
+- **Deleting a non-empty folder.** jBallerina's `delete` returns `()` and leaves a non-empty folder in place; the Go-native version returns an `ftp:Error` — spec section 3.4 requires an error when the operation fails.
+- **Credentials in file URIs.** jBallerina puts the plaintext password in `FileInfo.path`, `uri` and `rootURI` (listener handlers and `list`), in the deleted-file paths of `onFileDelete`, `onFileDeleted` and `WatchEvent.deletedFiles`, and in a listener `ContentBindingError`'s `filePath`; the Go-native version leaves the user and password out of these URIs (`ftp://host:port/path`), while `friendlyURI` and `publicURIString` keep `user:***@` (ballerina-platform/ballerina-library#9381, #9286).
+- **Deletion detection.** jBallerina reports a deleted file once for each poll that had reported it, and reports no deletion while the watched directory is empty; the Go-native version reports each deletion once, including the last file of a directory (ballerina-platform/ballerina-library#9288, #9380).
+- **Reply-code classification.** jBallerina takes the first 3-digit word of an error message as the FTP reply code, so `127` of `127.0.0.1` hides a `421` reply; the Go-native version uses the code of the server reply, and otherwise the last 3-digit word of the message (ballerina-platform/ballerina-library#9383).
+- **ZIP archive name.** jBallerina's `put` with `ftp:ZIP` cuts the whole path at its last dot, so `/v1.2/report` uploads to `/v1.zip` and a path without a dot panics; the Go-native version replaces the extension of the file name, or appends `.zip` when it has none (ballerina-platform/ballerina-library#9382).
+- **Removing a non-empty folder.** jBallerina's `rmdir` deletes a non-empty folder with everything inside it; the Go-native version returns an `ftp:Error` and leaves the folder in place — spec section 3.4 of 2.22.0 says `rmdir` fails on a non-empty folder (ballerina-platform/ballerina-library#9410).
+- **Unreadable known_hosts file.** jBallerina logs a warning and connects without host key verification when the `sftpSshKnownHosts` file does not exist; the Go-native version fails the SFTP connection with an `ftp:Error` (ballerina-platform/ballerina-library#9421).
+- **File size.** jBallerina's `size` narrows the size to 32 bits, so a 3 GiB file reports `-1073741824` while `list` reports `3221225472`; the Go-native version returns the full size from both (ballerina-platform/ballerina-library#9420).
+- **Symbolic link loops in listener scans.** jBallerina follows a symbolic link back into the folder being scanned again at every level, so a watched folder holding such links reports no files; the Go-native version does not follow a linked folder that lists the same entries as a folder being scanned (ballerina-platform/ballerina-library#9422).
+- **Circuit breaker failures across buckets.** jBallerina counts a failure in the bucket where the request ends but leaves the bucket where it started as the last one used, so the next window update clears a failure that ended in a later bucket and the circuit may never open; the Go-native version counts every failure (ballerina-platform/ballerina-library#9423).
+- **Socket timeouts are connection failures.** jBallerina passes the wrapping Ballerina error, not the Java exception, to the circuit breaker, so a `Read timed out` failure from `ftpSocketTimeout` falls in no failure category and a circuit breaker never opens on a hung server; the Go-native version counts a socket timeout as a `CONNECTION_ERROR`, as the `FailureCategory` documentation states (ballerina-platform/ballerina-library#9430).
+- **Transport error causes.** jBallerina reports connection and transfer failures with commons-vfs and JSch messages; the Go-native version keeps the same outer messages and error types but the underlying cause text comes from the Go network, FTP and SSH libraries.
 
 ### http
 

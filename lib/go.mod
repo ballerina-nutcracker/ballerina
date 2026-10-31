@@ -16,8 +16,10 @@ require (
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0
 	github.com/eclipse/paho.golang v0.23.0
 	github.com/go-ldap/ldap/v3 v3.4.13
-	golang.org/x/crypto v0.52.0
-	golang.org/x/text v0.37.0
+	github.com/jlaffaye/ftp v0.2.4
+	github.com/pkg/sftp v1.13.12
+	golang.org/x/crypto v0.54.0
+	golang.org/x/text v0.40.0
 	google.golang.org/protobuf v1.36.12
 )
 
@@ -32,6 +34,7 @@ require (
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/linkedin/goavro/v2 v2.15.0
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )

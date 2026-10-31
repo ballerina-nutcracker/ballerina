@@ -1,0 +1,89 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+//
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+import ballerina/io;
+
+# Record returned from the `ByteStream.next()` method.
+#
+# + value - The array of bytes
+type StreamEntry record {|
+    byte[] & readonly value;
+|};
+
+# Stream for reading file content in byte chunks from the FTP server.
+# This stream wraps the underlying I/O byte channel.
+class ByteStream {
+
+    private Client entity;
+    private boolean isClosed = false;
+    private string resourcePath;
+    private boolean initialStreamEntryConsumed = false;
+    private StreamEntry? initialStreamEntry = ();
+
+    # Initialize a `ByteStream` using a `ftp:Client`.
+    #
+    # + entity - The `ftp:Client` which contains the byte stream
+    # + resourcePath - The local path of the file/directory
+    # + arraySize - The size of a byte array as an integer
+    public isolated function init(Client entity, string resourcePath) returns Error? {
+        self.entity = entity;
+        self.resourcePath = resourcePath;
+        record {|byte[] & readonly value;|}|Error? tempInitialStreamEntity
+            = externInitialGetStreamEntryRecord(self.entity, self.resourcePath);
+        if tempInitialStreamEntity is Error {
+            return tempInitialStreamEntity;
+        } else {
+            self.initialStreamEntry = tempInitialStreamEntity;
+        }
+    }
+
+    # Reads and return the next `byte[]` of the related stream.
+    #
+    # + return - A `record` of `byte[]`s when the stream is available,
+    #            `()` if the stream has reached the end or else an `io:Error`
+    public isolated function next() returns record {|byte[] & readonly value;|}|io:Error? {
+        if self.initialStreamEntryConsumed {
+            return externGetStreamEntryRecord(self.entity);
+        } else {
+            self.initialStreamEntryConsumed = true;
+            return self.initialStreamEntry;
+        }
+    }
+
+    # Closes the stream. The primary usage of this function is to close the stream without reaching the end.
+    # If the stream reaches the end, the `byteStream.next` will automatically close the stream.
+    #
+    # + return - Returns `()` when the closing was successful or an `io:Error`
+    public isolated function close() returns io:Error? {
+        if !self.isClosed {
+            var closeResult = externCloseInputStream(self.entity);
+            if closeResult is () {
+                self.isClosed = true;
+            }
+            return closeResult;
+        }
+        return ();
+    }
+}
+
+isolated function externGetStreamEntryRecord(Client entity)
+        returns record {|byte[] & readonly value;|}|io:Error? = external;
+
+isolated function externInitialGetStreamEntryRecord(Client entity, string path)
+        returns record {|byte[] & readonly value;|}|Error? = external;
+
+isolated function externCloseInputStream(Client entity) returns io:Error? = external;
