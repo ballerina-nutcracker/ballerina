@@ -1,0 +1,19 @@
+-- stdout --
+application/octet-stream
+server stream
+bytes=10000 blocks=3
+{"data":"hello"}
+{"data":"a\nb","id":"1","event":"update"}
+text/event-stream
+no-cache,public
+["data: hello\n\nid: 1\nevent: update\ndata: a\ndata: b\n\n"]
+no-store
+["data: ok\n\nevent: error\ndata: db down\n\n"]
+5
+{"value":{"data":"1"}}
+Error occurred while reading stream: Idle timeout triggered while reading inbound response entity body
+500
+true
+-- stderr --
+time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("db down")
+time=<TIME> level=ERROR module="" message="failed to construct SseEvent" error=error GenericError ("Error occurred while reading stream: Idle timeout triggered while reading inbound response entity body")

@@ -1,0 +1,19 @@
+-- stdout --
+abcdef|application/octet-stream|chunked=true
+x|text/csv|chunked=true
+put body|text/plain|chunked=true
+forwarded|application/octet-stream|chunked=true
+Error occurred while streaming content: boom
+[8192,8192,3616]
+sm|al|l|
+sm
+al|l|
+error GenericClientError ("Error occurred while retrieving the byte stream from the response",error ParserError ("Byte stream is not available as payload"))
+error GenericClientError ("Error occurred while retrieving the byte stream from the response",error ParserError ("Byte stream is not available but payload can be obtain either as xml, json, string or byte[] type"))
+{"data":"one"}
+{"data":"two\nmore","id":"2","event":"tick"}
+{"data":"three","comment":"note","retry":100}
+error PayloadBindingClientError ("invalid payload target type. The response is not of text/event-stream content type.")
+error PayloadBindingClientError ("payload binding failed: Target return type must not be a union of stream<http:SseEvent, error?> and anydata")
+Not Found
+-- stderr --

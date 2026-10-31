@@ -11,7 +11,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 32 | 11 | 34 | 42% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -26,7 +26,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **284** | **35** | **67** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -66,6 +66,8 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **Status-code error messages use the registered reason phrase.** jBallerina reports the reason phrase the server actually sent. The PAL transport contract surfaces only the status code, so the Go-native version derives the message from the status code's registered phrase (for example `Not Found` for 404). A code outside the IANA registry — 499, which nginx sends for a client-closed request, among others — has no registered phrase, and the message becomes `status code <code>` rather than being left empty.
 - **A status error with an absent body keeps its reason phrase.** jBallerina extracts the error response body with the builder its `Content-Type` selects, and an extraction failure replaces the reason phrase with `http:ApplicationResponseError creation failed: <code> response payload extraction failed`. A 4xx or 5xx sent with `Content-Type: application/json` and no body at all trips that path, because a JSON decoder rejects an empty document. The Go-native version treats an absent body as having no payload, so the message stays the reason phrase and the error detail's `body` is `()`.
 - **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.
+- **A failing byte-stream response body aborts the connection.** When a byte stream sent as a response body returns an error, jBallerina stops writing and leaves the response open and incomplete ([ballerina-library#9349](https://github.com/ballerina-platform/ballerina-library/issues/9349)); the Go-native version aborts the connection, so the client sees the body fail instead of waiting on it.
+- **Server-Sent Events are parsed as in module-ballerina-http#2752.** Released jBallerina versions join multiple `data` lines without a separator and end an event only at `\n\n`, `\r\r` or `\r\n\r\n`; the Go-native version joins `data` lines with `\n` and ends an event at any two consecutive line breaks, following the WHATWG event-stream format as #2752 does.
 
 ### io
 

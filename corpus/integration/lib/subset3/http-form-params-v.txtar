@@ -1,0 +1,10 @@
+-- stdout --
+1
+hello world
+x=y
+orphan
+
+false
+5
+0
+-- stderr --

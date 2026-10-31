@@ -22,14 +22,14 @@ import ballerina/io;
 // wasn't wired into the inbound Request object's dispatch table (only the
 // read-only accessors were), so calling any of them on a service resource's
 // injected http:Request panicked with a generic, undiagnosable 500.
-service /reqmut on new http:Listener(19214) {
+service /reqmut on new http:Listener(19501) {
     resource function post headers(http:Request req) returns http:Response|error {
         req.setHeader("x-one", "a");
         req.addHeader("x-one", "b");
         req.setHeader("x-remove-me", "gone");
         req.removeHeader("x-remove-me");
         check req.setContentType("text/plain");
-        req.setTextPayload("mutated");
+        check req.setTextPayload("mutated");
 
         string hasRemoveMe = "false";
         if req.hasHeader("x-remove-me") {
@@ -46,20 +46,23 @@ service /reqmut on new http:Listener(19214) {
 
     resource function post payloads(http:Request req) returns http:Response|error {
         req.removeAllHeaders();
-        int countAfterRemove = req.getHeaderNames().length();
-        req.setJsonPayload({y: 7});
+        anydata countAfterRemove = req.getHeaderNames().length();
+        check req.setJsonPayload({y: 7});
         map<json> j = <map<json>>check req.getJsonPayload();
-        req.setBinaryPayload("bytes".toBytes());
+        check req.setBinaryPayload("bytes".toBytes());
         byte[] b = check req.getBinaryPayload();
 
+        anydata jsonY = j["y"];
         http:Response resp = new;
-        resp.setJsonPayload({countAfterRemove: countAfterRemove, jsonY: j["y"], bytesText: check string:fromBytes(b)});
+        resp.setHeader("x-count-after-remove", countAfterRemove.toString());
+        resp.setHeader("x-json-y", jsonY.toString());
+        resp.setTextPayload(check string:fromBytes(b));
         return resp;
     }
 }
 
 public function testMain() returns error? {
-    http:Client c = check new http:Client("http://localhost:19214", {});
+    http:Client c = check new http:Client("http://localhost:19501", {});
 
     http:Response r1 = check c->post("/reqmut/headers", "original");
     io:println(r1.statusCode); // @output 200
@@ -69,8 +72,7 @@ public function testMain() returns error? {
     io:println(check r1.getTextPayload()); // @output mutated
 
     http:Response r2 = check c->post("/reqmut/payloads", "ignored");
-    map<json> j2 = <map<json>>check r2.getJsonPayload();
-    io:println(j2["countAfterRemove"]); // @output 0
-    io:println(j2["jsonY"]); // @output 7
-    io:println(j2["bytesText"]); // @output bytes
+    io:println(check r2.getHeader("x-count-after-remove")); // @output 0
+    io:println(check r2.getHeader("x-json-y")); // @output 7
+    io:println(check r2.getTextPayload()); // @output bytes
 }

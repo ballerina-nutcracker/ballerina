@@ -229,7 +229,7 @@ type (
 	}
 	// ClientConfig bundles all static options for a new HTTP client instance.
 	ClientConfig struct {
-		Timeout         time.Duration
+		Timeout         time.Duration // idle timeout: the request fails once it goes this long without progress; 0 = none
 		FollowRedirects FollowRedirects
 		HTTPVersion     string // "1.1" or "2.0"; defaults to "2.0"
 		TLS             TLSConfig

@@ -190,6 +190,80 @@ func TestHttpClientBinaryLocal(t *testing.T) {
 	runExtern(t, fileCase("http-client-binary-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
 
+// TestHttpClientMultipartLocal exercises a mime:Entity[] request body (msgToBody's
+// Entity[] branch, mime's EncodeMultipart, auto-generated boundary). The server parses
+// the multipart body with Go's own mime/multipart.Reader and echoes a deterministic,
+// boundary-independent summary so the assertion doesn't depend on the random boundary.
+func TestHttpClientMultipartLocal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/echo-multipart" || r.Method != http.MethodPost {
+			w.WriteHeader(404)
+			return
+		}
+		mr, err := r.MultipartReader()
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+		var sb strings.Builder
+		count := 0
+		for {
+			part, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			}
+			count++
+			data, _ := io.ReadAll(part)
+			fmt.Fprintf(&sb, "%d:%s ", count, data)
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(200)
+		_, _ = fmt.Fprintf(w, "count=%d %s", count, strings.TrimSpace(sb.String()))
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-multipart-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
+// TestHttpClientStreamLocal exercises byte-stream request bodies (sent chunked, so the server
+// sees no Content-Length), getByteStream on received bodies, and binding a text/event-stream
+// response whose events are split across flushes to stream<http:SseEvent, error?>.
+func TestHttpClientStreamLocal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		flusher, _ := w.(http.Flusher)
+		switch r.URL.Path {
+		case "/echo":
+			body, _ := io.ReadAll(r.Body)
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = fmt.Fprintf(w, "%s|%s|chunked=%v", body, r.Header.Get("Content-Type"), r.ContentLength == -1)
+		case "/download":
+			w.Header().Set("Content-Type", "application/octet-stream")
+			_, _ = w.Write([]byte(strings.Repeat("a", 10000)))
+			flusher.Flush()
+			_, _ = w.Write([]byte(strings.Repeat("b", 10000)))
+		case "/small":
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = w.Write([]byte("small"))
+		case "/empty":
+			w.Header().Set("Content-Type", "text/plain")
+		case "/events":
+			w.Header().Set("Content-Type", "text/event-stream")
+			for _, part := range []string{"data: one\n\n", "id: 2\nevent: tick\ndata: two\n", "data: more\n\n",
+				": note\nretry: 100\ndata: three\r\n\r\n"} {
+				_, _ = w.Write([]byte(part))
+				flusher.Flush()
+			}
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-stream-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
 // TestHttpClientCompressionLocal exercises transparent gzip/deflate response
 // decompression (decompressResponseBody + the gzip/deflate ReadClosers). The
 // client factory disables Go's automatic decompression so the compressed body
