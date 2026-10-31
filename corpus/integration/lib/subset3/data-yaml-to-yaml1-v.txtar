@@ -1,0 +1,134 @@
+-- stdout --
+name: Central Library
+books:
+-
+  title: "1984"
+  year: 1949
+  tags:
+  - dystopia
+-
+  title: Emma
+  year: 1815
+  tags: []
+open: true
+rating: 4.5
+fee: 2.50
+empty: {}
+--
+name: Central Library
+books:
+-
+    title: "1984"
+    year: 1949
+    tags:
+    - dystopia
+-
+    title: Emma
+    year: 1815
+    tags: []
+open: true
+rating: 4.5
+fee: 2.50
+empty: {}
+--
+{name: Central Library, books: [{title: "1984", year: 1949, tags: [dystopia]}, {title: Emma, year: 1815, tags: []}], open: true, rating: 4.5, fee: 2.50, empty: {}}
+--
+!!str name: !!str Central Library
+!!str books: !!seq
+-
+  !!str title: !!str "1984"
+  !!str year: !!str 1949
+  !!str tags: !!seq
+  - !!str dystopia
+-
+  !!str title: !!str Emma
+  !!str year: !!str 1815
+  !!str tags: !!seq []
+!!str open: !!str true
+!!str rating: !!str 4.5
+!!str fee: !!str 2.50
+!!str empty: {}
+--
+{!!str name: !!str Central Library, !!str books: !!seq [{!!str title: !!str "1984", !!str year: !!str 1949, !!str tags: !!seq [!!str dystopia]}, {!!str title: !!str Emma, !!str year: !!str 1815, !!str tags: !!seq []}], !!str open: !!str true, !!str rating: !!str 4.5, !!str fee: !!str 2.50, !!str empty: {}}
+--
+"a": "x"
+"b": "1"
+--
+'a': 'it''s'
+'b': '1'
+--
+1
+---
+a
+---
+b: 2
+---
+- 3
+--
+
+--
+a:
+- 1
+- 2
+--
+[]
+--
+{}
+--
+Simple Scalar
+--
+-
+  - 1
+  - 2
+-
+  - 3
+--
+title: Emma
+year: 1815
+tags:
+- classic
+--
+a: ""
+b: "true"
+c: "123"
+d: "a: b"
+e: "- x"
+f: "a #b"
+g: "line1\nline2"
+h: " x"
+i: say "hi"
+j: null
+--
+- 1.0
+- 1.0E20
+- 1.0E-5
+- -0.0
+- 1.5E300
+--
+count is negative: -1
+"..."
+--
+["a,b", "c]d", {"k,1": "v{2}"}]
+--
+a: 1
+l:
+- 1
+- 2
+--
+indentationPolicy must be greater than 0 to write a nested block collection
+a: {}
+--
+- {}
+--
+["true", True, "null", ~, "1", "1.5", "+12", "Infinity", "0x1p3", 0x1F, .inf, "a: b"]
+--
+["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+["true", True, "null", ~, "1", "1.5", "+12", "Infinity", "0x1p3", 0x1F, .inf, "a: b"]
+--
+["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+["true", "True", "null", "~", "1", "1.5", "+12", "Infinity", "0x1p3", "0x1F", ".inf", "a: b"]
+--
+["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
+{"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
+{"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
+-- stderr --

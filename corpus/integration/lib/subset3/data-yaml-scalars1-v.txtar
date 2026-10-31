@@ -1,0 +1,43 @@
+-- stdout --
+[1,2,-3,7,4]
+[1.0,1.5,1000.0,1.0,0.5,Infinity,-0.0,8.0,2.5]
+[1.50,1E+3,12345678901234567890.123456789]
+[true,false]
+[null]
+[0,255]
+["A",1,2.5,true]
+[1,"x","1.5"]
+[true,"x"]
+["a"]
+[1,1.5,null,true,"text","123",1e20,12,"0x1F",".inf"]
+{"a":"1","b":"1.","c":"true","d":"null","e":"~","f":"12\n","g":"3","h":4}
+["1","x",2]
+["true","True","~"]
+{"name":"null"}
+{}
+[1,"1","1"]
+[true,"true",null,"null"]
+{"age":null}
+incompatible value 'null' for type 'int?' in field 'age'
+{}
+incompatible value 'null' for type 'int' in field 'age'
+incompatible expected type 'int' for value 'x'
+incompatible expected type 'int' for value '1.5'
+incompatible expected type 'int' for value '9223372036854775808'
+incompatible expected type 'float' for value '1.0f'
+incompatible expected type 'float' for value '.inf'
+incompatible expected type 'decimal' for value 'x'
+incompatible expected type 'boolean' for value 'True'
+incompatible expected type '()' for value '~'
+incompatible expected type 'byte' for value '256'
+incompatible expected type 'lang.int:Signed8' for value '200'
+incompatible expected type 'lang.string:Char' for value 'ab'
+incompatible expected type 'true|1|2.5|"A"|"B"' for value 'C'
+incompatible expected type 'anydata' for value 'True'
+incompatible expected type 'string' for value 'true'
+incompatible expected type 'string' for value 'True'
+["True","~"]
+["true","null"]
+{"a":1,"b":"True","c":"Null","d":"x"}
+{"a":1,"d":"x"}
+-- stderr --

@@ -1,0 +1,33 @@
+-- stdout --
+{"name":"a","age":2}
+{"name":"a","age":2}
+undefined field 'extra'
+{"name":"a","age":2,"extra":"x"}
+{"name":"a","x":1}
+required field 'age' not present in YAML
+incompatible value 'x' for type 'int' in field 'age'
+incompatible value 'x' for type 'int' in field 'inner.age'
+incompatible value 'x' for type 'int' in field 'nums'
+invalid type 'string' expected 'list type'
+invalid type for field 'name'
+incompatible value '5' for type '{| age: int, never... |}' in field 'inner'
+{"name":"a","nick":null}
+{"name":"a","nick":null}
+required field 'nick' not present in YAML
+{"name":"a","nick":null}
+incompatible value 'null' for type 'int' in field 'age'
+{"name":"a","nick":1}
+{"name":"a","age":2}
+required field 'name' not present in YAML
+{"a":"x","b":[1,2]}
+{"a":1,"c":2}
+{"b":"1"}
+incompatible expected type '{| int... |}' for value '5'
+invalid type '{| int... |}' expected 'list type'
+{"1":"a","null":"b","a b":"c","d":"e"}
+'cannot have duplicate map entries for '${key.toString()}' at line: '2' column: '3'
+{"a":2}
+{"a":3,"b":2}
+{"a":null,"b":2,"c":null}
+{"name":"a","age":1}
+-- stderr --

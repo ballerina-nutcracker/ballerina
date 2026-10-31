@@ -1,0 +1,31 @@
+-- stdout --
+[31,15,12,1.0,Infinity,-Infinity,true,null]
+NaN
+123
+["123"]
+bar
+[1,2]
+{"a":1}
+[12,true,null]
+'cannot cast True to boolean' at line: '1' column: '10'
+incompatible expected type 'int' for value 'true'
+'cannot cast abc to int' at line: '1' column: '8'
+'cannot cast 12abc to int' at line: '1' column: '10'
+'cannot cast 99999999999999999999 to int' at line: '1' column: '25'
+'cannot cast abc1 to float' at line: '1' column: '11'
+'tag schema not supported' at line: '1' column: '7'
+'tag schema not supported' at line: '1' column: '12'
+'tag schema not supported' at line: '1' column: '8'
+'tag schema not supported' at line: '2' column: '2'
+'tag schema not supported' at line: '1' column: '6'
+'tag handle is not defined' at line: '1' column: '6'
+5
+'custom tags not supported' at line: '1' column: '30'
+'duplicate tag handle' at line: '2' column: '9'
+{"a":1}
+{"a":1}
+'incompatible yaml version for the 1.2 parser' at line: '1' column: '9'
+'YAML document version is already defined' at line: '2' column: '5'
+{"a":1}
+'invalid directive document' at line: '2' column: '1'
+-- stderr --

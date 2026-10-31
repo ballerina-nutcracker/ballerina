@@ -1,0 +1,51 @@
+-- stdout --
+{"a":{"b":1,"c":[1,2,{"d":"e"}]},"f":["x","y"]}
+[[1,2],{"k":"v","l":"w"},null,["a",{"b":"c"}]]
+{"a":{"p":1},"b":{"p":1},"c":[1,2],"d":[1,2],"e":{"q":1},"f":{"q":1}}
+{"a":1,"b":2,"c":2}
+'duplicate anchor definition' at line: '3' column: '0'
+'anchor does not exist' at line: '1' column: '10'
+'an alias node cannot have tag properties' at line: '1' column: '13'
+{"a":"http://x.com/a#b","b":"12:30:00","c":"value#not-comment","d":-1,"e":"-x"}
+{"a":1,"b":2}
+{"a":1,"b":[2],"c":{"d":3}}
+{"a":"x","b":5}
+a
+[{"a":1},{"b":2}]
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true
+invalid type 'string' expected 'map type'
+'unexpected event' at line: '1' column: '4'
+'invalid token 'EOL' inside the double-quoted scalar' at line: '1' column: '4'
+'END of stream reached' at line: '1' column: '4'
+'invalid escape character' at line: '1' column: '5'
+'expected a unicode character after escaped char' at line: '1' column: '8'
+Cannot have nested mapping under a key-pair that is already assigned
+'invalid indentation' at line: '3' column: '2'
+'cannot have tab as an indentation' at line: '2' column: '2'
+'two block mapping keys cannot be defined in the same line' at line: '1' column: '5'
+'cannot have nested sequence for a defined value' at line: '1' column: '4'
+'cannot have block sequence under flow collection' at line: '1' column: '2'
+'cannot have a block node inside a flow node' at line: '1' column: '5'
+'block collection token cannot start in the same line as the directive marker' at line: '1' column: '5'
+'token cannot start in the same line as the document marker' at line: '2' column: '4'
+'invalid block header' at line: '1' column: '4'
+'invalid yaml document' at line: '1' column: '0'
+'non printable character found' at line: '1' column: '4'
+'there can only be one root event to a document' at line: '2' column: '3'
+'there can only be one root event to a document' at line: '1' column: '8'
+Cannot have nested mapping under a key-pair that is already assigned
+-- stderr --
