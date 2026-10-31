@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/tcp` package, a raw-bytes TCP client and listener, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -297,6 +297,26 @@ Types: `ldap:Client` (client class), `ldap:Error`.
 TLS is selected by supplying `clientSecureSocket`. The server certificate is trusted through a PEM certificate file path in `cert`; a `crypto:TrustStore` returns `ldap:Error`. `verifyHostName` and `tlsVersions` are supported.
 
 Not covered in this subset: the `ldap:Error` detail record (`error:detail()` is not implemented yet, so the result code is only visible in the message), and `distinct` error types.
+
+## [tcp](https://github.com/ballerina-platform/module-ballerina-tcp/blob/master/docs/spec/spec.md)
+
+Connection-oriented TCP client and listener that exchange raw bytes with no framing.
+
+| Feature | Notes |
+|---|---|
+| `new tcp:Client(remoteHost, remotePort, config)` | Connects to the remote host, optionally binding to `localHost`, with a `timeout` for reads and a `writeTimeout` for writes |
+| `Client->writeBytes(data)` / `Client->readBytes()` / `Client->close()` | Send raw bytes, read the bytes from one socket read, and close the connection |
+| `ClientSecureSocket` | TLS on the client with a PEM certificate file in `cert`, plus `protocol` versions and `ciphers`. A `crypto:TrustStore` returns `tcp:Error` |
+| `new tcp:Listener(localPort, config)` | Binds on `localHost` (all interfaces by default) |
+| `ListenerSecureSocket` | TLS on the listener with a certificate and private key file pair in `key`, plus `protocol` versions and `ciphers`. A `crypto:KeyStore` returns `tcp:Error` |
+| `Listener.attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | One service per listener. `'start` after a stop binds again. `gracefulStop` stops accepting while open connections stay up; `immediateStop` also closes every open connection |
+| `tcp:Service.onConnect(caller)` | Called for each accepted connection; returns the `tcp:ConnectionService` that handles it |
+| `tcp:ConnectionService.onBytes` / `onError` / `onClose` | `onBytes(readonly & byte[])` or `onBytes(Caller, readonly & byte[])`; returned bytes are written back to the peer; `onError(tcp:Error)`; `onClose()`. All three are optional; without `onBytes`, received bytes are dropped |
+| `tcp:Caller` | `writeBytes`, `close`, and the `remoteHost`, `remotePort`, `localHost`, `localPort` and `id` fields |
+
+The service rules that jBallerina's compiler plugin enforces on `service on` declarations are checked at runtime, for service classes as well: `attach` returns `tcp:Error` for an invalid `tcp:Service`, and an invalid connection service returned from `onConnect` is logged and its connection closed. `tcp:Service`, `tcp:ConnectionService` and `tcp:Error` are not `distinct` types. The `Caller` passed to a service does not carry its `tcp:Caller` class type, so `caller is tcp:Caller` on a value held as `any` returns `false` ([#510](https://github.com/ballerina-nutcracker/ballerina/issues/510)).
+
+Not covered in this subset: `ClientSecureSocket.sessionTimeout`, `ListenerSecureSocket.handshakeTimeout`/`sessionTimeout`, and `CertKey.keyPassword` (an encrypted private key fails at the TLS handshake).
 
 ## [udp](https://github.com/ballerina-platform/module-ballerina-udp/blob/master/docs/spec/spec.md)
 

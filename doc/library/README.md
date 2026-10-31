@@ -22,11 +22,12 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [task](../../lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md)               | 15 | 1 | 1 | 88% |
+| [tcp](../../lib/stdlibs/ballerina/tcp/0.0.1/go1.27/README.md)                 | 15 | 5 | 1 | 65% |
 | [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **295** | **36** | **72** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -140,6 +141,18 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **The skipped-trigger log uses Go's zone abbreviation.** The `LOG_AND_IGNORE` message prints the trigger start time in Java's `Date.toString` layout; the Go-native version uses the same layout with the zone abbreviation from the Go time zone database, which can differ (for example `+0530` instead of `IST`).
 - **A panic in a listener service is reported as a single line.** jBallerina prints an uncaught-exception stack trace from the virtual thread running the service; the Go-native version recovers the panic and prints `error: <message>` to stderr.
 - **Non-isolated jobs run concurrently.** jBallerina runs a job whose class or `execute` method is not isolated under the runtime's lock for non-isolated strands; the Go-native version runs every execution on its own strand, like `http` resources — use isolated jobs and `lock` statements for shared state.
+### tcp
+
+- **A connection is closed if `onConnect` returns an error.** jBallerina leaves the connection open with reads permanently paused in this case — a bug in the reference implementation. This port closes the connection instead.
+- **`onClose` is invoked at most once.** jBallerina can invoke `onClose` twice for a locally-initiated `Caller.close()` (once synchronously from `close()`, once again from the resulting disconnect event) — a bug in the reference implementation. This port guards with per-connection state so `onClose` never fires twice, whichever side triggers the close.
+- **`onClose` is dispatched for a connection closed before `onConnect` returns.** jBallerina never calls `onClose` when the connection closes while `onConnect` runs, for example when `onConnect` calls `caller->close()` or a write from `onConnect` fails because the peer has gone, so a service that tracks its connections leaks an entry — a bug in the reference implementation ([ballerina-library#9407](https://github.com/ballerina-platform/ballerina-library/issues/9407)). This port dispatches `onClose` once on the connection service that `onConnect` returns, as soon as it returns.
+- **`Caller`'s fields are computed once, at accept time.** jBallerina constructs a fresh `Caller` object (recomputing `remoteHost`/`remotePort`/`localHost`/`localPort`/`id`, including a potential reverse-DNS lookup) on every single `onConnect`/`onBytes` dispatch. This port computes these fields once when the connection is accepted and reuses them for its lifetime.
+- **`Listener.immediateStop()` actually stops the listener.** jBallerina's `immediateStop()` is an unimplemented no-op stub (per its own documentation). This port force-closes the listener and every active connection immediately.
+- **`Listener.detach()` validates the given service.** jBallerina's `detach()` clears whatever service is currently attached regardless of the argument passed to it. This port returns an `Error` unless the given service is the one currently attached.
+- **A second `Listener.attach()` returns an `Error`.** jBallerina returns `()` when a service is attached to a listener that already has one. This port returns an `Error` instead, since a `tcp:Listener` dispatches to a single service.
+- **Connections accepted while no service is attached are closed.** jBallerina's `start()` binds without a service and leaves such connections open with nothing reading them. This port also binds, but closes each connection accepted while no service is attached.
+- **`Caller.remoteHost` is the peer's IP address.** jBallerina performs a reverse-DNS lookup, so a client connecting from `127.0.0.1` is reported as `localhost`. This port reports the address as seen on the socket (e.g. `127.0.0.1`) without resolving a host name.
+- **A peer's close is noticed once `onBytes` returns or a write fails.** jBallerina keeps reading while `onBytes` runs, so a peer's close closes the connection and dispatches `onClose` at once, and later `Caller` writes return "Socket connection already closed.". This port reads the next chunk only after `onBytes` returns, so until then a `Caller` write can still succeed while the peer resets the connection; the first write that fails closes the connection and dispatches `onClose`, as jBallerina does after a failed write, and the error and any `onError` for bytes returned from `onBytes` read "Socket connection already closed.".
 
 ### time
 

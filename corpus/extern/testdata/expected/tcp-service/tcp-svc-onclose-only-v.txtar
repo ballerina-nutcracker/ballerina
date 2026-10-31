@@ -1,0 +1,5 @@
+-- stdout --
+onConnect true
+onClose
+true
+-- stderr --
