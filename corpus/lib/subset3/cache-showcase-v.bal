@@ -51,6 +51,15 @@ public function main() returns error? {
 
     cache:Cache c2 = new (defaultMaxAge = 1, cleanupInterval = 1);
     check c2.put("x", 1);
-    runtime:sleep(3);
-    io:println(c2.size()); // @output 0
+    io:println(waitForSize(c2, 0)); // @output 0
+}
+
+function waitForSize(cache:Cache c, int expected) returns int {
+    foreach int _ in 0 ..< 100 {
+        if c.size() == expected {
+            break;
+        }
+        runtime:sleep(0.1);
+    }
+    return c.size();
 }

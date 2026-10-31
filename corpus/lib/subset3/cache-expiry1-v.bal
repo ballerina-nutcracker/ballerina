@@ -63,6 +63,15 @@ public function main() returns error? {
     check cleaned.put("a", 1);
     check cleaned.put("b", 2);
     check cleaned.put("kept", 3, 100);
-    runtime:sleep(2.5);
-    io:println(cleaned.size(), " ", cleaned.keys()); // @output 1 ["kept"]
+    io:println(waitForSize(cleaned, 1), " ", cleaned.keys()); // @output 1 ["kept"]
+}
+
+function waitForSize(cache:Cache c, int expected) returns int {
+    foreach int _ in 0 ..< 100 {
+        if c.size() == expected {
+            break;
+        }
+        runtime:sleep(0.1);
+    }
+    return c.size();
 }
