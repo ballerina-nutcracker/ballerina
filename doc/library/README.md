@@ -9,6 +9,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
+| [constraint](../../lib/stdlibs/ballerina/constraint/0.0.1/go1.27/README.md)   | 9 | 1 | 4 | 64% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **289** | **32** | **75** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -40,6 +41,11 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **A `bytes`/`fixed` schema requires a value whose own type is `byte[]`.** An `int[]` is rejected even when every value happens to fit in a byte (0-255) — including a bare list literal such as `schema.toAvro([1, 2, 3])`, which carries no `byte[]` type of its own since `toAvro` takes `anydata`; declare the value as `byte[]` first. jBallerina agrees this should be an error but does not implement it as one: passing a plain `int[]`, in range or not, throws an uncaught `NullPointerException` instead of returning an error.
 - **Avro map keys are encoded in insertion order.** jBallerina iterates a Java `HashMap`, so the key order in an encoded Avro map is unspecified; the Go-native version writes keys in the Ballerina value's insertion order — the Avro encoding does not constrain map key order and readers are insensitive to it.
 - **A `fixed` schema with `"size": 0` is rejected.** jBallerina's underlying Avro library accepts a zero-size `fixed` type, which always encodes to zero bytes. The Go-native version's underlying codec requires a size greater than zero and rejects the schema itself with an `avro:Error` from `new`. Zero-size `fixed` types have no practical use and are not expected to appear in real schemas.
+
+### constraint
+
+- **Digit counts are computed per value.** jBallerina caches the digit counts of the first float or number value it validates and reuses them for later fields in the same call, so a second `maxIntegerDigits` or `maxFractionDigits` field can be checked against the wrong counts; the Go-native version counts the digits of every value separately.
+- **Custom messages from different fields are ordered by field name.** jBallerina joins the custom messages of failed constraints in the order the record fields are declared; the Go-native version joins them in field-name order, because record fields have no semantic order and the runtime exposes them unordered. The default `Validation failed for ...` part is sorted in both.
 
 ### crypto
 
