@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker, and the new `ballerina/data.xmldata` package, which converts XML values, text, bytes and byte-block streams to record types and validates XML against a record type.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -35,6 +35,7 @@ Every mapping the module specification defines is supported in both directions.
 `fromAvro` infers `targetType` from the contextually expected type, so `Person p = check schema.fromAvro(data);` binds the decoded payload to `Person`. Without a contextually expected type the compiler reports `cannot infer typedesc argument for parameter 'targetType'` — pass `targetType = Person` explicitly in that case.
 
 Records, enums, tuples, singletons, `map<T>`, `T[]`, `json`, `map<json>`, `anydata` and nilable forms of all of these are accepted as targets, along with numeric widening from `int` to `float` and `decimal`. A `readonly &` intersection of any of these is accepted too and binds to a frozen value.
+
 ## [io](https://github.com/ballerina-platform/module-ballerina-io/blob/master/docs/spec/spec.md)
 
 Subset 2 covered console printing and whole-file I/O (string, lines, bytes, JSON, XML). Subset 3 adds stream-based file reading and writing, built on the language's new `stream` type, plus byte channels — the low-level, object-based `ReadableByteChannel`/`WritableByteChannel` API for reading and writing bytes incrementally, either from a file or from an in-memory byte array.
@@ -347,3 +348,15 @@ Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:Wa
 | `configureWorkerPool(workerCount?, waitingTime?)` | `waitingTime` is how late a run may be before the waiting policy treats it as missed |
 | `getTimeInMillies(time)` | Epoch milliseconds of a future `time:Civil` |
 | `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |
+
+## [data.xmldata](https://github.com/ballerina-platform/module-ballerina-data.xmldata)
+
+Conversion from XML to record types. The parse functions take an inferred `typedesc<record {}>` target and return `t|xmldata:Error`; the text parsers convert while they read, and a target with a union of records is parsed into an XML value and traversed instead, as in jBallerina.
+
+| Function | Notes |
+|---|---|
+| `parseAsType` | Convert an `xml` value to the target record type |
+| `parseString` / `parseBytes` / `parseStream` | Parse XML text, UTF-8 bytes or a `stream<byte[], error?>` into the target record type |
+| `validate` | Check an `xml` value against a record type; an XSD file path is not supported and returns an `Error` |
+
+Elements, attributes and text content map to record fields, nested records, arrays, maps, `json`, `anydata` and `xml` fields, and open-record rest fields. Types: `xmldata:Options` and `xmldata:SourceOptions` (`attributePrefix`, `textFieldName`, `allowDataProjection`, `useSemanticEquality`; `enableConstraintValidation` is accepted and ignored), `xmldata:NameConfig`, `xmldata:NamespaceConfig`, the `@xmldata:Name`, `@xmldata:Namespace` and `@xmldata:Attribute` annotations (applied when the target record type is passed explicitly), `xmldata:Error`. `toXml`, `fromJson`, `transform` (XPath), the XSD annotations and `@xmldata:Any` are not included.

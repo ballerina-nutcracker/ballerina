@@ -1,0 +1,13 @@
+-- stdout --
+<x><p>1</p></x>
+<e><q a="1"/></e>
+<t>plain</t>
+2
+<items><b/></items>
+{"id":"1","n":5,"f":true}
+{"id":"1","n":5,"f":true}
+E: attribute 'tag' cannot be converted into the array type 'string[]'
+{"child":{"v":"x"}}
+true
+{"r":{"b":"s"}}
+-- stderr --

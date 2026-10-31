@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.xmldata](../../lib/stdlibs/ballerina/data.xmldata/0.0.1/go1.27/README.md) | 2 | 8 | 7 | 12% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **282** | **39** | **78** | **70%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,18 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.xmldata
+
+- **Malformed XML is described by the Go XML tokenizer.** jBallerina reports a syntax error with the Woodstox parser's message and position (for example `Unexpected EOF in prolog` followed by `at [row,col {unknown-source}]: [1,2]`); the Go-native version reports the error found by `encoding/xml`, the tokenizer the interpreter itself uses for XML, after the same `failed to parse xml: ` prefix.
+- **A parse error for a union target is returned as a module error.** When the target type contains a union of records, jBallerina parses the text into an XML value first and returns that parse error as a plain `error`, which then fails its own `t|Error` return type and panics with a `TypeCastError`; the Go-native version returns an `xmldata:Error`.
+- **The first missing required field is reported in field-name order.** When several required fields are absent, jBallerina reports the first one in Java `HashMap` order; the Go-native version reports the first one in code-point order of the field names, so the message is deterministic.
+- **Compiler-plugin checks run when the type is used, or not at all.** jBallerina's compiler plugin rejects a record whose `@xmldata:Name` overrides clash, and a target that is not a record type such as `map<string>`, as compile errors. This port has no compiler plugin, so those programs compile: a clashing record makes the conversion functions return an `xmldata:Error` (`duplicate field '<name>'`), and a map target such as `map<string>`, being the same type at runtime as the record `record {| string...; |}`, is converted as that record by every parse function.
+- **A required field that cannot hold `()` is never left as `()`.** When an empty element maps to a required field whose type does not contain `()`, such as `int|string`, or `xml` read by `parseString`, jBallerina leaves the field as `()` and returns a record value that does not belong to its type; the Go-native version returns `field '<name>' cannot be converted into the type '<type>'`.
+- **A byte value is range-checked before it is narrowed.** jBallerina narrows the parsed value to a 32-bit `int` before checking the byte range, so a value such as `4294967297` is accepted as `1`; the Go-native version checks the full value, so it is handled like any other out-of-range byte such as `256` (an element value returns `'string' value '<value>' cannot be converted to 'byte'`).
+- **A fixed-length array that cannot be filled is rejected.** When fewer elements than the array length are present and the element type has no filler value, such as a record with a required field, jBallerina fails with an internal `NullPointerException` message; the Go-native version returns `array size is not compatible with the expected size`.
+- **A byte-block stream error is returned as a module error.** When the stream passed to `parseStream` returns an error, jBallerina returns that error itself, which does not belong to the `t|Error` return type; the Go-native version returns an `xmldata:Error` with the same message and closes the stream.
+- **An absent fixed-length array field is checked like any other field.** When a record has a fixed-length array field, such as `Person[2] p?;`, and the XML has no element for it, jBallerina's `parseAsType` fails with an internal `NullPointerException` message whether or not the field is optional (ballerina-platform/ballerina-library#9431); the Go-native version leaves an optional field out and reports `required field '<name>' not present in XML` for a required one, as `parseString` does.
 
 ### file
 

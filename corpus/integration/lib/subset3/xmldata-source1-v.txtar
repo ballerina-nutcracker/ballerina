@@ -1,0 +1,17 @@
+-- stdout --
+{"name":"Ké","age":40}
+{"name":"😀","age":1}
+{"name":"Ké","age":40}
+{"name":"B","age":2}
+E: required field 'age' not present in XML
+true
+E: stream failure
+{"name":"D","age":4}
+true
+true
+E: failed to parse xml
+{"name":"Ké","age":40}
+{"name":"E","age":5}
+{"name":"F","age":6}
+{"p":{"n":1}}
+-- stderr --
