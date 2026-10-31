@@ -19,32 +19,36 @@ package semtypes
 import "testing"
 
 func TestMappingAtomicTypeRest(t *testing.T) {
-	env := CreateTypeEnv()
-	cx := ContextFrom(env)
+	t.Parallel()
 	fields := []Field{{name: "a", typeOf: Int}}
 	tests := []struct {
 		name string
-		rest SemType
+		rest func(cx Context) SemType
 	}{
-		{"closed", Never},
-		{"typed rest", String},
-		{"open", CreateAnydata(cx)},
+		{"closed", func(Context) SemType { return Never }},
+		{"typed rest", func(Context) SemType { return String }},
+		{"open", CreateAnydata},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			env := CreateTypeEnv()
+			cx := ContextFrom(env)
+			rest := tt.rest(cx)
 			md := NewMappingDefinition()
-			atomic := ToMappingAtomicType(cx, md.Define(env, fields, tt.rest))
+			atomic := ToMappingAtomicType(cx, md.Define(env, fields, rest))
 			if atomic == nil {
 				t.Fatal("expected a mapping atomic type")
 			}
-			if !IsSameType(cx, atomic.Rest(), tt.rest) {
-				t.Errorf("got rest %s expected %s", ToString(cx, atomic.Rest()), ToString(cx, tt.rest))
+			if !IsSameType(cx, atomic.Rest(), rest) {
+				t.Errorf("got rest %s expected %s", ToString(cx, atomic.Rest()), ToString(cx, rest))
 			}
 		})
 	}
 }
 
 func TestMappingAtomicTypeFields(t *testing.T) {
+	t.Parallel()
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
 	md := NewMappingDefinition()
