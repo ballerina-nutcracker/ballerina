@@ -19,7 +19,9 @@ package codec
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -37,13 +39,18 @@ type birWriter struct {
 	env          semtypes.Env
 	localDclIDs  map[*bir.BIRLocalVariableDcl]int32
 	localDclList []*bir.BIRLocalVariableDcl
+	// typeDescs numbers the typedesc constants of the package, so each is written once in the
+	// Type Descriptors section and referred to by index.
+	typeDescs       []*values.TypeDesc
+	typeDescIndexes map[*values.TypeDesc]int64
 }
 
 func Marshal(tyEnv semtypes.Env, pkg *bir.BIRPackage) ([]byte, error) {
 	writer := &birWriter{
-		cp:  NewConstantPool(),
-		tp:  semtypes.NewTypePool(),
-		env: tyEnv,
+		cp:              NewConstantPool(),
+		tp:              semtypes.NewTypePool(),
+		env:             tyEnv,
+		typeDescIndexes: make(map[*values.TypeDesc]int64),
 	}
 	return writer.serialize(pkg)
 }
@@ -61,6 +68,8 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 	bw.writeGlobalVars(birbuf, pkg)
 	bw.writeClassDefs(birbuf, pkg)
 	bw.writeFunctions(birbuf, pkg)
+	tdbuf := &bytes.Buffer{}
+	bw.writeTypeDescs(tdbuf)
 
 	buf := &bytes.Buffer{}
 	_, err = buf.Write([]byte(BIR_MAGIC))
@@ -83,6 +92,11 @@ func (bw *birWriter) serialize(pkg *bir.BIRPackage) (result []byte, err error) {
 	_, err = buf.Write(cpBytes)
 	if err != nil {
 		panic(fmt.Sprintf("writing constant pool bytes: %v", err))
+	}
+
+	_, err = buf.Write(tdbuf.Bytes())
+	if err != nil {
+		panic(fmt.Sprintf("writing type descriptor bytes: %v", err))
 	}
 
 	_, err = buf.Write(birbuf.Bytes())
@@ -560,6 +574,46 @@ func (bw *birWriter) writeConstValue(buf *bytes.Buffer, value any) {
 	bw.writeConstValueByTag(buf, tag, value)
 }
 
+// typeDescIndex returns the index of td in the Type Descriptors section, numbering td and the
+// typedescs of its field types if they are new.
+func (bw *birWriter) typeDescIndex(td *values.TypeDesc) int64 {
+	if index, ok := bw.typeDescIndexes[td]; ok {
+		return index
+	}
+	index := int64(len(bw.typeDescs))
+	bw.typeDescIndexes[td] = index
+	bw.typeDescs = append(bw.typeDescs, td)
+	for _, field := range slices.Sorted(maps.Keys(td.FieldTypes)) {
+		bw.typeDescIndex(td.FieldTypes[field])
+	}
+	return index
+}
+
+// writeTypeDescs writes the Type Descriptors section. Writing an annotation value can number more
+// typedescs, so the entries are written before their count.
+func (bw *birWriter) writeTypeDescs(buf *bytes.Buffer) {
+	entries := &bytes.Buffer{}
+	for i := 0; i < len(bw.typeDescs); i++ {
+		td := bw.typeDescs[i]
+		bw.writeType(entries, td.Constraint())
+		bw.writeAnnotationValues(entries, td.Annotations)
+		annotatedFields := slices.Sorted(maps.Keys(td.FieldAnnotations))
+		bw.writeLength(entries, len(annotatedFields))
+		for _, field := range annotatedFields {
+			bw.writeStringCPEntry(entries, field)
+			bw.writeAnnotationValues(entries, td.FieldAnnotations[field])
+		}
+		typedFields := slices.Sorted(maps.Keys(td.FieldTypes))
+		bw.writeLength(entries, len(typedFields))
+		for _, field := range typedFields {
+			bw.writeStringCPEntry(entries, field)
+			write(entries, bw.typeDescIndex(td.FieldTypes[field]))
+		}
+	}
+	bw.writeLength(buf, len(bw.typeDescs))
+	buf.Write(entries.Bytes())
+}
+
 func (bw *birWriter) writeAnnotationValues(buf *bytes.Buffer, annotations values.AnnotationValues) {
 	keys := make([]string, 0, len(annotations))
 	for key := range annotations {
@@ -686,18 +740,7 @@ func (bw *birWriter) writeConstValueByTag(buf *bytes.Buffer, tag typeTag, value 
 		if !ok {
 			panic(fmt.Sprintf("expected typedesc for tag %v, got %T", tag, value))
 		}
-		bw.writeType(buf, td.Constraint())
-		bw.writeAnnotationValues(buf, td.Annotations)
-		fields := make([]string, 0, len(td.FieldAnnotations))
-		for field := range td.FieldAnnotations {
-			fields = append(fields, field)
-		}
-		sort.Strings(fields)
-		bw.writeLength(buf, len(fields))
-		for _, field := range fields {
-			bw.writeStringCPEntry(buf, field)
-			bw.writeAnnotationValues(buf, td.FieldAnnotations[field])
-		}
+		write(buf, bw.typeDescIndex(td))
 	case typeTagRuntimeRef:
 		ref, ok := value.(*values.RuntimeAnnotationValueRef)
 		if !ok {

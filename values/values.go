@@ -46,6 +46,9 @@ type TypeDesc struct {
 	// individual fields of a record type, keyed by field name. Fields without
 	// annotations have no entry.
 	FieldAnnotations FieldAnnotationValues
+	// FieldTypes holds, for each record field whose type refers to a named type, the typedesc of
+	// that named type. Recursive types share typedescs, so walkers must guard against cycles.
+	FieldTypes map[string]*TypeDesc
 }
 
 // NewTypeDesc returns a fully initialized TypeDesc describing constraint.
@@ -72,6 +75,7 @@ func NewTypeDescWithFieldAnnotations(
 		constraint:       constraint,
 		Annotations:      annotations,
 		FieldAnnotations: fieldAnnotations,
+		FieldTypes:       make(map[string]*TypeDesc),
 	}
 }
 

@@ -684,6 +684,7 @@ type FieldDescriptor struct {
 	ty           semtypes.SemType
 	flags        FieldDescriptorFlag
 	DefaultFnRef SymbolRef
+	TypeRef      SymbolRef // named type of the field, looking through arrays and optional types
 	isPublic     bool
 }
 
