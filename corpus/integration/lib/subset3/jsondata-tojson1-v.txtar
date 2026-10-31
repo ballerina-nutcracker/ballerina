@@ -1,0 +1,14 @@
+-- stdout --
+{"id":"a1","balance":10.50,"rate":0.5,"active":true,"note":null,"history":[1,2]}
+true
+42
+text
+true
+1.25
+<a>b</a>
+{"list":["<c/>",{"k":[true,null]}],"empty":{},"values":[]}
+[[1,2],[1,2]]
+{"a":1}
+false
+[1,"x",2.5]
+-- stderr --

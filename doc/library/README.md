@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.jsondata](../../lib/stdlibs/ballerina/data.jsondata/0.0.1/go1.27/README.md) | 3 | 8 | 3 | 21% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **283** | **39** | **74** | **71%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,21 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.jsondata
+
+- **Parsing a stream returns errors instead of panicking.** jBallerina's `parseStream` lets every conversion and syntax error escape as a panic even though it declares `returns t|Error`; the Go-native version returns a `jsondata:Error` with the same message, as the signature describes.
+- **An incomplete document is reported as a module error.** jBallerina reports a document that ends right after a field's `:` as a plain `error` with the message `invalid JSON document`, which then fails its own `t|Error` return type and panics with a `TypeCastError`; the Go-native version returns a `jsondata:Error` with the same message. A decimal token out of the `decimal` range is likewise returned as a `jsondata:Error` instead of panicking.
+- **An empty list member is reported as an error.** For input such as `[1,,2]`, jBallerina throws a Java `StringIndexOutOfBoundsException`; the Go-native version returns a `jsondata:Error` naming the expected type and the empty value.
+- **A failed parse does not affect the next one.** jBallerina reuses one parser per thread and keeps the characters of a token it failed in the middle of, so the first token of the next parse on that thread is read with them prepended; the Go-native version starts every parse from an empty state.
+- **The first missing required field is reported in field-name order.** When several required fields are absent, jBallerina reports the first one in Java `HashMap` order; the Go-native version reports the first one in code-point order of the field names, so the message is deterministic.
+- **Compiler-plugin checks are partly replaced by runtime errors.** jBallerina's compiler plugin rejects a record whose `@jsondata:Name` overrides clash, and an `xml` or `table` type in the target of `parseString`, `parseBytes` or `parseStream`, as compile errors. This port has no compiler plugin, so those programs compile, and a parse call returns a `jsondata:Error` only for what it reaches: a clash among the target record's own fields (`duplicate field '<name>'`), and an `xml` or `table` type that a value is parsed into (`unsupported type '<type>'` for the target itself, an incompatible-value error for a member or field). A clashing record nested in the target, or an `int|xml` target given an `int`, parses without error.
+- **An unpaired surrogate escape is rejected.** jBallerina keeps a lone UTF-16 surrogate from a `\u` escape, such as `"\uD800"`, `"\uDC00"` or `"\uD800\u0041"`, in the string without an error, producing a string that is not a sequence of Unicode scalar values (its `toBytes()` encodes the surrogate as `?`) ([ballerina-library#9427](https://github.com/ballerina-platform/ballerina-library/issues/9427)); the Go-native version returns a `jsondata:Error` naming the escape and its position, such as `'unpaired surrogate escape '\uD800'' at line: '1' column: '8'`. An escaped surrogate pair such as `"\uD83D\uDE00"` forms one character in both.
+- **Invalid UTF-8 input is rejected.** jBallerina's `parseBytes` replaces a byte that is not valid UTF-8 with U+FFFD and its `parseStream` drops it, so `"a\xFFb"` silently parses as a different string ([ballerina-library#9415](https://github.com/ballerina-platform/ballerina-library/issues/9415)); the Go-native version returns a `jsondata:Error` naming the byte offset, such as `invalid UTF-8 byte at offset 2`.
+- **A number with a leading zero is rejected.** jBallerina's `parseString`, `parseBytes` and `parseStream` accept `01`, `-01`, `00` and `01.5`, at the top level or inside a list or mapping, which RFC 8259 does not allow ([ballerina-library#9416](https://github.com/ballerina-platform/ballerina-library/issues/9416)); the Go-native version returns a `jsondata:Error` such as `'leading zero in number '01'' at line: '1' column: '4'`. `0`, `-0` and `0.5` stay valid.
+- **An error from a parsed stream is returned.** jBallerina's `parseStream` treats an error from the byte-block stream as the end of the input and parses the bytes read so far, so a truncated stream can produce a wrong value; the Go-native version returns a `jsondata:Error` with the stream error's message and that error as its cause.
+- **Union-typed structures inside a list keep every member.** When a list member's type is a union that contains a list or mapping type, as in `(int[]|string)[]` or `(A|int)[2]`, jBallerina's parser loses track of the member index and the parent's expected type, so later members overwrite earlier ones or are checked against the union; for example `[[1],[2],[3]]` parses as `[[3]]`. The Go-native version keeps every member at its index and checks each against the list's member type.
+- **A JSON key naming a renamed field is rejected.** For an open record whose field `title` is read from the key `t` by `@jsondata:Name`, a key `title` in the input is neither that field nor a valid rest field. jBallerina's `parseString` writes it over the field and `parseAsType` panics with a `ClassCastException`; the Go-native version returns `duplicate field 'title'` from both.
 
 ### file
 

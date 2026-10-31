@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'anydata', got 'object { int count; public function init() returns nil }'
+  --> jsondata-api3-e.bal:24:30
+   |
+24 |     json _ = jsondata:toJson(new Counter()); // @error
+   |                              ^^^^^^^^^^^^^

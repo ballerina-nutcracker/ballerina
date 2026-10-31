@@ -1,0 +1,6 @@
+-- stdout --
+error: duplicate field 'b'
+error: duplicate field 'b'
+error: unsupported type 'xml'
+error: invalid type 'xml' expected 'anydata'
+-- stderr --
