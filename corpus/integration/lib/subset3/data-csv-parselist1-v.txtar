@@ -1,0 +1,21 @@
+-- stdout --
+[["a","b"],["1","x"],["2","y"]]
+[{"a":1,"b":"x"},{"a":2,"b":"y"}]
+[["a","b"],["1","x"],["2","y"]]
+[[1,"x"],[2,"y"]]
+error Error ("value 'a' in index '0' is not compatible with array type 'int'")
+[{"a":1,"b":"x"}]
+[["a","b"],["1","x"]]
+error Error ("no mapping type found for value 'a' in key 'a'")
+error Error ("custom headers should be provided")
+[{"a":1,"b":"x"}]
+error Error ("CSV data rows with varying headers are not yet supported")
+[{"a":1,"b":"x"}]
+error Error ("value '[\"1\",\"x\"]' cannot be cast into '{| a: int, b: string, never... |}', because fields in '{| a: int, b: string, never... |}' or the provided expected headers are not matching with the '[\"1\",\"x\"]'")
+error Error ("invalid number of headers")
+[{"a":1}]
+error Error ("no matching header value is found for the required field 'a'")
+error Error ("value ' 1' in index '0' is not compatible with array type 'int'")
+error Error ("invalid array size for expected tuple type, cannot be greater than '2'")
+[{"a":2,"b":"y"}]
+-- stderr --

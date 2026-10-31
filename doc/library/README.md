@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
+| [data.csv](../../lib/stdlibs/ballerina/data.csv/0.0.1/go1.27/README.md)       | 16 | 7 | 4 | 59% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **296** | **38** | **75** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -44,6 +45,23 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 ### crypto
 
 - **AES-CBC and AES-ECB always apply PKCS7 padding.** jBallerina selects PKCS5 or no padding based on the `padding` parameter value; the Go-native version always applies PKCS7 padding for CBC and ECB modes regardless of the parameter — Go's `cipher` package does not expose a separate no-padding mode. Programs relying on `NONE` padding will produce incorrect output.
+
+### data.csv
+
+- **The character U+FFFF is ordinary data.** jBallerina uses U+FFFF as its end-of-input marker, so the character in the input makes the parser loop forever; the Go-native version parses it as any other character.
+- **Fail-safe recovery skips exactly the offending line.** jBallerina locates the line to resume at within its current 1024-character read buffer only, so beyond the first buffer it drops the rest of the buffer, logs an empty offending row, or never terminates; the Go-native version always resumes at the line after the one that raised the error, logs that line as the offending row, and reports its physical line number as the row.
+- **An `OVERWRITE` fail-safe log keeps every entry of a union parse.** For a union element type, jBallerina parses the rows and then converts them with two separate loggers that each truncate the file on their first write, so the conversion errors erase the parse errors already logged; the Go-native version truncates the file once per call and keeps both.
+- **Fail-safe log files contain valid JSON.** jBallerina builds each JSON log line by concatenating the values without escaping them, so a row or message containing a quote produces an invalid line; the Go-native version escapes the values.
+- **The options value is not modified.** jBallerina rewrites the options value it is given, so passing the same value to a second call silently resets `nilAsOptionalField` and `absentAsNilableType`; the Go-native version leaves the options value unchanged.
+- **An exponent with an explicit plus sign is parsed in full.** jBallerina's number parsing stops at `E+`, so `1E+5` converts to `1.0`; the Go-native version converts it to `100000.0`.
+- **Integer subtype ranges are checked on the full value.** jBallerina checks the `byte`, `int:Signed8`, `int:Signed16`, `int:Unsigned8` and `int:Unsigned16` ranges on the value truncated to 32 bits, so `4294967297` converts to the byte `1`; the Go-native version rejects any value outside the range.
+- **A tuple whose members share one type behaves as a closed array.** Types are structural in the Go-native version, so `[int, int]` cannot be told apart from `int[2]`; its size errors name an array type instead of a tuple type, and its header row is checked against the array size.
+- **Option characters outside the Basic Multilingual Plane match whole characters.** jBallerina compares the delimiter, text enclosure, escape and comment characters with single UTF-16 code units, so such a character never matches; the Go-native version matches the whole character.
+- **An unpaired escaped UTF-16 surrogate becomes U+FFFD.** jBallerina keeps a lone surrogate from a `\u` escape in the string; Go strings cannot hold one, so the Go-native version substitutes the replacement character. An escaped surrogate pair forms one character in both.
+- **Byte-block streams keep bytes with the value 0xFF.** jBallerina's stream reader returns the byte 0xFF as the end-of-stream marker, so `parseStream` input in an encoding that uses that byte is cut short; the Go-native version reads every byte.
+- **A short row cannot leave a required field without a value.** jBallerina fills a required field that a row shorter than the header row does not reach with a default instead of rejecting the row ([ballerina-library#9285](https://github.com/ballerina-platform/ballerina-library/issues/9285)): `0`, `false` or `0.0` for an `int`, `boolean` or `float` field, and `()` for a `string` or `decimal` field even though the type does not allow `()`, producing a value outside the target type; the Go-native version returns the error `no matching header value is found for the required field '<name>'`, which `failSafe` logs and skips like any other row error. A nilable field is still set to `()` and an optional field is still left out.
+- **`transform` maps a value that belongs to a finite field or member type.** jBallerina's `transform` never maps a value to a finite or enum field or member type, so `"A"` for a `"A"|"B"` field or `1` for a `1|2` field fails with `no mapping type found for value '<value>' in key '<key>'`, and a value for an enum field or for a union with a finite member, such as `("A"|"B")?`, fails with `expected type cannot contains types other than basic types`, even though the value belongs to the type ([ballerina-library#9411](https://github.com/ballerina-platform/ballerina-library/issues/9411)); the Go-native version maps a value that belongs to the type and still rejects one that does not.
+- **`lineTerminator` decides which line feeds end a line, and a carriage return inside quotes is kept.** jBallerina ignores `lineTerminator`, so a bare line feed ends a line even when only `CRLF` is allowed ([ballerina-library#9412](https://github.com/ballerina-platform/ballerina-library/issues/9412)), and it drops every carriage return, including one inside a quoted value, so `"x\ry"` parses as `xy` ([ballerina-library#9413](https://github.com/ballerina-platform/ballerina-library/issues/9413)); the Go-native version ends a line at a bare line feed only when `LF` is allowed and at a line feed after a carriage return when `LF` or `CRLF` is allowed, and keeps carriage returns inside quoted values. A carriage return outside quotes is still dropped.
 
 ### file
 

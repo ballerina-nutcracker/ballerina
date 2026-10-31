@@ -1,0 +1,12 @@
+-- stdout --
+[{"a":1,"b":"é"}]
+[{"a":1,"b":"Ã©"}]
+[{"a":1,"b":"��"}]
+[{"a":1,"b":"�"}]
+error Error ("value '[97,44,98,10,49,44,195,169]' cannot be cast into 'typedesc {| a: int, b: string, never... |}[]'")
+[{"a":1,"b":"é"}]
+error Error ("Error occurred while reading the stream: value 'z' cannot be cast into 'int'")
+error Error ("Error occurred while reading the stream: FOO")
+error("boom")
+[{"a":"1"},{"a":"x"}]
+-- stderr --

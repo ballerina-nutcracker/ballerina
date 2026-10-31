@@ -1,0 +1,28 @@
+-- stdout --
+[[1],["+1"],[-1],[-0.0],[1],[1.0],[1.0],[".5"],[100000.0],["1e5"],[1e-5],[1,0],[9223372036854775807],[9.223372036854776e18],[null],[true],["x"]]
+[[1.0],[-0.0],[1.0],[1.0],[100000.0],[100000.0],[1500.0],[1e-5],[9.223372036854776e18]]
+[[Infinity]]
+[[1.0],[100.0],[0.001],[0.00010],[12345678],[1.2345678901234567E+19],[0.000010],[0]]
+error Error ("value '1E400' cannot be cast into 'decimal'")
+error Error ("value '1E5x' cannot be cast into 'float'")
+error Error ("value '1E+-5' cannot be cast into 'float'")
+[[true],[true],[false]]
+error Error ("value 'yes' cannot be cast into 'boolean'")
+error Error ("value '-0' cannot be cast into 'int'")
+[[1],["x"],["1.5"]]
+[[null],["x"]]
+[["A",1,2.5,true,null,"B"]]
+error Error ("value 'TRUE' cannot be cast into '(true|1|2.5|\"A\"|\"B\")?'")
+error Error ("value '256' cannot be cast into 'byte'")
+error Error ("value '4294967297' cannot be cast into 'byte'")
+error Error ("value '-129' cannot be cast into 'lang.int:Signed8'")
+error Error ("value '-1' cannot be cast into 'lang.int:Unsigned32'")
+error Error ("value 'xy' cannot be cast into 'lang.string:Char'")
+error Error ("value 'x' cannot be cast into '()'")
+error Error ("value '1' cannot be cast into 'int[]'")
+[[null],["null"]]
+[[1.0,5.0]]
+[["1.000"]]
+[["-2"]]
+[[-2]]
+-- stderr --

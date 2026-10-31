@@ -1,0 +1,10 @@
+-- stdout --
+true
+true
+true
+[{"a":"1","b":"x"},{"a":"2","b":"y"}]
+[{"a":"1","b":"x"},{"a":"2","b":"y"}]
+true
+true
+true
+-- stderr --
