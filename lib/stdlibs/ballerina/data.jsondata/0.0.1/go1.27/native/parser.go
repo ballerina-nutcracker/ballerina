@@ -454,7 +454,7 @@ func (sm *stateMachine) fieldName(buff []uint16, i, count int) (parserState, err
 	for ; i < count; i++ {
 		ch := buff[i]
 		sm.processLocation(ch)
-		if err := sm.checkSurrogatePaired(ch != charBackslash); err != nil {
+		if err := sm.checkSurrogatePaired(ch != charBackslash && ch != charEOF); err != nil {
 			return state, err
 		}
 		switch ch {
@@ -531,7 +531,7 @@ func (sm *stateMachine) stringContent(buff []uint16, i, count int, source parser
 	for ; i < count; i++ {
 		ch := buff[i]
 		sm.processLocation(ch)
-		if err := sm.checkSurrogatePaired(ch != charBackslash); err != nil {
+		if err := sm.checkSurrogatePaired(ch != charBackslash && ch != charEOF); err != nil {
 			return state, err
 		}
 		switch ch {
@@ -758,9 +758,6 @@ func (sm *stateMachine) escapedCharacter(buff []uint16, i, count int, source par
 	if i < count {
 		ch := buff[i]
 		sm.processLocation(ch)
-		if err := sm.checkSurrogatePaired(ch != 'u'); err != nil {
-			return state, err
-		}
 		state = source
 		switch ch {
 		case '"':
@@ -783,6 +780,9 @@ func (sm *stateMachine) escapedCharacter(buff []uint16, i, count int, source par
 			state = unicodeStateOf(source)
 		default:
 			return state, throwExpected("escaped characters")
+		}
+		if err := sm.checkSurrogatePaired(ch != 'u'); err != nil {
+			return state, err
 		}
 	}
 	sm.index = i + 1

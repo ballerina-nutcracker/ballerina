@@ -49,7 +49,7 @@ public function main() {
     Pair|jsondata:Error r5 = jsondata:parseString("{}");
     show(r5);
     // @output true required field 'a' not present in JSON
-    foreach string input in ["\"\\ud83d\"", "\"\\uDC00\"", "\"\\uD800\\u0041\"", "\"\\uD800x\"", "\"\\uDE00\\uD83D\"", "\"\\uD800\\n\""] {
+    foreach string input in ["\"\\ud83d\"", "\"\\uDC00\"", "\"\\uD800\\u0041\"", "\"\\uD800x\"", "\"\\uDE00\\uD83D\"", "\"\\uD800\\n\"", "\"\\uD800\\x\"", "\"\\uD800", "{\"\\uD800"] {
         json|jsondata:Error r6 = jsondata:parseString(input);
         show(r6);
     }
@@ -59,6 +59,9 @@ public function main() {
     // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '8'
     // @output true 'unpaired surrogate escape '\uDE00'' at line: '1' column: '7'
     // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '9'
+    // @output true 'expected 'escaped characters'' at line: '1' column: '9'
+    // @output true 'unexpected end of JSON document' at line: '1' column: '8'
+    // @output true 'unexpected end of JSON document' at line: '1' column: '9'
     string|jsondata:Error r6s = jsondata:parseString("\"\\uD800\"");
     show(r6s);
     // @output true 'unpaired surrogate escape '\uD800'' at line: '1' column: '8'
