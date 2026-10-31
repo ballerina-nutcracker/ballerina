@@ -171,10 +171,13 @@ Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code
 |---|---|
 | `getTextPayload` | Now returns `string\|error`, matching jBallerina's signature; extraction failures (for example exceeding `responseLimits.maxEntityBodySize`) surface as an `error` instead of being returned through a `string` signature |
 | `setXmlPayload` / `getXmlPayload` | Available on both `http:Request` and `http:Response`. `setXmlPayload` defaults the Content-Type to `application/xml`, keeping an already-set Content-Type when no override is passed |
+| `setPayload` | Available on both `http:Request` and `http:Response`. Accepts `json\|xml\|byte[]\|mime:Entity[]` and dispatches by the value's runtime type to `setTextPayload`, `setXmlPayload`, `setBinaryPayload`, `setJsonPayload` or `setBodyParts`. The `stream` payload kinds are not supported |
+| `setBodyParts` / `getBodyParts` | Available on both `http:Request` and `http:Response`, built on `ballerina/mime`. `setBodyParts` defaults the Content-Type to `multipart/form-data`, keeping an already-set Content-Type when no override is passed; the boundary is generated when the message is sent. `getBodyParts` returns the parts set by `setBodyParts`, or decodes an inbound multipart body (single level only). A part whose own body is `mime:Entity[]` is sent as a nested multipart body |
+| `getFormParams` | Available on `http:Request`. Decodes an `application/x-www-form-urlencoded` body into a `map<string>`, returning an `error` when the Content-Type is missing, invalid or not form-urlencoded, or when the body cannot be decoded |
 
 ### Outbound XML
 
-`RequestMessage` is now `anydata|http:Request`, so an `xml` value can be sent directly and is inferred as `application/xml`:
+`RequestMessage` is now `anydata|http:Request|mime:Entity[]`, so an `xml` value can be sent directly and is inferred as `application/xml`, and a `mime:Entity[]` is sent as a `multipart/form-data` body:
 
 ```ballerina
 xml echoed = check c->post("/echo", xml `<p>hi</p>`);

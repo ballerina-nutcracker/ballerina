@@ -1,0 +1,13 @@
+-- stdout --
+multipart/form-data count=2 1:hello world 2:{"x":1}
+multipart/form-data count=1 1:[multipart/mixed count=1 1:inner-text]
+multipart/form-data count=0
+multipart/mixed
+multipart/mixed count=1 1:hello world
+true
+multipart/mixed count=1 1:hello world
+multipart/related count=1 1:hello world
+multipart/mixed count=1 1:hello world
+multipart/form-data count=1 1:after
+failed to encode multipart body: bogus-cs
+-- stderr --

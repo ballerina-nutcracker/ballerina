@@ -1,0 +1,11 @@
+-- stdout --
+1
+hello world
+x=y
+orphan
+
+false
+5
+0
+{"name":"a","b":"c","k":"v=w","city":"කොළඹ","z":"end"}
+-- stderr --

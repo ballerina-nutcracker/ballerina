@@ -492,7 +492,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResult(rt, ctx.TypeCtx(), state.types, w, r, accessorKey, result)
+		writeResult(rt, ctx, state.types, w, r, accessorKey, result)
 		return
 	}
 	// The path matched a service but no resource under the requested method. If
@@ -616,7 +616,7 @@ func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request,
 
 // writeResult writes a Ballerina resource method return value as an HTTP response,
 // following jBallerina's Caller.returnResponse (http_connection.bal:141-196).
-func writeResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTypes,
+func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 	w http.ResponseWriter, r *http.Request, accessor string, result values.BalValue) {
 	switch v := result.(type) {
 	case nil:
@@ -630,9 +630,19 @@ func writeResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTypes,
 				"unexpected return type from resource method")
 			return
 		}
-		writeResponseObject(w, v, holder)
+		wireContentType := ""
+		if holder.parts != nil {
+			data, ct, err := encodeMultipartBody(ctx, holder.parts, responseContentType(v))
+			if err != nil {
+				writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
+				return
+			}
+			holder = &responseBodyHolder{buf: data}
+			wireContentType = ct
+		}
+		writeResponseObject(w, v, holder, wireContentType)
 	default:
-		writeAnydataResult(rt, tc, types, w, r, accessor, v)
+		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
 }
 
@@ -650,9 +660,9 @@ func responseBodyOf(obj *values.Object) (*responseBodyHolder, bool) {
 
 // The 201 rule keys on the declared accessor, not the request method, so a `default`
 // resource reached by a POST stays 200 — matching jBallerina.
-func writeAnydataResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTypes,
+func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 	w http.ResponseWriter, r *http.Request, accessor string, v values.BalValue) {
-	body, contentType, err := outboundPayload(tc, types, v)
+	body, contentType, err := outboundPayload(ctx, types, v, "")
 	if err != nil {
 		writeErrorJSON(rt, w, r, http.StatusInternalServerError,
 			"failed to serialize resource return value: "+err.Error())
@@ -669,7 +679,9 @@ func writeAnydataResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTyp
 	_, _ = w.Write(body)
 }
 
-func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder) {
+// wireContentType, when non-empty, replaces the Content-Type header, carrying the boundary a
+// multipart body was encoded with.
+func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string) {
 	statusCodeVal, _ := resp.Get("statusCode")
 	statusCode := http.StatusOK
 	// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
@@ -701,6 +713,11 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 				}
 			}
 		}
+	}
+	if wireContentType != "" {
+		// The body parts were re-encoded, so a Content-Length copied from a backend no longer holds.
+		w.Header().Del("Content-Length")
+		w.Header().Set("Content-Type", wireContentType)
 	}
 	// WriteHeader must be called before writing the body; once body bytes
 	// start flowing via writeStream, headers are already committed, so a write error here
