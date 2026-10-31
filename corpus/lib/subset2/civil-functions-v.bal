@@ -32,6 +32,8 @@ public function main() returns error? {
     io:println(addSecondsErrorKind([9223372036854775807, 0.5], 0.75)); // @output NumberOverflow
     io:println(addSecondsErrorKind([-9223372036854775807 - 1, 0.5], -0.25)); // @output NumberOverflow
     io:println(addSecondsErrorKind([0, 0], -9223372036854775808.5)); // @output NumberConversionError
+    io:println(addSecondsErrorKind([-9223372036854775807 - 1, 0], -0.01)); // @output NumberOverflow
+    io:println(time:utcAddSeconds([10, 0], -0.01)); // @output [9,0.99]
     io:println(time:utcAddSeconds([9223372036854775806, 0.5], 0.75)); // @output [9223372036854775807,0.25]
 
     // dateValidate: valid date
