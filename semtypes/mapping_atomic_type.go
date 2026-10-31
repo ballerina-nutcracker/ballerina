@@ -61,6 +61,10 @@ func (m *MappingAtomicType) FieldInnerVal(name string) SemType {
 	return CellInnerVal(m.FieldCell(name))
 }
 
+func (m *MappingAtomicType) Rest() SemType {
+	return CellInnerVal(m.rest)
+}
+
 func (m *MappingAtomicType) IsOptional(cx Context, name string) bool {
 	for i, n := range m.names {
 		if n == name {
