@@ -291,6 +291,15 @@ func (a *Decimal) roundToIntegral(rounding apd.Rounder) (*Decimal, *Error) {
 	if err != nil {
 		return nil, &Error{Kind: ErrInvalid}
 	}
+	// apd zeroes a value whose digits all lie below 0.1 without applying the rounding mode.
+	if out.v.IsZero() && !a.v.IsZero() {
+		if rounding == apd.RoundFloor && a.v.Negative {
+			return FromInt64(-1), nil
+		}
+		if rounding == apd.RoundCeiling && !a.v.Negative {
+			return FromInt64(1), nil
+		}
+	}
 	normalizeUpperExponent(out)
 	return out, nil
 }

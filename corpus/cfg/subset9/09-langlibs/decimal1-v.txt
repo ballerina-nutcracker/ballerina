@@ -52,6 +52,17 @@
           (group-expr
             (unary-expr -
               (literal 1.2))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.decimal floor (
+          (group-expr
+            (unary-expr -
+              (literal 0.01))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.decimal ceiling (
+          (group-expr
+            (literal 0.01)))))))
     (var-def
       (variable parsed (type
         (union-type
