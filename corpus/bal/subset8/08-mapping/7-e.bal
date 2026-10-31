@@ -14,4 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/io;
+
 const boolean c = {a: 1} == {a: 1}; // @error
+
+public function main() {
+    io:println(c);
+}
