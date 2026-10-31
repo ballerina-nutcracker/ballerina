@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker, and the new `ballerina/cache` package, an in-memory LRU cache with entry expiry and periodic cleanup.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -347,3 +347,17 @@ Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:Wa
 | `configureWorkerPool(workerCount?, waitingTime?)` | `waitingTime` is how late a run may be before the waiting policy treats it as missed |
 | `getTimeInMillies(time)` | Epoch milliseconds of a future `time:Civil` |
 | `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |
+
+## [cache](https://github.com/ballerina-platform/module-ballerina-cache/blob/master/docs/spec/spec.md)
+
+An in-memory key-value cache that evicts the least recently used entries by an eviction factor once it is full, expires entries by a per-entry or default max-age, and optionally removes expired entries with a recurring `ballerina/task` job.
+
+Types: `cache:Cache` (class), `cache:CacheConfig`, `cache:EvictionPolicy` (`LRU`), `cache:AbstractCache`, `cache:Error`.
+
+| Function | Notes |
+|---|---|
+| `new cache:Cache(capacity?, evictionFactor?, evictionPolicy?, defaultMaxAge?, cleanupInterval?)` | An invalid configuration panics with jBallerina's `Validation failed for '...' constraint(s).` message, at run time rather than compile time |
+| `put(key, value, maxAge?)` | Returns a `cache:Error` for a `()` value; when a new key is added to a full cache, first evicts `ceil(capacity * evictionFactor)` least recently used entries, while overwriting an existing key evicts nothing |
+| `get(key)` | Marks the entry most recently used; returns a `cache:Error` for a missing or expired key |
+| `invalidate(key)` / `invalidateAll()` | `invalidate` returns a `cache:Error` for a missing key |
+| `hasKey(key)` / `keys()` / `size()` / `capacity()` | `hasKey` removes an expired entry and returns `false`; `keys` and `size` include expired entries until `get`, `hasKey`, `invalidate` or the cleanup task removes them; `keys` lists them from least to most recently used |

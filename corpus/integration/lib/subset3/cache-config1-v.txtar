@@ -1,0 +1,18 @@
+-- stdout --
+ok 100
+ok 1
+ok 100
+Validation failed for '$.capacity:minValue' constraint(s).
+Validation failed for '$.evictionFactor:minValueExclusive' constraint(s).
+Validation failed for '$.evictionFactor:minValueExclusive' constraint(s).
+Validation failed for '$.evictionFactor:maxValue' constraint(s).
+Validation failed for '$.evictionFactor:maxValue' constraint(s).
+Validation failed for '$.evictionFactor:minValueExclusive' constraint(s).
+Validation failed for '$.evictionFactor:maxValue','$.evictionFactor:minValueExclusive' constraint(s).
+Validation failed for '$.defaultMaxAge:minValue' constraint(s).
+Validation failed for '$.cleanupInterval:minValueExclusive' constraint(s).
+Validation failed for '$.capacity:minValue','$.cleanupInterval:minValueExclusive','$.defaultMaxAge:minValue','$.evictionFactor:minValueExclusive' constraint(s).
+Validation failed for '$.capacity:minValue','$.cleanupInterval:minValueExclusive','$.defaultMaxAge:minValue','$.evictionFactor:maxValue' constraint(s).
+5 LRU
+true
+-- stderr --

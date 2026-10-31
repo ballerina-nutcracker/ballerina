@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: Validation failed for '$.capacity:minValue' constraint(s).
+        at ballerina/cache:Cache.init(0.0.1::cache.bal:83)
+           main(cache-config1-p.bal:22)

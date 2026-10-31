@@ -9,6 +9,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
+| [cache](../../lib/stdlibs/ballerina/cache/0.0.1/go1.27/README.md)             | 16 | 0 | 1 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **296** | **31** | **72** | **74%** |
 
 ## Notable Behavioural Changes
 
@@ -40,6 +41,16 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **A `bytes`/`fixed` schema requires a value whose own type is `byte[]`.** An `int[]` is rejected even when every value happens to fit in a byte (0-255) — including a bare list literal such as `schema.toAvro([1, 2, 3])`, which carries no `byte[]` type of its own since `toAvro` takes `anydata`; declare the value as `byte[]` first. jBallerina agrees this should be an error but does not implement it as one: passing a plain `int[]`, in range or not, throws an uncaught `NullPointerException` instead of returning an error.
 - **Avro map keys are encoded in insertion order.** jBallerina iterates a Java `HashMap`, so the key order in an encoded Avro map is unspecified; the Go-native version writes keys in the Ballerina value's insertion order — the Avro encoding does not constrain map key order and readers are insensitive to it.
 - **A `fixed` schema with `"size": 0` is rejected.** jBallerina's underlying Avro library accepts a zero-size `fixed` type, which always encodes to zero bytes. The Go-native version's underlying codec requires a size greater than zero and rejects the schema itself with an `avro:Error` from `new`. Zero-size `fixed` types have no practical use and are not expected to appear in real schemas.
+
+### cache
+
+- **Keys are listed from least to most recently used.** jBallerina returns `keys()` in the iteration order of a Java `ConcurrentHashMap`, which depends on key hashes and was never specified; the Go-native version returns them in recency order.
+- **Capacities above the 32-bit range are honoured.** jBallerina narrows `capacity` to a Java `int`, so `capacity = 4294967297` behaves as a capacity of 1 during eviction while `capacity()` still returns 4294967297; the Go-native version uses the full `int` value.
+- **The eviction count is computed exactly and clamped to between 1 and the capacity.** jBallerina evicts `ceil(capacity * evictionFactor)` entries computed in 32-bit float arithmetic, so the rounding error can evict one entry too many (e.g. `capacity = 50, evictionFactor = 0.3` evicts 16 instead of 15) ([ballerina-library#9406](https://github.com/ballerina-platform/ballerina-library/issues/9406)); the count is also unclamped, so a tiny `evictionFactor` (e.g. `1.0E-300`) evicts nothing and the cache settles at `capacity + 1` entries ([ballerina-library#9400](https://github.com/ballerina-platform/ballerina-library/issues/9400)), and for capacities above 2^24 the product can round up past `capacity` (e.g. `capacity = 16777219, evictionFactor = 1.0` gives 16777220) and fail the `put` with a `NullPointerException`. The Go-native version multiplies `capacity` by the shortest decimal representation of `evictionFactor` exactly and rounds up (so `capacity = 100, evictionFactor = 0.07` evicts 7 and `capacity = 10, evictionFactor = 0.25` evicts 3), then evicts at least one entry and at most every entry, so the cache never exceeds its capacity.
+- **Overwriting a key in a full cache evicts nothing.** jBallerina checks the capacity before looking up the key, so `put` on an existing key in a full cache evicts `ceil(capacity * evictionFactor)` unrelated entries, possibly including the key being written ([ballerina-library#9401](https://github.com/ballerina-platform/ballerina-library/issues/9401)); the Go-native version replaces the value and marks the entry most recently used, since an overwrite does not grow the cache.
+- **Expiry is compared at nanosecond precision.** jBallerina truncates both the expiry time and the current time to whole seconds, so an entry can expire up to one second early and a `maxAge` below 1 can expire it immediately ([ballerina-library#9399](https://github.com/ballerina-platform/ballerina-library/issues/9399)); the Go-native version compares Unix nanoseconds, and an expiry beyond the `int` range never expires.
+- **`hasKey` and `invalidate` treat an expired entry as absent.** jBallerina's `hasKey` returns `true` for an expired entry that `get` then reports as missing, and `invalidate` succeeds on it ([ballerina-library#9402](https://github.com/ballerina-platform/ballerina-library/issues/9402)); the Go-native version removes the expired entry, so `hasKey` returns `false` and `invalidate` returns a `cache:Error`.
+- **A `maxAge` that is neither -1 nor positive is rejected.** jBallerina's `put` silently replaces a `maxAge` of `0` or a negative value other than `-1` with `defaultMaxAge`, so with the default configuration `put(k, v, 0)` caches the entry forever ([ballerina-library#9404](https://github.com/ballerina-platform/ballerina-library/issues/9404)); the Go-native version returns a `cache:Error` such as `Unsupported max-age '0' for the key: k. It must be -1 or positive.`
 
 ### crypto
 

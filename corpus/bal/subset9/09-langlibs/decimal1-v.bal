@@ -27,6 +27,8 @@ public function main() {
     io:println(1.234d.quantize(0.00d)); // @output 1.23
     io:println((-1.2d).floor()); // @output -2
     io:println((-1.2d).ceiling()); // @output -1
+    io:println((-0.01d).floor()); // @output -1
+    io:println((0.01d).ceiling()); // @output 1
 
     decimal|error parsed = decimals:fromString("+12.30");
     if parsed is decimal {
