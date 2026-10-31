@@ -636,8 +636,8 @@ func writeResult(rt *runtime.Runtime, tc semtypes.Context, types *httpTypes,
 	}
 }
 
-// An http:Response is identified by its internal body slot rather than by its type, which is
-// a bare semtypes.Object for every object. The holder type is private to this package, so no
+// An http:Response is identified by its internal body slot rather than by its type, which the
+// server side has no handle on. The holder type is private to this package, so no
 // Ballerina-defined object can forge it.
 func responseBodyOf(obj *values.Object) (*responseBodyHolder, bool) {
 	bodyVal, ok := obj.Get("body")

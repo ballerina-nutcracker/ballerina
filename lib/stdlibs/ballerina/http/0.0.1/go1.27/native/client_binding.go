@@ -66,8 +66,8 @@ func bindResponse(ctx *extern.Context, types *httpTypes, resp *values.Object, ta
 	return result
 }
 
-// Responses are stamped with the top object type, so any object member counts — matching
-// jBallerina's hasHttpResponseType, true for an OBJECT tag anywhere in the union.
+// Any object member counts, matching jBallerina's hasHttpResponseType, true for an OBJECT tag
+// anywhere in the union.
 func admitsResponse(tc semtypes.Context, target semtypes.SemType) bool {
 	return !semtypes.IsEmpty(tc, semtypes.Intersect(target, semtypes.Object))
 }

@@ -35,6 +35,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -252,6 +253,27 @@ func TestHttpClientHeadersLocal(t *testing.T) {
 	}))
 	defer server.Close()
 	runExtern(t, fileCase("http-client-headers-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
+// TestHttpClientRequestMessageHeadersLocal checks that the headers of an http:Request message are
+// sent, merged with the headers and mediaType arguments the way jBallerina's populateOptions does.
+func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var wantTE []string
+		if r.Header.Get("X-Test") == "te-kept" {
+			wantTE = []string{"trailers"}
+		}
+		if r.Header.Get("Upgrade") != "" || r.Header.Get("Keep-Alive") != "" || strings.Contains(r.Header.Get("Connection"), "X-Test") ||
+			!slices.Equal(r.Header.Values("Te"), wantTE) || r.Close {
+			w.WriteHeader(400)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = fmt.Fprintf(w, "%s %v %v", r.Header.Get("Content-Type"), r.Header.Values("X-Test"), r.Header.Values("X-Multi"))
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-request-headers-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
 
 // TestHttpClientTLSInsecure: A client without InsecureSkipVerify would fail

@@ -56,6 +56,7 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 
 ### http
 
+- **Transport-owned request headers are not sent.** jBallerina sends the `Upgrade`, `Keep-Alive`, `Proxy-Connection`, `Transfer-Encoding` and `TE` headers of an outbound request, such as an inbound `http:Request` passed through to a client, and replaces `Connection` with its own value; the Go-native version drops these, except a single `TE: trailers` header, because Go's transport sets them and its HTTP/2 transport rejects a request that carries them.
 - **HTTP/1.0 falls back to HTTP/1.1 at runtime.** `HTTP_1_0` is present in the `HttpVersion` enum for jBallerina contract compatibility. When used, the Go runtime prints a warning to stderr and transparently upgrades the connection to HTTP/1.1, because Go's HTTP client cannot send HTTP/1.0 requests.
 - **Trailing headers are not modelled.** The `TRAILING` header position constant is accepted at compile time for API compatibility, but all header operations (`getHeader`, `getHeaders`, `hasHeader`, `getHeaderNames`) act on transport (leading) headers at runtime. HTTP trailers sent by the server are silently discarded.
 - **TLS protocol name has no effect.** The `protocol.name` field accepts `"SSL"`, `"TLS"`, and `"DTLS"` at compile time, but only TLS is supported at runtime. `"SSL"` and `"DTLS"` values are ignored because Go's standard TLS stack does not expose separate SSL or DTLS stacks.
