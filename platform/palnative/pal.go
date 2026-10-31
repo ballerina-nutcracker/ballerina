@@ -125,6 +125,12 @@ func NewPlatform() (pal.Platform, func()) {
 			CreateTempDir: CreateTempDir,
 			Readlink:      os.Readlink,
 			Watch:         Watch,
+
+			OpenRandomAccess: OpenRandomAccess,
+			CreateSeekable:   CreateSeekable,
+			RealPath:         RealPath,
+			SameFile:         SameFile,
+			Chtimes:          Chtimes,
 		},
 		OS: pal.OS{
 			GetEnv: func(name string) string {
@@ -342,6 +348,9 @@ func newFileInfo(path string, fi os.FileInfo) pal.FileInfo {
 		IsDir:      fi.IsDir(),
 		IsReadable: isReadable(path),
 		IsWritable: isWritable(path, fi),
+
+		Permissions:    uint32(fi.Mode().Perm()),
+		HasPermissions: hasPosixPermissions,
 	}
 }
 

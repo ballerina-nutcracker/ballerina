@@ -26,7 +26,8 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| [zip](../../lib/stdlibs/ballerina/zip/0.0.1/go1.27/README.md)                 | 26 | 1 | 0 | 96% |
+| **Total**                                         | **306** | **32** | **71** | **75%** |
 
 ## Notable Behavioural Changes
 
@@ -164,5 +165,10 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **`remoteHost` is the sender's IP address.** jBallerina fills `Caller.remoteHost` and the received `Datagram.remoteHost` from `InetSocketAddress.getHostName()`, which reverse-resolves the address, so a datagram from `127.0.0.1` reports `localhost`. This port reports the address as seen on the socket (e.g. `127.0.0.1`) without a reverse-DNS lookup.
 - **`Client->receiveDatagram()` reports the sender's address.** jBallerina fills the returned `Datagram`'s `remoteHost`/`remotePort` from the packet's recipient, which is the client's own local address — a bug in the reference implementation that contradicts the field documentation. This port reports the address of the peer that sent the datagram.
 - **`Caller.remoteHost`/`Caller.remotePort` are `final string`/`final int`.** jBallerina declares them as mutable `string?`/`int?` fields defaulting to `()`, but always sets them before a handler runs. This port declares them as never-nil `final` fields; code that reads them as `string?`/`int?` still compiles, but assigning to them does not.
+
+### zip
+
+- **Compressed output differs.** jBallerina deflates entries with zlib; the Go-native version uses Go's `compress/flate`, which encodes the same content at the same level into different bytes — the content and CRC-32 of each entry are the same, but `compressedSize` and the size of the archive are not, and for very small entries the Go output is a few bytes larger.
+- **Extraction limits on deflated entries stop at a different point.** jBallerina inflates a deflated entry 512 compressed bytes at a time and judges `maxTotalSize` and `maxCompressionRatio` against whatever each step produces; the Go-native version judges each full 8 KiB of output — both stop with the same `LimitExceededError` and message, but a deflated entry can trip a ratio limit after a different number of bytes, and the partial file a `maxTotalSize` limit leaves behind can be a different size or absent. Stored entries stop at the same point.
 
 The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.

@@ -1,0 +1,28 @@
+-- stdout --
+reports/ dir=true size=0
+reports/a.txt dir=false size=5
+reports/sub/ dir=true size=0
+reports/sub/b.txt dir=false size=23
+true
+a.txt
+world world world world
+true
+true
+a.txt
+renamed/a.txt
+nested/
+nested/b.txt
+inline.txt
+streamed.txt
+empty/
+a.txt
+true false
+DEFLATE 14 1122053085
+true
+streamed content
+23
+inline content
+true cannot extract the archive: it contains more than the 2 entries allowed
+true
+true
+-- stderr --

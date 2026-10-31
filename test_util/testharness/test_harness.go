@@ -357,6 +357,21 @@ func (p *testPal) Platform() pal.Platform {
 			Watch: func(path string, recursive bool, handler pal.WatchHandler) (pal.WatchHandle, error) {
 				return palnative.Watch(normalizePath(path), recursive, handler)
 			},
+			OpenRandomAccess: func(path string) (pal.RandomAccessFile, error) {
+				return palnative.OpenRandomAccess(normalizePath(path))
+			},
+			CreateSeekable: func(path string, exclusive bool) (pal.SeekableFile, error) {
+				return palnative.CreateSeekable(normalizePath(path), exclusive)
+			},
+			RealPath: func(path string) (string, error) {
+				return palnative.RealPath(normalizePath(path))
+			},
+			SameFile: func(first, second string) (bool, error) {
+				return palnative.SameFile(normalizePath(first), normalizePath(second))
+			},
+			Chtimes: func(path string, modified time.Time) error {
+				return palnative.Chtimes(normalizePath(path), modified)
+			},
 		},
 		OS: pal.OS{
 			GetEnv:      os.Getenv,
