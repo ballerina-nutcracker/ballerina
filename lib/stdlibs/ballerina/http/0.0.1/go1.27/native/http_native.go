@@ -105,6 +105,7 @@ type httpTypes struct {
 	jsonListTy  semtypes.SemType
 	jsonMapTy   semtypes.SemType
 	mapStringTy semtypes.SemType
+	anydataTy   semtypes.SemType
 }
 
 // 8 KB matches Netty's HttpObjectDecoder.maxChunkSize used by jBallerina's transport.
@@ -403,6 +404,7 @@ func initHttpModule(rt *runtime.Runtime) {
 		jsonMapTy:   jsonMapMd.Define(env, nil, jsonTy),
 		jsonListTy:  jsonListLd.Define(env, nil, semtypes.ListRest(jsonTy)),
 		mapStringTy: strMapMd.Define(env, nil, semtypes.String),
+		anydataTy:   semtypes.CreateAnydata(semtypes.ContextFrom(env)),
 	}
 
 	// msgToBody converts a Ballerina RequestMessage value to (io.Reader, contentLength, contentType).

@@ -583,6 +583,97 @@ public type ListenerConfiguration record {|
 public type Service service object {
 };
 
+# Defines the Payload resource signature parameter and return parameter.
+#
+# + mediaType - Specifies the allowed media types of the corresponding payload type
+public type HttpPayload record {|
+    string|string[] mediaType?;
+|};
+
+# The annotation which is used to define the Payload resource signature parameter and return parameter.
+public annotation HttpPayload Payload on parameter, return;
+
+# Defines the Header resource signature parameter.
+#
+# + name - Specifies the name of the required header
+public type HttpHeader record {|
+    string name?;
+|};
+
+# The annotation which is used to define the Header parameter.
+public const annotation HttpHeader Header on parameter, record field;
+
+# Defines the query resource signature parameter.
+#
+# + name - Specifies the name of the query parameter
+public type HttpQuery record {|
+    string name?;
+|};
+
+# The annotation which is used to define the query parameter.
+public const annotation HttpQuery Query on parameter, record field;
+
+# Represents the headers of the inbound request.
+public class Headers {
+
+    private Request? request = ();
+
+    isolated function setRequest(Request request) {
+        self.request = request;
+    }
+
+    isolated function getRequest() returns Request {
+        Request? req = self.request;
+        // Natively built Request values carry the top object type, so `req is Request` would fail.
+        if req is () {
+            panic error("Request is not initialized to retrieve headers");
+        }
+        return req;
+    }
+
+    # Checks whether the requested header key exists in the header map.
+    #
+    # + headerName - The header name
+    # + return - `true` if the specified header key exists
+    public isolated function hasHeader(string headerName) returns boolean {
+        return self.getRequest().hasHeader(headerName);
+    }
+
+    # Returns the value of the specified header. If the specified header key maps to multiple values, the first of
+    # these values is returned.
+    #
+    # + headerName - The header name
+    # + return - The first header value for the specified header name or an `error` if the header is not found.
+    #            jBallerina returns the distinct `HeaderNotFoundError`, which is not declared here.
+    public isolated function getHeader(string headerName) returns string|error {
+        return self.getRequest().getHeader(headerName);
+    }
+
+    # Gets all the header values to which the specified header key maps to.
+    #
+    # + headerName - The header name
+    # + return - The header values the specified header key maps to or an `error` if the header is not found.
+    #            jBallerina returns the distinct `HeaderNotFoundError`, which is not declared here.
+    public isolated function getHeaders(string headerName) returns string[]|error {
+        return self.getRequest().getHeaders(headerName);
+    }
+
+    # Gets all the names of the headers of the request.
+    #
+    # + return - An array of all the header names
+    public isolated function getHeaderNames() returns string[] {
+        return self.getRequest().getHeaderNames();
+    }
+}
+
+// The dispatcher calls this to build an http:Headers parameter, and reads its signature to
+// learn the Request and Headers types, which a native cannot name directly.
+function createHeaders(Request request) returns Headers {
+    Headers headers = new;
+    headers.setRequest(request);
+    return headers;
+}
+
 # An HTTP listener that accepts incoming connections and dispatches requests to attached
 # services based on path-based routing.
 #

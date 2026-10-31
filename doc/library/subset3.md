@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, `anydata` resource returns, and query, header, and payload parameter binding in resource signatures for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -188,6 +188,35 @@ resource function get album() returns xml {
 }
 ```
 
+### Service — resource signature parameters
+
+Resource functions may now declare query, header, and payload parameters alongside path parameters and an `http:Request` parameter, in any order. A binding failure is answered with 400 and a JSON error envelope whose message follows jBallerina (`no query param value found for 'id'`, `header binding failed for parameter: 'x-num'`, `data binding failed: ...`).
+
+| Parameter | Notes |
+|---|---|
+| Query parameter | Any unannotated parameter that is not the payload, or one annotated `@http:Query {name?}`. Types: `string`, `int`, `float`, `decimal`, `boolean`, `map<anydata>` and records (sent as JSON), arrays of these, and nilable forms. Values are split on commas and the first value binds to a non-array parameter. A missing parameter binds to `()` when nilable; a defaultable parameter does not receive its default and yields 400 instead |
+| `@http:Header {name?}` | Types: `string`, `int`, `float`, `decimal`, `boolean`, arrays of these, nilable forms, and closed records whose field names are the header names. An absent or empty header binds to `()` when nilable |
+| `@http:Payload {mediaType?}` | Any `anydata` type, deserialised by the builder the `Content-Type` selects (JSON, XML, text, form-urlencoded, octet-stream) or by the parameter type when the media type is absent or unknown. An empty body binds to `()` when nilable. `mediaType` is accepted but not enforced, as in jBallerina |
+| Default payload parameter | In a resource other than `get`, `head`, and `options`, the single unannotated structured parameter (a record, map, table, tuple, structured array, `byte[]`, or `xml`) is the payload |
+
+Signatures jBallerina's compiler plugin rejects — an ambiguous default payload, an unsupported parameter type, or two `http:Request` parameters — are reported per request with 500 instead.
+
+```ballerina
+type Album record {|
+    string title;
+    int year;
+|};
+
+service /albums on new http:Listener(9090) {
+    resource function get search(string artist, int? count, @http:Header {name: "X-Trace"} string? trace) returns string {
+        return string `${artist} ${count.toString()} ${trace ?: "-"}`;
+    }
+
+    resource function post .(Album album) returns Album {
+        return album;
+    }
+}
+```
 ## [mqtt](https://github.com/ballerina-platform/module-ballerina-mqtt/blob/main/docs/spec/spec.md)
 
 Types: `mqtt:Client`, `mqtt:Listener`, `mqtt:Caller` (classes), `mqtt:Service`, `mqtt:Message`, `mqtt:MessageProperties`, `mqtt:DeliveryToken`, `mqtt:Subscription`, `mqtt:ClientConfiguration`, `mqtt:ListenerConfiguration`, `mqtt:ConnectionConfiguration`, `mqtt:WillDetails`, `mqtt:SecureSocket`, `mqtt:CertKey`, `mqtt:Protocol`, `mqtt:Error`, `mqtt:ErrorDetails`, and the `mqtt:DEFAULT_URL` constant.

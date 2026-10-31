@@ -11,7 +11,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 7 | 38 | 38% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 10 | 34 | 40% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -26,7 +26,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **280** | **31** | **71** | **73%** |
+| **Total**                                         | **281** | **34** | **67** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -65,6 +65,8 @@ Consolidated from each package's README. Only permanent, architectural Go-level 
 - **A nil target type discards the payload.** jBallerina routes a `()` target through the string payload builder, so a non-empty body is handed back as a `string` even though `()` was requested. The Go-native version returns `()` and drops the body, keeping the bound value inside the requested type.
 - **Status-code error messages use the registered reason phrase.** jBallerina reports the reason phrase the server actually sent. The PAL transport contract surfaces only the status code, so the Go-native version derives the message from the status code's registered phrase (for example `Not Found` for 404). A code outside the IANA registry — 499, which nginx sends for a client-closed request, among others — has no registered phrase, and the message becomes `status code <code>` rather than being left empty.
 - **A status error with an absent body keeps its reason phrase.** jBallerina extracts the error response body with the builder its `Content-Type` selects, and an extraction failure replaces the reason phrase with `http:ApplicationResponseError creation failed: <code> response payload extraction failed`. A 4xx or 5xx sent with `Content-Type: application/json` and no body at all trips that path, because a JSON decoder rejects an empty document. The Go-native version treats an absent body as having no payload, so the message stays the reason phrase and the error detail's `body` is `()`.
+- **Invalid resource signatures are reported per request.** jBallerina's compiler plugin rejects an invalid resource signature at build time — an ambiguous default payload parameter, an unsupported query or header parameter type, two `http:Request` parameters, more than one http annotation on a parameter, or `@http:Payload` on a `get`, `head`, or `options` resource. The Go-native version has no compiler plugin, so the program builds and each request reaching such a resource is answered with 500 and the compiler plugin's diagnostic text as the message. The default payload parameter is likewise inferred at request time, so it also applies to resources of a service object constructor, which jBallerina's plugin leaves alone.
+- **Parameter binding errors use the runtime's conversion wording.** jBallerina's payload, query, and header binding failures carry `data.jsondata` and Java parser messages and name types as declared (for example `incompatible type found: 'Person'`). The Go-native version reports the message of the `lang.value:cloneWithType`-equivalent conversion and of Go's JSON, XML, and URL parsers, and prints types structurally (for example `'{| age: int, name: string, never... |}'`), because runtime types carry no declared names. The status codes, the message prefixes, and the binding outcome are unchanged.
 - **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.
 
 ### io

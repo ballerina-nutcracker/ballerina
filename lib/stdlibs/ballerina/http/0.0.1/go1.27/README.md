@@ -20,6 +20,7 @@ The Go Native Interpreter supports the **HTTP client subset**: the nine core rem
 - Read the response status code, text, JSON, or binary payload.
 - Bind the response payload directly to the expected type — records, arrays, maps, `json`, `string`, `byte[]`, and their nilable forms — driven by the response `Content-Type`.
 - Inspect response headers by name or enumerate all header names.
+- Bind query parameters, `@http:Header` parameters, an `http:Headers` parameter, and `@http:Payload` (or default payload) parameters in resource function signatures.
 - Construct `Response` objects in resource functions and populate them with `setTextPayload`, `setJsonPayload`, `setBinaryPayload`, `setHeader`, and direct field assignment (`response.statusCode = 404`).
 - Construct outbound `Request` objects and populate them for forwarding.
 - Parse structured header values (value + parameter map) with the header parsing utility.
@@ -61,6 +62,47 @@ public function main() returns error? {
     });
     http:Response secureResp = check secureClient->get("/");
     io:println("Secure status: ", secureResp.statusCode);
+}
+```
+
+A service binds path, query, header, and payload parameters from the resource signature, and the return value becomes the response:
+
+```ballerina
+import ballerina/http;
+import ballerina/io;
+
+type Album record {|
+    string title;
+    string artist;
+|};
+
+final map<Album> albums = {};
+
+service /albums on new http:Listener(9090) {
+    // GET /albums?artist=Miles%20Davis — `artist` is an optional query parameter.
+    resource function get .(string? artist) returns Album[] {
+        return from Album album in albums
+            where artist is () || album.artist == artist
+            select album;
+    }
+
+    // GET /albums/kind-of-blue — `id` is a path parameter; a missing album is a 404.
+    resource function get [string id]() returns Album|http:Response {
+        Album? album = albums[id];
+        if album is () {
+            http:Response notFound = new;
+            notFound.statusCode = 404;
+            return notFound;
+        }
+        return album;
+    }
+
+    // POST /albums/kind-of-blue — `album` is bound from the JSON body, `trace` from a header.
+    resource function post [string id](Album album, @http:Header {name: "X-Trace-Id"} string? trace) returns Album {
+        io:println("storing ", id, " (trace ", trace ?: "-", ")");
+        albums[id] = album;
+        return album;
+    }
 }
 ```
 
@@ -118,10 +160,10 @@ Support Levels:
 | Request object construction | Supported | `new http:Request()` creates an outbound request with `rawPath`, `method`, and `httpVersion` fields. |
 | Request write methods | Supported | `setTextPayload`, `setJsonPayload`, `setXmlPayload`, `setBinaryPayload` (each with optional `contentType`), `setHeader`, `addHeader`, `removeHeader`, `removeAllHeaders`, and `setContentType` populate the request. All four payload setters follow jBallerina's rule of keeping an existing `Content-Type` when no override is passed, falling back to their type-specific default only when none is set. |
 | Request read methods | Supported | `getTextPayload`, `getJsonPayload`, `getXmlPayload`, `getBinaryPayload`, `getHeader`, `getHeaders`, `hasHeader`, `getHeaderNames`, `getContentType`, `getQueryParams`, `getQueryParamValue`, and `getQueryParamValues` read from client-constructed or inbound requests. |
-| Path parameter binding | Not Yet Supported | Automatic extraction of URL path segments into resource function parameters is not implemented. |
-| Query parameter binding | Not Yet Supported | Automatic binding of URL query parameters to resource function parameters is not implemented. |
-| Inbound header binding | Not Yet Supported | Automatic binding of request headers to resource function parameters via `@http:Header` is not implemented. |
-| Inbound payload binding | Not Yet Supported | Automatic deserialization of the request body into typed resource function parameters via `@http:Payload` is not implemented. |
+| Path parameter binding | Supported | Path segments are coerced to the declared `string`, `int`, `float`, `decimal`, or `boolean` path parameter types, including rest path parameters. |
+| Query parameter binding | Partially Supported | Unannotated parameters and `@http:Query` parameters of type `string`, `int`, `float`, `decimal`, `boolean`, `map<anydata>`/records (sent as JSON), arrays of these, and their nilable forms bind from the query string, following jBallerina's parser: values are split on commas, keys are not URL-decoded, and the first value binds to a non-array parameter. A missing or value-less parameter binds to `()` when nilable and otherwise yields 400. A defaultable parameter (`int id = 10`) does not receive its default when the query parameter is absent; it yields 400 instead, because the runtime does not expose parameter defaults to native code. `treatNilableAsOptional` is not configurable, since `@http:ServiceConfig` is not implemented. |
+| Inbound header binding | Partially Supported | `@http:Header` parameters of type `string`, `int`, `float`, `decimal`, `boolean`, arrays of these, nilable forms, and closed records of these bind from request headers; `@http:Header {name}` renames the header. An absent or empty header binds to `()` when nilable and otherwise yields 400. On a header record, a field-level `@http:Header {name}` is ignored and the field name is used as the header name, because record field annotations are not reachable from a parameter type. An `http:Headers` parameter gives read access to all request headers (`hasHeader`, `getHeader`, `getHeaders`, `getHeaderNames`); its `getHeader` and `getHeaders` return `error` rather than the distinct `HeaderNotFoundError`, which is not declared. |
+| Inbound payload binding | Partially Supported | `@http:Payload` parameters, and the default payload parameter (the single unannotated structured or `xml` parameter of a non-`get`/`head`/`options` resource), are bound from the body using the builder the `Content-Type` selects, falling back to the parameter type when it is absent or unknown. An empty body binds to `()` for a nilable type; binding failures yield 400 with a `data binding failed: ...` message. A union type is matched by preferring `string` over `byte[]` over a form `map<string>`, rather than in declared member order, and `laxDataBinding` cannot be enabled, since `@http:ServiceConfig` is not implemented. A `mediaType` on `@http:Payload` is accepted but not enforced, as in jBallerina. A `Request` parameter declared alongside a payload parameter can still read the body. On a resource return type, `@http:Payload {mediaType}` is accepted but has no effect; the response Content-Type is still inferred from the returned value. |
 | Multipart and form-data payload | Not Yet Supported | `mime:Entity[]` as a request body type and the associated `getBodyParts()` response method are not implemented. |
 | Streaming request body | Not Yet Supported | `stream<byte[], io:Error?>` as a request payload type is not implemented. |
 
@@ -155,7 +197,7 @@ Support Levels:
 | Feature/API | Support Status | Comments / Limitations |
 |---|---|---|
 | HTTP service definition and routing | Supported | Path-based routing dispatches to the first attached service whose base path matches, not longest-prefix match; attach overlapping base paths on the same listener in most-specific-first order. |
-| Resource function dispatch | Partially Supported | Path parameters (typed segment coercion) and accessor methods (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `default`) dispatch to the matching resource function. Resource return values may be `http:Response`, `error`, `()`, or any `anydata` value; an `anydata` return is serialised with the Content-Type its type implies and answered with 201 for a `post` accessor and 200 otherwise, `()` gives 202, and an `error` gives a 500 JSON envelope. Status code response types are not implemented (see the row below), and every error maps to 500 rather than to a status derived from its type. |
+| Resource function dispatch | Partially Supported | Path parameters (typed segment coercion) and accessor methods (`get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `default`) dispatch to the matching resource function, which may declare an `http:Request` parameter and query, header, and payload parameters (see the Request table). Resource return values may be `http:Response`, `error`, `()`, or any `anydata` value; an `anydata` return is serialised with the Content-Type its type implies and answered with 201 for a `post` accessor and 200 otherwise, `()` gives 202, and an `error` gives a 500 JSON envelope. Status code response types are not implemented (see the row below), and every error maps to 500 rather than to a status derived from its type. |
 | Caller-based response dispatch | Not Yet Supported | The `Caller` class and its `respond()` method for sending responses back to the client are not implemented. |
 | Status code response types from resources | Not Yet Supported | Returning `http:Ok`, `http:Created`, `http:NotFound`, and other `StatusCodeResponse` subtypes from resource functions is not implemented. |
 | Service-level annotation | Not Yet Supported | `@http:ServiceConfig` (host, compression, chunking, CORS, auth, validation, lax data binding) is not implemented. |
@@ -189,4 +231,6 @@ Support Levels:
 - **A nil target type discards the payload.** jBallerina routes a `()` target through the string payload builder, so a non-empty body is handed back as a `string` even though `()` was requested. The Go-native version returns `()` and drops the body, keeping the bound value inside the requested type.
 - **Status-code error messages use the registered reason phrase.** jBallerina reports the reason phrase the server actually sent. The PAL transport contract surfaces only the status code, so the Go-native version derives the message from the status code's registered phrase (for example `Not Found` for 404). A code outside the IANA registry — 499, which nginx sends for a client-closed request, among others — has no registered phrase, and the message becomes `status code <code>` rather than being left empty.
 - **A status error with an absent body keeps its reason phrase.** jBallerina extracts the error response body with the builder its `Content-Type` selects, and an extraction failure replaces the reason phrase with `http:ApplicationResponseError creation failed: <code> response payload extraction failed`. A 4xx or 5xx sent with `Content-Type: application/json` and no body at all trips that path, because a JSON decoder rejects an empty document. The Go-native version treats an absent body as having no payload, so the message stays the reason phrase and the error detail's `body` is `()`.
+- **Invalid resource signatures are reported per request.** jBallerina's compiler plugin rejects an invalid resource signature at build time — an ambiguous default payload parameter, an unsupported query or header parameter type, two `http:Request` parameters, more than one http annotation on a parameter, or `@http:Payload` on a `get`, `head`, or `options` resource. The Go-native version has no compiler plugin, so the program builds and each request reaching such a resource is answered with 500 and the compiler plugin's diagnostic text as the message. The default payload parameter is likewise inferred at request time, so it also applies to resources of a service object constructor, which jBallerina's plugin leaves alone.
+- **Parameter binding errors use the runtime's conversion wording.** jBallerina's payload, query, and header binding failures carry `data.jsondata` and Java parser messages and name types as declared (for example `incompatible type found: 'Person'`). The Go-native version reports the message of the `lang.value:cloneWithType`-equivalent conversion and of Go's JSON, XML, and URL parsers, and prints types structurally (for example `'{| age: int, name: string, never... |}'`), because runtime types carry no declared names. The status codes, the message prefixes, and the binding outcome are unchanged.
 - **`gracefulStop` waits for in-flight requests to drain.** In jBallerina, `gracefulStop` effectively behaves like an immediate stop — it returns promptly without waiting for active requests, so calling it from within a resource on its own listener succeeds. The Go-native version implements the `http:Listener` contract literally and blocks until in-flight requests complete or the graceful-stop timeout (default 60s) elapses. A resource that calls `gracefulStop` on the listener serving it therefore self-deadlocks until the timeout elapses and then returns an error, rather than succeeding.

@@ -364,3 +364,31 @@ public function testMain() returns error? {
 	}
 	runExtern(t, tc, newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
+
+// TestHttpServiceQueryParams exercises query parameter binding: scalar, array, nilable,
+// enum, map, record and readonly parameter types, @http:Query renaming, jBallerina's
+// comma-splitting query parser, and the signature errors jBallerina reports at compile time.
+func TestHttpServiceQueryParams(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-query-params-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceHeaderParams exercises @http:Header parameter binding: scalar, array,
+// nilable and record parameter types, header renaming, empty and repeated header values,
+// and the signature errors jBallerina reports at compile time.
+func TestHttpServiceHeaderParams(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-header-params-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServicePayloadParams exercises request payload binding: @http:Payload and default
+// payload parameters, Content-Type driven builder selection with the type-based fallback,
+// empty bodies, a Request parameter alongside a payload, and the signature errors
+// jBallerina reports at compile time.
+func TestHttpServicePayloadParams(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-payload-params-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
