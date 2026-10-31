@@ -434,36 +434,30 @@ func initHttpModule(rt *runtime.Runtime) {
 		return bytes.NewReader(b), int64(len(b)), ct
 	}
 
-	// execBody serves post, put, patch and delete, whose parameter lists are identical:
-	// [self, path, message, headers, mediaType, targetType].
-	execBody := func(ctx *extern.Context, verb string, args []values.BalValue) (values.BalValue, error) {
-		self := args[0].(*values.Object)
-		path := args[1].(string)
+	// send issues a request and returns the raw Response; msg, headersArg and mediaTypeArg may
+	// be nil. Exactly one of the two results is non-nil.
+	send := func(ctx *extern.Context, verb, path string, self *values.Object,
+		msg, headersArg, mediaTypeArg values.BalValue) (*values.Object, values.BalValue) {
 		var bodyReader io.Reader
 		var contentLength int64
 		contentType := ""
-		if len(args) > 2 && args[2] != nil {
+		if msg != nil {
 			var ct string
-			bodyReader, contentLength, ct = msgToBody(ctx.TypeCtx(), args[2])
+			bodyReader, contentLength, ct = msgToBody(ctx.TypeCtx(), msg)
 			if bodyReader == nil && ct == "json_error" {
-				return values.NewErrorWithMessage("failed to serialize body to JSON"), nil
+				return nil, values.NewErrorWithMessage("failed to serialize body to JSON")
 			}
 			contentType = ct
 		}
-		var reqHeaders map[string][]string
-		if len(args) > 3 {
-			reqHeaders = extractHeaders(args[3])
-			for hdrKey, hdrVals := range reqHeaders {
-				if strings.EqualFold(hdrKey, "content-type") && len(hdrVals) > 0 {
-					contentType = hdrVals[0]
-					break
-				}
+		reqHeaders := extractHeaders(headersArg)
+		for hdrKey, hdrVals := range reqHeaders {
+			if strings.EqualFold(hdrKey, "content-type") && len(hdrVals) > 0 {
+				contentType = hdrVals[0]
+				break
 			}
 		}
-		if len(args) > 4 {
-			if mt, ok := args[4].(string); ok && mt != "" {
-				contentType = mt
-			}
+		if mt, ok := mediaTypeArg.(string); ok && mt != "" {
+			contentType = mt
 		}
 		reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
 		urlVal, _ := self.Get("url")
@@ -471,10 +465,46 @@ func initHttpModule(rt *runtime.Runtime) {
 		statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
 			goCtxOrBackground(ctx), verb, urlVal.(string)+path, bodyReader, contentLength, contentType, reqHeaders)
 		if err != nil {
-			return values.NewErrorWithMessage(err.Error()), nil
+			return nil, values.NewErrorWithMessage(err.Error())
 		}
-		resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
+		return buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream), nil
+	}
+
+	// execBody serves the remote post, put, patch and delete methods, whose parameter lists
+	// are identical: [self, path, message, headers, mediaType, targetType].
+	execBody := func(ctx *extern.Context, verb string, args []values.BalValue) (values.BalValue, error) {
+		resp, errVal := send(ctx, verb, args[1].(string), args[0].(*values.Object),
+			args[2], args[3], args[4])
+		if errVal != nil {
+			return errVal, nil
+		}
 		return bindResponse(ctx, &types, resp, args[5]), nil
+	}
+
+	// resourceMethod implements a client resource accessor. Its args are [self, path], then the
+	// matching remote method's parameters after its path, then the *QueryParams record.
+	resourceMethod := func(accessor string) extern.NativeFunc {
+		verb := strings.ToUpper(accessor)
+		return func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			var msg, headers, mediaType, target, params values.BalValue
+			switch accessor {
+			case "head":
+				headers, params = args[2], args[3]
+			case "get", "options":
+				headers, target, params = args[2], args[3], args[4]
+			default:
+				msg, headers, mediaType, target, params = args[2], args[3], args[4], args[5], args[6]
+			}
+			path := resourceRequestPath(args[1].(*values.List), params)
+			resp, errVal := send(ctx, verb, path, args[0].(*values.Object), msg, headers, mediaType)
+			if errVal != nil {
+				return errVal, nil
+			}
+			if target == nil {
+				return resp, nil
+			}
+			return bindResponse(ctx, &types, resp, target), nil
+		}
 	}
 
 	// Client class def.
@@ -502,6 +532,11 @@ func initHttpModule(rt *runtime.Runtime) {
 		},
 	}
 	runtime.RegisterExternClassDef(rt, clientClassDef)
+
+	for idx, accessor := range clientResourceAccessors {
+		runtime.RegisterExternFunction(rt, orgName, moduleName, clientResourceExternKey(accessor, idx),
+			resourceMethod(accessor))
+	}
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "parseHeader",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -780,21 +815,10 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$get",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			path := args[1].(string)
-			var reqHeaders map[string][]string
-			if len(args) > 2 {
-				reqHeaders = extractHeaders(args[2])
+			resp, errVal := send(ctx, "GET", args[1].(string), args[0].(*values.Object), nil, args[2], nil)
+			if errVal != nil {
+				return errVal, nil
 			}
-			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
-			urlVal, _ := self.Get("url")
-			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), "GET", urlVal.(string)+path, nil, 0, "", reqHeaders)
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
 			return bindResponse(ctx, &types, resp, args[3]), nil
 		})
 
@@ -805,40 +829,19 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$head",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			path := args[1].(string)
-			var reqHeaders map[string][]string
-			if len(args) > 2 {
-				reqHeaders = extractHeaders(args[2])
+			resp, errVal := send(ctx, "HEAD", args[1].(string), args[0].(*values.Object), nil, args[2], nil)
+			if errVal != nil {
+				return errVal, nil
 			}
-			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
-			urlVal, _ := self.Get("url")
-			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), "HEAD", urlVal.(string)+path, nil, 0, "", reqHeaders)
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			return buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream), nil
+			return resp, nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$options",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			path := args[1].(string)
-			var reqHeaders map[string][]string
-			if len(args) > 2 {
-				reqHeaders = extractHeaders(args[2])
+			resp, errVal := send(ctx, "OPTIONS", args[1].(string), args[0].(*values.Object), nil, args[2], nil)
+			if errVal != nil {
+				return errVal, nil
 			}
-			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
-			urlVal, _ := self.Get("url")
-			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), "OPTIONS", urlVal.(string)+path, nil, 0, "", reqHeaders)
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
 			return bindResponse(ctx, &types, resp, args[3]), nil
 		})
 
@@ -860,45 +863,11 @@ func initHttpModule(rt *runtime.Runtime) {
 	// execute: args = [self, httpVerb, path, message, headers, mediaType, targetType]
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Client.$remote$execute",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			verb := args[1].(string)
-			path := args[2].(string)
-
-			var bodyReader io.Reader
-			var contentLength int64
-			contentType := ""
-			if len(args) > 3 && args[3] != nil {
-				var ct string
-				bodyReader, contentLength, ct = msgToBody(ctx.TypeCtx(), args[3])
-				if bodyReader == nil && ct == "json_error" {
-					return values.NewErrorWithMessage("failed to serialize body to JSON"), nil
-				}
-				contentType = ct
+			resp, errVal := send(ctx, args[1].(string), args[2].(string), args[0].(*values.Object),
+				args[3], args[4], args[5])
+			if errVal != nil {
+				return errVal, nil
 			}
-			var reqHeaders map[string][]string
-			if len(args) > 4 {
-				reqHeaders = extractHeaders(args[4])
-				for hdrKey, hdrVals := range reqHeaders {
-					if strings.EqualFold(hdrKey, "content-type") && len(hdrVals) > 0 {
-						contentType = hdrVals[0]
-						break
-					}
-				}
-			}
-			if len(args) > 5 {
-				if mt, ok := args[5].(string); ok && mt != "" {
-					contentType = mt
-				}
-			}
-			reqHeaders = applyCompressionHeaders(compressionModeOf(self), reqHeaders)
-			urlVal, _ := self.Get("url")
-			clientHandle, _ := self.Get("$httpClient")
-			statusCode, respHeaders, respBodyStream, err := clientHandle.(pal.HTTPClient).Execute(
-				goCtxOrBackground(ctx), verb, urlVal.(string)+path, bodyReader, contentLength, contentType, reqHeaders)
-			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
-			}
-			resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
 			return bindResponse(ctx, &types, resp, args[6]), nil
 		})
 
@@ -1842,4 +1811,94 @@ func headerListValues(hdrs *values.Map, name string) []string {
 // toJSONBytes serializes a Ballerina value to JSON bytes.
 func toJSONBytes(v values.BalValue) ([]byte, error) {
 	return values.ToJSONByteArray(v)
+}
+
+// clientResourceAccessors lists the resource methods on the `Client` class in http.bal declaration
+// order: each extern key is `$resource$<accessor>$<declIndex>`, so a mismatch leaves the method unbound.
+var clientResourceAccessors = []string{"get", "post", "put", "patch", "delete", "head", "options"}
+
+func clientResourceExternKey(accessor string, idx int) string {
+	return fmt.Sprintf("Client.$resource$%s$%d", accessor, idx)
+}
+
+// resourceRequestPath renders client resource access path segments and query parameters into a
+// request path: segments are joined with "/", then any query parameters are appended after "?".
+// An empty segment list yields "/". Every segment and query value is rendered with Ballerina's
+// own `toString` semantics, then each segment is percent-encoded by writeEscapedPathSegment and
+// each query key and value with url.QueryEscape — see the README's "Notable Behavioural Changes"
+// for how both differ from jBallerina's wire format.
+func resourceRequestPath(segments *values.List, params values.BalValue) string {
+	var sb strings.Builder
+	for i := range segments.Len() {
+		sb.WriteByte('/')
+		writeEscapedPathSegment(&sb, balString(segments.Get(i)))
+	}
+	if sb.Len() == 0 {
+		sb.WriteByte('/')
+	}
+	if query := queryParamString(params); query != "" {
+		sb.WriteByte('?')
+		sb.WriteString(query)
+	}
+	return sb.String()
+}
+
+// writeEscapedPathSegment percent-encodes every byte outside RFC 3986 pchar, so `/`, `?`, `#`, `%`
+// and space are escaped while sub-delims such as `,` and `;` go out raw, as jBallerina sends them.
+func writeEscapedPathSegment(sb *strings.Builder, seg string) {
+	const upperHex = "0123456789ABCDEF"
+	for i := 0; i < len(seg); i++ {
+		c := seg[i]
+		if isPathSegmentChar(c) {
+			sb.WriteByte(c)
+			continue
+		}
+		sb.WriteByte('%')
+		sb.WriteByte(upperHex[c>>4])
+		sb.WriteByte(upperHex[c&0xF])
+	}
+}
+
+func isPathSegmentChar(c byte) bool {
+	switch {
+	case 'a' <= c && c <= 'z', 'A' <= c && c <= 'Z', '0' <= c && c <= '9':
+		return true
+	}
+	return strings.IndexByte("-._~!$&'()*+,;=:@", c) >= 0
+}
+
+// queryParamString renders a `QueryParams` record as "k=v" pairs joined with "&", in field
+// insertion order. An array-valued field becomes a single comma-joined pair ("k=a,b,c") rather
+// than a repeated key, matching jBallerina's constructQueryString.
+func queryParamString(params values.BalValue) string {
+	// The compiler always materialises the included record, even when the call
+	// supplies no query arguments, so this is never anything but a map.
+	paramMap := params.(*values.Map)
+	pairs := make([]string, 0, paramMap.Len())
+	for _, key := range paramMap.Keys() {
+		val, _ := paramMap.Get(key)
+		pairs = append(pairs, url.QueryEscape(key)+"="+queryParamValueString(val))
+	}
+	return strings.Join(pairs, "&")
+}
+
+// queryParamValueString escapes each element separately so the comma joining array elements
+// stays a delimiter rather than becoming part of an escaped value.
+func queryParamValueString(v values.BalValue) string {
+	list, ok := v.(*values.List)
+	if !ok {
+		return url.QueryEscape(balString(v))
+	}
+	parts := make([]string, list.Len())
+	for i := range list.Len() {
+		parts[i] = url.QueryEscape(balString(list.Get(i)))
+	}
+	return strings.Join(parts, ",")
+}
+
+// balString renders a PathParamType or SimpleQueryParamType value the way Ballerina's own
+// `toString` would. The visited set is only consulted for structured values, which these
+// never are.
+func balString(v values.BalValue) string {
+	return values.String(v, nil)
 }

@@ -191,6 +191,25 @@ func TestHttpServiceClientMethods(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-client-methods-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceClientResource exercises all seven client resource methods
+// (`client->/path.get()` and friends) against a service that echoes back the
+// method it dispatched on, so an accessor wired to the wrong native
+// implementation shows up as a mismatched verb.
+func TestHttpServiceClientResource(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-client-resource-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceClientResourcePath asserts the request target a client
+// resource method builds: path segment rendering for every PathParamType
+// member, and query parameter assembly from the *QueryParams included record.
+func TestHttpServiceClientResourcePath(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-client-resource-path-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceClientRedirect verifies the client follows a 302 redirect
 // (Location header) emitted by a local service and lands on the 200 target.
 func TestHttpServiceClientRedirect(t *testing.T) {
