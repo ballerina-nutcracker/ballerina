@@ -1,0 +1,34 @@
+(isReadonly
+  (bb0 () ()
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type readonly))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref L))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref M))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref T))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref U))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isReadonly (
+          (field-based-access q
+            (index-based-access
+              (field-based-access r
+                (simple-var-ref D))
+              (literal 0))))))))
+  )
+)
