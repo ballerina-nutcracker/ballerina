@@ -357,7 +357,7 @@ Types: `cache:Cache` (class), `cache:CacheConfig`, `cache:EvictionPolicy` (`LRU`
 | Function | Notes |
 |---|---|
 | `new cache:Cache(capacity?, evictionFactor?, evictionPolicy?, defaultMaxAge?, cleanupInterval?)` | An invalid configuration panics with jBallerina's `Validation failed for '...' constraint(s).` message, at run time rather than compile time |
-| `put(key, value, maxAge?)` | Returns a `cache:Error` for a `()` value; when a new key is added to a full cache, first evicts `ceil(capacity * evictionFactor)` least recently used entries, while overwriting an existing key evicts nothing |
+| `put(key, value, maxAge?)` | Returns a `cache:Error` for a `()` value or a `maxAge` that is neither -1 nor positive; when a new key is added to a full cache, first evicts `ceil(capacity * evictionFactor)` least recently used entries (at least 1, at most `capacity`), while overwriting an existing key evicts nothing |
 | `get(key)` | Marks the entry most recently used; returns a `cache:Error` for a missing or expired key |
 | `invalidate(key)` / `invalidateAll()` | `invalidate` returns a `cache:Error` for a missing key |
 | `hasKey(key)` / `keys()` / `size()` / `capacity()` | `hasKey` removes an expired entry and returns `false`; `keys` and `size` include expired entries until `get`, `hasKey`, `invalidate` or the cleanup task removes them; `keys` lists them from least to most recently used |
