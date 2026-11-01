@@ -121,33 +121,70 @@ main() -> nil{
     %76 = println(%75) -> bb22;
   }
   bb22 {
-    %77 = ConstantLoad +12.30
-    %78 = fromString(%77) -> bb23;
+    %77 = ConstantLoad 0.01
+    %78 = %77;
+    %79 = floor(%78) -> bb23;
   }
   bb23 {
-    parsed = %78;
-    %80 = parsed is decimal
-    %80 ? bb24 : bb26;
+    %80 = %79;
+    %81 = println(%80) -> bb24;
   }
   bb24 {
-    PushScopeFrame 1
-    %0 = println((1, parsed)) -> bb25;
+    %82 = ConstantLoad 0.01
+    %83 = unknown %82;
+    %84 = %83;
+    %85 = ceiling(%84) -> bb25;
   }
   bb25 {
-    PopScopeFrame
-    GOTO bb26;
+    %86 = %85;
+    %87 = println(%86) -> bb26;
   }
   bb26 {
-    PushScopeFrame 5
-    %0 = ConstantLoad bad
-    %1 = fromString(%0) -> bb27;
+    %88 = ConstantLoad 0
+    %89 = %88;
+    %90 = ceiling(%89) -> bb27;
   }
   bb27 {
-    %2 = %1 is error
-    %3 = %2;
-    %4 = println(%3) -> bb28;
+    %91 = %90;
+    %92 = println(%91) -> bb28;
   }
   bb28 {
+    %93 = ConstantLoad 0
+    %94 = %93;
+    %95 = floor(%94) -> bb29;
+  }
+  bb29 {
+    %96 = %95;
+    %97 = println(%96) -> bb30;
+  }
+  bb30 {
+    %98 = ConstantLoad +12.30
+    %99 = fromString(%98) -> bb31;
+  }
+  bb31 {
+    parsed = %99;
+    %101 = parsed is decimal
+    %101 ? bb32 : bb34;
+  }
+  bb32 {
+    PushScopeFrame 1
+    %0 = println((1, parsed)) -> bb33;
+  }
+  bb33 {
+    PopScopeFrame
+    GOTO bb34;
+  }
+  bb34 {
+    PushScopeFrame 5
+    %0 = ConstantLoad bad
+    %1 = fromString(%0) -> bb35;
+  }
+  bb35 {
+    %2 = %1 is error
+    %3 = %2;
+    %4 = println(%3) -> bb36;
+  }
+  bb36 {
     PopScopeFrame
     return;
   }
