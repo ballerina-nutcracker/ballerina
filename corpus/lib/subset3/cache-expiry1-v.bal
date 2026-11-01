@@ -69,7 +69,7 @@ public function main() returns error? {
 function waitForSize(cache:Cache c, int expected) returns int {
     foreach int _ in 0 ..< 100 {
         if c.size() == expected {
-            break;
+            return expected;
         }
         runtime:sleep(0.1);
     }
