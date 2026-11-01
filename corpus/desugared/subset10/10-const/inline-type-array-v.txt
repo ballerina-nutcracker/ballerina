@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (expr-function-body
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type readonly))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal [1,0,0]))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (literal [1,0,0]))))))
+      (expression-stmt
+        (invocation io println (
+          (literal [1,2,3]))))
+      (expression-stmt
+        (invocation io println (
+          (literal [7,0,0]))))
+      (expression-stmt
+        (invocation io println (
+          (literal [[1,0,0],[0,0,0]]))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (literal [[1,0,0],[0,0,0]])))))))))
