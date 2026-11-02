@@ -1,0 +1,135 @@
+module $anon.. v 0.0.0;
+class Iso {
+
+  id() -> int{
+    bb0 {
+      %2 = ConstantLoad 7
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class Holder {
+  f isolated function(int) returns int
+  td typedesc<int>
+  maybe nil|isolated object { isolated function id() returns int }
+  none nil|isolated object { isolated function id() returns int }
+
+  init() -> nil{
+    bb0 {
+      %2 = fp $anon/.:double
+      %3 = ConstantLoad f
+      self[%3] = %2;
+      %4 = ConstantLoad typedesc
+      %5 = ConstantLoad td
+      self[%5] = %4;
+      %6 = newObject $anon/.:Iso
+      %7 = %6.init() -> bb1;
+    }
+    bb1 {
+      %9 = %7 is nil
+      %9 ? bb2 : bb3;
+    }
+    bb2 {
+      %8 = %6;
+      GOTO bb4;
+    }
+    bb3 {
+      %8 = %7;
+      GOTO bb4;
+    }
+    bb4 {
+      %10 = ConstantLoad maybe
+      self[%10] = %8;
+      %11 = ConstantLoad <nil>
+      %12 = ConstantLoad none
+      self[%12] = %11;
+      return;
+    }
+  }
+}
+double(int) -> int{
+  bb0 {
+    %3 = a;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Holder
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    h = %3;
+    %7 = ConstantLoad f
+    %6 = h[%7];
+    f = %6;
+    %9 = ConstantLoad 4
+    %10 = %9;
+    %11 = f(%10) -> bb5;
+  }
+  bb5 {
+    %12 = %11;
+    %13 = println(%12) -> bb6;
+  }
+  bb6 {
+    %15 = ConstantLoad td
+    %14 = h[%15];
+    %16 = %14 is typedesc<int>
+    %17 = %16;
+    %18 = println(%17) -> bb7;
+  }
+  bb7 {
+    %20 = ConstantLoad maybe
+    %19 = h[%20];
+    maybe = %19;
+    %22 = maybe is isolated object { isolated function id() returns int }
+    %22 ? bb8 : bb11;
+  }
+  bb8 {
+    PushScopeFrame 3
+    %0 = (1, maybe).id() -> bb9;
+  }
+  bb9 {
+    %1 = %0;
+    %2 = println(%1) -> bb10;
+  }
+  bb10 {
+    PopScopeFrame
+    GOTO bb11;
+  }
+  bb11 {
+    PushScopeFrame 5
+    %1 = ConstantLoad none
+    %0 = (1, h)[%1];
+    %2 = %0 is nil
+    %3 = %2;
+    %4 = println(%3) -> bb12;
+  }
+  bb12 {
+    PopScopeFrame
+    return;
+  }
+}

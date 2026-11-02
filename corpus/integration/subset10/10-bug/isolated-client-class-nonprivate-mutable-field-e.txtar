@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-client-class-nonprivate-mutable-field-e.bal:17:5
+   |
+17 |     int count = 0; // @error mutable field with module-level visibility
+   |     ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-client-class-nonprivate-mutable-field-e.bal:18:5
+   |
+18 |     final int[] items = []; // @error final field with a mutable list type
+   |     ^^^^^^^^^^^^^^^^^^^^^^^

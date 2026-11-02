@@ -1,0 +1,41 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Point
+    (variable coords (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable name (type
+      (value-type string)) (expr
+      (literal p)))
+    (variable dim (type
+      (value-type int)) (expr
+      (literal 2)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access coords
+            (simple-var-ref self))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Point)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access coords
+            (simple-var-ref p)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access name
+            (simple-var-ref p)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access dim
+            (simple-var-ref p))))))))
