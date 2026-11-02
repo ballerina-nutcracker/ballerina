@@ -279,6 +279,76 @@ func readonlyMappingShapeType(t typeResolver, entries []values.MapEntry) (semtyp
 	return ty, atomic, nil
 }
 
+// singletonValue returns the value whose shape is the only shape in ty, or
+// false when ty is not a singleton type. Besides the simple singletons
+// SingleShape covers, this reads back the readonly list and mapping shapes that
+// readonlyListShapeType and readonlyMappingShapeType give a structured constant
+// (spec §8.8). A reference to such a constant has that type intersected with
+// readonly, so the atom is read through the alternatives, which intersect it.
+// They over-approximate ty, so when the only alternative has a single shape,
+// that is the shape of ty.
+func singletonValue(t typeResolver, ty semtypes.SemType) (values.BalValue, bool) {
+	if shape := semtypes.SingleShape(ty); shape.IsPresent() {
+		return shape.Get().Value, true
+	}
+	cx := t.typeContext()
+	if !semtypes.IsSubtype(cx, ty, semtypes.ValReadonly) {
+		return nil, false
+	}
+	if semtypes.IsSubtypeSimple(ty, semtypes.List) {
+		return singletonListValue(t, ty)
+	}
+	if semtypes.IsSubtypeSimple(ty, semtypes.Mapping) {
+		return singletonMappingValue(t, ty)
+	}
+	return nil, false
+}
+
+func singletonListValue(t typeResolver, ty semtypes.SemType) (values.BalValue, bool) {
+	alts := semtypes.ListAlternatives(t.typeContext(), ty)
+	if len(alts) != 1 {
+		return nil, false
+	}
+	atomic := semtypes.ToListAtomicType(t.typeEnv(), alts[0].Type())
+	if atomic == nil || !semtypes.IsNever(atomic.Rest()) {
+		return nil, false
+	}
+	members := make([]values.BalValue, atomic.FixedLength())
+	for i := range members {
+		member, ok := singletonValue(t, atomic.MemberAtInnerVal(i))
+		if !ok {
+			return nil, false
+		}
+		members[i] = member
+	}
+	return values.NewList(alts[0].Type(), atomic, true, nil, len(members), members), true
+}
+
+func singletonMappingValue(t typeResolver, ty semtypes.SemType) (values.BalValue, bool) {
+	cx := t.typeContext()
+	alts := semtypes.MappingAlternatives(cx, ty)
+	if len(alts) != 1 {
+		return nil, false
+	}
+	atomic := alts[0].Atomic()
+	if atomic == nil || !semtypes.IsNever(atomic.Rest()) {
+		return nil, false
+	}
+	names := atomic.FieldNames()
+	entries := make([]values.MapEntry, len(names))
+	for i, name := range names {
+		if atomic.IsOptional(cx, name) {
+			return nil, false
+		}
+		value, ok := singletonValue(t, atomic.FieldInnerVal(name))
+		if !ok {
+			return nil, false
+		}
+		entries[i] = values.MapEntry{Key: name, Value: value}
+	}
+	return values.NewMap(alts[0].Type(), atomic, true, entries), true
+}
+
 func (e *constantExpressionEvaluator) constantMappingKey(field *ast.BLangMappingKeyValueField) (string, bool) {
 	key := field.Key
 	if key == nil || key.Expr == nil {
@@ -523,24 +593,15 @@ func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBi
 		return lhs.(bool) && rhs.(bool), true
 	case model.OperatorKind_OR:
 		return lhs.(bool) || rhs.(bool), true
-	case model.OperatorKind_EQUAL, model.OperatorKind_EQUALS:
-		return values.DeepEquals(lhs, rhs), true
-	case model.OperatorKind_NOT_EQUAL:
-		return !values.DeepEquals(lhs, rhs), true
+	case model.OperatorKind_EQUAL, model.OperatorKind_EQUALS, model.OperatorKind_NOT_EQUAL,
+		model.OperatorKind_GREATER_THAN, model.OperatorKind_GREATER_EQUAL,
+		model.OperatorKind_LESS_THAN, model.OperatorKind_LESS_EQUAL:
+		result, _ := compareConstants(expr.OpKind, lhs, rhs)
+		return result, true
 	case model.OperatorKind_REF_EQUAL:
 		return constantExactEqual(lhs, rhs), true
 	case model.OperatorKind_REF_NOT_EQUAL:
 		return !constantExactEqual(lhs, rhs), true
-	case model.OperatorKind_GREATER_THAN:
-		return values.Compare(lhs, rhs) == values.CmpGT, true
-	case model.OperatorKind_GREATER_EQUAL:
-		result := values.Compare(lhs, rhs)
-		return result == values.CmpGT || result == values.CmpEQ, true
-	case model.OperatorKind_LESS_THAN:
-		return values.Compare(lhs, rhs) == values.CmpLT, true
-	case model.OperatorKind_LESS_EQUAL:
-		result := values.Compare(lhs, rhs)
-		return result == values.CmpLT || result == values.CmpEQ, true
 	case model.OperatorKind_BITWISE_AND:
 		return lhs.(int64) & rhs.(int64), true
 	case model.OperatorKind_BITWISE_OR:
@@ -555,6 +616,30 @@ func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBi
 		return int64(uint64(lhs.(int64)) >> uint(rhs.(int64)&0x3F)), true
 	default:
 		return e.internalFailure(fmt.Sprintf("unsupported constant binary operator %s", expr.OpKind), expr.GetPosition())
+	}
+}
+
+// compareConstants evaluates a relational or `==`/`!=` operator on two constant
+// values with the interpreter's comparison semantics; ok is false for any other
+// operator.
+func compareConstants(op model.OperatorKind, lhs, rhs values.BalValue) (result bool, ok bool) {
+	switch op {
+	case model.OperatorKind_EQUAL, model.OperatorKind_EQUALS:
+		return values.DeepEquals(lhs, rhs), true
+	case model.OperatorKind_NOT_EQUAL:
+		return !values.DeepEquals(lhs, rhs), true
+	case model.OperatorKind_GREATER_THAN:
+		return values.Compare(lhs, rhs) == values.CmpGT, true
+	case model.OperatorKind_GREATER_EQUAL:
+		r := values.Compare(lhs, rhs)
+		return r == values.CmpGT || r == values.CmpEQ, true
+	case model.OperatorKind_LESS_THAN:
+		return values.Compare(lhs, rhs) == values.CmpLT, true
+	case model.OperatorKind_LESS_EQUAL:
+		r := values.Compare(lhs, rhs)
+		return r == values.CmpLT || r == values.CmpEQ, true
+	default:
+		return false, false
 	}
 }
 

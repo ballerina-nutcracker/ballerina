@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> nil1-e.bal:26:9
+   |
+26 |         return; // @error
+   |         ^^^^^^^

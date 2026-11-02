@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected true, got boolean
+  --> singleton-compare-plain-e.bal:21:18
+   |
+21 |     true exact = MIN === 1; // @error === is not singleton typed
+   |                  ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected true, got boolean
+  --> singleton-compare-plain-e.bal:23:18
+   |
+23 |     true union = x < 3; // @error union of singletons is not a singleton
+   |                  ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected true, got boolean
+  --> singleton-compare-plain-e.bal:25:18
+   |
+25 |     true plain = y < 2; // @error int operand
+   |                  ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected true, got boolean
+  --> singleton-compare-plain-e.bal:27:21
+   |
+27 |     true optional = z == 1; // @error optional operand
+   |                     ^^^^^^

@@ -1,0 +1,65 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable same (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr ==
+            (literal [1])
+            (literal [1])))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref same))))
+      (var-def
+        (variable differ (type
+          (finite-type
+            (literal false))) (expr
+          (binary-expr !=
+            (literal [1])
+            (literal [1])))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref differ))))
+      (var-def
+        (variable sameMap (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr ==
+            (literal {"a":1})
+            (literal {"a":1})))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sameMap))))
+      (var-def
+        (variable nested (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr ==
+            (literal [[1],{"a":1}])
+            (literal [[1],{"a":1}])))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nested))))
+      (var-def
+        (variable less (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr <
+            (literal [1])
+            (literal [1,2])))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref less))))
+      (var-def
+        (variable greaterOrEqual (type
+          (finite-type
+            (literal false))) (expr
+          (binary-expr >=
+            (literal [1])
+            (literal [1,2])))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref greaterOrEqual)))))))

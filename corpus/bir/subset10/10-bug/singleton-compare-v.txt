@@ -1,0 +1,244 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = ConstantLoad 10
+    %5 = %4;
+    %1 = < %3 %5;
+    ordered = %1;
+    %7 = ordered;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad 1
+    %11 = %10;
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %9 = == %11 %13;
+    same = %9;
+    %15 = same;
+    %16 = println(%15) -> bb2;
+  }
+  bb2 {
+    %18 = ConstantLoad 2
+    %19 = %18;
+    %20 = ConstantLoad 1
+    %21 = %20;
+    %17 = < %19 %21;
+    lt = %17;
+    %23 = lt;
+    %24 = println(%23) -> bb3;
+  }
+  bb3 {
+    %27 = ConstantLoad 1
+    %28 = %27;
+    %29 = ConstantLoad 10
+    %30 = %29;
+    %26 = <= %28 %30;
+    %26 ? bb4 : bb5;
+  }
+  bb4 {
+    %31 = ConstantLoad ordered
+    %25 = %31;
+    GOTO bb6;
+  }
+  bb5 {
+    %32 = ConstantLoad 0
+    %25 = %32;
+    GOTO bb6;
+  }
+  bb6 {
+    label = %25;
+    %34 = println(label) -> bb7;
+  }
+  bb7 {
+    %36 = ConstantLoad 10
+    %37 = %36;
+    %38 = ConstantLoad 10
+    %39 = %38;
+    %35 = >= %37 %39;
+    ge = %35;
+    %41 = ge;
+    %42 = println(%41) -> bb8;
+  }
+  bb8 {
+    %44 = ConstantLoad 1
+    %45 = %44;
+    %46 = ConstantLoad 2
+    %47 = %46;
+    %43 = > %45 %47;
+    gt = %43;
+    %49 = gt;
+    %50 = println(%49) -> bb9;
+  }
+  bb9 {
+    %52 = ConstantLoad a
+    %53 = ConstantLoad a
+    %51 = != %52 %53;
+    ne = %51;
+    %55 = ne;
+    %56 = println(%55) -> bb10;
+  }
+  bb10 {
+    %58 = ConstantLoad 1
+    %59 = %58;
+    %60 = ConstantLoad 10
+    %61 = %60;
+    %57 = < %59 %61;
+    %62 = ! %57;
+    negated = %62;
+    %64 = negated;
+    %65 = println(%64) -> bb11;
+  }
+  bb11 {
+    %67 = ConstantLoad 0
+    %68 = %67;
+    %69 = ConstantLoad 0
+    %70 = unknown %69;
+    %71 = %70;
+    %66 = == %68 %71;
+    zero = %66;
+    %73 = zero;
+    %74 = println(%73) -> bb12;
+  }
+  bb12 {
+    %76 = ConstantLoad 0
+    %77 = unknown %76;
+    %78 = %77;
+    %79 = ConstantLoad 0
+    %80 = %79;
+    %75 = < %78 %80;
+    negZeroLt = %75;
+    %82 = negZeroLt;
+    %83 = println(%82) -> bb13;
+  }
+  bb13 {
+    %85 = ConstantLoad 0
+    %86 = unknown %85;
+    %87 = %86;
+    %88 = ConstantLoad 0
+    %89 = %88;
+    %84 = <= %87 %89;
+    negZeroLe = %84;
+    %91 = negZeroLe;
+    %92 = println(%91) -> bb14;
+  }
+  bb14 {
+    %94 = ConstantLoad 1.0
+    %95 = %94;
+    %96 = ConstantLoad 1.00
+    %97 = %96;
+    %93 = == %95 %97;
+    decEq = %93;
+    %99 = decEq;
+    %100 = println(%99) -> bb15;
+  }
+  bb15 {
+    %102 = ConstantLoad 1.0
+    %103 = %102;
+    %104 = ConstantLoad 1.00
+    %105 = %104;
+    %101 = < %103 %105;
+    decLt = %101;
+    %107 = decLt;
+    %108 = println(%107) -> bb16;
+  }
+  bb16 {
+    %110 = ConstantLoad <nil>
+    %111 = %110;
+    %112 = ConstantLoad <nil>
+    %113 = %112;
+    %109 = == %111 %113;
+    nilEq = %109;
+    %115 = nilEq;
+    %116 = println(%115) -> bb17;
+  }
+  bb17 {
+    %118 = ConstantLoad <nil>
+    %119 = %118;
+    %120 = ConstantLoad <nil>
+    %121 = %120;
+    %117 = <= %119 %121;
+    nilLe = %117;
+    %123 = nilLe;
+    %124 = println(%123) -> bb18;
+  }
+  bb18 {
+    %126 = ConstantLoad <nil>
+    %127 = %126;
+    %128 = ConstantLoad <nil>
+    %129 = %128;
+    %125 = < %127 %129;
+    nilLt = %125;
+    %131 = nilLt;
+    %132 = println(%131) -> bb19;
+  }
+  bb19 {
+    %134 = ConstantLoad <nil>
+    %135 = %134;
+    %136 = ConstantLoad 1
+    %137 = %136;
+    %133 = < %135 %137;
+    nilInt = %133;
+    %139 = nilInt;
+    %140 = println(%139) -> bb20;
+  }
+  bb20 {
+    %142 = ConstantLoad 1
+    %143 = %142;
+    %144 = ConstantLoad <nil>
+    %145 = %144;
+    %141 = >= %143 %145;
+    intNil = %141;
+    %147 = intNil;
+    %148 = println(%147) -> bb21;
+  }
+  bb21 {
+    %150 = ConstantLoad a
+    %151 = ConstantLoad B
+    %149 = < %150 %151;
+    strCase = %149;
+    %153 = strCase;
+    %154 = println(%153) -> bb22;
+  }
+  bb22 {
+    %156 = ConstantLoad ab
+    %157 = ConstantLoad a
+    %155 = > %156 %157;
+    strPrefix = %155;
+    %159 = strPrefix;
+    %160 = println(%159) -> bb23;
+  }
+  bb23 {
+    %162 = ConstantLoad 
+    %163 = ConstantLoad a
+    %161 = < %162 %163;
+    strEmpty = %161;
+    %165 = strEmpty;
+    %166 = println(%165) -> bb24;
+  }
+  bb24 {
+    %168 = ConstantLoad false
+    %169 = %168;
+    %170 = ConstantLoad true
+    %171 = %170;
+    %167 = < %169 %171;
+    boolOrder = %167;
+    %173 = boolOrder;
+    %174 = println(%173) -> bb25;
+  }
+  bb25 {
+    %176 = ConstantLoad true
+    %177 = %176;
+    %178 = ConstantLoad false
+    %179 = %178;
+    %175 = <= %177 %179;
+    boolLe = %175;
+    %181 = boolLe;
+    %182 = println(%181) -> bb26;
+  }
+  bb26 {
+    return;
+  }
+}

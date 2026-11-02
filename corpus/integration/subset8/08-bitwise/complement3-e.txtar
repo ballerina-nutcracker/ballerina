@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> complement3-e.bal:22:9
+   |
+22 |         io:println("impossible"); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^

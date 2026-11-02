@@ -1,5 +1,5 @@
 (main
-  (bb0 () (bb1 bb2)
+  (bb0 () (bb1)
     (binary-expr ==
       (invocation makeNil ())
       (invocation makeNil ()))
@@ -9,7 +9,7 @@
       (invocation io println (
         (literal 1))))
   )
-  (bb2 (bb1 bb0) ())
+  (bb2 (bb1) ())
 )
 (makeNil
   (bb0 () ()

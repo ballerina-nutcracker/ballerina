@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> singleton-compare-while-e.bal:21:9
+   |
+21 |         foo(); // @error loop body never runs
+   |         ^^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> singleton-compare-while-e.bal:28:5
+   |
+28 |     foo(); // @error loop never exits
+   |     ^^^^^^

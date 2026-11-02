@@ -6069,7 +6069,10 @@ func resolveRelationalExpr(t typeResolver, chain *binding, expr *ast.BLangBinary
 		t.semanticError("values are not comparable", expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	resultTy := semtypes.Boolean
+	resultTy, ok := comparisonResultType(t, expr, lhsTy, rhsTy)
+	if !ok {
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
 	setNodeType(t, expr, resultTy)
 	effect := defaultExpressionEffect(sequentialChain(t, rhsResult.effect))
 	return resultTy, effect, true
@@ -6332,15 +6335,37 @@ func resolveEqualityExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryEx
 	// The narrowing an equality test produces applies after both operands have been
 	// evaluated, so it is built on their outgoing chain.
 	chain = sequentialChain(t, rhsResult.effect)
-	var effect expressionEffect
+	effect := defaultExpressionEffect(chain)
+	resultTy := semtypes.Boolean
 	if expr.OpKind == model.OperatorKind_EQUAL || expr.OpKind == model.OperatorKind_NOT_EQUAL {
 		effect = equalityNarrowingEffect(t, chain, expr, lhsResult.ty, rhsResult.ty)
-	} else {
-		effect = defaultExpressionEffect(chain)
+		var ok bool
+		if resultTy, ok = comparisonResultType(t, expr, lhsResult.ty, rhsResult.ty); !ok {
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
 	}
-	resultTy := semtypes.Boolean
 	setNodeType(t, expr, resultTy)
 	return resultTy, effect, true
+}
+
+// comparisonResultType applies the singleton typing rule to a relational or
+// `==`/`!=` expression: when both operands are singletons the result is the
+// singleton boolean the operator evaluates to, otherwise plain boolean.
+func comparisonResultType(t typeResolver, expr *ast.BLangBinaryExpr, lhsTy, rhsTy semtypes.SemType) (semtypes.SemType, bool) {
+	lhsValue, lhsIsSingleton := singletonValue(t, lhsTy)
+	if !lhsIsSingleton {
+		return semtypes.Boolean, true
+	}
+	rhsValue, rhsIsSingleton := singletonValue(t, rhsTy)
+	if !rhsIsSingleton {
+		return semtypes.Boolean, true
+	}
+	result, ok := compareConstants(expr.OpKind, lhsValue, rhsValue)
+	if !ok {
+		t.internalError(fmt.Sprintf("unexpected comparison operator %s", string(expr.OpKind)), expr.GetPosition())
+		return semtypes.SemType{}, false
+	}
+	return semtypes.BooleanConst(result), true
 }
 
 func resolveLogicalExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (semtypes.SemType, expressionEffect, bool) {

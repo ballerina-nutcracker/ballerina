@@ -63,43 +63,16 @@ var UnsupportedTests = []string{
 	// https://github.com/ballerina-nutcracker/ballerina/issues/83
 
 	// pure literal fold + reachability of always-false branch.
-	"subset8/08-bitwise/complement3-e.bal",
 	"subset8/08-const/1-e.bal",
-	"subset8/08-const/7-e.bal",
-	"subset8/08-const/8-e.bal",
-	"subset8/08-const/9-e.bal",
-	"subset8/08-const/10-e.bal",
-	"subset8/08-const/11-e.bal",
-	"subset8/08-const/12-e.bal",
-	"subset8/08-const/13-e.bal",
 	"subset8/08-const/14-e.bal",
 	"subset8/08-const/15-e.bal",
-	"subset8/08-const/16-e.bal",
-	"subset8/08-const/17-e.bal",
-	"subset8/08-const/18-e.bal",
 	"subset8/08-const/7-v.bal",
 	"subset8/08-const/8-v.bal",
 	"subset8/08-const/10-v.bal",
 	"subset8/08-float/5-e.bal",
-	"subset8/08-float/7-e.bal",
-	"subset8/08-narrowing/unreach3-e.bal",
-	"subset8/08-narrowing/unreach4-e.bal",
-	"subset8/08-singleton/nil1-e.bal",
-	"subset8/08-singleton/stringconcat1-e.bal",
-	"subset8/08-string/1-e.bal",
-	"subset8/08-string/5-e.bal",
 
 	// singleton narrowing + fold + reachability.
-	"subset8/08-narrowing/2-e.bal",
-	"subset8/08-narrowing/4-e.bal",
-	"subset8/08-narrowing/6-e.bal",
-	"subset8/08-narrowing/8-e.bal",
 	"subset8/08-narrowing/10-e.bal",
-	"subset8/08-narrowing/12-e.bal",
-	"subset8/08-narrowing/15-e.bal",
-	"subset8/08-singleton/decimal2-e.bal",
-	"subset8/08-singleton/decimal4-e.bal",
-	"subset8/08-singleton/decimal5-e.bal",
 	"subset8/08-singleton/decimal6-e.bal",
 	"subset8/08-singleton/decimal7-e.bal",
 	"subset8/08-singleton/decimal8-e.bal",
@@ -108,12 +81,9 @@ var UnsupportedTests = []string{
 	"subset8/08-singleton/decimal11-e.bal",
 	"subset8/08-singleton/decimal12-e.bal",
 	"subset8/08-singleton/decimal13-e.bal",
-	"subset8/08-singleton/not1-e.bal",
-	"subset8/08-singleton/string1-e.bal",
 
 	// match-arm reachability after discriminator fold/narrowing.
 	"subset8/08-match/7-e.bal",
-	"subset8/08-match/19-e.bal",
 
 	// disjoint-singleton == / != diagnostic.
 	"subset8/08-equal/3-e.bal",

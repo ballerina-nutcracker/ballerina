@@ -1,0 +1,21 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unmatchable match clause
+  --> singleton-compare-match-e.bal:26:9
+   |
+26 |         false => { // @error clause can never match
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |             io:println("no");
+   |             ^^^^^^^^^^^^^^^^^
+28 |         }
+   |         ^
+
+error[SEMANTIC_ERROR]: unreachable match clause
+  --> singleton-compare-match-e.bal:26:9
+   |
+26 |         false => { // @error clause can never match
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |             io:println("no");
+   |             ^^^^^^^^^^^^^^^^^
+28 |         }
+   |         ^

@@ -1,0 +1,64 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable same (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (simple-var-ref A)
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref same))))
+    (var-def
+      (variable differ (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr !=
+          (simple-var-ref A)
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref differ))))
+    (var-def
+      (variable sameMap (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (simple-var-ref M)
+          (simple-var-ref N)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref sameMap))))
+    (var-def
+      (variable nested (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (simple-var-ref P)
+          (simple-var-ref Q)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nested))))
+    (var-def
+      (variable less (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (simple-var-ref A)
+          (simple-var-ref B)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref less))))
+    (var-def
+      (variable greaterOrEqual (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr >=
+          (simple-var-ref A)
+          (simple-var-ref B)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref greaterOrEqual))))
+  )
+)

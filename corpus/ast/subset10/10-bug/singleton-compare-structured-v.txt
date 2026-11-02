@@ -1,0 +1,95 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A () (
+    (list-constructor-expr
+      (literal 1))))
+  (const M () (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal 1)))))
+  (const N () (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal 1)))))
+  (const B () (
+    (list-constructor-expr
+      (literal 1)
+      (literal 2))))
+  (const P () (
+    (list-constructor-expr
+      (simple-var-ref A)
+      (simple-var-ref M))))
+  (const Q () (
+    (list-constructor-expr
+      (list-constructor-expr
+        (literal 1))
+      (mapping-constructor-expr
+        (key-value
+          (literal a)
+          (literal 1))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable same (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr ==
+            (simple-var-ref A)
+            (simple-var-ref A)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref same))))
+      (var-def
+        (variable differ (type
+          (finite-type
+            (literal false))) (expr
+          (binary-expr !=
+            (simple-var-ref A)
+            (simple-var-ref A)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref differ))))
+      (var-def
+        (variable sameMap (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr ==
+            (simple-var-ref M)
+            (simple-var-ref N)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sameMap))))
+      (var-def
+        (variable nested (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr ==
+            (simple-var-ref P)
+            (simple-var-ref Q)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref nested))))
+      (var-def
+        (variable less (type
+          (finite-type
+            (literal true))) (expr
+          (binary-expr <
+            (simple-var-ref A)
+            (simple-var-ref B)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref less))))
+      (var-def
+        (variable greaterOrEqual (type
+          (finite-type
+            (literal false))) (expr
+          (binary-expr >=
+            (simple-var-ref A)
+            (simple-var-ref B)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref greaterOrEqual)))))))

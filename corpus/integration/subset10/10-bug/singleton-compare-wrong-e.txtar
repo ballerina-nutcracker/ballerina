@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected false, got true
+  --> singleton-compare-wrong-e.bal:19:17
+   |
+19 | const false C = MIN < 2; // @error C is true
+   |                 ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected false, got true
+  --> singleton-compare-wrong-e.bal:22:15
+   |
+22 |     false a = 1 < 2; // @error result is true
+   |               ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected false, got true
+  --> singleton-compare-wrong-e.bal:26:15
+   |
+26 |     false e = float:NaN == float:NaN; // @error result is true
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected true, got false
+  --> singleton-compare-wrong-e.bal:23:14
+   |
+23 |     true b = "b" <= "a"; // @error result is false
+   |              ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected true, got false
+  --> singleton-compare-wrong-e.bal:24:14
+   |
+24 |     true c = 1.0d != 1.00d; // @error result is false
+   |              ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected true, got false
+  --> singleton-compare-wrong-e.bal:25:14
+   |
+25 |     true d = float:NaN < float:NaN; // @error result is false
+   |              ^^^^^^^^^^^^^^^^^^^^^

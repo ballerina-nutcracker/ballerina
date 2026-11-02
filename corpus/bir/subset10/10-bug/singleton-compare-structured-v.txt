@@ -1,0 +1,54 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad [1]
+    %3 = ConstantLoad [1]
+    %1 = == %2 %3;
+    same = %1;
+    %5 = same;
+    %6 = println(%5) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad [1]
+    %9 = ConstantLoad [1]
+    %7 = != %8 %9;
+    differ = %7;
+    %11 = differ;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad {"a":1}
+    %15 = ConstantLoad {"a":1}
+    %13 = == %14 %15;
+    sameMap = %13;
+    %17 = sameMap;
+    %18 = println(%17) -> bb3;
+  }
+  bb3 {
+    %20 = ConstantLoad [[1],{"a":1}]
+    %21 = ConstantLoad [[1],{"a":1}]
+    %19 = == %20 %21;
+    nested = %19;
+    %23 = nested;
+    %24 = println(%23) -> bb4;
+  }
+  bb4 {
+    %26 = ConstantLoad [1]
+    %27 = ConstantLoad [1,2]
+    %25 = < %26 %27;
+    less = %25;
+    %29 = less;
+    %30 = println(%29) -> bb5;
+  }
+  bb5 {
+    %32 = ConstantLoad [1]
+    %33 = ConstantLoad [1,2]
+    %31 = >= %32 %33;
+    greaterOrEqual = %31;
+    %35 = greaterOrEqual;
+    %36 = println(%35) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

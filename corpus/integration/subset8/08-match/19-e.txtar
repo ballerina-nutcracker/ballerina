@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> 19-e.bal:32:17
+   |
+32 |                 io:println("unreachable"); // @error
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^

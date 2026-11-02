@@ -1,0 +1,75 @@
+module $anon.. v 0.0.0;
+one() -> 1{
+  bb0 {
+    %1 = ConstantLoad one
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 1
+    %0 = %3;
+    return;
+  }
+}
+two() -> 2{
+  bb0 {
+    %1 = ConstantLoad two
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad 2
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %2 = one() -> bb1;
+  }
+  bb1 {
+    %3 = %2;
+    %4 = two() -> bb2;
+  }
+  bb2 {
+    %5 = %4;
+    %1 = < %3 %5;
+    t = %1;
+    %7 = t;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %10 = two() -> bb4;
+  }
+  bb4 {
+    %11 = %10;
+    %12 = ConstantLoad 2
+    %13 = %12;
+    %9 = == %11 %13;
+    %9 ? bb5 : bb7;
+  }
+  bb5 {
+    PushScopeFrame 2
+    %0 = ConstantLoad taken
+    %1 = println(%0) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb7 {
+    PushScopeFrame 8
+    %1 = one() -> bb8;
+  }
+  bb8 {
+    %2 = %1;
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %0 = >= %2 %4;
+    f = %0;
+    %6 = f;
+    %7 = println(%6) -> bb9;
+  }
+  bb9 {
+    PopScopeFrame
+    return;
+  }
+}

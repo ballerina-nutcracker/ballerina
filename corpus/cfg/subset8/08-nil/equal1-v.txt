@@ -1,5 +1,5 @@
 (main
-  (bb0 () (bb1 bb2)
+  (bb0 () (bb1)
     (binary-expr ==
       (invocation makeNil ())
       (literal <nil>))
@@ -9,7 +9,7 @@
       (invocation io println (
         (literal 1))))
   )
-  (bb2 (bb1 bb0) (bb3 bb4)
+  (bb2 (bb1) (bb3)
     (binary-expr ==
       (literal <nil>)
       (invocation makeNil ()))
@@ -19,7 +19,7 @@
       (invocation io println (
         (literal 2))))
   )
-  (bb4 (bb3 bb2) (bb5 bb6)
+  (bb4 (bb3) (bb5)
     (binary-expr ==
       (literal <nil>)
       (literal <nil>))
@@ -29,24 +29,22 @@
       (invocation io println (
         (literal 3))))
   )
-  (bb6 (bb5 bb4) (bb7 bb9)
+  (bb6 (bb5) (bb8)
     (binary-expr !=
       (invocation makeNil ())
       (literal <nil>))
   )
-  (bb7 (bb6) (bb8))
-  (bb8 (bb7 bb9) (bb10 bb12)
+  (bb7 (bb8) (bb10)
     (binary-expr !=
       (literal <nil>)
       (invocation makeNil ()))
   )
-  (bb9 (bb6) (bb8)
+  (bb8 (bb6) (bb7)
     (expression-stmt
       (invocation io println (
         (literal 4))))
   )
-  (bb10 (bb8) (bb11))
-  (bb11 (bb10 bb12) (bb13 bb14)
+  (bb9 (bb10) (bb11 bb12)
     (var-def
       (variable b (type
         (value-type boolean)) (expr
@@ -55,17 +53,17 @@
           (literal <nil>)))))
     (simple-var-ref b)
   )
-  (bb12 (bb8) (bb11)
+  (bb10 (bb7) (bb9)
     (expression-stmt
       (invocation io println (
         (literal 5))))
   )
-  (bb13 (bb11) (bb14)
+  (bb11 (bb9) (bb12)
     (expression-stmt
       (invocation io println (
         (literal 6))))
   )
-  (bb14 (bb13 bb11) ())
+  (bb12 (bb11 bb9) ())
 )
 (makeNil
   (bb0 () ()

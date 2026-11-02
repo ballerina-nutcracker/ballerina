@@ -1,0 +1,241 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable ordered (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (simple-var-ref MIN)
+          (simple-var-ref MAX)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ordered))))
+    (var-def
+      (variable same (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (simple-var-ref MIN)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref same))))
+    (var-def
+      (variable lt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (literal 2)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref lt))))
+    (var-def
+      (variable label (type
+        (value-type string)) (expr
+        (ternary-expr
+          (binary-expr <=
+            (simple-var-ref MIN)
+            (simple-var-ref MAX))
+          (literal ordered)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref label))))
+    (var-def
+      (variable ge (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr >=
+          (simple-var-ref MAX)
+          (literal 10)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ge))))
+    (var-def
+      (variable gt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr >
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref gt))))
+    (var-def
+      (variable ne (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr !=
+          (simple-var-ref NAME)
+          (literal a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ne))))
+    (var-def
+      (variable negated (type
+        (finite-type
+          (literal false))) (expr
+        (unary-expr !
+          (group-expr
+            (binary-expr <
+              (simple-var-ref MIN)
+              (simple-var-ref MAX)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref negated))))
+    (var-def
+      (variable zero (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (literal 0)
+          (unary-expr -
+            (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref zero))))
+    (var-def
+      (variable negZeroLt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (unary-expr -
+            (literal 0))
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref negZeroLt))))
+    (var-def
+      (variable negZeroLe (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <=
+          (unary-expr -
+            (literal 0))
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref negZeroLe))))
+    (var-def
+      (variable decEq (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (literal 1.0)
+          (literal 1.00)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decEq))))
+    (var-def
+      (variable decLt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (literal 1.0)
+          (literal 1.00)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref decLt))))
+    (var-def
+      (variable nilEq (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (literal <nil>)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilEq))))
+    (var-def
+      (variable nilLe (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <=
+          (literal <nil>)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilLe))))
+    (var-def
+      (variable nilLt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (literal <nil>)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilLt))))
+    (var-def
+      (variable nilInt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (literal <nil>)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nilInt))))
+    (var-def
+      (variable intNil (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr >=
+          (literal 1)
+          (literal <nil>)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref intNil))))
+    (var-def
+      (variable strCase (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (literal a)
+          (literal B)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref strCase))))
+    (var-def
+      (variable strPrefix (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr >
+          (literal ab)
+          (literal a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref strPrefix))))
+    (var-def
+      (variable strEmpty (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (literal )
+          (literal a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref strEmpty))))
+    (var-def
+      (variable boolOrder (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (literal false)
+          (literal true)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref boolOrder))))
+    (var-def
+      (variable boolLe (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <=
+          (literal true)
+          (literal false)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref boolLe))))
+  )
+)

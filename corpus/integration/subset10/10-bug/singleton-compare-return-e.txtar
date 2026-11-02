@@ -1,0 +1,21 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> singleton-compare-return-e.bal:21:1
+   |
+21 | function f() returns int { // @error missing return
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     if MIN > MAX {
+   |     ^^^^^^^^^^^^^^
+23 |         return 1; // @error unreachable
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |     }
+   |     ^
+25 | }
+   | ^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> singleton-compare-return-e.bal:23:9
+   |
+23 |         return 1; // @error unreachable
+   |         ^^^^^^^^^

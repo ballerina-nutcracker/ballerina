@@ -5,7 +5,7 @@
   )
 )
 (printComp
-  (bb0 () (bb1 bb2)
+  (bb0 () (bb1)
     (binary-expr >
       (literal true)
       (literal false))
@@ -15,5 +15,5 @@
       (invocation io println (
         (literal 1))))
   )
-  (bb2 (bb1 bb0) ())
+  (bb2 (bb1) ())
 )

@@ -1,0 +1,245 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ORDERED)
+        (simple-var-ref REVERSED))))
+    (expression-stmt
+      (invocation io println (
+        (invocation ordered ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation pickIf ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation pickWhile ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation param (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation narrowed (
+          (literal 1))))))
+    (var-def
+      (variable b (type
+        (value-type boolean)) (expr
+        (invocation narrowed (
+          (literal 2))))))
+    (var-def
+      (variable a (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr &&
+          (binary-expr <
+            (simple-var-ref MIN)
+            (simple-var-ref MAX))
+          (binary-expr >
+            (simple-var-ref MAX)
+            (simple-var-ref MIN))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (var-def
+      (variable c (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr &&
+          (binary-expr >
+            (simple-var-ref MIN)
+            (simple-var-ref MAX))
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (var-def
+      (variable d (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ||
+          (binary-expr <
+            (simple-var-ref MIN)
+            (simple-var-ref MAX))
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref d))))
+    (var-def
+      (variable fromCall (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <=
+          (invocation one ())
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref fromCall))))
+    (var-def
+      (variable enumEq (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (simple-var-ref RED)
+          (literal RED)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref enumEq))))
+    (var-def
+      (variable enumLt (type
+        (finite-type
+          (literal false))) (expr
+        (binary-expr <
+          (simple-var-ref RED)
+          (literal GREEN)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref enumLt))))
+    (var-def
+      (variable nested (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (group-expr
+            (binary-expr <
+              (literal 1)
+              (literal 2)))
+          (group-expr
+            (binary-expr <
+              (literal 3)
+              (literal 4)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nested))))
+    (var-def
+      (variable nestedOrder (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (group-expr
+            (binary-expr >
+              (literal 1)
+              (literal 2)))
+          (group-expr
+            (binary-expr <
+              (literal 3)
+              (literal 4)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nestedOrder))))
+    (var-def
+      (variable negative (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (unary-expr -
+            (literal 1))
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref negative))))
+    (var-def
+      (variable sum (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr ==
+          (binary-expr +
+            (literal 1)
+            (literal 1))
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref sum))))
+    (var-def
+      (variable concat (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr >=
+          (binary-expr +
+            (literal a)
+            (literal b))
+          (literal ab)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref concat))))
+    (var-def
+      (variable v (type
+        (value-type any)) (expr
+        (binary-expr <
+          (simple-var-ref MIN)
+          (simple-var-ref MAX)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (finite-type
+            (literal true))))))
+  )
+)
+(narrowed
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref v)
+      (finite-type
+        (literal 1)))
+  )
+  (bb1 (bb0) ()
+    (var-def
+      (variable t (type
+        (finite-type
+          (literal true))) (expr
+        (binary-expr <
+          (simple-var-ref v)
+          (literal 2)))))
+    (return
+      (simple-var-ref t))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal false))
+  )
+)
+(one
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(ordered
+  (bb0 () ()
+    (return
+      (binary-expr <
+        (simple-var-ref MIN)
+        (simple-var-ref MAX)))
+  )
+)
+(param
+  (bb0 () ()
+    (return
+      (binary-expr <
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)
+(pickIf
+  (bb0 () (bb1)
+    (binary-expr <
+      (simple-var-ref MIN)
+      (simple-var-ref MAX))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 1))
+  )
+)
+(pickWhile
+  (bb0 () (bb1))
+  (bb1 (bb0) (bb2)
+    (binary-expr <=
+      (simple-var-ref MIN)
+      (simple-var-ref MAX))
+  )
+  (bb2 (bb1) ()
+    (return
+      (literal 2))
+  )
+)
