@@ -17,6 +17,13 @@ function testMain() {
 function testDisabled() {
 }
 
+@test:Config {
+    runs: 4,
+    minPassRate: 0.8
+}
+function testEvaluation() {
+}
+
 @test:BeforeSuite
 function beforeAll() {
 }

@@ -91,6 +91,11 @@ type Result struct {
 	// the data provider")` (registerTestConfig), never passed through
 	// getErrorMessage at all, so it must be formatted without that trick.
 	RawMessage bool
+
+	// Eval is non-nil only when Type == EvalTest — the per-run breakdown
+	// behind Message's "evaluation passed/failed with an average pass rate
+	// of X" summary.
+	Eval *EvalSummary
 }
 
 // TestType mirrors types.bal's TestType enum — report.bal#getTestType reads
@@ -102,7 +107,39 @@ const (
 	GeneralTest TestType = iota
 	DataDrivenMapOfTuple
 	DataDrivenTupleOfTuple
+	EvalTest
 )
+
+// EvalSummary is an evaluation test's (TestFunction.IsEvaluation()) outcome
+// across all of its Runs — ported from jballerina's EvaluationSummary.
+// ObservedPassRate is passedIterations/Runs for a non-data-driven
+// evaluation, or the average of each run's own passedEntries/totalEntries
+// for a data-driven one.
+type EvalSummary struct {
+	TargetPassRate   float64
+	ObservedPassRate float64
+	RunResults       []EvalRun
+}
+
+// EvalRun is one run (1..Runs) of an evaluation test — jballerina's
+// EvaluationRunWithoutDataSet/EvaluationRunWithDataSet collapsed into one
+// shape: Outcomes is nil for a non-data-driven evaluation (ErrorMessage
+// alone describes that run's single invocation), populated for a
+// data-driven one (one entry per data-provider row that ran, PassRate that
+// row set's own passedEntries/totalEntries).
+type EvalRun struct {
+	ID           int
+	ErrorMessage string // non-data-driven only; "" if that run passed
+	Outcomes     []EvalOutcome
+	PassRate     float64 // data-driven only
+}
+
+// EvalOutcome is one data-provider row's result within one EvalRun of a
+// data-driven evaluation test — jballerina's EvaluationOutcome.
+type EvalOutcome struct {
+	ID           string
+	ErrorMessage string // "" if that row passed
+}
 
 // panicMessage extracts a readable message from whatever runtime.InvokeFunction
 // panics with. A failed assertion panics with *values.Error (confirmed by
