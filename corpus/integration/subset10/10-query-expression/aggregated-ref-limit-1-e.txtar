@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-limit-1-e.bal:23:15
+   |
+23 |         limit y // @error aggregated variable as a limit expression
+   |               ^

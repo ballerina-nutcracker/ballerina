@@ -1,0 +1,605 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable $desugar$0))
+      (var-def
+        (variable $desugar$1 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable x))
+      (var-def
+        (variable $desugar$2 (expr
+          (simple-var-ref xs))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$2))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$4)
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$2)
+              (simple-var-ref $desugar$4)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$1)
+              (list-constructor-expr
+                (simple-var-ref x)))))
+          (assignment
+            (simple-var-ref $desugar$4)
+            (binary-expr +
+              (simple-var-ref $desugar$4)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable y))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$6)
+          (simple-var-ref $desugar$5))
+        (block-stmt
+          (var-def
+            (variable $desugar$7 (expr
+              (index-based-access
+                (simple-var-ref $desugar$1)
+                (simple-var-ref $desugar$6)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$7)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref y)
+            (binary-expr *
+              (simple-var-ref x)
+              (literal 2)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$7)
+              (simple-var-ref y))))
+          (assignment
+            (simple-var-ref $desugar$6)
+            (binary-expr +
+              (simple-var-ref $desugar$6)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$8 (expr
+          (invocation lang.__internal queryCollect (
+            (simple-var-ref $desugar$1)
+            (numeric-literal 2)
+            (list-constructor-expr
+              (literal false)
+              (literal false)))))))
+      (assignment
+        (simple-var-ref x)
+        (index-based-access
+          (simple-var-ref $desugar$8)
+          (numeric-literal 0)))
+      (assignment
+        (simple-var-ref y)
+        (index-based-access
+          (simple-var-ref $desugar$8)
+          (numeric-literal 1)))
+      (assignment
+        (simple-var-ref $desugar$0)
+        (invocation lang.array length (
+          (expression-thunk
+          (var-def
+            (variable $desugar$9 (expr
+              (list-constructor-expr))))
+          (var-def
+            (variable $desugar$10 (expr
+              (simple-var-ref y))))
+          (var-def
+            (variable $desugar$11 (expr
+              (invocation lang.array length (
+                (simple-var-ref $desugar$10))))))
+          (var-def
+            (variable $desugar$12 (expr
+              (numeric-literal 0))))
+          (while
+            (binary-expr <
+              (simple-var-ref $desugar$12)
+              (simple-var-ref $desugar$11))
+            (block-stmt
+              (expression-stmt
+                (invocation lang.array push (
+                  (simple-var-ref $desugar$9)
+                  (index-based-access
+                    (simple-var-ref $desugar$10)
+                    (simple-var-ref $desugar$12)))))
+              (assignment
+                (simple-var-ref $desugar$12)
+                (binary-expr +
+                  (simple-var-ref $desugar$12)
+                  (numeric-literal 1)))))
+          (simple-var-ref $desugar$9)))))
+      (var-def
+        (variable n (type
+          (value-type int)) (expr
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref n))))
+      (var-def
+        (variable $desugar$13 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$14 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable x))
+      (var-def
+        (variable $desugar$15 (expr
+          (simple-var-ref xs))))
+      (var-def
+        (variable $desugar$16 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$15))))))
+      (var-def
+        (variable $desugar$17 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$17)
+          (simple-var-ref $desugar$16))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$15)
+              (simple-var-ref $desugar$17)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$14)
+              (list-constructor-expr
+                (simple-var-ref x)))))
+          (assignment
+            (simple-var-ref $desugar$17)
+            (binary-expr +
+              (simple-var-ref $desugar$17)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$18 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$14))))))
+      (var-def
+        (variable $desugar$19 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable m))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$19)
+          (simple-var-ref $desugar$18))
+        (block-stmt
+          (var-def
+            (variable $desugar$20 (expr
+              (index-based-access
+                (simple-var-ref $desugar$14)
+                (simple-var-ref $desugar$19)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$20)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref m)
+            (binary-expr +
+              (simple-var-ref x)
+              (literal 10)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$20)
+              (simple-var-ref m))))
+          (assignment
+            (simple-var-ref $desugar$19)
+            (binary-expr +
+              (simple-var-ref $desugar$19)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$21 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$22 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$23 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$14))))))
+      (var-def
+        (variable $desugar$24 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$24)
+          (simple-var-ref $desugar$23))
+        (block-stmt
+          (var-def
+            (variable $desugar$25 (expr
+              (index-based-access
+                (simple-var-ref $desugar$14)
+                (simple-var-ref $desugar$24)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$25)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref m)
+            (index-based-access
+              (simple-var-ref $desugar$25)
+              (numeric-literal 1)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$22)
+              (list-constructor-expr
+                (simple-var-ref x)))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$21)
+              (simple-var-ref $desugar$25))))
+          (assignment
+            (simple-var-ref $desugar$24)
+            (binary-expr +
+              (simple-var-ref $desugar$24)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$26 (expr
+          (invocation lang.__internal queryGroup (
+            (simple-var-ref $desugar$21)
+            (simple-var-ref $desugar$22)
+            (list-constructor-expr
+              (literal true)
+              (literal false)))))))
+      (var-def
+        (variable $desugar$27 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$26))))))
+      (var-def
+        (variable $desugar$28 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$28)
+          (simple-var-ref $desugar$27))
+        (block-stmt
+          (var-def
+            (variable $desugar$29 (expr
+              (index-based-access
+                (simple-var-ref $desugar$26)
+                (simple-var-ref $desugar$28)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$29)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref m)
+            (index-based-access
+              (simple-var-ref $desugar$29)
+              (numeric-literal 1)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$13)
+              (binary-expr +
+                (index-based-access
+                  (expression-thunk
+                  (var-def
+                    (variable $desugar$30 (expr
+                      (list-constructor-expr))))
+                  (var-def
+                    (variable $desugar$31 (expr
+                      (simple-var-ref m))))
+                  (var-def
+                    (variable $desugar$32 (expr
+                      (invocation lang.array length (
+                        (simple-var-ref $desugar$31))))))
+                  (var-def
+                    (variable $desugar$33 (expr
+                      (numeric-literal 0))))
+                  (while
+                    (binary-expr <
+                      (simple-var-ref $desugar$33)
+                      (simple-var-ref $desugar$32))
+                    (block-stmt
+                      (expression-stmt
+                        (invocation lang.array push (
+                          (simple-var-ref $desugar$30)
+                          (index-based-access
+                            (simple-var-ref $desugar$31)
+                            (simple-var-ref $desugar$33)))))
+                      (assignment
+                        (simple-var-ref $desugar$33)
+                        (binary-expr +
+                          (simple-var-ref $desugar$33)
+                          (numeric-literal 1)))))
+                  (simple-var-ref $desugar$30))
+                  (literal 0))
+                (invocation lang.array length (
+                  (expression-thunk
+                  (var-def
+                    (variable $desugar$34 (expr
+                      (list-constructor-expr))))
+                  (var-def
+                    (variable $desugar$35 (expr
+                      (simple-var-ref m))))
+                  (var-def
+                    (variable $desugar$36 (expr
+                      (invocation lang.array length (
+                        (simple-var-ref $desugar$35))))))
+                  (var-def
+                    (variable $desugar$37 (expr
+                      (numeric-literal 0))))
+                  (while
+                    (binary-expr <
+                      (simple-var-ref $desugar$37)
+                      (simple-var-ref $desugar$36))
+                    (block-stmt
+                      (expression-stmt
+                        (invocation lang.array push (
+                          (simple-var-ref $desugar$34)
+                          (index-based-access
+                            (simple-var-ref $desugar$35)
+                            (simple-var-ref $desugar$37)))))
+                      (assignment
+                        (simple-var-ref $desugar$37)
+                        (binary-expr +
+                          (simple-var-ref $desugar$37)
+                          (numeric-literal 1)))))
+                  (simple-var-ref $desugar$34))))))))
+          (assignment
+            (simple-var-ref $desugar$28)
+            (binary-expr +
+              (simple-var-ref $desugar$28)
+              (numeric-literal 1)))))
+      (var-def
+        (variable r (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (simple-var-ref $desugar$13))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (var-def
+        (variable $desugar$38 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$39 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable x))
+      (var-def
+        (variable $desugar$40 (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 1)))))
+      (var-def
+        (variable $desugar$41 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$40))))))
+      (var-def
+        (variable $desugar$42 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$42)
+          (simple-var-ref $desugar$41))
+        (block-stmt
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$40)
+              (simple-var-ref $desugar$42)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$39)
+              (list-constructor-expr
+                (simple-var-ref x)))))
+          (assignment
+            (simple-var-ref $desugar$42)
+            (binary-expr +
+              (simple-var-ref $desugar$42)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$43 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$39))))))
+      (var-def
+        (variable $desugar$44 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable m))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$44)
+          (simple-var-ref $desugar$43))
+        (block-stmt
+          (var-def
+            (variable $desugar$45 (expr
+              (index-based-access
+                (simple-var-ref $desugar$39)
+                (simple-var-ref $desugar$44)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$45)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref m)
+            (binary-expr +
+              (simple-var-ref x)
+              (literal 10)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$45)
+              (simple-var-ref m))))
+          (assignment
+            (simple-var-ref $desugar$44)
+            (binary-expr +
+              (simple-var-ref $desugar$44)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$46 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$47 (expr
+          (list-constructor-expr))))
+      (var-def
+        (variable $desugar$48 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$39))))))
+      (var-def
+        (variable $desugar$49 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$49)
+          (simple-var-ref $desugar$48))
+        (block-stmt
+          (var-def
+            (variable $desugar$50 (expr
+              (index-based-access
+                (simple-var-ref $desugar$39)
+                (simple-var-ref $desugar$49)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$50)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref m)
+            (index-based-access
+              (simple-var-ref $desugar$50)
+              (numeric-literal 1)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$47)
+              (list-constructor-expr
+                (simple-var-ref x)))))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$46)
+              (simple-var-ref $desugar$50))))
+          (assignment
+            (simple-var-ref $desugar$49)
+            (binary-expr +
+              (simple-var-ref $desugar$49)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$51 (expr
+          (invocation lang.__internal queryGroup (
+            (simple-var-ref $desugar$46)
+            (simple-var-ref $desugar$47)
+            (list-constructor-expr
+              (literal true)
+              (literal false)))))))
+      (var-def
+        (variable $desugar$52 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$51))))))
+      (var-def
+        (variable $desugar$53 (expr
+          (numeric-literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$53)
+          (simple-var-ref $desugar$52))
+        (block-stmt
+          (var-def
+            (variable $desugar$54 (expr
+              (index-based-access
+                (simple-var-ref $desugar$51)
+                (simple-var-ref $desugar$53)))))
+          (assignment
+            (simple-var-ref x)
+            (index-based-access
+              (simple-var-ref $desugar$54)
+              (numeric-literal 0)))
+          (assignment
+            (simple-var-ref m)
+            (index-based-access
+              (simple-var-ref $desugar$54)
+              (numeric-literal 1)))
+          (expression-stmt
+            (invocation lang.array push (
+              (simple-var-ref $desugar$38)
+              (expression-thunk
+              (var-def
+                (variable $desugar$55 (expr
+                  (list-constructor-expr))))
+              (expression-stmt
+                (invocation lang.array push (
+                  (simple-var-ref $desugar$55)
+                  (literal 0))))
+              (var-def
+                (variable $desugar$56 (expr
+                  (simple-var-ref m))))
+              (var-def
+                (variable $desugar$57 (expr
+                  (invocation lang.array length (
+                    (simple-var-ref $desugar$56))))))
+              (var-def
+                (variable $desugar$58 (expr
+                  (numeric-literal 0))))
+              (while
+                (binary-expr <
+                  (simple-var-ref $desugar$58)
+                  (simple-var-ref $desugar$57))
+                (block-stmt
+                  (expression-stmt
+                    (invocation lang.array push (
+                      (simple-var-ref $desugar$55)
+                      (index-based-access
+                        (simple-var-ref $desugar$56)
+                        (simple-var-ref $desugar$58)))))
+                  (assignment
+                    (simple-var-ref $desugar$58)
+                    (binary-expr +
+                      (simple-var-ref $desugar$58)
+                      (numeric-literal 1)))))
+              (expression-stmt
+                (invocation lang.array push (
+                  (simple-var-ref $desugar$55)
+                  (literal 1))))
+              (simple-var-ref $desugar$55)))))
+          (assignment
+            (simple-var-ref $desugar$53)
+            (binary-expr +
+              (simple-var-ref $desugar$53)
+              (numeric-literal 1)))))
+      (var-def
+        (variable withOtherMembers (type
+          (array-type
+            (value-type int) dimensions: 2 ([][]))) (expr
+          (simple-var-ref $desugar$38))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref withOtherMembers)))))))

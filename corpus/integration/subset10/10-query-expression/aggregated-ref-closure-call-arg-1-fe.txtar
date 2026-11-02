@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: aggregated variable reference inside a nested function is not supported
+  --> aggregated-ref-closure-call-arg-1-fe.bal:31:55
+   |
+31 |         select callIt(function() returns int => count(y)); // @error aggregated variable as a call argument inside an anonymous function is not implemented
+   |                                                       ^

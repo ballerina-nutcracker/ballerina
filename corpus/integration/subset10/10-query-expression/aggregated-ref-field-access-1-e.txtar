@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-field-access-1-e.bal:26:17
+   |
+26 |         collect q.a; // @error aggregated variable as a field access container
+   |                 ^

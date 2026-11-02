@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: aggregated variable reference inside a nested function is not supported
+  --> aggregated-ref-closure-1-fe.bal:24:52
+   |
+24 |         select callIt(function() returns int[] => [y]); // @error aggregated variable reference inside a nested function is not implemented
+   |                                                    ^

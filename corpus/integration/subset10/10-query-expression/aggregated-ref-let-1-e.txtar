@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-let-1-e.bal:23:23
+   |
+23 |         let int[] z = y // @error aggregated variable as a let clause initializer
+   |                       ^

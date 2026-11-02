@@ -23,7 +23,8 @@
                   (simple-var-ref x)
                   (literal 2))))))
           (collect-clause
-            (simple-var-ref y))))))
+            (list-constructor-expr
+              (simple-var-ref y)))))))
     (var-def
       (variable afterGroup (expr
         (query-expr
@@ -39,7 +40,8 @@
             (grouping-key
               (simple-var-ref x)))
           (collect-clause
-            (simple-var-ref x))))))
+            (list-constructor-expr
+              (simple-var-ref x)))))))
     (var-def
       (variable afterGroupNonKey (expr
         (query-expr
@@ -62,7 +64,8 @@
             (grouping-key
               (simple-var-ref x)))
           (collect-clause
-            (simple-var-ref y))))))
+            (list-constructor-expr
+              (simple-var-ref y)))))))
     (var-def
       (variable contextualSelect (type
         (array-type

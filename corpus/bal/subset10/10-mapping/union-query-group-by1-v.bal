@@ -41,7 +41,7 @@ public function main() {
         v: from var x in xs
             let int n = x + 10
             group by x
-            select n[0] + n.length(),
+            select [n][0] + [n].length(),
         m: 1
     };
     io:println(r); // @output {"v":[13,14,14],"m":1}
@@ -50,7 +50,7 @@ public function main() {
         v: from var x in xs
             let int n = x + 10
             group by x
-            collect n[0] + n.length(),
+            collect [n][0] + [n].length(),
         m: 1
     };
     io:println(c); // @output {"v":16,"m":1}

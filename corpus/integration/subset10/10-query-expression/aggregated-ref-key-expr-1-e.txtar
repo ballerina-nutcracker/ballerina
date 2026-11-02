@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-key-expr-1-e.bal:22:16
+   |
+22 |         select x; // @error variable used only in a grouping key expression is aggregated
+   |                ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: aggregated variable reference as a call argument is not supported
+  --> aggregated-ref-println-arg-1-fe.bal:22:28
+   |
+22 |         collect io:println(y); // @error aggregated variable as an external function rest argument is not implemented
+   |                            ^

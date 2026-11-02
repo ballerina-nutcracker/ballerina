@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: aggregated variable reference as a call argument is not supported
+  --> aggregated-ref-new-arg-1-fe.bal:30:29
+   |
+30 |         collect new Counter(y).n; // @error aggregated variable as a new expression rest argument is not implemented
+   |                             ^

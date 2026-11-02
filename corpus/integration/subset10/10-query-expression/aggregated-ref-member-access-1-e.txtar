@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-member-access-1-e.bal:23:16
+   |
+23 |         select n[0]; // @error aggregated variable as a member access container
+   |                ^

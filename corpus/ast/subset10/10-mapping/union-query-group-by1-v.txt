@@ -66,10 +66,12 @@
                 (select-clause
                   (binary-expr +
                     (index-based-access
-                      (simple-var-ref n)
+                      (list-constructor-expr
+                        (simple-var-ref n))
                       (literal 0))
                     (invocation length expr:
-                      (simple-var-ref n) ())))))
+                      (list-constructor-expr
+                        (simple-var-ref n)) ())))))
             (key-value
               (literal m)
               (literal 1))))))
@@ -107,10 +109,12 @@
                 (collect-clause
                   (binary-expr +
                     (index-based-access
-                      (simple-var-ref n)
+                      (list-constructor-expr
+                        (simple-var-ref n))
                       (literal 0))
                     (invocation length expr:
-                      (simple-var-ref n) ())))))
+                      (list-constructor-expr
+                        (simple-var-ref n)) ())))))
             (key-value
               (literal m)
               (literal 1))))))

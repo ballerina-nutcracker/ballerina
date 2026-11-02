@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-group-expr-1-e.bal:22:19
+   |
+22 |         collect [(y)]; // @error parenthesized aggregated variable is not an aggregated-variable-reference
+   |                   ^

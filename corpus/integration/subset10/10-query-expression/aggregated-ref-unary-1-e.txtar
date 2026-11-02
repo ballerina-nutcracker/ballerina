@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-unary-1-e.bal:23:17
+   |
+23 |         select !y; // @error aggregated variable as a unary operand
+   |                 ^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-from-1-e.bal:22:30
+   |
+22 |         select from var y in x // @error aggregated variable as a from clause collection
+   |                              ^

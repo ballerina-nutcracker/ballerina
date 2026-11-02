@@ -30,7 +30,8 @@
                       (literal 2))))))
               (collect-clause
                 (invocation lang.array length (
-                  (simple-var-ref y))))))
+                  (list-constructor-expr
+                    (simple-var-ref y)))))))
           (key-value
             (literal m)
             (literal 1))))))

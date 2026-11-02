@@ -1737,6 +1737,10 @@ func resolveCompoundAssignmentLhs(t typeResolver, chain *binding, lhs ast.BLangE
 		lhsTy, lhsEffect := lhsResult.ty, lhsResult.effect
 		return lhsTy, sequentialChain(t, lhsEffect), true
 	default:
+		if ref, isVarRef := lhs.(*ast.BLangVarRef); isVarRef && isAggregatedVariable(chain, ref.Symbol()) {
+			reportAggregatedVariableReference(t, lhs)
+			return semtypes.SemType{}, nil, false
+		}
 		lhsResult, ok := resolveActionOrExpression(t, nil, lhs, semtypes.SemType{})
 		if !ok {
 			return semtypes.SemType{}, nil, false
@@ -5443,7 +5447,27 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, q *queryRes
 	return currentChain, true
 }
 
+// resolveSimpleVarRef resolves a variable-reference-expr, which cannot refer to an aggregated variable.
 func resolveSimpleVarRef(t typeResolver, chain *binding, expr *ast.BLangVarRef) (expressionResult, bool) {
+	if isAggregatedVariable(chain, expr.Symbol()) {
+		reportAggregatedVariableReference(t, expr)
+		return expressionResult{}, false
+	}
+	return resolveVarRefBinding(t, chain, expr)
+}
+
+// isAggregatedVariable reports whether ref is aggregated by an enclosing query, including one outside the
+// innermost function.
+func isAggregatedVariable(chain *binding, ref model.SymbolRef) bool {
+	aggregated, _ := lookupQueryAggregatedBindingInner(chain, ref, false)
+	return aggregated
+}
+
+func reportAggregatedVariableReference(t typeResolver, expr ast.BLangExpression) {
+	t.semanticError("aggregated variable can only be referenced as a list constructor member or a function argument", expr.GetPosition())
+}
+
+func resolveVarRefBinding(t typeResolver, chain *binding, expr *ast.BLangVarRef) (expressionResult, bool) {
 	baseSymbol := expr.Symbol()
 	sym, isNarrowed := lookupBinding(t, chain, baseSymbol)
 	if isNarrowed {
@@ -5568,7 +5592,7 @@ func resolveListConstructorMembers(t typeResolver, chain *binding, expr *ast.BLa
 		if spread[i] {
 			required = queryAggregatedListType(t.typeEnv(), required, false)
 		}
-		result, ok := resolveActionOrExpression(t, chain, memberExpr, required)
+		result, ok := resolveListMember(t, chain, expr, i, required, false)
 		if !ok {
 			return nil, chain, false
 		}
@@ -5600,7 +5624,7 @@ func resolveListConstructorInner(t typeResolver, chain *binding, expr *ast.BLang
 	}
 	for i, memberExpr := range expr.Exprs {
 		isSpread := expr.IsSpreadMember(i) || isQueryAggregatedVariableReference(chain, memberExpr)
-		memberResult, ok := resolveMemberValue(t, chain, memberExpr, readonlyValue && !isSpread)
+		memberResult, ok := resolveListMember(t, chain, expr, i, semtypes.SemType{}, readonlyValue && !isSpread)
 		if !ok {
 			return expressionResult{}, false
 		}
@@ -5643,6 +5667,30 @@ func contextualErrorType(t typeResolver, baseType, expectedType semtypes.SemType
 		return baseType
 	}
 	return errorPart
+}
+
+// resolveListMember resolves the member at index i of expr against expectedType, or as a readonly member without an
+// expectation. A member that is a reference to an aggregated variable is an aggregated-variable-reference, which is
+// implicitly spread; the operand of an explicit spread is a variable-reference-expr instead.
+func resolveListMember(t typeResolver, chain *binding, expr *ast.BLangListConstructorExpr, i int, expectedType semtypes.SemType, readonly bool) (expressionResult, bool) {
+	memberExpr := expr.Exprs[i]
+	if expr.IsSpreadMember(i) {
+		return resolveActionOrExpression(t, chain, memberExpr, expectedType)
+	}
+	if !supportedAggregatedVariableReference(t, chain, memberExpr) {
+		return expressionResult{}, false
+	}
+	if isQueryAggregatedVariableReference(chain, memberExpr) {
+		result, ok := resolveVarRefBinding(t, chain, memberExpr.(*ast.BLangVarRef))
+		if !ok {
+			setNodeType(t, memberExpr, semtypes.Never)
+		}
+		return result, ok
+	}
+	if readonly {
+		return resolveReadonlyMember(t, chain, memberExpr)
+	}
+	return resolveActionOrExpression(t, chain, memberExpr, expectedType)
 }
 
 func isQueryAggregatedVariableReference(chain *binding, expr ast.BLangExpression) bool {
@@ -7354,6 +7402,12 @@ func resolveOpaqueCallArgs(t typeResolver, chain *binding, inv invocable, args [
 		return callArgsResult{}, false
 	}
 
+	for _, arg := range lowered {
+		if !supportedCallArg(t, chain, arg) {
+			return callArgsResult{}, false
+		}
+	}
+
 	// The monomorphizer resolves the arguments it needs to pick the function. Each argument is resolved only
 	// once: the remaining ones are resolved afterwards, continuing from the chain these resolutions produce.
 	resolveChain := chain
@@ -7725,6 +7779,9 @@ func resolveArgs(t typeResolver, args []ast.BLangExpression, chain *binding, par
 			t.unimplemented("named arguments not supported in this context", arg.GetPosition())
 			return nil, chain, false
 		}
+		if !supportedCallArg(t, chain, arg) {
+			return nil, chain, false
+		}
 		tyResult, ok := resolveActionOrExpression(t, chain, arg, paramType(i))
 		if !ok {
 			return nil, chain, false
@@ -7734,6 +7791,27 @@ func resolveArgs(t typeResolver, args []ast.BLangExpression, chain *binding, par
 		tys = append(tys, ty)
 	}
 	return tys, chain, true
+}
+
+// supportedCallArg reports whether arg can be resolved as a call argument. Call arguments that are aggregated
+// variables are not supported yet.
+func supportedCallArg(t typeResolver, chain *binding, arg ast.BLangExpression) bool {
+	if isQueryAggregatedVariableReference(chain, arg) {
+		t.unimplemented("aggregated variable reference as a call argument is not supported", arg.GetPosition())
+		return false
+	}
+	return supportedAggregatedVariableReference(t, chain, arg)
+}
+
+// supportedAggregatedVariableReference reports whether expr is not a reference to an aggregated variable from
+// inside a function nested in the query, which is not supported yet.
+func supportedAggregatedVariableReference(t typeResolver, chain *binding, expr ast.BLangExpression) bool {
+	ref, isVarRef := expr.(*ast.BLangVarRef)
+	if isVarRef && lookupCapturedQueryAggregatedBinding(chain, ref.Symbol()) {
+		t.unimplemented("aggregated variable reference inside a nested function is not supported", expr.GetPosition())
+		return false
+	}
+	return true
 }
 
 func hasIncludedRecordParam(sig model.UntypedFunctionSignature, nRequired int) bool {

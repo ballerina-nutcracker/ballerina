@@ -30,7 +30,7 @@ public function main() {
     A|B r = {
         v: from var x in xs
             let int y = x * 2
-            collect y.length(),
+            collect [y].length(),
         m: 1
     };
     io:println(r); // @output {"v":3,"m":1}

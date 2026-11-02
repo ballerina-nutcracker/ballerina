@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: aggregated variable can only be referenced as a list constructor member or a function argument
+  --> aggregated-ref-method-1-e.bal:22:17
+   |
+22 |         collect y.length(); // @error aggregated variable as a method call receiver
+   |                 ^

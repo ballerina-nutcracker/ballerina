@@ -150,12 +150,20 @@ func lookupBinding(t typeResolver, chain *binding, ref model.SymbolRef) (model.S
 // not a conditional refinement, so the eligibility policy never applies to it and
 // it needs no resolver.
 func lookupQueryAggregatedBinding(chain *binding, ref model.SymbolRef) bool {
-	return lookupQueryAggregatedBindingInner(chain, ref, false)
+	aggregated, crossedBoundary := lookupQueryAggregatedBindingInner(chain, ref, false)
+	return aggregated && !crossedBoundary
 }
 
-func lookupQueryAggregatedBindingInner(chain *binding, ref model.SymbolRef, crossedBoundary bool) bool {
+// lookupCapturedQueryAggregatedBinding reports query aggregation by a query outside the innermost function, such
+// as an aggregated variable referenced from an anonymous function in a select clause.
+func lookupCapturedQueryAggregatedBinding(chain *binding, ref model.SymbolRef) bool {
+	aggregated, crossedBoundary := lookupQueryAggregatedBindingInner(chain, ref, false)
+	return aggregated && crossedBoundary
+}
+
+func lookupQueryAggregatedBindingInner(chain *binding, ref model.SymbolRef, crossedBoundary bool) (bool, bool) {
 	if chain == nil {
-		return false
+		return false, crossedBoundary
 	}
 	if chain.hasFlag(bindingFlagFunctionBoundary) {
 		return lookupQueryAggregatedBindingInner(chain.prev, ref, true)
@@ -164,7 +172,7 @@ func lookupQueryAggregatedBindingInner(chain *binding, ref model.SymbolRef, cros
 		return lookupQueryAggregatedBindingInner(chain.prev, ref, crossedBoundary)
 	}
 	if chain.ref == ref || chain.narrowedSymbol == ref {
-		return !crossedBoundary && !chain.isUnnarrowing() && chain.hasFlag(bindingFlagQueryAggregated)
+		return !chain.isUnnarrowing() && chain.hasFlag(bindingFlagQueryAggregated), crossedBoundary
 	}
 	return lookupQueryAggregatedBindingInner(chain.prev, ref, crossedBoundary)
 }

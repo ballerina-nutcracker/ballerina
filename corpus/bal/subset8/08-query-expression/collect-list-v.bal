@@ -20,16 +20,16 @@ public function main() {
     int[] xs = [1, 2, 3];
     var doubled = from var x in xs
         let int y = x * 2
-        collect y;
+        collect [y];
 
     var afterGroup = from var x in [1, 2, 1, 3]
         group by x
-        collect x;
+        collect [x];
 
     var afterGroupNonKey = from var x in [1, 2, 1, 3]
         let int y = x + 10
         group by x
-        collect y;
+        collect [y];
 
     decimal[] contextualSelect = from var _ in xs
         select 1;

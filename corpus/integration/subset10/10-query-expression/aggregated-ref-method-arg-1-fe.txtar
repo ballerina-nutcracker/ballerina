@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: aggregated variable reference as a call argument is not supported
+  --> aggregated-ref-method-arg-1-fe.bal:22:28
+   |
+22 |         collect xs.indexOf(y) ?: -1; // @error aggregated variable as a method call rest argument is not implemented
+   |                            ^

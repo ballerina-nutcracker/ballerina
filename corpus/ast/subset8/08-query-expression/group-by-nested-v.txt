@@ -35,7 +35,8 @@
                 (from-clause
                   (var-def
                     (variable y))
-                  (simple-var-ref x))
+                  (list-constructor-expr
+                    (simple-var-ref x)))
                 (group-by-clause
                   (grouping-key
                     (var-def

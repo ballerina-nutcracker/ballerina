@@ -359,7 +359,7 @@ func TestResolveQueryExprCollectAggregatesVariables(t *testing.T) {
 
 	query := newQueryExpr(
 		newFromClause(newIntListLiteral(1, 2, 3), xDef, true),
-		newCollectClauseExpr(collectXRef),
+		newCollectClauseExpr(newListLiteral(collectXRef)),
 	)
 
 	queryTy, _, ok := resolveQueryExpr(resolver, nil, query, semtypes.SemType{})
@@ -394,7 +394,7 @@ func TestResolveQueryExprGroupByClauseAggregatesNonGroupingVars(t *testing.T) {
 		newFromClause(newIntListLiteral(1, 2, 3), xDef, true),
 		newLetClause(yDef),
 		newGroupByClause(newGroupingKeyRef(groupXRef)),
-		newSelectClause(selectYRef),
+		newSelectClause(newListLiteral(selectYRef)),
 	)
 
 	queryTy, _, ok := resolveQueryExpr(resolver, nil, query, semtypes.SemType{})
@@ -432,7 +432,7 @@ func TestResolveQueryExprCollectDoesNotReaggregateGroupByVars(t *testing.T) {
 		newFromClause(newIntListLiteral(1, 2, 3), xDef, true),
 		newLetClause(yDef),
 		newGroupByClause(newGroupingKeyRef(groupXRef)),
-		newCollectClauseExpr(collectYRef),
+		newCollectClauseExpr(newListLiteral(collectYRef)),
 	)
 
 	queryTy, _, ok := resolveQueryExpr(resolver, nil, query, semtypes.SemType{})

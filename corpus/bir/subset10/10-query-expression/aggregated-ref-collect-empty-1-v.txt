@@ -1,0 +1,96 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    %2 = newArray [int...][%1]{}
+    xs = %2;
+    %5 = ConstantLoad 0
+    %6 = newArray list[%5]{}
+    $desugar$1 = %6;
+    $desugar$2 = xs;
+    %10 = length($desugar$2) -> bb1;
+  }
+  bb1 {
+    $desugar$3 = %10;
+    %12 = ConstantLoad 0
+    $desugar$4 = %12;
+    GOTO bb2;
+  }
+  bb2 {
+    %15 = $desugar$4;
+    %16 = $desugar$3;
+    %14 = < %15 %16;
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$2)[(1, $desugar$4)];
+    (1, x) = %0;
+    %1 = ConstantLoad 1
+    %2 = newArray list[%1]{(1, x)}
+    %3 = push((1, $desugar$1),%2) -> bb5;
+  }
+  bb4 {
+    %17 = ConstantLoad 1
+    %18 = %17;
+    %19 = ConstantLoad false
+    %20 = ConstantLoad 1
+    %21 = newArray list[%20]{%19}
+    %22 = queryCollect($desugar$1,%18,%21) -> bb6;
+  }
+  bb5 {
+    %5 = (1, $desugar$4);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$4) = %4;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    $desugar$5 = %22;
+    %25 = ConstantLoad 0
+    %24 = $desugar$5[%25];
+    x = %24;
+    %26 = ConstantLoad 0
+    %27 = newArray [int...][%26]{}
+    $desugar$6 = %27;
+    $desugar$7 = x;
+    %30 = length($desugar$7) -> bb7;
+  }
+  bb7 {
+    $desugar$8 = %30;
+    %32 = ConstantLoad 0
+    $desugar$9 = %32;
+    GOTO bb8;
+  }
+  bb8 {
+    %35 = $desugar$9;
+    %36 = $desugar$8;
+    %34 = < %35 %36;
+    %34 ? bb9 : bb10;
+  }
+  bb9 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$7)[(1, $desugar$9)];
+    %1 = %0;
+    %2 = push((1, $desugar$6),%1) -> bb11;
+  }
+  bb10 {
+    $desugar$0 = $desugar$6;
+    r = $desugar$0;
+    %38 = println(r) -> bb12;
+  }
+  bb11 {
+    %4 = (1, $desugar$9);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$9) = %3;
+    PopScopeFrame
+    GOTO bb8;
+  }
+  bb12 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: aggregated variable reference as a call argument is not supported
+  --> aggregated-ref-fn-value-arg-1-fe.bal:23:19
+   |
+23 |         collect f(y); // @error aggregated variable as a rest argument of a function value call is not implemented
+   |                   ^
