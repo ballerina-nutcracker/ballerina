@@ -148,9 +148,7 @@ func hasSingleApplicableAttachPointListType(tyCtx semtypes.Context, segments []s
 }
 
 // validateClassInner validates the members of a class or service body; a
-// member that reports is abandoned and the next one runs. Every field of a
-// readonly object is isolated (spec 6.8.1), so only fields of a mutable
-// isolated object need to be private or isolated.
+// member that reports is abandoned and the next one runs.
 func validateClassInner(cx scope.Context, info scope.ClassInfo, readonly bool, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
 	methods []common.NamedClassMethod, resourceMethods []*ast.BLangResourceMethod) {
 	for _, field := range fields {
@@ -167,9 +165,9 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, readonly bool, f
 	for _, rm := range resourceMethods {
 		validateInvokableNode(scope.NewMethod(cx, rm, info), rm)
 	}
-	if info.IsIsolated() && !readonly {
+	if info.IsIsolated() {
 		for _, field := range fields {
-			validateIsolatedClassField(cx, field)
+			validateIsolatedClassField(cx, field, readonly)
 		}
 	}
 	for i := 1; i < len(resourceMethods); i++ {
@@ -178,14 +176,14 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, readonly bool, f
 }
 
 // validateIsolatedClassField: a non-private field of an isolated object must
-// be isolated: final and of a type that is a subtype of
-// readonly | isolated object {}.
-func validateIsolatedClassField(cx scope.Context, field *ast.BLangVariable) {
+// be final (implicitly so in a readonly object) and of a type that is a
+// subtype of readonly | isolated object {}.
+func validateIsolatedClassField(cx scope.Context, field *ast.BLangVariable, readonlyObject bool) {
 	if field.IsPrivate() {
 		return
 	}
 	tyCtx := cx.TyCtx()
-	if !field.IsFinal() || !semtypes.IsSubtype(tyCtx, cx.CompilerCtx().SymbolType(field.Symbol()), semtypes.CreateIsolated(tyCtx)) {
+	if (!field.IsFinal() && !readonlyObject) || !semtypes.IsSubtype(tyCtx, cx.CompilerCtx().SymbolType(field.Symbol()), semtypes.CreateIsolated(tyCtx)) {
 		cx.SemanticErr("non-private field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly|isolated object {}\"", field.GetPosition())
 	}
 }

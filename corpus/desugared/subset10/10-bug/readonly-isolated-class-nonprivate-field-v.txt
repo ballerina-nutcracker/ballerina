@@ -2,8 +2,10 @@
   (import-package ballerina io (as io))
   (class-definition Point
     (variable coords (type
-      (array-type
-        (value-type int) dimensions: 1 ([]))))
+      (intersection-type
+        (value-type readonly)
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
     (variable name (type
       (value-type string)))
     (variable dim (type

@@ -17,7 +17,7 @@
 import ballerina/io;
 
 readonly isolated class Point {
-    int[] coords;
+    readonly & int[] coords;
     string name = "p";
     public int dim = 2;
 
