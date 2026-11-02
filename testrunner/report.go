@@ -26,6 +26,7 @@ package testrunner
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -90,6 +91,13 @@ func WriteConsoleReport(w io.Writer, report RunReport, isSystemConsole bool, exe
 	if !isSystemConsole {
 		for _, r := range resultsByStatus(report.Results, Pass) {
 			_, _ = fmt.Fprintln(w, "\t\t[pass] "+r.Name)
+			// An evaluation test prints its pass-rate message even when it
+			// passed — the only TestType that does — matching
+			// consoleReport's own `if entry.testType() == EVAL_TEST` check
+			// inside the passedCases() loop.
+			if r.Type == EvalTest {
+				_, _ = fmt.Fprintln(w, "\n\t\t    "+formatFailedError(r.Message, 3))
+			}
 		}
 	}
 	for _, r := range resultsByStatus(report.Results, Fail) {
@@ -102,6 +110,9 @@ func WriteConsoleReport(w io.Writer, report RunReport, isSystemConsole bool, exe
 			message += "\n"
 		}
 		_, _ = fmt.Fprintln(w, "\n\t\t    "+formatFailedError(message, 3))
+		if r.Type == EvalTest {
+			writeEvalReport(w, r.Eval)
+		}
 	}
 
 	summary := Summarize(report)
@@ -156,6 +167,42 @@ func writeTestFailureNotice(w io.Writer, n TestFailureNotice) {
 	} else {
 		_, _ = fmt.Fprint(w, "\n\t"+n.Name+" has failed.\n\n")
 	}
+}
+
+// writeEvalReport mirrors report.bal#printEvaluationReportInConsole: the
+// per-run breakdown printed after a failing evaluation test's own summary
+// message — one line per run for a non-data-driven evaluation (run id +
+// message), one run-header line plus one line per data-provider row for a
+// data-driven one. Outcomes == nil distinguishes the two, matching
+// jballerina's own EvaluationRunWithoutDataSet vs EvaluationRunWithDataSet
+// type-based dispatch.
+func writeEvalReport(w io.Writer, eval *EvalSummary) {
+	if eval == nil {
+		return
+	}
+	_, _ = fmt.Fprintln(w, "\t\t\t    evaluation runs:")
+	for _, run := range eval.RunResults {
+		if run.Outcomes == nil {
+			_, _ = fmt.Fprintln(w, "\n\t\t\t\t    run: "+strconv.Itoa(run.ID)+
+				"\n\t\t\t\t\t    message: "+getConsoleMessage(run.ErrorMessage, "\n\t\t\t\t\t\t\t"))
+			continue
+		}
+		_, _ = fmt.Fprintln(w, "\n\t\t\t\t    run: "+strconv.Itoa(run.ID))
+		for _, outcome := range run.Outcomes {
+			_, _ = fmt.Fprintln(w, "\n\t\t\t\t\t    entry: "+outcome.ID+
+				"\n\t\t\t\t\t    message: "+getConsoleMessage(outcome.ErrorMessage, "\n\t\t\t\t\t\t\t"))
+		}
+	}
+}
+
+// getConsoleMessage mirrors report.bal#getConsoleMessage: an empty message
+// (that run/entry passed) prints as "passed"; otherwise each embedded
+// newline is reindented to indent, matching the original's regex replace.
+func getConsoleMessage(message, indent string) string {
+	if message == "" {
+		return "passed"
+	}
+	return strings.ReplaceAll(message, "\n", indent)
 }
 
 // formatFailedError ports report.bal#formatFailedError: split the message on

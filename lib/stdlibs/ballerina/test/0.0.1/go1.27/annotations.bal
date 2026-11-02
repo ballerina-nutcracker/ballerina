@@ -23,8 +23,8 @@
 # + after - Function to be run after the test is run
 # + dependsOn - A list of functions the test function depends on and will be run before the test
 # + serialExecution - Flag to mandate the test to run serially, despite the parallel eligibility
-# + minPassRate - Accepted for source compatibility; not yet honoured — every run must still pass
-# + runs - Accepted for source compatibility; not yet honoured — a test always runs exactly once
+# + minPassRate - Minimum average pass rate (0.0-1.0) required across `runs` executions for the test to be considered passed. Setting this or `runs` away from its default makes this an evaluation test
+# + runs - Number of times to repeat the test execution, averaging pass/fail across all runs against `minPassRate`. Must be at least 1
 public type TestConfig record {
     boolean enable = true;
     string[] groups = [];

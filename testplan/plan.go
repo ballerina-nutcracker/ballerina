@@ -39,6 +39,17 @@ type TestFunction struct {
 	After           string   // referenced function name, "" if none
 	SerialExecution bool
 	DataProvider    string // referenced function name, "" if none
+	MinPassRate     float64
+	Runs            int
+}
+
+// IsEvaluation reports whether t is an evaluation test — jballerina's own
+// isEvaluationTest draws this line purely from these two fields differing
+// from their defaults, with no separate annotation or marker: @test:Config
+// omitting both minPassRate and runs is an ordinary test, writing either one
+// makes it an evaluation.
+func (t TestFunction) IsEvaluation() bool {
+	return t.Runs != 1 || t.MinPassRate != 1.0
 }
 
 // SuiteHook is a discovered @test:BeforeSuite/@test:BeforeEach/@test:AfterEach

@@ -28,9 +28,58 @@ import (
 // TestStatusEntry mirrors ballerina/test's TestStatusEntry record — one row
 // of module_status.json (native test_io.go's testStatusEntryJSON).
 type TestStatusEntry struct {
-	Name           string `json:"name"`
-	Status         string `json:"status"`
-	FailureMessage string `json:"failureMessage,omitempty"`
+	Name              string                 `json:"name"`
+	Status            string                 `json:"status"`
+	FailureMessage    string                 `json:"failureMessage,omitempty"`
+	EvaluationSummary *EvaluationSummaryJSON `json:"evaluationSummary,omitempty"`
+}
+
+// EvaluationSummaryJSON mirrors report.bal#getPassedEntry/getFailedEntry's
+// "evaluationSummary" field — set only for a Pass/Fail entry whose Result.Type
+// is EvalTest. A simplified mirror of jballerina's EvaluationSummary, not a
+// byte-identical port: EvaluationRunJSON collapses
+// EvaluationRunWithoutDataSet/EvaluationRunWithDataSet into one shape the
+// same way EvalRun itself already does (Outcomes/PassRate are only ever set
+// for a data-driven evaluation's run).
+type EvaluationSummaryJSON struct {
+	TargetPassRate   float64             `json:"targetPassRate"`
+	ObservedPassRate float64             `json:"observedPassRate"`
+	EvaluationRuns   []EvaluationRunJSON `json:"evaluationRuns"`
+}
+
+// EvaluationRunJSON mirrors one EvalRun.
+type EvaluationRunJSON struct {
+	ID           int                     `json:"id"`
+	ErrorMessage string                  `json:"errorMessage,omitempty"` // non-data-driven only
+	Outcomes     []EvaluationOutcomeJSON `json:"outcomes,omitempty"`     // data-driven only
+	PassRate     float64                 `json:"passRate,omitempty"`     // data-driven only
+}
+
+// EvaluationOutcomeJSON mirrors one EvalOutcome.
+type EvaluationOutcomeJSON struct {
+	ID           string `json:"id"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
+}
+
+// buildEvaluationSummaryJSON returns nil for a non-evaluation Result (eval
+// is nil), so TestStatusEntry's omitempty drops the field entirely.
+func buildEvaluationSummaryJSON(eval *EvalSummary) *EvaluationSummaryJSON {
+	if eval == nil {
+		return nil
+	}
+	runs := make([]EvaluationRunJSON, len(eval.RunResults))
+	for i, run := range eval.RunResults {
+		outcomes := make([]EvaluationOutcomeJSON, len(run.Outcomes))
+		for j, o := range run.Outcomes {
+			outcomes[j] = EvaluationOutcomeJSON(o)
+		}
+		runs[i] = EvaluationRunJSON{ID: run.ID, ErrorMessage: run.ErrorMessage, Outcomes: outcomes, PassRate: run.PassRate}
+	}
+	return &EvaluationSummaryJSON{
+		TargetPassRate:   eval.TargetPassRate,
+		ObservedPassRate: eval.ObservedPassRate,
+		EvaluationRuns:   runs,
+	}
 }
 
 // ModuleStatus mirrors module_status.json's top-level shape (native
@@ -59,13 +108,18 @@ type ModuleStatus struct {
 func BuildModuleStatus(report RunReport) ModuleStatus {
 	status := ModuleStatus{}
 	for _, r := range resultsByStatus(report.Results, Pass) {
-		status.Tests = append(status.Tests, TestStatusEntry{Name: native.EscapeSpecialCharacters(r.Name), Status: "PASSED"})
+		status.Tests = append(status.Tests, TestStatusEntry{
+			Name:              native.EscapeSpecialCharacters(r.Name),
+			Status:            "PASSED",
+			EvaluationSummary: buildEvaluationSummaryJSON(r.Eval),
+		})
 	}
 	for _, r := range resultsByStatus(report.Results, Fail) {
 		status.Tests = append(status.Tests, TestStatusEntry{
-			Name:           native.EscapeSpecialCharacters(r.Name),
-			Status:         "FAILURE",
-			FailureMessage: r.Message,
+			Name:              native.EscapeSpecialCharacters(r.Name),
+			Status:            "FAILURE",
+			FailureMessage:    r.Message,
+			EvaluationSummary: buildEvaluationSummaryJSON(r.Eval),
 		})
 	}
 	for _, r := range resultsByStatus(report.Results, Skip) {
