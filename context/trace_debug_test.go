@@ -314,13 +314,12 @@ func TestSpansAreOrderedAndLanedWithoutFalseNesting(t *testing.T) {
 }
 
 // TestSpansWithEqualStartsAreOrderedDeterministically covers the sort
-// tiebreaks: spans that begin at the same offset order the longest first so a
-// parent precedes a child, then fall back to span id, so a recording never
-// reorders between marshals.
+// tiebreak: spans that begin at the same offset keep the order they started in
+// (span id) regardless of extent, so a recording never reorders between
+// marshals.
 func TestSpansWithEqualStartsAreOrderedDeterministically(t *testing.T) {
 	t.Parallel()
 	env := enabledEnv()
-	// Recorded shortest-first so only the tiebreaks can produce the wanted order.
 	recordSpan(&env.traceState, "short", 0, 5*time.Microsecond)
 	recordSpan(&env.traceState, "long", 0, 20*time.Microsecond)
 	recordSpan(&env.traceState, "same-extent-second", 0, 20*time.Microsecond)
@@ -329,7 +328,7 @@ func TestSpansWithEqualStartsAreOrderedDeterministically(t *testing.T) {
 	for _, event := range decodeTrace(t, env).TraceEvents {
 		names = append(names, event.Name)
 	}
-	want := []string{"long", "same-extent-second", "short"}
+	want := []string{"short", "long", "same-extent-second"}
 	if !slices.Equal(names, want) {
 		t.Fatalf("order = %q, want %q", names, want)
 	}
@@ -486,6 +485,50 @@ func TestChildAfterASiblingEndsRejoinsTheParentLane(t *testing.T) {
 	byLabel := eventsByLabel(trace)
 	if byLabel["third"].Tid != byLabel["parent"].Tid {
 		t.Fatalf("third lane = %d, want the parent lane %d", byLabel["third"].Tid, byLabel["parent"].Tid)
+	}
+	assertContainment(t, trace)
+	assertLaneInvariants(t, trace)
+}
+
+// TestZeroLengthChildAtItsParentEndSharesTheParentLane covers a coarse clock
+// (Windows advances it once per timer tick): a zero-length child and grandchild
+// share the offset where their parent ends, and must stay on the parent's lane
+// rather than drop to a lower free lane.
+func TestZeroLengthChildAtItsParentEndSharesTheParentLane(t *testing.T) {
+	t.Parallel()
+	env := enabledEnv()
+	recordSpan(&env.traceState, "earlier", 0, 15*time.Microsecond)
+	root := recordSpan(&env.traceState, "root", 1*time.Microsecond, 25*time.Microsecond)
+	class := recordChild(&env.traceState, "class", root, 20*time.Microsecond, 20*time.Microsecond)
+	recordChild(&env.traceState, "method", class, 20*time.Microsecond, 20*time.Microsecond)
+
+	trace := decodeTrace(t, env)
+	byLabel := eventsByLabel(trace)
+	for _, label := range []string{"class", "method"} {
+		if byLabel[label].Tid != byLabel["root"].Tid {
+			t.Fatalf("%s lane = %d, want the root lane %d", label, byLabel[label].Tid, byLabel["root"].Tid)
+		}
+	}
+	assertContainment(t, trace)
+	assertLaneInvariants(t, trace)
+}
+
+// TestZeroLengthSiblingSharingAStartKeepsTheParentLane covers a coarse clock
+// giving a zero-length child the same offset as the sibling that starts after
+// it: both are serial children and must stay on the parent's lane.
+func TestZeroLengthSiblingSharingAStartKeepsTheParentLane(t *testing.T) {
+	t.Parallel()
+	env := enabledEnv()
+	parent := recordSpan(&env.traceState, "parent", 0, 30*time.Microsecond)
+	recordChild(&env.traceState, "first", parent, 10*time.Microsecond, 10*time.Microsecond)
+	recordChild(&env.traceState, "second", parent, 10*time.Microsecond, 20*time.Microsecond)
+
+	trace := decodeTrace(t, env)
+	byLabel := eventsByLabel(trace)
+	for _, label := range []string{"first", "second"} {
+		if byLabel[label].Tid != byLabel["parent"].Tid {
+			t.Fatalf("%s lane = %d, want the parent lane %d", label, byLabel[label].Tid, byLabel["parent"].Tid)
+		}
 	}
 	assertContainment(t, trace)
 	assertLaneInvariants(t, trace)

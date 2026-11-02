@@ -154,11 +154,9 @@ func compareTraceSpans(a, b traceSpan) int {
 	if c := cmp.Compare(a.start, b.start); c != 0 {
 		return c
 	}
-	// Longest first, so a parent sorts before a child that starts with it and
-	// the lane allocator sees the parent already open.
-	if c := cmp.Compare(b.end, a.end); c != 0 {
-		return c
-	}
+	// Ids are allocated as spans start, so on a coarse clock that gives several
+	// spans one offset, id order keeps a parent before its child and an earlier
+	// sibling (possibly zero-length) before a later one.
 	return cmp.Compare(a.id, b.id)
 }
 
@@ -168,11 +166,20 @@ type laneStack struct {
 	open []traceSpan
 }
 
-// closeEndedAt drops the spans that no longer contain a span starting at start.
-func (l *laneStack) closeEndedAt(start time.Duration) {
-	for len(l.open) > 0 && l.open[len(l.open)-1].end <= start {
+// closeEnded drops the spans that no longer contain span. An ancestor that ends
+// exactly where span starts still contains it: a coarse clock can give a
+// zero-length child the same offset as its parent's end.
+func (l *laneStack) closeEnded(span traceSpan, parents map[uint64]uint64) {
+	for len(l.open) > 0 && hasEndedBefore(l.open[len(l.open)-1], span, parents) {
 		l.open = l.open[:len(l.open)-1]
 	}
+}
+
+func hasEndedBefore(open, span traceSpan, parents map[uint64]uint64) bool {
+	if open.end != span.start {
+		return open.end < span.start
+	}
+	return !isTraceAncestor(open.id, span, parents)
 }
 
 // accepts reports whether span can be drawn on this lane: either nothing is
@@ -217,7 +224,7 @@ func isTraceAncestor(candidate uint64, span traceSpan, parents map[uint64]uint64
 // their own lanes.
 func assignTraceLane(lanes *[]laneStack, span traceSpan, parents map[uint64]uint64) int {
 	for lane := range *lanes {
-		(*lanes)[lane].closeEndedAt(span.start)
+		(*lanes)[lane].closeEnded(span, parents)
 	}
 	for lane := range *lanes {
 		if (*lanes)[lane].topID() == span.parent && (*lanes)[lane].accepts(span, parents) {
