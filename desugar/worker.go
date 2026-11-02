@@ -127,7 +127,7 @@ func desugarDefaultWorker(
 	// nested function; BIR gen resolves the variables they capture lexically.
 	stmts := walkStatementList(cx, worker.Stmts)
 	if len(sends) > 0 {
-		inner := newWorkerClosure(cx, name+workerBodySuffix, newBlockFunctionBody(stmts, pos), returnTy, returnTypeDescriptor, cx.currentScope(), pos)
+		inner := newWorkerClosure(cx, name+constants.WorkerBodyFunctionSuffix, newBlockFunctionBody(stmts, pos), returnTy, returnTypeDescriptor, cx.currentScope(), pos)
 		innerDef, innerRef := assignToLocal(cx, inner, pos)
 		closureDefs = append(closureDefs, innerDef)
 		stmts = withTerminationDelivery(cx, innerRef, returnTy, sends, diagnostics.EndLocation(pos))
@@ -201,7 +201,7 @@ func createWorkerClosure(
 		lambda.Function = desugarNestedFunction(cx, lambda.Function)
 		return nil, lambda
 	}
-	inner := newWorkerClosure(cx, name+workerBodySuffix, workerBody, returnTy, returnTypeDescriptor, worker.Scope(), pos)
+	inner := newWorkerClosure(cx, name+constants.WorkerBodyFunctionSuffix, workerBody, returnTy, returnTypeDescriptor, worker.Scope(), pos)
 	inner.Function = desugarNestedFunction(cx, inner.Function)
 	innerDef, innerRef := assignToLocal(cx, inner, pos)
 	terminationPos := diagnostics.EndLocation(workerBody.GetPosition())
@@ -209,10 +209,6 @@ func createWorkerClosure(
 	lambda := newWorkerClosure(cx, name, newBlockFunctionBody(stmts, pos), returnTy, returnTypeDescriptor, cx.currentScope(), pos)
 	return []ast.StatementNode{innerDef}, lambda
 }
-
-// workerBodySuffix names the hidden function a worker's body runs in when the
-// worker waits for the delivery of its async messages before terminating.
-const workerBodySuffix = "$body"
 
 // newWorkerClosure builds a generated anonymous function of the current
 // function from body as it is; the caller lowers it if needed.

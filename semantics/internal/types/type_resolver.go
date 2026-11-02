@@ -376,11 +376,8 @@ func (t *packageTypeResolver) setCurrentScope(s model.Scope) { t.scope = s }
 // so it can never clash with a user-written or generated function name.
 const moduleXMLStepOwner = "$module"
 
-// xmlStepFnPrefix starts the name of every function an XML step lowers to.
-const xmlStepFnPrefix = "$xmlStep$"
-
 func xmlStepFnName(owner string, idx int) string {
-	return fmt.Sprintf("%s%s$%d", xmlStepFnPrefix, owner, idx)
+	return fmt.Sprintf("%s%s$%d", constants.XMLStepFunctionPrefix, owner, idx)
 }
 
 type xmlStepCounterKey struct {
@@ -406,7 +403,7 @@ func (t *packageTypeResolver) packageID() *model.PackageID { return t.pkg.Packag
 func (t *packageTypeResolver) nextMonoFnName(origName string) string {
 	idx := t.monoCounters[origName]
 	t.monoCounters[origName] = idx + 1
-	return fmt.Sprintf("$mono$%s$%d", origName, idx)
+	return fmt.Sprintf("%s%s$%d", constants.MonomorphicFunctionPrefix, origName, idx)
 }
 
 func (t *packageTypeResolver) lookupImportedSymbols(name string) (model.ExportedSymbolSpace, bool) {
@@ -636,7 +633,7 @@ func opaqueCallIsolated(t typeResolver, args []ast.BLangExpression) bool {
 
 func isGeneratedXMLStepLambda(expr ast.BLangExpression) bool {
 	lambda, ok := expr.(*ast.BLangLambdaFunction)
-	return ok && lambda.Function.Name != nil && strings.HasPrefix(lambda.Function.Name.GetValue(), xmlStepFnPrefix)
+	return ok && lambda.Function.Name != nil && strings.HasPrefix(lambda.Function.Name.GetValue(), constants.XMLStepFunctionPrefix)
 }
 
 func hasResolverContext(t typeResolver, flag resolverContext) bool {
@@ -689,7 +686,7 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 	}
 	idx := f.monoCounters[origName]
 	f.monoCounters[origName] = idx + 1
-	return fmt.Sprintf("$mono$%s$%d", origName, idx)
+	return fmt.Sprintf("%s%s$%d", constants.MonomorphicFunctionPrefix, origName, idx)
 }
 
 func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
@@ -9441,7 +9438,7 @@ func lowerXMLStepExpr(t typeResolver, expr *ast.BLangXMLStepExpression) (ast.BLa
 		case *ast.BLangXMLStepFilterExtend:
 			current = newXMLStepFilter(current, extension.NamePattern, extension.GetPosition())
 		case *ast.BLangXMLStepIndexExtend:
-			current, ok = newDirectLangXMLInternalInvocation(t, "$stepIndex", []ast.BLangExpression{current, extension.Expression}, extension.GetPosition())
+			current, ok = newDirectLangXMLInternalInvocation(t, constants.XMLStepIndexFunctionName, []ast.BLangExpression{current, extension.Expression}, extension.GetPosition())
 		case *ast.BLangXMLStepMethodCallExtend:
 			invocation := &ast.BLangInvocation{}
 			invocation.Expr = current
