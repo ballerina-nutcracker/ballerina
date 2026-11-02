@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -80,7 +81,7 @@ func (v *walkTestVisitor) Visit(node ast.BLangNode) ast.Visitor {
 		v.checkSymbolType(n)
 	case *ast.BLangFunction:
 		name := n.Name.GetValue()
-		if name == "init" || name == desugar.StartFunctionName || name == desugar.GracefulStopFunctionName || name == desugar.ImmediateStopFunctionName {
+		if name == "init" || name == constants.ModuleStartFunctionName || name == constants.ModuleGracefulStopFunctionName || name == constants.ModuleImmediateStopFunctionName {
 			v.checkSymbolLocation(n)
 		}
 	}
