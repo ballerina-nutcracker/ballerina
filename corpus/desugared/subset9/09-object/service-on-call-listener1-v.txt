@@ -1,7 +1,6 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
-  (variable $desugar$0)
   (variable $moduleListeners)
   (class-definition SimpleListener
     (function init () ()
@@ -50,7 +49,7 @@
       (block-function-body)))
   (service
     (on
-    (simple-var-ref $desugar$0))
+    (invocation makeListener ()))
     (function init () ()
       (block-function-body)))
   (function init () ()
@@ -58,20 +57,20 @@
       (assignment
         (simple-var-ref $moduleListeners)
         (list-constructor-expr))
-      (assignment
-        (simple-var-ref $desugar$0)
-        (invocation makeListener ()))
+      (var-def
+        (variable $desugar$0 (expr
+          (service-init))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation makeListener ()))))
       (expression-stmt
         (invocation lang.array push (
           (simple-var-ref $moduleListeners)
-          (simple-var-ref $desugar$0))))
-      (var-def
-        (variable $desugar$1 (expr
-          (service-init))))
+          (simple-var-ref $desugar$1))))
       (expression-stmt
         (invocation attach expr:
-          (simple-var-ref $desugar$0) (
-          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$1) (
+          (simple-var-ref $desugar$0)
           (literal <nil>))))))
   (function makeListener () (
     (user-defined-type SimpleListener))
