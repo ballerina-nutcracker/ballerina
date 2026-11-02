@@ -20,6 +20,5 @@ Running tests for module 'sourcelessmods.module2'
 
 		Test execution time : <DURATION>s
 -- stderr --
-warning: no compiler-plugin TestPlan for testorg/sourcelessmods; treating as no discovered tests
 -- exitcode --
 0

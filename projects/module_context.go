@@ -80,14 +80,15 @@ type moduleContext struct {
 
 // newModuleContext creates a moduleContext from ModuleConfig.
 func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxTree bool) *moduleContext {
-	diagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor())
+	srcDiagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor(), false)
+	testDiagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor(), true)
 
 	// Build source document context map
 	srcDocContextMap := make(map[DocumentID]*documentContext)
 	srcDocIDs := make([]DocumentID, 0, len(moduleConfig.SourceDocs()))
 	for _, srcDocConfig := range moduleConfig.SourceDocs() {
 		docID := srcDocConfig.DocumentID()
-		srcDocContextMap[docID] = newDocumentContext(srcDocConfig, disableSyntaxTree, diagKeyPrefix)
+		srcDocContextMap[docID] = newDocumentContext(srcDocConfig, disableSyntaxTree, srcDiagKeyPrefix)
 		srcDocIDs = append(srcDocIDs, docID)
 	}
 
@@ -96,7 +97,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 	testSrcDocIDs := make([]DocumentID, 0, len(moduleConfig.TestSourceDocs()))
 	for _, testDocConfig := range moduleConfig.TestSourceDocs() {
 		docID := testDocConfig.DocumentID()
-		testDocContextMap[docID] = newDocumentContext(testDocConfig, disableSyntaxTree, diagKeyPrefix)
+		testDocContextMap[docID] = newDocumentContext(testDocConfig, disableSyntaxTree, testDiagKeyPrefix)
 		testSrcDocIDs = append(testSrcDocIDs, docID)
 	}
 
@@ -124,7 +125,14 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 //   - workspace member:   "<member-dir>/[modules/<moduleNamePart>/]"
 //   - build named module: "modules/<moduleNamePart>/"
 //   - default module:     ""
-func buildDiagKeyPrefix(project Project, md ModuleDescriptor) string {
+//
+// buildDiagKeyPrefix builds the prefix documentContext.registrationKey()
+// combines with a document's bare name. isTest adds a "tests/" segment so a
+// test document's key (and hence the path printDiagnostic/printSourceSnippet
+// read the file back from) matches its real on-disk location — without it, a
+// diagnostic in tests/a_test.bal printed as the bare "a_test.bal", and
+// snippet rendering silently failed trying to read that nonexistent path.
+func buildDiagKeyPrefix(project Project, md ModuleDescriptor, isTest bool) string {
 	if project.Kind() == ProjectKindBala {
 		return md.Org().Value() + "/" + md.Name().String() + "/" + md.Version().String() + "::"
 	}
@@ -140,6 +148,9 @@ func buildDiagKeyPrefix(project Project, md ModuleDescriptor) string {
 	}
 	if !md.Name().IsDefaultModuleName() {
 		prefix += ModulesDir + "/" + md.Name().ModuleNamePart() + "/"
+	}
+	if isTest {
+		prefix += "tests/"
 	}
 	return prefix
 }

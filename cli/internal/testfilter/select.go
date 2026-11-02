@@ -38,6 +38,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/test/0.0.1/go1.27/native"
 	"github.com/ballerina-nutcracker/ballerina/testplan"
+	"github.com/ballerina-nutcracker/ballerina/testrunner"
 )
 
 // SelectOptions mirrors the raw CLI flags/context filter.bal's setTestOptions
@@ -124,19 +125,7 @@ type testFilter struct {
 func parseTestFilters(raw string) []testFilter {
 	var filters []testFilter
 	for _, entry := range splitList(raw) {
-		module := ""
-		name := entry
-		if colon := strings.Index(name, ":"); colon >= 0 {
-			// A '#' (data-key separator) before the colon means the colon
-			// belongs to something after the data key, not a module
-			// qualifier — matches filter.bal#containsAPrefix.
-			if hash := strings.Index(name, "#"); hash < 0 || hash > colon {
-				module, name = name[:colon], name[colon+1:]
-			}
-		}
-		if hash := strings.Index(name, "#"); hash >= 0 {
-			name = name[:hash]
-		}
+		module, name, _, _ := testrunner.SplitTestsEntry(entry)
 		filters = append(filters, testFilter{Name: name, Module: module})
 	}
 	return filters
@@ -221,6 +210,21 @@ type rerunEntryJSON struct {
 // distinguish it with errors.Is.
 var ErrInvalidRerunData = errors.New("invalid failed test data")
 
+// readRerunEntries reads and parses opts.RerunJSONPath, shared by
+// selectRerunFailed and SubKeysFromRerun so the two don't each independently
+// read and unmarshal the exact same file.
+func readRerunEntries(path string) (map[string]rerunEntryJSON, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var entries map[string]rerunEntryJSON
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
 // selectRerunFailed reads the module's rerun_test.json entry and uses its
 // test names directly, with no group/wildcard/module matching (matching
 // filter.bal#parseRerunJson's own behavior of replacing --tests-based
@@ -228,12 +232,8 @@ var ErrInvalidRerunData = errors.New("invalid failed test data")
 // JSON, no entry for this module) is reported as an error rather than
 // silently yielding an empty set.
 func selectRerunFailed(opts SelectOptions) (map[string]bool, error) {
-	data, err := os.ReadFile(opts.RerunJSONPath)
+	entries, err := readRerunEntries(opts.RerunJSONPath)
 	if err != nil {
-		return nil, ErrInvalidRerunData
-	}
-	var entries map[string]rerunEntryJSON
-	if err := json.Unmarshal(data, &entries); err != nil {
 		return nil, ErrInvalidRerunData
 	}
 	entry, ok := entries[opts.ModuleName]
@@ -264,12 +264,8 @@ func SubKeysFromRerun(opts SelectOptions) map[string][]string {
 	if !opts.RerunFailed {
 		return nil
 	}
-	data, err := os.ReadFile(opts.RerunJSONPath)
+	entries, err := readRerunEntries(opts.RerunJSONPath)
 	if err != nil {
-		return nil
-	}
-	var entries map[string]rerunEntryJSON
-	if err := json.Unmarshal(data, &entries); err != nil {
 		return nil
 	}
 	entry, ok := entries[opts.ModuleName]

@@ -24,10 +24,9 @@
 // plugin can import it — see lib/stdlibs/ballerina/test's compilerplugin
 // package, the sole producer of a TestPlan (an earlier cli/internal
 // AST-walk producer, testdiscovery, was retired once the plugin proved
-// itself — see the implementation plan's Phase 3.4 notes). Every consumer
-// of a TestPlan depends only on this package, not on how a TestPlan was
-// produced, so swapping the producer again later wouldn't require changing
-// them.
+// itself). Every consumer of a TestPlan depends only on this package, not
+// on how a TestPlan was produced, so swapping the producer again later
+// wouldn't require changing them.
 package testplan
 
 // TestFunction is a discovered @test:Config-annotated function.

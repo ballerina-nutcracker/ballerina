@@ -60,27 +60,26 @@ func Summarize(report RunReport) Summary {
 }
 
 // WriteConsoleReport mirrors execute.bal#startSuite's console output byte
-// for byte:
-//  1. report.Events, replayed in the exact chronological order Run recorded
-//     them — the old engine prints a hook failure (printExecutionError) or a
-//     test/row failure's "has failed" notice (handleTestFuncOutput/
-//     handleDataDrivenTestOutput/isTestReadyToExecute) live, as execution
-//     reaches it; Run stays pure (no I/O), so the reporter replays the
-//     recorded stream instead. A single executeOne call can interleave both
-//     kinds (e.g. a test's own body fails, then its AfterGroups hook also
-//     fails), which is exactly why this needs one ordered stream rather than
-//     printing all hook failures and then all test failures.
-//  2. [pass] lines — only when !isSystemConsole, matching
+// for byte, printing the part that comes after every test and hook has
+// already run:
+//  1. [pass] lines — only when !isSystemConsole, matching
 //     report.bal#consoleReport's isSystemConsole() gate (ballerina/test
 //     hides them on an interactive terminal, keeps them for piped/CI output).
-//  3. [fail] lines with each one's formatted message.
-//  4. The passing/failing/skipped counts, or "No tests found" if nothing ran
+//  2. [fail] lines with each one's formatted message.
+//  3. The passing/failing/skipped counts, or "No tests found" if nothing ran
 //     (this is consoleReport's own empty check; execute.bal#startSuite has a
 //     separate, earlier "No tests found" — single-tab, no exec-time line
 //     at all — for zero discovered tests, which a caller is expected to
 //     have already handled before ever calling Run, the same way
 //     cli/cmd/test.go already checks testplan.TestPlan.HasAny()).
-//  5. The execution time line.
+//  4. The execution time line.
+//
+// The live notices — a hook failure (printExecutionError) or a test/row
+// failure's "has failed" line (handleTestFuncOutput/
+// handleDataDrivenTestOutput/isTestReadyToExecute) — print separately and
+// earlier than all of this, from Run itself via writeConsoleEvent, the
+// instant each happens, interleaved with that test/hook's own output
+// exactly as jballerina prints them live; see Run's doc comment.
 //
 // Passes and fails are printed as two separate groups (every pass, in its
 // own relative order, then every fail, in its own relative order) rather
@@ -88,10 +87,6 @@ func Summarize(report RunReport) Summary {
 // ReportData storing them in two separate arrays (passed/failed) that
 // consoleReport iterates one after the other.
 func WriteConsoleReport(w io.Writer, report RunReport, isSystemConsole bool, executionTime time.Duration) {
-	for _, ev := range report.Events {
-		writeConsoleEvent(w, ev)
-	}
-
 	if !isSystemConsole {
 		for _, r := range resultsByStatus(report.Results, Pass) {
 			_, _ = fmt.Fprintln(w, "\t\t[pass] "+r.Name)
