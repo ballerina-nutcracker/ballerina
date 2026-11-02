@@ -17,6 +17,7 @@
 package testrunner_test
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,7 +34,11 @@ import (
 
 // TestRun_ReportEndToEnd compiles and runs the real "failing" fixture, then
 // checks the live pipeline produces the same report format report_test.go's
-// golden tests verify against hand-built RunReports.
+// golden tests verify against hand-built RunReports. Run and
+// WriteConsoleReport write to the same builder here only to confirm they
+// combine into the right final text; see TestRun_WritesFailureNoticeLive for
+// the part that actually matters — that Run's notice lands on its writer
+// before Run returns, not deferred to WriteConsoleReport.
 func TestRun_ReportEndToEnd(t *testing.T) {
 	rt, plan := compileAndRun(t, "failing")
 	graph, err := testplan.BuildGraph(plan)
@@ -41,9 +46,8 @@ func TestRun_ReportEndToEnd(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "failing", plan, graph, nil, nil)
-
 	var sb strings.Builder
+	report := testrunner.Run(&sb, rt, "testorg", "failing", plan, graph, nil, nil)
 	testrunner.WriteConsoleReport(&sb, report, false, 0)
 	out := sb.String()
 
@@ -66,6 +70,30 @@ func TestRun_ReportEndToEnd(t *testing.T) {
 	summary := testrunner.Summarize(report)
 	if summary.ExitCode != 1 {
 		t.Errorf("expected ExitCode 1, got %d", summary.ExitCode)
+	}
+}
+
+// TestRun_WritesFailureNoticeLive confirms Run itself writes a test's "has
+// failed" notice to w before Run returns, rather than buffering it for
+// WriteConsoleReport to print afterwards — the bug this guards against had
+// every notice appearing only after the whole suite (and all its tests' own
+// printed output) had already finished, instead of interleaved live the way
+// jballerina prints them.
+func TestRun_WritesFailureNoticeLive(t *testing.T) {
+	rt, plan := compileAndRun(t, "failing")
+	graph, err := testplan.BuildGraph(plan)
+	if err != nil {
+		t.Fatalf("BuildGraph: %v", err)
+	}
+
+	var sb strings.Builder
+	report := testrunner.Run(&sb, rt, "testorg", "failing", plan, graph, nil, nil)
+
+	if got := sb.String(); !strings.Contains(got, "\n\ttestFails: has failed.\n\n") {
+		t.Errorf("expected Run to write the \"has failed\" notice to w directly, got %q", got)
+	}
+	if len(report.Results) == 0 {
+		t.Fatal("expected at least one Result")
 	}
 }
 
@@ -148,7 +176,7 @@ func TestRun_PassSkipAndOrder(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "sample", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "sample", plan, graph, nil, nil)
 	results := report.Results
 	if len(results) != 2 {
 		t.Fatalf("expected 2 results, got %d: %+v", len(results), results)
@@ -194,7 +222,7 @@ func TestRun_IncludedFiltersWhatRuns(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	results := testrunner.Run(rt, "testorg", "sample", plan, graph, map[string]bool{"testSetup": true}, nil).Results
+	results := testrunner.Run(io.Discard, rt, "testorg", "sample", plan, graph, map[string]bool{"testSetup": true}, nil).Results
 	if len(results) != 1 || results[0].Name != "testSetup" {
 		t.Fatalf("expected only testSetup to run, got %+v", results)
 	}
@@ -207,7 +235,7 @@ func TestRun_FailedAssertionReportsFailWithMessage(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	results := testrunner.Run(rt, "testorg", "failing", plan, graph, nil, nil).Results
+	results := testrunner.Run(io.Discard, rt, "testorg", "failing", plan, graph, nil, nil).Results
 	byName := resultsByName(results)
 
 	if byName["testPasses"].Status != testrunner.Pass {
@@ -232,7 +260,7 @@ func TestRun_BeforeSuiteFailureSkipsEverything(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "beforesuitefails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "beforesuitefails", plan, graph, nil, nil)
 
 	byName := resultsByName(report.Results)
 	if byName["testA"].Status != testrunner.Skip {
@@ -270,7 +298,7 @@ func TestRun_BeforeEachFailureIsSticky(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "beforeeachfails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "beforeeachfails", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if byName["testA"].Status != testrunner.Skip {
@@ -303,7 +331,7 @@ func TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "beforegroupfails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "beforegroupfails", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if byName["testA"].Status != testrunner.Skip {
@@ -332,7 +360,7 @@ func TestRun_FailedDependencyCascadesSkip(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "dependsonfails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dependsonfails", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if byName["testA"].Status != testrunner.Fail {
@@ -353,7 +381,7 @@ func TestRun_MapDataProviderRowsAndNoDependentCascade(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "dataprovidermap", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataprovidermap", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if len(report.Results) != 4 {
@@ -387,7 +415,7 @@ func TestRun_TupleDataProviderRowsKeyedByIndex(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "dataprovidertuple", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataprovidertuple", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if len(report.Results) != 2 {
@@ -411,7 +439,7 @@ func TestRun_DataProviderFailureShortCircuitsBeforeHooks(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "dataproviderpanics", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataproviderpanics", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if len(report.Results) != 2 {
@@ -443,7 +471,7 @@ func TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "beforetestfails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "beforetestfails", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if byName["testA"].Status != testrunner.Skip {
@@ -478,7 +506,7 @@ func TestRun_AfterTestFailureCascadesSkipDespitePassing(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "aftertestfails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "aftertestfails", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if byName["testA"].Status != testrunner.Pass {
@@ -509,7 +537,7 @@ func TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName(t *testing.T) 
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "dataproviderbeforefails", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataproviderbeforefails", plan, graph, nil, nil)
 
 	if len(report.Results) != 2 {
 		t.Fatalf("expected 2 results (one per data row), got %d: %+v", len(report.Results), report.Results)
@@ -546,7 +574,7 @@ func TestRun_SubKeyFilterExactMatch(t *testing.T) {
 
 	included := map[string]bool{"testSquare": true}
 	subKeys := testrunner.ParseSubKeyFilters("testSquare#one")
-	report := testrunner.Run(rt, "testorg", "dataprovidermap", plan, graph, included, subKeys)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataprovidermap", plan, graph, included, subKeys)
 
 	if len(report.Results) != 1 {
 		t.Fatalf("expected exactly 1 result, got %d: %+v", len(report.Results), report.Results)
@@ -568,7 +596,7 @@ func TestRun_SubKeyFilterMultipleKeys(t *testing.T) {
 
 	included := map[string]bool{"testSquare": true}
 	subKeys := testrunner.ParseSubKeyFilters("testSquare#one,testSquare#three")
-	report := testrunner.Run(rt, "testorg", "dataprovidermap", plan, graph, included, subKeys)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataprovidermap", plan, graph, included, subKeys)
 	byName := resultsByName(report.Results)
 
 	if len(report.Results) != 2 {
@@ -597,7 +625,7 @@ func TestRun_SubKeyFilterWildcard(t *testing.T) {
 
 	included := map[string]bool{"testSquare": true}
 	subKeys := testrunner.ParseSubKeyFilters("testSquare#t*")
-	report := testrunner.Run(rt, "testorg", "dataprovidermap", plan, graph, included, subKeys)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataprovidermap", plan, graph, included, subKeys)
 	byName := resultsByName(report.Results)
 
 	if len(report.Results) != 2 {
@@ -626,7 +654,7 @@ func TestRun_SubKeyFilterBypassedByEnabledDependent(t *testing.T) {
 
 	included := map[string]bool{"testSquare": true, "testUsesAll": true}
 	subKeys := testrunner.ParseSubKeyFilters("testSquare#one")
-	report := testrunner.Run(rt, "testorg", "subkeydependentbypass", plan, graph, included, subKeys)
+	report := testrunner.Run(io.Discard, rt, "testorg", "subkeydependentbypass", plan, graph, included, subKeys)
 	byName := resultsByName(report.Results)
 
 	if byName["testSquare#one"].Status != testrunner.Pass {
@@ -651,7 +679,7 @@ func TestRun_EmptyDataProviderRunsNothing(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "emptydataprovider", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "emptydataprovider", plan, graph, nil, nil)
 
 	if len(report.Results) != 0 {
 		t.Errorf("expected no results from a zero-row data provider, got %+v", report.Results)
@@ -680,7 +708,7 @@ func TestRun_DataProviderErrorAndFunctionValues(t *testing.T) {
 		t.Fatalf("BuildGraph: %v", err)
 	}
 
-	report := testrunner.Run(rt, "testorg", "dataprovidervaluetypes", plan, graph, nil, nil)
+	report := testrunner.Run(io.Discard, rt, "testorg", "dataprovidervaluetypes", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
 	if len(report.Results) != 2 {

@@ -37,13 +37,12 @@
 //
 // A note on the `*.bal` references throughout this package's comments
 // (execute.bal, serialExecuter.bal, register.bal, report.bal, filter.bal,
-// registration_api.bal): those files were the Ballerina orchestration
-// engine this package replaced, and they no longer exist in this repo —
-// they were deleted once this package took over (see the P8 implementation
-// plan's Phase 3.4b). The references are kept deliberately, because they
-// record *why* several non-obvious behaviors here are shaped the way they
-// are; read them against git history or jballerina upstream, not against
-// the current tree.
+// registration_api.bal): these are jBallerina's own testerina
+// implementation sources — the Java-based ballerina/test engine this
+// package is a from-scratch Go port of — not files that ever existed in
+// this repo. The references are kept deliberately, because they record
+// *why* several non-obvious behaviors here are shaped the way they are;
+// read them against jballerina upstream, not against this repo's history.
 package testrunner
 
 import (

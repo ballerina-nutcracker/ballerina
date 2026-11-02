@@ -1,14 +1,11 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: Unknown symbol: afterFuncNonExist
- --> main_test.bal:4:12
+ --> tests/main_test.bal:4:12
   |
+4 |     after: afterFuncNonExist
+  |            ^^^^^^^^^^^^^^^^^
 
 ballerina: compilation contains errors
-
-USAGE:
-    test [<source-file.bal> | <package-dir>]
-
-For more information try 'bal test --help'
 -- exitcode --
 1

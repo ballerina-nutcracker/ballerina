@@ -17,6 +17,8 @@
 package testrunner
 
 import (
+	"io"
+
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/testplan"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -29,12 +31,13 @@ type HookFailure struct {
 	Message string
 }
 
-// RunReport is one full Run's outcome: every test Result, every HookFailure,
-// and the chronological Events stream WriteConsoleReport replays verbatim.
+// RunReport is one full Run's outcome: every test Result and every
+// HookFailure. The live console notices (a test or hook "has failed" as
+// execution reaches it) are written directly to Run's w as they happen, not
+// collected here — see w's doc comment on Run.
 type RunReport struct {
 	Results      []Result
 	HookFailures []HookFailure
-	Events       []ConsoleEvent
 }
 
 // ConsoleEvent is one live console notice in the order Run produced it —
@@ -58,9 +61,15 @@ type TestFailureNotice struct {
 // Run executes a suite (BeforeSuite, every included test in graph.Order with
 // its full hook/data-provider lifecycle, then AfterSuite). See this
 // package's doc comment (run.go) for what's not yet covered.
-func Run(rt *runtime.Runtime, org, module string, plan *testplan.TestPlan, graph *testplan.Graph, included map[string]bool, subKeyFilters SubKeyFilters) RunReport {
+//
+// w receives each "has failed" console notice (test or hook) the instant it
+// happens, interleaved with that test/hook's own output (which the invoked
+// Ballerina function writes directly, e.g. via io:println) exactly as
+// jballerina does — see execute.bal's inline println calls. A test or hook's
+// own output isn't itself routed through w; only the notice is.
+func Run(w io.Writer, rt *runtime.Runtime, org, module string, plan *testplan.TestPlan, graph *testplan.Graph, included map[string]bool, subKeyFilters SubKeyFilters) RunReport {
 	r := &runner{
-		rt: rt, org: org, module: module, plan: plan, graph: graph, included: included,
+		w: w, rt: rt, org: org, module: module, plan: plan, graph: graph, included: included,
 		byName:         indexByName(plan.Tests),
 		perTestSkip:    make(map[string]bool),
 		groupTotal:     computeGroupTotals(plan, included),
@@ -72,6 +81,7 @@ func Run(rt *runtime.Runtime, org, module string, plan *testplan.TestPlan, graph
 }
 
 type runner struct {
+	w        io.Writer
 	rt       *runtime.Runtime
 	org      string
 	module   string
@@ -107,7 +117,6 @@ type runner struct {
 	subKeyFilters SubKeyFilters
 
 	hookFailures []HookFailure
-	events       []ConsoleEvent
 }
 
 func indexByName(tests []testplan.TestFunction) map[string]testplan.TestFunction {
@@ -160,7 +169,7 @@ func (r *runner) run() RunReport {
 
 	r.runAfterSuiteHooks()
 
-	return RunReport{Results: results, HookFailures: r.hookFailures, Events: r.events}
+	return RunReport{Results: results, HookFailures: r.hookFailures}
 }
 
 // executeOne dispatches to the data-driven or plain-test path based on
@@ -218,7 +227,7 @@ func (r *runner) executeSingle(t testplan.TestFunction) Result {
 func (r *runner) executeDataDriven(t testplan.TestFunction) []Result {
 	rows, testType, err := r.dataProviderRows(t.DataProvider)
 	if err != nil {
-		r.events = append(r.events, ConsoleEvent{TestFailure: &TestFailureNotice{Name: t.Name, HasSuffix: false}})
+		writeConsoleEvent(r.w, ConsoleEvent{TestFailure: &TestFailureNotice{Name: t.Name, HasSuffix: false}})
 		return []Result{{Name: t.Name, Status: Fail, Message: DataProviderFailedMessage, RawMessage: true}}
 	}
 
@@ -270,7 +279,7 @@ func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue,
 			result.Message = panicMessage(rec)
 		}
 		if result.Status == Fail {
-			r.events = append(r.events, ConsoleEvent{TestFailure: &TestFailureNotice{Name: testName, Suffix: suffix, HasSuffix: true}})
+			writeConsoleEvent(r.w, ConsoleEvent{TestFailure: &TestFailureNotice{Name: testName, Suffix: suffix, HasSuffix: true}})
 		}
 	}()
 	fn, ok := runtime.LookupFunction(r.rt, r.org, r.module, fnName)
@@ -279,9 +288,13 @@ func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue,
 		result.Message = "function " + fnName + " not found"
 		return result
 	}
-	if _, err := runtime.InvokeFunction(r.rt, fn, args); err != nil {
+	retVal, err := runtime.InvokeFunction(r.rt, fn, args)
+	if err != nil {
 		result.Status = Fail
 		result.Message = err.Error()
+	} else if errVal, ok := retVal.(*values.Error); ok {
+		result.Status = Fail
+		result.Message = panicMessage(errVal)
 	}
 	return result
 }
@@ -409,8 +422,13 @@ func (r *runner) invokeHook(name, label string, includeName bool) (failed bool) 
 		r.recordHookFailure(HookFailure{Hook: label, Message: prefix + "function " + name + " not found"})
 		return true
 	}
-	if _, err := runtime.InvokeFunction(r.rt, fn, nil); err != nil {
+	retVal, err := runtime.InvokeFunction(r.rt, fn, nil)
+	if err != nil {
 		r.recordHookFailure(HookFailure{Hook: label, Message: prefix + err.Error()})
+		return true
+	}
+	if errVal, ok := retVal.(*values.Error); ok {
+		r.recordHookFailure(HookFailure{Hook: label, Message: prefix + panicMessage(errVal)})
 		return true
 	}
 	return false
@@ -418,5 +436,5 @@ func (r *runner) invokeHook(name, label string, includeName bool) (failed bool) 
 
 func (r *runner) recordHookFailure(hf HookFailure) {
 	r.hookFailures = append(r.hookFailures, hf)
-	r.events = append(r.events, ConsoleEvent{Hook: &hf})
+	writeConsoleEvent(r.w, ConsoleEvent{Hook: &hf})
 }

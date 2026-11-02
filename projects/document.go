@@ -109,7 +109,8 @@ func (dm *DocumentModifier) Apply() *Document {
 	disableSyntaxTree := dm.oldModule.Project().BuildOptions().CompilationOptions().DisableSyntaxTree()
 
 	// Create new documentContext with the updated config
-	newDocContext := newDocumentContext(newDocConfig, disableSyntaxTree, buildDiagKeyPrefix(dm.oldModule.Project(), dm.oldModule.Descriptor()))
+	isTest := dm.oldModule.moduleCtx.isTestDocument(dm.documentID)
+	newDocContext := newDocumentContext(newDocConfig, disableSyntaxTree, buildDiagKeyPrefix(dm.oldModule.Project(), dm.oldModule.Descriptor(), isTest))
 
 	// Update the module with the new document context
 	// This triggers module modification which cascades to package

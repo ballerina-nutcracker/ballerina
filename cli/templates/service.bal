@@ -5,12 +5,12 @@ import ballerina/http;
 service / on new http:Listener(9090) {
 
     # A resource for generating greetings
-    # + req - HTTP request containing the name
+    # + req - HTTP request containing the name as a query parameter
     # + return - string name with hello message or error
     resource function get greeting(http:Request req) returns string|error {
-        string name = check req.getTextPayload();
+        string? name = req.getQueryParamValue("name");
         // Send a response back to the caller.
-        if name.length() == 0 {
+        if name is () || name.length() == 0 {
             return error("name should not be empty!");
         }
         return string `Hello, ${name}`;

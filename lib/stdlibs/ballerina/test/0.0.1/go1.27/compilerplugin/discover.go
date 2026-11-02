@@ -26,6 +26,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/testplan"
 )
 
@@ -225,22 +226,28 @@ func mappingKeyName(key *ast.BLangMappingKey) (string, bool) {
 	}
 }
 
+// boolField reads a boolean annotation field via its determined singleton
+// type rather than requiring a literal AST node, so a const reference (e.g.
+// `enable: DISABLED` where `const DISABLED = false`) resolves the same way a
+// literal `false` would.
 func boolField(fields map[string]ast.BLangExpression, name string, defaultValue bool) bool {
 	expr, ok := fields[name]
 	if !ok {
 		return defaultValue
 	}
-	literal, ok := expr.(*ast.BLangLiteral)
-	if !ok {
+	shape := semtypes.SingleShape(expr.Type())
+	if shape.IsEmpty() {
 		return defaultValue
 	}
-	value, ok := literal.Value.(bool)
+	value, ok := shape.Get().Value.(bool)
 	if !ok {
 		return defaultValue
 	}
 	return value
 }
 
+// stringArrayField reads a string-list annotation field, resolving each
+// member via its determined singleton type — see boolField's doc comment.
 func stringArrayField(fields map[string]ast.BLangExpression, name string) []string {
 	expr, ok := fields[name]
 	if !ok {
@@ -252,11 +259,11 @@ func stringArrayField(fields map[string]ast.BLangExpression, name string) []stri
 	}
 	var result []string
 	for _, member := range list.Exprs {
-		literal, ok := member.(*ast.BLangLiteral)
-		if !ok {
+		shape := semtypes.SingleShape(member.Type())
+		if shape.IsEmpty() {
 			continue
 		}
-		value, ok := literal.Value.(string)
+		value, ok := shape.Get().Value.(string)
 		if !ok {
 			continue
 		}

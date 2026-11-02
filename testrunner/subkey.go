@@ -27,6 +27,26 @@ import (
 // this map has no sub-key restriction: every data row runs.
 type SubKeyFilters map[string][]string
 
+// SplitTestsEntry splits one raw --tests entry ("[module:]name[#key]") into
+// its optional module qualifier, base test name, and optional data-provider
+// sub-key — matching filter.bal#containsAPrefix's colon-vs-hash precedence
+// rule (a '#' before the colon means the colon belongs to something after
+// the data key, not a module qualifier). Shared by this package's own
+// sub-key filtering and cli/internal/testfilter's name/module filtering,
+// which otherwise parsed the exact same syntax twice.
+func SplitTestsEntry(entry string) (module, name, key string, hasKey bool) {
+	name = entry
+	if colon := strings.Index(name, ":"); colon >= 0 {
+		if hash := strings.Index(name, "#"); hash < 0 || hash > colon {
+			module, name = name[:colon], name[colon+1:]
+		}
+	}
+	if hash := strings.Index(name, "#"); hash >= 0 {
+		name, key, hasKey = name[:hash], name[hash+1:], true
+	}
+	return module, name, key, hasKey
+}
+
 // ParseSubKeyFilters extracts sub-key filters from a raw, comma-separated
 // --tests value. A test named more than once accumulates every suffix under
 // the one entry, not just the last.
@@ -36,17 +56,10 @@ func ParseSubKeyFilters(tests string) SubKeyFilters {
 		if entry == "" {
 			continue
 		}
-		name := entry
-		if colon := strings.Index(name, ":"); colon >= 0 {
-			if hash := strings.Index(name, "#"); hash < 0 || hash > colon {
-				name = name[colon+1:]
-			}
-		}
-		hash := strings.Index(name, "#")
-		if hash < 0 {
+		_, base, key, hasKey := SplitTestsEntry(entry)
+		if !hasKey {
 			continue
 		}
-		base, key := name[:hash], name[hash+1:]
 		// jballerina's "--tests name#'key'" convention wraps a sub-key in
 		// single quotes when disambiguating from the comma-separated list;
 		// strip only a matching outer pair before matching in matches().
