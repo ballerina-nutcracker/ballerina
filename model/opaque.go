@@ -17,6 +17,7 @@
 package model
 
 import (
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -204,6 +205,6 @@ func langXMLOpaqueSymbols() []Symbol {
 	syms[OpaqueFnXMLMap] = newOpaqueFunctionSymbol("map", OpaqueFnXMLMap)
 	syms[OpaqueFnXMLForEach] = newOpaqueFunctionSymbol("forEach", OpaqueFnXMLForEach)
 	syms[OpaqueFnXMLFilter] = newOpaqueFunctionSymbol("filter", OpaqueFnXMLFilter)
-	syms[OpaqueFnXMLStepIndex] = newPrivateOpaqueFunctionSymbol("$stepIndex", OpaqueFnXMLStepIndex)
+	syms[OpaqueFnXMLStepIndex] = newPrivateOpaqueFunctionSymbol(constants.XMLStepIndexFunctionName, OpaqueFnXMLStepIndex)
 	return syms
 }
