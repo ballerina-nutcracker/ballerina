@@ -1,0 +1,23 @@
+-- stdout --
+refused: Unable to connect to server (mqtt:Error=true)
+http scheme: no NetworkModule installed for scheme "http" of URI "http://localhost:1883" (mqtt:Error=true)
+no scheme: no NetworkModule installed for scheme "localhost" of URI "localhost:1883" (mqtt:Error=true)
+ws scheme: WebSocket broker URIs are not supported: ws://localhost:1883 (mqtt:Error=true)
+unparsable: Can't parse string to URI "127.0.0.1:1883" (mqtt:Error=true)
+missing scheme: missing scheme in broker URI: //localhost:1883 (mqtt:Error=true)
+tcp path: URI path must be empty "tcp://localhost:1883/a" (mqtt:Error=true)
+ssl path: ssl://localhost:8883/ (mqtt:Error=true)
+no credentials: login rejected=true (mqtt:Error=true)
+wrong credentials: login rejected=true (mqtt:Error=true)
+credentials: connected
+serverUris: connected
+serverUris all down: Unable to connect to server (mqtt:Error=true)
+invalid serverUris: no NetworkModule installed for scheme "http" of URI "http://localhost:1883" (mqtt:Error=true)
+empty serverUris: connected
+empty client id: connected
+options: connected
+will: connected
+listener refused: Unable to connect to server
+listener http scheme: no NetworkModule installed for scheme "http" of URI "http://localhost:1"
+listener: connected
+-- stderr --
