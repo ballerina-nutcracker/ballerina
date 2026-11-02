@@ -42,6 +42,7 @@ const (
 func ProcessTests(compilerCtx *context.CompilerContext, _ model.ExportedSymbolSpace, pkg *ast.BLangPackage) (*ast.BLangPackage, error) {
 	plan := discover(pkg)
 	validateDependsOn(compilerCtx, pkg, plan)
+	validateEvaluationConfig(compilerCtx, pkg, plan)
 	testplan.Store(moduleKey(pkg), plan)
 	return pkg, nil
 }
@@ -54,10 +55,7 @@ func validateDependsOn(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 	for _, t := range plan.Tests {
 		testNames[t.Name] = true
 	}
-	fnPositions := make(map[string]*ast.BLangFunction, len(pkg.Functions))
-	for _, fn := range pkg.Functions {
-		fnPositions[identifierValue(fn.Name)] = fn
-	}
+	fnPositions := buildFnPositions(pkg)
 	for _, t := range plan.Tests {
 		for _, dep := range t.DependsOn {
 			if testNames[dep] {
@@ -69,6 +67,30 @@ func validateDependsOn(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 			)
 		}
 	}
+}
+
+// validateEvaluationConfig reports a compile error for a @test:Config with
+// runs < 1 — jballerina's own TestConfig doesn't validate this, but a Go
+// port dividing by runs (passedIterations / runs) would otherwise compute
+// NaN/Inf silently instead of failing loudly at compile time.
+func validateEvaluationConfig(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, plan *testplan.TestPlan) {
+	fnPositions := buildFnPositions(pkg)
+	for _, t := range plan.Tests {
+		if t.Runs < 1 {
+			compilerCtx.SemanticError(
+				fmt.Sprintf("'runs' must be at least 1, got %d", t.Runs),
+				fnPositions[t.Name].GetPosition(),
+			)
+		}
+	}
+}
+
+func buildFnPositions(pkg *ast.BLangPackage) map[string]*ast.BLangFunction {
+	fnPositions := make(map[string]*ast.BLangFunction, len(pkg.Functions))
+	for _, fn := range pkg.Functions {
+		fnPositions[identifierValue(fn.Name)] = fn
+	}
+	return fnPositions
 }
 
 func moduleKey(pkg *ast.BLangPackage) testplan.ModuleKey {
@@ -168,6 +190,8 @@ func parseTestConfig(fnName string, att ast.BLangAnnotationAttachment) testplan.
 		After:           functionRefField(fields, "after"),
 		SerialExecution: boolField(fields, "serialExecution", false),
 		DataProvider:    functionRefField(fields, "dataProvider"),
+		MinPassRate:     floatField(fields, "minPassRate", 1.0),
+		Runs:            intField(fields, "runs", 1),
 	}
 }
 
@@ -244,6 +268,42 @@ func boolField(fields map[string]ast.BLangExpression, name string, defaultValue 
 		return defaultValue
 	}
 	return value
+}
+
+// floatField reads a float annotation field via its determined singleton
+// type — see boolField's doc comment.
+func floatField(fields map[string]ast.BLangExpression, name string, defaultValue float64) float64 {
+	expr, ok := fields[name]
+	if !ok {
+		return defaultValue
+	}
+	shape := semtypes.SingleShape(expr.Type())
+	if shape.IsEmpty() {
+		return defaultValue
+	}
+	value, ok := shape.Get().Value.(float64)
+	if !ok {
+		return defaultValue
+	}
+	return value
+}
+
+// intField reads an int annotation field via its determined singleton
+// type — see boolField's doc comment.
+func intField(fields map[string]ast.BLangExpression, name string, defaultValue int) int {
+	expr, ok := fields[name]
+	if !ok {
+		return defaultValue
+	}
+	shape := semtypes.SingleShape(expr.Type())
+	if shape.IsEmpty() {
+		return defaultValue
+	}
+	value, ok := shape.Get().Value.(int64)
+	if !ok {
+		return defaultValue
+	}
+	return int(value)
 }
 
 // stringArrayField reads a string-list annotation field, resolving each

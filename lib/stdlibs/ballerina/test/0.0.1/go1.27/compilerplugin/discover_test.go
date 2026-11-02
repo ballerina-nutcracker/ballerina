@@ -95,10 +95,10 @@ func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 		t.Fatal("plugin did not stash a TestPlan — did it fire at all?")
 	}
 
-	if len(plan.Tests) != 3 {
-		t.Fatalf("expected 3 @test:Config functions, got %d: %+v", len(plan.Tests), plan.Tests)
+	if len(plan.Tests) != 4 {
+		t.Fatalf("expected 4 @test:Config functions, got %d: %+v", len(plan.Tests), plan.Tests)
 	}
-	var testSetup, testMain, testDisabled *testplan.TestFunction
+	var testSetup, testMain, testDisabled, testEvaluation *testplan.TestFunction
 	for i := range plan.Tests {
 		switch plan.Tests[i].Name {
 		case "testSetup":
@@ -107,6 +107,8 @@ func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 			testMain = &plan.Tests[i]
 		case "testDisabled":
 			testDisabled = &plan.Tests[i]
+		case "testEvaluation":
+			testEvaluation = &plan.Tests[i]
 		}
 	}
 	// testSetup must itself be a @test:Config function — confirmed via a
@@ -136,6 +138,15 @@ func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 	}
 	if testDisabled.Enable {
 		t.Error("testDisabled: expected Enable=false")
+	}
+	if testMain.MinPassRate != 1.0 || testMain.Runs != 1 || testMain.IsEvaluation() {
+		t.Errorf("testMain: expected default MinPassRate=1.0, Runs=1, IsEvaluation()=false, got %+v", testMain)
+	}
+	if testEvaluation == nil {
+		t.Fatal("testEvaluation not discovered")
+	}
+	if testEvaluation.MinPassRate != 0.8 || testEvaluation.Runs != 4 || !testEvaluation.IsEvaluation() {
+		t.Errorf("testEvaluation: expected MinPassRate=0.8, Runs=4, IsEvaluation()=true, got %+v", testEvaluation)
 	}
 
 	if len(plan.BeforeSuite) != 1 || plan.BeforeSuite[0].Name != "beforeAll" {
@@ -182,5 +193,29 @@ func TestProcessTests_RejectsDependsOnNonTestFunction(t *testing.T) {
 			messages = append(messages, d.Message())
 		}
 		t.Fatalf("expected a dependsOn diagnostic, got: %v", messages)
+	}
+}
+
+// TestProcessTests_RejectsRunsLessThanOne: a Go port dividing by runs
+// (passedIterations/runs) would otherwise silently compute NaN/Inf instead
+// of failing loudly — see validateEvaluationConfig's doc comment.
+func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
+	compilation := loadTestdataProject(t, "bad-runs")
+	diag := compilation.DiagnosticResult()
+	if !diag.HasErrors() {
+		t.Fatal("expected a compile error for runs < 1")
+	}
+	var found bool
+	for _, d := range diag.Diagnostics() {
+		if strings.Contains(d.Message(), "'runs' must be at least 1, got 0") {
+			found = true
+		}
+	}
+	if !found {
+		var messages []string
+		for _, d := range diag.Diagnostics() {
+			messages = append(messages, d.Message())
+		}
+		t.Fatalf("expected a runs diagnostic, got: %v", messages)
 	}
 }

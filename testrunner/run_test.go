@@ -721,3 +721,113 @@ func TestRun_DataProviderErrorAndFunctionValues(t *testing.T) {
 		t.Errorf("testFunctionData#even: expected Pass, got %v (%s)", got.Status, got.Message)
 	}
 }
+
+// TestRun_EvaluationCrossesThresholdPasses confirms a non-data-driven
+// evaluation test (runs/minPassRate set) averages pass/fail across its Runs
+// rather than failing on the first assertion failure like a plain test
+// would, and that it carries an EvalSummary with one RunResults entry per
+// run.
+func TestRun_EvaluationCrossesThresholdPasses(t *testing.T) {
+	rt, plan := compileAndRun(t, "evalnondatadriven")
+	graph, err := testplan.BuildGraph(plan)
+	if err != nil {
+		t.Fatalf("BuildGraph: %v", err)
+	}
+
+	report := testrunner.Run(io.Discard, rt, "testorg", "evalnondatadriven", plan, graph, nil, nil)
+	byName := resultsByName(report.Results)
+
+	crosses := byName["testCrossesThreshold"]
+	if crosses.Status != testrunner.Pass {
+		t.Fatalf("testCrossesThreshold: expected Pass, got %v (%s)", crosses.Status, crosses.Message)
+	}
+	if crosses.Type != testrunner.EvalTest {
+		t.Errorf("testCrossesThreshold: expected Type=EvalTest, got %v", crosses.Type)
+	}
+	if crosses.Eval == nil {
+		t.Fatal("testCrossesThreshold: expected a non-nil Eval summary")
+	}
+	if crosses.Eval.TargetPassRate != 0.5 || crosses.Eval.ObservedPassRate != 0.5 {
+		t.Errorf("testCrossesThreshold: expected target/observed pass rate 0.5/0.5, got %+v", crosses.Eval)
+	}
+	if len(crosses.Eval.RunResults) != 4 {
+		t.Errorf("testCrossesThreshold: expected 4 RunResults (one per run), got %d", len(crosses.Eval.RunResults))
+	}
+
+	below := byName["testBelowThreshold"]
+	if below.Status != testrunner.Fail {
+		t.Fatalf("testBelowThreshold: expected Fail, got %v (%s)", below.Status, below.Message)
+	}
+	if below.Eval == nil || below.Eval.ObservedPassRate != 0 {
+		t.Errorf("testBelowThreshold: expected ObservedPassRate=0, got %+v", below.Eval)
+	}
+	if len(below.Eval.RunResults) != 3 {
+		t.Errorf("testBelowThreshold: expected 3 RunResults, got %d", len(below.Eval.RunResults))
+	}
+	for _, run := range below.Eval.RunResults {
+		if run.ErrorMessage == "" {
+			t.Errorf("testBelowThreshold: expected a non-empty ErrorMessage on every run, got %+v", run)
+		}
+	}
+}
+
+// TestRun_EvaluationBeforeFailureSkipsWholeEvaluation confirms a failing
+// before: hook aborts the entire evaluation (not just one run), skipping it
+// and cascading the skip to its dependent — the same before: hook never
+// invokes the test body at all, across any run.
+func TestRun_EvaluationBeforeFailureSkipsWholeEvaluation(t *testing.T) {
+	rt, plan := compileAndRun(t, "evalbeforefails")
+	graph, err := testplan.BuildGraph(plan)
+	if err != nil {
+		t.Fatalf("BuildGraph: %v", err)
+	}
+
+	report := testrunner.Run(io.Discard, rt, "testorg", "evalbeforefails", plan, graph, nil, nil)
+	byName := resultsByName(report.Results)
+
+	if got := byName["testEvalSkipped"]; got.Status != testrunner.Skip {
+		t.Errorf("testEvalSkipped: expected Skip, got %v", got.Status)
+	}
+	if got := byName["testDependent"]; got.Status != testrunner.Skip {
+		t.Errorf("testDependent: expected Skip (cascaded), got %v", got.Status)
+	}
+}
+
+// TestRun_DataDrivenEvaluationAveragesPerIterationPassRate confirms a
+// data-driven evaluation test's final score is the average of each
+// iteration's own passedEntries/totalEntries, not a flat
+// passedRows/totalRows across every run combined.
+func TestRun_DataDrivenEvaluationAveragesPerIterationPassRate(t *testing.T) {
+	rt, plan := compileAndRun(t, "evaldatadriven")
+	graph, err := testplan.BuildGraph(plan)
+	if err != nil {
+		t.Fatalf("BuildGraph: %v", err)
+	}
+
+	report := testrunner.Run(io.Discard, rt, "testorg", "evaldatadriven", plan, graph, nil, nil)
+	byName := resultsByName(report.Results)
+
+	crosses := byName["testDataDrivenCrossesThreshold"]
+	if crosses.Status != testrunner.Pass {
+		t.Fatalf("testDataDrivenCrossesThreshold: expected Pass, got %v (%s)", crosses.Status, crosses.Message)
+	}
+	if crosses.Eval == nil || crosses.Eval.ObservedPassRate != 0.5 {
+		t.Fatalf("testDataDrivenCrossesThreshold: expected ObservedPassRate=0.5, got %+v", crosses.Eval)
+	}
+	if len(crosses.Eval.RunResults) != 2 {
+		t.Fatalf("testDataDrivenCrossesThreshold: expected 2 RunResults, got %d", len(crosses.Eval.RunResults))
+	}
+	for _, run := range crosses.Eval.RunResults {
+		if len(run.Outcomes) != 2 {
+			t.Errorf("run %d: expected 2 outcomes (one per data row), got %d", run.ID, len(run.Outcomes))
+		}
+		if run.PassRate != 0.5 {
+			t.Errorf("run %d: expected PassRate=0.5, got %v", run.ID, run.PassRate)
+		}
+	}
+
+	below := byName["testDataDrivenBelowThreshold"]
+	if below.Status != testrunner.Fail {
+		t.Fatalf("testDataDrivenBelowThreshold: expected Fail, got %v (%s)", below.Status, below.Message)
+	}
+}

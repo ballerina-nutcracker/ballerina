@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "evalbeforefails"
+version = "0.1.0"

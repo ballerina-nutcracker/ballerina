@@ -47,7 +47,7 @@ func TestTestPlanTypesStayPlainData(t *testing.T) {
 
 func isPlainDataType(ty reflect.Type) bool {
 	switch ty.Kind() {
-	case reflect.String, reflect.Bool:
+	case reflect.String, reflect.Bool, reflect.Int, reflect.Float64:
 		return true
 	case reflect.Slice:
 		return isPlainDataType(ty.Elem())
