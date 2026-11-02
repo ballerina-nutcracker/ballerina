@@ -666,7 +666,7 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	clearModuleInitExprs(pkg)
 
 	for i := range pkg.Services {
-		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, pkg.Services[i])...)
+		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, pkg.Services[i], moduleListenersRef)...)
 	}
 	body := pkg.InitFunction.Body.(*ast.BLangBlockFunctionBody)
 	// The generated module initialization runs before anything the user wrote.
@@ -835,15 +835,24 @@ func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListene
 	assign.SetPosition(pos)
 
 	stmts := []ast.StatementNode{assign}
+	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerVarRef, pos)
+	if registerStmt == nil {
+		return stmts
+	}
+	return append(stmts, registerStmt)
+}
 
+// buildListenerRegistration builds the statement that pushes a listener value
+// into `$moduleListeners`.
+func buildListenerRegistration(pkgCtx *packageContext, moduleListenersRef, listenerRef *ast.BLangVarRef, pos diagnostics.Location) ast.StatementNode {
 	mlRef := *moduleListenersRef
-	pushSrc := *listenerVarRef
+	pushSrc := *listenerRef
 	inv := createArrayPushInvocation(pkgCtx, &mlRef, &pushSrc)
 	if inv == nil {
 		pkgCtx.internalError("failed to create array:push invocation for module listener", pos)
-		return stmts
+		return nil
 	}
-	return append(stmts, createExpressionStmt(inv, pos))
+	return createExpressionStmt(inv, pos)
 }
 
 func pickInitFunctionPosition(nodes []moduleInitNode, pkg *ast.BLangPackage) diagnostics.Location {
@@ -943,10 +952,11 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 
 // buildServiceInitStmts produces the statements that, for each service
 // declaration in the module, construct the service instance into a synthetic
-// local in the init function and call `attach` on each listener in the
-// service's `on` clause. The statements run in the module init function
-// after all module-level variable initializers.
-func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *ast.BLangService) []ast.StatementNode {
+// local in the init function and then, for each expression in the service's
+// `on` clause in order, evaluate it, register the listener and call `attach`
+// on it (spec 8.3.2). The statements run in the module init function after
+// all module-level variable initializers.
+func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *ast.BLangService, moduleListenersRef *ast.BLangVarRef) []ast.StatementNode {
 	svcTy := svc.GetTypeData().Type
 	if semtypes.IsZero(svcTy) || semtypes.IsZero(svc.ObjectBodyType) {
 		pkgCtx.internalError("service types unresolved at desugar", svc.GetPosition())
@@ -960,8 +970,13 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 	stmts := []ast.StatementNode{varDef}
 
 	for _, listenerExpr := range svc.AttachedExprs {
+		listenerRef, listenerStmts := buildServiceListenerInit(pkgCtx, pkg, listenerExpr, moduleListenersRef)
+		if listenerRef == nil {
+			continue
+		}
+		stmts = append(stmts, listenerStmts...)
 		refCopy := *svcRef
-		attachInv := buildListenerAttachInvocation(pkgCtx, svc, listenerExpr, &refCopy)
+		attachInv := buildListenerAttachInvocation(pkgCtx, svc, listenerRef, &refCopy)
 		if attachInv == nil {
 			continue
 		}
@@ -970,47 +985,31 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 	return stmts
 }
 
-// hoistInlineServiceListeners replaces each inline listener expression in
-// the `on` clause of a service with a reference to a synthetic module-level
-// `listener` variable initialized to that expression.
-func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) {
-	for i := range pkg.Services {
-		svc := pkg.Services[i]
-		for j, listenerExpr := range svc.AttachedExprs {
-			_, ok := listenerExpr.(*ast.BLangVarRef)
-			if ok {
-				continue
-			}
-
-			pos := listenerExpr.GetPosition()
-			exprTy := listenerExpr.Type()
-			if semtypes.IsZero(exprTy) {
-				pkgCtx.internalError("inline listener expression has no type at desugar", pos)
-				return
-			}
-			ty := semtypes.Diff(exprTy, semtypes.Error)
-			name := pkgCtx.nextDesugarSymbolName()
-			sym := model.NewVariableSymbol(name, false, false, false, pos)
-			sym.SetListener()
-			symRef := pkgCtx.addModuleSymbol(name, &sym)
-			pkgCtx.setSymbolType(symRef, ty)
-
-			ident := newIdentifier(name)
-			ident.SetPosition(pos)
-
-			gv := &ast.BLangVariable{Name: ident}
-			gv.SetSymbol(symRef)
-			gv.SetInitialExpression(listenerExpr)
-			gv.SetPosition(pos)
-			pkg.AddGlobalVariable(gv)
-
-			ref := &ast.BLangVarRef{VariableName: ident}
-			ref.SetSymbol(symRef)
-			ref.Ty = ty
-			ref.SetPosition(pos)
-			svc.AttachedExprs[j] = ref
-		}
+// buildServiceListenerInit returns the expression a service attaches to for
+// one expression in its `on` clause, with the statements that must run first.
+// A variable reference is used as is and is not registered here, which is
+// correct only for `listener` variables (registered by their own
+// initializer). Any other expression is evaluated into a synthetic local in
+// the init function and the resulting listener is registered in
+// `$moduleListeners`.
+func buildServiceListenerInit(pkgCtx *packageContext, pkg *ast.BLangPackage, listenerExpr ast.BLangExpression, moduleListenersRef *ast.BLangVarRef) (ast.BLangExpression, []ast.StatementNode) {
+	if _, ok := listenerExpr.(*ast.BLangVarRef); ok {
+		return listenerExpr, nil
 	}
+	pos := listenerExpr.GetPosition()
+	exprTy := listenerExpr.Type()
+	if semtypes.IsZero(exprTy) {
+		pkgCtx.internalError("listener expression has no type at desugar", pos)
+		return nil, nil
+	}
+	listenerTy := semtypes.Diff(exprTy, semtypes.Error)
+	varDef, listenerRef := createDesugaredLocal(pkgCtx, pkg.InitFunction.Scope(), listenerTy, wrapInCheck(listenerExpr), pos)
+
+	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerRef, pos)
+	if registerStmt == nil {
+		return nil, nil
+	}
+	return listenerRef, []ast.StatementNode{varDef, registerStmt}
 }
 
 func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location) (*ast.BLangVariableDef, *ast.BLangVarRef) {
@@ -1669,7 +1668,6 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		ensureServiceDefaultInitFunction(pkgCtx, pkg.Services[i])
 	}
 
-	hoistInlineServiceListeners(pkgCtx, pkg)
 	generatedFunctions := desugarInitFn(pkgCtx, compilerCtx, pkg)
 
 	// Each worker writes generated functions to its own result slot. The slots

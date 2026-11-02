@@ -1,0 +1,96 @@
+(L
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access n
+          (simple-var-ref self))
+        (simple-var-ref n))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref trace)
+          (binary-expr +
+            (literal listener init )
+            (simple-var-ref n)))))
+    )
+  )
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref trace)
+          (binary-expr +
+            (literal attach )
+            (field-based-access n
+              (simple-var-ref self))))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal start )
+          (field-based-access n
+            (simple-var-ref self)))))
+    )
+  )
+)
+(init
+  (bb0 () ()
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref trace)
+        (literal service init))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref trace)
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref trace)
+          (literal 1)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref trace)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref trace)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (simple-var-ref trace)
+          (literal 4)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (simple-var-ref trace))))))
+  )
+)

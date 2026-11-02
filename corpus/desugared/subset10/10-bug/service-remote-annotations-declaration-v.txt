@@ -1,7 +1,6 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang array (as lang.array))
-  (variable $desugar$0)
   (variable $moduleListeners)
   (annotation RemoteMarker
     (attach-point serviceremotefunction))
@@ -59,7 +58,8 @@
       (block-function-body)))
   (service
     (on
-    (simple-var-ref $desugar$0))
+    (new
+      (user-defined-type AnnotationListener) ()))
     (function init () ()
       (block-function-body))
     (function $remote$ping () (
@@ -74,21 +74,21 @@
       (assignment
         (simple-var-ref $moduleListeners)
         (list-constructor-expr))
-      (assignment
-        (simple-var-ref $desugar$0)
-        (new
-          (user-defined-type AnnotationListener) ()))
+      (var-def
+        (variable $desugar$0 (expr
+          (service-init))))
+      (var-def
+        (variable $desugar$1 (expr
+          (new
+            (user-defined-type AnnotationListener) ()))))
       (expression-stmt
         (invocation lang.array push (
           (simple-var-ref $moduleListeners)
-          (simple-var-ref $desugar$0))))
-      (var-def
-        (variable $desugar$1 (expr
-          (service-init))))
+          (simple-var-ref $desugar$1))))
       (expression-stmt
         (invocation attach expr:
-          (simple-var-ref $desugar$0) (
-          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$1) (
+          (simple-var-ref $desugar$0)
           (literal <nil>))))))
   (function main () (
     (value-type null))
