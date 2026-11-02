@@ -346,23 +346,10 @@ func applyPadding(padding, s string) string {
 }
 
 func initTestModule(rt *runtime.Runtime) {
-	env := rt.GetTypeEnv()
-
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "getBallerinaType", getBallerinaType)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "getStringDiff", getStringDiff)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "getKeysDiff", getKeysDiff)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "sprintf", sprintf)
-
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "matchWildcard", matchWildcard)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "escapeSpecialCharacters", escapeSpecialCharacters)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "isSystemConsole", isSystemConsole)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "currentTimeInMillis", currentTimeInMillis)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "printValue", printValue)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "split", splitStringFactory(env))
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "invokeFunction", invokeFunction)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "readModuleRerunEntry", readModuleRerunEntryFactory(env))
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "writeModuleRerunEntry", writeModuleRerunEntry)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "writeModuleStatusReport", writeModuleStatusReport)
 }
 
 func init() {

@@ -79,8 +79,7 @@ func loadTestdataProject(t *testing.T, name string) *projects.PackageCompilation
 // This fixture was originally copied from the now-retired
 // cli/internal/testdiscovery/testdata/sample to check the two independent
 // producers for field-by-field parity before cli/cmd/test.go's wiring
-// switched over to this package exclusively (see the implementation plan's
-// Phase 3.4 notes).
+// switched over to this package exclusively.
 func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 	compilation := loadTestdataProject(t, "sample")
 	if diag := compilation.DiagnosticResult(); diag.HasErrors() {

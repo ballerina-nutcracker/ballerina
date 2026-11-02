@@ -28,21 +28,19 @@ type ModuleKey struct {
 // (the writer, running once per module during compilation) and whatever
 // reads it afterward in the same process (a frontend, or a test asserting
 // parity against another producer). Plugins run concurrently, one goroutine
-// per module (confirmed against PR #921's actual dispatch code), so this
-// needs real synchronization, not just documentation saying so.
+// per module, so this needs real synchronization, not just documentation
+// saying so.
 //
-// Known limitation, by design so far: a key carries no revision or
-// compilation-instance identity, and Store always overwrites unconditionally
-// — there is no way for a reader to tell which compile produced the plan it
-// gets back, or to detect that a newer compile is already in flight. A
-// one-shot CLI process never notices, since exactly one compile of any given
-// module is ever in flight at a time. A long-lived host that recompiles the
-// same module repeatedly (a language server, reacting to edits) would need
-// to add that itself — e.g. by never calling Store/Load concurrently for the
-// same key, or by layering its own generation check on top — since nothing
-// here provides one. This was raised in review and deliberately left
-// unaddressed rather than guessed at: no such host exists yet to validate
-// the right shape against (see the implementation plan's notes on this).
+// Known limitation: a key carries no revision or compilation-instance
+// identity, and Store always overwrites unconditionally — there is no way
+// for a reader to tell which compile produced the plan it gets back, or to
+// detect that a newer compile is already in flight. A one-shot CLI process
+// never notices, since exactly one compile of any given module is ever in
+// flight at a time. A long-lived host that recompiles the same module
+// repeatedly (a language server, reacting to edits) would need to add that
+// itself — e.g. by never calling Store/Load concurrently for the same key,
+// or by layering its own generation check on top — since nothing here
+// provides one.
 var store sync.Map // ModuleKey -> *TestPlan
 
 // Store records plan as the TestPlan discovered for key, overwriting any

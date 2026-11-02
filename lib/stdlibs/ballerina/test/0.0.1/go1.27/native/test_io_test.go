@@ -17,19 +17,10 @@
 package native
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
-
-// Full end-to-end coverage of the ballerina/test module (including everything
-// that needs a real runtime *extern.Context, e.g. readModuleRerunEntry's
-// record construction) lives in .bal-level verification, not here — see
-// CHECKPOINT.md's P8.6-P8.8 entry. These tests cover the pure-Go helpers that
-// don't need a runtime context at all.
 
 func TestMatchWildcard(t *testing.T) {
 	cases := []struct {
@@ -81,73 +72,5 @@ func TestIsBalanced(t *testing.T) {
 		if got := isBalanced(c.s); got != c.want {
 			t.Errorf("isBalanced(%q) = %v, want %v", c.s, got, c.want)
 		}
-	}
-}
-
-// writeModuleRerunEntry/readModuleRerunEntry's BalValue conversion (record/map
-// construction against a real semtypes.Env) is exercised end-to-end via
-// .bal-level verification (see CHECKPOINT.md's P8.6-P8.8 entry: setTestOptions
-// with --rerun-failed round-tripped through a real rerun_test.json), matching
-// this package's existing convention (see time_test.go) of not hand-building
-// BalValue graphs in Go tests for behavior the type checker already guarantees
-// shape for. These tests cover the plain-Go merge/read logic beneath that.
-func TestReadRerunFileRoundTrip(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "rerun_test.json")
-
-	initial := map[string]rerunEntryJSON{
-		"mod1": {TestNames: []string{"testA"}, TestModuleNames: map[string]*string{"testA": ptr("mod1")}},
-	}
-	data, err := json.Marshal(initial)
-	if err != nil {
-		t.Fatalf("marshal fixture: %v", err)
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatalf("write fixture: %v", err)
-	}
-
-	all, err := readRerunFile(path)
-	if err != nil {
-		t.Fatalf("readRerunFile: %v", err)
-	}
-	entry, ok := all["mod1"]
-	if !ok || len(entry.TestNames) != 1 || entry.TestNames[0] != "testA" {
-		t.Fatalf("unexpected round-tripped entry: %+v", all)
-	}
-	if entry.TestModuleNames["testA"] == nil || *entry.TestModuleNames["testA"] != "mod1" {
-		t.Errorf("unexpected testModuleNames: %+v", entry.TestModuleNames)
-	}
-
-	// Merging a second module (mirroring writeModuleRerunEntry's read-modify-
-	// write) must not clobber the first.
-	all["mod2"] = rerunEntryJSON{TestNames: []string{"testB"}}
-	data, err = json.Marshal(all)
-	if err != nil {
-		t.Fatalf("marshal merged: %v", err)
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatalf("write merged: %v", err)
-	}
-	all, err = readRerunFile(path)
-	if err != nil {
-		t.Fatalf("readRerunFile after merge: %v", err)
-	}
-	if _, ok := all["mod1"]; !ok {
-		t.Errorf("mod1 entry was lost after merging mod2: %+v", all)
-	}
-	if _, ok := all["mod2"]; !ok {
-		t.Errorf("mod2 entry missing: %+v", all)
-	}
-}
-
-func ptr(s string) *string { return &s }
-
-func TestReadRerunFileMissingReturnsEmpty(t *testing.T) {
-	all, err := readRerunFile(filepath.Join(t.TempDir(), "does_not_exist.json"))
-	if err != nil {
-		t.Fatalf("expected no error for a missing file, got %v", err)
-	}
-	if len(all) != 0 {
-		t.Errorf("expected an empty map, got %+v", all)
 	}
 }

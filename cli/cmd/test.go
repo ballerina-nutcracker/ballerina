@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/testfilter"
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
@@ -243,7 +244,9 @@ func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 	if diagResult := result.Diagnostics(); diagResult.HasErrors() || diagResult.HasWarnings() {
 		printDiagnostics(fsys, stderr, diagResult, !isTerminal(), diagnostics.NewDiagnosticEnv())
 		if diagResult.HasErrors() {
-			return testError("package loading reported errors")
+			// A compile error isn't a CLI usage mistake — no USAGE block,
+			// matching bal run's own plain "compilation contains errors".
+			return fmt.Errorf("compilation contains errors")
 		}
 	}
 
@@ -363,7 +366,9 @@ func runTestsForProject(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 	if cd := compilation.DiagnosticResult(); cd.HasErrors() || cd.HasWarnings() {
 		printDiagnostics(fsys, stderr, cd, !isTerminal(), compilation.DiagnosticEnv())
 		if cd.HasErrors() {
-			return 1, nil, testError("compilation contains errors")
+			// A compile error isn't a CLI usage mistake — no USAGE block,
+			// matching bal run's own plain "compilation contains errors".
+			return 1, nil, fmt.Errorf("compilation contains errors")
 		}
 	}
 
@@ -406,7 +411,7 @@ func runTestsForModules(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 	anyHadTests := false
 	anyFailed := false
 	for _, module := range modules {
-		if !discoverTests(stderr, module).HasAny() {
+		if !discoverTests(stderr, compilation, module).HasAny() {
 			continue
 		}
 		anyHadTests = true
@@ -430,8 +435,11 @@ func runTestsForModules(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 }
 
 // discoverTests reads the compiler plugin's stashed TestPlan for module. A
-// missing stash is reported loudly, not silently treated as normal.
-func discoverTests(stderr io.Writer, module *projects.Module) *testplan.TestPlan {
+// missing stash is reported loudly only when module actually imports
+// ballerina/test — the plugin only ever runs for an importing module, so a
+// module without the import (common in a multi-module package where only
+// some modules have tests) never getting a stash isn't an anomaly.
+func discoverTests(stderr io.Writer, compilation *projects.PackageCompilation, module *projects.Module) *testplan.TestPlan {
 	key := testplan.ModuleKey{
 		Org:    module.PackageInstance().PackageOrg().Value(),
 		Module: module.ModuleName().String(),
@@ -439,9 +447,28 @@ func discoverTests(stderr io.Writer, module *projects.Module) *testplan.TestPlan
 	if plan, ok := testplan.Load(key); ok {
 		return plan
 	}
-	_, _ = fmt.Fprintf(stderr, "warning: no compiler-plugin TestPlan for %s/%s; treating as no discovered tests\n",
-		key.Org, key.Module)
+	if moduleImportsBallerinaTest(compilation.ModuleAST(module.ModuleID())) {
+		_, _ = fmt.Fprintf(stderr, "warning: no compiler-plugin TestPlan for %s/%s; treating as no discovered tests\n",
+			key.Org, key.Module)
+	}
 	return &testplan.TestPlan{}
+}
+
+// moduleImportsBallerinaTest mirrors the compiler plugin's own dispatch
+// condition (it only runs for a module that explicitly imports the
+// declaring package) so discoverTests can tell "the plugin legitimately
+// never ran" from "the plugin should have run but didn't."
+func moduleImportsBallerinaTest(pkg *ast.BLangPackage) bool {
+	if pkg == nil {
+		return false
+	}
+	for _, imp := range pkg.Imports {
+		if imp.OrgName != nil && imp.OrgName.GetValue() == "ballerina" &&
+			len(imp.PkgNameComps) == 1 && imp.PkgNameComps[0].GetValue() == "test" {
+			return true
+		}
+	}
+	return false
 }
 
 // runTestsForModule runs one module's test suite in-process via its own
@@ -450,7 +477,7 @@ func discoverTests(stderr io.Writer, module *projects.Module) *testplan.TestPlan
 func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writer, fsys fs.FS,
 	project projects.Project, compilation *projects.PackageCompilation,
 	module *projects.Module, projectDir string) (int, error) {
-	discovered := discoverTests(stderr, module)
+	discovered := discoverTests(stderr, compilation, module)
 
 	moduleName := module.ModuleName().String()
 	pkgName := module.PackageInstance().PackageName().Value()
@@ -549,7 +576,11 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		subKeyFilters[name] = keys
 	}
 	start := time.Now()
-	report := testrunner.Run(rt, rootOrg, moduleName, selected, graph, included, subKeyFilters)
+	// os.Stdout, not cmd.OutOrStdout(): see the comment on WriteConsoleReport
+	// below — the live "has failed" notices Run prints as execution reaches
+	// them must land on the same real stdout the test/hook's own println
+	// output does, or the two interleave out of order.
+	report := testrunner.Run(os.Stdout, rt, rootOrg, moduleName, selected, graph, included, subKeyFilters)
 	executionTime := time.Since(start)
 
 	// Gracefully stop any module-level listeners the package under test

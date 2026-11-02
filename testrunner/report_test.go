@@ -28,7 +28,10 @@ import (
 // from reading report.bal alone) — a data-driven test with one passing row
 // and one failing row, the failing row's multi-line assertion message, and
 // its "testSquare:bad has failed." live notice (note: ":" separator here,
-// not the "#" used in the final [fail] line's name).
+// not the "#" used in the final [fail] line's name). The notice is written
+// via writeConsoleEvent, standing in for Run's own live call, since
+// WriteConsoleReport itself only prints what comes after every test and
+// hook has already run — see its doc comment.
 func TestWriteConsoleReport_MatchesDataProviderSingleFailureGolden(t *testing.T) {
 	report := RunReport{
 		Results: []Result{
@@ -36,12 +39,10 @@ func TestWriteConsoleReport_MatchesDataProviderSingleFailureGolden(t *testing.T)
 			{Name: "testSquare#bad", Status: Fail, Type: DataDrivenMapOfTuple,
 				Message: "Assertion Failed!\n \nexpected: '5'\nactual\t: '4'"},
 		},
-		Events: []ConsoleEvent{
-			{TestFailure: &TestFailureNotice{Name: "testSquare", Suffix: "bad", HasSuffix: true}},
-		},
 	}
 
 	var sb strings.Builder
+	writeConsoleEvent(&sb, ConsoleEvent{TestFailure: &TestFailureNotice{Name: "testSquare", Suffix: "bad", HasSuffix: true}})
 	WriteConsoleReport(&sb, report, false, 0)
 
 	want := "\n\ttestSquare:bad has failed.\n\n" +
@@ -68,12 +69,10 @@ func TestWriteConsoleReport_MatchesSkipDependencyFailureGolden(t *testing.T) {
 			{Name: "testDependency", Status: Fail, Message: "dependency setup failed"},
 			{Name: "testDependent", Status: Skip},
 		},
-		Events: []ConsoleEvent{
-			{TestFailure: &TestFailureNotice{Name: "testDependency", Suffix: "", HasSuffix: true}},
-		},
 	}
 
 	var sb strings.Builder
+	writeConsoleEvent(&sb, ConsoleEvent{TestFailure: &TestFailureNotice{Name: "testDependency", Suffix: "", HasSuffix: true}})
 	WriteConsoleReport(&sb, report, false, 0)
 
 	want := "\n\ttestDependency: has failed.\n\n" +
@@ -98,10 +97,10 @@ func TestWriteConsoleReport_MatchesBeforeSuiteFailureGolden(t *testing.T) {
 	report := RunReport{
 		Results:      []Result{{Name: "testA", Status: Skip}},
 		HookFailures: []HookFailure{hf},
-		Events:       []ConsoleEvent{{Hook: &hf}},
 	}
 
 	var sb strings.Builder
+	writeConsoleEvent(&sb, ConsoleEvent{Hook: &hf})
 	WriteConsoleReport(&sb, report, false, 0)
 
 	want := "\t[fail] beforeSuiteFails[before test suite function]:\n\t    beforeSuite failed\n\t\t\n\t\t\n" +
@@ -136,22 +135,17 @@ func TestWriteConsoleReport_SystemConsoleSuppressesPassLines(t *testing.T) {
 }
 
 // TestWriteConsoleReport_InterleavesHookAndTestFailuresChronologically
-// confirms Events — not two separately-batched lists — drives the live
-// notice ordering: a test's own body failing, then its AfterGroups hook
-// also failing (both can happen within one executeOne call), must print in
-// that same order, not all-hooks-then-all-tests.
+// confirms writeConsoleEvent prints live, in call order — not buffered and
+// replayed later — so a test's own body failing, then its AfterGroups hook
+// also failing (both can happen within one executeOne call, exactly the
+// order Run invokes them in), prints in that same order, not
+// all-hooks-then-all-tests.
 func TestWriteConsoleReport_InterleavesHookAndTestFailuresChronologically(t *testing.T) {
 	hf := HookFailure{Hook: "after test group function for the test", Message: "afterG\nafterG failed"}
-	report := RunReport{
-		Results: []Result{{Name: "testA", Status: Fail, Message: "testA failed"}},
-		Events: []ConsoleEvent{
-			{TestFailure: &TestFailureNotice{Name: "testA", HasSuffix: true}},
-			{Hook: &hf},
-		},
-	}
 
 	var sb strings.Builder
-	WriteConsoleReport(&sb, report, false, 0)
+	writeConsoleEvent(&sb, ConsoleEvent{TestFailure: &TestFailureNotice{Name: "testA", HasSuffix: true}})
+	writeConsoleEvent(&sb, ConsoleEvent{Hook: &hf})
 
 	testIdx := strings.Index(sb.String(), "testA: has failed")
 	hookIdx := strings.Index(sb.String(), "[fail] afterG[")

@@ -1774,12 +1774,12 @@ func testBalNewCorpus(t *testing.T, cli *balCLI) {
 
 	t.Run("package-with-template", func(t *testing.T) {
 		for _, tc := range []struct {
-			template, sourceFile, sourceContains string
+			template, sourceFile, sourceContains, testFile, testContains string
 		}{
-			{"default", "main.bal", "public function main()"},
-			{"main", "main.bal", "public function main()"},
-			{"service", "service.bal", "service / on new http:Listener"},
-			{"lib", "lib.bal", "public function hello(string? name) returns string"},
+			{"default", "main.bal", "public function main()", "main_test.bal", "@test:Config {}"},
+			{"main", "main.bal", "public function main()", "main_test.bal", "@test:Config {}"},
+			{"service", "service.bal", "service / on new http:Listener", "service_test.bal", "@test:Config {}"},
+			{"lib", "lib.bal", "public function hello(string? name) returns string", "lib_test.bal", "test:assertEquals"},
 		} {
 			t.Run(tc.template, func(t *testing.T) {
 				t.Parallel()
@@ -1793,6 +1793,19 @@ func testBalNewCorpus(t *testing.T, cli *balCLI) {
 					t.Errorf("%s missing %q:\n%s", tc.sourceFile, tc.sourceContains, sourceContent)
 				}
 				assertOnlyTemplateSourceExists(t, pkgPath, tc.sourceFile)
+
+				// The sample test file scaffolded alongside the source file
+				// (see cli/templates/{main,lib,service}_test.bal) — matches
+				// the chosen template, imports ballerina/test, and is the
+				// only one of the three test templates present.
+				testContent := readFileT(t, filepath.Join(pkgPath, "tests", tc.testFile))
+				if !strings.Contains(testContent, tc.testContains) {
+					t.Errorf("%s missing %q:\n%s", tc.testFile, tc.testContains, testContent)
+				}
+				if !strings.Contains(testContent, "import ballerina/test;") {
+					t.Errorf("%s missing 'import ballerina/test;':\n%s", tc.testFile, testContent)
+				}
+				assertOnlyTemplateTestExists(t, pkgPath, tc.testFile)
 			})
 		}
 	})
@@ -2162,8 +2175,25 @@ func assertNewPackageStructure(t *testing.T, projectPath string) {
 	if _, err := os.Stat(filepath.Join(projectPath, ".gitignore")); os.IsNotExist(err) {
 		t.Errorf(".gitignore does not exist: %s", projectPath)
 	}
+	if _, err := os.Stat(filepath.Join(projectPath, "tests", "main_test.bal")); os.IsNotExist(err) {
+		t.Errorf("tests/main_test.bal does not exist: %s", projectPath)
+	}
 	if _, err := os.Stat(filepath.Join(projectPath, "Package.md")); err == nil {
 		t.Errorf("Package.md should not exist for default template: %s", projectPath)
+	}
+}
+
+// assertOnlyTemplateTestExists verifies that of main_test.bal/lib_test.bal/
+// service_test.bal under dir/tests, only wantFile exists.
+func assertOnlyTemplateTestExists(t *testing.T, dir, wantFile string) {
+	t.Helper()
+	for _, other := range []string{"main_test.bal", "lib_test.bal", "service_test.bal"} {
+		if other == wantFile {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(dir, "tests", other)); err == nil {
+			t.Errorf("unexpected test file %s exists alongside %s", other, wantFile)
+		}
 	}
 }
 

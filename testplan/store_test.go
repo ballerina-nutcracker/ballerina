@@ -53,10 +53,10 @@ func TestStore_OverwritesPreviousEntry(t *testing.T) {
 	}
 }
 
-// TestForget_RemovesTheEntry guards the one concrete fix made for a
-// long-lived-host (e.g. a language server) scenario raised in review: Store
-// never evicts anything on its own, so a process that opens and closes many
-// modules over its lifetime needs an explicit way to bound the store's size.
+// TestForget_RemovesTheEntry guards a long-lived-host (e.g. a language
+// server) scenario: Store never evicts anything on its own, so a process
+// that opens and closes many modules over its lifetime needs an explicit
+// way to bound the store's size.
 func TestForget_RemovesTheEntry(t *testing.T) {
 	key := ModuleKey{Org: "testorg", Module: "store_test_mod_c"}
 	Store(key, &TestPlan{Tests: []TestFunction{{Name: "testA"}}})

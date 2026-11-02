@@ -268,21 +268,6 @@ isolated function getInequalityErrorMsg(any|error actual, any|error expected, st
     return errorMsg;
 }
 
-// byteSubstring stands in for the not-yet-implemented lang.string:substring (see TODO.md).
-// Byte-based, not Unicode-codepoint-safe.
-isolated function byteSubstring(string str, int startIndex, int endIndex) returns string {
-    byte[] bytes = str.toBytes();
-    byte[] sliced = [];
-    foreach int i in startIndex ..< endIndex {
-        sliced.push(bytes[i]);
-    }
-    string|error result = string:fromBytes(sliced);
-    if result is error {
-        return str;
-    }
-    return result;
-}
-
 // mapHasKey stands in for the not-yet-implemented lang.map:hasKey (see TODO.md).
 isolated function mapHasKey(map<anydata> m, string k) returns boolean {
     foreach string existingKey in m.keys() {
