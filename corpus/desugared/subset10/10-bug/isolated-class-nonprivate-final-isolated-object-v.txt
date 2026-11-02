@@ -1,0 +1,95 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Counter
+    (object-type isolated
+      (method-decl next () (
+        (value-type int)))))
+  (class-definition SimpleCounter
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 0))))
+    (function next () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (compound-assignment +
+              (index-based-access
+                (simple-var-ref self)
+                (literal n))
+              (literal 1))
+            (return
+              (index-based-access
+                (simple-var-ref self)
+                (literal n))))))))
+  (class-definition Worker
+    (variable counter (type
+      (user-defined-type Counter)))
+    (variable other (type
+      (user-defined-type SimpleCounter)))
+    (variable mixed (type
+      (union-type
+        (user-defined-type Counter)
+        (intersection-type
+          (value-type readonly)
+          (array-type
+            (value-type int) dimensions: 1 ([]))))))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal counter))
+          (new
+            (user-defined-type SimpleCounter) ()))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal other))
+          (new ()))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal mixed))
+          (list-constructor-expr
+            (literal 1)
+            (literal 2))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable w (type
+          (user-defined-type Worker)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (index-based-access
+              (simple-var-ref w)
+              (literal counter)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (index-based-access
+              (simple-var-ref w)
+              (literal counter)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (index-based-access
+              (simple-var-ref w)
+              (literal other)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref w)
+              (literal mixed))
+            (array-type
+              (value-type int) dimensions: 1 ([])))))))))

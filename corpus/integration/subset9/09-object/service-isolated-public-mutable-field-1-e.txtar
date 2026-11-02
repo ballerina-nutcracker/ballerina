@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly"
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
   --> service-isolated-public-mutable-field-1-e.bal:43:5
    |
 43 |     public int x = 0; // @error

@@ -176,11 +176,16 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BL
 }
 
 // validateIsolatedClassField: a non-private field of an isolated object must
-// be final and of a readonly type.
+// be final and of a type that is a subtype of readonly | isolated object {}.
 func validateIsolatedClassField(cx scope.Context, field *ast.BLangVariable) {
-	if !field.IsPrivate() && !scope.IsImmutableField(cx, field) {
-		cx.SemanticErr("non-private field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly\"", field.GetPosition())
+	if !field.IsPrivate() && !isIsolatedField(cx, field) {
+		cx.SemanticErr("non-private field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly|isolated object {}\"", field.GetPosition())
 	}
+}
+
+func isIsolatedField(cx scope.Context, field *ast.BLangVariable) bool {
+	tyCtx := cx.TyCtx()
+	return field.IsFinal() && semtypes.IsSubtype(tyCtx, cx.CompilerCtx().SymbolType(field.Symbol()), semtypes.CreateIsolated(tyCtx))
 }
 
 // validateUniqueResourceMethod: rms[i] may not have the same method name and

@@ -1,18 +1,18 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly"
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
   --> isolated-service-nonprivate-final-mutable-type-e.bal:43:5
    |
 43 |     final anydata data = 1; // @error anydata is not a subtype of readonly
    |     ^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly"
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
   --> isolated-service-nonprivate-final-mutable-type-e.bal:44:5
    |
 44 |     public final map<int> counts = {}; // @error public final field with mutable map type
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly"
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
   --> isolated-service-nonprivate-final-mutable-type-e.bal:45:5
    |
 45 |     string name = "x"; // @error readonly type but not final
