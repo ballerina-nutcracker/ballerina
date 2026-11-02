@@ -212,7 +212,7 @@ func createWorkerClosure(
 
 // workerBodySuffix names the hidden function a worker's body runs in when the
 // worker waits for the delivery of its async messages before terminating.
-const workerBodySuffix = "$body"
+const workerBodySuffix = constants.WorkerBodyFunctionSuffix
 
 // newWorkerClosure builds a generated anonymous function of the current
 // function from body as it is; the caller lowers it if needed.

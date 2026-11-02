@@ -21,11 +21,8 @@ const (
 	UserHome   = "user.home"
 )
 
-// Prefixes of the lookup keys the compiler hands to the functions it
-// generates. A source name can never start with '$', so a key carrying one of
-// these prefixes is always a generated function. The runtime matches on them
-// to keep generated frames out of stack traces, so a new kind of generated
-// function belongs here as well as at its generation site.
+// Names and prefixes for compiler-generated functions. Registering a name here
+// does not decide whether the runtime hides its frame from stack traces.
 const (
 	// DefaultParamFunctionPrefix marks the function that evaluates a
 	// defaultable parameter (`semantics/internal/symbols`).
@@ -34,6 +31,17 @@ const (
 	AnonFunctionPrefix = "$anonFunc$"
 	// WorkerClosurePrefix marks a named worker's body closure (`desugar`).
 	WorkerClosurePrefix = "$worker:"
+
+	ModuleStartFunctionName         = "$start"
+	ModuleGracefulStopFunctionName  = "$gracefulStop"
+	ModuleImmediateStopFunctionName = "$immediateStop"
+	RemoteMethodFunctionPrefix      = "$remote$"
+	ResourceMethodFunctionPrefix    = "$resource$"
+	MonomorphicFunctionPrefix       = "$mono$"
+	XMLStepFunctionPrefix           = "$xmlStep$"
+	XMLStepIndexFunctionName        = "$stepIndex"
+	ListenerMethodFunctionPrefix    = "$"
+	WorkerBodyFunctionSuffix        = "$body"
 )
 
 // DefaultWorkerName is the name of the default worker of a block function body

@@ -15,8 +15,10 @@
 
 package model
 
+import "github.com/ballerina-nutcracker/ballerina/common/constants"
+
 const (
-	ModuleStartFunctionName         = "$start"
-	ModuleGracefulStopFunctionName  = "$gracefulStop"
-	ModuleImmediateStopFunctionName = "$immediateStop"
+	ModuleStartFunctionName         = constants.ModuleStartFunctionName
+	ModuleGracefulStopFunctionName  = constants.ModuleGracefulStopFunctionName
+	ModuleImmediateStopFunctionName = constants.ModuleImmediateStopFunctionName
 )

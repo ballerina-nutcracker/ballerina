@@ -2229,7 +2229,7 @@ func (ms *compilationUnitSymbolResolver) allocateResourceMethodSymbol(targetScop
 }
 
 func mangledResourceMethodName(methodName string, idx int) string {
-	return fmt.Sprintf("$resource$%s$%d", methodName, idx)
+	return fmt.Sprintf("%s%s$%d", constants.ResourceMethodFunctionPrefix, methodName, idx)
 }
 
 func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangResourceMethod) bool {

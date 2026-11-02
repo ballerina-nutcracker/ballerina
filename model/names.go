@@ -16,9 +16,13 @@
 
 package model
 
-import "strings"
+import (
+	"strings"
 
-const remoteMethodPrefix = "$remote$"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
+)
+
+const remoteMethodPrefix = constants.RemoteMethodFunctionPrefix
 
 func RemoteMethodName(name string) string {
 	return remoteMethodPrefix + name

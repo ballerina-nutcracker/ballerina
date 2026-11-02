@@ -377,7 +377,7 @@ func (t *packageTypeResolver) setCurrentScope(s model.Scope) { t.scope = s }
 const moduleXMLStepOwner = "$module"
 
 // xmlStepFnPrefix starts the name of every function an XML step lowers to.
-const xmlStepFnPrefix = "$xmlStep$"
+const xmlStepFnPrefix = constants.XMLStepFunctionPrefix
 
 func xmlStepFnName(owner string, idx int) string {
 	return fmt.Sprintf("%s%s$%d", xmlStepFnPrefix, owner, idx)
@@ -406,7 +406,7 @@ func (t *packageTypeResolver) packageID() *model.PackageID { return t.pkg.Packag
 func (t *packageTypeResolver) nextMonoFnName(origName string) string {
 	idx := t.monoCounters[origName]
 	t.monoCounters[origName] = idx + 1
-	return fmt.Sprintf("$mono$%s$%d", origName, idx)
+	return fmt.Sprintf("%s%s$%d", constants.MonomorphicFunctionPrefix, origName, idx)
 }
 
 func (t *packageTypeResolver) lookupImportedSymbols(name string) (model.ExportedSymbolSpace, bool) {
@@ -689,7 +689,7 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 	}
 	idx := f.monoCounters[origName]
 	f.monoCounters[origName] = idx + 1
-	return fmt.Sprintf("$mono$%s$%d", origName, idx)
+	return fmt.Sprintf("%s%s$%d", constants.MonomorphicFunctionPrefix, origName, idx)
 }
 
 func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
@@ -9424,7 +9424,7 @@ func lowerXMLStepExpr(t typeResolver, expr *ast.BLangXMLStepExpression) (ast.BLa
 		case *ast.BLangXMLStepFilterExtend:
 			current = newXMLStepFilter(current, extension.NamePattern, extension.GetPosition())
 		case *ast.BLangXMLStepIndexExtend:
-			current, ok = newDirectLangXMLInternalInvocation(t, "$stepIndex", []ast.BLangExpression{current, extension.Expression}, extension.GetPosition())
+			current, ok = newDirectLangXMLInternalInvocation(t, constants.XMLStepIndexFunctionName, []ast.BLangExpression{current, extension.Expression}, extension.GetPosition())
 		case *ast.BLangXMLStepMethodCallExtend:
 			invocation := &ast.BLangInvocation{}
 			invocation.Expr = current

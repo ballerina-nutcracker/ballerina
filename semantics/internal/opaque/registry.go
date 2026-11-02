@@ -18,6 +18,7 @@ package opaque
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -480,7 +481,7 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 			// $stepIndex backs an indexed XML step. It is not visible to Ballerina
 			// source, so the compiler is its only caller.
 			model.OpaqueFnXMLStepIndex: {
-				name:   "$stepIndex",
+				name:   constants.XMLStepIndexFunctionName,
 				params: []model.Param{{Name: "x"}, {Name: "i"}},
 				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
 					semanticError SemanticError, _ bool, args []ast.BLangExpression,
