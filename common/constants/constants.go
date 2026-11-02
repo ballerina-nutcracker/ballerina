@@ -21,11 +21,10 @@ const (
 	UserHome   = "user.home"
 )
 
-// Prefixes of the lookup keys the compiler hands to the functions it
-// generates. A source name can never start with '$', so a key carrying one of
-// these prefixes is always a generated function. The runtime matches on them
-// to keep generated frames out of stack traces, so a new kind of generated
-// function belongs here as well as at its generation site.
+// Names and prefixes for compiler-generated functions. A source name can never
+// start with '$', so every generated name built from these must start with '$'
+// to never clash with a source name. Registering a name here does not decide
+// whether the runtime hides its frame from stack traces.
 const (
 	// DefaultParamFunctionPrefix marks the function that evaluates a
 	// defaultable parameter (`semantics/internal/symbols`).
@@ -34,6 +33,29 @@ const (
 	AnonFunctionPrefix = "$anonFunc$"
 	// WorkerClosurePrefix marks a named worker's body closure (`desugar`).
 	WorkerClosurePrefix = "$worker:"
+
+	// ModuleStartFunctionName, ModuleGracefulStopFunctionName and
+	// ModuleImmediateStopFunctionName name the per-module lifecycle dispatch
+	// functions (`desugar`). Each one iterates the module's listener array and
+	// invokes the matching listener method (see desugar.ListenerMethodFor).
+	ModuleStartFunctionName         = "$start"
+	ModuleGracefulStopFunctionName  = "$gracefulStop"
+	ModuleImmediateStopFunctionName = "$immediateStop"
+
+	// XMLStepFunctionPrefix starts the name of every function an XML step
+	// lowers to (`semantics/internal/types`).
+	XMLStepFunctionPrefix = "$xmlStep$"
+
+	// WorkerBodyFunctionSuffix names the hidden function a worker's body runs
+	// in when the worker waits for the delivery of its async messages before
+	// terminating (`desugar`).
+	WorkerBodyFunctionSuffix = "$body"
+
+	RemoteMethodFunctionPrefix   = "$remote$"
+	ResourceMethodFunctionPrefix = "$resource$"
+	MonomorphicFunctionPrefix    = "$mono$"
+	XMLStepIndexFunctionName     = "$stepIndex"
+	ListenerMethodFunctionPrefix = "$listener$"
 )
 
 // DefaultWorkerName is the name of the default worker of a block function body

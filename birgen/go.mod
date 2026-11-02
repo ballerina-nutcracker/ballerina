@@ -8,6 +8,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina v0.7.0
 	github.com/ballerina-nutcracker/ballerina/ast v0.7.0
 	github.com/ballerina-nutcracker/ballerina/bir v0.7.0
+	github.com/ballerina-nutcracker/ballerina/common v0.7.0
 	github.com/ballerina-nutcracker/ballerina/context v0.7.0
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0
 	github.com/ballerina-nutcracker/ballerina/model v0.7.0
@@ -18,7 +19,6 @@ require (
 )
 
 require (
-	github.com/ballerina-nutcracker/ballerina/common v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/decimal v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/lib v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/nodebuilder v0.7.0 // indirect

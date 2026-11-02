@@ -22,6 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	compilerctx "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/desugar"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -443,11 +444,11 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 		switch birFunc.Name.Value() {
 		case "main":
 			birPkg.MainFunction = birFunc
-		case model.ModuleStartFunctionName:
+		case constants.ModuleStartFunctionName:
 			birPkg.StartFunction = birFunc
-		case model.ModuleGracefulStopFunctionName:
+		case constants.ModuleGracefulStopFunctionName:
 			birPkg.GracefulStopFunction = birFunc
-		case model.ModuleImmediateStopFunctionName:
+		case constants.ModuleImmediateStopFunctionName:
 			birPkg.ImmediateStopFunction = birFunc
 		}
 	}
