@@ -138,14 +138,18 @@ func (s *traceState) marshalTrace() ([]byte, error) {
 	slices.SortFunc(spans, compareTraceSpans)
 
 	parents := make(map[uint64]uint64, len(spans))
+	hasChild := make(map[uint64]bool, len(spans))
 	for _, span := range spans {
 		parents[span.id] = span.parent
+		if span.parent != 0 {
+			hasChild[span.parent] = true
+		}
 	}
 
 	events := make([]traceEvent, 0, len(spans))
 	var lanes []laneStack
 	for _, span := range spans {
-		events = append(events, newTraceEvent(span, assignTraceLane(&lanes, span, parents)))
+		events = append(events, newTraceEvent(span, assignTraceLane(&lanes, span, parents, hasChild)))
 	}
 	return json.Marshal(traceDocument{TraceEvents: events})
 }
@@ -169,17 +173,29 @@ type laneStack struct {
 // closeEnded drops the spans that no longer contain span. An ancestor that ends
 // exactly where span starts still contains it: a coarse clock can give a
 // zero-length child the same offset as its parent's end.
-func (l *laneStack) closeEnded(span traceSpan, parents map[uint64]uint64) {
-	for len(l.open) > 0 && hasEndedBefore(l.open[len(l.open)-1], span, parents) {
+func (l *laneStack) closeEnded(span traceSpan, parents map[uint64]uint64, hasChild map[uint64]bool) {
+	for len(l.open) > 0 && hasEndedBefore(l.open[len(l.open)-1], span, parents, hasChild) {
 		l.open = l.open[:len(l.open)-1]
 	}
 }
 
-func hasEndedBefore(open, span traceSpan, parents map[uint64]uint64) bool {
+func hasEndedBefore(open, span traceSpan, parents map[uint64]uint64, hasChild map[uint64]bool) bool {
 	if open.end != span.start {
 		return open.end < span.start
 	}
+	if traceRoot(open.id, parents) != traceRoot(span.id, parents) {
+		// A tie across trees ends open unless its own child is still to come.
+		return !hasChild[open.id]
+	}
 	return !isTraceAncestor(open.id, span, parents)
+}
+
+// traceRoot walks id's recorded parentage up to its root span.
+func traceRoot(id uint64, parents map[uint64]uint64) uint64 {
+	for parents[id] != 0 {
+		id = parents[id]
+	}
+	return id
 }
 
 // accepts reports whether span can be drawn on this lane: either nothing is
@@ -222,9 +238,9 @@ func isTraceAncestor(candidate uint64, span traceSpan, parents map[uint64]uint64
 // that accepts it, otherwise a fresh lane. Serial children therefore share
 // their parent's lane and draw inside it, while concurrent siblings spread onto
 // their own lanes.
-func assignTraceLane(lanes *[]laneStack, span traceSpan, parents map[uint64]uint64) int {
+func assignTraceLane(lanes *[]laneStack, span traceSpan, parents map[uint64]uint64, hasChild map[uint64]bool) int {
 	for lane := range *lanes {
-		(*lanes)[lane].closeEnded(span, parents)
+		(*lanes)[lane].closeEnded(span, parents, hasChild)
 	}
 	for lane := range *lanes {
 		if (*lanes)[lane].topID() == span.parent && (*lanes)[lane].accepts(span, parents) {

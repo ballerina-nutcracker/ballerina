@@ -701,3 +701,39 @@ func TestUnnestedRecordingLanesRootsWithoutNesting(t *testing.T) {
 		t.Fatalf("C lane = %d, want the freed lane %d", byLabel["C"].Tid, byLabel["A"].Tid)
 	}
 }
+
+// TestZeroLengthRootTiedByAnUnrelatedTreeKeepsItsOwnLane covers a coarse
+// clock tying an unrelated tree's root to this root's own end: that must not
+// evict this root before its child is recorded, or the child loses its lane.
+func TestZeroLengthRootTiedByAnUnrelatedTreeKeepsItsOwnLane(t *testing.T) {
+	t.Parallel()
+	env := enabledEnv()
+	root := recordSpan(&env.traceState, "root", 0, 0)
+	recordSpan(&env.traceState, "unrelated", 0, 10*time.Microsecond)
+	recordChild(&env.traceState, "child", root, 0, 0)
+
+	trace := decodeTrace(t, env)
+	byLabel := eventsByLabel(trace)
+	if byLabel["child"].Tid != byLabel["root"].Tid {
+		t.Fatalf("child lane = %d, want the root lane %d", byLabel["child"].Tid, byLabel["root"].Tid)
+	}
+	assertContainment(t, trace)
+	assertLaneInvariants(t, trace)
+}
+
+// TestBackToBackUnrelatedRootsReuseTheFreedLane covers a coarse clock tying a
+// childless root's end to another tree's root start: that tie must still free
+// the lane, or every root pair tied this way wastes one.
+func TestBackToBackUnrelatedRootsReuseTheFreedLane(t *testing.T) {
+	t.Parallel()
+	env := enabledEnv()
+	recordSpan(&env.traceState, "A", 0, 10*time.Microsecond)
+	recordSpan(&env.traceState, "B", 10*time.Microsecond, 20*time.Microsecond)
+
+	trace := decodeTrace(t, env)
+	byLabel := eventsByLabel(trace)
+	if byLabel["B"].Tid != byLabel["A"].Tid {
+		t.Fatalf("B lane = %d, want the freed lane %d", byLabel["B"].Tid, byLabel["A"].Tid)
+	}
+	assertLaneInvariants(t, trace)
+}
