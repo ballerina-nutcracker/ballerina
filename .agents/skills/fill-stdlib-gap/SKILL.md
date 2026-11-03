@@ -164,4 +164,4 @@ Update the README row via the **`stdlib-readme-format`** skill:
 
 ### Final report
 
-In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/lib/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.
+In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/lib/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the upstream issue link for each `jBallerina bug` fix, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.
