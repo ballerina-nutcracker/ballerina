@@ -174,11 +174,11 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 			continue
 		}
 		if syntaxTree.RootNode.HasDiagnostics() {
-			units = append(units, nodebuilder.GetRecoveredCompilationUnit(d.ctx, syntaxTree))
+			units = append(units, nodebuilder.GetRecoveredCompilationUnit(d.ctx, d.ctx.GetDefaultPackage(), syntaxTree))
 			d.hasBadNodes = true
 			continue
 		}
-		units = append(units, nodebuilder.GetCompilationUnit(d.ctx, syntaxTree))
+		units = append(units, nodebuilder.GetCompilationUnit(d.ctx, d.ctx.GetDefaultPackage(), syntaxTree))
 	}
 
 	if len(units) == 0 {
