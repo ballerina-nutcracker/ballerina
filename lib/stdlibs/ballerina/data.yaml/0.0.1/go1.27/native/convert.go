@@ -185,8 +185,8 @@ func (c *converter) convertToUnion(n *node, ti typeInfo, sc scope) (values.BalVa
 	return nil, newConversionError("invalid type '%s' expected 'anydata'", c.t.typeName(ti.ty))
 }
 
-// convertToMapping binds a mapping node to a record or map. Unknown keys go to the rest type; a scalar
-// that does not convert to the rest type is dropped, as in jBallerina.
+// convertToMapping binds a mapping node to a record or map. Unknown keys go to the rest type; an untagged
+// scalar that does not convert to the rest type is dropped, as in jBallerina.
 func (c *converter) convertToMapping(n *node, shape rowShape, sc scope) (values.BalValue, error) {
 	builder := newRowBuilder(&shape)
 	remaining := shape.remainingFields()
@@ -212,7 +212,7 @@ func (c *converter) convertToMapping(n *node, shape rowShape, sc scope) (values.
 		}
 		value, err := c.convert(p.value, shape.rest, sc.child(key, nil))
 		if err != nil {
-			if p.value.kind == nodeScalar {
+			if p.value.kind == nodeScalar && !p.value.hasTyped {
 				continue
 			}
 			return nil, err
