@@ -59,6 +59,8 @@ public function main() {
     show(yaml:parseString("%TAG !e! tag:yaml.org,2002:\n---\n!e!int \"5\""));
     show(yaml:parseString("%TAG !e! tag:example.com,2000:\n---\n!e!int 5"));
     show(yaml:parseString("%TAG !e! tag:yaml.org,2002:\n%TAG !e! tag:yaml.org,2002:\n---\na"));
+    // A tag handle is scoped to the document that declares it, even when the next one starts with ---.
+    show(yaml:parseString("%TAG !e! tag:yaml.org,2002:\n--- !e!str a\n--- !e!str b", {}, Strings));
     show(yaml:parseString("%YAML 1.2\n---\na: 1"));
     show(yaml:parseString("%YAML 1.1\n---\na: 1"));
     show(yaml:parseString("%YAML 2.0\n---\na: 1"));
@@ -90,6 +92,7 @@ public function main() {
 // @output 5
 // @output 'custom tags not supported' at line: '1' column: '30'
 // @output 'duplicate tag handle' at line: '2' column: '9'
+// @output 'tag handle is not defined' at line: '3' column: '10'
 // @output {"a":1}
 // @output {"a":1}
 // @output 'incompatible yaml version for the 1.2 parser' at line: '1' column: '9'
