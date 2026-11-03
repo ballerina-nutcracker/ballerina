@@ -54,6 +54,12 @@ error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns
 45 |     _ = x1/*.length(); // @error
    |         ^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns xml, got function(xml:Element) returns int
+  --> xml-step-extend-e.bal:48:9
+   |
+48 |     _ = x1/*.slice(0).length(); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: incompatible type: expected function(xml:Element) returns xml, got function(xml:Element) returns nil
   --> xml-step-extend-e.bal:57:9
    |
@@ -65,12 +71,6 @@ error[SEMANTIC_ERROR]: method not found: foo
    |
 44 |     _ = x1/*.foo(); // @error
    |             ^^^^^^
-
-error[SEMANTIC_ERROR]: missing required parameter 'endIndex'
-  --> xml-step-extend-e.bal:48:13
-   |
-48 |     _ = x1/*.slice(0).length(); // @error
-   |             ^^^^^^^^^
 
 error[SEMANTIC_ERROR]: too many arguments
   --> xml-step-extend-e.bal:41:21
