@@ -25,6 +25,10 @@ function busyPort() returns int = external;
 
 function busyReplies() returns int = external;
 
+function sftpProxyPort() returns int = external;
+
+function freezeSftpProxy() = external;
+
 function scrub(string message) returns string {
     string port = ":" + ftpPort().toString();
     string result = message;
@@ -211,6 +215,24 @@ public function main() returns error? {
     var afterOpening = lateOpen->exists("/present.txt");
     io:println(describe(afterOpening)); // @output CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
     check lateOpen->close();
+
+    // A keepalive answered by the server keeps an idle session open past the session timeout,
+    // and a server that stops answering fails the session within two timeouts.
+    ftp:Client stalling = check new ({
+        protocol: ftp:SFTP,
+        host: "127.0.0.1",
+        port: sftpProxyPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        socketConfig: {sftpSessionTimeout: 0.5}
+    });
+    runtime:sleep(1.5);
+    boolean idleRoot = check stalling->isDirectory("/");
+    io:println(idleRoot); // @output true
+    freezeSftpProxy();
+    boolean|ftp:Error frozenRoot = stalling->isDirectory("/");
+    io:println(frozenRoot is ftp:Error); // @output true
+    ftp:Error? closedStalling = stalling->close();
+    io:println(closedStalling is ftp:Error); // @output true
 }
 
 function opensOnHang(ftp:FailureCategory category) returns boolean|error {

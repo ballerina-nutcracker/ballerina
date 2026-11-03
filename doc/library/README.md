@@ -60,7 +60,6 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **FTPS data channel protection.** jBallerina negotiates the `dataChannelProtection` level (`CLEAR`, `PRIVATE`, `SAFE`, `CONFIDENTIAL`); the Go-native version always negotiates `PROT P` (`PRIVATE`) — the Go FTP client offers no other level.
 - **FTPS key and trust stores.** jBallerina reads JKS and PKCS12 stores; the Go-native version reads PKCS12 stores and PEM certificate files only — Go has no JKS reader.
 - **SFTP compression and GSSAPI.** jBallerina negotiates `sftpCompression` and can authenticate with `GSSAPI_WITH_MIC`; the Go-native version always transfers uncompressed and skips `GSSAPI_WITH_MIC` — the Go SSH library supports neither.
-- **SFTP session timeout.** jBallerina applies `sftpSessionTimeout` as the SSH socket timeout; the Go-native version applies only `connectTimeout` to SFTP connections.
 - **Regular expressions.** jBallerina compiles file name and dependency patterns as Java regular expressions; the Go-native version uses Go regular expressions, which reject look-around and back-references, and reports invalid patterns with Go's error text.
 - **File permissions in FileInfo.** jBallerina reports SFTP readability, writability and executability for the connected user; the Go-native version reports the owner permission bits.
 - **Handler failure output.** jBallerina prints a stack trace when a listener handler fails or a file cannot be read; the Go-native version prints `error: <message>` to stderr.

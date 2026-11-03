@@ -53,6 +53,7 @@ func runFtp(t *testing.T, name string) {
 		"ftpsPort":             f.ftpsPort,
 		"ftpsImplicitPort":     f.ftpsImplicitPort,
 		"sftpPort":             f.sftpPort,
+		"sftpProxyPort":        f.sftpProxyPort,
 		"busyPort":             f.busyPort,
 		"certPath":             f.certPath,
 		"keyPath":              f.keyPath,
@@ -83,6 +84,11 @@ func runFtp(t *testing.T, name string) {
 				if err := f.ftpGate.awaitHeld(); err != nil {
 					return values.NewErrorWithMessage(err.Error()), nil
 				}
+				return nil, nil
+			}},
+		testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "freezeSftpProxy",
+			Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) {
+				f.sftpProxyFrozen.Store(true)
 				return nil, nil
 			}},
 		testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "releaseHeld",

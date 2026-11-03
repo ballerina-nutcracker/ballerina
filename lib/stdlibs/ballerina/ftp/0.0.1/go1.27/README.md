@@ -62,9 +62,9 @@ Support Levels:
 | Client initialization and configuration validation | Supported | A `port` outside 1–65535 and an invalid `circuitBreaker` fail with an `ftp:InvalidConfigError` before connecting, the intended behaviour confirmed in ballerina-platform/ballerina-library#9385; jBallerina 2.22.0 falls back to the default port and reports breaker errors as `ftp:Error` after connecting |
 | FTP connections | Supported | Directories are listed with `LIST`, and a symbolic link takes its target's type, as commons-vfs does |
 | FTPS connections | Partially Supported | Explicit and implicit modes, PEM `cert` paths and PKCS12 `crypto:TrustStore`/`crypto:KeyStore` files, and `verifyHostName` are supported. `dataChannelProtection` and JKS stores are not; see Notable Behavioural Changes |
-| SFTP connections | Partially Supported | Password, keyboard-interactive and private-key (optionally encrypted) authentication, `preferredMethods` and `sftpSshKnownHosts` are supported; a `known_hosts` file that cannot be read fails the connection. `GSSAPI_WITH_MIC`, `sftpCompression` and `sftpSessionTimeout` have no effect; see Notable Behavioural Changes |
+| SFTP connections | Partially Supported | Password, keyboard-interactive and private-key (optionally encrypted) authentication, `preferredMethods` and `sftpSshKnownHosts` are supported; a `known_hosts` file that cannot be read fails the connection. `GSSAPI_WITH_MIC` and `sftpCompression` have no effect; see Notable Behavioural Changes |
 | Anonymous login and server root | Supported | `userDirIsRoot` maps `/` to the login directory |
-| Connection and socket timeouts | Supported | `connectTimeout`, `ftpDataTimeout` and `ftpSocketTimeout` |
+| Connection and socket timeouts | Supported | `connectTimeout`, `ftpDataTimeout`, `ftpSocketTimeout` and `sftpSessionTimeout`; as in JSch, an SFTP session that receives nothing for `sftpSessionTimeout` sends one keepalive request and fails at the second timeout in a row |
 | Proxies | Not Yet Supported | A `proxy` configuration is validated, then rejected with `Proxy configuration is not yet supported` |
 | Read whole files as bytes or text | Supported | `getBytes`, `getText` |
 | Read JSON with data binding | Partially Supported | `getJson` binds to `json` and to record and array types with `cloneWithType` semantics, and honours `laxDataBinding`. Parse and binding error messages differ from `data.jsondata`'s until that library is ported |
@@ -112,7 +112,6 @@ Support Levels:
 - **FTPS data channel protection.** jBallerina negotiates the `dataChannelProtection` level (`CLEAR`, `PRIVATE`, `SAFE`, `CONFIDENTIAL`); the Go-native version always negotiates `PROT P` (`PRIVATE`) — the Go FTP client offers no other level.
 - **FTPS key and trust stores.** jBallerina reads JKS and PKCS12 stores; the Go-native version reads PKCS12 stores and PEM certificate files only — Go has no JKS reader.
 - **SFTP compression and GSSAPI.** jBallerina negotiates `sftpCompression` and can authenticate with `GSSAPI_WITH_MIC`; the Go-native version always transfers uncompressed and skips `GSSAPI_WITH_MIC` — the Go SSH library supports neither.
-- **SFTP session timeout.** jBallerina applies `sftpSessionTimeout` as the SSH socket timeout; the Go-native version applies only `connectTimeout` to SFTP connections.
 - **Regular expressions.** jBallerina compiles file name and dependency patterns as Java regular expressions; the Go-native version uses Go regular expressions, which reject look-around and back-references, and reports invalid patterns with Go's error text.
 - **File permissions in FileInfo.** jBallerina reports SFTP readability, writability and executability for the connected user; the Go-native version reports the owner permission bits.
 - **Handler failure output.** jBallerina prints a stack trace when a listener handler fails or a file cannot be read; the Go-native version prints `error: <message>` to stderr.
