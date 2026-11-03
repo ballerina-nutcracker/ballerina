@@ -138,7 +138,7 @@ public function main() returns error? {
     // Now lnk links back to /mixed, so it is skipped and /mixed/lnk/a.txt is not reported deleted.
     check retargetMixedLink();
     error? looping = mixed.poll();
-    io:println(looping is ftp:Error); // @output true
+    io:println(looping is ftp:Error ? portless(looping.message()) : "polled"); // @output Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/mixed/locked
     io:println(waitForMixedEvent()); // @output added=["/mixed/a.txt"] deleted=0
     check mixed.gracefulStop();
 }
