@@ -481,13 +481,13 @@ func (c linkListingConn) Write(b []byte) (int, error) {
 type jailFs struct{ afero.Fs }
 
 func (f jailFs) Open(name string) (afero.File, error) {
-	if p := path.Clean(name); p == "/" || p == "/home" {
+	if p := path.Clean(name); p == "/" || p == "/home" || p == "/home/alice/mixed/locked" {
 		return nil, os.ErrPermission
 	}
 	return f.Fs.Open(name)
 }
 
-func startJailFTPServer(t *testing.T) int64 {
+func startJailFTPServer(t *testing.T) (int64, string) {
 	t.Helper()
 	root := t.TempDir()
 	home := filepath.Join(root, "home", "alice")
@@ -504,6 +504,7 @@ func startJailFTPServer(t *testing.T) int64 {
 		t.Skipf("symlinks are not available: %v", err)
 	}
 	writeLinkLoop(t, filepath.Join(home, "looped"))
+	writeMixedFolder(t, home)
 	big, err := os.Create(filepath.Join(home, "big.bin"))
 	if err != nil {
 		t.Fatal(err)
@@ -517,7 +518,34 @@ func startJailFTPServer(t *testing.T) int64 {
 		t.Fatal(err)
 	}
 	fs := jailFs{afero.NewBasePathFs(afero.NewOsFs(), root)}
-	return serveFTP(t, jailFTPDriver{newFTPTestDriver(t, fs, nil, ftpserver.ClearOrEncrypted)})
+	return serveFTP(t, jailFTPDriver{newFTPTestDriver(t, fs, nil, ftpserver.ClearOrEncrypted)}), home
+}
+
+// writeMixedFolder creates home/mixed holding a.txt, a folder "locked" that jailFs refuses to list,
+// and a symlink "lnk" to a folder that also holds a.txt; retargetMixedLink turns lnk into a loop.
+func writeMixedFolder(t *testing.T, home string) {
+	t.Helper()
+	for _, dir := range []string{"mixed/locked", "target"} {
+		if err := os.MkdirAll(filepath.Join(home, dir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, file := range []string{"mixed/a.txt", "mixed/locked/hidden.txt", "target/a.txt"} {
+		if err := os.WriteFile(filepath.Join(home, file), []byte("a"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink("../target", filepath.Join(home, "mixed", "lnk")); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func retargetMixedLink(home string) error {
+	link := filepath.Join(home, "mixed", "lnk")
+	if err := os.Remove(link); err != nil {
+		return err
+	}
+	return os.Symlink(".", link)
 }
 
 // writeLinkLoop creates dir holding a.txt and two symlinks to dir itself, so a scan that follows
