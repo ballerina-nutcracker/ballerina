@@ -30,6 +30,8 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"mime"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -188,6 +190,63 @@ func TestHttpClientBinaryLocal(t *testing.T) {
 	}))
 	defer server.Close()
 	runExtern(t, fileCase("http-client-binary-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
+// TestHttpClientMultipartLocal exercises multipart request bodies: a mime:Entity[] message, a
+// nested multipart part, an empty Entity[] and a Request built with setBodyParts. The server
+// parses each body with Go's mime/multipart reader and echoes a boundary-independent summary.
+func TestHttpClientMultipartLocal(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/echo-multipart" || r.Method != http.MethodPost {
+			w.WriteHeader(404)
+			return
+		}
+		summary, err := summarizeMultipart(r.Header.Get("Content-Type"), r.Body)
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(200)
+		_, _ = io.WriteString(w, summary)
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-multipart-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
+// summarizeMultipart describes a multipart body as "<media type> count=<n> <i>:<body> ...",
+// summarizing a nested multipart part recursively in brackets.
+func summarizeMultipart(contentType string, body io.Reader) (string, error) {
+	mediaType, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return "", err
+	}
+	mr := multipart.NewReader(body, params["boundary"])
+	var sb strings.Builder
+	count := 0
+	for {
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", err
+		}
+		count++
+		partType := part.Header.Get("Content-Type")
+		if strings.HasPrefix(partType, "multipart/") {
+			nested, err := summarizeMultipart(partType, part)
+			if err != nil {
+				return "", err
+			}
+			fmt.Fprintf(&sb, " %d:[%s]", count, nested)
+			continue
+		}
+		data, _ := io.ReadAll(part)
+		fmt.Fprintf(&sb, " %d:%s", count, data)
+	}
+	return fmt.Sprintf("%s count=%d%s", mediaType, count, sb.String()), nil
 }
 
 // TestHttpClientCompressionLocal exercises transparent gzip/deflate response
