@@ -470,13 +470,13 @@ func (c *sessionTimeoutConn) start(client *ssh.Client, timeout time.Duration) {
 	}
 	c.client.Store(client)
 	c.timeout.Store(int64(timeout))
-	_ = c.Conn.SetReadDeadline(c.now().Add(timeout))
+	_ = c.SetReadDeadline(c.now().Add(timeout))
 }
 
 func (c *sessionTimeoutConn) Read(b []byte) (int, error) {
 	for {
 		if timeout := time.Duration(c.timeout.Load()); timeout > 0 {
-			_ = c.Conn.SetReadDeadline(c.now().Add(timeout))
+			_ = c.SetReadDeadline(c.now().Add(timeout))
 		}
 		n, err := c.Conn.Read(b)
 		var netErr net.Error
