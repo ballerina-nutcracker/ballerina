@@ -1,0 +1,27 @@
+(package
+  (import-package ballerina lang xml (as lang.xml))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal a))))
+      (assignment
+        (wildcard-binding-pattern)
+        (expression-thunk
+        (var-def
+          (variable $desugar$0 (expr
+            (simple-var-ref x))))
+        (var-def
+          (variable $desugar$1 (expr
+            (literal 2))))
+        (var-def
+          (variable $desugar$2 (expr
+            (invocation $default$0 (
+              (simple-var-ref $desugar$0)
+              (simple-var-ref $desugar$1))))))
+        (invocation lang.xml slice (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))))))))
