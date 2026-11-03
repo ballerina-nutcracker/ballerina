@@ -21,7 +21,40 @@ import ballerina/lang.runtime;
 
 function jailPort() returns int = external;
 
+function retargetMixedLink() returns error? = external;
+
 isolated string[] added = [];
+
+isolated string[] mixedEvents = [];
+
+service class MixedService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent & readonly event) {
+        string[] files = from ftp:FileInfo f in event.addedFiles order by f.pathDecoded select f.pathDecoded;
+        lock {
+            mixedEvents.push(string `added=${files.toString()} deleted=${event.deletedFiles.length()}`);
+        }
+    }
+}
+
+function waitForMixedEvent() returns string {
+    foreach int _ in 0 ..< 200 {
+        lock {
+            if mixedEvents.length() > 0 {
+                return mixedEvents.remove(0);
+            }
+        }
+        runtime:sleep(0.05);
+    }
+    return "no event";
+}
+
+function portless(string message) returns string {
+    string port = ":" + jailPort().toString();
+    int? i = message.indexOf(port);
+    return i is int ? message.substring(0, i) + ":PORT" + message.substring(i + port.length()) : message;
+}
 
 service class LoopService {
     *ftp:Service;
@@ -89,4 +122,23 @@ public function main() returns error? {
         io:println(added.toString()); // @output ["/looped/a.txt"]
     }
     check looped.gracefulStop();
+
+    ftp:Listener mixed = check new ({
+        host: "127.0.0.1",
+        port: jailPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        userDirIsRoot: true,
+        path: "/mixed",
+        pollingInterval: 3600
+    });
+    check mixed.attach(new MixedService());
+    error? partial = mixed.poll();
+    io:println(partial is ftp:Error ? portless(partial.message()) : "polled"); // @output Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/mixed/locked
+    io:println(waitForMixedEvent()); // @output added=["/mixed/a.txt","/mixed/lnk/a.txt"] deleted=0
+    // Now lnk links back to /mixed, so it is skipped and /mixed/lnk/a.txt is not reported deleted.
+    check retargetMixedLink();
+    error? looping = mixed.poll();
+    io:println(looping is ftp:Error); // @output true
+    io:println(waitForMixedEvent()); // @output added=["/mixed/a.txt"] deleted=0
+    check mixed.gracefulStop();
 }

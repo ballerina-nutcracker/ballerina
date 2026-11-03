@@ -81,15 +81,15 @@ func (c *consumer) uri(logical string) string {
 	return vfsURI(c.remote.ep, logical, false)
 }
 
-// consume returns the poll's failure to list the watched folder; jBallerina only logs it
-// (ballerina-library#9474).
+// consume returns the poll's first failure to list the watched folder or a folder under it, with
+// the event for what was listed; jBallerina only logs it (ballerina-library#9474).
 func (c *consumer) consume() (fileEvent, bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	root := cleanPath(c.watch.path)
 	children, err := c.remote.sess.readDir(c.remote.serverPath(root))
 	if err != nil {
-		return fileEvent{}, false, operationError("Error during the poll operation: Failed to list "+c.uri(root), err)
+		return fileEvent{}, false, c.listingError(root, err)
 	}
 	rootFiles := make([]string, 0, len(children))
 	for _, child := range children {
@@ -106,13 +106,18 @@ func (c *consumer) consume() (fileEvent, bool, error) {
 		}
 	}
 	sort.Strings(scan.event.deleted)
-	return scan.event, len(scan.event.added) > 0 || len(scan.event.deleted) > 0, nil
+	return scan.event, len(scan.event.added) > 0 || len(scan.event.deleted) > 0, scan.err
+}
+
+func (c *consumer) listingError(dir string, err error) error {
+	return operationError("Error during the poll operation: Failed to list "+c.uri(dir), err)
 }
 
 type pollScan struct {
 	rootFiles []string
 	listed    map[string]struct{}
 	event     fileEvent
+	err       error
 }
 
 func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pollScan, ancestors [][]remoteEntry) {
@@ -126,9 +131,13 @@ func (c *consumer) handleDirectory(dir string, children []remoteEntry, scan *pol
 			grandChildren, err := c.remote.sess.readDir(c.remote.serverPath(logical))
 			if err != nil {
 				c.keepReportedUnder(logical, scan)
+				if scan.err == nil {
+					scan.err = c.listingError(logical, err)
+				}
 				continue
 			}
 			if child.isLink && listsSameAsAny(grandChildren, ancestors) {
+				c.keepReportedUnder(logical, scan)
 				continue
 			}
 			c.handleDirectory(logical, grandChildren, scan, ancestors)
@@ -154,8 +163,8 @@ func listsSameAsAny(listing []remoteEntry, ancestors [][]remoteEntry) bool {
 	})
 }
 
-// keepReportedUnder treats the files reported under a folder that could not be listed as still
-// present, so a failed listing is not mistaken for deletions.
+// keepReportedUnder treats the files reported under a folder that is not scanned in this poll as
+// still present, so a failed listing or a skipped link is not mistaken for deletions.
 func (c *consumer) keepReportedUnder(dir string, scan *pollScan) {
 	for logical := range c.reported {
 		if strings.HasPrefix(logical, dir+"/") {

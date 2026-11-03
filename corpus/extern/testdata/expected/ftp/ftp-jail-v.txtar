@@ -10,4 +10,8 @@ outside
 3221225472
 [3221225472]
 ["/looped/a.txt"]
+Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/mixed/locked
+added=["/mixed/a.txt","/mixed/lnk/a.txt"] deleted=0
+true
+added=["/mixed/a.txt"] deleted=0
 -- stderr --
