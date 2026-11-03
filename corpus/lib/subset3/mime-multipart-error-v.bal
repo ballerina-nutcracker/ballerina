@@ -14,8 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/mime;
+import ballerina/file;
 import ballerina/io;
+import ballerina/mime;
 
 public function main() returns error? {
     // non-multipart entity
@@ -35,6 +36,27 @@ public function main() returns error? {
     if noBoundaryResult is mime:ParserError {
         io:println(noBoundaryResult.message()); // @output Error occurred while extracting body parts from entity: no boundary parameter found in Content-Type
     }
+
+    mime:Entity noPart = new;
+    noPart.setByteArray("garbage".toBytes(), "multipart/form-data; boundary=zzz");
+    mime:Entity[]|mime:ParserError noPartResult = noPart.getBodyParts();
+    if noPartResult is mime:ParserError {
+        io:println(noPartResult.message()); // @output Error occurred while extracting body parts from entity: Missing start boundary
+    }
+
+    mime:Entity emptyBody = new;
+    emptyBody.setByteArray([], "multipart/form-data; boundary=zzz");
+    mime:Entity[] emptyParts = check emptyBody.getBodyParts();
+    io:println(emptyParts.length()); // @output 0
+
+    string emptyPath = check file:createTemp();
+    mime:Entity emptyFile = new;
+    emptyFile.setFileAsEntityBody(emptyPath, "multipart/form-data; boundary=zzz");
+    mime:Entity[]|mime:ParserError emptyFileResult = emptyFile.getBodyParts();
+    if emptyFileResult is mime:ParserError {
+        io:println(emptyFileResult.message()); // @output Error occurred while extracting body parts from entity: Missing start boundary
+    }
+    check file:remove(emptyPath);
 
     // entity with no content-type header at all
     mime:Entity noHeader = new;
