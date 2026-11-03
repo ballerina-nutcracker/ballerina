@@ -116,8 +116,6 @@ func (p *parser) nextDocument() (doc *node, explicit bool, ok bool, err error) {
 			return nil, false, false, err
 		}
 		p.sawDocumentEnd = true
-		p.tagHandles = make(map[string]string)
-		p.versionDefined = false
 		next, err := p.peek()
 		if err != nil {
 			return nil, false, false, err
@@ -131,6 +129,8 @@ func (p *parser) nextDocument() (doc *node, explicit bool, ok bool, err error) {
 	if tok.kind == tokenStreamEnd {
 		return nil, false, false, nil
 	}
+	p.tagHandles = make(map[string]string)
+	p.versionDefined = false
 	hasDirectives, err := p.parseDirectives()
 	if err != nil {
 		return nil, false, false, err
