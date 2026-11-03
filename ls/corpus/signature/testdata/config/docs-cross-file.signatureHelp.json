@@ -1,0 +1,34 @@
+{
+  "source": "projects/cross-file/main.bal",
+  "position": {
+    "line": 17,
+    "character": 10
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "cross(int value)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nCross file."
+          },
+          "parameters": [
+            {
+              "label": [
+                6,
+                15
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` value**: Sibling file parameter."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

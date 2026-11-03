@@ -1,0 +1,40 @@
+{
+  "source": "projects/project/main.bal",
+  "position": {
+    "line": 18,
+    "character": 16
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "sibling(int value, string title)",
+          "parameters": [
+            {
+              "label": [
+                8,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` value**"
+              }
+            },
+            {
+              "label": [
+                19,
+                31
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

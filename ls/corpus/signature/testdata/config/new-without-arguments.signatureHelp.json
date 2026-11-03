@@ -1,0 +1,10 @@
+{
+  "source": "new-without-arguments.bal",
+  "position": {
+    "line": 20,
+    "character": 19
+  },
+  "expected": [
+    null
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "source": "remote-client.bal",
+  "position": {
+    "line": 54,
+    "character": 17
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "remote1(string id, int age, string name)",
+          "parameters": [
+            {
+              "label": [
+                8,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` id**"
+              }
+            },
+            {
+              "label": [
+                19,
+                26
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` age**"
+              }
+            },
+            {
+              "label": [
+                28,
+                39
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` name**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

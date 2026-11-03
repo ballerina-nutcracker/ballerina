@@ -1,0 +1,40 @@
+{
+  "source": "ast-constructor-fallback.bal",
+  "position": {
+    "line": 18,
+    "character": 23
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Box(int first, int second)",
+          "parameters": [
+            {
+              "label": [
+                8,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` first**"
+              }
+            },
+            {
+              "label": [
+                19,
+                29
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` second**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

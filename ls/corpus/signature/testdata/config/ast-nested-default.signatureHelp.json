@@ -1,0 +1,30 @@
+{
+  "source": "ast-nested-default.bal",
+  "position": {
+    "line": 19,
+    "character": 23
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "inner(int value)",
+          "parameters": [
+            {
+              "label": [
+                6,
+                15
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` value**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

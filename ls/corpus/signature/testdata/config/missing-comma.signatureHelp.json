@@ -1,0 +1,40 @@
+{
+  "source": "missing-comma.bal",
+  "position": {
+    "line": 18,
+    "character": 10
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(int count, string title)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                13
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` count**"
+              }
+            },
+            {
+              "label": [
+                15,
+                27
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

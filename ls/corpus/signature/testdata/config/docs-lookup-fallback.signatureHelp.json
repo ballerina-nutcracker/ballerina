@@ -1,0 +1,40 @@
+{
+  "source": "docs-lookup-fallback.bal",
+  "position": {
+    "line": 23,
+    "character": 11
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "fn(int, string)",
+          "parameters": [
+            {
+              "label": [
+                3,
+                6
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`**"
+              }
+            },
+            {
+              "label": [
+                8,
+                14
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

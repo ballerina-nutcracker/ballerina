@@ -1,0 +1,40 @@
+{
+  "source": "expressions.bal",
+  "position": {
+    "line": 121,
+    "character": 28
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "fooF(a, b)",
+          "parameters": [
+            {
+              "label": [
+                5,
+                6
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**a**"
+              }
+            },
+            {
+              "label": [
+                8,
+                9
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**b**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

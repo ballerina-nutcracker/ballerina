@@ -1,0 +1,34 @@
+{
+  "source": "docs-local-methods.bal",
+  "position": {
+    "line": 31,
+    "character": 12
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "put(int value)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nLocal method."
+          },
+          "parameters": [
+            {
+              "label": [
+                4,
+                13
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` value**: Stored value."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

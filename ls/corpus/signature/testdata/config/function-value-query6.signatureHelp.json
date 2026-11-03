@@ -1,0 +1,30 @@
+{
+  "source": "function-value.bal",
+  "position": {
+    "line": 26,
+    "character": 10
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "u(int)",
+          "parameters": [
+            {
+              "label": [
+                2,
+                5
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

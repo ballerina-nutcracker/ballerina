@@ -1,0 +1,50 @@
+{
+  "source": "ast-rest.bal",
+  "position": {
+    "line": 19,
+    "character": 9
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(int first, int second, int... rest)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                13
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` first**"
+              }
+            },
+            {
+              "label": [
+                15,
+                25
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` second**"
+              }
+            },
+            {
+              "label": [
+                27,
+                38
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int...` rest**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

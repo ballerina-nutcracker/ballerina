@@ -1,0 +1,18 @@
+{
+  "source": "forms.bal",
+  "position": {
+    "line": 30,
+    "character": 28
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Empty()",
+          "parameters": []
+        }
+      ],
+      "activeSignature": 0
+    }
+  ]
+}

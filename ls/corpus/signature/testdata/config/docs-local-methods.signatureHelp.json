@@ -1,0 +1,34 @@
+{
+  "source": "docs-local-methods.bal",
+  "position": {
+    "line": 30,
+    "character": 22
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Box(int size)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nLocal constructor."
+          },
+          "parameters": [
+            {
+              "label": [
+                8,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` size**: Initial size."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

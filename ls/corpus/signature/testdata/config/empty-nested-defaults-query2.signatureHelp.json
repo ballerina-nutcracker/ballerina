@@ -1,0 +1,10 @@
+{
+  "source": "empty-nested-defaults.bal",
+  "position": {
+    "line": 19,
+    "character": 18
+  },
+  "expected": [
+    null
+  ]
+}

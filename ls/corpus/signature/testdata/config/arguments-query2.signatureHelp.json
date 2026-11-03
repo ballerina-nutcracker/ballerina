@@ -1,0 +1,50 @@
+{
+  "source": "arguments.bal",
+  "position": {
+    "line": 25,
+    "character": 36
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "choose(int count, string title, string... extra)",
+          "parameters": [
+            {
+              "label": [
+                7,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` count**"
+              }
+            },
+            {
+              "label": [
+                18,
+                30
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` title**"
+              }
+            },
+            {
+              "label": [
+                32,
+                47
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string...` extra**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

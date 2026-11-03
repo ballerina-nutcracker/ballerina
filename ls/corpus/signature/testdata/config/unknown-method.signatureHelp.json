@@ -1,0 +1,10 @@
+{
+  "source": "unknown-method.bal",
+  "position": {
+    "line": 19,
+    "character": 18
+  },
+  "expected": [
+    null
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "source": "names-only.bal",
+  "position": {
+    "line": 18,
+    "character": 18
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "unresolved(count, title)",
+          "parameters": [
+            {
+              "label": [
+                11,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**count**"
+              }
+            },
+            {
+              "label": [
+                18,
+                23
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

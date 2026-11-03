@@ -1,0 +1,18 @@
+{
+  "source": "arguments.bal",
+  "position": {
+    "line": 29,
+    "character": 9
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "zero()",
+          "parameters": []
+        }
+      ],
+      "activeSignature": 0
+    }
+  ]
+}

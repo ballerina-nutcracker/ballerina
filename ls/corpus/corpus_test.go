@@ -26,7 +26,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -83,9 +82,6 @@ func TestCorpus(t *testing.T) {
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
 			t.Parallel()
-			if strings.HasPrefix(fixture, "signature/") && slices.Contains(signatureSkipList(), "ls/corpus/"+fixture) {
-				t.Skip("incomplete call recovery is not supported yet")
-			}
 			runTranscript(t, fixture)
 		})
 	}

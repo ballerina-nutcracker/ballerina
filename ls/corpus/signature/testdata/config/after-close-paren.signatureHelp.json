@@ -1,0 +1,10 @@
+{
+  "source": "after-close-paren.bal",
+  "position": {
+    "line": 19,
+    "character": 15
+  },
+  "expected": [
+    null
+  ]
+}

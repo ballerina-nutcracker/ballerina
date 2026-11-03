@@ -1,0 +1,34 @@
+{
+  "source": "langlib-empty-length.bal",
+  "position": {
+    "line": 18,
+    "character": 26
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "length([nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...] arr)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nReturns the number of members of an array."
+          },
+          "parameters": [
+            {
+              "label": [
+                7,
+                134
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`[nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]` arr**: the array"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

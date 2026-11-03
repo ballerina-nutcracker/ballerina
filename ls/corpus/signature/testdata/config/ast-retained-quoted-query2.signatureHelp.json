@@ -1,0 +1,40 @@
+{
+  "source": "ast-retained-quoted.bal",
+  "position": {
+    "line": 18,
+    "character": 33
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "quoted(type, second)",
+          "parameters": [
+            {
+              "label": [
+                7,
+                11
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**type**"
+              }
+            },
+            {
+              "label": [
+                13,
+                19
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**second**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "source": "ast-invalid-named.bal",
+  "position": {
+    "line": 19,
+    "character": 18
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "pick(count, title)",
+          "parameters": [
+            {
+              "label": [
+                5,
+                10
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**count**"
+              }
+            },
+            {
+              "label": [
+                12,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

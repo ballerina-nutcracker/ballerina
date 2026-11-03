@@ -1,0 +1,40 @@
+{
+  "source": "function-value.bal",
+  "position": {
+    "line": 32,
+    "character": 12
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "lam(int w, string v)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                9
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` w**"
+              }
+            },
+            {
+              "label": [
+                11,
+                19
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` v**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "source": "projects/imported/main.bal",
+  "position": {
+    "line": 21,
+    "character": 12
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "put(int value)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nPut a value."
+          },
+          "parameters": [
+            {
+              "label": [
+                4,
+                13
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` value**: Value to put."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}
