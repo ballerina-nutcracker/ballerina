@@ -1,0 +1,36 @@
+module $anon.. v 0.0.0;
+g  [{| x: int, never... |}|{| x: string, never... |}...];
+h  {| y: [int, never...]|[string, never...], never... |}|{| y: int, never... |};
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 0
+    %1 = g[%2];
+    %3 = %1 is {| x: int, never... |}
+    %4 = %3;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 1
+    %6 = g[%7];
+    %8 = %6 is {| x: string, never... |}
+    %9 = %8;
+    %10 = println(%9) -> bb2;
+  }
+  bb2 {
+    %11 = h is {| y: [int, never...]|[string, never...], never... |}
+    %12 = %11;
+    %13 = println(%12) -> bb3;
+  }
+  bb3 {
+    %14 = <{| y: [int, never...]|[string, never...], never... |}>(h)
+    c = %14;
+    %17 = ConstantLoad y
+    %16 = c[%17];
+    %18 = %16 is [string, never...]
+    %19 = %18;
+    %20 = println(%19) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

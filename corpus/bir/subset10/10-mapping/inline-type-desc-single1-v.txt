@@ -1,0 +1,24 @@
+module $anon.. v 0.0.0;
+g  {| x: boolean, never... |};
+v  any;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = v is object { int a }
+    %3 = newMap {| x: boolean, never... |}{%1=%2}
+    l = %3;
+    %6 = ConstantLoad x
+    %5 = g[%6];
+    %7 = %5;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad x
+    %9 = l[%10];
+    %11 = %9;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

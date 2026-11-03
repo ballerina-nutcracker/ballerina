@@ -1,0 +1,26 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (value-type float)) (expr
+          (literal 3.16923250480252e+21))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref value)
+            (literal 3169232504802519810048.0)))))
+      (var-def
+        (variable negative (type
+          (value-type float)) (expr
+          (unary-expr -
+            (literal 3.16923250480252e+21)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref negative)
+            (unary-expr -
+              (literal 3169232504802519810048.0)))))))))

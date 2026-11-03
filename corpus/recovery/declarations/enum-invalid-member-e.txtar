@@ -21,10 +21,24 @@ enum Colour { R, '_ } // @error
   (const R enum-member (
     (value-type string)) (
     (literal R)))
+  (const (bad-identifier) enum-member (
+    (value-type string)) (
+    (literal _)))
   (type-definition Colour enum
-    (user-defined-type R))
-  (bad-top-level enum))
--- symbols --
-+Colour +R -_
+    (union-type
+      (user-defined-type R)
+      (user-defined-type _))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: _
+  --> enum-invalid-member-e.bal:17:18
+   |
+17 | enum Colour { R, '_ } // @error
+   |                  ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> enum-invalid-member-e.bal:17:18
+   |
+17 | enum Colour { R, '_ } // @error
+   |                  ^^^
 -- diagnostic-counts --
 1 '_' is a keyword, and may not be used as an identifier

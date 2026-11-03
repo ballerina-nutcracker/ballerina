@@ -42,14 +42,26 @@ func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		v2 := op2.(float64)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, v1+v2)
 	case string:
-		v2 := op2.(string)
-		setOperandValue(ctx, binaryOp.LhsOp, frame, v1+v2)
+		switch v2 := op2.(type) {
+		case string:
+			setOperandValue(ctx, binaryOp.LhsOp, frame, v1+v2)
+		case values.XMLValue:
+			setOperandValue(ctx, binaryOp.LhsOp, frame, values.ConcatXML(values.NewXMLText(v1), v2))
+		default:
+			panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
+		}
 	case *decimal.Decimal:
 		v2 := op2.(*decimal.Decimal)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Add, v2))
 	case values.XMLValue:
-		v2 := op2.(values.XMLValue)
-		setOperandValue(ctx, binaryOp.LhsOp, frame, values.ConcatXML(v1, v2))
+		switch v2 := op2.(type) {
+		case values.XMLValue:
+			setOperandValue(ctx, binaryOp.LhsOp, frame, values.ConcatXML(v1, v2))
+		case string:
+			setOperandValue(ctx, binaryOp.LhsOp, frame, values.ConcatXML(v1, values.NewXMLText(v2)))
+		default:
+			panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
+		}
 	default:
 		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
 	}

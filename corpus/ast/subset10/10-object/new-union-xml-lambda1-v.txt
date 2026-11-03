@@ -1,0 +1,98 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition XmlFn
+    (variable f (type
+      (function-type (
+        (value-type xml)) (
+        (value-type xml)))))
+    (function init (
+      (variable f (type
+        (function-type (
+          (value-type xml)) (
+          (value-type xml)))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access f
+            (simple-var-ref self))
+          (simple-var-ref f)))))
+  (class-definition IntFn
+    (variable f (type
+      (function-type (
+        (value-type int)) (
+        (value-type xml)))))
+    (function init (
+      (variable f (type
+        (function-type (
+          (value-type int)) (
+          (value-type xml)))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access f
+            (simple-var-ref self))
+          (simple-var-ref f)))))
+  (function kind (
+    (variable v (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type XmlFn))
+          (literal XmlFn)
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref v)
+              (user-defined-type IntFn))
+            (literal IntFn)
+            (literal neither))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal a
+                (xml-text-literal 1))
+              (xml-element-literal a
+                (xml-text-literal 2)))))))
+      (var-def
+        (variable c (type
+          (union-type
+            (user-defined-type XmlFn)
+            (user-defined-type IntFn))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_0 (
+                (variable s)) ()
+                (expr-function-body
+                  (xml-step-expression
+                    (simple-var-ref s)
+                    (xml-step-element-children
+                      (xml-name-pattern-identifier a))
+                    (xml-step-index-extend
+                      (literal 0)))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref c))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref c)
+          (user-defined-type XmlFn))
+        (block-stmt
+          (var-def
+            (variable f (expr
+              (field-based-access f
+                (simple-var-ref c)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation f (
+                (simple-var-ref x))))))) ())
+      (block-stmt))))

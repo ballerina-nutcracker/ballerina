@@ -1,0 +1,77 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type float)) (expr
+        (literal 1.8446744073709552e+19))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref value)
+          (literal 1.8446744073709552e+19)))))
+    (var-def
+      (variable negative (type
+        (value-type float)) (expr
+        (unary-expr -
+          (literal 1.8446744073709552e+19)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref negative)
+          (unary-expr -
+            (literal 1.8446744073709552e+19))))))
+    (var-def
+      (variable maximum (type
+        (value-type int)) (expr
+        (literal 9223372036854775807))))
+    (var-def
+      (variable minimum (type
+        (value-type int)) (expr
+        (literal -9223372036854775808))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr &&
+          (binary-expr ==
+            (simple-var-ref maximum)
+            (literal 9223372036854775807))
+          (binary-expr ==
+            (simple-var-ref minimum)
+            (literal -9223372036854775808))))))
+    (var-def
+      (variable aboveMaximum (type
+        (value-type float)) (expr
+        (literal 9.223372036854776e+18))))
+    (var-def
+      (variable belowMinimum (type
+        (value-type float)) (expr
+        (unary-expr -
+          (literal 9.223372036854776e+18)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr &&
+          (binary-expr ==
+            (simple-var-ref aboveMaximum)
+            (literal 9.223372036854776e+18))
+          (binary-expr ==
+            (simple-var-ref belowMinimum)
+            (unary-expr -
+              (literal 9.223372036854776e+18)))))))
+    (var-def
+      (variable tie (type
+        (value-type float)) (expr
+        (literal 1.8446744073709552e+19))))
+    (var-def
+      (variable aboveTie (type
+        (value-type float)) (expr
+        (literal 1.8446744073709556e+19))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr &&
+          (binary-expr ==
+            (simple-var-ref tie)
+            (simple-var-ref value))
+          (binary-expr ==
+            (simple-var-ref aboveTie)
+            (literal 1.8446744073709556e+19))))))
+  )
+)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> order-by-operand-1-e.bal:22:18
+   |
+22 |         order by x + "a" ascending // @error order by key fails to resolve
+   |                  ^^^^^^^

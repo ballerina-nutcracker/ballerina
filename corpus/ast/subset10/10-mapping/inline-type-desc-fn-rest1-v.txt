@@ -1,0 +1,120 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (union-type
+          (value-type boolean)
+          (function-type (
+            (value-type int)
+            (value-type int)
+            (function-type-param rest
+            (value-type int))) (
+            (value-type int)))))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function total (
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)) (expr
+      (literal 2)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+      (foreach
+        (var-def
+          (variable r (type
+            (value-type int))))
+        (simple-var-ref rest)
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref sum)
+            (simple-var-ref r))))
+      (return
+        (simple-var-ref sum))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fn (type
+          (value-type any)) (expr
+          (simple-var-ref total))))
+      (var-def
+        (variable tested (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-test-expr is
+                (simple-var-ref fn)
+                (function-type (
+                  (value-type int)
+                  (value-type int)
+                  (function-type-param rest
+                  (value-type int))) (
+                  (value-type int)))))))))
+      (var-def
+        (variable cast (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-conversion-expr
+                (simple-var-ref fn)
+                (function-type (
+                  (value-type int)
+                  (value-type int)
+                  (function-type-param rest
+                  (value-type int))) (
+                  (value-type int)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref tested))))
+      (if
+        (type-test-expr is
+          (simple-var-ref cast)
+          (user-defined-type A))
+        (block-stmt
+          (var-def
+            (variable x (type
+              (union-type
+                (value-type boolean)
+                (function-type (
+                  (value-type int)
+                  (value-type int)
+                  (function-type-param rest
+                  (value-type int))) (
+                  (value-type int))))) (expr
+              (field-based-access x
+                (simple-var-ref cast)))))
+          (if
+            (type-test-expr is
+              (simple-var-ref x)
+              (function-type (
+                (value-type int)
+                (value-type int)
+                (function-type-param rest
+                (value-type int))) (
+                (value-type int))))
+            (block-stmt
+              (expression-stmt
+                (invocation io println (
+                  (invocation x (
+                    (literal 1)
+                    (literal 2)
+                    (literal 3))))))) ())
+          (block-stmt)) ())
+      (block-stmt))))

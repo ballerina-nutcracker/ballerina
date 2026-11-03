@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> from-operand-1-e.bal:21:30
+   |
+21 |     int[] ys = from int x in xs + "a" // @error collection fails to resolve
+   |                              ^^^^^^^^

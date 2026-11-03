@@ -167,16 +167,18 @@ func NewPlatform() (pal.Platform, func()) {
 		Time: pal.Time{
 			Now:          time.Now,
 			MonotonicNow: func() time.Duration { return time.Since(processStart) },
+			AfterFunc:    AfterFunc,
 		},
 		HTTP: pal.HTTP{
 			NewClient: NewHTTPClient,
 			Listen:    Listen,
 		},
 		Net: pal.Net{
-			Dial:         Dial,
-			Listen:       ListenTCP,
-			DialPacket:   DialPacket,
-			ListenPacket: ListenPacket,
+			Dial:              Dial,
+			Listen:            ListenTCP,
+			DialPacket:        DialPacket,
+			ListenPacket:      ListenPacket,
+			ResolvePacketAddr: ResolvePacketAddr,
 		},
 		Signals: signals,
 	}, cleanupSignals
@@ -504,4 +506,10 @@ func copyContents(src, dst string) (err error) {
 	}()
 	_, err = io.Copy(dstF, srcF)
 	return err
+}
+
+// AfterFunc schedules f on a real wall-clock timer. Exposed at package level
+// so the test harness PAL can share it.
+func AfterFunc(d time.Duration, f func()) pal.Timer {
+	return time.AfterFunc(d, f)
 }

@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: missing close paren token
+  --> included-record-param-e.bal:17:16
+   |
+17 | function foo(+A{} string args) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing decimal integer literal
+  --> included-record-param-e.bal:17:15
+   |
+17 | function foo(+A{} string args) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing function keyword
+  --> included-record-param-e.bal:17:30
+   |
+17 | function foo(+A{} string args) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> included-record-param-e.bal:17:30
+   |
+17 | function foo(+A{} string args) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> included-record-param-e.bal:21:13
+   |
+21 |     int y = ; // @error
+   |
+
+error[SYNTAX_ERROR]: missing open paren token
+  --> included-record-param-e.bal:17:30
+   |
+17 | function foo(+A{} string args) { // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> included-record-param-e.bal:17:30
+   |
+17 | function foo(+A{} string args) { // @error
+   |

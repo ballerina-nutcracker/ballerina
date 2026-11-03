@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for list constructor
+  --> union-xml-step-ambiguous1-e.bal:19:44
+   |
+19 |     [xml, int]|[xml<xml:Element>, int] l = [x/<a>, 1]; // @error ambiguous inherent type for list constructor
+   |                                            ^^^^^^^^^^

@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "subset10_1370_bug2_v"
+version = "0.1.0"

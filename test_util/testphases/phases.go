@@ -111,6 +111,7 @@ var builtinStdlibs = []stdlibEntry{
 	flatEntry("http", "0.0.1", "go1.27"),
 	flatEntry("log", "0.0.1", "go1.27"),
 	flatEntry("math.vector", "0.0.1", "go1.27"),
+	flatEntry("mime", "0.0.1", "go1.27"),
 	flatEntry("os", "0.0.1", "go1.27"),
 	flatEntry("random", "0.0.1", "go1.27"),
 	flatEntry("time", "0.0.1", "go1.27"),
@@ -119,6 +120,8 @@ var builtinStdlibs = []stdlibEntry{
 	flatEntry("avro", "0.0.1", "go1.27"),
 	flatEntry("file", "0.0.1", "go1.27"),
 	flatEntry("uuid", "0.0.1", "go1.27"),
+	flatEntry("task", "0.0.1", "go1.27"),
+	flatEntry("mqtt", "0.0.1", "go1.27"),
 	flatEntry("protobuf", "0.0.1", "go1.27"),
 	subModuleEntry("protobuf", "types.any", "0.0.1", "go1.27"),
 	subModuleEntry("protobuf", "types.duration", "0.0.1", "go1.27"),
@@ -127,6 +130,7 @@ var builtinStdlibs = []stdlibEntry{
 	subModuleEntry("protobuf", "types.timestamp", "0.0.1", "go1.27"),
 	subModuleEntry("protobuf", "types.wrappers", "0.0.1", "go1.27"),
 	flatEntry("ldap", "0.0.1", "go1.27"),
+	flatEntry("udp", "0.0.1", "go1.27"),
 }
 
 // moduleBalFiles returns the sorted list of .bal file paths (embed-FS relative)

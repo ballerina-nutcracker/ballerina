@@ -24,35 +24,39 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // possiblyAssignedState is the set of tracked variables that are assigned on
 // at least one path reaching a program point.
 type possiblyAssignedState map[model.SymbolRef]bool
 
-// possiblyAssignedAnalyzer finds assignments to final variables declared
-// without an initializer that may already hold a value.
+// possiblyAssignedAnalyzer finds assignments to final variables and final
+// `self` fields declared without an initializer that may already hold a value.
 type possiblyAssignedAnalyzer struct {
 	ctx     *context.CompilerContext
 	fcfg    *functionCFG
 	tracked map[model.SymbolRef]bool
-	exits   []possiblyAssignedState
+	// selfFields is keyed by field name; set only for class and service init.
+	selfFields map[string]model.SymbolRef
+	exits      []possiblyAssignedState
 	// reachable marks blocks reachable from the entry block, so assignments
 	// in unreachable code do not flow into reachable code.
 	reachable []bool
 }
 
-func newPossiblyAssignedAnalyzer(ctx *context.CompilerContext, fcfg *functionCFG, tracked map[model.SymbolRef]bool) *possiblyAssignedAnalyzer {
+func newPossiblyAssignedAnalyzer(ctx *context.CompilerContext, fcfg *functionCFG, tracked map[model.SymbolRef]bool, selfFields map[string]model.SymbolRef) *possiblyAssignedAnalyzer {
 	exits := make([]possiblyAssignedState, len(fcfg.bbs))
 	for i := range exits {
 		exits[i] = possiblyAssignedState{}
 	}
 	return &possiblyAssignedAnalyzer{
-		ctx:       ctx,
-		fcfg:      fcfg,
-		tracked:   tracked,
-		exits:     exits,
-		reachable: reachableFromEntry(fcfg),
+		ctx:        ctx,
+		fcfg:       fcfg,
+		tracked:    tracked,
+		selfFields: selfFields,
+		exits:      exits,
+		reachable:  reachableFromEntry(fcfg),
 	}
 }
 
@@ -79,9 +83,10 @@ func reachableFromEntry(fcfg *functionCFG) []bool {
 // analyzeFinalReassignments reports assignments to final variables declared
 // without an initializer when the variable is possibly assigned already.
 // Locals are checked in every function; final module variables are checked in
-// the module init function.
+// the module init function and final fields in their class or service init.
 func analyzeFinalReassignments(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	moduleFinals := deferredFinalModuleVars(pkg)
+	initFields := deferredFinalFieldsByInit(ctx, pkg)
 	var wg sync.WaitGroup
 	for _, fn := range common.PackageFunctionDecls(pkg) {
 		wg.Go(func() {
@@ -93,10 +98,14 @@ func analyzeFinalReassignments(ctx *context.CompilerContext, pkg *ast.BLangPacka
 			if pkg.InitFunction != nil && fn.Symbol() == pkg.InitFunction.Symbol() {
 				maps.Copy(tracked, moduleFinals)
 			}
+			selfFields := initFields[fn.Symbol()]
+			for _, ref := range selfFields {
+				tracked[ref] = true
+			}
 			if len(tracked) == 0 {
 				return
 			}
-			newPossiblyAssignedAnalyzer(ctx, &fnCfg, tracked).analyze()
+			newPossiblyAssignedAnalyzer(ctx, &fnCfg, tracked, selfFields).analyze()
 		})
 	}
 	wg.Wait()
@@ -109,6 +118,51 @@ func deferredFinalModuleVars(pkg *ast.BLangPackage) map[model.SymbolRef]bool {
 		if v.Expr == nil && v.IsFinal() {
 			result[v.Symbol()] = true
 		}
+	}
+	return result
+}
+
+// deferredFinalFieldsByInit maps the symbol of each class and service init
+// function to its final fields declared without an initializer, including
+// the ones brought in by type inclusion.
+func deferredFinalFieldsByInit(ctx *context.CompilerContext, pkg *ast.BLangPackage) map[model.SymbolRef]map[string]model.SymbolRef {
+	result := make(map[model.SymbolRef]map[string]model.SymbolRef)
+	for _, classDef := range pkg.ClassDefinitions {
+		if classDef.InitFunction == nil {
+			continue
+		}
+		var names []string
+		for _, member := range ctx.SymbolMembers(classDef.Symbol()) {
+			if field, ok := member.(*model.FieldDescriptor); ok && field.IsFinal() && !field.HasDefault() {
+				names = append(names, field.MemberName())
+			}
+		}
+		result[classDef.InitFunction.Symbol()] = fieldSymbols(ctx, classDef.Scope(), names, classDef.GetPosition())
+	}
+	for _, svc := range pkg.Services {
+		if svc.InitFunction == nil {
+			continue
+		}
+		var names []string
+		for _, field := range svc.Fields {
+			if field.IsFinal() && field.Expr == nil {
+				names = append(names, field.Name.GetValue())
+			}
+		}
+		result[svc.InitFunction.Symbol()] = fieldSymbols(ctx, svc.Scope(), names, svc.GetPosition())
+	}
+	return result
+}
+
+func fieldSymbols(ctx *context.CompilerContext, classScope model.Scope, names []string, pos diagnostics.Location) map[string]model.SymbolRef {
+	result := make(map[string]model.SymbolRef, len(names))
+	for _, name := range names {
+		ref, ok := classScope.GetSymbol(name)
+		if !ok {
+			ctx.InternalError("symbol of field '"+name+"' not found", pos)
+			continue
+		}
+		result[name] = ref
 	}
 	return result
 }
@@ -186,13 +240,27 @@ func (a *possiblyAssignedAnalyzer) transfer(node ast.Node, state possiblyAssigne
 	case *ast.BLangVariableDef:
 		delete(state, n.Var.Symbol())
 	case *ast.BLangAssignment:
-		varRef, ok := n.VarRef.(*ast.BLangVarRef)
-		if !ok || !a.tracked[varRef.Symbol()] {
-			return
+		switch target := n.VarRef.(type) {
+		case *ast.BLangVarRef:
+			a.assign(state, target.Symbol(), "final '"+target.VariableName.GetValue()+"'", target, reportErrors)
+		case *ast.BLangFieldBaseAccess:
+			if !common.IsSelfFieldAccess(target) {
+				return
+			}
+			name := target.Field.GetValue()
+			if ref, ok := a.selfFields[name]; ok {
+				a.assign(state, ref, "final field '"+name+"'", target, reportErrors)
+			}
 		}
-		if state[varRef.Symbol()] && reportErrors {
-			a.ctx.SemanticError("cannot assign a value to potentially initialized final '"+varRef.VariableName.GetValue()+"'", varRef.GetPosition())
-		}
-		state[varRef.Symbol()] = true
 	}
+}
+
+func (a *possiblyAssignedAnalyzer) assign(state possiblyAssignedState, ref model.SymbolRef, description string, target ast.Node, reportErrors bool) {
+	if !a.tracked[ref] {
+		return
+	}
+	if state[ref] && reportErrors {
+		a.ctx.SemanticError("cannot assign a value to potentially initialized "+description, target.GetPosition())
+	}
+	state[ref] = true
 }

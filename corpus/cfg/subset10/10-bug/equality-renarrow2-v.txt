@@ -1,0 +1,92 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation size (
+          (literal medium)))
+        (literal  )
+        (invocation size (
+          (literal xl))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sizeNotEqual (
+          (literal large)))
+        (literal  )
+        (invocation sizeNotEqual (
+          (literal xlarge))))))
+  )
+)
+(size
+  (bb0 () (bb1 bb2)
+    (binary-expr ||
+      (binary-expr ==
+        (simple-var-ref s)
+        (literal xl))
+      (binary-expr ==
+        (simple-var-ref s)
+        (literal xlarge)))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal xlarge))
+  )
+  (bb2 (bb0) (bb3 bb4)
+    (binary-expr ||
+      (binary-expr ||
+        (binary-expr ==
+          (simple-var-ref s)
+          (literal small))
+        (binary-expr ==
+          (simple-var-ref s)
+          (literal medium)))
+      (binary-expr ==
+        (simple-var-ref s)
+        (literal large)))
+  )
+  (bb3 (bb2) ()
+    (return
+      (simple-var-ref s))
+  )
+  (bb4 (bb2) ()
+    (return
+      (error-constructor-expr (
+        (literal unknown))))
+  )
+)
+(sizeNotEqual
+  (bb0 () (bb1 bb4)
+    (binary-expr &&
+      (binary-expr !=
+        (simple-var-ref s)
+        (literal xl))
+      (binary-expr !=
+        (simple-var-ref s)
+        (literal xlarge)))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (binary-expr &&
+      (binary-expr &&
+        (binary-expr !=
+          (simple-var-ref s)
+          (literal small))
+        (binary-expr !=
+          (simple-var-ref s)
+          (literal medium)))
+      (binary-expr !=
+        (simple-var-ref s)
+        (literal large)))
+  )
+  (bb2 (bb1) ()
+    (return
+      (error-constructor-expr (
+        (literal unknown))))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref s))
+  )
+  (bb4 (bb0) ()
+    (return
+      (literal xlarge))
+  )
+)

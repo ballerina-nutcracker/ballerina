@@ -1,0 +1,105 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable negInf (type
+          (value-type float)) (expr
+          (unary-expr -
+            (simple-var-ref float Infinity)))))
+      (var-def
+        (variable nan (type
+          (value-type float)) (expr
+          (simple-var-ref float NaN))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (simple-var-ref negInf) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (list-constructor-expr
+              (simple-var-ref negInf)) ()))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type float))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (simple-var-ref negInf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (simple-var-ref m) ()))))
+      (var-def
+        (variable nested (type
+          (array-type
+            (value-type anydata) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (list-constructor-expr
+              (simple-var-ref negInf))
+            (mapping-constructor-expr
+              (key-value
+                (literal k)
+                (simple-var-ref negInf)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (simple-var-ref nested) ()))))
+      (var-def
+        (variable tup (type
+          (tuple-type
+            (value-type float)
+            (value-type string))) (expr
+          (list-constructor-expr
+            (simple-var-ref negInf)
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (simple-var-ref tup) ()))))
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal boom)) (
+            (named-arg v
+              (simple-var-ref negInf)))))))
+      (var-def
+        (variable errs (type
+          (array-type
+            (union-type
+              (value-type any)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref e)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (simple-var-ref errs) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (group-expr
+              (unary-expr -
+                (simple-var-ref negInf))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (group-expr
+              (unary-expr -
+                (simple-var-ref nan))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBalString expr:
+            (group-expr
+              (unary-expr -
+                (literal 1.5))) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toString expr:
+            (simple-var-ref negInf) ())))))))

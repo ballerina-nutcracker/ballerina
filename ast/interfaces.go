@@ -41,7 +41,13 @@ type TypeData struct {
 
 type Node interface {
 	GetPosition() diagnostics.Location
-	GetDeterminedType() semtypes.SemType
+}
+
+// NodeWithType is implemented by nodes that have a type: expressions and actions (the type of the value they
+// evaluate to) and type descriptors (the type they denote). Type returns the zero type until it is resolved.
+type NodeWithType interface {
+	Node
+	Type() semtypes.SemType
 }
 
 type NodeWithSymbol interface {

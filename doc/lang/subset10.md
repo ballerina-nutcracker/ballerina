@@ -58,11 +58,16 @@
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
 - [Check expression](https://ballerina.io/spec/lang/master/#checking-expr)
+  - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
 - [Type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr)
 - [New expression](https://ballerina.io/spec/lang/master/#section_6.8.2)
+  - When selecting among multiple candidate object types, resolving the arguments has the following restrictions:
+    - An explicitly typed [anonymous function](https://ballerina.io/spec/lang/master/#anonymous-function-expr) nested inside an [anonymous function with inferred parameter types](https://ballerina.io/spec/lang/master/#infer-anonymous-function-expr) is checked from its signature only during candidate selection, so errors in its body that depend on the candidate don't rule that candidate out.
 - [List constructor](https://ballerina.io/spec/lang/master/#list-constructor-expr)
+  - When selecting among multiple candidate inherent types, resolving the members has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
+  - When selecting among multiple candidate inherent types, resolving the field values has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
   - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes

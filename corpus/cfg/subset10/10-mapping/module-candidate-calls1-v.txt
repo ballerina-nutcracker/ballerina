@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref g1)
+          (user-defined-type B)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref g2)
+          (user-defined-type A)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref g3)
+          (user-defined-type C)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref g4)
+          (user-defined-type D)))))
+  )
+)
+(name
+  (bb0 () ()
+    (return
+      (literal s))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

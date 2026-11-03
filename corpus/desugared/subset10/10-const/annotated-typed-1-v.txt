@@ -1,0 +1,19 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation constInfo const
+    (user-defined-type Meta)
+    (attach-point source const))
+  (type-definition Meta
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field name
+          (value-type string))
+        (field code
+          (value-type int)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (numeric-literal 10)))))))

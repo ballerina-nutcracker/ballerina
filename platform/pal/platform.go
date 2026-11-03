@@ -102,6 +102,8 @@ type (
 	Time struct {
 		Now          func() time.Time
 		MonotonicNow func() time.Duration
+		// AfterFunc calls f on its own goroutine once d has elapsed.
+		AfterFunc func(d time.Duration, f func()) Timer
 	}
 	// Net abstracts raw TCP(+TLS) and UDP socket dialing and listening for
 	// non-HTTP wire protocols (e.g. ldap, tcp, udp). HTTP-based stdlibs must
@@ -123,6 +125,9 @@ type (
 		// address. The returned net.PacketConn's ReadFrom/WriteTo carry an
 		// explicit per-datagram peer address, unlike DialPacket's net.Conn.
 		ListenPacket func(network, address string) (net.PacketConn, error)
+		// ResolvePacketAddr resolves a "host:port" address (performing a name
+		// lookup if needed) into a peer address usable with PacketConn.WriteTo.
+		ResolvePacketAddr func(network, address string) (net.Addr, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).
@@ -137,6 +142,11 @@ type (
 		Listen func(cfg ServerConfig, handler http.Handler) (ServerHandle, error)
 	}
 )
+
+// Timer is a pending AfterFunc call. Stop reports whether it prevented the call.
+type Timer interface {
+	Stop() bool
+}
 
 // ProcessHandle is an opaque handle to a running subprocess.
 type ProcessHandle interface {

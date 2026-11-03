@@ -1,0 +1,94 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable mixed (type
+        (array-type
+          (union-type
+            (value-type int)
+            (value-type string)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal a)
+          (literal 2)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (invocation lang.array map (
+              (simple-var-ref mixed)
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable x)) ()
+                  (expr-function-body
+                    (ternary-expr
+                      (type-test-expr is
+                        (simple-var-ref x)
+                        (value-type int))
+                      (simple-var-ref x)
+                      (literal 0))))))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (var-def
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 3)))))
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type C)
+          (user-defined-type D))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (invocation lang.array map (
+              (simple-var-ref arr)
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable x)) ()
+                  (expr-function-body
+                    (ternary-expr
+                      (binary-expr ==
+                        (simple-var-ref x)
+                        (literal 1))
+                      (simple-var-ref x)
+                      (literal 0))))))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (ternary-expr
+      (type-test-expr is
+        (simple-var-ref x)
+        (value-type int))
+      (simple-var-ref x)
+      (literal 0))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (ternary-expr
+      (binary-expr ==
+        (simple-var-ref x)
+        (literal 1))
+      (simple-var-ref x)
+      (literal 0))
+  )
+)

@@ -1,0 +1,202 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition DecFn
+    (variable value (type
+      (value-type decimal)))
+    (function init (
+      (variable callback (type
+        (function-type () (
+          (value-type decimal)))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (binary-expr +
+            (invocation callback ())
+            (type-conversion-expr
+              (simple-var-ref marker)
+              (value-type decimal)))))))
+  (class-definition FloatFn
+    (variable value (type
+      (value-type float)))
+    (function init (
+      (variable callback (type
+        (function-type () (
+          (value-type float)))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (invocation callback ()))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition IntOnly
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable callback (type
+        (function-type () (
+          (value-type int)))))
+      (variable arg (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (binary-expr +
+            (invocation callback ())
+            (simple-var-ref arg))))))
+  (class-definition IntOrString
+    (variable value (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (function init (
+      (variable callback (type
+        (function-type () (
+          (value-type int)))))
+      (variable arg (type
+        (union-type
+          (value-type int)
+          (value-type string))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref arg))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callback)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (union-type
+            (user-defined-type DecFn)
+            (user-defined-type FloatFn))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_0 () (
+                (value-type decimal))
+                (block-function-body
+                  (var-def
+                    (variable base (type
+                      (value-type decimal)) (expr
+                      (literal 1.00))))
+                  (var-def
+                    (variable f (type
+                      (function-type () (
+                        (value-type decimal)))) (expr
+                      (lambda
+                        (function $anonFunc$_1 () ()
+                          (expr-function-body
+                            (literal 1.50d)))))))
+                  (return
+                    (binary-expr +
+                      (simple-var-ref base)
+                      (invocation f ()))))))
+            (literal 1))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref d)
+          (user-defined-type DecFn))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref d)))))) ())
+      (block-stmt
+        (var-def
+          (variable x (type
+            (union-type
+              (value-type int)
+              (value-type string))) (expr
+            (literal 5))))
+        (if
+          (type-test-expr is
+            (simple-var-ref x)
+            (value-type int))
+          (block-stmt
+            (var-def
+              (variable c (type
+                (union-type
+                  (user-defined-type IntOnly)
+                  (user-defined-type IntOrString))) (expr
+                (new (
+                  (lambda
+                    (function $anonFunc$_2 () (
+                      (value-type int))
+                      (block-function-body
+                        (return
+                          (ternary-expr
+                            (type-test-expr is
+                              (simple-var-ref x)
+                              (value-type int))
+                            (literal 1)
+                            (literal 0))))))
+                  (simple-var-ref x))))))
+            (expression-stmt
+              (invocation io println (
+                (type-test-expr is
+                  (simple-var-ref c)
+                  (user-defined-type IntOrString)))))) ())
+        (block-stmt
+          (var-def
+            (variable y (type
+              (union-type
+                (value-type int)
+                (value-type string))) (expr
+              (literal 5))))
+          (if
+            (type-test-expr is
+              (simple-var-ref y)
+              (value-type int))
+            (block-stmt
+              (var-def
+                (variable n (type
+                  (union-type
+                    (user-defined-type IntOnly)
+                    (user-defined-type IntOrString))) (expr
+                  (new (
+                    (lambda
+                      (function $anonFunc$_3 () (
+                        (value-type int))
+                        (block-function-body
+                          (var-def
+                            (variable g (expr
+                              (lambda
+                                (function $anonFunc$_4 (
+                                  (variable a (type
+                                    (union-type
+                                      (value-type int)
+                                      (value-type string))) (expr
+                                    (simple-var-ref y)))) (
+                                  (value-type int))
+                                  (block-function-body
+                                    (return
+                                      (ternary-expr
+                                        (type-test-expr is
+                                          (simple-var-ref a)
+                                          (value-type int))
+                                        (simple-var-ref a)
+                                        (literal 0)))))))))
+                          (return
+                            (invocation g ())))))
+                    (simple-var-ref y))))))
+              (expression-stmt
+                (invocation io println (
+                  (type-test-expr is
+                    (simple-var-ref n)
+                    (user-defined-type IntOrString)))))) ())
+          (block-stmt))))))

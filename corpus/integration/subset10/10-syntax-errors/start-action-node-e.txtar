@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid expression in start action
+  --> start-action-node-e.bal:18:21
+   |
+18 |     future<int> x = start 5; // @error
+   |                     ^^^^^

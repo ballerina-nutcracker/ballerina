@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -188,6 +188,41 @@ resource function get album() returns xml {
 }
 ```
 
+## [mqtt](https://github.com/ballerina-platform/module-ballerina-mqtt/blob/main/docs/spec/spec.md)
+
+Types: `mqtt:Client`, `mqtt:Listener`, `mqtt:Caller` (classes), `mqtt:Service`, `mqtt:Message`, `mqtt:MessageProperties`, `mqtt:DeliveryToken`, `mqtt:Subscription`, `mqtt:ClientConfiguration`, `mqtt:ListenerConfiguration`, `mqtt:ConnectionConfiguration`, `mqtt:WillDetails`, `mqtt:SecureSocket`, `mqtt:CertKey`, `mqtt:Protocol`, `mqtt:Error`, `mqtt:ErrorDetails`, and the `mqtt:DEFAULT_URL` constant.
+
+### Client
+
+| Method | Notes |
+|---|---|
+| `new mqtt:Client(serverUri, clientId, *config)` | Connects to a `tcp://` or `ssl://` broker URI; returns `mqtt:Error?` |
+| `Client->publish(topic, message)` | Publishes with QoS 0, 1 or 2 and waits for delivery to complete; returns `mqtt:DeliveryToken\|mqtt:Error`. An invalid QoS or topic returns an `mqtt:Error` (jBallerina panics) |
+| `Client->subscribe(subscriptions)` | Accepts `string`, `string[]`, `mqtt:Subscription` or `mqtt:Subscription[]`; topic filters may use `+` and `#` |
+| `Client->receive()` | Returns `stream<mqtt:Message, error?>`; every stream of a client shares one message queue. Read it with `next()` — `foreach` over a stream is not supported by the interpreter yet |
+| `Client->isConnected()` / `disconnect()` / `reconnect()` / `close()` | Same connection-state rules and error reason codes as jBallerina; `reconnect()` returns before the reconnect completes |
+
+### Listener and services
+
+| Feature | Notes |
+|---|---|
+| `new mqtt:Listener(serverUri, clientId, subscriptions, *config)` | Connects on initialization; subscribes when started. `manualAcks` defers acknowledgement to `mqtt:Caller->complete()` |
+| `attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | Usable directly or through module-level `listener` and `service on` declarations. `detach` unsubscribes the listener's topics but keeps the connection, and attaching again re-subscribes (jBallerina disconnects) |
+| `onMessage(mqtt:Message)` / `onMessage(mqtt:Message, mqtt:Caller)` | Invoked once per message, one message at a time |
+| `onError(mqtt:Error)` | Invoked when the network connection is lost, the service has no `onMessage`, or `onMessage` panics (jBallerina prints the panic); errors with no `onError` are printed to stderr |
+| `onComplete(mqtt:DeliveryToken)` | Invoked when a `Caller->respond()` reply has been delivered |
+| `Caller->respond(message)` / `Caller->complete()` | Replies to the request's `responseTopic` with its `correlationData`, and acknowledges the message in `manualAcks` mode. Both return an `mqtt:Error` when the reply or acknowledgement fails (jBallerina returns `()`) |
+
+### Connection and security
+
+| Feature | Notes |
+|---|---|
+| Authentication | `username` and `password` |
+| Connection options | `keepAliveInterval`, `connectionTimeout`, `cleanStart`, `serverUris` (tried in order), `automaticReconnect`, `maxReconnectDelay`, and `willDetails` |
+| TLS / mutual TLS | `SecureSocket.cert` as a PEM file path, `SecureSocket.key` as an `mqtt:CertKey` with an unencrypted PEM key, and `SecureSocket.protocol` |
+
+Not covered in this subset: `crypto:TrustStore` / `crypto:KeyStore` TLS and encrypted private keys, and `ws://` / `wss://` broker URIs. jBallerina's compile-time service validation is applied when a service is attached: an invalid service method signature makes `attach` return an `mqtt:Error` with the compiler plugin's message.
+
 ## [protobuf](https://github.com/ballerina-platform/module-ballerina-protobuf/blob/master/docs/spec/spec.md)
 
 `ballerina/protobuf` provides the type declarations for the protobuf well-known types used by generated gRPC client/service code, plus packing and unpacking values into `protobuf.types.any:Any` for the well-known types. The separate `.proto`-to-Ballerina code generator that produces gRPC client/service stubs and `@protobuf:Descriptor`-annotated message records is not part of this package and is out of scope.
@@ -262,3 +297,53 @@ Types: `ldap:Client` (client class), `ldap:Error`.
 TLS is selected by supplying `clientSecureSocket`. The server certificate is trusted through a PEM certificate file path in `cert`; a `crypto:TrustStore` returns `ldap:Error`. `verifyHostName` and `tlsVersions` are supported.
 
 Not covered in this subset: the `ldap:Error` detail record (`error:detail()` is not implemented yet, so the result code is only visible in the message), and `distinct` error types.
+
+## [udp](https://github.com/ballerina-platform/module-ballerina-udp/blob/master/docs/spec/spec.md)
+
+Types: `udp:Client`, `udp:ConnectClient`, `udp:Listener`, `udp:Caller` (classes), `udp:Service`, `udp:Datagram`, `udp:ClientConfiguration`, `udp:ConnectClientConfiguration`, `udp:ListenerConfiguration`, `udp:Error`.
+
+| Feature | Notes |
+|---|---|
+| `new udp:Client(config)` | Connectionless client bound to `localHost` (all interfaces when omitted) with a read `timeout` |
+| `Client->sendDatagram(datagram)` / `Client->receiveDatagram()` / `Client->close()` | Payloads larger than 8192 bytes are sent as multiple datagrams, as in jBallerina. `receiveDatagram()` returns a `readonly & udp:Datagram` whose `remoteHost`/`remotePort` are the sender's |
+| `new udp:ConnectClient(remoteHost, remotePort, config)` | Connection-oriented client that only exchanges datagrams with the given peer |
+| `ConnectClient->writeBytes(data)` / `ConnectClient->readBytes()` / `ConnectClient->close()` | Payloads larger than 8192 bytes are sent as multiple datagrams, as in jBallerina. `readBytes()` returns one datagram as `readonly & byte[]` and does not reassemble a fragmented write, so callers must reassemble application-level messages |
+| `new udp:Listener(localPort, config)` | Binds on `start()`; `attach`, `detach`, `start`, `gracefulStop` and `immediateStop` are supported, and a stopped listener can be started again |
+| `udp:Service` | Declares exactly one of `onBytes(readonly & byte[] data, udp:Caller caller)` or `onDatagram(readonly & udp:Datagram datagram, udp:Caller caller)`, plus an optional `onError(udp:Error err)`. The `Caller` parameter is optional and parameters may appear in either order. A returned `byte[]` or `udp:Datagram` is sent as a reply; the service is validated when it is attached |
+| `Caller->sendBytes(data)` / `Caller->sendDatagram(datagram)` | Reply to the sender or send to any destination |
+
+`config` is a plain record parameter, so pass a record literal (`{localHost: "x"}`) rather than named arguments. `remoteHost` is reported as an IP address without a reverse-DNS lookup. Service methods are checked by `Listener.attach()` instead of at compile time. `udp:Service` is a plain (non-`distinct`) service object type and `udp:Error` is an alias of `error`.
+
+Not covered in this subset: a listener restricted to one remote peer (`ListenerConfiguration.remoteHost`/`remotePort`) and `distinct` error types.
+
+## [mime](https://github.com/ballerina-platform/module-ballerina-mime/blob/master/docs/spec/spec.md)
+
+`ballerina/mime` provides media type parsing, content disposition handling, MIME entity header/body management, multipart bodies, and Base64 encoding/decoding.
+
+Types: `mime:MediaType`, `mime:ContentDisposition`, `mime:Entity` (class); `mime:Error` and subtypes (`InvalidContentTypeError`, `ParserError`, `HeaderNotFoundError`, `EncodeError`, `DecodeError`) as plain `error` aliases — `distinct` is not yet supported.
+
+| Feature | Notes |
+|---|---|
+| `getMediaType(contentType)` / `getContentDispositionObject(contentDisposition)` | Parse a `Content-Type` / `Content-Disposition` header value |
+| Entity header and content metadata | `setHeader`/`getHeader`/`getHeaders`/`getHeaderNames`/`addHeader`/`removeHeader`/`removeAllHeaders`/`hasHeader`; `setContentType`/`getContentType`/`setContentId`/`getContentId`/`setContentLength`/`getContentLength`/`setContentDisposition`/`getContentDisposition` |
+| Entity body — text, JSON, XML, byte array | `setText`/`getText`, `setJson`/`getJson`, `setXml`/`getXml`, `setByteArray`/`getByteArray`; every accessor lazily converts from whatever the body was actually set as, matching jBallerina's data-source model |
+| `setBody(string\|xml\|json\|byte[]\|Entity[])` | Generic body dispatch by argument type |
+| `setFileAsEntityBody(filePath, contentType?)` | Sets the file as a lazy byte-channel data source, read on demand by whichever accessor materializes the body first, matching jBallerina; a failed file open panics, matching jBallerina's own `checkpanic io:openReadableFile` |
+| Multipart bodies | `setBodyParts`/`getBodyParts` — `message/*` bodies return a `ParserError`; jBallerina silently returns an empty array for these instead |
+| `base64Encode`/`base64Decode`/`base64EncodeBlob`/`base64DecodeBlob` | Accept `string`, `byte[]`, or an `io:ReadableByteChannel` (read fully, result handed back as a freshly-constructed channel; charset does not apply to the channel form, matching jBallerina) |
+
+## [task](https://github.com/ballerina-platform/module-ballerina-task/blob/master/docs/spec/spec.md)
+
+Scheduling of `task:Job` objects once or at a fixed interval, with the error and waiting policies and job management of jBallerina's Quartz-based scheduler.
+
+Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:WaitingPolicy`, `task:Service`, `task:RetryConfiguration`, `task:Listener` (class), `task:Error`.
+
+| Function | Notes |
+|---|---|
+| `scheduleOneTimeJob(job, triggerTime)` | Runs the job once at a future `time:Civil`; a panic in `execute` is logged and ignored |
+| `scheduleJobRecurByFrequency(job, interval, maxCount?, startTime?, endTime?, taskPolicy?)` | Runs the job every `interval` seconds, optionally bounded by a count and a start/end window |
+| `pauseJob` / `resumeJob` / `pauseAllJobs` / `resumeAllJobs` | A resumed job applies its waiting policy to the runs it missed: `WAIT` fires them all, `IGNORE` and `LOG_AND_IGNORE` skip them |
+| `unscheduleJob` / `getRunningJobs` | Unscheduling the last job shuts the scheduler down; running jobs are listed in ascending id order |
+| `configureWorkerPool(workerCount?, waitingTime?)` | `waitingTime` is how late a run may be before the waiting policy treats it as missed |
+| `getTimeInMillies(time)` | Epoch milliseconds of a future `time:Civil` |
+| `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |

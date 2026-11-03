@@ -1,0 +1,40 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type R)
+          (user-defined-type S))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal f)
+            (lambda
+              (function $anonFunc$_0 (
+                (variable p)) ()
+                (expr-function-body
+                  (binary-expr *
+                    (simple-var-ref p)
+                    (literal 2))))))))))
+    (type-test-expr is
+      (simple-var-ref r)
+      (user-defined-type R))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable f (expr
+        (field-based-access f
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal 3))))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr *
+      (simple-var-ref p)
+      (literal 2))
+  )
+)

@@ -24,7 +24,7 @@ type ErrA error<Detail>;
 
 public function main() {
     ErrA err0 = error ErrA("whoops", errA = ());
-    io:println(err0); // @output error ErrA ("whoops",errA=null)
+    io:println(err0); // @output error("whoops",errA=null)
     ErrA error1 = error("Whoops", errA = ());
     io:println(error1); // @output error("Whoops",errA=null)
     ErrA error2 = error("Whoops", errA = error1);

@@ -1,0 +1,33 @@
+name: Lang Library Coverage
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'lib/langlibs/ballerina/**'
+      - 'model/opaque.go'
+      - 'doc/langlib/**'
+      - 'README.md'
+      - '.github/scripts/langlib_coverage.py'
+      - '.github/scripts/test_langlib_coverage.py'
+      - '.github/workflows/langlib-coverage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-coverage:
+    name: Check lang library coverage docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test coverage generator
+        run: python3 .github/scripts/test_langlib_coverage.py
+      - name: Check generated docs are up to date
+        run: python3 .github/scripts/langlib_coverage.py --check

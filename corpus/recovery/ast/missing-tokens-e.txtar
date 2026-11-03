@@ -1,0 +1,145 @@
+-- missing-tokens-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function call(int a, int b) returns int => a + b;
+
+type Point record {
+    int x
+    int y; // @error missing semicolon after x
+};
+
+enum Color {
+    RED
+    GREEN // @error the parser reads the missing comma as a missing equal
+}
+
+class Box {
+    int value = 0
+} // @error missing semicolon after value
+
+function args() returns int {
+    return call(1 2); // @error
+}
+
+function parens() returns int {
+    int a = (1 + 2; // @error
+    return a;
+}
+
+function assignments() {
+    int a 1; // @error
+    a = 2
+} // @error missing semicolon after a = 2
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (function (position 1:1 18:1) call (
+    (variable (position 17:15 17:20) a (type
+      (value-type (position 17:15 17:19) int)))
+    (variable (position 17:22 17:27) b (type
+      (value-type (position 17:22 17:26) int)))) (
+    (value-type (position 17:37 17:41) int))
+    (expr-function-body (position 17:41 18:1)
+      (binary-expr (position 17:44 17:49) +
+        (simple-var-ref (position 17:44 17:46) a)
+        (simple-var-ref (position 17:48 17:49) b))))
+  (type-definition (position 18:1 23:1) Point
+    (record-type (position 19:12 22:2)
+      (field x
+        (value-type (position 20:1 20:9) int))
+      (field y
+        (value-type (position 21:1 21:9) int))))
+  (const (position 25:1 27:1) RED enum-member (
+    (value-type (position <built-in>) string)) (
+    (simple-var-ref (position 26:1 27:1) GREEN)))
+  (type-definition (position 23:1 28:1) Color enum
+    (user-defined-type (position 25:1 26:1) RED))
+  (class-definition (position 28:1 32:1) Box
+    (variable (position 30:1 31:1) value (type
+      (value-type (position 30:1 30:9) int)) (expr
+      (literal (position 30:17 31:1) 0))))
+  (function (position 32:1 36:1) args () (
+    (value-type (position 33:25 33:29) int))
+    (block-function-body (position 33:29 36:1)
+      (return (position 34:1 35:1)
+        (invocation (position 34:12 34:21) call (
+          (literal (position 34:17 34:19) 1)
+          (literal (position 34:19 34:20) 2))))))
+  (function (position 36:1 41:1) parens () (
+    (value-type (position 37:27 37:31) int))
+    (block-function-body (position 37:31 41:1)
+      (var-def (position 38:1 39:1)
+        (variable (position 38:1 39:1) a (type
+          (value-type (position 38:1 38:9) int)) (expr
+          (group-expr (position 38:13 38:19)
+            (binary-expr (position 38:14 38:19) +
+              (literal (position 38:14 38:16) 1)
+              (literal (position 38:18 38:19) 2))))))
+      (return (position 39:1 40:1)
+        (simple-var-ref (position 39:12 39:13) a))))
+  (function (position 41:1 46:1) assignments () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 42:24 46:1)
+      (var-def (position 43:1 44:1)
+        (variable (position 43:1 44:1) a (type
+          (value-type (position 43:1 43:9) int)) (expr
+          (literal (position 43:11 43:12) 1))))
+      (assignment (position 44:1 45:1)
+        (simple-var-ref (position 44:1 44:7) a)
+        (literal (position 44:9 45:1) 2)))))
+-- stderr --
+error[SYNTAX_ERROR]: missing close paren token
+  --> missing-tokens-e.bal:38:19
+   |
+38 |     int a = (1 + 2; // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> missing-tokens-e.bal:34:19
+   |
+34 |     return call(1 2); // @error
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> missing-tokens-e.bal:26:1
+   |
+26 |     GREEN // @error the parser reads the missing comma as a missing equal
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> missing-tokens-e.bal:43:11
+   |
+43 |     int a 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-tokens-e.bal:21:1
+   |
+21 |     int y; // @error missing semicolon after x
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-tokens-e.bal:31:1
+   |
+31 | } // @error missing semicolon after value
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-tokens-e.bal:45:1
+   |
+45 | } // @error missing semicolon after a = 2
+   |

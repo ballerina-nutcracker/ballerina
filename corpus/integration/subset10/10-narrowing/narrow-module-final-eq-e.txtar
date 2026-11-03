@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected 2, got int|string
+  --> narrow-module-final-eq-e.bal:24:15
+   |
+24 |         2 q = finalVar; // @error a final module variable cannot be narrowed
+   |               ^^^^^^^^

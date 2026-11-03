@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+class IntList {
+
+  init([int...],int) -> nil{
+    bb0 {
+      _ = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StringList {
+
+  init([string...],string) -> nil{
+    bb0 {
+      _ = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    values = %5;
+    %7 = newObject $anon/.:IntList
+    $desugar$0 = values;
+    %9 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %9;
+    %11 = ConstantLoad 0
+    %12 = newArray list[%11]{}
+    $desugar$2 = %12;
+    %15 = ConstantLoad 0
+    $desugar$3 = %15;
+    GOTO bb2;
+  }
+  bb2 {
+    %18 = $desugar$3;
+    %19 = $desugar$1;
+    %17 = < %18 %19;
+    %17 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, v) = %0;
+    %2 = (1, v);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$2),%5) -> bb5;
+  }
+  bb4 {
+    %20 = ConstantLoad 1
+    %21 = %7.init($desugar$2,%20) -> bb6;
+  }
+  bb5 {
+    %8 = (1, $desugar$3);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$3) = %7;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %23 = %21 is nil
+    %23 ? bb7 : bb8;
+  }
+  bb7 {
+    %22 = %7;
+    GOTO bb9;
+  }
+  bb8 {
+    %22 = %21;
+    GOTO bb9;
+  }
+  bb9 {
+    l = %22;
+    %25 = l is object { public function init([int...], int) returns nil }
+    %26 = %25;
+    %27 = println(%26) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

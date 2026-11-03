@@ -1,0 +1,68 @@
+module $anon.. v 0.0.0;
+class IntList {
+
+  init([int...],int) -> nil{
+    bb0 {
+      _ = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StringList {
+
+  init([int...],string) -> nil{
+    bb0 {
+      _ = values;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    %6 = newObject $anon/.:IntList
+    %7 = fp $anon/.:$anonFunc$_0
+    %8 = map(arr,%7) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad 1
+    %10 = %6.init(%8,%9) -> bb2;
+  }
+  bb2 {
+    %12 = %10 is nil
+    %12 ? bb3 : bb4;
+  }
+  bb3 {
+    %11 = %6;
+    GOTO bb5;
+  }
+  bb4 {
+    %11 = %10;
+    GOTO bb5;
+  }
+  bb5 {
+    l = %11;
+    %14 = l is object { public function init([int...], int) returns nil }
+    %15 = %14;
+    %16 = println(%15) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = v;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}

@@ -25,11 +25,18 @@ function useMember() returns string { return R; }
   (const B enum-member (
     (value-type string)) (
     (literal B)))
+  (type-definition (bad-identifier) enum
+    (union-type
+      (user-defined-type R)
+      (user-defined-type B)))
   (function useMember () (
     (value-type string))
     (block-function-body
       (return
-        (simple-var-ref R))))
-  (bad-top-level enum))
--- symbols --
-+R +B
+        (simple-var-ref R)))))
+-- stderr --
+error[SYNTAX_ERROR]: missing identifier
+  --> enum-name-e.bal:17:6
+   |
+17 | enum { R, B } // @error
+   |

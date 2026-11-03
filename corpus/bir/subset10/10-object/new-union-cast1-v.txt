@@ -1,0 +1,92 @@
+module $anon.. v 0.0.0;
+class Fixed {
+  values [int, int, never...]
+  length int
+
+  init([int, int, never...],int,nil) -> nil{
+    bb0 {
+      %5 = ConstantLoad values
+      self[%5] = values;
+      %6 = ConstantLoad length
+      self[%6] = length;
+      _ = pushed;
+      return;
+    }
+  }
+}
+class Text {
+  values string
+
+  init(string,int,nil) -> nil{
+    bb0 {
+      %5 = ConstantLoad values
+      self[%5] = values;
+      _ = length;
+      _ = pushed;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    fixed = %4;
+    x = fixed;
+    %7 = ConstantLoad abc
+    s = %7;
+    %9 = ConstantLoad 0
+    %10 = newArray [int...][%9]{}
+    arr = %10;
+    %12 = newObject $anon/.:Fixed
+    %13 = <[int, int, never...]>(x)
+    %14 = length(s) -> bb1;
+  }
+  bb1 {
+    %15 = ConstantLoad 3
+    %16 = %15;
+    %17 = push(arr,%16) -> bb2;
+  }
+  bb2 {
+    %18 = %12.init(%13,%14,%17) -> bb3;
+  }
+  bb3 {
+    %20 = %18 is nil
+    %20 ? bb4 : bb5;
+  }
+  bb4 {
+    %19 = %12;
+    GOTO bb6;
+  }
+  bb5 {
+    %19 = %18;
+    GOTO bb6;
+  }
+  bb6 {
+    f = %19;
+    %22 = f is object { public function init([int, int, never...], int, nil) returns nil; int length; [int, int, never...] values }
+    %22 ? bb7 : bb9;
+  }
+  bb7 {
+    PushScopeFrame 8
+    %1 = ConstantLoad values
+    %0 = (1, f)[%1];
+    %2 = ConstantLoad  
+    %4 = ConstantLoad length
+    %3 = (1, f)[%4];
+    %5 = %3;
+    %6 = ConstantLoad  
+    %7 = println(%0,%2,%5,%6,(1, arr)) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb9;
+  }
+  bb9 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}

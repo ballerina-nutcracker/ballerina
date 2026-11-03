@@ -1,0 +1,231 @@
+module $anon.. v 0.0.0;
+first  {| m: int, v: xml, never... |}|{| m: string, v: xml, never... |};
+index  int;
+lambda  [function(string) returns [string...], int, never...]|[function(xml) returns [xml...], int, never...];
+list  [xml, int, never...]|[xml, string, never...];
+second  {| m: int, v: xml, never... |}|{| m: string, v: xml, never... |};
+y  xml;
+kind(any) -> string{
+  bb0 {
+    %2 = v is {| m: int, v: xml, never... |}
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad A
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = (1, v) is {| m: string, v: xml, never... |}
+    %0 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 1
+    %0 = ConstantLoad B
+    (2, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb4 {
+    PushScopeFrame 1
+    %0 = (2, v) is [xml, int, never...]
+    %0 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 1
+    %0 = ConstantLoad [xml, int]
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = (3, v) is [function(xml) returns [xml...], int, never...]
+    %0 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 1
+    %0 = ConstantLoad [function (xml) returns xml[], int]
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+  bb8 {
+    PushScopeFrame 1
+    %0 = ConstantLoad other
+    (4, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = kind(first) -> bb1;
+  }
+  bb1 {
+    %2 = println(%1) -> bb2;
+  }
+  bb2 {
+    %3 = println(first) -> bb3;
+  }
+  bb3 {
+    %4 = kind(second) -> bb4;
+  }
+  bb4 {
+    %5 = println(%4) -> bb5;
+  }
+  bb5 {
+    %6 = println(second) -> bb6;
+  }
+  bb6 {
+    %7 = kind(list) -> bb7;
+  }
+  bb7 {
+    %8 = println(%7) -> bb8;
+  }
+  bb8 {
+    %9 = println(list) -> bb9;
+  }
+  bb9 {
+    l = lambda;
+    %11 = kind(l) -> bb10;
+  }
+  bb10 {
+    %12 = println(%11) -> bb11;
+  }
+  bb11 {
+    %13 = l is [function(xml) returns [xml...], int, never...]
+    %13 ? bb12 : bb15;
+  }
+  bb12 {
+    PushScopeFrame 5
+    %1 = ConstantLoad 0
+    %0 = (1, l)[%1];
+    f = %0;
+    %3 = f(y) -> bb13;
+  }
+  bb13 {
+    %4 = println(%3) -> bb14;
+  }
+  bb14 {
+    PopScopeFrame
+    GOTO bb15;
+  }
+  bb15 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(xml) -> [xml...]{
+  bb0 {
+    %2 = ConstantLoad <nil>
+    %3 = %2;
+    %4 = elements(s,%3) -> bb1;
+  }
+  bb1 {
+    %5 = fp $anon/.:$xmlStep$$anonFunc$_0$0
+    %6 = map(%4,%5) -> bb2;
+  }
+  bb2 {
+    %7 = + s y;
+    %8 = ConstantLoad <nil>
+    %9 = %8;
+    %10 = elements(%7,%9) -> bb3;
+  }
+  bb3 {
+    %11 = fp $anon/.:$xmlStep$$anonFunc$_0$1
+    %12 = map(%10,%11) -> bb4;
+  }
+  bb4 {
+    %14 = ConstantLoad v
+    %13 = first[%14];
+    %15 = ConstantLoad <nil>
+    %16 = %15;
+    %17 = elements(%13,%16) -> bb5;
+  }
+  bb5 {
+    %18 = fp $anon/.:$xmlStep$$anonFunc$_0$2
+    %19 = map(%17,%18) -> bb6;
+  }
+  bb6 {
+    %20 = ConstantLoad 3
+    %21 = newArray [xml...][%20]{%6, %12, %19}
+    %0 = %21;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_0$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_0$1(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getDescendants($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$anonFunc$_0$2(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$module$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$module$1(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$$module$2(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "b"}])
+    %4 = $stepIndex(%3,index) -> bb2;
+  }
+  bb2 {
+    %0 = %4;
+    return;
+  }
+}

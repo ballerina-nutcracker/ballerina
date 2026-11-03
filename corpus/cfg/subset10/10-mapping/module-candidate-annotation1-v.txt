@@ -1,0 +1,12 @@
+(f
+  (bb0 () ())
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation f ()))
+    (expression-stmt
+      (invocation io println (
+        (literal ok))))
+  )
+)

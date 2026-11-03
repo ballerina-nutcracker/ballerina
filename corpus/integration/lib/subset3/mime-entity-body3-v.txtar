@@ -1,0 +1,14 @@
+-- stdout --
+Error occurred while extracting text data from entity
+Error occurred while extracting json data from entity
+true
+Error occurred while extracting xml data from entity
+Error occurred while extracting text data from entity
+Error occurred while extracting json data from entity
+Error occurred while extracting xml data from entity
+Error occurred while extracting json data from entity
+Error occurred while extracting xml data from entity
+Error occurred while extracting xml data from entity
+
+
+-- stderr --

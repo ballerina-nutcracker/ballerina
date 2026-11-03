@@ -1,0 +1,39 @@
+module $anon.. v 0.0.0;
+m  {| m: int, v: xml, never... |}|{| m: string, v: xml, never... |};
+x  xml;
+show(any) -> nil{
+  bb0 {
+    %2 = v is {| m: int, v: xml, never... |}
+    %3 = %2;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = v is {| m: string, v: xml, never... |}
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = show(m) -> bb1;
+  }
+  bb1 {
+    %2 = println(m) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$xmlStep$$module$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}

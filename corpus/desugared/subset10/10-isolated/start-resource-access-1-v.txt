@@ -1,0 +1,57 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Client
+    (function init () ()
+      (block-function-body))
+    (resource-function get
+      (param a
+        (value-type int))
+      (param b
+        (value-type int))
+      (variable c (type
+        (value-type int)))
+      (value-type int)
+      (block-function-body
+        (return
+          (binary-expr +
+            (binary-expr +
+              (binary-expr *
+                (simple-var-ref a)
+                (literal 100))
+              (binary-expr *
+                (simple-var-ref b)
+                (literal 10)))
+            (simple-var-ref c))))))
+  (function seg () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (var-def
+        (variable r (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (client-resource-access get expr:
+              (simple-var-ref c) computed:
+              (invocation seg ()) computed:
+              (literal 2)
+              (literal 3))))))
+      (var-def
+        (variable v (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref r)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v)))))))

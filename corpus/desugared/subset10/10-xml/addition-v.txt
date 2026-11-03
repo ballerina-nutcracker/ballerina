@@ -1,0 +1,144 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Word
+    (union-type
+      (finite-type
+        (literal def))
+      (finite-type
+        (literal ghi))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable text (type
+          (value-type xml)) (expr
+          (xml-text-literal abc))))
+      (var-def
+        (variable suffix (type
+          (value-type string)) (expr
+          (literal def))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref text)
+            (simple-var-ref suffix)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref suffix)
+            (simple-var-ref text)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref text)
+            (literal <item/>)))))
+      (var-def
+        (variable ampersand (type
+          (value-type string)) (expr
+          (literal &amp;))))
+      (var-def
+        (variable lessThan (type
+          (value-type string)) (expr
+          (literal &lt;))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref text)
+            (simple-var-ref ampersand)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref ampersand)
+            (simple-var-ref text)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref text)
+            (simple-var-ref lessThan)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref lessThan)
+            (simple-var-ref text)))))
+      (var-def
+        (variable textSubtype (type
+          (user-defined-type xml Text)) (expr
+          (xml-text-literal text))))
+      (var-def
+        (variable charSubtype (type
+          (user-defined-type string Char)) (expr
+          (literal x))))
+      (var-def
+        (variable wordSubtype (type
+          (user-defined-type Word)) (expr
+          (literal ghi))))
+      (var-def
+        (variable appendedText (type
+          (user-defined-type xml Text)) (expr
+          (binary-expr +
+            (simple-var-ref textSubtype)
+            (simple-var-ref charSubtype)))))
+      (var-def
+        (variable prependedText (type
+          (user-defined-type xml Text)) (expr
+          (binary-expr +
+            (simple-var-ref charSubtype)
+            (simple-var-ref textSubtype)))))
+      (var-def
+        (variable textSequence (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Text))) (expr
+          (binary-expr +
+            (simple-var-ref textSubtype)
+            (simple-var-ref wordSubtype)))))
+      (var-def
+        (variable prependedSequence (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Text))) (expr
+          (binary-expr +
+            (simple-var-ref wordSubtype)
+            (simple-var-ref textSubtype)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref appendedText))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref prependedText))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref textSequence))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref prependedSequence))))
+      (var-def
+        (variable element (type
+          (user-defined-type xml Element)) (expr
+          (xml-element-literal item))))
+      (var-def
+        (variable elementWithText (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text)))) (expr
+          (binary-expr +
+            (simple-var-ref element)
+            (simple-var-ref suffix)))))
+      (var-def
+        (variable textWithElement (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (union-type
+              (user-defined-type xml Element)
+              (user-defined-type xml Text)))) (expr
+          (binary-expr +
+            (simple-var-ref suffix)
+            (simple-var-ref element)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref elementWithText))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref textWithElement)))))))

@@ -1,0 +1,103 @@
+-- returns-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function blockMissingType() returns {} // @error
+function exprMissingType() returns => 1; // @error
+function blockMissingKeyword() int {} // @error
+function exprMissingKeyword() int => 1; // @error
+function valid() returns int => 1; // @error missing close brace of blockMissingKeyword
+-- ast --
+(package
+  (function blockMissingType () (
+    (bad-type simple-reference))
+    (block-function-body))
+  (function exprMissingType () (
+    (bad-type simple-reference))
+    (expr-function-body
+      (literal 1)))
+  (function exprMissingKeyword () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable (bad-identifier) (type
+          (value-type int)) (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable (bad-identifier))) ()
+              (expr-function-body
+                (literal 1)))))))))
+  (function valid () (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (bad-top-level function (tokens ("function" 19:1 19:9) ("(" 19:29 19:30) (")" 19:30 19:31) ("{" 19:36 19:37) ("}" 19:37 19:38))))
+(lambda-types
+  ($anonFunc$_0 [callable=never]))
+-- stderr --
+error[SEMANTIC_ERROR]: cannot infer anonymous function parameter types without an expected function type
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |                                   ^^^^
+
+error[SYNTAX_ERROR]: invalid token
+  --> returns-e.bal:19:32
+   |
+19 | function blockMissingKeyword() int {} // @error
+   |                                ^^^^^
+
+error[SYNTAX_ERROR]: missing close brace token
+  --> returns-e.bal:21:1
+   |
+21 | function valid() returns int => 1; // @error missing close brace of blockMissingKeyword
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> returns-e.bal:20:35
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> returns-e.bal:20:31
+   |
+20 | function exprMissingKeyword() int => 1; // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> returns-e.bal:17:37
+   |
+17 | function blockMissingType() returns {} // @error
+   |
+
+error[SYNTAX_ERROR]: missing type desc
+  --> returns-e.bal:18:36
+   |
+18 | function exprMissingType() returns => 1; // @error
+   |

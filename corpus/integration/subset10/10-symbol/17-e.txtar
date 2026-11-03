@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
+  --> 17-e.bal:19:10
+   |
+19 | function foo() returns int { // @error
+   |          ^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
+  --> 17-e.bal:23:10
+   |
+23 | function foo() returns int { // @error
+   |          ^^^

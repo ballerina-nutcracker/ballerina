@@ -1,0 +1,93 @@
+(IntBox
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref value))
+    )
+  )
+)
+(IntOuter
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access inner
+          (simple-var-ref self))
+        (simple-var-ref inner))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(StringBox
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref value))
+    )
+  )
+)
+(StringOuter
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access inner
+          (simple-var-ref self))
+        (simple-var-ref inner))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable o (type
+        (union-type
+          (user-defined-type IntOuter)
+          (user-defined-type StringOuter))) (expr
+        (new (
+          (new (
+            (literal 5)))
+          (literal 1))))))
+    (type-test-expr is
+      (simple-var-ref o)
+      (user-defined-type IntOuter))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access inner
+            (simple-var-ref o))
+          (user-defined-type IntBox)))))
+  )
+  (bb2 (bb1 bb0) (bb3 bb4)
+    (var-def
+      (variable s (type
+        (union-type
+          (user-defined-type IntOuter)
+          (user-defined-type StringOuter))) (expr
+        (new (
+          (new (
+            (literal five)))
+          (literal x))))))
+    (type-test-expr is
+      (simple-var-ref s)
+      (user-defined-type StringOuter))
+  )
+  (bb3 (bb2) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access inner
+            (simple-var-ref s))
+          (user-defined-type StringBox)))))
+  )
+  (bb4 (bb3 bb2) ())
+)

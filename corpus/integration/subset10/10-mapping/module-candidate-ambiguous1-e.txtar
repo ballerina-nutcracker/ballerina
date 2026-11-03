@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> module-candidate-ambiguous1-e.bal:25:9
+   |
+25 | A|B g = {x: "s"}; // @error ambiguous inherent type
+   |         ^^^^^^^^

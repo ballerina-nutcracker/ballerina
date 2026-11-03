@@ -1,10 +1,7 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="doc/img/logo-dark.svg" width="300">
-  <source media="(prefers-color-scheme: light)" srcset="doc/img/logo-light.svg" width="300">
-  <img alt="Ballerina Nutcracker" src="doc/img/logo-light.svg" width="300">
-</picture>
+<img alt="Ballerina Nutcracker" src="https://raw.githubusercontent.com/ballerina-nutcracker/ballerina/main/doc/img/logo-light.svg#gh-light-mode-only" width="300">
+<img alt="Ballerina Nutcracker" src="https://raw.githubusercontent.com/ballerina-nutcracker/ballerina/main/doc/img/logo-dark.svg#gh-dark-mode-only" width="300">
 
 **A native interpreter for the Ballerina programming language.**
 
@@ -86,9 +83,15 @@ Development is organized by **subsets** of the Ballerina language; each mileston
 
 ## Standard library coverage
 
-**71%** of tracked standard library features are supported across 14 packages: 213 supported, 24 partially supported, 64 not yet supported. See [Standard library support](doc/library/README.md) for per-package coverage and behavioural changes from jBallerina.
+**73%** of tracked standard library features are supported across 18 packages: 280 supported, 31 partially supported, 71 not yet supported. See [Standard library support](doc/library/README.md) for per-package coverage and behavioural changes from jBallerina.
 
-**Supported packages:** [avro](lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md), [crypto](lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md), [file](lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md), [http](lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md), [io](lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md), [ldap](lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md), [log](lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md), [math.vector](lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md), [os](lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md), [protobuf](lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md), [random](lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md), [time](lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md), [url](lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md), [uuid](lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)
+**Supported packages:** [avro](lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md), [crypto](lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md), [file](lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md), [http](lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md), [io](lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md), [ldap](lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md), [log](lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md), [math.vector](lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md), [mime](lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md), [mqtt](lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md), [os](lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md), [protobuf](lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md), [random](lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md), [task](lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md), [time](lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md), [udp](lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md), [url](lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md), [uuid](lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)
+
+## Lang library coverage
+
+**47%** of jBallerina lang library functions are supported across 19 modules: 107 supported, 0 partially supported, 123 not yet supported. Functions handled directly by the compiler count as supported. See [Lang library support](doc/langlib/README.md) for per-module coverage.
+
+**Supported modules:** [lang.array](lib/langlibs/ballerina/lang.array/0.0.1/any/README.md), [lang.boolean](lib/langlibs/ballerina/lang.boolean/0.0.1/any/README.md), [lang.decimal](lib/langlibs/ballerina/lang.decimal/0.0.1/any/README.md), [lang.error](lib/langlibs/ballerina/lang.error/0.0.1/any/README.md), [lang.float](lib/langlibs/ballerina/lang.float/0.0.1/any/README.md), [lang.int](lib/langlibs/ballerina/lang.int/0.0.1/any/README.md), [lang.map](lib/langlibs/ballerina/lang.map/0.0.1/any/README.md), [lang.runtime](lib/langlibs/ballerina/lang.runtime/0.0.1/any/README.md), [lang.string](lib/langlibs/ballerina/lang.string/0.0.1/any/README.md), [lang.value](lib/langlibs/ballerina/lang.value/0.0.1/any/README.md), [lang.xml](lib/langlibs/ballerina/lang.xml/0.0.1/any/README.md)
 
 ## Contributing
 

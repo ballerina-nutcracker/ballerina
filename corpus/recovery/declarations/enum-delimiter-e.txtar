@@ -28,7 +28,10 @@ enum Colour { R, B
   (type-definition Colour enum
     (union-type
       (user-defined-type R)
-      (user-defined-type B)))
-  (bad-top-level enum))
--- symbols --
-+Colour +R +B
+      (user-defined-type B))))
+-- stderr --
+error[SYNTAX_ERROR]: missing close brace token
+  --> enum-delimiter-e.bal:18:1
+   |
+18 | // @error
+   |

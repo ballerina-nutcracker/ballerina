@@ -1,0 +1,20 @@
+-- stdout --
+reconnect while connected: Client is connected (mqtt:Error=true)
+close while connected: Client is connected (mqtt:Error=true)
+disconnect: ok
+isConnected: false
+disconnect again: Client is disconnected (mqtt:Error=true)
+publish while disconnected: Client is not connected (mqtt:Error=true)
+subscribe while disconnected: Client is not connected (mqtt:Error=true)
+reconnect: ok
+reconnected: true
+publish after reconnect: true
+disconnect: ok
+close: ok
+close again: ok
+isConnected after close: false
+reconnect after close: Client is closed (mqtt:Error=true)
+disconnect after close: Client is closed (mqtt:Error=true)
+publish after close: Client is not connected (mqtt:Error=true)
+receive after close: true
+-- stderr --

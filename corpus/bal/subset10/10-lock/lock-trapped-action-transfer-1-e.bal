@@ -44,7 +44,7 @@ function unrestrictedValuesFromLock() returns map<int>|error {
     Client c = new;
     int[] localValues = [42];
     lock { // @error
-        return trap c->value(localValues);
+        return trap c->value(localValues); // @error not an isolated expression in a lock
     }
 }
 

@@ -1,0 +1,169 @@
+-- method-call-args-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+class C {
+    int total;
+    function init(int a, int b = 2) { self.total = a + b; }
+    function m(int a, int b = 2) returns int => a + b;
+}
+function missingComma(C obj) returns int => obj.m(1 2); // @error
+function namedMissingValue(C obj) returns int => obj.m(1, b = ); // @error
+function positionalAfterNamed(C obj) returns int => obj.m(a = 1, 2); // @error
+function newMissingComma() returns C => new C(1 2); // @error
+function newNamedMissingValue() returns C => new C(1, b = ); // @error
+function newPositionalAfterNamed() returns C => new C(a = 1, 2); // @error
+function valid(C obj) returns C => new C(obj.m(1, b = 3));
+-- ast --
+(package
+  (class-definition C
+    (variable total (type
+      (value-type int)))
+    (function init (
+      (variable a (type
+        (value-type int)))
+      (variable b (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access total
+            (simple-var-ref self))
+          (binary-expr +
+            (simple-var-ref a)
+            (simple-var-ref b)))))
+    (function m (
+      (variable a (type
+        (value-type int)))
+      (variable b (type
+        (value-type int)) (expr
+        (literal 2)))) (
+      (value-type int))
+      (expr-function-body
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+  (function missingComma (
+    (variable obj (type
+      (user-defined-type C)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation m expr:
+        (simple-var-ref obj) (
+        (literal 1)
+        (literal 2)))))
+  (function namedMissingValue (
+    (variable obj (type
+      (user-defined-type C)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation m expr:
+        (simple-var-ref obj) (
+        (literal 1)
+        (named-arg b
+          (simple-var-ref (bad-identifier)))))))
+  (function positionalAfterNamed (
+    (variable obj (type
+      (user-defined-type C)))) (
+    (value-type int))
+    (expr-function-body
+      (invocation m expr:
+        (simple-var-ref obj) (
+        (named-arg a
+          (bad-expr-or-action simple-literal))))))
+  (function newMissingComma () (
+    (user-defined-type C))
+    (expr-function-body
+      (new
+        (user-defined-type C) (
+        (literal 1)
+        (literal 2)))))
+  (function newNamedMissingValue () (
+    (user-defined-type C))
+    (expr-function-body
+      (new
+        (user-defined-type C) (
+        (literal 1)
+        (named-arg b
+          (simple-var-ref (bad-identifier)))))))
+  (function newPositionalAfterNamed () (
+    (user-defined-type C))
+    (expr-function-body
+      (new
+        (user-defined-type C) (
+        (named-arg a
+          (bad-expr-or-action simple-literal))))))
+  (function valid (
+    (variable obj (type
+      (user-defined-type C)))) (
+    (user-defined-type C))
+    (expr-function-body
+      (new
+        (user-defined-type C) (
+        (invocation m expr:
+          (simple-var-ref obj) (
+          (literal 1)
+          (named-arg b
+            (literal 3)))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> method-call-args-e.bal:23:63
+   |
+23 | function namedMissingValue(C obj) returns int => obj.m(1, b = ); // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> method-call-args-e.bal:26:59
+   |
+26 | function newNamedMissingValue() returns C => new C(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> method-call-args-e.bal:22:53
+   |
+22 | function missingComma(C obj) returns int => obj.m(1 2); // @error
+   |
+
+error[SYNTAX_ERROR]: missing comma token
+  --> method-call-args-e.bal:25:49
+   |
+25 | function newMissingComma() returns C => new C(1 2); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> method-call-args-e.bal:23:63
+   |
+23 | function namedMissingValue(C obj) returns int => obj.m(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> method-call-args-e.bal:26:59
+   |
+26 | function newNamedMissingValue() returns C => new C(1, b = ); // @error
+   |
+
+error[SYNTAX_ERROR]: named arg followed by positional arg
+  --> method-call-args-e.bal:24:63
+   |
+24 | function positionalAfterNamed(C obj) returns int => obj.m(a = 1, 2); // @error
+   |                                                               ^^^^
+
+error[SYNTAX_ERROR]: named arg followed by positional arg
+  --> method-call-args-e.bal:27:59
+   |
+27 | function newPositionalAfterNamed() returns C => new C(a = 1, 2); // @error
+   |                                                           ^^^^

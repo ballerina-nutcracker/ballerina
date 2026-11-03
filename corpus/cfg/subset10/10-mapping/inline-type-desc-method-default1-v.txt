@@ -1,0 +1,81 @@
+(Runner
+  (run
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref p)
+          (literal 1)))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable v (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type Runner) ()))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-test-expr is
+              (simple-var-ref v)
+              (object-type
+                (method-decl run (
+                  (param p
+                    (value-type int))) (
+                  (value-type int))))))))))
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type C)
+          (user-defined-type D))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-conversion-expr
+              (simple-var-ref v)
+              (object-type
+                (method-decl run (
+                  (param p
+                    (value-type int))) (
+                  (value-type int))))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref c)
+          (user-defined-type C)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation run expr:
+          (field-based-access x
+            (simple-var-ref c)) (
+          (literal 4))))))
+    (type-test-expr is
+      (simple-var-ref v)
+      (object-type
+        (method-decl run (
+          (param p
+            (value-type int))) (
+          (value-type int)))))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation run expr:
+          (simple-var-ref v) (
+          (literal 4))))))
+  )
+  (bb2 (bb1 bb0) ())
+)

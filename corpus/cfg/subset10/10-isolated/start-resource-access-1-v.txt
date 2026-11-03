@@ -1,0 +1,51 @@
+(Client
+  (Client.$resource$get$0
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (binary-expr +
+            (binary-expr *
+              (simple-var-ref a)
+              (literal 100))
+            (binary-expr *
+              (simple-var-ref b)
+              (literal 10)))
+          (simple-var-ref c)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Client)) (expr
+        (new ()))))
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (client-resource-access get expr:
+            (simple-var-ref c) computed:
+            (invocation seg ()) computed:
+            (literal 2)
+            (literal 3))))))
+    (var-def
+      (variable v (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+)
+(seg
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

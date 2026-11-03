@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> limit-operand-1-e.bal:22:15
+   |
+22 |         limit 1 + "a" // @error limit expression fails to resolve
+   |               ^^^^^^^

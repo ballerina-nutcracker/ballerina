@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field v
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int))))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field v
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int))))
+      (field m
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 3))
+            (key-value
+              (literal b)
+              (literal 4))))))
+      (var-def
+        (variable y (type
+          (value-type any)) (expr
+          (simple-var-ref value))))
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal m)
+              (literal s))
+            (key-value
+              (literal v)
+              (type-conversion-expr
+                (simple-var-ref y)
+                (record-type
+                  (field a
+                    (value-type int)
+                    (literal 1))
+                  (field b
+                    (value-type int)
+                    (literal 2)))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

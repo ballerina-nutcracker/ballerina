@@ -27,7 +27,10 @@ enum Palette RED, BLUE } // @error
   (type-definition Palette enum
     (union-type
       (user-defined-type RED)
-      (user-defined-type BLUE)))
-  (bad-top-level enum))
--- symbols --
-+Palette +RED +BLUE
+      (user-defined-type BLUE))))
+-- stderr --
+error[SYNTAX_ERROR]: missing open brace token
+  --> enum-missing-open-e.bal:17:14
+   |
+17 | enum Palette RED, BLUE } // @error
+   |

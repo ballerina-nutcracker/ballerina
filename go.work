@@ -12,6 +12,7 @@ use (
 	./compiler-tools/benchmark
 	./compiler-tools/benchmark-http
 	./compiler-tools/tree-gen
+	./compiler-tools/walkpurity
 	./context
 	./decimal
 	./desugar

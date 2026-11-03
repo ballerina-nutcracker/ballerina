@@ -1,0 +1,111 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (variable g1 (type
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))))
+  (variable g2 (type
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))))
+  (variable g3 (type
+    (union-type
+      (user-defined-type C)
+      (user-defined-type E))))
+  (variable g4 (type
+    (union-type
+      (user-defined-type D)
+      (user-defined-type B))))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition C
+    (record-type
+      (field x
+        (function-type () (
+          (value-type int))))))
+  (type-definition D
+    (record-type
+      (field x
+        (user-defined-type Counter))))
+  (type-definition E
+    (record-type
+      (field x
+        (function-type () (
+          (value-type string))))))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 0)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref g1)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (invocation name ()))))
+      (assignment
+        (simple-var-ref g2)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (invocation lang.string length (
+              (literal abc))))))
+      (assignment
+        (simple-var-ref g3)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (lambda
+              (function $anonFunc$_0 () (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (literal 1))))))))
+      (assignment
+        (simple-var-ref g4)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (new ()))))))
+  (function name () (
+    (value-type string))
+    (block-function-body
+      (return
+        (literal s))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g1)
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g2)
+            (user-defined-type A)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g3)
+            (user-defined-type C)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g4)
+            (user-defined-type D))))))))

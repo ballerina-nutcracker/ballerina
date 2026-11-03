@@ -1,0 +1,75 @@
+-- bad-names-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function _() {} // @error
+const int '_ = 1; // @error
+int '_ = 1; // @error
+type '_ int; // @error
+annotation '_ on type; // @error
+class '_ {} // @error
+-- ast --
+(package
+  (const (bad-identifier) (
+    (value-type int)) (
+    (literal 1)))
+  (variable (bad-identifier) (type
+    (value-type int)) (expr
+    (literal 1)))
+  (annotation (bad-identifier)
+    (attach-point type))
+  (type-definition (bad-identifier)
+    (value-type int))
+  (class-definition (bad-identifier))
+  (function (bad-identifier) () (
+    (value-type null))
+    (block-function-body)))
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:17:10
+   |
+17 | function _() {} // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:18:11
+   |
+18 | const int '_ = 1; // @error
+   |           ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:19:5
+   |
+19 | int '_ = 1; // @error
+   |     ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:20:6
+   |
+20 | type '_ int; // @error
+   |      ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:21:12
+   |
+21 | annotation '_ on type; // @error
+   |            ^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> bad-names-e.bal:22:7
+   |
+22 | class '_ {} // @error
+   |       ^^^

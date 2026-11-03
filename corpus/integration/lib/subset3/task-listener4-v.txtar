@@ -1,0 +1,5 @@
+-- stdout --
+calls: 2
+-- stderr --
+error: service panic
+error: retry panic

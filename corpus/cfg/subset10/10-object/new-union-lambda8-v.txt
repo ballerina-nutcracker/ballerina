@@ -1,0 +1,84 @@
+(IntAdd
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(StrRepeat
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable sum (type
+        (union-type
+          (user-defined-type IntAdd)
+          (user-defined-type StrRepeat))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_0 (
+              (variable a)
+              (variable b)) ()
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref a)
+                  (simple-var-ref b)))))
+          (literal 1))))))
+    (var-def
+      (variable repeated (type
+        (union-type
+          (user-defined-type IntAdd)
+          (user-defined-type StrRepeat))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_1 (
+              (variable a)
+              (variable b)) ()
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref a)
+                  (invocation lang.value toString (
+                    (simple-var-ref b)))))))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref sum)
+          (user-defined-type IntAdd)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref repeated)
+          (user-defined-type StrRepeat)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref a)
+      (simple-var-ref b))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref a)
+      (invocation lang.value toString (
+        (simple-var-ref b))))
+  )
+)

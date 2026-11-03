@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: more than one restricted variable referenced in lock statement
+  --> two-restricted-fields-1-e.bal:24:13
+   |
+24 |             self.total += 1; // @error more than one restricted variable referenced in lock statement
+   |             ^^^^^^^^^^

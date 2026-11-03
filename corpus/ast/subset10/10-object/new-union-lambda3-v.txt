@@ -1,0 +1,110 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntFn
+    (function init (
+      (variable callback (type
+        (function-type (
+          (value-type int)) (
+          (value-type int)))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callback))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition FloatFn
+    (function init (
+      (variable callback (type
+        (function-type (
+          (value-type float)) (
+          (value-type float)))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callback))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition Outer
+    (function init (
+      (variable inner (type
+        (union-type
+          (user-defined-type IntFn)
+          (user-defined-type FloatFn))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref inner))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition OtherOuter
+    (function init (
+      (variable inner (type
+        (union-type
+          (user-defined-type IntFn)
+          (user-defined-type FloatFn))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref inner))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (union-type
+            (user-defined-type IntFn)
+            (user-defined-type FloatFn))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_0 (
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref v)
+                    (literal 1)))))
+            (literal 1))))))
+      (var-def
+        (variable o (type
+          (union-type
+            (user-defined-type Outer)
+            (user-defined-type OtherOuter))) (expr
+          (new (
+            (new (
+              (lambda
+                (function $anonFunc$_1 (
+                  (variable v)) ()
+                  (expr-function-body
+                    (binary-expr +
+                      (simple-var-ref v)
+                      (literal 1)))))
+              (literal 1)))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref f)
+            (user-defined-type IntFn)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref o)
+            (user-defined-type Outer))))))))

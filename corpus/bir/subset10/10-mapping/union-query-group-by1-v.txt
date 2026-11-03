@@ -1,0 +1,375 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 3
+    %5 = ConstantLoad 2
+    %6 = ConstantLoad 5
+    %7 = newArray [int...][%6]{%1, %2, %3, %4, %5}
+    xs = %7;
+    %9 = ConstantLoad v
+    %10 = ConstantLoad 0
+    %11 = newArray list[%10]{}
+    $desugar$0 = %11;
+    %13 = ConstantLoad 0
+    %14 = newArray list[%13]{}
+    $desugar$1 = %14;
+    $desugar$2 = xs;
+    %18 = length($desugar$2) -> bb1;
+  }
+  bb1 {
+    $desugar$3 = %18;
+    %20 = ConstantLoad 0
+    $desugar$4 = %20;
+    GOTO bb2;
+  }
+  bb2 {
+    %23 = $desugar$4;
+    %24 = $desugar$3;
+    %22 = < %23 %24;
+    %22 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$2)[(1, $desugar$4)];
+    (1, x) = %0;
+    %1 = ConstantLoad 1
+    %2 = newArray list[%1]{(1, x)}
+    %3 = push((1, $desugar$1),%2) -> bb5;
+  }
+  bb4 {
+    %25 = length($desugar$1) -> bb6;
+  }
+  bb5 {
+    %5 = (1, $desugar$4);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$4) = %4;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    $desugar$5 = %25;
+    %27 = ConstantLoad 0
+    $desugar$6 = %27;
+    GOTO bb7;
+  }
+  bb7 {
+    %31 = $desugar$6;
+    %32 = $desugar$5;
+    %30 = < %31 %32;
+    %30 ? bb8 : bb9;
+  }
+  bb8 {
+    PushScopeFrame 14
+    %0 = (1, $desugar$1)[(1, $desugar$6)];
+    $desugar$7 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$7[%3];
+    (1, x) = %2;
+    %5 = (1, x);
+    %6 = ConstantLoad 10
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, n) = %4;
+    %8 = (1, n);
+    %9 = push($desugar$7,%8) -> bb10;
+  }
+  bb9 {
+    %33 = ConstantLoad 0
+    %34 = newArray list[%33]{}
+    $desugar$8 = %34;
+    %36 = ConstantLoad 0
+    %37 = newArray list[%36]{}
+    $desugar$9 = %37;
+    %39 = length($desugar$1) -> bb11;
+  }
+  bb10 {
+    %11 = (1, $desugar$6);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$6) = %10;
+    PopScopeFrame
+    GOTO bb7;
+  }
+  bb11 {
+    $desugar$10 = %39;
+    %41 = ConstantLoad 0
+    $desugar$11 = %41;
+    GOTO bb12;
+  }
+  bb12 {
+    %44 = $desugar$11;
+    %45 = $desugar$10;
+    %43 = < %44 %45;
+    %43 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 14
+    %0 = (1, $desugar$1)[(1, $desugar$11)];
+    $desugar$12 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$12[%3];
+    (1, x) = %2;
+    %5 = ConstantLoad 1
+    %4 = $desugar$12[%5];
+    (1, n) = %4;
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, x)}
+    %8 = push((1, $desugar$9),%7) -> bb15;
+  }
+  bb14 {
+    %46 = ConstantLoad true
+    %47 = ConstantLoad false
+    %48 = ConstantLoad 2
+    %49 = newArray list[%48]{%46, %47}
+    %50 = queryGroup($desugar$8,$desugar$9,%49) -> bb17;
+  }
+  bb15 {
+    %9 = push((1, $desugar$8),$desugar$12) -> bb16;
+  }
+  bb16 {
+    %11 = (1, $desugar$11);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$11) = %10;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb17 {
+    $desugar$13 = %50;
+    %52 = length($desugar$13) -> bb18;
+  }
+  bb18 {
+    $desugar$14 = %52;
+    %54 = ConstantLoad 0
+    $desugar$15 = %54;
+    GOTO bb19;
+  }
+  bb19 {
+    %57 = $desugar$15;
+    %58 = $desugar$14;
+    %56 = < %57 %58;
+    %56 ? bb20 : bb21;
+  }
+  bb20 {
+    PushScopeFrame 19
+    %0 = (1, $desugar$13)[(1, $desugar$15)];
+    $desugar$16 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$16[%3];
+    (1, x) = %2;
+    %5 = ConstantLoad 1
+    %4 = $desugar$16[%5];
+    (1, n) = %4;
+    %8 = ConstantLoad 0
+    %7 = (1, n)[%8];
+    %9 = %7;
+    %10 = (1, n);
+    %11 = length(%10) -> bb22;
+  }
+  bb21 {
+    %59 = ConstantLoad m
+    %60 = ConstantLoad 1
+    %61 = newMap {| m: int, v: [int...], never... |}{%9=$desugar$0, %59=%60}
+    r = %61;
+    %63 = println(r) -> bb24;
+  }
+  bb22 {
+    %12 = %11;
+    %6 = + %9 %12;
+    %13 = %6;
+    %14 = push((1, $desugar$0),%13) -> bb23;
+  }
+  bb23 {
+    %16 = (1, $desugar$15);
+    %17 = ConstantLoad 1
+    %18 = %17;
+    %15 = + %16 %18;
+    (1, $desugar$15) = %15;
+    PopScopeFrame
+    GOTO bb19;
+  }
+  bb24 {
+    %64 = r is {| m: int, v: [int...], never... |}
+    %65 = %64;
+    %66 = println(%65) -> bb25;
+  }
+  bb25 {
+    %67 = ConstantLoad v
+    %69 = ConstantLoad 0
+    %70 = newArray list[%69]{}
+    $desugar$18 = %70;
+    $desugar$19 = xs;
+    %74 = length($desugar$19) -> bb26;
+  }
+  bb26 {
+    $desugar$20 = %74;
+    %76 = ConstantLoad 0
+    $desugar$21 = %76;
+    GOTO bb27;
+  }
+  bb27 {
+    %79 = $desugar$21;
+    %80 = $desugar$20;
+    %78 = < %79 %80;
+    %78 ? bb28 : bb29;
+  }
+  bb28 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$19)[(1, $desugar$21)];
+    (1, x) = %0;
+    %1 = ConstantLoad 1
+    %2 = newArray list[%1]{(1, x)}
+    %3 = push((1, $desugar$18),%2) -> bb30;
+  }
+  bb29 {
+    %81 = length($desugar$18) -> bb31;
+  }
+  bb30 {
+    %5 = (1, $desugar$21);
+    %6 = ConstantLoad 1
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, $desugar$21) = %4;
+    PopScopeFrame
+    GOTO bb27;
+  }
+  bb31 {
+    $desugar$22 = %81;
+    %83 = ConstantLoad 0
+    $desugar$23 = %83;
+    GOTO bb32;
+  }
+  bb32 {
+    %87 = $desugar$23;
+    %88 = $desugar$22;
+    %86 = < %87 %88;
+    %86 ? bb33 : bb34;
+  }
+  bb33 {
+    PushScopeFrame 14
+    %0 = (1, $desugar$18)[(1, $desugar$23)];
+    $desugar$24 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$24[%3];
+    (1, x) = %2;
+    %5 = (1, x);
+    %6 = ConstantLoad 10
+    %7 = %6;
+    %4 = + %5 %7;
+    (1, n) = %4;
+    %8 = (1, n);
+    %9 = push($desugar$24,%8) -> bb35;
+  }
+  bb34 {
+    %89 = ConstantLoad 0
+    %90 = newArray list[%89]{}
+    $desugar$25 = %90;
+    %92 = ConstantLoad 0
+    %93 = newArray list[%92]{}
+    $desugar$26 = %93;
+    %95 = length($desugar$18) -> bb36;
+  }
+  bb35 {
+    %11 = (1, $desugar$23);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$23) = %10;
+    PopScopeFrame
+    GOTO bb32;
+  }
+  bb36 {
+    $desugar$27 = %95;
+    %97 = ConstantLoad 0
+    $desugar$28 = %97;
+    GOTO bb37;
+  }
+  bb37 {
+    %100 = $desugar$28;
+    %101 = $desugar$27;
+    %99 = < %100 %101;
+    %99 ? bb38 : bb39;
+  }
+  bb38 {
+    PushScopeFrame 14
+    %0 = (1, $desugar$18)[(1, $desugar$28)];
+    $desugar$29 = %0;
+    %3 = ConstantLoad 0
+    %2 = $desugar$29[%3];
+    (1, x) = %2;
+    %5 = ConstantLoad 1
+    %4 = $desugar$29[%5];
+    (1, n) = %4;
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, x)}
+    %8 = push((1, $desugar$26),%7) -> bb40;
+  }
+  bb39 {
+    %102 = ConstantLoad true
+    %103 = ConstantLoad false
+    %104 = ConstantLoad 2
+    %105 = newArray list[%104]{%102, %103}
+    %106 = queryGroup($desugar$25,$desugar$26,%105) -> bb42;
+  }
+  bb40 {
+    %9 = push((1, $desugar$25),$desugar$29) -> bb41;
+  }
+  bb41 {
+    %11 = (1, $desugar$28);
+    %12 = ConstantLoad 1
+    %13 = %12;
+    %10 = + %11 %13;
+    (1, $desugar$28) = %10;
+    PopScopeFrame
+    GOTO bb37;
+  }
+  bb42 {
+    $desugar$30 = %106;
+    %108 = ConstantLoad 2
+    %109 = %108;
+    %110 = ConstantLoad false
+    %111 = ConstantLoad true
+    %112 = ConstantLoad 2
+    %113 = newArray list[%112]{%110, %111}
+    %114 = queryCollect($desugar$30,%109,%113) -> bb43;
+  }
+  bb43 {
+    $desugar$31 = %114;
+    %117 = ConstantLoad 0
+    %116 = $desugar$31[%117];
+    x = %116;
+    %119 = ConstantLoad 1
+    %118 = $desugar$31[%119];
+    n = %118;
+    %122 = ConstantLoad 0
+    %121 = n[%122];
+    %123 = %121;
+    %124 = n;
+    %125 = length(%124) -> bb44;
+  }
+  bb44 {
+    %126 = %125;
+    %120 = + %123 %126;
+    $desugar$17 = %120;
+    %127 = ConstantLoad m
+    %128 = ConstantLoad 1
+    %129 = newMap {| m: int, v: int, never... |}{%67=$desugar$17, %127=%128}
+    c = %129;
+    %131 = println(c) -> bb45;
+  }
+  bb45 {
+    %132 = c is {| m: int, v: int, never... |}
+    %133 = %132;
+    %134 = println(%133) -> bb46;
+  }
+  bb46 {
+    return;
+  }
+}

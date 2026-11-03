@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+class IntAdd {
+
+  init(function(int, int) returns int,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StrRepeat {
+
+  init(function(string, int) returns string,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:IntAdd
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = ConstantLoad 1
+    %4 = %1.init(%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    sum = %5;
+    %8 = newObject $anon/.:StrRepeat
+    %9 = fp $anon/.:$anonFunc$_1
+    %10 = ConstantLoad 1
+    %11 = %8.init(%9,%10) -> bb5;
+  }
+  bb5 {
+    %13 = %11 is nil
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %12 = %8;
+    GOTO bb8;
+  }
+  bb7 {
+    %12 = %11;
+    GOTO bb8;
+  }
+  bb8 {
+    repeated = %12;
+    %15 = sum is object { public function init(function(int, int) returns int, int) returns nil }
+    %16 = %15;
+    %17 = println(%16) -> bb9;
+  }
+  bb9 {
+    %18 = repeated is object { public function init(function(string, int) returns string, int) returns nil }
+    %19 = %18;
+    %20 = println(%19) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1(string,int) -> string{
+  bb0 {
+    %4 = b;
+    %5 = toString(%4) -> bb1;
+  }
+  bb1 {
+    %3 = + a %5;
+    %0 = %3;
+    return;
+  }
+}

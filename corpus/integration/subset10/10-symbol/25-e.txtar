@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInMethod
+  --> 25-e.bal:21:16
+   |
+21 |         return undefinedInMethod; // @error
+   |                ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: UnknownInclusion
+  --> 25-e.bal:18:6
+   |
+18 |     *UnknownInclusion; // @error
+   |      ^^^^^^^^^^^^^^^^

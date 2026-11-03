@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: bar
+  --> 7-e.bal:19:13
+   |
+19 |     int _ = unknownPrefix:bar(); // @error
+   |             ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: foo
+  --> 7-e.bal:18:13
+   |
+18 |     int _ = unknownPrefix:foo(); // @error
+   |             ^^^^^^^^^^^^^^^^^^^

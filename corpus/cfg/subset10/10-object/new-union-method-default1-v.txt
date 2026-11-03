@@ -1,0 +1,96 @@
+(First
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access result
+          (simple-var-ref self))
+        (invocation run expr:
+          (simple-var-ref runner) (
+          (simple-var-ref marker))))
+    )
+  )
+)
+(Runner
+  (run
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref p)
+          (literal 1)))
+    )
+  )
+)
+(Second
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access result
+          (simple-var-ref self))
+        (invocation run expr:
+          (simple-var-ref runner) (
+          (invocation lang.string length (
+            (simple-var-ref marker))))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type Runner) ()))))
+    (var-def
+      (variable a (type
+        (union-type
+          (user-defined-type First)
+          (user-defined-type Second))) (expr
+        (new (
+          (type-conversion-expr
+            (simple-var-ref v)
+            (object-type
+              (method-decl run (
+                (param p
+                  (value-type int))) (
+                (value-type int)))))
+          (literal 4))))))
+    (var-def
+      (variable b (type
+        (union-type
+          (user-defined-type First)
+          (user-defined-type Second))) (expr
+        (new (
+          (type-conversion-expr
+            (simple-var-ref v)
+            (object-type
+              (method-decl run (
+                (param p
+                  (value-type int))) (
+                (value-type int)))))
+          (literal ab))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref a)
+            (user-defined-type First))
+          (literal First)
+          (literal Second)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access result
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref b)
+            (user-defined-type First))
+          (literal First)
+          (literal Second)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access result
+          (simple-var-ref b)))))
+  )
+)

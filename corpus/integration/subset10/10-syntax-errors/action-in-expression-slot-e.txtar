@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: action as a wait expr
+  --> action-in-expression-slot-e.bal:27:18
+   |
+27 |     int d = wait (wait g); // @error
+   |                  ^^^^^^^^
+
+error[SYNTAX_ERROR]: action as a wait expr
+  --> action-in-expression-slot-e.bal:28:27
+   |
+28 |     foreach int i in wait start retList() { // @error
+   |                           ^^^^^^^^^^^^^^^

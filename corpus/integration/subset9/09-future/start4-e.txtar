@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> start4-e.bal:21:18
+   |
+21 |     return start nonisolated(); // @error
+   |                  ^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: start action is not isolated
   --> start4-e.bal:21:12
    |

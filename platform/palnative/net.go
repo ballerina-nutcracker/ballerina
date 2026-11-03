@@ -111,3 +111,9 @@ func DialPacket(ctx context.Context, network, address, localAddr string) (net.Co
 func ListenPacket(network, address string) (net.PacketConn, error) {
 	return net.ListenPacket(network, address)
 }
+
+// ResolvePacketAddr is the pal.Net.ResolvePacketAddr factory for the
+// native-CLI platform. It resolves a datagram peer address via the OS resolver.
+func ResolvePacketAddr(network, address string) (net.Addr, error) {
+	return net.ResolveUDPAddr(network, address)
+}

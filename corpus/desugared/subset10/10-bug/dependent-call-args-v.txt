@@ -1,0 +1,42 @@
+(package
+  (import-package ballerina io (as io))
+  (function depend (
+    (variable b (type
+      (array-type
+        (value-type byte) dimensions: 1 ([]))))
+    (variable t (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
+    (union-type
+      (user-defined-type t)
+      (error-type)))
+    (extern-function-body))
+  (function inferredUnion () (
+    (union-type
+      (builtin-ref-type json)
+      (error-type)))
+    (block-function-body
+      (return
+        (invocation depend (
+          (list-constructor-expr
+            (literal 65))
+          (typedesc-expr))))))
+  (function namedUnion () (
+    (union-type
+      (builtin-ref-type json)
+      (error-type)))
+    (block-function-body
+      (return
+        (invocation depend (
+          (list-constructor-expr
+            (literal 65))
+          (typedesc-expr
+            (builtin-ref-type json)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal declared)))))))

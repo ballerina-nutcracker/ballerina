@@ -1,0 +1,63 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    %6 = ConstantLoad v
+    $desugar$0 = arr;
+    %8 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %8;
+    %10 = ConstantLoad 0
+    %11 = newArray list[%10]{}
+    $desugar$2 = %11;
+    %14 = ConstantLoad 0
+    $desugar$3 = %14;
+    GOTO bb2;
+  }
+  bb2 {
+    %17 = $desugar$3;
+    %18 = $desugar$1;
+    %16 = < %17 %18;
+    %16 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %1 = * %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$2),%5) -> bb5;
+  }
+  bb4 {
+    %19 = ConstantLoad m
+    %20 = ConstantLoad 1
+    %21 = newMap {| m: int, v: [int...], never... |}{%6=$desugar$2, %19=%20}
+    mapping = %21;
+    %23 = println(mapping) -> bb6;
+  }
+  bb5 {
+    %8 = (1, $desugar$3);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$3) = %7;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    %24 = mapping is {| m: int, v: [int...], never... |}
+    %25 = %24;
+    %26 = println(%25) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

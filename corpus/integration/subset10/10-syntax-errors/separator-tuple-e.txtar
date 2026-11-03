@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> separator-tuple-e.bal:17:14
+   |
+17 | type T [int $, string]; // @error
+   |              ^

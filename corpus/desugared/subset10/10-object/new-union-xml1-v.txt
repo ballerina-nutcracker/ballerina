@@ -1,0 +1,109 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
+  (class-definition XmlArg
+    (variable value (type
+      (value-type xml)))
+    (variable marker (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type xml)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal marker))
+          (simple-var-ref marker)))))
+  (class-definition StringArg
+    (variable value (type
+      (value-type xml)))
+    (variable marker (type
+      (value-type string)))
+    (function init (
+      (variable value (type
+        (value-type xml)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (simple-var-ref value))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal marker))
+          (simple-var-ref marker)))))
+  (function show (
+    (variable v (type
+      (value-type any)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type XmlArg)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type StringArg)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-element-literal a
+              (xml-text-literal 1))))))
+      (var-def
+        (variable s (type
+          (union-type
+            (user-defined-type XmlArg)
+            (user-defined-type StringArg))) (expr
+          (new (
+            (invocation lang.xml map (
+              (invocation lang.xml elements (
+                (simple-var-ref x)
+                (literal <nil>)))
+              (lambda
+                (function $xmlStep$main$0 (
+                  (variable $xmlStepItem)) ()
+                  (expr-function-body
+                    (xml-filter-expression
+                      (invocation lang.xml getChildren (
+                        (simple-var-ref $xmlStepItem)))
+                      (xml-name-pattern-identifier a)))))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation show (
+          (simple-var-ref s))))
+      (if
+        (type-test-expr is
+          (simple-var-ref s)
+          (user-defined-type XmlArg))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref s)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref s)
+                (literal marker)))))) ())
+      (block-stmt))))

@@ -1,0 +1,69 @@
+(package
+  (import-package ballerina io (as io))
+  (variable g1 (type
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))))
+  (variable g2 (type
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))))
+  (variable g3 (type
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))))
+  (variable s1 (type
+    (value-type string)))
+  (variable s2)
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref s1)
+        (literal s))
+      (assignment
+        (simple-var-ref g1)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (simple-var-ref s1))))
+      (assignment
+        (simple-var-ref s2)
+        (literal 1))
+      (assignment
+        (simple-var-ref g2)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (simple-var-ref s2))))
+      (assignment
+        (simple-var-ref g3)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal c))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g1)
+            (user-defined-type B)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g2)
+            (user-defined-type A)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref g3)
+            (user-defined-type B))))))))

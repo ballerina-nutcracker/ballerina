@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: UnknownInclusion
+  --> 27-e.bal:18:6
+   |
+18 |     *UnknownInclusion; // @error
+   |      ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: UnknownParamType
+  --> 27-e.bal:19:16
+   |
+19 |     function m(UnknownParamType p) returns int; // @error
+   |                ^^^^^^^^^^^^^^^^

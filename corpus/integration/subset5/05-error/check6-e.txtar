@@ -5,9 +5,3 @@ error[SEMANTIC_ERROR]: error type of check expression is not a subtype of the en
    |
 18 |     foo(check error("error")); // @error
    |         ^^^^^^^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: incompatible type: expected any, got never
-  --> check6-e.bal:18:9
-   |
-18 |     foo(check error("error")); // @error
-   |         ^^^^^^^^^^^^^^^^^^^^

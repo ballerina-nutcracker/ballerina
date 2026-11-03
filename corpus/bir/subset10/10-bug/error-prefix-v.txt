@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad failed
+    %2 = newError error(%1)
+    e = %2;
+    %4 = message(e) -> bb1;
+  }
+  bb1 {
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = fp ballerina/lang.error:message
+    message = %6;
+    %8 = message(e) -> bb3;
+  }
+  bb3 {
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

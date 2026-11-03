@@ -1,0 +1,116 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type boolean))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition Run
+    (object-type
+      (method-decl run (
+        (param p
+          (value-type int))) (
+        (value-type int)))))
+  (type-definition C
+    (record-type
+      (field x
+        (user-defined-type Run))
+      (field m
+        (value-type int))))
+  (type-definition D
+    (record-type
+      (field x
+        (user-defined-type Run))
+      (field m
+        (value-type string))))
+  (class-definition Runner
+    (function init () ()
+      (block-function-body))
+    (function run (
+      (variable p (type
+        (value-type int)) (expr
+        (literal 0)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref p)
+            (literal 1))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (value-type any)) (expr
+          (new
+            (user-defined-type Runner) ()))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-test-expr is
+                (simple-var-ref v)
+                (object-type
+                  (method-decl run (
+                    (param p
+                      (value-type int))) (
+                    (value-type int))))))))))
+      (var-def
+        (variable c (type
+          (union-type
+            (user-defined-type C)
+            (user-defined-type D))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-conversion-expr
+                (simple-var-ref v)
+                (object-type
+                  (method-decl run (
+                    (param p
+                      (value-type int))) (
+                    (value-type int))))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref c)
+            (user-defined-type C)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation run expr:
+            (index-based-access
+              (simple-var-ref c)
+              (literal x)) (
+            (literal 4))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (object-type
+            (method-decl run (
+              (param p
+                (value-type int))) (
+              (value-type int)))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation run expr:
+                (simple-var-ref v) (
+                (literal 4))))))) ())
+      (block-stmt)))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 0)))))

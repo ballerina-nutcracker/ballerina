@@ -22,13 +22,27 @@ function useColour() returns Colour { return R; }
   (const R enum-member (
     (value-type string)) (
     (literal R)))
+  (const G enum-member (
+    (value-type string)) (
+    (simple-var-ref (bad-identifier))))
   (type-definition Colour enum
-    (user-defined-type R))
+    (union-type
+      (user-defined-type R)
+      (user-defined-type G)))
   (function useColour () (
     (user-defined-type Colour))
     (block-function-body
       (return
-        (simple-var-ref R))))
-  (bad-top-level enum))
--- symbols --
-+Colour +R -G +useColour
+        (simple-var-ref R)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> enum-initializer-e.bal:17:29
+   |
+17 | public enum Colour { R, G = } // @error
+   |
+
+error[SYNTAX_ERROR]: missing expression
+  --> enum-initializer-e.bal:17:29
+   |
+17 | public enum Colour { R, G = } // @error
+   |

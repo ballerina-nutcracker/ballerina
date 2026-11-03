@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref g)
+            (literal 0))
+          (user-defined-type A)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (index-based-access
+            (simple-var-ref g)
+            (literal 1))
+          (user-defined-type B)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref h)
+          (user-defined-type C)))))
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (type-conversion-expr
+          (simple-var-ref h)
+          (user-defined-type C)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access y
+            (simple-var-ref c))
+          (tuple-type
+            (value-type string))))))
+  )
+)

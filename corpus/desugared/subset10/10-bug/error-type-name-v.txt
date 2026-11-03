@@ -1,0 +1,101 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (type-definition E
+    (error-type))
+  (type-definition MyDetail
+    (record-type
+      (field code
+        (value-type int))))
+  (type-definition MyError
+    (error-type
+      (user-defined-type MyDetail)))
+  (type-definition AliasError
+    (user-defined-type MyError))
+  (type-definition DistinctError
+    (error-type))
+  (type-definition OtherDistinctError
+    (error-type))
+  (type-definition AliasOfDistinctError
+    (user-defined-type DistinctError))
+  (type-definition BothDistinctError
+    (intersection-type
+      (user-defined-type DistinctError)
+      (user-defined-type OtherDistinctError)))
+  (type-definition ReadonlyError
+    (intersection-type
+      (value-type readonly)
+      (user-defined-type MyError)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (user-defined-type E)) (expr
+          (error-constructor-expr (
+            (literal x))))))
+      (var-def
+        (variable e2 (type
+          (user-defined-type E)) (expr
+          (error-constructor-expr
+            (user-defined-type E) (
+            (literal x))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e1))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e2))))
+      (expression-stmt
+        (invocation io println (
+          (error-constructor-expr
+            (user-defined-type MyError) (
+            (literal m)) (
+            (named-arg code
+              (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (error-constructor-expr
+            (user-defined-type AliasError) (
+            (literal a)) (
+            (named-arg code
+              (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (error-constructor-expr
+            (user-defined-type ReadonlyError) (
+            (literal r)) (
+            (named-arg code
+              (literal 2)))))))
+      (var-def
+        (variable list (type
+          (array-type
+            (union-type
+              (value-type any)
+              (error-type)) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (simple-var-ref e2)
+            (error-constructor-expr
+              (user-defined-type MyError) (
+              (literal m)) (
+              (named-arg code
+                (literal 5))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.value toBalString (
+            (simple-var-ref list))))))
+      (expression-stmt
+        (invocation io println (
+          (error-constructor-expr
+            (user-defined-type DistinctError) (
+            (literal d))))))
+      (expression-stmt
+        (invocation io println (
+          (error-constructor-expr
+            (user-defined-type AliasOfDistinctError) (
+            (literal ad))))))
+      (expression-stmt
+        (invocation io println (
+          (error-constructor-expr
+            (user-defined-type BothDistinctError) (
+            (literal b)))))))))

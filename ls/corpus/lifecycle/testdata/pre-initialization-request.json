@@ -1,0 +1,41 @@
+{
+  "source": "",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": "before",
+      "method": "unknown/method",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": "before",
+      "error": {
+        "code": -32002,
+        "message": "server not initialized"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    }
+  ]
+}

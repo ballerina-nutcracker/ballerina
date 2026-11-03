@@ -12,12 +12,6 @@ error[SYNTAX_ERROR]: missing asterisk token
 37 |     xml filtered = x.< | >; // @error
    |
 
-error[SYNTAX_ERROR]: missing asterisk token
-  --> filter-syntax-e.bal:37:26
-   |
-37 |     xml filtered = x.< | >; // @error
-   |
-
 error[SYNTAX_ERROR]: missing gt token
   --> filter-syntax-e.bal:25:24
    |

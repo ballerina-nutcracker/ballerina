@@ -1,0 +1,61 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (union-type
+            (value-type xml)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (var-def
+        (variable text (type
+          (value-type string)) (expr
+          (literal text))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type xml)
+            (value-type null))) (expr
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref text)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (value-type null)))))
+      (assignment
+        (simple-var-ref value)
+        (xml-element-literal a))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref text)))))
+      (var-def
+        (variable prefix (type
+          (union-type
+            (value-type string)
+            (value-type null))) (expr
+          (literal <nil>))))
+      (assignment
+        (simple-var-ref result)
+        (binary-expr +
+          (simple-var-ref prefix)
+          (xml-text-literal x)))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (value-type null)))))
+      (assignment
+        (simple-var-ref prefix)
+        (literal p))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref prefix)
+            (xml-text-literal x))))))))

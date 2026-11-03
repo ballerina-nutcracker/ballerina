@@ -1,0 +1,58 @@
+(package
+  (import-package ballerina io (as io))
+  (variable g (type
+    (union-type
+      (tuple-type
+        (value-type int)
+        (value-type int))
+      (tuple-type
+        (value-type string)))))
+  (variable h (type
+    (union-type
+      (tuple-type
+        (value-type int))
+      (tuple-type
+        (value-type string)))))
+  (variable nested (type
+    (union-type
+      (array-type
+        (tuple-type
+          (value-type int)
+          (value-type int)) dimensions: 1 ([]))
+      (array-type
+        (tuple-type
+          (value-type string)) dimensions: 1 ([])))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref g)
+        (list-constructor-expr
+          (literal s)))
+      (assignment
+        (simple-var-ref h)
+        (list-constructor-expr
+          (literal s)))
+      (assignment
+        (simple-var-ref nested)
+        (list-constructor-expr
+          (list-constructor-expr
+            (literal s))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref g))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref h)
+            (tuple-type
+              (value-type string))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref nested)
+            (array-type
+              (tuple-type
+                (value-type string)) dimensions: 1 ([])))))))))

@@ -1,0 +1,6 @@
+[package]
+org = "testorg"
+name = "includespkg"
+version = "0.1.0"
+
+include = ["docs/**", "assets/*.txt", "!assets/secret.txt"]

@@ -1,0 +1,71 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = newError error(%1)
+    e1 = %2;
+    %4 = ConstantLoad x
+    %5 = newError error(%4)
+    e2 = %5;
+    %7 = println(e1) -> bb1;
+  }
+  bb1 {
+    %8 = println(e2) -> bb2;
+  }
+  bb2 {
+    %9 = ConstantLoad m
+    %10 = ConstantLoad code
+    %11 = ConstantLoad 5
+    %12 = newMap mapping{%10=%11}
+    %13 = newError error<readonly&{| code: int, anydata... |}>(%9, %12)
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    %15 = ConstantLoad a
+    %16 = ConstantLoad code
+    %17 = ConstantLoad 1
+    %18 = newMap mapping{%16=%17}
+    %19 = newError error<readonly&{| code: int, anydata... |}>(%15, %18)
+    %20 = println(%19) -> bb4;
+  }
+  bb4 {
+    %21 = ConstantLoad r
+    %22 = ConstantLoad code
+    %23 = ConstantLoad 2
+    %24 = newMap mapping{%22=%23}
+    %25 = newError error<readonly&{| code: int, anydata... |}>(%21, %24)
+    %26 = println(%25) -> bb5;
+  }
+  bb5 {
+    %27 = ConstantLoad m
+    %28 = ConstantLoad code
+    %29 = ConstantLoad 5
+    %30 = newMap mapping{%28=%29}
+    %31 = newError error<readonly&{| code: int, anydata... |}>(%27, %30)
+    %32 = ConstantLoad 2
+    %33 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...][%32]{e2, %31}
+    list = %33;
+    %35 = toBalString(list) -> bb6;
+  }
+  bb6 {
+    %36 = println(%35) -> bb7;
+  }
+  bb7 {
+    %37 = ConstantLoad d
+    %38 = newError error<error>(%37)
+    %39 = println(%38) -> bb8;
+  }
+  bb8 {
+    %40 = ConstantLoad ad
+    %41 = newError error<error>(%40)
+    %42 = println(%41) -> bb9;
+  }
+  bb9 {
+    %43 = ConstantLoad b
+    %44 = newError error<error&error>(%43)
+    %45 = println(%44) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

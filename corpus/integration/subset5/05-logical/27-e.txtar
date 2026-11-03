@@ -1,13 +1,13 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: expect boolean types for &&
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
   --> 27-e.bal:18:17
    |
 18 |     boolean _ = a && true; // @error
-   |                 ^^^^^^^^^
+   |                 ^
 
-error[SEMANTIC_ERROR]: expect boolean types for ||
-  --> 27-e.bal:19:17
+error[SEMANTIC_ERROR]: incompatible type: expected boolean, got int
+  --> 27-e.bal:19:26
    |
 19 |     boolean _ = false || a; // @error
-   |                 ^^^^^^^^^^
+   |                          ^

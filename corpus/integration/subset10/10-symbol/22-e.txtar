@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInDuplicateClass
+  --> 22-e.bal:25:16
+   |
+25 |         return undefinedInDuplicateClass; // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'C'
+  --> 22-e.bal:17:7
+   |
+17 | class C { // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'C'
+  --> 22-e.bal:23:7
+   |
+23 | class C { // @error
+   |       ^

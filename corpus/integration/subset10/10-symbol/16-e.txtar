@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInDuplicate
+  --> 16-e.bal:23:12
+   |
+23 |     return undefinedInDuplicate; // @error
+   |            ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
+  --> 16-e.bal:17:10
+   |
+17 | function foo() returns int { // @error
+   |          ^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'foo'
+  --> 16-e.bal:21:10
+   |
+21 | function foo() returns int { // @error
+   |          ^^^
+
+error[SEMANTIC_ERROR]: unused variable 'unusedLocal'
+  --> 16-e.bal:22:5
+   |
+22 |     int unusedLocal = 2; // @error
+   |     ^^^^^^^^^^^^^^^^^^^^

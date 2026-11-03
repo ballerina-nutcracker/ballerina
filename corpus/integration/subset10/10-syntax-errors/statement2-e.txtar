@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> statement2-e.bal:19:12
+   |
+19 |     break $; // @error
+   |            ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> statement2-e.bal:21:15
+   |
+21 |     continue $; // @error
+   |               ^

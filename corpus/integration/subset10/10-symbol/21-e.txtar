@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: UnknownType
+  --> 21-e.bal:18:8
+   |
+18 | type T UnknownType; // @error
+   |        ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'T'
+  --> 21-e.bal:17:6
+   |
+17 | type T int; // @error
+   |      ^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'T'
+  --> 21-e.bal:18:6
+   |
+18 | type T UnknownType; // @error
+   |      ^

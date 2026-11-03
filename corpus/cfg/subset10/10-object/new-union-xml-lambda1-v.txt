@@ -1,0 +1,93 @@
+(IntFn
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access f
+          (simple-var-ref self))
+        (simple-var-ref f))
+    )
+  )
+)
+(XmlFn
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access f
+          (simple-var-ref self))
+        (simple-var-ref f))
+    )
+  )
+)
+(kind
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type XmlFn))
+        (literal XmlFn)
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type IntFn))
+          (literal IntFn)
+          (literal neither))))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-element-literal root
+          (xml-sequence-literal
+            (xml-element-literal a
+              (xml-text-literal 1))
+            (xml-element-literal a
+              (xml-text-literal 2)))))))
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type XmlFn)
+          (user-defined-type IntFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_0 (
+              (variable s)) ()
+              (expr-function-body
+                (xml-step-expression
+                  (simple-var-ref s)
+                  (xml-step-element-children
+                    (xml-name-pattern-identifier a))
+                  (xml-step-index-extend
+                    (literal 0)))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation kind (
+          (simple-var-ref c))))))
+    (type-test-expr is
+      (simple-var-ref c)
+      (user-defined-type XmlFn))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable f (expr
+        (field-based-access f
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (simple-var-ref x))))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (xml-step-expression
+      (simple-var-ref s)
+      (xml-step-element-children
+        (xml-name-pattern-identifier a))
+      (xml-step-index-extend
+        (literal 0)))
+  )
+)

@@ -18,8 +18,20 @@
 enum Colour { G = } // @error
 -- ast --
 (package
+  (const G enum-member (
+    (value-type string)) (
+    (simple-var-ref (bad-identifier))))
   (type-definition Colour enum
-    (bad-type))
-  (bad-top-level enum))
--- symbols --
-+Colour -G
+    (user-defined-type G)))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> enum-empty-e.bal:17:19
+   |
+17 | enum Colour { G = } // @error
+   |
+
+error[SYNTAX_ERROR]: missing expression
+  --> enum-empty-e.bal:17:19
+   |
+17 | enum Colour { G = } // @error
+   |

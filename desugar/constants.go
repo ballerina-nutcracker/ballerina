@@ -35,7 +35,7 @@ func materializeConstantRef(cx *functionContext, ref *ast.BLangVarRef) ast.BLang
 		return nil
 	}
 	value := constSym.ConstantValue()
-	ty := ref.GetDeterminedType()
+	ty := ref.Type()
 	if semtypes.IsZero(ty) {
 		cx.pkgCtx.compilerCtx.InternalError("constant reference type is not resolved", ref.GetPosition())
 		return nil
@@ -56,7 +56,7 @@ func constantValueLiteral(value values.BalValue, pos diagnostics.Location, ty se
 		lit = ast.NewBLangLiteral(pos, info.kind, value, originalValue, true)
 		expr = lit
 	}
-	lit.SetDeterminedType(ty)
+	lit.Ty = ty
 	return expr
 }
 

@@ -22,18 +22,32 @@ function useColour() returns Colour { return B; }
   (const R enum-member (
     (value-type string)) (
     (literal R)))
+  (const (bad-identifier) enum-member (
+    (value-type string)) (
+    (literal )))
   (const B enum-member (
     (value-type string)) (
     (literal B)))
   (type-definition Colour enum
     (union-type
-      (user-defined-type R)
+      (union-type
+        (user-defined-type R)
+        (user-defined-type ))
       (user-defined-type B)))
   (function useColour () (
     (user-defined-type Colour))
     (block-function-body
       (return
-        (simple-var-ref B))))
-  (bad-top-level enum))
--- symbols --
-+Colour +R +B
+        (simple-var-ref B)))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: 
+  --> enum-member-e.bal:17:18
+   |
+17 | enum Colour { R, , B } // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> enum-member-e.bal:17:18
+   |
+17 | enum Colour { R, , B } // @error
+   |

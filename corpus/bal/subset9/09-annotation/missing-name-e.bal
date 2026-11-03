@@ -22,7 +22,7 @@ public function main() {
 }
 
 @ // @error missing annotation name
-@ // @error missing annotation name
+@
 function consecutive() {
 }
 

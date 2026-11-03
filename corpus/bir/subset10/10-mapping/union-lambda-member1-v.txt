@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad f
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = newMap {| f: function(int) returns int, never... |}{%1=%2}
+    r = %3;
+    %5 = r is {| f: function(int) returns int, never... |}
+    %5 ? bb1 : bb4;
+  }
+  bb1 {
+    PushScopeFrame 8
+    %1 = ConstantLoad f
+    %0 = (1, r)[%1];
+    f = %0;
+    %3 = ConstantLoad 3
+    %4 = %3;
+    %5 = f(%4) -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb4 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = p;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}

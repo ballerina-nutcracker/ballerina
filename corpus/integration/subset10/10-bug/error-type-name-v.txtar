@@ -1,0 +1,11 @@
+-- stdout --
+error("x")
+error("x")
+error("m",code=5)
+error("a",code=1)
+error("r",code=2)
+[error("x"),error("m",code=5)]
+error DistinctError ("d")
+error AliasOfDistinctError ("ad")
+error BothDistinctError ("b")
+-- stderr --

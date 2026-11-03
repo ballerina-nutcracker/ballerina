@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> separator-first-error-e.bal:18:19
+   |
+18 |     int[] a = [1 $, 2 $, 3]; // @error
+   |                   ^

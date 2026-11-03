@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: 'check' in a default expression is not supported
+  --> field-default-check-1-fv.bal:24:19
+   |
+24 |     int|error v = check g(); // @error check in a default expression is unimplemented (#1219)
+   |                   ^^^^^^^^^

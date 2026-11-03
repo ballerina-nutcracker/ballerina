@@ -1,0 +1,130 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"ls\"\nname = \"contracts\"\nversion = \"0.1.0\"\n",
+    "main.bal": "function main() {}\n",
+    "modules/a/a.bal": "public function value() returns string { return \"one\"; }\n",
+    "modules/c/c.bal": "import ls/contracts.a;\nfunction consume() { int n = a:value(); _ = n; }\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "initialize",
+      "params": {},
+      "id": 1
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/modules/c/c.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "import ls/contracts.a;\nfunction consume() { int n = a:value(); _ = n; }\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/modules/a/a.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "public function value() returns string { return \"one\"; }\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didChange",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/modules/a/a.bal",
+          "version": 2
+        },
+        "contentChanges": [
+          {
+            "text": "public function value() returns int { return 1; }\n"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/modules/a/a.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/modules/c/c.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 29
+              },
+              "end": {
+                "line": 1,
+                "character": 38
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "incompatible type: expected int, got string"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/modules/a/a.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/modules/c/c.bal",
+        "diagnostics": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (literal ퟿) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (literal ) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (literal 􏿿) ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal A))))
+      (expression-stmt
+        (invocation io println (
+          (literal \u{D800})))))))

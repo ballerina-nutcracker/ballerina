@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for A
+  --> new-lazy-const-cycle1-e.bal:24:7
+   |
+24 | const A = later; // @error
+   |       ^
+
+error[SEMANTIC_ERROR]: invalid cycle detected for later
+  --> new-lazy-const-cycle1-e.bal:23:7
+   |
+23 | const later = A; // @error
+   |       ^^^^^

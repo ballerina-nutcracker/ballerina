@@ -1,12 +1,36 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-trapped-action-transfer-1-e.bal:31:21
+   |
+31 |         return trap c->value(values); // @error
+   |                     ^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-trapped-action-transfer-1-e.bal:39:21
+   |
+39 |         return trap c->constant(); // @error
+   |                     ^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-trapped-action-transfer-1-e.bal:47:21
+   |
+47 |         return trap c->value(localValues); // @error not an isolated expression in a lock
+   |                     ^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> lock-trapped-action-transfer-1-e.bal:47:30
+   |
+47 |         return trap c->value(localValues); // @error not an isolated expression in a lock
+   |                              ^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: no restricted variable referenced in lock statement
   --> lock-trapped-action-transfer-1-e.bal:46:5
    |
 46 |     lock { // @error
    |     ^^^^^^^^^^^^^^^^
-47 |         return trap c->value(localValues);
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+47 |         return trap c->value(localValues); // @error not an isolated expression in a lock
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 48 |     }
    |     ^
 
@@ -21,3 +45,9 @@ error[SEMANTIC_ERROR]: not an isolated expression
    |
 39 |         return trap c->constant(); // @error
    |                ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: not an isolated expression
+  --> lock-trapped-action-transfer-1-e.bal:47:16
+   |
+47 |         return trap c->value(localValues); // @error not an isolated expression in a lock
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^

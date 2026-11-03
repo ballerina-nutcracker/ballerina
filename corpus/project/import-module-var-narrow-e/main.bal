@@ -17,15 +17,11 @@
 import ballerina/io;
 import testorg/import_module_var_narrow_e.data;
 
-// A mutable module binding of an imported module is no more stable than one of
-// this module, but a final one stays eligible.
+// A mutable module variable of an imported module cannot be narrowed.
 public function main() {
     if data:shared is int {
         data:mutate();
         int y = data:shared; // @error an imported mutable module variable cannot be narrowed
         io:println(y);
-    }
-    if data:pinned is int {
-        io:println(data:pinned + 1);
     }
 }

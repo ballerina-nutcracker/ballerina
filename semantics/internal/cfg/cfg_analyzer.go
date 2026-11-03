@@ -32,7 +32,7 @@ import (
 // - Unitialized variable analysis: validate all variables are initialized before use in all code paths
 // - Unitialized field analysis: validate object fields are initialized in all code paths in init method (if they don't have inline initializers)
 // - Unitialized global var analysis: validate all module global variables are initialized in module init funciton (if they don't have inline initializers)
-// - Final reassignment analysis: validate final variables without inline initializers are not assigned when possibly assigned already
+// - Final reassignment analysis: validate final variables and class/service fields without inline initializers are not assigned when possibly assigned already
 func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
 	var wg sync.WaitGroup
 	wg.Go(func() { analyzeReachability(ctx, cfg) })

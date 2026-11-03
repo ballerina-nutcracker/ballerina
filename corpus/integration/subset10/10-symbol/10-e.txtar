@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: undefined XML namespace prefix 'q'
+  --> 10-e.bal:19:13
+   |
+19 |     xml _ = xml `<q:a>${v}</q:a><q:b/>`; // @error
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined XML namespace prefix 'q'
+  --> 10-e.bal:19:13
+   |
+19 |     xml _ = xml `<q:a>${v}</q:a><q:b/>`; // @error
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined XML namespace prefix 'r'
+  --> 10-e.bal:20:18
+   |
+20 |     xml _ = xml `<r:a><r:b/></r:a>`; // @error
+   |                  ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined XML namespace prefix 'r'
+  --> 10-e.bal:20:23
+   |
+20 |     xml _ = xml `<r:a><r:b/></r:a>`; // @error
+   |                       ^^^^^^

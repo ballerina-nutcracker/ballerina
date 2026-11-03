@@ -40,7 +40,7 @@ type PersonNilAge record {|
     int? age;
 |};
 
-type AnyMap map<any>;
+type AnydataMap map<anydata>;
 
 public function main() returns error? {
     json num = 42;
@@ -78,7 +78,7 @@ public function main() returns error? {
     io:println(withAge); // @output {"name":"Ann","age":null}
 
     json openMap = {"a": 1};
-    AnyMap anyMap = check openMap.fromJsonWithType(AnyMap);
-    io:println(anyMap); // @output {"a":1}
+    AnydataMap anydataMap = check openMap.fromJsonWithType(AnydataMap);
+    io:println(anydataMap); // @output {"a":1}
     return;
 }

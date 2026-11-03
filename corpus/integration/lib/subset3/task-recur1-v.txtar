@@ -1,0 +1,19 @@
+-- stdout --
+true true true
+limited: 3
+windowed in range: true
+forever fired: true
+false false true
+stopped: true
+0
+single: 1 false
+The maxCount should be a positive integer.
+The maxCount should be a positive integer.
+Repeat Interval cannot be zero.
+Repeat Interval cannot be zero.
+Repeat interval must be >= 0
+End time cannot be before start time
+Invalid time:
+Invalid time:
+0
+-- stderr --

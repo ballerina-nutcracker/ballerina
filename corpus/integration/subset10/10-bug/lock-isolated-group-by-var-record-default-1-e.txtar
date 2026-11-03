@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-group-by-var-record-default-1-e.bal:23:40
+   |
+23 |         group by record {| int value = seed; |} k = {value: x} // @error
+   |                                        ^^^^
+
 error[SEMANTIC_ERROR]: access of mutable variable
   --> lock-isolated-group-by-var-record-default-1-e.bal:23:40
    |

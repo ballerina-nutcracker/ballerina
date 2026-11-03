@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-stream-type-record-default-1-e.bal:27:70
+   |
+27 |     stream<record {| int a = 0; |}> s = new stream<record {| int a = counter; |}>(new Gen()); // @error
+   |                                                                      ^^^^^^^
+
 error[SEMANTIC_ERROR]: access of mutable variable
   --> lock-isolated-stream-type-record-default-1-e.bal:27:70
    |

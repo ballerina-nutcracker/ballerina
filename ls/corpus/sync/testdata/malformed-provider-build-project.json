@@ -1,0 +1,153 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"ls\"\nname = \"malformedprovider\"\nversion = \"0.1.0\"\n",
+    "main.bal": "import ls/malformedprovider.greet;\n\npublic function main() {\n    _ = greet:greeting();\n    int unused = 1;\n}\n",
+    "modules/greet/greet.bal": "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction broken(int {\n}\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/modules/greet/greet.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "public function greeting() returns string {\n    return \"hello\";\n}\n\nfunction broken(int {\n}\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didClose",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/modules/greet/greet.bal"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "import ls/malformedprovider.greet;\n\npublic function main() {\n    _ = greet:greeting();\n    int unused = 1;\n}\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/modules/greet/greet.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 4,
+                "character": 20
+              },
+              "end": {
+                "line": 4,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing identifier"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 4,
+                "character": 20
+              },
+              "end": {
+                "line": 4,
+                "character": 20
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing close paren token"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/modules/greet/greet.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/main.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 4,
+                "character": 4
+              },
+              "end": {
+                "line": 4,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected error|"large"|"medium"|"small"|"xlarge", got "medium"|"small"|"tiny"
+  --> equality-renarrow2-e.bal:27:16
+   |
+27 |         return s; // @error
+   |                ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected error|"large"|"medium"|"small"|"xlarge", got string&¬"medium"&¬"small"&¬"tiny"&¬"xl"&¬"xlarge"
+  --> equality-renarrow2-e.bal:29:12
+   |
+29 |     return s; // @error
+   |            ^

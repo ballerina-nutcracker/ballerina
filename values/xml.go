@@ -333,7 +333,12 @@ func NewValidatedXMLProcessingInstruction(target, data string, isReadonly bool) 
 	return NewXMLProcessingInstruction(target, data, isReadonly)
 }
 
+var xmlNeverType = semtypes.XMLSequence(semtypes.Never)
+
 func NewXMLText(body string) *XMLText {
+	if body == "" {
+		return &XMLText{Body: body, semType: xmlNeverType}
+	}
 	return &XMLText{Body: body, semType: semtypes.XMLText}
 }
 

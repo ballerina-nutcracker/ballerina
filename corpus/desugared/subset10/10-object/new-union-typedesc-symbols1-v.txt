@@ -1,0 +1,119 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition First
+    (function init (
+      (variable value (type
+        (value-type any)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition Second
+    (function init (
+      (variable value (type
+        (value-type any)))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref value))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function double (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref a)
+        (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fn (type
+          (value-type any)) (expr
+          (simple-var-ref double))))
+      (var-def
+        (variable rec (type
+          (record-type
+            (field a
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))))))
+      (var-def
+        (variable m (type
+          (value-type any)) (expr
+          (simple-var-ref rec))))
+      (var-def
+        (variable a (type
+          (union-type
+            (user-defined-type First)
+            (user-defined-type Second))) (expr
+          (new (
+            (type-test-expr is
+              (simple-var-ref fn)
+              (object-type
+                (method-decl run () (
+                  (value-type null)))))
+            (literal 1))))))
+      (var-def
+        (variable b (type
+          (union-type
+            (user-defined-type First)
+            (user-defined-type Second))) (expr
+          (new (
+            (type-conversion-expr
+              (simple-var-ref fn)
+              (function-type (
+                (value-type int)) (
+                (value-type int))))
+            (literal 1))))))
+      (var-def
+        (variable c (type
+          (union-type
+            (user-defined-type First)
+            (user-defined-type Second))) (expr
+          (new (
+            (type-conversion-expr
+              (simple-var-ref m)
+              (record-type
+                (field a
+                  (value-type int)
+                  (literal 1))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref a)
+              (user-defined-type First))
+            (literal First)
+            (literal Second)))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref b)
+              (user-defined-type First))
+            (literal First)
+            (literal Second)))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref c)
+              (user-defined-type First))
+            (literal First)
+            (literal Second))))))))

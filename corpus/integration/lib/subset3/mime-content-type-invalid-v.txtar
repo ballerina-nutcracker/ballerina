@@ -1,0 +1,11 @@
+-- stdout --
+More characters encountered in input than expected.
+More characters encountered in input than expected.
+More characters encountered in input than expected.
+More characters encountered in input than expected.
+More characters encountered in input than expected.
+Unable to find a sub type.
+Unable to find a sub type.
+ok
+text/plain; charset=utf-8
+-- stderr --

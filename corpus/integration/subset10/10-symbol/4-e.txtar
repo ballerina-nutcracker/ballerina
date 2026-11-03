@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undef
+  --> 4-e.bal:18:13
+   |
+18 |     int y = undef; // @error
+   |             ^^^^^

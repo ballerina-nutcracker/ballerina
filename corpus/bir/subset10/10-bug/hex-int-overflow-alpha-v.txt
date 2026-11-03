@@ -1,0 +1,28 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3.16923250480252e+21
+    value = %1;
+    %4 = value;
+    %5 = ConstantLoad 3.16923250480252e+21
+    %6 = %5;
+    %3 = == %4 %6;
+    %7 = %3;
+    %8 = println(%7) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad 3.16923250480252e+21
+    %10 = unknown %9;
+    negative = %10;
+    %13 = negative;
+    %14 = ConstantLoad 3.16923250480252e+21
+    %15 = unknown %14;
+    %16 = %15;
+    %12 = == %13 %16;
+    %17 = %12;
+    %18 = println(%17) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

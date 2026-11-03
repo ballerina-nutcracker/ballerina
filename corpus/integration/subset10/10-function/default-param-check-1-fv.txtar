@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: 'check' in a default expression is not supported
+  --> default-param-check-1-fv.bal:23:26
+   |
+23 | function f(int|error x = check g()) returns int { // @error check in a default expression is unimplemented (#1219)
+   |                          ^^^^^^^^^

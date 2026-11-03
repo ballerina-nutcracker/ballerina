@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to constant
+  --> assign-target-1-e.bal:25:5
+   |
+25 |     C = 1; // @error cannot assign to constant
+   |     ^
+
+error[SEMANTIC_ERROR]: cannot assign to function
+  --> assign-target-1-e.bal:27:5
+   |
+27 |     f = f; // @error cannot assign to function
+   |     ^
+
+error[SEMANTIC_ERROR]: cannot assign to type
+  --> assign-target-1-e.bal:26:5
+   |
+26 |     T = int; // @error cannot assign to type
+   |     ^

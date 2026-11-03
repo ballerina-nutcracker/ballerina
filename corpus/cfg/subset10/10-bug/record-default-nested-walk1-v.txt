@@ -1,0 +1,88 @@
+(localOuter
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (record-type
+          (field isFn
+            (value-type boolean)
+            (type-test-expr is
+              (invocation mk ())
+              (function-type () (
+                (record-type
+                  (field b
+                    (value-type int)
+                    (literal 2))))))))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access isFn
+        (simple-var-ref o)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable o (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access isFn
+          (simple-var-ref o)))))
+    (var-def
+      (variable nested (type
+        (function-type () (
+          (value-type int)))) (expr
+        (field-based-access nested
+          (simple-var-ref o)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nested ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation localOuter ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation paramOuter ( <default>)))))
+  )
+)
+(mk
+  (bb0 () ()
+    (return
+      (lambda
+        (function $anonFunc$_0 () (
+          (record-type
+            (field b
+              (value-type int)
+              (literal 2))))
+          (block-function-body
+            (return
+              (mapping-constructor-expr))))))
+  )
+)
+(paramOuter
+  (bb0 () ()
+    (return
+      (field-based-access isFn
+        (simple-var-ref p)))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (record-type
+          (field b
+            (value-type int)
+            (literal 2)))) (expr
+        (mapping-constructor-expr))))
+    (return
+      (field-based-access b
+        (simple-var-ref r)))
+  )
+)

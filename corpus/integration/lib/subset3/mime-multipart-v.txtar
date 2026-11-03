@@ -1,0 +1,17 @@
+-- stdout --
+multipart/form-data; boundary=XYZBOUNDARY
+2
+hello world
+1
+2
+2
+2
+form-data; name="a"
+value-a
+application/json
+{"k":"v"}
+
+false
+plain value
+multipart/form-data
+-- stderr --

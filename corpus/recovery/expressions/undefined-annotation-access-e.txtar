@@ -35,3 +35,9 @@ function probe() {
         (wildcard-binding-pattern)
         (annot-access-expr missing
           (simple-var-ref t))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown annotation: missing
+  --> undefined-annotation-access-e.bal:19:9
+   |
+19 |     _ = t.@missing; // @error undefined annotation must not panic
+   |         ^^^^^^^^^^

@@ -1,0 +1,92 @@
+module $anon.. v 0.0.0;
+class IntFn {
+
+  init(function(int) returns int,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StrFn {
+
+  init(function(string) returns string,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:IntFn
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = ConstantLoad 1
+    %4 = %1.init(%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    f = %5;
+    %8 = newObject $anon/.:StrFn
+    %9 = fp $anon/.:$anonFunc$_1
+    %10 = ConstantLoad 1
+    %11 = %8.init(%9,%10) -> bb5;
+  }
+  bb5 {
+    %13 = %11 is nil
+    %13 ? bb6 : bb7;
+  }
+  bb6 {
+    %12 = %8;
+    GOTO bb8;
+  }
+  bb7 {
+    %12 = %11;
+    GOTO bb8;
+  }
+  bb8 {
+    g = %12;
+    %15 = f is object { public function init(function(int) returns int, int) returns nil }
+    %16 = %15;
+    %17 = println(%16) -> bb9;
+  }
+  bb9 {
+    %18 = g is object { public function init(function(string) returns string, int) returns nil }
+    %19 = %18;
+    %20 = println(%19) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = v;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_1(string) -> string{
+  bb0 {
+    %3 = ConstantLoad !
+    %2 = + v %3;
+    %0 = %2;
+    return;
+  }
+}

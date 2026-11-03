@@ -5,3 +5,9 @@ error[SEMANTIC_ERROR]: invalid cycle detected for FIRST
    |
 17 | const string FIRST = SECOND; // @error
    |              ^^^^^
+
+error[SEMANTIC_ERROR]: invalid cycle detected for SECOND
+  --> namespace16-e.bal:18:14
+   |
+18 | const string SECOND = FIRST; // @error
+   |              ^^^^^^

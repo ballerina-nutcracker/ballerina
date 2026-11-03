@@ -245,7 +245,8 @@ func toString(v BalValue, visited map[uintptr]bool, isDirect bool) string {
 // BalString renders v in Ballerina's expression style, as used by
 // lang.value:toBalString: unlike String, strings are quoted at every level
 // (including the top), nil renders as "()" rather than the empty string,
-// decimals carry a trailing "d", and non-finite floats carry a "float:" prefix.
+// decimals carry a trailing "d", and non-finite floats are written as
+// float:NaN, float:Infinity and -float:Infinity.
 func BalString(v BalValue, visited map[uintptr]bool) string {
 	switch t := v.(type) {
 	case nil:
@@ -257,8 +258,10 @@ func BalString(v BalValue, visited map[uintptr]bool) string {
 	case float64:
 		formatted := FormatFloat(t)
 		switch formatted {
-		case "NaN", "Infinity", "-Infinity":
+		case "NaN", "Infinity":
 			return "float:" + formatted
+		case "-Infinity":
+			return "-float:Infinity"
 		default:
 			return formatted
 		}

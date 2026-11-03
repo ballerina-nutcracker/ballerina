@@ -81,9 +81,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangExprFunctionBody:
 		p.printExprFunctionBody(t)
 	case *BLangExternFunctionBody:
-		p.StartNode()
-		p.PrintString("extern-function-body")
-		p.EndNode()
+		p.printLeafNode("extern-function-body")
 	case *BLangVariable:
 		if t.IsConstant() {
 			p.printConstant(t)
@@ -129,7 +127,7 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangDefaultArg:
 		p.PrintString("<default>")
 	case *BLangInferredTypedescDefault:
-		p.PrintString("<>")
+		p.printLeafNode("inferred-typedesc-default")
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:
@@ -309,15 +307,15 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	case *BLangXMLNS:
 		p.printXMLNS(t)
 	case *BLangBadTopLevelNode:
-		p.printBadNode("bad-top-level")
+		p.printRecoveredNode("bad-top-level", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadStmt:
-		p.printBadNode("bad-stmt")
+		p.printRecoveredNode("bad-stmt", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadExprOrAction:
-		p.printBadNode("bad-expr-or-action")
+		p.printRecoveredNode("bad-expr-or-action", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadTypeNode:
-		p.printBadNode("bad-type")
+		p.printRecoveredNode("bad-type", t.RecoveredKind().String(), t.RecoveredTokens())
 	case *BLangBadIdentifier:
-		p.printBadNode("bad-identifier")
+		p.printLeafNode("bad-identifier")
 	default:
 		if p.Fallback != nil {
 			p.Fallback(p, node)
@@ -328,9 +326,22 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 	}
 }
 
-func (p *PrettyPrinter) printBadNode(kind string) {
+func (p *PrettyPrinter) printLeafNode(kind string) {
 	p.StartNode()
 	p.PrintString(kind)
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printRecoveredNode(name, kind string, tokens []RecoveredToken) {
+	p.StartNode()
+	p.PrintString(name + " " + kind)
+	if len(tokens) > 0 {
+		p.PrintString("(tokens")
+		for _, token := range tokens {
+			p.PrintString(fmt.Sprintf("(%q %s)", token.Text(), p.sourceRange(token.GetPosition())))
+		}
+		p.printSticky(")")
+	}
 	p.EndNode()
 }
 
@@ -343,7 +354,7 @@ func (p *PrettyPrinter) printXMLNS(node *BLangXMLNS) {
 	}
 	if prefix := node.GetPrefix(); prefix != nil {
 		p.PrintString("as")
-		p.PrintString(prefix.GetValue())
+		p.PrintString(printableIdentifierValue(prefix))
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -434,6 +445,9 @@ func (p *PrettyPrinter) printPackage(node *BLangPackage) {
 	for _, function := range sortedFunctions {
 		p.PrintInner(function)
 	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
+	}
 	p.indentLevel--
 	p.EndNode()
 }
@@ -502,17 +516,7 @@ func (p *PrettyPrinter) PrintString(str string) {
 func (p *PrettyPrinter) printPendingNodeLocation() {
 	location := p.pendingNodeLocation
 	if diagnostics.LocationHasSource(location) {
-		if p.DiagnosticEnv == nil {
-			panic("DiagnosticEnv is required to print AST node locations")
-		}
-		fmt.Fprintf(
-			&p.buffer,
-			" (position %d:%d %d:%d)",
-			p.DiagnosticEnv.StartLine(location)+1,
-			p.DiagnosticEnv.StartColumn(location)+1,
-			p.DiagnosticEnv.EndLine(location)+1,
-			p.DiagnosticEnv.EndColumn(location)+1,
-		)
+		fmt.Fprintf(&p.buffer, " (position %s)", p.sourceRange(location))
 		return
 	}
 	if diagnostics.IsLocationEmpty(location) {
@@ -524,6 +528,19 @@ func (p *PrettyPrinter) printPendingNodeLocation() {
 		return
 	}
 	p.buffer.WriteString(" (position synthetic)")
+}
+
+func (p *PrettyPrinter) sourceRange(location diagnostics.Location) string {
+	if p.DiagnosticEnv == nil {
+		panic("DiagnosticEnv is required to print AST node locations")
+	}
+	return fmt.Sprintf(
+		"%d:%d %d:%d",
+		p.DiagnosticEnv.StartLine(location)+1,
+		p.DiagnosticEnv.StartColumn(location)+1,
+		p.DiagnosticEnv.EndLine(location)+1,
+		p.DiagnosticEnv.EndColumn(location)+1,
+	)
 }
 
 func (p *PrettyPrinter) printPackageID(packageID *model.PackageID) {
@@ -675,7 +692,7 @@ func (p *PrettyPrinter) printXMLStepMethodCallExtend(node *BLangXMLStepMethodCal
 	p.PrintString("xml-step-method-call-extend")
 	p.indentLevel++
 	if node.Invocation != nil {
-		p.PrintString(node.Invocation.Name.GetValue())
+		p.PrintString(printableIdentifierValue(node.Invocation.Name))
 		for _, arg := range node.Invocation.ArgExprs {
 			p.PrintInner(arg)
 		}
@@ -692,16 +709,16 @@ func (p *PrettyPrinter) printXMLNamePatterns(patterns []BLangAtomicNamePattern) 
 			p.PrintString("xml-name-pattern-wildcard")
 		case NamePatternKindIdentifier:
 			p.PrintString("xml-name-pattern-identifier")
-			p.PrintString(pattern.Identifier.GetValue())
+			p.PrintString(printableIdentifierValue(pattern.Identifier))
 		case NamePatternKindQualifiedIdentifier:
 			p.PrintString("xml-name-pattern-qualified-identifier")
 			if pattern.NamespacePrefix != nil {
-				p.PrintString(pattern.NamespacePrefix.GetValue())
+				p.PrintString(printableIdentifierValue(pattern.NamespacePrefix))
 			}
-			p.PrintString(pattern.Identifier.GetValue())
+			p.PrintString(printableIdentifierValue(pattern.Identifier))
 		case NamePatternKindPrefix:
 			p.PrintString("xml-name-pattern-prefix-wildcard")
-			p.PrintString(pattern.NamespacePrefix.GetValue())
+			p.PrintString(printableIdentifierValue(pattern.NamespacePrefix))
 		default:
 			panic("unsupported XML name pattern kind")
 		}
@@ -816,7 +833,7 @@ func (p *PrettyPrinter) printVarRef(node *BLangVarRef) {
 
 func printableIdentifierValue(identifier IdentifierNode) string {
 	if _, ok := identifier.(*BLangBadIdentifier); ok {
-		return "<BAD>"
+		return "(bad-identifier)"
 	}
 	return identifier.GetValue()
 }
@@ -825,10 +842,10 @@ func (p *PrettyPrinter) printAnnotAccessExpr(node *BLangAnnotAccessExpr) {
 	p.StartNode()
 	p.PrintString("annot-access-expr")
 	if node.AnnotationName != nil {
-		if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" {
-			p.PrintString(node.PkgAlias.GetValue() + " " + node.AnnotationName.GetValue())
+		if node.PkgAlias != nil && printableIdentifierValue(node.PkgAlias) != "" {
+			p.PrintString(printableIdentifierValue(node.PkgAlias) + " " + printableIdentifierValue(node.AnnotationName))
 		} else {
-			p.PrintString(node.AnnotationName.GetValue())
+			p.PrintString(printableIdentifierValue(node.AnnotationName))
 		}
 	}
 	p.indentLevel++
@@ -888,10 +905,10 @@ func (p *PrettyPrinter) printInvocation(node *BLangInvocation) {
 	p.PrintString("invocation")
 
 	// Print function name with optional package alias
-	if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" {
-		p.PrintString(node.PkgAlias.GetValue() + " " + node.Name.GetValue())
+	if node.PkgAlias != nil && printableIdentifierValue(node.PkgAlias) != "" {
+		p.PrintString(printableIdentifierValue(node.PkgAlias) + " " + printableIdentifierValue(node.Name))
 	} else {
-		p.PrintString(node.Name.GetValue())
+		p.PrintString(printableIdentifierValue(node.Name))
 	}
 
 	// Print expression for method calls if present
@@ -931,7 +948,7 @@ func (p *PrettyPrinter) printResourcePathParamSegment(kind string, seg *BLangRes
 func (p *PrettyPrinter) printResourceMethod(node *BLangResourceMethod) {
 	p.StartNode()
 	p.PrintString("resource-function")
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 	p.indentLevel++
 	for i := range node.ResourcePath {
 		seg := &node.ResourcePath[i]
@@ -1034,7 +1051,7 @@ func (p *PrettyPrinter) printMultipleWaitAction(node *BLangMultipleWaitAction) {
 func (p *PrettyPrinter) printRemoteMethodCallAction(node *BLangRemoteMethodCallAction) {
 	p.StartNode()
 	p.PrintString("remote-method-call")
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 
 	if node.Expr != nil {
 		p.PrintString("expr:")
@@ -1059,7 +1076,7 @@ func (p *PrettyPrinter) printRemoteMethodCallAction(node *BLangRemoteMethodCallA
 func (p *PrettyPrinter) printNamedArgsExpression(node *BLangNamedArgsExpression) {
 	p.StartNode()
 	p.PrintString("named-arg")
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
 	p.indentLevel--
@@ -1141,7 +1158,7 @@ func (p *PrettyPrinter) printBuiltInRefTypeNode(node *BLangBuiltInRefTypeNode) {
 func (p *PrettyPrinter) printVariable(node *BLangVariable) {
 	p.StartNode()
 	p.PrintString("variable")
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 	if node.TypeNode() != nil {
 		p.PrintString("(type")
 		p.indentLevel++
@@ -1187,7 +1204,7 @@ func (p *PrettyPrinter) printFunction(node *BLangFunction) {
 	p.PrintString("function")
 
 	// Print function name
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 
 	// Print markdown documentation if present
 	if node.MarkdownDocumentationAttachment != nil {
@@ -1280,8 +1297,8 @@ func (p *PrettyPrinter) printTypeTestExpr(node *BLangTypeTestExpr) {
 	}
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
-	if node.Type.TypeDescriptor != nil {
-		p.PrintInner(node.Type.TypeDescriptor.(BLangNode))
+	if node.TestedType.TypeDescriptor != nil {
+		p.PrintInner(node.TestedType.TypeDescriptor.(BLangNode))
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -1526,7 +1543,7 @@ func (p *PrettyPrinter) printArrayType(node *BLangArrayType) {
 func (p *PrettyPrinter) printConstant(node *BLangVariable) {
 	p.StartNode()
 	p.PrintString("const")
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 	if node.Flags().Has(model.FlagEnumMember) {
 		p.PrintString("enum-member")
 	}
@@ -1622,7 +1639,7 @@ func (p *PrettyPrinter) printAnnotation(node *BLangAnnotation) {
 	p.StartNode()
 	p.PrintString("annotation")
 	if node.Name != nil {
-		p.PrintString(node.Name.GetValue())
+		p.PrintString(printableIdentifierValue(node.Name))
 	}
 	if node.IsPublic() {
 		p.PrintString("public")
@@ -1665,10 +1682,10 @@ func (p *PrettyPrinter) printAnnotationAttachment(node *BLangAnnotationAttachmen
 	p.StartNode()
 	p.PrintString("annotation-attachment")
 	if node.AnnotationName != nil {
-		if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" {
-			p.PrintString(node.PkgAlias.GetValue() + " " + node.AnnotationName.GetValue())
+		if node.PkgAlias != nil && printableIdentifierValue(node.PkgAlias) != "" {
+			p.PrintString(printableIdentifierValue(node.PkgAlias) + " " + printableIdentifierValue(node.AnnotationName))
 		} else {
-			p.PrintString(node.AnnotationName.GetValue())
+			p.PrintString(printableIdentifierValue(node.AnnotationName))
 		}
 	}
 	p.indentLevel++
@@ -2093,8 +2110,8 @@ func (p *PrettyPrinter) printConstrainedType(node *BLangConstrainedType) {
 	p.StartNode()
 	p.PrintString("constrained-type")
 	p.indentLevel++
-	if node.Type.TypeDescriptor != nil {
-		p.PrintInner(node.Type.TypeDescriptor.(BLangNode))
+	if node.BaseType.TypeDescriptor != nil {
+		p.PrintInner(node.BaseType.TypeDescriptor.(BLangNode))
 	}
 	if node.Constraint.TypeDescriptor != nil {
 		p.PrintInner(node.Constraint.TypeDescriptor.(BLangNode))
@@ -2108,7 +2125,7 @@ func (p *PrettyPrinter) printTypeDefinition(node *BLangTypeDefinition) {
 	p.StartNode()
 	p.PrintString("type-definition")
 	if node.Name != nil {
-		p.PrintString(node.Name.GetValue())
+		p.PrintString(printableIdentifierValue(node.Name))
 	}
 	if node.IsEnum() {
 		p.PrintString("enum")
@@ -2197,6 +2214,9 @@ func (p *PrettyPrinter) printObjectType(node *BLangObjectType) {
 	for _, member := range members {
 		p.PrintInner(member.(BLangNode))
 	}
+	for _, badNode := range node.BadMembers {
+		p.PrintInner(badNode)
+	}
 	p.indentLevel--
 	p.EndNode()
 }
@@ -2229,7 +2249,7 @@ func (p *PrettyPrinter) printMethodDecl(node *BMethodDecl) {
 			p.StartNode()
 			p.PrintString("param")
 			if param.Name != nil {
-				p.PrintString(param.Name.GetValue())
+				p.PrintString(printableIdentifierValue(param.Name))
 			}
 			p.indentLevel++
 			p.PrintInner(param.TypeDesc.(BLangNode))
@@ -2257,7 +2277,7 @@ func (p *PrettyPrinter) printFieldBaseAccess(node *BLangFieldBaseAccess) {
 	} else {
 		p.PrintString("field-based-access")
 	}
-	p.PrintString(node.Field.GetValue())
+	p.PrintString(printableIdentifierValue(node.Field))
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
 	p.indentLevel--
@@ -2288,7 +2308,7 @@ func (p *PrettyPrinter) printErrorConstructorExpr(node *BLangErrorConstructorExp
 		for _, namedArg := range node.NamedArgs {
 			p.StartNode()
 			p.PrintString("named-arg")
-			p.PrintString(namedArg.Name.GetValue())
+			p.PrintString(printableIdentifierValue(namedArg.Name))
 			p.indentLevel++
 			p.PrintInner(namedArg.Expr.(BLangNode))
 			p.indentLevel--
@@ -2338,7 +2358,7 @@ func (p *PrettyPrinter) printClassDefinition(node *BLangClassDefinition) {
 	if node.IsDistinct() {
 		p.PrintString("distinct")
 	}
-	p.PrintString(node.Name.GetValue())
+	p.PrintString(printableIdentifierValue(node.Name))
 	p.indentLevel++
 	p.printAnnotationAttachments(node)
 	// Print fields
@@ -2354,6 +2374,9 @@ func (p *PrettyPrinter) printClassDefinition(node *BLangClassDefinition) {
 	}
 	for _, rm := range node.ResourceMethods {
 		p.PrintInner(rm)
+	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -2407,6 +2430,9 @@ func (p *PrettyPrinter) printService(node *BLangService) {
 	}
 	for _, rm := range node.ResourceMethods {
 		p.PrintInner(rm)
+	}
+	for _, badNode := range node.BadTopLevelNodes {
+		p.PrintInner(badNode)
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -2478,7 +2504,7 @@ func (p *PrettyPrinter) printFunctionTypeParam(node *BLangFunctionTypeParam) {
 	p.StartNode()
 	p.PrintString("function-type-param")
 	if node.Name != nil {
-		p.PrintInner(node.Name)
+		p.PrintString(printableIdentifierValue(node.Name))
 	}
 	if node.TypeDesc != nil {
 		p.PrintInner(node.TypeDesc.(BLangNode))

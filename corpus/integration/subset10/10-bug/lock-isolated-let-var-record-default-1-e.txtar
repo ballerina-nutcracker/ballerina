@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-let-var-record-default-1-e.bal:23:35
+   |
+23 |         let record {| int value = seed; |} r = {value: x} // @error
+   |                                   ^^^^
+
 error[SEMANTIC_ERROR]: access of mutable variable
   --> lock-isolated-let-var-record-default-1-e.bal:23:35
    |

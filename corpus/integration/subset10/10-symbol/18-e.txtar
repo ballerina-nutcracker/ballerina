@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: undefinedInInitializer
+  --> 18-e.bal:18:13
+   |
+18 | int value = undefinedInInitializer; // @error
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'value'
+  --> 18-e.bal:17:5
+   |
+17 | int value = 1; // @error
+   |     ^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'value'
+  --> 18-e.bal:18:5
+   |
+18 | int value = undefinedInInitializer; // @error
+   |     ^^^^^

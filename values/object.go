@@ -124,3 +124,15 @@ func (o *Object) HasRemoteMethods() bool {
 	}
 	return false
 }
+
+// RemoteMethodNames returns the names, without the "$remote$" prefix, of the
+// remote methods the object declares. The order is unspecified.
+func (o *Object) RemoteMethodNames() []string {
+	var names []string
+	for k := range o.methodKeys {
+		if name, ok := strings.CutPrefix(k, "$remote$"); ok {
+			names = append(names, name)
+		}
+	}
+	return names
+}

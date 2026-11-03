@@ -1,0 +1,324 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field v
+        (value-type xml))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field v
+        (value-type xml))
+      (field m
+        (value-type string))))
+  (type-definition C
+    (record-type
+      (field v
+        (value-type xml))
+      (field m
+        (value-type float))))
+  (function kind (
+    (variable v (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type A))
+        (block-stmt
+          (return
+            (literal A))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type B))
+          (block-stmt
+            (return
+              (literal B))) ())
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref v)
+              (user-defined-type C))
+            (block-stmt
+              (return
+                (literal C))) ())
+          (block-stmt
+            (if
+              (type-test-expr is
+                (simple-var-ref v)
+                (tuple-type
+                  (value-type xml)
+                  (value-type int)))
+              (block-stmt
+                (return
+                  (literal [xml, int]))) ())
+            (block-stmt
+              (if
+                (type-test-expr is
+                  (simple-var-ref v)
+                  (tuple-type
+                    (value-type xml)
+                    (value-type string)))
+                (block-stmt
+                  (return
+                    (literal [xml, string]))) ())
+              (block-stmt
+                (if
+                  (type-test-expr is
+                    (simple-var-ref v)
+                    (tuple-type
+                      (function-type (
+                        (value-type xml)) (
+                        (array-type
+                          (value-type xml) dimensions: 1 ([]))))
+                      (value-type int)))
+                  (block-stmt
+                    (return
+                      (literal [function (xml) returns xml[], int]))) ())
+                (block-stmt
+                  (if
+                    (type-test-expr is
+                      (simple-var-ref v)
+                      (tuple-type
+                        (function-type (
+                          (value-type xml)
+                          (value-type int)) (
+                          (value-type xml)))
+                        (value-type int)))
+                    (block-stmt
+                      (return
+                        (literal [function (xml, int) returns xml, int]))) ())
+                  (block-stmt
+                    (return
+                      (literal other)))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal a
+                (xml-element-literal b
+                  (xml-text-literal 1)))
+              (xml-element-literal a
+                (xml-element-literal b
+                  (xml-text-literal 2))))))))
+      (var-def
+        (variable m (type
+          (union-type
+            (union-type
+              (user-defined-type A)
+              (user-defined-type B))
+            (user-defined-type C))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (xml-step-expression
+                (simple-var-ref x)
+                (xml-step-element-children
+                  (xml-name-pattern-identifier a))))
+            (key-value
+              (literal m)
+              (literal 1.5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref m))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (var-def
+        (variable l (type
+          (union-type
+            (union-type
+              (tuple-type
+                (value-type xml)
+                (value-type int))
+              (tuple-type
+                (value-type xml)
+                (value-type string)))
+            (tuple-type
+              (value-type xml)
+              (value-type float)))) (expr
+          (list-constructor-expr
+            (xml-step-expression
+              (simple-var-ref x)
+              (xml-step-element-children
+                (xml-name-pattern-identifier a))
+              (xml-step-index-extend
+                (literal 1)))
+            (literal s)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref l))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref l))))
+      (var-def
+        (variable mapped (type
+          (union-type
+            (tuple-type
+              (value-type xml)
+              (value-type int))
+            (tuple-type
+              (value-type xml)
+              (value-type string)))) (expr
+          (list-constructor-expr
+            (xml-step-expression
+              (simple-var-ref x)
+              (xml-step-element-children
+                (xml-name-pattern-identifier a))
+              (xml-step-method-call-extend map
+                (lambda
+                  (function $anonFunc$_0 (
+                    (variable e)) ()
+                    (expr-function-body
+                      (xml-step-expression
+                        (simple-var-ref e)
+                        (xml-step-element-children
+                          (xml-name-pattern-identifier b))))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref mapped))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mapped))))
+      (var-def
+        (variable nested (type
+          (union-type
+            (tuple-type
+              (function-type (
+                (value-type string)) (
+                (array-type
+                  (value-type string) dimensions: 1 ([]))))
+              (value-type int))
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (array-type
+                  (value-type xml) dimensions: 1 ([]))))
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (lambda
+              (function $anonFunc$_1 (
+                (variable s)) ()
+                (expr-function-body
+                  (list-constructor-expr
+                    (xml-step-expression
+                      (simple-var-ref s)
+                      (xml-step-element-children
+                        (xml-name-pattern-identifier a))
+                      (xml-step-method-call-extend map
+                        (lambda
+                          (function $anonFunc$_2 (
+                            (variable e)) ()
+                            (expr-function-body
+                              (xml-step-expression
+                                (simple-var-ref e)
+                                (xml-step-element-children
+                                  (xml-name-pattern-identifier b))))))))
+                    (xml-step-expression
+                      (simple-var-ref s)
+                      (xml-step-element-children
+                        (xml-name-pattern-identifier a))
+                      (xml-step-method-call-extend filter
+                        (lambda
+                          (function $anonFunc$_3 (
+                            (variable e)) ()
+                            (expr-function-body
+                              (binary-expr >
+                                (invocation length expr:
+                                  (group-expr
+                                    (xml-step-expression
+                                      (simple-var-ref e)
+                                      (xml-step-element-children
+                                        (xml-name-pattern-identifier b)))) ())
+                                (literal 0)))))))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref nested))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref nested)
+          (tuple-type
+            (function-type (
+              (value-type xml)) (
+              (array-type
+                (value-type xml) dimensions: 1 ([]))))
+            (value-type int)))
+        (block-stmt
+          (var-def
+            (variable f (expr
+              (index-based-access
+                (simple-var-ref nested)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation f (
+                (simple-var-ref x))))))) ())
+      (block-stmt
+        (var-def
+          (variable pair (type
+            (union-type
+              (tuple-type
+                (function-type (
+                  (value-type string)
+                  (value-type int)) (
+                  (value-type string)))
+                (value-type int))
+              (tuple-type
+                (function-type (
+                  (value-type xml)
+                  (value-type int)) (
+                  (value-type xml)))
+                (value-type int)))) (expr
+            (list-constructor-expr
+              (lambda
+                (function $anonFunc$_4 (
+                  (variable s)
+                  (variable i)) ()
+                  (expr-function-body
+                    (xml-step-expression
+                      (simple-var-ref s)
+                      (xml-step-element-children
+                        (xml-name-pattern-identifier a))
+                      (xml-step-index-extend
+                        (simple-var-ref i))))))
+              (literal 1)))))
+        (expression-stmt
+          (invocation io println (
+            (invocation kind (
+              (simple-var-ref pair))))))
+        (if
+          (type-test-expr is
+            (simple-var-ref pair)
+            (tuple-type
+              (function-type (
+                (value-type xml)
+                (value-type int)) (
+                (value-type xml)))
+              (value-type int)))
+          (block-stmt
+            (var-def
+              (variable g (expr
+                (index-based-access
+                  (simple-var-ref pair)
+                  (literal 0)))))
+            (expression-stmt
+              (invocation io println (
+                (invocation g (
+                  (simple-var-ref x)
+                  (literal 1))))))) ())
+        (block-stmt)))))

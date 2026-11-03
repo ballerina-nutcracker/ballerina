@@ -1,0 +1,66 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntBox
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (value-type int)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (binary-expr +
+            (simple-var-ref value)
+            (simple-var-ref marker))))))
+  (class-definition StringBox
+    (variable value (type
+      (value-type string)))
+    (function init (
+      (variable value (type
+        (value-type string)))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (simple-var-ref value))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (variable box (type
+    (union-type
+      (user-defined-type IntBox)
+      (user-defined-type StringBox))) (expr
+    (new (
+      (type-conversion-expr
+        (group-expr
+          (binary-expr +
+            (simple-var-ref later)
+            (literal 1)))
+        (user-defined-type Count))
+      (literal 1)))))
+  (variable later (type
+    (value-type int)) (expr
+    (literal 4)))
+  (type-definition Count
+    (value-type int))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref box)
+          (user-defined-type IntBox))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access value
+                (simple-var-ref box)))))) ())
+      (block-stmt))))

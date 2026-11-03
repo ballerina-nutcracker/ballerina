@@ -44,11 +44,11 @@ public function main() {
 
     int|error barResult = bar();
     if (barResult is error) {
-        io:println(barResult); // @output error ErrorWithDetail ("bar",message="bar message",id=1)
+        io:println(barResult); // @output error("bar",message="bar message",id=1)
     }
 
     int|error bazResult = baz();
     if (bazResult is error) {
-        io:println(bazResult); // @output error ErrorWithDetail ("baz",error ErrorWithDetail ("bar",message="bar message",id=2),message="baz message",id=3)
+        io:println(bazResult); // @output error("baz",error("bar",message="bar message",id=2),message="baz message",id=3)
     }
 }

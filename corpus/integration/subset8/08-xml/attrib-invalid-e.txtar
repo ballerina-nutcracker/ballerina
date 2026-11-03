@@ -17,21 +17,3 @@ error[SYNTAX_ERROR]: missing double quote token
    |
 18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
    |
-
-error[SYNTAX_ERROR]: missing double quote token
-  --> attrib-invalid-e.bal:18:38
-   |
-18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
-   |
-
-error[SYNTAX_ERROR]: missing double quote token
-  --> attrib-invalid-e.bal:18:38
-   |
-18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
-   |
-
-error[SYNTAX_ERROR]: missing equal token
-  --> attrib-invalid-e.bal:18:38
-   |
-18 |     xml:Element e1 = xml `<e attr1= 2>tt</e>`; // @error
-   |

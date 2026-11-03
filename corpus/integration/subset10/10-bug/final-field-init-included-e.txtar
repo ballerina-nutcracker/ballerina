@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final field 'v'
+  --> final-field-init-included-e.bal:31:9
+   |
+31 |         self.v = 6; // @error included final field assigned twice in init
+   |         ^^^^^^

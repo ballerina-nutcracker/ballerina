@@ -1,0 +1,9 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref g)
+          (user-defined-type A)))))
+  )
+)

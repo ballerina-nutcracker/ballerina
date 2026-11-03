@@ -42,31 +42,42 @@ type RecordWithUnknownInclusion record {
 -- ast --
 (package
   (type-definition RecordWithBadInclusion
-    (bad-type))
+    (record-type
+      (field good
+        (value-type int))))
   (type-definition RecordWithUnknownInclusion
     (record-type
       (field good
         (value-type int)
         (literal 1))))
   (class-definition C
+    (variable (bad-identifier) (type
+      (value-type int)))
     (variable goodField (type
       (value-type int)))
+    (function init (
+      (variable (bad-identifier) (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body))
+    (function (bad-identifier) (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body))
     (function valid () (
       (value-type null))
       (block-function-body
         (var-def
           (variable x (type
             (value-type int)) (expr
-            (bad-expr-or-action))))
+            (simple-var-ref (bad-identifier)))))
         (var-def
           (variable later (type
             (value-type int)) (expr
             (literal 2))))))
-    (bad-top-level field)
-    (bad-top-level function)
-    (bad-top-level function)
-    (bad-top-level type-inclusion)
-    (bad-top-level type-inclusion))
+    (bad-top-level type-inclusion (tokens ("*" 22:5 22:6) (":" 22:9 22:10) (";" 22:11 22:12)))
+    (bad-top-level type-inclusion (tokens ("*" 23:5 23:6) (";" 23:6 23:7))))
   (class-definition InclusionFailure
     (variable good (type
       (value-type int)))
@@ -75,10 +86,108 @@ type RecordWithUnknownInclusion record {
       (expr-function-body
         (field-based-access good
           (simple-var-ref self)))))
+  (function (bad-identifier) () (
+    (value-type null))
+    (block-function-body))
   (function valid () (
     (value-type null))
     (block-function-body
       (var-def
         (variable surviving (type
-          (user-defined-type C))))))
-  (bad-top-level function))
+          (user-defined-type C)))))))
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: 
+  --> class-e.bal:24:32
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |
+
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> class-e.bal:29:6
+   |
+29 |     *Missing; // @error
+   |      ^^^^^^^
+
+error[SEMANTIC_ERROR]: Unknown type: Missing
+  --> class-e.bal:38:6
+   |
+38 |     *Missing; // @error
+   |      ^^^^^^^
+
+error[SEMANTIC_ERROR]: type inclusion must be a user-defined type
+  --> class-e.bal:34:6
+   |
+34 |     *mod:_; // @error
+   |      ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'later'
+  --> class-e.bal:24:34
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |                                  ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'surviving'
+  --> class-e.bal:27:20
+   |
+27 | function valid() { C surviving; } // @error unused surviving sibling
+   |                    ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> class-e.bal:20:16
+   |
+20 |     function _(int x) {} // @error
+   |                ^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> class-e.bal:24:24
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |                        ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> class-e.bal:18:9
+   |
+18 |     int _; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> class-e.bal:20:14
+   |
+20 |     function _(int x) {} // @error
+   |              ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> class-e.bal:21:23
+   |
+21 |     function init(int _) {} // @error
+   |                       ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> class-e.bal:22:10
+   |
+22 |     *mod:_; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> class-e.bal:26:10
+   |
+26 | function _() {} // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> class-e.bal:34:10
+   |
+34 |     *mod:_; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-e.bal:23:6
+   |
+23 |     *; // @error
+   |
+
+error[SYNTAX_ERROR]: missing identifier
+  --> class-e.bal:24:32
+   |
+24 |     function valid() { int x = ; int later = 2; } // @error
+   |

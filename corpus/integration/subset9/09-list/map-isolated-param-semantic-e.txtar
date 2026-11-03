@@ -1,19 +1,19 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
-  --> map-isolated-param-semantic-e.bal:37:16
+  --> map-isolated-param-semantic-e.bal:40:16
    |
-37 |         return value; // @error
+40 |         return value; // @error
    |                ^^^^^
 
 error[SEMANTIC_ERROR]: invocation of a non-isolated function
-  --> map-isolated-param-semantic-e.bal:22:36
+  --> map-isolated-param-semantic-e.bal:25:36
    |
-22 |         return values.map(value => nonIsolated(value)).length(); // @error
+25 |         return values.map(value => nonIsolated(value)).length(); // @error
    |                                    ^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: invocation of a non-isolated function
-  --> map-isolated-param-semantic-e.bal:27:28
+  --> map-isolated-param-semantic-e.bal:30:28
    |
-27 |     int[] values = [1].map(nonIsolated); // @error
+30 |     int[] values = [1].map(nonIsolated); // @error
    |                            ^^^^^^^^^^^

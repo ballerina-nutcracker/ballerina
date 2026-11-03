@@ -70,6 +70,7 @@ type (
 
 	BLangWildCardBindingPattern struct {
 		bLangBindingPatternBase
+		nodeWithTypeBase
 	}
 )
 

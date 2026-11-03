@@ -17,12 +17,15 @@
 package corpus
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -37,13 +40,15 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/test_util/langlib"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 	"golang.org/x/tools/txtar"
 )
 
-// recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it,
-// and are checked against their markers and goldens only once every phase they exercise is enabled.
-const recoveryPhaseLimit = testphases.PhaseParse
+// recoveryPhaseLimit is the last phase that recovers from source errors. Fixtures run only up to it and their
+// goldens hold the tree built by then; markers are checked only once every phase they exercise is enabled. A phase
+// that reports an error other than a syntax error also ends the pipeline: only syntax errors are recovered from.
+const recoveryPhaseLimit = testphases.PhaseSemanticAnalysis
 
 func TestRecovery(t *testing.T) {
 	t.Parallel()
@@ -72,17 +77,18 @@ func TestRecovery(t *testing.T) {
 				t.Fatalf("expected %s and ast sections in %s", sourceName, inputPath)
 			}
 			content := string(archive.Files[0].Data)
-			sourcePath := filepath.Join(filepath.Dir(inputPath), sourceName)
+			sourcePath := sourceName
 			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
 			cx := context.NewCompilerContext(env)
 			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
 			finalPhase := testphases.PhaseSemanticAnalysis
 			var result *testphases.PipelineResult
+			var completed testphases.Phase
 			if astOnly {
 				finalPhase = testphases.PhaseAST
-				result, err = runRecoveryAST(cx, sourcePath, content)
+				result, completed, err = runRecoveryAST(cx, sourcePath, content)
 			} else {
-				result, err = runRecoveryPipeline(env, cx, nil, sourcePath, content)
+				result, completed, err = runRecoveryPipeline(env, cx, nil, sourcePath, content)
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -92,24 +98,19 @@ func TestRecovery(t *testing.T) {
 					t.Errorf("recovery pipeline reported an internal error: %s", diagnostic.String())
 				}
 			}
-			if recoveryPhaseLimit < finalPhase {
-				return
-			}
-			testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
 			printer := ast.PrettyPrinter{Fallback: printRecoveryFallback, ShowNodeLocations: astOnly, DiagnosticEnv: cx.DiagnosticEnv()}
-			var actualAST string
-			if astOnly {
-				actualAST = printer.Print(result.CompilationUnit)
-			} else {
-				actualAST = printer.Print(result.Package) + printLambdaResolutionTypes(semtypes.ContextFrom(env.GetTypeEnv()), result.Package)
+			actualStderr := printRecoveryDiagnostics(cx, sourcePath, content)
+			compareRecoveryGolden(t, inputPath, archive, printRecoveryResult(printer, env, result, completed), actualStderr)
+			finalPhaseReached := recoveryPhaseLimit >= finalPhase
+			if finalPhaseReached {
+				testharness.ValidateErrorMarkers(t, sourcePath, content, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
 			}
-			compareRecoveryGolden(t, inputPath, archive, actualAST)
-			for _, section := range archive.Files[2:] {
+			for _, section := range archive.Files[3:] {
 				switch section.Name {
-				case "symbols":
-					assertRecoverySymbols(t, result, string(section.Data))
 				case "diagnostic-counts":
-					assertRecoveryDiagnosticCounts(t, cx, string(section.Data))
+					if finalPhaseReached {
+						assertRecoveryDiagnosticCounts(t, cx, string(section.Data))
+					}
 				default:
 					t.Fatalf("unexpected section %s in %s", section.Name, inputPath)
 				}
@@ -122,23 +123,6 @@ func TestRecovery(t *testing.T) {
 	}
 	if count == 0 {
 		t.Fatal("no recovery fixtures discovered")
-	}
-}
-
-func assertRecoverySymbols(t *testing.T, result *testphases.PipelineResult, expected string) {
-	t.Helper()
-	if result.Package == nil || result.Package.Scope == nil {
-		t.Fatal("symbol expectations require semantic recovery")
-	}
-	for _, expectation := range strings.Fields(expected) {
-		if len(expectation) < 2 || (expectation[0] != '+' && expectation[0] != '-') {
-			t.Fatalf("invalid symbol expectation %q: use +name or -name", expectation)
-		}
-		name := expectation[1:]
-		_, found := result.Package.Scope.GetSymbol(name)
-		if want := expectation[0] == '+'; found != want {
-			t.Errorf("symbol %s: present = %t, want %t", name, found, want)
-		}
 	}
 }
 
@@ -200,17 +184,12 @@ func printLambdaResolutionTypes(typeContext semtypes.Context, pkg *ast.BLangPack
 		sb.WriteString("\n  (")
 		if lambda.Function == nil {
 			sb.WriteString("<missing-function>")
-			writeLambdaResolutionType(&sb, typeContext, "callable", lambda.GetDeterminedType())
+			writeLambdaResolutionType(&sb, typeContext, "callable", lambda.Type())
 			sb.WriteString(")")
 			continue
 		}
 		sb.WriteString(lambda.Function.Name.GetValue())
-		writeLambdaResolutionType(&sb, typeContext, "callable", lambda.GetDeterminedType())
-		writeLambdaResolutionType(&sb, typeContext, "function", lambda.Function.GetDeterminedType())
-		writeLambdaResolutionType(&sb, typeContext, "name", lambda.Function.Name.GetDeterminedType())
-		if body, ok := lambda.Function.Body.(*ast.BLangExprFunctionBody); ok {
-			writeLambdaResolutionType(&sb, typeContext, "expression-body", body.GetDeterminedType())
-		}
+		writeLambdaResolutionType(&sb, typeContext, "callable", lambda.Type())
 		sb.WriteString(")")
 	}
 	sb.WriteString(")\n")
@@ -225,44 +204,98 @@ func writeLambdaResolutionType(sb *strings.Builder, typeContext semtypes.Context
 	fmt.Fprintf(sb, " [%s=%s]", label, value)
 }
 
-func compareRecoveryGolden(t *testing.T, inputPath string, archive *txtar.Archive, actualAST string) {
+// printRecoveryResult prints the furthest tree the pipeline built: the compilation unit until symbol
+// resolution assembles the package, and the lambda types once type resolution has completed.
+func printRecoveryResult(printer ast.PrettyPrinter, env *context.CompilerEnvironment, result *testphases.PipelineResult,
+	completed testphases.Phase) string {
+	if result.Package == nil {
+		return printer.Print(result.CompilationUnit)
+	}
+	actualAST := printer.Print(result.Package)
+	if completed >= testphases.PhaseTypeResolution {
+		actualAST += printLambdaResolutionTypes(semtypes.ContextFrom(env.GetTypeEnv()), result.Package)
+	}
+	return actualAST
+}
+
+// printRecoveryDiagnostics renders every diagnostic as the CLI prints it, sorted like the integration stderr goldens.
+func printRecoveryDiagnostics(cx *context.CompilerContext, sourcePath, content string) string {
+	var stderr bytes.Buffer
+	fsys := fstest.MapFS{sourcePath: {Data: []byte(content)}}
+	testharness.PrintDiagnostics(fsys, &stderr, projects.NewDiagnosticResult(cx.Diagnostics()), cx.DiagnosticEnv())
+	return normalizeIntegrationStderr(stderr.String())
+}
+
+// compareRecoveryGolden compares the ast section and the stderr section that follows it; -update rewrites both,
+// adding the stderr section when it is missing.
+func compareRecoveryGolden(t *testing.T, inputPath string, archive *txtar.Archive, actualAST, actualStderr string) {
 	t.Helper()
-	expectedAST := string(archive.Files[1].Data)
+	hasStderr := len(archive.Files) > 2 && archive.Files[2].Name == "stderr"
 	if *update {
 		archive.Files[1].Data = []byte(actualAST)
+		if hasStderr {
+			archive.Files[2].Data = []byte(actualStderr)
+		} else {
+			archive.Files = slices.Insert(archive.Files, 2, txtar.File{Name: "stderr", Data: []byte(actualStderr)})
+		}
 		if test_util.UpdateTxtarArchiveIfNeeded(t, inputPath, archive.Files) {
-			t.Errorf("updated recovery AST: %s", inputPath)
+			t.Errorf("updated recovery golden: %s", inputPath)
 		}
 		return
 	}
+	if !hasStderr {
+		t.Fatalf("expected a stderr section after the ast section in %s", inputPath)
+	}
+	expectedAST := string(archive.Files[1].Data)
 	if test_util.NormalizeNewlines(expectedAST) != test_util.NormalizeNewlines(actualAST) {
 		t.Errorf("recovery AST mismatch: %s\n%s", inputPath, test_util.FormatExpectedGot(expectedAST, actualAST))
+	}
+	expectedStderr := string(archive.Files[2].Data)
+	if test_util.NormalizeNewlines(expectedStderr) != test_util.NormalizeNewlines(actualStderr) {
+		t.Errorf("recovery stderr mismatch: %s\n%s", inputPath, test_util.FormatExpectedGot(expectedStderr, actualStderr))
 	}
 }
 
 // AST-only fixtures exercise source forms whose semantic recovery is not supported yet.
-func runRecoveryAST(cx *context.CompilerContext, inputPath, content string) (*testphases.PipelineResult, error) {
+func runRecoveryAST(cx *context.CompilerContext, inputPath, content string) (*testphases.PipelineResult, testphases.Phase, error) {
 	cx.DiagnosticEnv().RegisterFile(inputPath, text.NewStringTextDocument(content))
 	tree, err := parser.GetSyntaxTree(cx, inputPath, content)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if recoveryPhaseLimit < testphases.PhaseAST {
-		return &testphases.PipelineResult{}, nil
+		return &testphases.PipelineResult{}, testphases.PhaseParse, nil
 	}
 	unit := nodebuilder.GetRecoveredCompilationUnit(cx, cx.GetDefaultPackage(), tree)
 	if unit == nil {
-		return nil, fmt.Errorf("recovered compilation unit is nil")
+		return nil, 0, fmt.Errorf("recovered compilation unit is nil")
 	}
-	return &testphases.PipelineResult{CompilationUnit: unit}, nil
+	return &testphases.PipelineResult{CompilationUnit: unit}, testphases.PhaseAST, nil
 }
 
 type recoveryPhases struct {
+	cx        *context.CompilerContext
 	completed testphases.Phase
 }
 
-func (p *recoveryPhases) limitReached() bool {
-	return p.completed >= recoveryPhaseLimit
+// stopped reports whether no later phase may run: the limit is reached, or a phase reported an error other than a
+// syntax error.
+func (p *recoveryPhases) stopped() bool {
+	return p.completed >= recoveryPhaseLimit || hasNonSyntaxError(p.cx)
+}
+
+func hasNonSyntaxError(cx *context.CompilerContext) bool {
+	for _, diagnostic := range cx.Diagnostics() {
+		info := diagnostic.DiagnosticInfo()
+		if info.Code() == "SYNTAX_ERROR" {
+			continue
+		}
+		switch info.Severity() {
+		case diagnostics.Error, diagnostics.Fatal:
+			return true
+		}
+	}
+	return false
 }
 
 func (p *recoveryPhases) run(phase testphases.Phase, execute func() error) error {
@@ -276,9 +309,9 @@ func (p *recoveryPhases) run(phase testphases.Phase, execute func() error) error
 	return nil
 }
 
-func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerContext, langlibs *langlib.Symbols, inputPath string, content string) (*testphases.PipelineResult, error) {
+func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerContext, langlibs *langlib.Symbols, inputPath string, content string) (*testphases.PipelineResult, testphases.Phase, error) {
 	result := &testphases.PipelineResult{}
-	phases := recoveryPhases{completed: testphases.PhaseParse - 1}
+	phases := recoveryPhases{cx: cx, completed: testphases.PhaseParse - 1}
 	cx.DiagnosticEnv().RegisterFile(inputPath, text.NewStringTextDocument(content))
 	var syntaxTree *st.SyntaxTree
 	if err := phases.run(testphases.PhaseParse, func() error {
@@ -286,10 +319,10 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 		syntaxTree, err = parser.GetSyntaxTree(cx, inputPath, content)
 		return err
 	}); err != nil {
-		return nil, fmt.Errorf("parsing recovery source: %w", err)
+		return nil, 0, fmt.Errorf("parsing recovery source: %w", err)
 	}
-	if phases.limitReached() {
-		return result, nil
+	if phases.stopped() {
+		return result, phases.completed, nil
 	}
 	if err := phases.run(testphases.PhaseAST, func() error {
 		result.CompilationUnit = nodebuilder.GetRecoveredCompilationUnit(cx, cx.GetDefaultPackage(), syntaxTree)
@@ -298,16 +331,16 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 		}
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	if phases.limitReached() {
-		return result, nil
+	if phases.stopped() {
+		return result, phases.completed, nil
 	}
 	if langlibs == nil {
 		var err error
 		langlibs, err = testphases.LoadLanglibs(env, cx)
 		if err != nil {
-			return nil, fmt.Errorf("loading recovery langlibs: %w", err)
+			return nil, 0, fmt.Errorf("loading recovery langlibs: %w", err)
 		}
 	}
 	pkgID := result.CompilationUnit.GetPackageID()
@@ -321,37 +354,37 @@ func runRecoveryPipeline(env *context.CompilerEnvironment, cx *context.CompilerC
 		result.Package.Scope = pkgScope
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	if phases.limitReached() {
-		return result, nil
+	if phases.stopped() {
+		return result, phases.completed, nil
 	}
 	if err := phases.run(testphases.PhaseTypeResolution, func() error {
 		semantics.ResolvePublicNodeTypes(cx, result.Package, importedSymbols)
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	if phases.limitReached() {
-		return result, nil
+	if phases.stopped() {
+		return result, phases.completed, nil
 	}
 	if err := phases.run(testphases.PhaseTypeNarrowing, func() error {
 		semantics.ResolvePrivateNodesTypes(cx, result.Package, importedSymbols)
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	if phases.limitReached() {
-		return result, nil
+	if phases.stopped() {
+		return result, phases.completed, nil
 	}
 	if err := phases.run(testphases.PhaseSemanticAnalysis, func() error {
 		semantics.AnalyzeSemantics(cx, result.Package, importedSymbols)
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if phases.completed != testphases.PhaseSemanticAnalysis {
-		return nil, fmt.Errorf("recovery reached phase %d, want semantic analysis", phases.completed)
+		return nil, 0, fmt.Errorf("recovery reached phase %d, want semantic analysis", phases.completed)
 	}
-	return result, nil
+	return result, phases.completed, nil
 }

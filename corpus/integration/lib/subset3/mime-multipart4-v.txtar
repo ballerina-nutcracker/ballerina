@@ -1,0 +1,8 @@
+-- stdout --
+1
+hello
+[]
+0
+0
+Entity body is not a type of composite media type. Received content-type : null
+-- stderr --

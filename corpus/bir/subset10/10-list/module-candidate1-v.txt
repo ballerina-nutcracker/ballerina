@@ -1,0 +1,22 @@
+module $anon.. v 0.0.0;
+g  [int, int, never...]|[string, never...];
+h  [int, never...]|[string, never...];
+nested  [[int, int, never...]...]|[[string, never...]...];
+main() -> nil{
+  bb0 {
+    %1 = println(g) -> bb1;
+  }
+  bb1 {
+    %2 = h is [string, never...]
+    %3 = %2;
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = nested is [[string, never...]...]
+    %6 = %5;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}

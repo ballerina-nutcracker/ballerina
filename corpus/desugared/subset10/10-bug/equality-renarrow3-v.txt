@@ -1,0 +1,102 @@
+(package
+  (import-package ballerina io (as io))
+  (function describe (
+    (variable x (type
+      (union-type
+        (union-type
+          (value-type int)
+          (value-type string))
+        (value-type boolean))))) (
+    (value-type string))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (union-type
+            (value-type int)
+            (value-type string)))
+        (block-stmt
+          (if
+            (binary-expr ==
+              (simple-var-ref x)
+              (literal a))
+            (block-stmt
+              (var-def
+                (variable s (type
+                  (finite-type
+                    (literal a))) (expr
+                  (simple-var-ref x))))
+              (return
+                (simple-var-ref s))) ())
+          (block-stmt)) ())
+      (block-stmt
+        (return
+          (literal other)))))
+  (function loopUntilA (
+    (variable x0 (type
+      (union-type
+        (value-type int)
+        (value-type string))))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (value-type string))) (expr
+          (simple-var-ref x0))))
+      (var-def
+        (variable seen (type
+          (value-type string)) (expr
+          (literal ))))
+      (while
+        (type-test-expr is
+          (simple-var-ref x)
+          (value-type string))
+        (block-stmt
+          (if
+            (binary-expr ==
+              (simple-var-ref x)
+              (literal a))
+            (block-stmt
+              (var-def
+                (variable s (type
+                  (finite-type
+                    (literal a))) (expr
+                  (simple-var-ref x))))
+              (compound-assignment +
+                (simple-var-ref seen)
+                (simple-var-ref s))
+              (assignment
+                (simple-var-ref x)
+                (literal 1))) (
+            (block-stmt
+              (assignment
+                (simple-var-ref x)
+                (literal a)))))))
+      (return
+        (simple-var-ref seen))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation describe (
+            (literal a)))
+          (literal  )
+          (invocation describe (
+            (literal 1)))
+          (literal  )
+          (invocation describe (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation loopUntilA (
+            (literal b)))
+          (literal  )
+          (invocation loopUntilA (
+            (literal a)))
+          (literal  )
+          (invocation loopUntilA (
+            (literal 1)))
+          (literal |)))))))

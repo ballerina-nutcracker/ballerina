@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: UNDEF
+  --> 9-e.bal:21:7
+   |
+21 | xmlns UNDEF as p; // @error
+   |       ^^^^^

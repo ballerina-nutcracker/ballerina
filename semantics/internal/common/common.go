@@ -63,12 +63,18 @@ func AssignmentTargetError(kind model.SymbolKind) (string, bool) {
 	}
 }
 
-func IterableType(ctx *context.CompilerContext, symbolType func(model.SymbolRef) semtypes.SemType) (semtypes.SemType, bool) {
+func IterableType(ctx *context.CompilerContext) (semtypes.SemType, bool) {
 	ref, ok := ctx.LangLibDistinctTypeSymbol("lang.object", "Iterable")
 	if !ok {
 		return semtypes.SemType{}, false
 	}
-	return symbolType(ref), true
+	return ctx.SymbolType(ref), true
+}
+
+// DeclaredNodes returns the nodes that declare a symbol. A declaration with a bad name declares none, so it has
+// no type.
+func DeclaredNodes[N ast.NodeWithSymbol](nodes []N) []N {
+	return slices.DeleteFunc(slices.Clone(nodes), func(node N) bool { return !ast.SymbolIsSet(node) })
 }
 
 type NamedClassMethod struct {
@@ -159,20 +165,6 @@ func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (str
 		ctx.InternalError(fmt.Sprintf("unexpected record key expression type: %T", key.Expr), key.GetPosition())
 		return "", false
 	}
-}
-
-// MappingFieldExpectedType returns the type a mapping constructor field's value
-// must have when the constructor has type mappingTy with atomic type mat.
-func MappingFieldExpectedType(ctx *context.CompilerContext, tc semtypes.Context, mappingTy semtypes.SemType, mat *semtypes.MappingAtomicType, kv *ast.BLangMappingKeyValueField) (semtypes.SemType, bool) {
-	if kv.Key.Kind == ast.MappingKeyComputed {
-		keyTy := semtypes.Intersect(kv.Key.Expr.GetDeterminedType(), semtypes.String)
-		return semtypes.MappingMemberTypeInnerVal(tc, mappingTy, keyTy), true
-	}
-	keyName, ok := MappingKeyName(ctx, kv.Key)
-	if !ok {
-		return semtypes.SemType{}, false
-	}
-	return mat.FieldInnerVal(keyName), true
 }
 
 func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualType semtypes.SemType) string {

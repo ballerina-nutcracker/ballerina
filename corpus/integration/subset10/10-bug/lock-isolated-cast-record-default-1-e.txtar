@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> lock-isolated-cast-record-default-1-e.bal:24:56
+   |
+24 |     record {| int value; |} r = <record {| int value = seed; |}> a; // @error
+   |                                                        ^^^^
+
 error[SEMANTIC_ERROR]: access of mutable variable
   --> lock-isolated-cast-record-default-1-e.bal:24:56
    |

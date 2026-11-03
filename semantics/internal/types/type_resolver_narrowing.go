@@ -18,6 +18,7 @@ package types
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -31,7 +32,7 @@ const (
 )
 
 type binding struct {
-	// ref is the underlying symbol we are narrowing. This is never a narrowed symbol
+	// ref is the base symbol this entry applies to. This is never a narrowed symbol
 	ref            model.SymbolRef
 	narrowedSymbol model.SymbolRef
 	prev           *binding
@@ -80,6 +81,8 @@ type expressionResult struct {
 	ty                semtypes.SemType
 	effect            expressionEffect
 	functionSignature model.FunctionSignatureRef
+	symbol            model.SymbolRef // resolved callee of an invocation or action, narrowed symbol of a var/const ref; empty otherwise
+	lax               bool            // field access resolved as lax access
 }
 
 type statementEffect struct {
@@ -89,19 +92,21 @@ type statementEffect struct {
 }
 
 // canNarrow reports whether a conditional refinement of ref applies at this
-// point. Constants, final bindings and parameters cannot be reassigned, so they
-// stay eligible. A mutable module binding is never eligible, because any call can
-// reassign it. A mutable local stops being eligible once a capture entry that
-// contains it is on the chain. A narrowed copy inherits the flags of the symbol
-// it copies, so eligibility is read from the original declaration.
+// point. Only local variables and parameters can be narrowed, so module-level
+// variables, constants and functions are never eligible. Final locals and
+// parameters cannot be reassigned, so they stay eligible. A mutable local stops
+// being eligible once a capture entry that contains it is on the chain. A
+// narrowed copy inherits the flags of the symbol it copies, so eligibility is
+// read from the original declaration.
 func canNarrow(t typeResolver, chain *binding, ref model.SymbolRef) bool {
-	if isStableDeclaration(t, ref) {
-		return true
-	}
 	ref = t.unnarrowedSymbol(ref)
 	cx := t.compilerContext()
-	if metadata, _ := cx.ValueSymbolMetadata(ref); metadata.TopLevel {
+	metadata, isValue := cx.ValueSymbolMetadata(ref)
+	if !isValue || metadata.TopLevel {
 		return false
+	}
+	if isStableMetadata(metadata) {
+		return true
 	}
 	for c := chain; c != nil; c = c.prev {
 		if c.isCaptureEntry() && cx.CaptureGroupContains(c.captures, ref) {
@@ -111,18 +116,15 @@ func canNarrow(t typeResolver, chain *binding, ref model.SymbolRef) bool {
 	return true
 }
 
-// isStableDeclaration reports whether ref names a declaration nothing can
-// reassign, so neither a capture nor the module policy can invalidate a
-// refinement of it.
+// isStableDeclaration reports whether ref names a final or parameter declaration,
+// which nothing can reassign, so no capture can invalidate a refinement of it.
 func isStableDeclaration(t typeResolver, ref model.SymbolRef) bool {
-	metadata, isValue := t.compilerContext().ValueSymbolMetadata(t.unnarrowedSymbol(ref))
-	if !isValue {
-		// A non-value symbol, such as a module function named in
-		// `foo is function () returns int`, is a constant, so capture semantics
-		// can be safely ignored for it.
-		return true
-	}
-	return metadata.Const || metadata.Final || metadata.Parameter
+	metadata, _ := t.compilerContext().ValueSymbolMetadata(t.unnarrowedSymbol(ref))
+	return isStableMetadata(metadata)
+}
+
+func isStableMetadata(metadata context.ValueSymbolMetadata) bool {
+	return metadata.Final || metadata.Parameter
 }
 
 // lookupBinding returns the effective symbol for a base symbol at the current
@@ -197,6 +199,19 @@ func narrowSymbol(t typeResolver, underlying model.SymbolRef, ty semtypes.SemTyp
 	narrowedSymbol := t.createNarrowedSymbol(underlying)
 	t.setSymbolType(narrowedSymbol, ty)
 	return narrowedSymbol
+}
+
+// narrowByType splits the current type of ref, which may be a narrowed symbol, by ty: the true outcome narrows the
+// base symbol to the part inside ty and the false outcome to the rest.
+func narrowByType(t typeResolver, chain *binding, ref model.SymbolRef, ty semtypes.SemType) expressionEffect {
+	symbolTy := t.symbolType(ref)
+	base := t.unnarrowedSymbol(ref)
+	trueSym := narrowSymbol(t, base, semtypes.Intersect(symbolTy, ty))
+	falseSym := narrowSymbol(t, base, semtypes.Diff(symbolTy, ty))
+	return expressionEffect{
+		ifTrue:  &binding{ref: base, narrowedSymbol: trueSym, prev: chain},
+		ifFalse: &binding{ref: base, narrowedSymbol: falseSym, prev: chain},
+	}
 }
 
 func unnarrowSymbol(t typeResolver, chain *binding, symbol model.SymbolRef) statementEffect {
@@ -472,10 +487,6 @@ func sequentialChain(t typeResolver, effect expressionEffect) *binding {
 	return mergeChains(t, effect.ifTrue, effect.ifFalse, semtypes.Union)
 }
 
-func singletonExprEffect(chain *binding, expr ast.BLangActionOrExpression) (expressionEffect, bool) {
-	return singletonResultEffect(chain, expr.GetDeterminedType())
-}
-
 // singletonResultEffect represents the outcome a constant-valued condition cannot
 // take. The impossible outcome keeps the expression's incoming chain: no
 // reachable use reads it, and importing the produced effects there would make an
@@ -524,4 +535,28 @@ func varRefExpInner(expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
 	default:
 		return model.SymbolRef{}, false
 	}
+}
+
+// withSingletonEffect replaces the effect of a result whose type is a boolean singleton: the branch that cannot be
+// taken narrows every symbol to never.
+func withSingletonEffect(chain *binding, result expressionResult) expressionResult {
+	singletonEffect, isSingleton := singletonResultEffect(chain, result.ty)
+	if !isSingleton {
+		return result
+	}
+	if isSingletonBool(result.ty, true) {
+		singletonEffect.ifTrue = result.effect.ifTrue
+	} else {
+		singletonEffect.ifFalse = result.effect.ifFalse
+	}
+	result.effect = singletonEffect
+	return result
+}
+
+// withRawSymbol records the committed callee of an already resolved invocation in result.
+func withRawSymbol(result expressionResult, symbol model.Symbol) expressionResult {
+	if callee, ok := symbol.(*model.SymbolRef); ok {
+		result.symbol = *callee
+	}
+	return result
 }

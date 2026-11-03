@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: failed to find a suitable object type
+  --> new-union-implicit1-e.bal:31:22
+   |
+31 |     First|Second s = new ([new], 1); // @error failed to find a suitable object type
+   |                      ^^^^^^^^^^^^^^

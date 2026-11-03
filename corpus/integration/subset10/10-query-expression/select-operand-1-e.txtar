@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> select-operand-1-e.bal:22:16
+   |
+22 |         select x + "a"; // @error select expression fails to resolve
+   |                ^^^^^^^

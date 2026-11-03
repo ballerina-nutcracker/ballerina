@@ -1,0 +1,81 @@
+module $anon.. v 0.0.0;
+n  int;
+name() -> string{
+  bb0 {
+    %1 = ConstantLoad s
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: {| x: int, never... |}|{| x: string, never... |}, g: {| x: int, never... |}|{| x: string, never... |}, h: {| x: int, never... |}|{| x: string, never... |}, i: {| x: int, never... |}|{| x: string, never... |}, never... |}{} defaults{f=$anon/.:$default$0, g=$anon/.:$default$1, h=$anon/.:$default$2, i=$anon/.:$default$3}
+    r = %1;
+    %4 = ConstantLoad f
+    %3 = r[%4];
+    %5 = %3 is {| x: string, never... |}
+    %6 = %5;
+    %7 = println(%6) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad g
+    %8 = r[%9];
+    %10 = %8 is {| x: string, never... |}
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %14 = ConstantLoad h
+    %13 = r[%14];
+    %15 = %13 is {| x: string, never... |}
+    %16 = %15;
+    %17 = println(%16) -> bb3;
+  }
+  bb3 {
+    %19 = ConstantLoad i
+    %18 = r[%19];
+    %20 = %18 is {| x: int, never... |}
+    %21 = %20;
+    %22 = println(%21) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$default$0() -> {| x: int, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad s
+    %3 = newMap {| x: string, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> {| x: int, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = name() -> bb1;
+  }
+  bb1 {
+    %3 = newMap {| x: string, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$2() -> {| x: int, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad c
+    %3 = newMap {| x: string, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$3() -> {| x: int, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = newMap {| x: int, never... |}{%1=n}
+    %0 = %2;
+    return;
+  }
+}

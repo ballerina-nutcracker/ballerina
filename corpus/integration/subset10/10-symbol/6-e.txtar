@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Variable already defined: x
+  --> 6-e.bal:24:9
+   |
+24 |         int x = 2; // @error
+   |         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'p'
+  --> 6-e.bal:17:21
+   |
+17 | function dup(int p, int p) returns int { // @error
+   |                     ^^^^^

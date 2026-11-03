@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid decimal literal: 1e99999999999
+  --> numeric-literal-range-1-e.bal:21:17
+   |
+21 |     decimal d = 1e99999999999d; // @error decimal literal out of range
+   |                 ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid float literal: 1e400
+  --> numeric-literal-range-1-e.bal:20:15
+   |
+20 |     float f = 1e400; // @error float literal out of range
+   |               ^^^^^

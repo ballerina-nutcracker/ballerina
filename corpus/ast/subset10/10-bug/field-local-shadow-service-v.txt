@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Reader
+    (object-type service
+      (method-decl read () (
+        (value-type int)))))
+  (class-definition SimpleListener
+    (function attach (
+      (variable svc (type
+        (user-defined-type Reader)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (invocation read expr:
+              (simple-var-ref svc) ()))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type Reader)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable listenerValue (type
+    (user-defined-type SimpleListener)) (expr
+    (new ())))
+  (service
+    (on
+    (simple-var-ref listenerValue))
+    (variable value (type
+      (value-type int)) (expr
+      (literal 5)))
+    (function read () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable value (type
+            (value-type int)) (expr
+            (literal 2))))
+        (return
+          (binary-expr +
+            (simple-var-ref value)
+            (field-based-access value
+              (simple-var-ref self)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

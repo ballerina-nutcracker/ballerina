@@ -1,0 +1,52 @@
+(Counter
+  (next
+    (bb0 () ()
+      (compound-assignment +
+        (field-based-access n
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (field-based-access n
+              (simple-var-ref self)))))
+    )
+  )
+)
+(Naturals
+  (iterator
+    (bb0 () ()
+      (return
+        (new ()))
+    )
+  )
+)
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable naturals (type
+        (user-defined-type Naturals)) (expr
+        (new ()))))
+  )
+  (bb1 (bb0 bb5) (bb2 bb3)
+    (simple-var-ref naturals)
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb4 bb5)
+    (binary-expr >
+      (simple-var-ref i)
+      (literal 3))
+  )
+  (bb3 (bb1 bb4) ())
+  (bb4 (bb2) (bb3)
+    (break)
+  )
+  (bb5 (bb2) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+)

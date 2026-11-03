@@ -1,0 +1,155 @@
+-- missing-semicolon-call-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function foo() {}
+
+function f(int a) returns int => a;
+
+function g(int a) returns string => a.toString();
+
+class Counter {
+    int count = 0;
+
+    function bar() returns int => self.count;
+
+    function reset() {
+        self.count = 0;
+    }
+}
+
+// Each missing semicolon is reported at the start of the following line.
+function calls(Counter obj) returns string {
+    foo()
+    obj.reset() // @error
+    int x = f(1) // @error
+    string s = g(x) // @error
+    int y = x + f(2) // @error
+    int z = obj.bar() + y // @error
+    return s + g(z); // @error
+}
+-- ast --
+(package
+  (import-package ballerina lang value (as lang.value))
+  (class-definition Counter
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function bar () (
+      (value-type int))
+      (expr-function-body
+        (field-based-access count
+          (simple-var-ref self))))
+    (function reset () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access count
+            (simple-var-ref self))
+          (literal 0)))))
+  (function foo () (
+    (value-type null))
+    (block-function-body))
+  (function f (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (simple-var-ref a)))
+  (function g (
+    (variable a (type
+      (value-type int)))) (
+    (value-type string))
+    (expr-function-body
+      (invocation lang.value toString (
+        (simple-var-ref a)))))
+  (function calls (
+    (variable obj (type
+      (user-defined-type Counter)))) (
+    (value-type string))
+    (block-function-body
+      (expression-stmt
+        (invocation foo ()))
+      (expression-stmt
+        (invocation reset expr:
+          (simple-var-ref obj) ()))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (invocation f (
+            (literal 1))))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (invocation g (
+            (simple-var-ref x))))))
+      (var-def
+        (variable y (type
+          (value-type int)) (expr
+          (binary-expr +
+            (simple-var-ref x)
+            (invocation f (
+              (literal 2)))))))
+      (var-def
+        (variable z (type
+          (value-type int)) (expr
+          (binary-expr +
+            (invocation bar expr:
+              (simple-var-ref obj) ())
+            (simple-var-ref y)))))
+      (return
+        (binary-expr +
+          (simple-var-ref s)
+          (invocation g (
+            (simple-var-ref z))))))))
+-- stderr --
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-semicolon-call-e.bal:36:1
+   |
+36 |     obj.reset() // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-semicolon-call-e.bal:37:1
+   |
+37 |     int x = f(1) // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-semicolon-call-e.bal:38:1
+   |
+38 |     string s = g(x) // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-semicolon-call-e.bal:39:1
+   |
+39 |     int y = x + f(2) // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-semicolon-call-e.bal:40:1
+   |
+40 |     int z = obj.bar() + y // @error
+   |
+
+error[SYNTAX_ERROR]: missing semicolon token
+  --> missing-semicolon-call-e.bal:41:1
+   |
+41 |     return s + g(z); // @error
+   |
+-- diagnostic-counts --
+6 missing semicolon token

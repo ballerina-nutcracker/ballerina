@@ -1,0 +1,60 @@
+module $anon.. v 0.0.0;
+class WithFn {
+
+  init(function(int) returns int,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+class WithInt {
+
+  init(int,string) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:WithFn
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = ConstantLoad 1
+    %4 = %1.init(%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    w = %5;
+    %8 = w is object { public function init(function(int) returns int, int) returns nil }
+    %9 = %8;
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = v;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}

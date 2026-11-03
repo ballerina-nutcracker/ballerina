@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected function(int) returns string, got function(int) returns int
+  --> explicit-lambda-expected-type-2-e.bal:20:39
+   |
+20 |     function (int) returns string h = function(int y) returns int { // @error incompatible return type
+   |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |         return y;
+   |         ^^^^^^^^^
+22 |     };
+   |     ^

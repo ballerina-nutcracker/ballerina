@@ -1,0 +1,45 @@
+(SimpleListener
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation io println (
+          (invocation read expr:
+            (simple-var-ref svc) ()))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ())
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ())
+  )
+)
+(main
+  (bb0 () ())
+)
+(read
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (literal 2))))
+    (return
+      (binary-expr +
+        (simple-var-ref value)
+        (field-based-access value
+          (simple-var-ref self))))
+  )
+)

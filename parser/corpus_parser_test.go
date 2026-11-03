@@ -39,27 +39,10 @@ var corpusParserSkipList = []string{
 	// No skipped tests
 }
 
-// Regex parser ignore list (13 files: regex parser not yet implemented)
-var regexParserIgnoreList = []string{
-	"bala/test_bala/types/regexp_type_test.bal",
-	"bala/test_projects/test_project_regexp/regexpTypes.bal",
-	"jvm/largeMethods/modules/functions/large-functions.bal",
-	"query/query-action.bal",
-	"query/query-expr-with-query-construct-type.bal",
-	"query/query_action_or_expr.bal",
-	"query/simple-query-with-defined-type.bal",
-	"types/readonly/test_inherently_immutable_type.bal",
-	"types/readonly/test_selectively_immutable_type.bal",
-	"types/regexp/regexp_type_test.bal",
-	"types/regexp/regexp_value_negative_test.bal",
-	"types/regexp/regexp_value_test.bal",
-	"types/table/table_key_field_value_test.bal",
-}
-
 // shouldIgnoreFile checks if a file should be ignored based on the ignore lists
 func shouldIgnoreFile(filePath string) bool {
 	allIgnoreLists := [][]string{
-		regexParserIgnoreList,
+		test_util.RegexParserIgnoreList,
 	}
 
 	for _, ignoreList := range allIgnoreLists {

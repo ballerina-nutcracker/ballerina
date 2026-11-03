@@ -1,0 +1,108 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Size
+    (union-type
+      (union-type
+        (union-type
+          (finite-type
+            (literal small))
+          (finite-type
+            (literal medium)))
+        (finite-type
+          (literal large)))
+      (finite-type
+        (literal xlarge))))
+  (function size (
+    (variable s (type
+      (value-type string)))) (
+    (union-type
+      (user-defined-type Size)
+      (error-type)))
+    (block-function-body
+      (if
+        (binary-expr ||
+          (binary-expr ==
+            (simple-var-ref s)
+            (literal xl))
+          (binary-expr ==
+            (simple-var-ref s)
+            (literal xlarge)))
+        (block-stmt
+          (return
+            (literal xlarge))) ())
+      (block-stmt
+        (if
+          (binary-expr ||
+            (binary-expr ||
+              (binary-expr ==
+                (simple-var-ref s)
+                (literal small))
+              (binary-expr ==
+                (simple-var-ref s)
+                (literal medium)))
+            (binary-expr ==
+              (simple-var-ref s)
+              (literal large)))
+          (block-stmt
+            (return
+              (simple-var-ref s))) ())
+        (block-stmt
+          (return
+            (error-constructor-expr (
+              (literal unknown))))))))
+  (function sizeNotEqual (
+    (variable s (type
+      (value-type string)))) (
+    (union-type
+      (user-defined-type Size)
+      (error-type)))
+    (block-function-body
+      (if
+        (binary-expr &&
+          (binary-expr !=
+            (simple-var-ref s)
+            (literal xl))
+          (binary-expr !=
+            (simple-var-ref s)
+            (literal xlarge)))
+        (block-stmt
+          (if
+            (binary-expr &&
+              (binary-expr &&
+                (binary-expr !=
+                  (simple-var-ref s)
+                  (literal small))
+                (binary-expr !=
+                  (simple-var-ref s)
+                  (literal medium)))
+              (binary-expr !=
+                (simple-var-ref s)
+                (literal large)))
+            (block-stmt
+              (return
+                (error-constructor-expr (
+                  (literal unknown))))) ())
+          (block-stmt
+            (return
+              (simple-var-ref s)))) ())
+      (block-stmt
+        (return
+          (literal xlarge)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation size (
+            (literal medium)))
+          (literal  )
+          (invocation size (
+            (literal xl))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sizeNotEqual (
+            (literal large)))
+          (literal  )
+          (invocation sizeNotEqual (
+            (literal xlarge)))))))))

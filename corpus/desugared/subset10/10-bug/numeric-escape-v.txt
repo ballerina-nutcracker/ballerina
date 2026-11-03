@@ -1,0 +1,24 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (literal ퟿))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (literal 􏿿))))))
+      (expression-stmt
+        (invocation io println (
+          (literal A))))
+      (expression-stmt
+        (invocation io println (
+          (literal \u{D800})))))))

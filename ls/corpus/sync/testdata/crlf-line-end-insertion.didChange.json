@@ -1,0 +1,150 @@
+{
+  "source": "",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "publishDiagnostics": {
+              "versionSupport": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/buffer.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "public function main() {\r\n    int unused = 1;\r\n}\r\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didChange",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/buffer.bal",
+          "version": 2
+        },
+        "contentChanges": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 999
+              },
+              "end": {
+                "line": 1,
+                "character": 999
+              }
+            },
+            "text": " int added = 2;"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/buffer.bal",
+        "version": 1,
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 4
+              },
+              "end": {
+                "line": 1,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/buffer.bal",
+        "version": 2,
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 4
+              },
+              "end": {
+                "line": 1,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 20
+              },
+              "end": {
+                "line": 1,
+                "character": 34
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'added'"
+          }
+        ]
+      }
+    }
+  ]
+}

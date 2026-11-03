@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: expected 'resource'
+  --> missing-token-resource-e.bal:18:1
+   |
+18 |     remote function get id() returns int; // @error
+   |

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: type definition C is empty
+  --> stream-recursive-completion-e.bal:17:1
+   |
+17 | type C stream<C, C>; // @error type definition is empty
+   | ^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,49 @@
+(isolatedFn
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (function-type () (
+          (value-type int)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable r (type
+                  (constrained-type
+                    (builtin-ref-type future)
+                    (value-type int))) (expr
+                  (start-action isolated
+                    (invocation isolatedFn (
+                      (literal 42)))))))
+              (return
+                (check-panicked-expr
+                  (single-wait-action
+                    (simple-var-ref r))))))))))
+    (compound-assignment +
+      (simple-var-ref counter)
+      (invocation f ()))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action isolated
+          (invocation isolatedFn (
+            (literal 42)))))))
+    (return
+      (check-panicked-expr
+        (single-wait-action
+          (simple-var-ref r))))
+  )
+)

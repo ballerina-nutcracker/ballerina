@@ -7,6 +7,7 @@ linters:
     - usetesting
     - dupl
     - exhaustive
+    - gochecksumtype
     - iface
     - iotamixing
     - reassign
@@ -20,6 +21,8 @@ linters:
         - ".*"
     exhaustive:
       default-signifies-exhaustive: true
+    gochecksumtype:
+      default-signifies-exhaustive: false
     depguard:
       rules:
         no-test-util-in-production:

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> method-decl-rest-default-uninit1-e.bal:19:62
+   |
+19 |     boolean b = v is object { function run(record {| int a = x; |}... r); }; // @error variable may not be initialized
+   |                                                              ^

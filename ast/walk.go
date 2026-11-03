@@ -70,6 +70,9 @@ func Walk(v Visitor, node BLangNode) {
 		for i := range node.ClassDefinitions {
 			Walk(v, node.ClassDefinitions[i])
 		}
+		for i := range node.BadTopLevelNodes {
+			Walk(v, node.BadTopLevelNodes[i])
+		}
 
 	case *BLangCompilationUnit:
 		for _, topLevelNode := range node.TopLevelNodes {
@@ -481,7 +484,7 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Expr != nil {
 			Walk(v, node.Expr.(BLangNode))
 		}
-		WalkTypeData(v, &node.Type)
+		WalkTypeData(v, &node.TestedType)
 
 	case *BLangCommitExpr:
 		panic("unimplemented")
@@ -624,7 +627,7 @@ func Walk(v Visitor, node BLangNode) {
 		WalkTypeData(v, &node.DetailType)
 
 	case *BLangConstrainedType:
-		WalkTypeData(v, &node.Type)
+		WalkTypeData(v, &node.BaseType)
 		WalkTypeData(v, &node.Constraint)
 	case *BLangStreamType:
 		WalkTypeData(v, &node.ValueType)
@@ -663,6 +666,9 @@ func Walk(v Visitor, node BLangNode) {
 		for member := range node.Members() {
 			Walk(v, member.(BLangNode))
 		}
+		for i := range node.BadMembers {
+			Walk(v, node.BadMembers[i])
+		}
 
 	case *BObjectField:
 		attachments := node.GetAnnotationAttachments()
@@ -672,23 +678,10 @@ func Walk(v Visitor, node BLangNode) {
 		Walk(v, node.Ty.(BLangNode))
 
 	case *BMethodDecl:
-		for _, param := range node.RequiredParams {
-			Walk(v, param.TypeDesc.(BLangNode))
-		}
-		if node.ReturnTypeDescriptor != nil {
-			Walk(v, node.ReturnTypeDescriptor.(BLangNode))
-		}
+		walkFunctionTypeSignature(v, &node.BLangFunctionType)
 
 	case *BLangFunctionType:
-		for i := range node.RequiredParams {
-			Walk(v, node.RequiredParams[i])
-		}
-		if node.RestParam != nil {
-			Walk(v, node.RestParam)
-		}
-		if node.ReturnTypeDescriptor != nil {
-			Walk(v, node.ReturnTypeDescriptor.(BLangNode))
-		}
+		walkFunctionTypeSignature(v, node)
 
 	case *BLangFunctionTypeParam:
 		if node.Name != nil {
@@ -998,6 +991,18 @@ func WalkTypeData(v Visitor, typeData *TypeData) {
 	v.Visit(nil)
 }
 
+func walkFunctionTypeSignature(v Visitor, fnType *BLangFunctionType) {
+	for i := range fnType.RequiredParams {
+		Walk(v, fnType.RequiredParams[i])
+	}
+	if fnType.RestParam != nil {
+		Walk(v, fnType.RestParam)
+	}
+	if fnType.ReturnTypeDescriptor != nil {
+		Walk(v, fnType.ReturnTypeDescriptor.(BLangNode))
+	}
+}
+
 func walkClassDefnBody(v Visitor, b *classDefnBase) {
 	for i := range b.AnnAttachments {
 		Walk(v, &b.AnnAttachments[i])
@@ -1013,6 +1018,9 @@ func walkClassDefnBody(v Visitor, b *classDefnBase) {
 	}
 	for _, field := range b.Fields {
 		Walk(v, field)
+	}
+	for _, badNode := range b.BadTopLevelNodes {
+		Walk(v, badNode)
 	}
 	WalkTypeData(v, &b.typeData)
 }

@@ -107,6 +107,7 @@ func createBalaProjectConfig(fsys fs.FS, balaPath string) (balaProjectConfigResu
 		Keywords:         manifest.Keywords(),
 		ExportedModules:  manifest.ExportedModules(),
 		Modules:          manifest.Modules(),
+		Include:          manifest.Include(),
 		Repository:       manifest.Repository(),
 		BallerinaVersion: manifest.BallerinaVersion(),
 		Visibility:       manifest.Visibility(),

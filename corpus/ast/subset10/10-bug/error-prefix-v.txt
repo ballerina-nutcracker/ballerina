@@ -1,0 +1,25 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal failed))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation error message (
+            (simple-var-ref e))))))
+      (var-def
+        (variable message (type
+          (function-type (
+            (error-type)) (
+            (value-type string)))) (expr
+          (simple-var-ref error message))))
+      (expression-stmt
+        (invocation io println (
+          (invocation message (
+            (simple-var-ref e)))))))))

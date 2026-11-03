@@ -428,7 +428,7 @@ func alwaysTerminatesViaCheck(tyCtx semtypes.Context, expr ast.BLangExpression) 
 	if inner == nil {
 		return false
 	}
-	return semtypes.IsSubtype(tyCtx, inner.GetDeterminedType(), semtypes.Error)
+	return semtypes.IsSubtype(tyCtx, inner.Type(), semtypes.Error)
 }
 
 // Branching statement handlers
@@ -471,11 +471,11 @@ func (analyzer *functionControlFlowAnalyzer) analyzeIf(curBB bbRef, stmt *ast.BL
 }
 
 func (analyzer *functionControlFlowAnalyzer) isFalse(node ast.BLangExpression) bool {
-	return semtypes.IsSameType(analyzer.tyCtx, node.GetDeterminedType(), falseTy)
+	return semtypes.IsSameType(analyzer.tyCtx, node.Type(), falseTy)
 }
 
 func (analyzer *functionControlFlowAnalyzer) isTrue(node ast.BLangExpression) bool {
-	return semtypes.IsSameType(analyzer.tyCtx, node.GetDeterminedType(), trueTy)
+	return semtypes.IsSameType(analyzer.tyCtx, node.Type(), trueTy)
 }
 
 func (analyzer *functionControlFlowAnalyzer) analyzeWhile(curBB bbRef, stmt *ast.BLangWhile) stmtEffect {

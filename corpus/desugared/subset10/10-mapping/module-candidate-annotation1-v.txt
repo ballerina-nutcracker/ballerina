@@ -1,0 +1,31 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation ann
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B))
+    (attach-point function))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function f () (
+    (value-type null))
+    (block-function-body)
+    (annotation-attachment ann
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal s)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation f ()))
+      (expression-stmt
+        (invocation io println (
+          (literal ok)))))))

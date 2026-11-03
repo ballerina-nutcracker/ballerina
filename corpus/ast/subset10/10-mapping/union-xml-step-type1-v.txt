@@ -1,0 +1,256 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Elements
+    (record-type
+      (field v
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Element)))
+      (field m
+        (value-type int))))
+  (type-definition Texts
+    (record-type
+      (field v
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Text)))
+      (field m
+        (value-type int))))
+  (type-definition Any
+    (record-type
+      (field v
+        (value-type xml))
+      (field m
+        (value-type int))))
+  (function kind (
+    (variable v (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type Elements))
+        (block-stmt
+          (return
+            (literal Elements))) ())
+      (block-stmt
+        (if
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type Texts))
+          (block-stmt
+            (return
+              (literal Texts))) ())
+        (block-stmt
+          (if
+            (type-test-expr is
+              (simple-var-ref v)
+              (user-defined-type Any))
+            (block-stmt
+              (return
+                (literal Any))) ())
+          (block-stmt
+            (if
+              (type-test-expr is
+                (simple-var-ref v)
+                (tuple-type
+                  (constrained-type
+                    (builtin-ref-type xml)
+                    (user-defined-type xml Element))
+                  (value-type int)))
+              (block-stmt
+                (return
+                  (literal [xml<xml:Element>, int]))) ())
+            (block-stmt
+              (if
+                (type-test-expr is
+                  (simple-var-ref v)
+                  (tuple-type
+                    (value-type xml)
+                    (value-type int)))
+                (block-stmt
+                  (return
+                    (literal [xml, int]))) ())
+              (block-stmt
+                (if
+                  (type-test-expr is
+                    (simple-var-ref v)
+                    (tuple-type
+                      (function-type (
+                        (value-type xml)) (
+                        (constrained-type
+                          (builtin-ref-type xml)
+                          (user-defined-type xml Element))))
+                      (value-type int)))
+                  (block-stmt
+                    (return
+                      (literal [function (xml) returns xml<xml:Element>, int]))) ())
+                (block-stmt
+                  (return
+                    (literal other))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal a
+                (xml-text-literal 1))
+              (xml-text-literal text)
+              (xml-element-literal a
+                (xml-text-literal 2)))))))
+      (var-def
+        (variable filtered (type
+          (union-type
+            (user-defined-type Elements)
+            (user-defined-type Texts))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (xml-step-expression
+                (simple-var-ref x)
+                (xml-step-element-children
+                  (xml-name-pattern-identifier a))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref filtered))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref filtered))))
+      (var-def
+        (variable unfiltered (type
+          (union-type
+            (user-defined-type Texts)
+            (user-defined-type Any))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (xml-step-expression
+                (simple-var-ref x)
+                (xml-step-all-children)))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref unfiltered))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref unfiltered))))
+      (var-def
+        (variable l (type
+          (union-type
+            (tuple-type
+              (constrained-type
+                (builtin-ref-type xml)
+                (user-defined-type xml Element))
+              (value-type int))
+            (tuple-type
+              (value-type xml)
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (xml-step-expression
+              (simple-var-ref x)
+              (xml-step-all-children))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref l))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref l))))
+      (var-def
+        (variable lambda (type
+          (union-type
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (constrained-type
+                  (builtin-ref-type xml)
+                  (user-defined-type xml Text))))
+              (value-type int))
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (constrained-type
+                  (builtin-ref-type xml)
+                  (user-defined-type xml Element))))
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (lambda
+              (function $anonFunc$_0 (
+                (variable s)) ()
+                (expr-function-body
+                  (xml-step-expression
+                    (simple-var-ref s)
+                    (xml-step-element-children
+                      (xml-name-pattern-identifier a))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref lambda))))))
+      (var-def
+        (variable indexed (type
+          (union-type
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (constrained-type
+                  (builtin-ref-type xml)
+                  (user-defined-type xml Text))))
+              (value-type int))
+            (tuple-type
+              (function-type (
+                (value-type xml)) (
+                (constrained-type
+                  (builtin-ref-type xml)
+                  (user-defined-type xml Element))))
+              (value-type int)))) (expr
+          (list-constructor-expr
+            (lambda
+              (function $anonFunc$_1 (
+                (variable s)) ()
+                (expr-function-body
+                  (xml-step-expression
+                    (simple-var-ref s)
+                    (xml-step-element-children
+                      (xml-name-pattern-identifier a))
+                    (xml-step-index-extend
+                      (literal 0))))))
+            (literal 1)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref indexed))))))
+      (if
+        (type-test-expr is
+          (simple-var-ref indexed)
+          (tuple-type
+            (function-type (
+              (value-type xml)) (
+              (constrained-type
+                (builtin-ref-type xml)
+                (user-defined-type xml Element))))
+            (value-type int)))
+        (block-stmt
+          (var-def
+            (variable f (expr
+              (index-based-access
+                (simple-var-ref indexed)
+                (literal 0)))))
+          (expression-stmt
+            (invocation io println (
+              (invocation f (
+                (simple-var-ref x))))))) ())
+      (block-stmt))))
