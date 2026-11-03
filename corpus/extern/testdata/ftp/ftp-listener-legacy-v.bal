@@ -21,6 +21,12 @@ import ballerina/lang.runtime;
 
 function ftpPort() returns int = external;
 
+function holdOpen(string path) = external;
+
+function awaitHeld() returns error? = external;
+
+function releaseHeld() = external;
+
 isolated string[] events = [];
 
 isolated function recordEvent(string event) {
@@ -185,21 +191,13 @@ service class CsvService {
     }
 }
 
-ftp:Listener? racing = ();
-ftp:Service? lateService = ();
-
 @ftp:ServiceConfig {path: "/race/a"}
-service class DetachingService {
+service class EarlyService {
     *ftp:Service;
 
-    remote function onFileChange(ftp:WatchEvent event) returns error? {
+    remote function onFileChange(ftp:WatchEvent event) {
         _ = event;
-        ftp:Listener? l = racing;
-        ftp:Service? late = lateService;
-        if l is ftp:Listener && late is ftp:Service {
-            check l.detach(late);
-        }
-        recordEvent("detached the late service");
+        recordEvent("early service dispatched");
     }
 }
 
@@ -364,12 +362,9 @@ public function main() returns error? {
     io:println(unlisted is ftp:Error ? scrub(unlisted.message()) : "polled"); // @output Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/gone
     check vanishing.immediateStop();
 
-    // The second service is detached while the poll still lists its many folders.
+    // The second service is detached while the poll, which has already taken both, lists the first.
     check c->putText("/race/a/a.txt", "a");
     check c->putText("/race/b/b.txt", "b");
-    foreach int i in 0 ..< 100 {
-        check c->mkdir("/race/b/d" + i.toString());
-    }
     ftp:Listener raceListener = check new ({
         host: "127.0.0.1",
         port: ftpPort(),
@@ -377,14 +372,16 @@ public function main() returns error? {
         pollingInterval: 3600
     });
     LateService late = new;
-    racing = raceListener;
-    lateService = late;
-    check raceListener.attach(new DetachingService());
+    check raceListener.attach(new EarlyService());
     check raceListener.attach(late);
-    check raceListener.poll();
+    holdOpen("/race/a");
+    future<error?> racePoll = start raceListener.poll();
+    check awaitHeld();
+    check raceListener.detach(late);
+    releaseHeld();
+    check wait racePoll;
     waitFor(1);
-    runtime:sleep(0.2);
-    printEvents(); // @output detached the late service
+    printEvents(); // @output early service dispatched
     check raceListener.gracefulStop();
 
     check validation.immediateStop();
