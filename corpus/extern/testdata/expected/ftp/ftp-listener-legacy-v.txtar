@@ -38,4 +38,6 @@ polled
 Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/gone
 early service dispatched
 0
+caller kept
+FTP Client is already closed, hence further operations are not allowed
 -- stderr --

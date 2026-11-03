@@ -410,22 +410,27 @@ func (m *ftpModule) cleanup(ctx *extern.Context, args []values.BalValue) (values
 	}
 	state.mu.Lock()
 	services := state.services
+	shared := state.shared
 	state.services = nil
 	state.legacyCon = nil
 	state.shared = nil
 	state.modeSet = false
 	state.typeKeys = map[string]bool{}
 	state.mu.Unlock()
-	closed := map[*values.Object]bool{}
+	callers := []*values.Object{shared}
 	consumers := map[*consumer]bool{}
-	var errs []error
 	for _, sc := range services {
 		consumers[sc.consumer] = true
-		if sc.caller == nil || closed[sc.caller] {
+		callers = append(callers, sc.caller)
+	}
+	closed := map[*values.Object]bool{}
+	var errs []error
+	for _, caller := range callers {
+		if caller == nil || closed[caller] {
 			continue
 		}
-		closed[sc.caller] = true
-		if err := closeCaller(ctx, sc.caller); err != nil {
+		closed[caller] = true
+		if err := closeCaller(ctx, caller); err != nil {
 			errs = append(errs, err)
 		}
 	}
