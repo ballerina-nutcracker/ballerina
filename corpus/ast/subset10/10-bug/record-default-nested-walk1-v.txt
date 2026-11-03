@@ -1,0 +1,107 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function mk () (
+    (value-type any))
+    (block-function-body
+      (return
+        (lambda
+          (function $anonFunc$_0 () (
+            (record-type
+              (field b
+                (value-type int)
+                (literal 2))))
+            (block-function-body
+              (return
+                (mapping-constructor-expr))))))))
+  (type-definition Outer
+    (record-type
+      (field isFn
+        (value-type boolean)
+        (type-test-expr is
+          (invocation mk ())
+          (function-type () (
+            (record-type
+              (field b
+                (value-type int)
+                (literal 2)))))))
+      (field nested
+        (function-type () (
+          (value-type int)))
+        (lambda
+          (function $anonFunc$_1 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable r (type
+                  (record-type
+                    (field b
+                      (value-type int)
+                      (literal 2)))) (expr
+                  (mapping-constructor-expr))))
+              (return
+                (field-based-access b
+                  (simple-var-ref r)))))))))
+  (function localOuter () (
+    (value-type boolean))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (record-type
+            (field isFn
+              (value-type boolean)
+              (type-test-expr is
+                (invocation mk ())
+                (function-type () (
+                  (record-type
+                    (field b
+                      (value-type int)
+                      (literal 2))))))))) (expr
+          (mapping-constructor-expr))))
+      (return
+        (field-based-access isFn
+          (simple-var-ref o)))))
+  (function paramOuter (
+    (variable p (type
+      (record-type
+        (field isFn
+          (value-type boolean)
+          (type-test-expr is
+            (invocation mk ())
+            (function-type () (
+              (record-type
+                (field b
+                  (value-type int)
+                  (literal 2))))))))) (expr
+      (mapping-constructor-expr)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (field-based-access isFn
+          (simple-var-ref p)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access isFn
+            (simple-var-ref o)))))
+      (var-def
+        (variable nested (type
+          (function-type () (
+            (value-type int)))) (expr
+          (field-based-access nested
+            (simple-var-ref o)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nested ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation localOuter ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation paramOuter ())))))))

@@ -342,8 +342,16 @@ func (l *lexer) processNumericEscapeWithoutBackslash() {
 		return
 	}
 
-	reader.Advance()
+	const maxUnicodeCodePoint = 0x10FFFF
+	codePoint := 0
+	validCodePoint := true
 	for isHexDigit(byte(reader.Peek())) {
+		digit := hexDigitValue(byte(reader.Peek()))
+		if codePoint > (maxUnicodeCodePoint-digit)/16 {
+			validCodePoint = false
+		} else {
+			codePoint = codePoint*16 + digit
+		}
 		reader.Advance()
 	}
 
@@ -353,7 +361,21 @@ func (l *lexer) processNumericEscapeWithoutBackslash() {
 		return
 	}
 
+	if !validCodePoint || (0xD800 <= codePoint && codePoint <= 0xDFFF) {
+		l.reportLexerError(common.ERROR_INVALID_STRING_NUMERIC_ESCAPE_SEQUENCE)
+	}
 	reader.Advance()
+}
+
+func hexDigitValue(c byte) int {
+	switch {
+	case '0' <= c && c <= '9':
+		return int(c - '0')
+	case 'a' <= c && c <= 'f':
+		return int(c-'a') + 10
+	default:
+		return int(c-'A') + 10
+	}
 }
 
 func (l *lexer) reportInvalidEscapeSequence(nextChar rune) {

@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+class Runner {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  run(int) -> int{
+    bb0 {
+      %4 = p;
+      %5 = ConstantLoad 1
+      %6 = %5;
+      %3 = + %4 %6;
+      %0 = %3;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Runner
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    v = %3;
+    %6 = fp $anon/.:$anonFunc$_0
+    fn = %6;
+    %8 = <object { function run(int) returns int }>(v)
+    %9 = ConstantLoad 1
+    %10 = ConstantLoad 2
+    %11 = newArray [object { function run(int) returns int }, int, never...][%10]{%8, %9}
+    objects = %11;
+    %14 = fp $anon/.:$default$3
+    $desugar$0 = %14;
+    %15 = fn is function(int, int) returns int
+    %16 = ConstantLoad s
+    %17 = ConstantLoad 2
+    %18 = newArray [boolean, string, never...][%17]{%15, %16}
+    functions = %18;
+    %20 = objects is [object { function run(int) returns int }, int, never...]
+    %21 = %20;
+    %22 = println(%21) -> bb5;
+  }
+  bb5 {
+    %24 = ConstantLoad 0
+    %23 = objects[%24];
+    %25 = ConstantLoad 4
+    %26 = %25;
+    %27 = %23.run(%26) -> bb6;
+  }
+  bb6 {
+    %28 = %27;
+    %29 = println(%28) -> bb7;
+  }
+  bb7 {
+    %30 = println(functions) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %4 = a;
+    %5 = b;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+$default$3(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 2
+    %0 = %2;
+    return;
+  }
+}

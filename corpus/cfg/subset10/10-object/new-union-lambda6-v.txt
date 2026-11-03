@@ -1,0 +1,40 @@
+(IntFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(StrFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref f)
+          (user-defined-type IntFn)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref v)
+      (literal 1))
+  )
+)

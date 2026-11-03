@@ -1,0 +1,145 @@
+module $anon.. v 0.0.0;
+sum({| a: int, b: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad a
+    %3 = r[%4];
+    %5 = %3;
+    %7 = ConstantLoad b
+    %6 = r[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:sum
+    h = %1;
+    %3 = ConstantLoad f
+    %5 = fp $anon/.:$default$6
+    $desugar$0 = %5;
+    %6 = fp $anon/.:$default$7
+    $desugar$1 = %6;
+    %8 = <function({| a: int, b: int, never... |}) returns int>(h)
+    %9 = ConstantLoad m
+    %10 = ConstantLoad 1
+    %11 = newMap {| f: function({| a: int, b: int, never... |}) returns int, m: int, never... |}{%3=%8, %9=%10}
+    x = %11;
+    %13 = x is {| f: function({| a: int, b: int, never... |}) returns int, m: int, never... |}
+    %14 = %13;
+    %15 = println(%14) -> bb1;
+  }
+  bb1 {
+    %16 = x is {| f: function({| a: int, b: int, never... |}) returns int, m: int, never... |}
+    %16 ? bb2 : bb6;
+  }
+  bb2 {
+    PushScopeFrame 12
+    %1 = fp $anon/.:$default$8
+    $desugar$2 = %1;
+    %2 = fp $anon/.:$default$9
+    $desugar$3 = %2;
+    %5 = ConstantLoad f
+    %4 = (1, x)[%5];
+    g = %4;
+    %7 = $desugar$2() -> bb3;
+  }
+  bb3 {
+    $desugar$4 = %7;
+    %9 = g($desugar$4) -> bb4;
+  }
+  bb4 {
+    %10 = %9;
+    %11 = println(%10) -> bb5;
+  }
+  bb5 {
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> {| a: int, b: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad 2
+    %3 = newMap {| a: int, b: int, never... |}{%1=%2} defaults{a=$anon/.:$default$1}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> {| a: int, b: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad 2
+    %3 = newMap {| a: int, b: int, never... |}{%1=%2} defaults{a=$anon/.:$default$3}
+    %0 = %3;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$5() -> {| a: int, b: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad 2
+    %3 = newMap {| a: int, b: int, never... |}{%1=%2} defaults{a=$anon/.:$default$4}
+    %0 = %3;
+    return;
+  }
+}
+$default$6() -> {| a: int, b: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad 2
+    %3 = newMap {| a: int, b: int, never... |}{%1=%2} defaults{a=$anon/.:$default$7}
+    %0 = %3;
+    return;
+  }
+}
+$default$7() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$8() -> {| a: int, b: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad 2
+    %3 = newMap {| a: int, b: int, never... |}{%1=%2} defaults{a=$anon/.:$default$9}
+    %0 = %3;
+    return;
+  }
+}
+$default$9() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}

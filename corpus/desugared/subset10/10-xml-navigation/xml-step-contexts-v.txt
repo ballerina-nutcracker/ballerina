@@ -13,18 +13,11 @@
     (record-type
       (field items
         (value-type xml)
-        (invocation lang.xml map (
-          (invocation lang.xml elements (
-            (xml-element-literal root
-              (xml-element-literal item
-                (xml-text-literal A)))
-            (literal <nil>)))
-          (lambda
-            (function $xmlStep$$module$0 (
-              (variable $xmlStepItem)) ()
-              (expr-function-body
-                (invocation lang.xml getChildren (
-                  (simple-var-ref $xmlStepItem)))))))))))
+        (xml-step-expression
+          (xml-element-literal root
+            (xml-element-literal item
+              (xml-text-literal A)))
+          (xml-step-all-children)))))
   (class-definition Holder
     (variable items (type
       (value-type xml)))

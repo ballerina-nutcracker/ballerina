@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> start-lock-locals-1-e.bal:36:38
+   |
+36 |         future<int[]> f = start copy(outside); // @error start action inside lock
+   |                                      ^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-lock-locals-1-e.bal:27:27
+   |
+27 |         future<int[]> f = start copy(local); // @error start action inside lock
+   |                           ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-lock-locals-1-e.bal:36:27
+   |
+36 |         future<int[]> f = start copy(outside); // @error start action inside lock
+   |                           ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot start strand inside a lock statement
+  --> start-lock-locals-1-e.bal:44:27
+   |
+44 |         future<int[]> f = start copy(from int x in [counter] select x); // @error start action inside lock
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

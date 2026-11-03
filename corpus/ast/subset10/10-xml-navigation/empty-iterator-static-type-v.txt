@@ -1,0 +1,27 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable empty (type
+          (constrained-type
+            (builtin-ref-type xml)
+            (value-type never))) (expr
+          (xml-sequence-literal))))
+      (var-def
+        (variable iterator (expr
+          (invocation iterator expr:
+            (simple-var-ref empty) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref iterator)
+            (object-type
+              (method-decl next public () (
+                (union-type
+                  (record-type
+                    (field value
+                      (value-type never)))
+                  (value-type null))))))))))))

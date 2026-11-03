@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: foreach collection must have an iteration completion type of nil
+  --> foreach-iterable-error-completion-e.bal:35:22
+   |
+35 |     foreach var x in e { // @error completion type includes error
+   |                      ^

@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: attempted strand start while holding a lock
+        at main(start-in-lambda-called-in-lock-1-p.bal:25)
+           main(start-in-lambda-called-in-lock-1-p.bal:29)

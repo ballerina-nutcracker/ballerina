@@ -1,0 +1,12 @@
+-- stdout --
+recurring fired: 3
+one-time fired: 1
+false
+fired while paused: 0
+true
+fired after resume: true
+false
+The maxCount should be a positive integer.
+true
+Invalid job id: -1
+-- stderr --

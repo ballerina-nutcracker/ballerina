@@ -1,0 +1,14 @@
+Packaged language-server lifecycle requests and response assertions.
+-- session.json --
+[
+  {
+    "request": {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":null,"capabilities":{}}},
+    "resultKeys": ["capabilities"]
+  },
+  {"request": {"jsonrpc":"2.0","method":"initialized","params":{}}},
+  {
+    "request": {"jsonrpc":"2.0","id":2,"method":"shutdown"},
+    "result": null
+  },
+  {"request": {"jsonrpc":"2.0","method":"exit"}}
+]

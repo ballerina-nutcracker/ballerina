@@ -1,0 +1,185 @@
+{
+  "source": "document_buffer.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "publishDiagnostics": {
+              "versionSupport": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/a%40b.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didChange",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/a%40b.bal",
+          "version": 2
+        },
+        "contentChanges": [
+          {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 0
+              },
+              "end": {
+                "line": 0,
+                "character": 0
+              }
+            },
+            "text": "// shifted\n"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didChange",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/a%40b.bal",
+          "version": 3
+        },
+        "contentChanges": [
+          {
+            "text": ""
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didClose",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/a%40b.bal"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/a%40b.bal",
+        "version": 1,
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 15,
+                "character": 4
+              },
+              "end": {
+                "line": 15,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/a%40b.bal",
+        "version": 2,
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 16,
+                "character": 4
+              },
+              "end": {
+                "line": 16,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/a%40b.bal",
+        "version": 3,
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/a%40b.bal",
+        "diagnostics": []
+      }
+    }
+  ]
+}

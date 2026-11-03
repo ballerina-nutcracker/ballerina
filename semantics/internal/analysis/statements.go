@@ -175,7 +175,12 @@ func validateForeachValueType(cx scope.Context, stmt *ast.BLangForeach, variable
 			cx.SemanticErr("foreach collection must be subtype of object:Iterable", collection.GetPosition())
 			return false
 		}
-		valueType = iteratorValueType(tyCtx, collectionType)
+		nextReturnTy := iteratorNextReturnType(tyCtx, collectionType)
+		if !semtypes.IsSubtype(tyCtx, semtypes.Diff(nextReturnTy, semtypes.Mapping), semtypes.Nil) {
+			cx.SemanticErr("foreach collection must have an iteration completion type of nil", collection.GetPosition())
+			return false
+		}
+		valueType = semtypes.MappingMemberTypeInnerVal(tyCtx, semtypes.Intersect(nextReturnTy, semtypes.Mapping), semtypes.StringConst("value"))
 	}
 	if !semtypes.IsSubtype(tyCtx, valueType, variableType) {
 		cx.SemanticErr(strings.Join([]string{"invalid variable type ", semtypes.ToString(tyCtx, variableType)}, ""), stmt.VariableDef.Var.GetPosition())
@@ -184,15 +189,13 @@ func validateForeachValueType(cx scope.Context, stmt *ast.BLangForeach, variable
 	return true
 }
 
-// iteratorValueType is the value type of an Iterable: next() of its
-// iterator() returns record {| T value; |}|C.
-func iteratorValueType(tyCtx semtypes.Context, iterableTy semtypes.SemType) semtypes.SemType {
+// iteratorNextReturnType is the return type of next() on the iterator() of an
+// Iterable; for a well-formed Iterable it has the shape record {| T value; |}|C.
+func iteratorNextReturnType(tyCtx semtypes.Context, iterableTy semtypes.SemType) semtypes.SemType {
 	argsDefn := semtypes.NewListDefinition()
 	emptyArgs := argsDefn.Define(tyCtx.Env(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	iteratorTy := semtypes.FunctionReturnType(tyCtx, semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("iterator"), iterableTy), emptyArgs)
-	nextReturnTy := semtypes.FunctionReturnType(tyCtx, semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("next"), iteratorTy), emptyArgs)
-	recordPart := semtypes.Diff(nextReturnTy, semtypes.Union(semtypes.Nil, semtypes.Error))
-	return semtypes.MappingMemberTypeInnerVal(tyCtx, recordPart, semtypes.StringConst("value"))
+	return semtypes.FunctionReturnType(tyCtx, semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("next"), iteratorTy), emptyArgs)
 }
 
 func validateDo(cx scope.Context, stmt *ast.BLangDo) {

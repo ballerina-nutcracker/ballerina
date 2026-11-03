@@ -1,0 +1,129 @@
+{
+  "source": "diagnostic_position.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/diagnostic_position.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didChange",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/diagnostic_position.bal",
+          "version": 2
+        },
+        "contentChanges": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 0
+              }
+            },
+            "text": "\n  "
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/diagnostic_position.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 4
+              },
+              "end": {
+                "line": 1,
+                "character": 19
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/diagnostic_position.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 6
+              },
+              "end": {
+                "line": 2,
+                "character": 21
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused variable 'unused'"
+          }
+        ]
+      }
+    }
+  ]
+}

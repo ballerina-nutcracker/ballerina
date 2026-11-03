@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: failed to find a suitable object type
+  --> new-union-lambda-body1-e.bal:32:21
+   |
+32 |     IntFn|StrFn f = new (v => v.nosuch, 1); // @error
+   |                     ^^^^^^^^^^^^^^^^^^^^^^

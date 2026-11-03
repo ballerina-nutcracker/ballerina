@@ -1,0 +1,6 @@
+-- stdout --
+IntArg
+[<a>1<b>x</b></a><a>2</a>,<a>1<b>x</b></a><a>2</a><c><a>3</a></c>,<a>1<b>x</b></a><a>2</a><a>3</a>,<a>2</a>,<a>1<b>x</b></a><a>2</a>,<a>1<b>x</b></a>]
+StringArg
+[<a>1<b>x</b></a><a>2</a>,<a>1<b>x</b></a><a>2</a><c><a>3</a></c>,<a>1<b>x</b></a><a>2</a><a>3</a>,<a>2</a>,<a>1<b>x</b></a><a>2</a>,<a>1<b>x</b></a>]
+-- stderr --

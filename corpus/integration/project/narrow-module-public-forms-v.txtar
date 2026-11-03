@@ -1,0 +1,5 @@
+-- stdout --
+int two matched closure
+true
+false
+-- stderr --

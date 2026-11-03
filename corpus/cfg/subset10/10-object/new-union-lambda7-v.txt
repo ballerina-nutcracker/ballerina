@@ -1,0 +1,60 @@
+(BitFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(StrFn
+  (init
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref callback))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref marker))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (union-type
+          (user-defined-type BitFn)
+          (user-defined-type StrFn))) (expr
+        (new (
+          (lambda
+            (function $anonFunc$_0 (
+              (variable v)) ()
+              (expr-function-body
+                (ternary-expr
+                  (binary-expr ==
+                    (simple-var-ref v)
+                    (literal 1))
+                  (simple-var-ref v)
+                  (literal 0)))))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref f)
+          (user-defined-type BitFn)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (ternary-expr
+      (binary-expr ==
+        (simple-var-ref v)
+        (literal 1))
+      (simple-var-ref v)
+      (literal 0))
+  )
+)

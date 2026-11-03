@@ -1,0 +1,96 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)
+          (literal 1)
+          (literal 3)
+          (literal 2)))))
+    (var-def
+      (variable r (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (query-expr
+              (from-clause
+                (var-def
+                  (variable x))
+                (simple-var-ref xs))
+              (let-clause
+                (var-def
+                  (variable n (type
+                    (value-type int)) (expr
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal 10))))))
+              (group-by-clause
+                (grouping-key
+                  (simple-var-ref x)))
+              (select-clause
+                (binary-expr +
+                  (index-based-access
+                    (simple-var-ref n)
+                    (literal 0))
+                  (invocation lang.array length (
+                    (simple-var-ref n)))))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r)
+          (user-defined-type A)))))
+    (var-def
+      (variable c (type
+        (union-type
+          (user-defined-type C)
+          (user-defined-type D))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal v)
+            (query-expr
+              (from-clause
+                (var-def
+                  (variable x))
+                (simple-var-ref xs))
+              (let-clause
+                (var-def
+                  (variable n (type
+                    (value-type int)) (expr
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal 10))))))
+              (group-by-clause
+                (grouping-key
+                  (simple-var-ref x)))
+              (collect-clause
+                (binary-expr +
+                  (index-based-access
+                    (simple-var-ref n)
+                    (literal 0))
+                  (invocation lang.array length (
+                    (simple-var-ref n)))))))
+          (key-value
+            (literal m)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref c)
+          (user-defined-type C)))))
+  )
+)

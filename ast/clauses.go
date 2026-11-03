@@ -56,7 +56,6 @@ type (
 	BLangGroupByClause struct {
 		bLangNodeBase
 		GroupingKeyList []*BLangGroupingKey
-		NonGroupingKeys common.Set[string]
 	}
 	BLangGroupingKey struct {
 		bLangNodeBase

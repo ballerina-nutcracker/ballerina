@@ -1,0 +1,79 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 0))))
+    (function next () (
+      (record-type
+        (field value
+          (value-type int))))
+      (block-function-body
+        (compound-assignment +
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal 1))
+        (return
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (index-based-access
+                (simple-var-ref self)
+                (literal n))))))))
+  (class-definition Naturals
+    (function init () ()
+      (block-function-body))
+    (function iterator () (
+      (user-defined-type Counter))
+      (block-function-body
+        (return
+          (new ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable naturals (type
+          (user-defined-type Naturals)) (expr
+          (new ()))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref naturals))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$0) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$4 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$2) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$4))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$4)
+                (literal value)))))
+          (if
+            (binary-expr >
+              (simple-var-ref i)
+              (literal 3))
+            (block-stmt
+              (break)) ())
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (simple-var-ref i))))))))))

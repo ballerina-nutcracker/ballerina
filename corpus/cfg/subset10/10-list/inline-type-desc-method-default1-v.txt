@@ -1,0 +1,93 @@
+(Runner
+  (run
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref p)
+          (literal 1)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type Runner) ()))))
+    (var-def
+      (variable fn (type
+        (value-type any)) (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable a (type
+              (value-type int)))
+            (variable b (type
+              (value-type int)) (expr
+              (literal 2)))) (
+            (value-type int))
+            (expr-function-body
+              (binary-expr +
+                (simple-var-ref a)
+                (simple-var-ref b))))))))
+    (var-def
+      (variable objects (type
+        (union-type
+          (tuple-type
+            (user-defined-type Run)
+            (value-type int))
+          (tuple-type
+            (user-defined-type Run)
+            (value-type string)))) (expr
+        (list-constructor-expr
+          (type-conversion-expr
+            (simple-var-ref v)
+            (object-type
+              (method-decl run (
+                (param p
+                  (value-type int))) (
+                (value-type int)))))
+          (literal 1)))))
+    (var-def
+      (variable functions (type
+        (union-type
+          (tuple-type
+            (value-type boolean)
+            (value-type int))
+          (tuple-type
+            (value-type boolean)
+            (value-type string)))) (expr
+        (list-constructor-expr
+          (type-test-expr is
+            (simple-var-ref fn)
+            (function-type (
+              (value-type int)
+              (value-type int)) (
+              (value-type int))))
+          (literal s)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref objects)
+          (tuple-type
+            (user-defined-type Run)
+            (value-type int))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation run expr:
+          (index-based-access
+            (simple-var-ref objects)
+            (literal 0)) (
+          (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref functions))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref a)
+      (simple-var-ref b))
+  )
+)

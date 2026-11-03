@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> union-query-none1-e.bal:26:13
+   |
+26 |     A|B r = {v: from int x in arr select x * 2}; // @error no applicable inherent type for mapping constructor
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

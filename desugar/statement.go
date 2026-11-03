@@ -862,7 +862,6 @@ func createMethodInvocation(cx *functionContext, receiver ast.BLangExpression, m
 func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrExpression, loopVarDef *ast.BLangVariableDef, body *ast.BLangBlockStmt, foreachScope model.Scope) desugaredNode[ast.StatementNode] {
 	var initStmts []ast.StatementNode
 	basePos := collection.GetPosition()
-	tyCtx := cx.typeCtx()
 
 	// Step 1: Evaluate collection into temp var
 	collResult := walkExpression(cx, collection)
@@ -942,37 +941,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	setPositionIfMissing(nilCheckIf, basePos)
 	whileBodyStmts = append(whileBodyStmts, nilCheckIf)
 
-	// 4c: if $next is error { panic $next } (only if error is possible)
-	hasError := !semtypes.IsEmpty(tyCtx, semtypes.Intersect(nextReturnType, semtypes.Error))
-	if hasError {
-		nextRefForErrCheck := &ast.BLangVarRef{VariableName: nextVarName}
-		nextRefForErrCheck.SetSymbol(nextSymbol)
-		nextRefForErrCheck.Ty = nextReturnType
-
-		errCheck := ast.NewBLangTypeTestExpr(
-			basePos,
-			nextRefForErrCheck,
-			ast.TypeData{Type: semtypes.Error},
-			false,
-		)
-		errCheck.Ty = semtypes.Boolean
-
-		nextRefForPanic := &ast.BLangVarRef{VariableName: nextVarName}
-		nextRefForPanic.SetSymbol(nextSymbol)
-		nextRefForPanic.Ty = nextReturnType
-
-		panicStmt := &ast.BLangPanic{Expr: nextRefForPanic}
-		setPositionIfMissing(panicStmt, basePos)
-		errCheckIf := &ast.BLangIf{
-			Expr: errCheck,
-			Body: ast.BLangBlockStmt{Stmts: []ast.StatementNode{panicStmt}},
-		}
-		errCheckIf.SetScope(foreachScope)
-		setPositionIfMissing(errCheckIf, basePos)
-		whileBodyStmts = append(whileBodyStmts, errCheckIf)
-	}
-
-	// 4d: loopVar = $next.value (field access desugared to index access by walkBlockStmt)
+	// 4c: loopVar = $next.value (field access desugared to index access by walkBlockStmt)
 	nextRefForValue := &ast.BLangVarRef{VariableName: nextVarName}
 	nextRefForValue.SetSymbol(nextSymbol)
 	nextRefForValue.Ty = semtypes.Mapping
@@ -987,7 +956,7 @@ func desugarForEachOnIterable(cx *functionContext, collection ast.BLangActionOrE
 	loopVarDef.Var.SetInitialExpression(valueAccess)
 	whileBodyStmts = append(whileBodyStmts, loopVarDef)
 
-	// 4e: original body stmts
+	// 4d: original body stmts
 	whileBodyStmts = append(whileBodyStmts, body.Stmts...)
 
 	body.Stmts = whileBodyStmts

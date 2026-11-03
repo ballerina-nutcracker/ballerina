@@ -32,7 +32,6 @@ import (
 const (
 	astPkg    = "github.com/ballerina-nutcracker/ballerina/ast"
 	walksFile = "walks.go"
-	debugFile = "type_resolver_candidate_debug.go"
 )
 
 // Interface methods declared in the analyzed package that walks may use.
@@ -82,7 +81,6 @@ func run(pass *analysis.Pass) (any, error) {
 }
 
 // checkIgnoredFiles reports files that build constraints exclude from this run, since neither rule can check them.
-// Only the debug-only candidate checker is exempt.
 func checkIgnoredFiles(pass *analysis.Pass) {
 	if len(pass.Files) == 0 {
 		return
@@ -95,7 +93,7 @@ func checkIgnoredFiles(pass *analysis.Pass) {
 	}
 	for _, path := range pass.IgnoredFiles {
 		name := filepath.Base(path)
-		if strings.HasSuffix(name, "_test.go") || name == debugFile || !strings.HasSuffix(name, ".go") {
+		if strings.HasSuffix(name, "_test.go") || !strings.HasSuffix(name, ".go") {
 			continue
 		}
 		pass.Reportf(pos, "%s is excluded by build constraints, so it can't be checked", name)

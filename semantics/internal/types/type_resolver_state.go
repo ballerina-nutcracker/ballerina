@@ -18,14 +18,14 @@ package types
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
-	balCommon "github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // Every AST write performed during type resolution goes through these helpers. Each of them does nothing while the
 // resolver is ephemeral, so that a candidate trial (see selectCandidate) resolves expressions without committing
-// anything.
+// anything. The one exception is the XML step lowering, which resolveXMLStepExpr writes directly because it does not
+// depend on the candidate.
 
 type symbolNode interface {
 	ast.BLangNode
@@ -180,13 +180,6 @@ func setListConstructorInherentType(t typeResolver, node *ast.BLangListConstruct
 	}
 }
 
-func setGroupByNonGroupingKeys(t typeResolver, clause *ast.BLangGroupByClause, keys balCommon.Set[string]) {
-	if t.isEphemeral() {
-		return
-	}
-	clause.NonGroupingKeys = keys
-}
-
 func setFunctionTypedSignature(t typeResolver, sym model.FunctionSymbol, sig model.TypedFunctionSignature) {
 	if t.isEphemeral() {
 		return
@@ -199,13 +192,6 @@ func setLambdaSymbolType(t typeResolver, fn *ast.BLangFunction, ty semtypes.SemT
 		return
 	}
 	updateSymbolType(t, fn, ty)
-}
-
-func setXMLStepLowering(t typeResolver, expr *ast.BLangXMLStepExpression, lowered ast.BLangExpression) {
-	if t.isEphemeral() {
-		return
-	}
-	expr.LoweredExpression = lowered
 }
 
 func setTypeDefinition(t typeResolver, field *semtypes.Definition, defn semtypes.Definition) {

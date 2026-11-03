@@ -1,0 +1,5 @@
+-- stdout --
+true
+false
+[<a>1</a>,<b>2</b>]
+-- stderr --

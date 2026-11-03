@@ -647,7 +647,8 @@ type (
 		// resolved against the result type of the preceding extension. Desugaring is
 		// too late to type-check and monomorphize those generated calls. Since type
 		// resolution cannot replace this node in its parent, desugaring uses this
-		// fully typed lowering.
+		// fully typed lowering. The first type resolution to reach the step sets it,
+		// including a candidate trial, and later resolutions reuse it.
 		LoweredExpression BLangExpression
 	}
 

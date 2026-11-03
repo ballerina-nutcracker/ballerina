@@ -1,0 +1,4 @@
+-- stdout --
+{"x":false}
+5
+-- stderr --

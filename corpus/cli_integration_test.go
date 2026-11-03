@@ -71,6 +71,7 @@ func TestBalCLI(t *testing.T) {
 		run  func(t *testing.T, cli *balCLI)
 	}{
 		{"BalHelp", testBalHelp},
+		{"LanguageServerLauncher", testLanguageServerLauncher},
 		{"BalVersion", testBalVersion},
 		{"BalRunDumpFlags", testBalRunDumpFlags},
 		{"BalRunCorpus", testBalRunCorpus},
@@ -5135,6 +5136,9 @@ func newBalCLI(t *testing.T) *balCLI {
 	if err := buildBalBinaryTo(repoRoot, coverDir, cli.relBin, false); err != nil {
 		t.Fatal(err)
 	}
+	if err := buildLanguageServerBinaryTo(repoRoot, coverDir, filepath.Join(dir, hostExeSuffix("bal-language-server"))); err != nil {
+		t.Fatal(err)
+	}
 	if err := buildBalBinaryTo(repoRoot, coverDir, cli.debugBin, true); err != nil {
 		t.Fatal(err)
 	}
@@ -5188,6 +5192,20 @@ func buildBalBinaryTo(repoRoot, coverDir, outputPath string, debugBuild bool) er
 	cmd.Dir = repoRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to build bal binary: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+func buildLanguageServerBinaryTo(repoRoot, coverDir, outputPath string) error {
+	args := []string{"build", "-o", outputPath}
+	if coverDir != "" {
+		args = append(args, "-cover", "-coverpkg="+cliCoverPackages)
+	}
+	args = append(args, "./ls/cmd")
+	cmd := exec.Command("go", args...)
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to build language server binary: %w\n%s", err, out)
 	}
 	return nil
 }

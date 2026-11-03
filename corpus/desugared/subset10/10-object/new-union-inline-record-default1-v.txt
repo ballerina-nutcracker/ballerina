@@ -1,0 +1,88 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (class-definition First
+    (variable a (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (record-type
+          (field a
+            (value-type int)))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref value)
+              (literal a))
+            (simple-var-ref marker))))))
+  (class-definition Second
+    (variable a (type
+      (value-type int)))
+    (function init (
+      (variable value (type
+        (record-type
+          (field a
+            (value-type int)))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (binary-expr +
+            (index-based-access
+              (simple-var-ref value)
+              (literal a))
+            (invocation lang.string length (
+              (simple-var-ref marker))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (record-type
+            (field a
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))))))
+      (var-def
+        (variable y (type
+          (value-type any)) (expr
+          (simple-var-ref value))))
+      (var-def
+        (variable c (type
+          (union-type
+            (user-defined-type First)
+            (user-defined-type Second))) (expr
+          (new (
+            (type-conversion-expr
+              (simple-var-ref y)
+              (record-type
+                (field a
+                  (value-type int)
+                  (literal 1))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref c)
+              (user-defined-type First))
+            (literal First)
+            (literal Second)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal a))))))))

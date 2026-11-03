@@ -1,0 +1,6 @@
+-- stdout --
+{"v":[2,3],"m":1}
+true
+{"v":[false,true],"m":1}
+true
+-- stderr --

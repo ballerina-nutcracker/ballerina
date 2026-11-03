@@ -16,8 +16,6 @@
 
 public int|string shared = 1;
 
-public final int|string pinned = 2;
-
 public function mutate() {
     shared = "changed";
 }

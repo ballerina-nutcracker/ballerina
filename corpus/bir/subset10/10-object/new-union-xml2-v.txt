@@ -1,0 +1,414 @@
+module $anon.. v 0.0.0;
+class IntArg {
+  values [xml...]
+  marker int
+
+  init(xml,xml,xml,xml,xml,xml,int) -> nil{
+    bb0 {
+      %9 = ConstantLoad 6
+      %10 = newArray [xml...][%9]{children, all, descendants, indexed, filtered, called}
+      %11 = ConstantLoad values
+      self[%11] = %10;
+      %12 = ConstantLoad marker
+      self[%12] = marker;
+      return;
+    }
+  }
+}
+class StringArg {
+  values [xml...]
+  marker string
+
+  init(xml,xml,xml,xml,xml,xml,string) -> nil{
+    bb0 {
+      %9 = ConstantLoad 6
+      %10 = newArray [xml...][%9]{children, all, descendants, indexed, filtered, called}
+      %11 = ConstantLoad values
+      self[%11] = %10;
+      %12 = ConstantLoad marker
+      self[%12] = marker;
+      return;
+    }
+  }
+}
+kind(any) -> string{
+  bb0 {
+    %3 = v is object { public function init(xml, xml, xml, xml, xml, xml, int) returns nil; int marker; [xml...] values }
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad IntArg
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %6 = v is object { public function init(xml, xml, xml, xml, xml, xml, string) returns nil; string marker; [xml...] values }
+    %6 ? bb4 : bb5;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    %7 = ConstantLoad StringArg
+    %5 = %7;
+    GOTO bb6;
+  }
+  bb5 {
+    %8 = ConstantLoad neither
+    %5 = %8;
+    GOTO bb6;
+  }
+  bb6 {
+    %2 = %5;
+    GOTO bb3;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = newXMLText(%1)
+    %3 = ConstantLoad x
+    %4 = newXMLText(%3)
+    %5 = newXMLElement("b", %4)
+    %6 = newXMLSequence{%2, %5}
+    %7 = newXMLElement("a", %6)
+    %8 = ConstantLoad 2
+    %9 = newXMLText(%8)
+    %10 = newXMLElement("a", %9)
+    %11 = ConstantLoad 3
+    %12 = newXMLText(%11)
+    %13 = newXMLElement("a", %12)
+    %14 = newXMLElement("c", %13)
+    %15 = newXMLSequence{%7, %10, %14}
+    %16 = newXMLElement("root", %15)
+    x = %16;
+    %18 = newObject $anon/.:IntArg
+    %19 = ConstantLoad <nil>
+    %20 = %19;
+    %21 = elements(x,%20) -> bb1;
+  }
+  bb1 {
+    %22 = fp $anon/.:$xmlStep$main$0
+    %23 = map(%21,%22) -> bb2;
+  }
+  bb2 {
+    %24 = ConstantLoad <nil>
+    %25 = %24;
+    %26 = elements(x,%25) -> bb3;
+  }
+  bb3 {
+    %27 = fp $anon/.:$xmlStep$main$1
+    %28 = map(%26,%27) -> bb4;
+  }
+  bb4 {
+    %29 = ConstantLoad <nil>
+    %30 = %29;
+    %31 = elements(x,%30) -> bb5;
+  }
+  bb5 {
+    %32 = fp $anon/.:$xmlStep$main$2
+    %33 = map(%31,%32) -> bb6;
+  }
+  bb6 {
+    %34 = ConstantLoad <nil>
+    %35 = %34;
+    %36 = elements(x,%35) -> bb7;
+  }
+  bb7 {
+    %37 = fp $anon/.:$xmlStep$main$3
+    %38 = map(%36,%37) -> bb8;
+  }
+  bb8 {
+    %39 = ConstantLoad <nil>
+    %40 = %39;
+    %41 = elements(x,%40) -> bb9;
+  }
+  bb9 {
+    %42 = fp $anon/.:$xmlStep$main$4
+    %43 = map(%41,%42) -> bb10;
+  }
+  bb10 {
+    %44 = ConstantLoad <nil>
+    %45 = %44;
+    %46 = elements(x,%45) -> bb11;
+  }
+  bb11 {
+    %47 = fp $anon/.:$xmlStep$main$5
+    %48 = map(%46,%47) -> bb12;
+  }
+  bb12 {
+    %49 = ConstantLoad 1
+    %50 = %18.init(%23,%28,%33,%38,%43,%48,%49) -> bb13;
+  }
+  bb13 {
+    %52 = %50 is nil
+    %52 ? bb14 : bb15;
+  }
+  bb14 {
+    %51 = %18;
+    GOTO bb16;
+  }
+  bb15 {
+    %51 = %50;
+    GOTO bb16;
+  }
+  bb16 {
+    o = %51;
+    %54 = kind(o) -> bb17;
+  }
+  bb17 {
+    %55 = println(%54) -> bb18;
+  }
+  bb18 {
+    %56 = o is object { public function init(xml, xml, xml, xml, xml, xml, int) returns nil; int marker; [xml...] values }
+    %56 ? bb19 : bb21;
+  }
+  bb19 {
+    PushScopeFrame 3
+    %1 = ConstantLoad values
+    %0 = (1, o)[%1];
+    %2 = println(%0) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 39
+    %0 = newObject $anon/.:StringArg
+    %1 = ConstantLoad <nil>
+    %2 = %1;
+    %3 = elements((1, x),%2) -> bb22;
+  }
+  bb22 {
+    %4 = fp $anon/.:$xmlStep$main$6
+    %5 = map(%3,%4) -> bb23;
+  }
+  bb23 {
+    %6 = ConstantLoad <nil>
+    %7 = %6;
+    %8 = elements((1, x),%7) -> bb24;
+  }
+  bb24 {
+    %9 = fp $anon/.:$xmlStep$main$7
+    %10 = map(%8,%9) -> bb25;
+  }
+  bb25 {
+    %11 = ConstantLoad <nil>
+    %12 = %11;
+    %13 = elements((1, x),%12) -> bb26;
+  }
+  bb26 {
+    %14 = fp $anon/.:$xmlStep$main$8
+    %15 = map(%13,%14) -> bb27;
+  }
+  bb27 {
+    %16 = ConstantLoad <nil>
+    %17 = %16;
+    %18 = elements((1, x),%17) -> bb28;
+  }
+  bb28 {
+    %19 = fp $anon/.:$xmlStep$main$9
+    %20 = map(%18,%19) -> bb29;
+  }
+  bb29 {
+    %21 = ConstantLoad <nil>
+    %22 = %21;
+    %23 = elements((1, x),%22) -> bb30;
+  }
+  bb30 {
+    %24 = fp $anon/.:$xmlStep$main$10
+    %25 = map(%23,%24) -> bb31;
+  }
+  bb31 {
+    %26 = ConstantLoad <nil>
+    %27 = %26;
+    %28 = elements((1, x),%27) -> bb32;
+  }
+  bb32 {
+    %29 = fp $anon/.:$xmlStep$main$11
+    %30 = map(%28,%29) -> bb33;
+  }
+  bb33 {
+    %31 = ConstantLoad s
+    %32 = %0.init(%5,%10,%15,%20,%25,%30,%31) -> bb34;
+  }
+  bb34 {
+    %34 = %32 is nil
+    %34 ? bb35 : bb36;
+  }
+  bb35 {
+    %33 = %0;
+    GOTO bb37;
+  }
+  bb36 {
+    %33 = %32;
+    GOTO bb37;
+  }
+  bb37 {
+    p = %33;
+    %36 = kind(p) -> bb38;
+  }
+  bb38 {
+    %37 = println(%36) -> bb39;
+  }
+  bb39 {
+    %38 = p is object { public function init(xml, xml, xml, xml, xml, xml, string) returns nil; string marker; [xml...] values }
+    %38 ? bb40 : bb42;
+  }
+  bb40 {
+    PushScopeFrame 3
+    %1 = ConstantLoad values
+    %0 = (1, p)[%1];
+    %2 = println(%0) -> bb41;
+  }
+  bb41 {
+    PopScopeFrame
+    GOTO bb42;
+  }
+  bb42 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+$xmlStep$main$0(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$1(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$main$2(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getDescendants($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$3(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = $stepIndex(%3,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$main$4(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$5(xml:Element) -> xml:Element{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = get(%3,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$main$6(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$7(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$main$8(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getDescendants($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$9(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = $stepIndex(%3,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}
+$xmlStep$main$10(xml:Element) -> xml<xml:Element>{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %0 = %3;
+    return;
+  }
+}
+$xmlStep$main$11(xml:Element) -> xml:Element{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %3 = xmlFilter(%2, [{"", "a"}])
+    %4 = ConstantLoad 0
+    %5 = %4;
+    %6 = get(%3,%5) -> bb2;
+  }
+  bb2 {
+    %0 = %6;
+    return;
+  }
+}

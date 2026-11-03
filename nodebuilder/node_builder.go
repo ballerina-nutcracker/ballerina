@@ -1386,9 +1386,6 @@ func (n *nodeBuilder) createSimpleLiteralFromText(literal st.Node, textValue str
 
 		if kind != st.TEMPLATE_STRING && kind != st.XML_TEXT_CONTENT &&
 			kind != st.PROMPT_CONTENT && !isTokenInRegExp(kind) {
-			pos := n.getPosition(literal)
-			validateUnicodePoints(text, pos)
-
 			// Try to unescape, but handle errors gracefully
 			// We may reach here when the string literal has syntax diagnostics.
 			// Therefore mock the compiler with an empty string on error.
@@ -5375,9 +5372,7 @@ func (n *nodeBuilder) transformGroupByClause(groupByClauseNode *st.GroupByClause
 		!n.expectToken(groupByClauseNode.ByKeyword()) {
 		return nil, false
 	}
-	groupByClause := &ast.BLangGroupByClause{
-		NonGroupingKeys: &balCommon.UnorderedSet[string]{},
-	}
+	groupByClause := &ast.BLangGroupByClause{}
 	groupByClause.SetPosition(n.getPosition(groupByClauseNode))
 	groupingKeys := groupByClauseNode.GroupingKey()
 	for node, separator := range groupingKeys.SeparatedElements() {

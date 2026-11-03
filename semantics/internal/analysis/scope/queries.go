@@ -31,7 +31,7 @@ func EnclosingFunction(cx Context) (FunctionInfo, bool) {
 			return FunctionInfo{}, false
 		case *functionContext:
 			return FunctionInfo{class: c.class, RetTy: c.retTy, symbol: c.symbol, self: c.self, ID: c.id, kind: c.kind, isolated: c.isolated}, true
-		case *lockContext, *isolatedExprContext:
+		case *lockContext, *isolatedExprContext, *factsContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -63,7 +63,7 @@ func LookupLocal(cx Context, sym model.SymbolRef) (VarDecl, ScopeID, bool) {
 			if md, ok := c.locals[sym]; ok {
 				return md, c.id, true
 			}
-		case *lockContext, *isolatedExprContext:
+		case *lockContext, *isolatedExprContext, *factsContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -84,7 +84,7 @@ func inLockLocals(cx Context, sym model.SymbolRef) bool {
 		case *lockContext:
 			_, ok := c.locals[sym]
 			return ok
-		case *isolatedExprContext:
+		case *isolatedExprContext, *factsContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -146,7 +146,7 @@ func defineLocal(cx Context, sym model.SymbolRef, md VarDecl) {
 			return
 		case *lockContext:
 			c.locals[sym] = struct{}{}
-		case *isolatedExprContext:
+		case *isolatedExprContext, *factsContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -181,7 +181,7 @@ func innermostLock(cx Context) (*lockContext, bool) {
 			return nil, false
 		case *lockContext:
 			return c, true
-		case *isolatedExprContext:
+		case *isolatedExprContext, *factsContext:
 			continue
 		default:
 			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
@@ -189,6 +189,25 @@ func innermostLock(cx Context) (*lockContext, bool) {
 		}
 	}
 	return nil, false
+}
+
+// lexicallyInLock reports whether cx is within a lock body, either of the
+// current closure or of any enclosing one.
+func lexicallyInLock(cx Context) bool {
+	for cur := cx; cur != nil; cur = cur.parent() {
+		switch cur.(type) {
+		case *packageContext:
+			return false
+		case *lockContext:
+			return true
+		case *functionContext, *isolatedExprContext, *factsContext:
+			continue
+		default:
+			cx.InternalErr("unknown context", diagnostics.NewBuiltinLocation())
+			return false
+		}
+	}
+	return false
 }
 
 func nextScopeID(cx Context) ScopeID {

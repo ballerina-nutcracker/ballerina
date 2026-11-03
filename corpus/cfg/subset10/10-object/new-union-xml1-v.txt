@@ -1,0 +1,80 @@
+(StringArg
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref value))
+      (assignment
+        (field-based-access marker
+          (simple-var-ref self))
+        (simple-var-ref marker))
+    )
+  )
+)
+(XmlArg
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access value
+          (simple-var-ref self))
+        (simple-var-ref value))
+      (assignment
+        (field-based-access marker
+          (simple-var-ref self))
+        (simple-var-ref marker))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-element-literal root
+          (xml-element-literal a
+            (xml-text-literal 1))))))
+    (var-def
+      (variable s (type
+        (union-type
+          (user-defined-type XmlArg)
+          (user-defined-type StringArg))) (expr
+        (new (
+          (xml-step-expression
+            (simple-var-ref x)
+            (xml-step-element-children
+              (xml-name-pattern-identifier a)))
+          (literal 1))))))
+    (expression-stmt
+      (invocation show (
+        (simple-var-ref s))))
+    (type-test-expr is
+      (simple-var-ref s)
+      (user-defined-type XmlArg))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref s)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access marker
+          (simple-var-ref s)))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(show
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type XmlArg)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref v)
+          (user-defined-type StringArg)))))
+  )
+)

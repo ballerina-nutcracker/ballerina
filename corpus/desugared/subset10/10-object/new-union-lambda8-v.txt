@@ -1,0 +1,80 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition IntAdd
+    (function init (
+      (variable callback (type
+        (function-type (
+          (value-type int)
+          (value-type int)) (
+          (value-type int)))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callback))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition StrRepeat
+    (function init (
+      (variable callback (type
+        (function-type (
+          (value-type string)
+          (value-type int)) (
+          (value-type string)))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref callback))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (union-type
+            (user-defined-type IntAdd)
+            (user-defined-type StrRepeat))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_0 (
+                (variable a)
+                (variable b)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref a)
+                    (simple-var-ref b)))))
+            (literal 1))))))
+      (var-def
+        (variable repeated (type
+          (union-type
+            (user-defined-type IntAdd)
+            (user-defined-type StrRepeat))) (expr
+          (new (
+            (lambda
+              (function $anonFunc$_1 (
+                (variable a)
+                (variable b)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref a)
+                    (invocation lang.value toString (
+                      (simple-var-ref b)))))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref sum)
+            (user-defined-type IntAdd)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref repeated)
+            (user-defined-type StrRepeat))))))))

@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, and the new `ballerina/mime` module for MIME media types, entities, and multipart bodies.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -171,10 +171,13 @@ Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code
 |---|---|
 | `getTextPayload` | Now returns `string\|error`, matching jBallerina's signature; extraction failures (for example exceeding `responseLimits.maxEntityBodySize`) surface as an `error` instead of being returned through a `string` signature |
 | `setXmlPayload` / `getXmlPayload` | Available on both `http:Request` and `http:Response`. `setXmlPayload` defaults the Content-Type to `application/xml`, keeping an already-set Content-Type when no override is passed |
+| `setPayload` | Available on both `http:Request` and `http:Response`. Accepts `json\|xml\|byte[]\|mime:Entity[]` and dispatches by the value's runtime type to `setTextPayload`, `setXmlPayload`, `setBinaryPayload`, `setJsonPayload` or `setBodyParts`. The `stream` payload kinds are not supported |
+| `setBodyParts` / `getBodyParts` | Available on both `http:Request` and `http:Response`, built on `ballerina/mime`. `setBodyParts` defaults the Content-Type to `multipart/form-data`, keeping an already-set Content-Type when no override is passed; the boundary is generated when the message is sent. `getBodyParts` returns the parts set by `setBodyParts`, or decodes an inbound multipart body (single level only). A part whose own body is `mime:Entity[]` is sent as a nested multipart body |
+| `getFormParams` | Available on `http:Request`. Decodes an `application/x-www-form-urlencoded` body into a `map<string>`, returning an `error` when the Content-Type is missing, invalid or not form-urlencoded, or when the body cannot be decoded |
 
 ### Outbound XML
 
-`RequestMessage` is now `anydata|http:Request`, so an `xml` value can be sent directly and is inferred as `application/xml`:
+`RequestMessage` is now `anydata|http:Request|mime:Entity[]`, so an `xml` value can be sent directly and is inferred as `application/xml`, and a `mime:Entity[]` is sent as a `multipart/form-data` body:
 
 ```ballerina
 xml echoed = check c->post("/echo", xml `<p>hi</p>`);
@@ -187,6 +190,41 @@ resource function get album() returns xml {
     return xml `<album><title>Kind of Blue</title></album>`;
 }
 ```
+
+## [mqtt](https://github.com/ballerina-platform/module-ballerina-mqtt/blob/main/docs/spec/spec.md)
+
+Types: `mqtt:Client`, `mqtt:Listener`, `mqtt:Caller` (classes), `mqtt:Service`, `mqtt:Message`, `mqtt:MessageProperties`, `mqtt:DeliveryToken`, `mqtt:Subscription`, `mqtt:ClientConfiguration`, `mqtt:ListenerConfiguration`, `mqtt:ConnectionConfiguration`, `mqtt:WillDetails`, `mqtt:SecureSocket`, `mqtt:CertKey`, `mqtt:Protocol`, `mqtt:Error`, `mqtt:ErrorDetails`, and the `mqtt:DEFAULT_URL` constant.
+
+### Client
+
+| Method | Notes |
+|---|---|
+| `new mqtt:Client(serverUri, clientId, *config)` | Connects to a `tcp://` or `ssl://` broker URI; returns `mqtt:Error?` |
+| `Client->publish(topic, message)` | Publishes with QoS 0, 1 or 2 and waits for delivery to complete; returns `mqtt:DeliveryToken\|mqtt:Error`. An invalid QoS or topic returns an `mqtt:Error` (jBallerina panics) |
+| `Client->subscribe(subscriptions)` | Accepts `string`, `string[]`, `mqtt:Subscription` or `mqtt:Subscription[]`; topic filters may use `+` and `#` |
+| `Client->receive()` | Returns `stream<mqtt:Message, error?>`; every stream of a client shares one message queue. Read it with `next()` — `foreach` over a stream is not supported by the interpreter yet |
+| `Client->isConnected()` / `disconnect()` / `reconnect()` / `close()` | Same connection-state rules and error reason codes as jBallerina; `reconnect()` returns before the reconnect completes |
+
+### Listener and services
+
+| Feature | Notes |
+|---|---|
+| `new mqtt:Listener(serverUri, clientId, subscriptions, *config)` | Connects on initialization; subscribes when started. `manualAcks` defers acknowledgement to `mqtt:Caller->complete()` |
+| `attach` / `detach` / `'start` / `gracefulStop` / `immediateStop` | Usable directly or through module-level `listener` and `service on` declarations. `detach` unsubscribes the listener's topics but keeps the connection, and attaching again re-subscribes (jBallerina disconnects) |
+| `onMessage(mqtt:Message)` / `onMessage(mqtt:Message, mqtt:Caller)` | Invoked once per message, one message at a time |
+| `onError(mqtt:Error)` | Invoked when the network connection is lost, the service has no `onMessage`, or `onMessage` panics (jBallerina prints the panic); errors with no `onError` are printed to stderr |
+| `onComplete(mqtt:DeliveryToken)` | Invoked when a `Caller->respond()` reply has been delivered |
+| `Caller->respond(message)` / `Caller->complete()` | Replies to the request's `responseTopic` with its `correlationData`, and acknowledges the message in `manualAcks` mode. Both return an `mqtt:Error` when the reply or acknowledgement fails (jBallerina returns `()`) |
+
+### Connection and security
+
+| Feature | Notes |
+|---|---|
+| Authentication | `username` and `password` |
+| Connection options | `keepAliveInterval`, `connectionTimeout`, `cleanStart`, `serverUris` (tried in order), `automaticReconnect`, `maxReconnectDelay`, and `willDetails` |
+| TLS / mutual TLS | `SecureSocket.cert` as a PEM file path, `SecureSocket.key` as an `mqtt:CertKey` with an unencrypted PEM key, and `SecureSocket.protocol` |
+
+Not covered in this subset: `crypto:TrustStore` / `crypto:KeyStore` TLS and encrypted private keys, and `ws://` / `wss://` broker URIs. jBallerina's compile-time service validation is applied when a service is attached: an invalid service method signature makes `attach` return an `mqtt:Error` with the compiler plugin's message.
 
 ## [protobuf](https://github.com/ballerina-platform/module-ballerina-protobuf/blob/master/docs/spec/spec.md)
 
@@ -296,3 +334,19 @@ Types: `mime:MediaType`, `mime:ContentDisposition`, `mime:Entity` (class); `mime
 | `setFileAsEntityBody(filePath, contentType?)` | Sets the file as a lazy byte-channel data source, read on demand by whichever accessor materializes the body first, matching jBallerina; a failed file open panics, matching jBallerina's own `checkpanic io:openReadableFile` |
 | Multipart bodies | `setBodyParts`/`getBodyParts` — `message/*` bodies return a `ParserError`; jBallerina silently returns an empty array for these instead |
 | `base64Encode`/`base64Decode`/`base64EncodeBlob`/`base64DecodeBlob` | Accept `string`, `byte[]`, or an `io:ReadableByteChannel` (read fully, result handed back as a freshly-constructed channel; charset does not apply to the channel form, matching jBallerina) |
+
+## [task](https://github.com/ballerina-platform/module-ballerina-task/blob/master/docs/spec/spec.md)
+
+Scheduling of `task:Job` objects once or at a fixed interval, with the error and waiting policies and job management of jBallerina's Quartz-based scheduler.
+
+Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:WaitingPolicy`, `task:Service`, `task:RetryConfiguration`, `task:Listener` (class), `task:Error`.
+
+| Function | Notes |
+|---|---|
+| `scheduleOneTimeJob(job, triggerTime)` | Runs the job once at a future `time:Civil`; a panic in `execute` is logged and ignored |
+| `scheduleJobRecurByFrequency(job, interval, maxCount?, startTime?, endTime?, taskPolicy?)` | Runs the job every `interval` seconds, optionally bounded by a count and a start/end window |
+| `pauseJob` / `resumeJob` / `pauseAllJobs` / `resumeAllJobs` | A resumed job applies its waiting policy to the runs it missed: `WAIT` fires them all, `IGNORE` and `LOG_AND_IGNORE` skip them |
+| `unscheduleJob` / `getRunningJobs` | Unscheduling the last job shuts the scheduler down; running jobs are listed in ascending id order |
+| `configureWorkerPool(workerCount?, waitingTime?)` | `waitingTime` is how late a run may be before the waiting policy treats it as missed |
+| `getTimeInMillies(time)` | Epoch milliseconds of a future `time:Civil` |
+| `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |

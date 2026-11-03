@@ -1,0 +1,77 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    arr = %4;
+    %6 = ConstantLoad inner
+    %7 = ConstantLoad v
+    %8 = fp $anon/.:$anonFunc$_0
+    %9 = map(arr,%8) -> bb1;
+  }
+  bb1 {
+    %10 = ConstantLoad m
+    %11 = ConstantLoad 1
+    %12 = newMap {| m: int, v: [int...], never... |}{%7=%9, %10=%11}
+    %13 = ConstantLoad tag
+    %14 = ConstantLoad 1
+    %15 = newMap {| inner: {| m: int, v: [int...], never... |}|{| m: string, v: [string...], never... |}, tag: int, never... |}{%6=%12, %13=%14}
+    o = %15;
+    %17 = println(o) -> bb2;
+  }
+  bb2 {
+    %18 = o is {| inner: {| m: int, v: [int...], never... |}|{| m: string, v: [string...], never... |}, tag: int, never... |}
+    %19 = %18;
+    %20 = ConstantLoad  
+    %22 = ConstantLoad inner
+    %21 = o[%22];
+    %23 = %21 is {| m: int, v: [int...], never... |}
+    %24 = %23;
+    %25 = println(%19,%20,%24) -> bb3;
+  }
+  bb3 {
+    %26 = ConstantLoad pair
+    %27 = fp $anon/.:$anonFunc$_1
+    %28 = map(arr,%27) -> bb4;
+  }
+  bb4 {
+    %29 = ConstantLoad 1
+    %30 = ConstantLoad 2
+    %31 = newArray [[int...], int, never...][%30]{%28, %29}
+    %32 = ConstantLoad tag
+    %33 = ConstantLoad t
+    %34 = newMap {| pair: [[int...], int, never...]|[[string...], string, never...], tag: string, never... |}{%26=%31, %32=%33}
+    p = %34;
+    %36 = println(p) -> bb5;
+  }
+  bb5 {
+    %37 = p is {| pair: [[int...], int, never...]|[[string...], string, never...], tag: string, never... |}
+    %38 = %37;
+    %39 = println(%38) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 10
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}

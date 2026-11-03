@@ -1,0 +1,181 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field f
+        (function-type (
+          (record-type
+            (field a
+              (value-type int)
+              (literal 1))
+            (field b
+              (value-type int)))) (
+          (value-type int))))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field f
+        (function-type (
+          (record-type
+            (field a
+              (value-type int)
+              (literal 1))
+            (field b
+              (value-type int)))) (
+          (value-type int))))
+      (field m
+        (value-type string))))
+  (function sum (
+    (variable r (type
+      (record-type
+        (field a
+          (value-type int)
+          (literal 1))
+        (field b
+          (value-type int)))) (expr
+      (mapping-constructor-expr
+        (key-value
+          (literal b)
+          (literal 2)))))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (index-based-access
+          (simple-var-ref r)
+          (literal a))
+        (index-based-access
+          (simple-var-ref r)
+          (literal b)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (value-type any)) (expr
+          (simple-var-ref sum))))
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f)
+              (expression-thunk
+              (var-def
+                (variable $desugar$0))
+              (assignment
+                (simple-var-ref $desugar$0)
+                (lambda
+                  (function $default$6 () ()
+                    (block-function-body
+                      (return
+                        (mapping-constructor-expr
+                          (key-value
+                            (literal b)
+                            (literal 2))))))))
+              (var-def
+                (variable $desugar$1 (expr
+                  (lambda
+                    (function $default$7 () ()
+                      (block-function-body
+                        (return
+                          (literal 1))))))))
+              (type-conversion-expr
+                (simple-var-ref h)
+                (function-type (
+                  (record-type
+                    (field a
+                      (value-type int)
+                      (literal 1))
+                    (field b
+                      (value-type int)))) (
+                  (value-type int))))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref x)
+            (user-defined-type A)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type A))
+        (block-stmt
+          (var-def
+            (variable $desugar$2))
+          (assignment
+            (simple-var-ref $desugar$2)
+            (lambda
+              (function $default$8 () ()
+                (block-function-body
+                  (return
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal b)
+                        (literal 2))))))))
+          (var-def
+            (variable $desugar$3 (expr
+              (lambda
+                (function $default$9 () ()
+                  (block-function-body
+                    (return
+                      (literal 1))))))))
+          (var-def
+            (variable g (type
+              (function-type (
+                (record-type
+                  (field a
+                    (value-type int)
+                    (literal 1))
+                  (field b
+                    (value-type int)))) (
+                (value-type int)))) (expr
+              (index-based-access
+                (simple-var-ref x)
+                (literal f)))))
+          (expression-stmt
+            (invocation io println (
+              (expression-thunk
+              (var-def
+                (variable $desugar$4 (expr
+                  (invocation $desugar$2 ()))))
+              (invocation g (
+                (simple-var-ref $desugar$4)))))))) ())
+      (block-stmt)))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal b)
+            (literal 2))))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal b)
+            (literal 2))))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$4 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal b)
+            (literal 2)))))))

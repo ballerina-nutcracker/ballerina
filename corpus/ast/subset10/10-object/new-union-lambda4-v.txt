@@ -1,0 +1,64 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition IntList
+    (function init (
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref values))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (class-definition StringList
+    (function init (
+      (variable values (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (variable marker (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref values))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref marker)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable l (type
+          (union-type
+            (user-defined-type IntList)
+            (user-defined-type StringList))) (expr
+          (new (
+            (invocation map expr:
+              (simple-var-ref arr) (
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable v)) ()
+                  (expr-function-body
+                    (binary-expr +
+                      (simple-var-ref v)
+                      (literal 1)))))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref l)
+            (user-defined-type IntList))))))))

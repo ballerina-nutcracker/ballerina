@@ -1,0 +1,151 @@
+module $anon.. v 0.0.0;
+class First {
+
+  init(any,int) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+class Second {
+
+  init(any,string) -> nil{
+    bb0 {
+      _ = value;
+      _ = marker;
+      return;
+    }
+  }
+}
+double(int) -> int{
+  bb0 {
+    %3 = a;
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:double
+    fn = %1;
+    %3 = ConstantLoad a
+    %4 = ConstantLoad 2
+    %5 = newMap {| a: int, never... |}{%3=%4}
+    rec = %5;
+    m = rec;
+    %8 = newObject $anon/.:First
+    %9 = fn is object { function run() returns nil }
+    %10 = ConstantLoad 1
+    %11 = %8.init(%9,%10) -> bb1;
+  }
+  bb1 {
+    %13 = %11 is nil
+    %13 ? bb2 : bb3;
+  }
+  bb2 {
+    %12 = %8;
+    GOTO bb4;
+  }
+  bb3 {
+    %12 = %11;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %12;
+    %15 = newObject $anon/.:First
+    %16 = <function(int) returns int>(fn)
+    %17 = ConstantLoad 1
+    %18 = %15.init(%16,%17) -> bb5;
+  }
+  bb5 {
+    %20 = %18 is nil
+    %20 ? bb6 : bb7;
+  }
+  bb6 {
+    %19 = %15;
+    GOTO bb8;
+  }
+  bb7 {
+    %19 = %18;
+    GOTO bb8;
+  }
+  bb8 {
+    b = %19;
+    %22 = newObject $anon/.:First
+    %23 = <{| a: int, never... |}>(m)
+    %24 = ConstantLoad 1
+    %25 = %22.init(%23,%24) -> bb9;
+  }
+  bb9 {
+    %27 = %25 is nil
+    %27 ? bb10 : bb11;
+  }
+  bb10 {
+    %26 = %22;
+    GOTO bb12;
+  }
+  bb11 {
+    %26 = %25;
+    GOTO bb12;
+  }
+  bb12 {
+    c = %26;
+    %30 = a is object { public function init(any, int) returns nil }
+    %30 ? bb13 : bb14;
+  }
+  bb13 {
+    %31 = ConstantLoad First
+    %29 = %31;
+    GOTO bb15;
+  }
+  bb14 {
+    %32 = ConstantLoad Second
+    %29 = %32;
+    GOTO bb15;
+  }
+  bb15 {
+    %33 = println(%29) -> bb16;
+  }
+  bb16 {
+    %35 = b is object { public function init(any, int) returns nil }
+    %35 ? bb17 : bb18;
+  }
+  bb17 {
+    %36 = ConstantLoad First
+    %34 = %36;
+    GOTO bb19;
+  }
+  bb18 {
+    %37 = ConstantLoad Second
+    %34 = %37;
+    GOTO bb19;
+  }
+  bb19 {
+    %38 = println(%34) -> bb20;
+  }
+  bb20 {
+    %40 = c is object { public function init(any, int) returns nil }
+    %40 ? bb21 : bb22;
+  }
+  bb21 {
+    %41 = ConstantLoad First
+    %39 = %41;
+    GOTO bb23;
+  }
+  bb22 {
+    %42 = ConstantLoad Second
+    %39 = %42;
+    GOTO bb23;
+  }
+  bb23 {
+    %43 = println(%39) -> bb24;
+  }
+  bb24 {
+    return;
+  }
+}

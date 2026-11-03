@@ -678,23 +678,10 @@ func Walk(v Visitor, node BLangNode) {
 		Walk(v, node.Ty.(BLangNode))
 
 	case *BMethodDecl:
-		for _, param := range node.RequiredParams {
-			Walk(v, param.TypeDesc.(BLangNode))
-		}
-		if node.ReturnTypeDescriptor != nil {
-			Walk(v, node.ReturnTypeDescriptor.(BLangNode))
-		}
+		walkFunctionTypeSignature(v, &node.BLangFunctionType)
 
 	case *BLangFunctionType:
-		for i := range node.RequiredParams {
-			Walk(v, node.RequiredParams[i])
-		}
-		if node.RestParam != nil {
-			Walk(v, node.RestParam)
-		}
-		if node.ReturnTypeDescriptor != nil {
-			Walk(v, node.ReturnTypeDescriptor.(BLangNode))
-		}
+		walkFunctionTypeSignature(v, node)
 
 	case *BLangFunctionTypeParam:
 		if node.Name != nil {
@@ -1002,6 +989,18 @@ func WalkTypeData(v Visitor, typeData *TypeData) {
 		Walk(v, tdNode)
 	}
 	v.Visit(nil)
+}
+
+func walkFunctionTypeSignature(v Visitor, fnType *BLangFunctionType) {
+	for i := range fnType.RequiredParams {
+		Walk(v, fnType.RequiredParams[i])
+	}
+	if fnType.RestParam != nil {
+		Walk(v, fnType.RestParam)
+	}
+	if fnType.ReturnTypeDescriptor != nil {
+		Walk(v, fnType.ReturnTypeDescriptor.(BLangNode))
+	}
 }
 
 func walkClassDefnBody(v Visitor, b *classDefnBase) {

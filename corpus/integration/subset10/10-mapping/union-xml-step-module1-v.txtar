@@ -1,0 +1,5 @@
+-- stdout --
+true
+false
+{"v":<a>1</a>,"m":1}
+-- stderr --

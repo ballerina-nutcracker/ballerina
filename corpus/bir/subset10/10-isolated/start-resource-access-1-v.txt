@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+class Client {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  resource get [int]/[int] Client.$resource$get$0(int,int,int) -> int{
+    bb0 {
+      %8 = a;
+      %9 = ConstantLoad 100
+      %10 = %9;
+      %7 = * %8 %10;
+      %11 = %7;
+      %13 = b;
+      %14 = ConstantLoad 10
+      %15 = %14;
+      %12 = * %13 %15;
+      %16 = %12;
+      %6 = + %11 %16;
+      %17 = %6;
+      %18 = c;
+      %5 = + %17 %18;
+      %0 = %5;
+      return;
+    }
+  }
+}
+seg() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Client
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    c = %3;
+    %6 = seg() -> bb5;
+  }
+  bb5 {
+    %7 = %6;
+    %8 = ConstantLoad 2
+    %9 = %8;
+    %10 = ConstantLoad 3
+    %11 = %10;
+    %12 = start c->[%7,%9].get(%11) isolated=true -> bb6;
+  }
+  bb6 {
+    r = %12;
+    %14 = wait r -> bb7;
+  }
+  bb7 {
+    v = %14;
+    %16 = println(v) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

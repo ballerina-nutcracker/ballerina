@@ -1,0 +1,111 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Person
+    (record-type
+      (field id
+        (value-type int))
+      (field name
+        (value-type string))))
+  (type-definition Department
+    (record-type
+      (field id
+        (value-type int))
+      (field name
+        (value-type string))))
+  (type-definition A
+    (record-type
+      (field v
+        (array-type
+          (value-type string) dimensions: 1 ([])))
+      (field m
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field v
+        (array-type
+          (value-type int) dimensions: 1 ([])))
+      (field m
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable people (type
+          (array-type
+            (user-defined-type Person) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal id)
+                (literal 2))
+              (key-value
+                (literal name)
+                (literal Ranjan)))
+            (mapping-constructor-expr
+              (key-value
+                (literal id)
+                (literal 1))
+              (key-value
+                (literal name)
+                (literal Alex)))))))
+      (var-def
+        (variable departments (type
+          (array-type
+            (user-defined-type Department) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal id)
+                (literal 1))
+              (key-value
+                (literal name)
+                (literal HR)))
+            (mapping-constructor-expr
+              (key-value
+                (literal id)
+                (literal 2))
+              (key-value
+                (literal name)
+                (literal Ops)))))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (query-expr
+                (from-clause
+                  (var-def
+                    (variable person))
+                  (simple-var-ref people))
+                (join-clause
+                  (var-def
+                    (variable dept))
+                  (simple-var-ref departments)
+                  (on-clause
+                    (field-based-access id
+                      (simple-var-ref person))
+                    (field-based-access id
+                      (simple-var-ref dept))))
+                (select-clause
+                  (binary-expr +
+                    (binary-expr +
+                      (field-based-access name
+                        (simple-var-ref person))
+                      (literal :))
+                    (field-based-access name
+                      (simple-var-ref dept))))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (user-defined-type A))))))))

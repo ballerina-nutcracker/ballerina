@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: invalid string numeric escape sequence
+  --> numeric-escape-e.bal:17:9
+   |
+17 |     _ = "\u{D800}"; // @error
+   |         ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid string numeric escape sequence
+  --> numeric-escape-e.bal:18:9
+   |
+18 |     _ = "\u{DFFF}"; // @error
+   |         ^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid string numeric escape sequence
+  --> numeric-escape-e.bal:19:9
+   |
+19 |     _ = "\u{110000}"; // @error
+   |         ^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid string numeric escape sequence
+  --> numeric-escape-e.bal:20:9
+   |
+20 |     _ = "\u{FFFFFFFFFFFFFFFF61}"; // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SYNTAX_ERROR]: invalid string numeric escape sequence
+  --> numeric-escape-e.bal:23:10
+   |
+23 | function 'f\u{D800}() { // @error
+   |          ^^^^^^^^^^

@@ -1,0 +1,84 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type boolean))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable k (type
+          (value-type int)) (expr
+          (literal 5))))
+      (var-def
+        (variable value (type
+          (record-type
+            (field a
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))))))
+      (var-def
+        (variable v (type
+          (value-type any)) (expr
+          (simple-var-ref value))))
+      (var-def
+        (variable tested (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-test-expr is
+                (simple-var-ref v)
+                (record-type
+                  (field a
+                    (value-type int)
+                    (simple-var-ref k)))))))))
+      (var-def
+        (variable cast (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (binary-expr ==
+                (field-based-access a
+                  (type-conversion-expr
+                    (simple-var-ref v)
+                    (record-type
+                      (field a
+                        (value-type int)
+                        (simple-var-ref k)))))
+                (literal 2)))))))
+      (var-def
+        (variable param (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-test-expr is
+                (simple-var-ref v)
+                (function-type (
+                  (value-type int)) (
+                  (value-type null)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref tested))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref cast))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref param)))))))

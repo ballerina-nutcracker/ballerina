@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> union-xml-step-operand1-e.bal:31:13
+   |
+31 |     A|B m = {v: s/<a>, m: 1}; // @error no applicable inherent type for mapping constructor
+   |             ^^^^^^^^^^^^^^^^

@@ -1,0 +1,132 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition IntFn
+    (record-type
+      (field f
+        (function-type (
+          (value-type int)) (
+          (value-type xml))))
+      (field m
+        (value-type int))))
+  (type-definition StringFn
+    (record-type
+      (field f
+        (function-type (
+          (value-type string)) (
+          (value-type xml))))
+      (field m
+        (value-type int))))
+  (function kind (
+    (variable v (type
+      (value-type any)))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref v)
+            (user-defined-type IntFn))
+          (literal IntFn)
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref v)
+              (user-defined-type StringFn))
+            (literal StringFn)
+            (literal neither))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal root
+            (xml-sequence-literal
+              (xml-element-literal a
+                (xml-text-literal 1))
+              (xml-element-literal a
+                (xml-text-literal 2))
+              (xml-element-literal a
+                (xml-text-literal 3)))))))
+      (var-def
+        (variable indexed (type
+          (union-type
+            (user-defined-type IntFn)
+            (user-defined-type StringFn))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal f)
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable i)) ()
+                  (expr-function-body
+                    (xml-step-expression
+                      (simple-var-ref x)
+                      (xml-step-element-children
+                        (xml-name-pattern-identifier a))
+                      (xml-step-index-extend
+                        (simple-var-ref i)))))))
+            (key-value
+              (literal m)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation kind (
+            (simple-var-ref indexed))))))
+      (var-def
+        (variable f (expr
+          (field-based-access f
+            (simple-var-ref indexed)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref f)
+          (function-type (
+            (value-type int)) (
+            (value-type xml))))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation f (
+                (literal 2))))))) ())
+      (block-stmt
+        (var-def
+          (variable called (type
+            (union-type
+              (user-defined-type IntFn)
+              (user-defined-type StringFn))) (expr
+            (mapping-constructor-expr
+              (key-value
+                (literal f)
+                (lambda
+                  (function $anonFunc$_1 (
+                    (variable i)) ()
+                    (expr-function-body
+                      (xml-step-expression
+                        (simple-var-ref x)
+                        (xml-step-element-children
+                          (xml-name-pattern-identifier a))
+                        (xml-step-method-call-extend get
+                          (simple-var-ref i)))))))
+              (key-value
+                (literal m)
+                (literal 1))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation kind (
+              (simple-var-ref called))))))
+        (var-def
+          (variable g (expr
+            (field-based-access f
+              (simple-var-ref called)))))
+        (if
+          (type-test-expr is
+            (simple-var-ref g)
+            (function-type (
+              (value-type int)) (
+              (value-type xml))))
+          (block-stmt
+            (expression-stmt
+              (invocation io println (
+                (invocation g (
+                  (literal 1))))))) ())
+        (block-stmt)))))

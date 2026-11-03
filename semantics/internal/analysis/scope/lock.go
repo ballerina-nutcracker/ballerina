@@ -140,7 +140,10 @@ func lockResourceAccess(cx Context, call *ast.BLangClientResourceAccessAction, _
 	}
 }
 
-// lockStartAction: a lock may not start a strand.
-func lockStartAction(cx Context, start *ast.BLangStartAction, _ Facts) {
-	cx.SemanticErr("cannot start strand inside a lock statement", start.GetPosition())
+// startOutsideLock: a start action may not occur lexically within a lock
+// statement, including within a closure defined in a lock body.
+func startOutsideLock(cx Context, start *ast.BLangStartAction) {
+	if lexicallyInLock(cx) {
+		cx.SemanticErr("cannot start strand inside a lock statement", start.GetPosition())
+	}
 }

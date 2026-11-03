@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: initializer of an isolated variable must be an isolated expression
+  --> isolated-var-query-init-1-e.bal:17:26
+   |
+17 | isolated int[] doubled = from int x in [1, 2] select x * 2; // @error
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

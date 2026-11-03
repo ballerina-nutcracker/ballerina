@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> inline-type-desc-duplicate-field1-e.bal:26:13
+   |
+26 |     A|B r = {x: v is record {| int a; int a; |}}; // @error no applicable inherent type
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

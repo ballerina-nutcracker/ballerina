@@ -1,0 +1,111 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type boolean))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (type-definition C
+    (record-type
+      (field y
+        (value-type int))))
+  (type-definition D
+    (record-type
+      (field y
+        (value-type string))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable value (type
+          (record-type
+            (field c
+              (union-type
+                (user-defined-type C)
+                (user-defined-type D)))
+            (field l
+              (union-type
+                (tuple-type
+                  (value-type int)
+                  (value-type int))
+                (tuple-type
+                  (value-type int)
+                  (value-type string)))))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal c)
+              (mapping-constructor-expr
+                (key-value
+                  (literal y)
+                  (literal 1))))
+            (key-value
+              (literal l)
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))))))
+      (var-def
+        (variable v (type
+          (value-type any)) (expr
+          (simple-var-ref value))))
+      (var-def
+        (variable r (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-test-expr is
+                (simple-var-ref v)
+                (record-type
+                  (field c
+                    (union-type
+                      (user-defined-type C)
+                      (user-defined-type D))
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal y)
+                        (literal 1))))
+                  (field l
+                    (union-type
+                      (tuple-type
+                        (value-type int)
+                        (value-type int))
+                      (tuple-type
+                        (value-type int)
+                        (value-type string)))
+                    (list-constructor-expr
+                      (literal 1)
+                      (literal s))))))))))
+      (var-def
+        (variable p (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (type-test-expr is
+                (simple-var-ref v)
+                (function-type (
+                  (union-type
+                    (user-defined-type C)
+                    (user-defined-type D))
+                  (union-type
+                    (tuple-type
+                      (value-type int)
+                      (value-type int))
+                    (tuple-type
+                      (value-type int)
+                      (value-type string)))) (
+                  (value-type null)))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref p)))))))

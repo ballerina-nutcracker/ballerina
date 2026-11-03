@@ -1,0 +1,62 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable empty (type
+        (value-type xml)) (expr
+        (xml-sequence-literal))))
+    (var-def
+      (variable elements (type
+        (constrained-type
+          (builtin-ref-type xml)
+          (user-defined-type xml Element))) (expr
+        (xml-sequence-literal))))
+    (var-def
+      (variable missing (type
+        (value-type xml)) (expr
+        (xml-step-expression
+          (group-expr
+            (xml-element-literal a))
+          (xml-step-element-children
+            (xml-name-pattern-identifier b))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref empty)
+          (constrained-type
+            (builtin-ref-type xml)
+            (value-type never))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref empty)
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref empty)
+          (user-defined-type xml Text)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref elements)
+          (constrained-type
+            (builtin-ref-type xml)
+            (value-type never))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref missing)
+          (constrained-type
+            (builtin-ref-type xml)
+            (value-type never))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref missing)
+          (constrained-type
+            (builtin-ref-type xml)
+            (user-defined-type xml Element))))))
+  )
+)

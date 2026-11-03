@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+class BitFn {
+
+  init(function(int) returns 0|1,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+class StrFn {
+
+  init(function(string) returns string,int) -> nil{
+    bb0 {
+      _ = callback;
+      _ = marker;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:BitFn
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = ConstantLoad 1
+    %4 = %1.init(%2,%3) -> bb1;
+  }
+  bb1 {
+    %6 = %4 is nil
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %5 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %5 = %4;
+    GOTO bb4;
+  }
+  bb4 {
+    f = %5;
+    %8 = f is object { public function init(function(int) returns 0|1, int) returns nil }
+    %9 = %8;
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$anonFunc$_0(int) -> 0|1{
+  bb0 {
+    %4 = v;
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = == %4 %6;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %2 = v;
+    GOTO bb3;
+  }
+  bb2 {
+    %7 = ConstantLoad 0
+    %2 = %7;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}

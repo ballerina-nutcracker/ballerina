@@ -1,0 +1,40 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (variable counter (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function isolatedFn (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (simple-var-ref n))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable r (type
+                    (constrained-type
+                      (builtin-ref-type future)
+                      (value-type int))) (expr
+                    (start-action
+                      (invocation isolatedFn (
+                        (literal 42)))))))
+                (return
+                  (check-panicked-expr
+                    (single-wait-action
+                      (simple-var-ref r))))))))))
+      (lock
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref counter)
+            (invocation f ())))))))

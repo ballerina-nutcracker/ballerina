@@ -1,0 +1,87 @@
+module $anon.. v 0.0.0;
+first([int...]) -> int{
+  bb0 {
+    %4 = length(xs) -> bb1;
+  }
+  bb1 {
+    %5 = %4;
+    %6 = ConstantLoad 0
+    %7 = %6;
+    %3 = > %5 %7;
+    %3 ? bb2 : bb3;
+  }
+  bb2 {
+    %9 = ConstantLoad 0
+    %8 = xs[%9];
+    %2 = %8;
+    GOTO bb4;
+  }
+  bb3 {
+    %10 = ConstantLoad 0
+    %2 = %10;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3
+    %2 = ConstantLoad 4
+    %3 = ConstantLoad 2
+    %4 = newArray [int, int, never...][%3]{%1, %2}
+    $desugar$0 = %4;
+    %6 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    %8 = ConstantLoad 0
+    %9 = newArray list[%8]{}
+    $desugar$2 = %9;
+    %12 = ConstantLoad 0
+    $desugar$3 = %12;
+    GOTO bb2;
+  }
+  bb2 {
+    %15 = $desugar$3;
+    %16 = $desugar$1;
+    %14 = < %15 %16;
+    %14 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 11
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %2 = (1, x);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    %5 = %1;
+    %6 = push((1, $desugar$2),%5) -> bb5;
+  }
+  bb4 {
+    %17 = start first($desugar$2) isolated=false -> bb6;
+  }
+  bb5 {
+    %8 = (1, $desugar$3);
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, $desugar$3) = %7;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    f = %17;
+    %19 = wait f -> bb7;
+  }
+  bb7 {
+    r = %19;
+    %21 = println(r) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> union-lambda2-e.bal:23:13
+   |
+23 |     A|B r = {v: arr.map(x => x > 1), m: 1}; // @error
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected "CONTINUE"|"LOG_AND_CONTINUE"|"LOG_AND_TERMINATE"|"TERMINATE", got "IGNORE"
+  --> task2-e.bal:20:44
+   |
+20 |     task:TaskPolicy policy = {errorPolicy: "IGNORE"}; // @error
+   |                                            ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected "EXPONENTIAL"|"FIXED", got "LINEAR"
+  --> task2-e.bal:21:95
+   |
+21 |     task:RetryConfiguration retryConfig = {maxAttempts: 1, retryInterval: 1, backoffStrategy: "LINEAR"}; // @error
+   |                                                                                               ^^^^^^^^

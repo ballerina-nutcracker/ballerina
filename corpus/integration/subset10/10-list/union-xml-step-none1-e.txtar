@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for list constructor
+  --> union-xml-step-none1-e.bal:19:34
+   |
+19 |     [string, int]|[int, int] l = [x/<a>, 1]; // @error no applicable inherent type for list constructor
+   |                                  ^^^^^^^^^^

@@ -1,0 +1,103 @@
+(main
+  (bb0 () (bb1 bb4)
+    (var-def
+      (variable fn (type
+        (value-type any)) (expr
+        (simple-var-ref total))))
+    (var-def
+      (variable tested (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-test-expr is
+              (simple-var-ref fn)
+              (function-type (
+                (value-type int)
+                (value-type int)
+                (function-type-param rest
+                (value-type int))) (
+                (value-type int)))))))))
+    (var-def
+      (variable cast (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (type-conversion-expr
+              (simple-var-ref fn)
+              (function-type (
+                (value-type int)
+                (value-type int)
+                (function-type-param rest
+                (value-type int))) (
+                (value-type int)))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref tested))))
+    (type-test-expr is
+      (simple-var-ref cast)
+      (user-defined-type A))
+  )
+  (bb1 (bb0) (bb2 bb3)
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type boolean)
+          (function-type (
+            (value-type int)
+            (value-type int)
+            (function-type-param rest
+            (value-type int))) (
+            (value-type int))))) (expr
+        (field-based-access x
+          (simple-var-ref cast)))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (function-type (
+        (value-type int)
+        (value-type int)
+        (function-type-param rest
+        (value-type int))) (
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb3)
+    (expression-stmt
+      (invocation io println (
+        (invocation x (
+          (literal 1)
+          (literal 2)
+          (literal 3))))))
+  )
+  (bb3 (bb2 bb1) (bb4))
+  (bb4 (bb3 bb0) ())
+)
+(total
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref rest)
+    (var-def
+      (variable r (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref sum)
+      (simple-var-ref r))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref sum))
+  )
+)

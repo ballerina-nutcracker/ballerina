@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> union-query-ambiguous1-e.bal:26:13
+   |
+26 |     A|B r = {v: from int x in arr select x * 2}; // @error ambiguous inherent type for mapping constructor
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

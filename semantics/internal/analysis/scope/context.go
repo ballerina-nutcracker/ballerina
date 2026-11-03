@@ -17,8 +17,9 @@
 // Package scope holds the scope contexts, rule sets and facts of the semantic
 // analyzer (stage 6). The descent in package analysis pushes a context per
 // semantic scope and runs the active rule sets at each node through the
-// Apply* helpers; it cannot reach a parent context, call a rule or fabricate
-// facts.
+// Apply* helpers; it cannot reach a parent context or call a rule. It chooses
+// where facts are demanded by pushing NewStartCall or NewIsolatedVarInit;
+// outside a demanding context facts carry no meaning and must not be read.
 package scope
 
 import (
@@ -44,6 +45,7 @@ type Context interface {
 	UnimplementedErr(msg string, loc diagnostics.Location)
 	parent() Context
 	rules() []ruleSet
+	factsNeeded() bool
 }
 
 // ScopeID identifies a closure within a context chain; it is the number of
@@ -89,8 +91,14 @@ type (
 		active []ruleSet
 	}
 
+	// factsBase records whether facts are computed under a context.
+	factsBase struct {
+		need bool
+	}
+
 	packageContext struct {
 		ruleBase
+		factsBase
 		compilerCtx *context.CompilerContext
 		tyCtx       semtypes.Context
 		moduleVars  map[model.SymbolRef]VarDecl
@@ -99,6 +107,7 @@ type (
 	functionContext struct {
 		contextBase
 		ruleBase
+		factsBase
 		class    ClassInfo
 		retTy    semtypes.SemType
 		locals   map[model.SymbolRef]VarDecl
@@ -112,6 +121,7 @@ type (
 	lockContext struct {
 		contextBase
 		ruleBase
+		factsBase
 		lock       *ast.BLangLock
 		locals     map[model.SymbolRef]struct{}
 		restricted model.SymbolRef
@@ -120,6 +130,15 @@ type (
 	isolatedExprContext struct {
 		contextBase
 		ruleBase
+		factsBase
+	}
+
+	// factsContext is the scope of an expression whose facts a consumer reads;
+	// it demands them and carries the parent's rules unchanged.
+	factsContext struct {
+		contextBase
+		ruleBase
+		factsBase
 	}
 )
 
@@ -128,11 +147,14 @@ var (
 	_ Context = (*functionContext)(nil)
 	_ Context = (*lockContext)(nil)
 	_ Context = (*isolatedExprContext)(nil)
+	_ Context = (*factsContext)(nil)
 )
 
 func (c contextBase) parent() Context { return c.outer }
 
 func (r ruleBase) rules() []ruleSet { return r.active }
+
+func (f factsBase) factsNeeded() bool { return f.need }
 
 func (c contextBase) CompilerCtx() *context.CompilerContext { return c.outer.CompilerCtx() }
 
@@ -195,6 +217,7 @@ func NewPackage(ctx *context.CompilerContext, tyCtx semtypes.Context, pkg *ast.B
 	}
 	return &packageContext{
 		ruleBase:    ruleBase{active: closureRules(false)},
+		factsBase:   factsBase{need: false},
 		compilerCtx: ctx,
 		tyCtx:       tyCtx,
 		moduleVars:  moduleVars,
@@ -244,6 +267,7 @@ func NewLambda(parent Context, node invokableSignatureNode) Context {
 func newFunctionContext(parent Context, node invokableSignatureNode) *functionContext {
 	fc := &functionContext{
 		contextBase: contextBase{outer: parent},
+		factsBase:   factsBase{need: false},
 		locals:      make(map[model.SymbolRef]VarDecl),
 		symbol:      node.Symbol(),
 		id:          nextScopeID(parent),
@@ -266,6 +290,7 @@ func NewExpressionClosure(parent Context, kind ClosureKind) Context {
 	enclosing, hasEnclosing := EnclosingFunction(parent)
 	fc := &functionContext{
 		contextBase: contextBase{outer: parent},
+		factsBase:   factsBase{need: false},
 		locals:      make(map[model.SymbolRef]VarDecl),
 		id:          nextScopeID(parent),
 		kind:        fnExpressionClosure,
@@ -298,8 +323,9 @@ func NewLock(parent Context, lock *ast.BLangLock) Context {
 		contextBase: contextBase{outer: parent},
 		ruleBase: ruleBase{active: slices.Concat(withoutKind(parent.rules(), outsideLock),
 			[]ruleSet{lockCandidateRules(), lockTransferRules(), lockCallRules()})},
-		lock:   lock,
-		locals: make(map[model.SymbolRef]struct{}),
+		factsBase: factsBase{need: true},
+		lock:      lock,
+		locals:    make(map[model.SymbolRef]struct{}),
 	}
 }
 
@@ -315,7 +341,26 @@ func NewIsolatedExpr(parent Context, expr ast.BLangExpression) Context {
 	return &isolatedExprContext{
 		contextBase: contextBase{outer: parent},
 		ruleBase:    ruleBase{active: withoutKind(parent.rules(), lockTransfer)},
+		factsBase:   factsBase{need: true},
 	}
+}
+
+// NewStartCall pushes the scope of a start action's call. Its facts decide
+// whether the started strand is isolated, so they are demanded.
+func NewStartCall(parent Context) Context {
+	return newFactsContext(parent)
+}
+
+// NewIsolatedVarInit pushes the scope of an isolated module-level variable's
+// initializer, which must be an isolated expression, so its facts are
+// demanded.
+func NewIsolatedVarInit(parent Context, v *ast.BLangVariable) Context {
+	common.Assert(func() bool { md, ok := parent.ModuleVar(v.Symbol()); return ok && md.IsIsolated() })
+	return newFactsContext(parent)
+}
+
+func newFactsContext(parent Context) *factsContext {
+	return &factsContext{contextBase{outer: parent}, ruleBase{active: parent.rules()}, factsBase{need: true}}
 }
 
 func withoutKind(rules []ruleSet, kind ruleKind) []ruleSet {

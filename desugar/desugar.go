@@ -135,6 +135,10 @@ func (ctx *packageContext) getSymbol(ref model.SymbolRef) model.Symbol {
 	return ctx.compilerCtx.GetSymbol(ref)
 }
 
+func (ctx *packageContext) unnarrowedSymbol(ref model.SymbolRef) model.SymbolRef {
+	return ctx.compilerCtx.UnnarrowedSymbol(ref)
+}
+
 func (ctx *packageContext) functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return ctx.compilerCtx.GetFunctionSignature(ref)
 }
@@ -312,6 +316,10 @@ func (ctx *functionContext) getSymbol(ref model.SymbolRef) model.Symbol {
 	return ctx.pkgCtx.getSymbol(ref)
 }
 
+func (ctx *functionContext) unnarrowedSymbol(ref model.SymbolRef) model.SymbolRef {
+	return ctx.pkgCtx.unnarrowedSymbol(ref)
+}
+
 func (ctx *functionContext) typeEnv() semtypes.Env {
 	return ctx.pkgCtx.typeEnv()
 }
@@ -324,6 +332,7 @@ type desugarContext interface {
 	setSymbolType(ref model.SymbolRef, ty semtypes.SemType)
 	symbolType(ref model.SymbolRef) semtypes.SemType
 	getSymbol(ref model.SymbolRef) model.Symbol
+	unnarrowedSymbol(ref model.SymbolRef) model.SymbolRef
 	functionSignature(ref model.SymbolRef) (model.UntypedFunctionSignature, bool)
 	functionSignatureByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSignature
 	associateFunctionSignature(source, target model.SymbolRef)
@@ -1197,8 +1206,9 @@ func createDefaultValueFunction(name string, defaultExpr ast.BLangExpression, re
 }
 
 type desugaredRecordFieldResult struct {
-	fn     *ast.BLangFunction
-	symRef model.SymbolRef
+	fn      *ast.BLangFunction
+	symRef  model.SymbolRef
+	fieldTy semtypes.SemType
 }
 
 type desugaredTypeDescResult struct {
@@ -1243,9 +1253,17 @@ func desugarLocalTypeDescDefaults(cx *functionContext, functions []*ast.BLangFun
 	return append(declarations, assignments...)
 }
 
+// recordFieldDefaultFnType builds the type of a record field default function, `function () returns fieldTy`.
+func recordFieldDefaultFnType(env semtypes.Env, fieldTy semtypes.SemType) semtypes.SemType {
+	paramListDefn := semtypes.NewListDefinition()
+	paramListTy := paramListDefn.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
+	fnDefn := semtypes.NewFunctionDefinition()
+	return fnDefn.Define(env, paramListTy, fieldTy, semtypes.FunctionQualifiersFrom(env, false, false))
+}
+
 func desugarRecordFieldDefault(cx *functionContext, field desugaredRecordFieldResult) ast.StatementNode {
 	fn := desugarNestedFunction(cx, field.fn)
-	fnType := cx.symbolType(field.symRef)
+	fnType := recordFieldDefaultFnType(cx.typeEnv(), field.fieldTy)
 	lambda := &ast.BLangLambdaFunction{Function: fn}
 	lambda.Ty = fnType
 	setPositionIfMissing(lambda, fn.GetPosition())
@@ -1327,6 +1345,16 @@ func desugarFunctionTypeDesc(ctx desugarContext, fnType *ast.BLangFunctionType, 
 	return result
 }
 
+// setRecordDefaultFnSignature populates the signature of the record field default function symbol
+// allocated during symbol resolution.
+func setRecordDefaultFnSignature(ctx *packageContext, fnRef model.SymbolRef, fieldTy semtypes.SemType, loc diagnostics.Location) {
+	ctx.compilerCtx.SetFunctionTypedSignature(fnRef, model.TypedFunctionSignature{ReturnType: fieldTy})
+	handle := ctx.compilerCtx.AllocateFunctionSignature(nil, false)
+	if !ctx.compilerCtx.AssociateFunctionSignature(fnRef, handle) {
+		ctx.internalError("function signature already set", loc)
+	}
+}
+
 func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, parentScope model.Scope) desugaredTypeDescResult {
 	var result desugaredTypeDescResult
 	for _, field := range recType.FieldPtrs() {
@@ -1335,27 +1363,13 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 			continue
 		}
 		symRef := field.Default.FnRef
-		fnCtx := &functionContext{pkgCtx: ctx.packageContext()}
-		fnCtx.pushScope(field.Default.FnScope)
-		// Use the inner walk so setup statements are hoisted into the default
-		// value function body instead of being wrapped in a thunk: the body
-		// runs them unconditionally before returning, which is the same
-		// evaluation order with a simpler shape.
-		defaultExpr := walkExpressionInner(fnCtx, field.Default.Expr)
-		fnCtx.popScope()
-		field.Default.Expr = defaultExpr.replacementNode.(ast.BLangExpression)
-
+		fieldTy := field.Type.Type()
+		setRecordDefaultFnSignature(ctx.packageContext(), symRef, fieldTy, field.GetPosition())
+		// Not walked here: desugarFunction desugars the generated function exactly once, and walkReturn hoists its setup statements.
 		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.Default.Expr, nil)
-		if len(defaultExpr.initStmts) > 0 {
-			body := fn.Body.(*ast.BLangBlockFunctionBody)
-			body.Stmts = append(defaultExpr.initStmts, body.Stmts...)
-		}
 		fn.SetSymbol(symRef)
 		fn.SetScope(field.Default.FnScope)
-
-		result.functions = append(result.functions, fnCtx.generatedFunctions...)
-		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef})
-
+		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef, fieldTy: fieldTy})
 	}
 	if recType.RestType != nil {
 		result.append(desugarTypeDesc(ctx, recType.RestType, parentScope))
@@ -1445,7 +1459,7 @@ func createDefaultClosure(ctx desugarContext, def *model.DefaultableParam, expr 
 	defaultClosure := createDefaultValueFunction(fnName, expr, requiredParams)
 	defaultClosure.SetSymbol(symRef)
 	defaultClosure.SetScope(fnScope)
-	remapSymbolRefs(defaultClosure.Body.(ast.BLangNode), symbolMapping)
+	remapSymbolRefs(ctx, defaultClosure.Body.(ast.BLangNode), symbolMapping)
 	return defaultClosure
 }
 
@@ -1563,13 +1577,14 @@ func desugarClassMethodDefaults(pkgCtx *packageContext, pkg *ast.BLangPackage) {
 }
 
 type symbolRemapper struct {
+	ctx     desugarContext
 	mapping map[model.SymbolRef]model.SymbolRef
 }
 
 func (r symbolRemapper) Visit(node ast.BLangNode) ast.Visitor {
 	if ref, ok := node.(ast.BNodeWithSymbol); ok {
 		oldSym := ref.Symbol()
-		if newSym, found := r.mapping[oldSym]; found {
+		if newSym, found := r.mapping[r.ctx.unnarrowedSymbol(oldSym)]; found {
 			ref.SetSymbol(newSym)
 		}
 	}
@@ -1581,13 +1596,13 @@ func (r symbolRemapper) VisitTypeData(_ *ast.TypeData) ast.Visitor {
 }
 
 // remapSymbolRefs updates symbols based on the mapping given
-func remapSymbolRefs(node ast.BLangNode, mapping map[model.SymbolRef]model.SymbolRef) {
+func remapSymbolRefs(ctx desugarContext, node ast.BLangNode, mapping map[model.SymbolRef]model.SymbolRef) {
 	if len(mapping) == 0 {
 		return
 	}
 	// This runs on source defaults before desugaring, so the tree cannot yet
 	// contain desugar-only nodes that ast.Walk does not know about.
-	ast.Walk(symbolRemapper{mapping: mapping}, node)
+	ast.Walk(symbolRemapper{ctx: ctx, mapping: mapping}, node)
 }
 
 // DesugarPackage returns a desugared package (may be new or same instance)
