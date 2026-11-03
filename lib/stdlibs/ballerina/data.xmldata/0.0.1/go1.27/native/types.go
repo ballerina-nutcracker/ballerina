@@ -138,11 +138,10 @@ type typeCache struct {
 }
 
 // typeKeyed keys interner-recognisable types by handle; the rest, such as byte or a union with a singleton
-// member, are matched by type equality once per representation and then found by instance.
+// member, are bucketed by their singleton values and matched by type equality within a bucket.
 type typeKeyed[V any] struct {
-	byHandle   map[semtypes.InternHandle]V
-	byInstance map[semtypes.InstanceKey]V
-	others     []typeEntry[V]
+	byHandle map[semtypes.InternHandle]V
+	others   map[singletonKey][]typeEntry[V]
 }
 
 type typeEntry[V any] struct {
@@ -150,10 +149,35 @@ type typeEntry[V any] struct {
 	value V
 }
 
+// singletonKey records the int and the string a type's int and string parts consist of, when either is a
+// single value. Equal types have equal parts, so they always share a key.
+type singletonKey struct {
+	intValue    int64
+	stringValue string
+	hasInt      bool
+	hasString   bool
+}
+
+func singletonKeyOf(ty semtypes.SemType) singletonKey {
+	var key singletonKey
+	basic := semtypes.WidenToBasicTypes(ty)
+	if semtypes.ContainsBasicType(basic, semtypes.Int) {
+		if shape := semtypes.SingleShape(semtypes.Intersect(ty, semtypes.Int)); shape.IsPresent() {
+			key.intValue, key.hasInt = shape.Get().Value.(int64)
+		}
+	}
+	if semtypes.ContainsBasicType(basic, semtypes.String) {
+		if shape := semtypes.SingleShape(semtypes.Intersect(ty, semtypes.String)); shape.IsPresent() {
+			key.stringValue, key.hasString = shape.Get().Value.(string)
+		}
+	}
+	return key
+}
+
 func newTypeKeyed[V any]() typeKeyed[V] {
 	return typeKeyed[V]{
-		byHandle:   make(map[semtypes.InternHandle]V),
-		byInstance: make(map[semtypes.InstanceKey]V),
+		byHandle: make(map[semtypes.InternHandle]V),
+		others:   make(map[singletonKey][]typeEntry[V]),
 	}
 }
 
@@ -171,13 +195,7 @@ func getOrCompute[V any](c *typeCache, tc semtypes.Context, entries *typeKeyed[V
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if !internable(key) {
-		instance := key.InstanceKey()
-		if value, ok := entries.byInstance[instance]; ok {
-			return value
-		}
-		value := lookupOrCompute(tc, entries, key, compute)
-		entries.byInstance[instance] = value
-		return value
+		return lookupOrCompute(tc, entries, key, compute)
 	}
 	handle := c.interner.Intern(key)
 	if value, ok := entries.byHandle[handle]; ok {
@@ -190,13 +208,15 @@ func getOrCompute[V any](c *typeCache, tc semtypes.Context, entries *typeKeyed[V
 
 func lookupOrCompute[V any](tc semtypes.Context, entries *typeKeyed[V], key semtypes.SemType,
 	compute func(semtypes.SemType) V) V {
-	for _, e := range entries.others {
+	bucketKey := singletonKeyOf(key)
+	bucket := entries.others[bucketKey]
+	for _, e := range bucket {
 		if semtypes.IsSameType(tc, e.key, key) {
 			return e.value
 		}
 	}
 	value := compute(key)
-	entries.others = append(entries.others, typeEntry[V]{key: key, value: value})
+	entries.others[bucketKey] = append(bucket, typeEntry[V]{key: key, value: value})
 	return value
 }
 
