@@ -189,6 +189,23 @@ public function main() returns error? {
     // A socket timeout on a hung server is a connection failure, as the FailureCategory docs state.
     io:println(opensOnHang(ftp:TRANSIENT_ERROR)); // @output false
     io:println(opensOnHang(ftp:CONNECTION_ERROR)); // @output true
+
+    // A success that opens the circuit long after the last failure still waits resetTime.
+    ftp:Client lateOpen = check connect({
+        rollingWindow: {requestVolumeThreshold: 3, timeWindow: 60, bucketSize: 10},
+        failureThreshold: 0.3,
+        resetTime: 1,
+        failureCategories: [ftp:ALL_ERRORS]
+    });
+    check lateOpen->putText("/present.txt", "here");
+    var lateFailure = lateOpen->getText("/missing.txt");
+    io:println(lateFailure is ftp:FileNotFoundError); // @output true
+    runtime:sleep(1.2);
+    var opening = lateOpen->exists("/present.txt");
+    io:println(opening); // @output true
+    var afterOpening = lateOpen->exists("/present.txt");
+    io:println(describe(afterOpening)); // @output CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
+    check lateOpen->close();
 }
 
 function opensOnHang(ftp:FailureCategory category) returns boolean|error {
