@@ -201,6 +201,16 @@ service class EarlyService {
     }
 }
 
+@ftp:ServiceConfig {path: "/held"}
+service class HeldContentService {
+    *ftp:Service;
+
+    remote function onFileText(string content, ftp:FileInfo info) {
+        _ = info;
+        recordEvent("held content dispatched: " + content);
+    }
+}
+
 @ftp:ServiceConfig {path: "/race/b"}
 service class LateService {
     *ftp:Service;
@@ -383,6 +393,26 @@ public function main() returns error? {
     waitFor(1);
     printEvents(); // @output early service dispatched
     check raceListener.gracefulStop();
+
+    // The service is detached while the poll reads the file it was about to receive.
+    check c->putText("/held/a.txt", "a");
+    ftp:Listener heldListener = check new ({
+        host: "127.0.0.1",
+        port: ftpPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        pollingInterval: 3600
+    });
+    HeldContentService held = new;
+    check heldListener.attach(held);
+    holdOpen("/held/a.txt");
+    future<error?> heldPoll = start heldListener.poll();
+    check awaitHeld();
+    check heldListener.detach(held);
+    releaseHeld();
+    check wait heldPoll;
+    runtime:sleep(0.2);
+    io:println(eventCount()); // @output 0
+    check heldListener.gracefulStop();
 
     check validation.immediateStop();
     check c->close();

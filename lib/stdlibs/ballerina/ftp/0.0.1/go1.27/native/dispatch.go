@@ -349,11 +349,18 @@ func (m *ftpModule) dispatchContent(ctx *extern.Context, state *listenerState, s
 			m.logError(err.Error())
 			return
 		}
+		if !state.attached(sc) {
+			_ = r.Close()
+			return
+		}
 		content = m.contentStream(r)
 	} else {
 		data, err := withRetry(ctx, state.retry, "fetchContent", func() ([]byte, error) {
 			return remote.readAll(f.logical)
 		})
+		if !state.attached(sc) {
+			return
+		}
 		if err != nil {
 			m.logError(err.Error())
 			return
