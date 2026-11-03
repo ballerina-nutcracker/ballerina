@@ -32,10 +32,11 @@ import (
 
 const listenerStateField = "$ftpListener"
 
+// ageFilter measures age from the last-modified time also for CREATION_TIME, as jBallerina falls
+// back to it when the server reports no creation time, which FTP and SFTP listings never carry.
 type ageFilter struct {
-	minAge   *float64
-	maxAge   *float64
-	creation bool
+	minAge *float64
+	maxAge *float64
 }
 
 type dependencyCondition struct {
@@ -109,8 +110,7 @@ func parseAgeFilter(m *values.Map) (*ageFilter, error) {
 	if m == nil {
 		return nil, nil
 	}
-	mode, _ := getString(m, "ageCalculationMode")
-	f := &ageFilter{minAge: optionalFloat(m, "minAge"), maxAge: optionalFloat(m, "maxAge"), creation: mode == "CREATION_TIME"}
+	f := &ageFilter{minAge: optionalFloat(m, "minAge"), maxAge: optionalFloat(m, "maxAge")}
 	if f.minAge != nil && *f.minAge < 0 {
 		return nil, newError(kindInvalidConfig, "fileAgeFilter.minAge must be positive or zero (got: "+values.FormatFloat(*f.minAge)+")")
 	}
