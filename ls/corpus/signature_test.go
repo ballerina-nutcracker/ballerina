@@ -181,7 +181,11 @@ func (c *signatureClient) await(t *testing.T, id int, reply <-chan json.RawMessa
 
 func (c *signatureClient) read(t *testing.T, output *io.PipeReader) {
 	defer close(c.done)
-	defer output.Close()
+	defer func() {
+		if err := output.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
 	reader := bufio.NewReader(output)
 	for {
 		raw, err := protocol.ReadFrame(reader)

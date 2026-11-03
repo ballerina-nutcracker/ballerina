@@ -114,7 +114,7 @@ func emptyCallContext(paths [][]ast.BLangNode, call ast.BLangNode, args []ast.BL
 			return false
 		}
 		for i := len(path) - 1; path[i] != call; i-- {
-			if !callWideDefault(path[i], loc) && !(lowered && path[i] == alias) {
+			if !callWideDefault(path[i], loc) && (!lowered || path[i] != alias) {
 				return false
 			}
 		}
