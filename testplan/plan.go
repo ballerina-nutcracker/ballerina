@@ -43,11 +43,8 @@ type TestFunction struct {
 	Runs            int
 }
 
-// IsEvaluation reports whether t is an evaluation test — jballerina's own
-// isEvaluationTest draws this line purely from these two fields differing
-// from their defaults, with no separate annotation or marker: @test:Config
-// omitting both minPassRate and runs is an ordinary test, writing either one
-// makes it an evaluation.
+// IsEvaluation reports whether t is an evaluation test: Runs or MinPassRate
+// differs from its default.
 func (t TestFunction) IsEvaluation() bool {
 	return t.Runs != 1 || t.MinPassRate != 1.0
 }

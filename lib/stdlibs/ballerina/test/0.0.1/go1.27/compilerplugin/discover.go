@@ -28,6 +28,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/testplan"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 const (
@@ -40,9 +41,8 @@ const (
 // pkg, validates dependsOn references, stashes the result in testplan's
 // store keyed by pkg's module identity, and returns pkg unchanged.
 func ProcessTests(compilerCtx *context.CompilerContext, _ model.ExportedSymbolSpace, pkg *ast.BLangPackage) (*ast.BLangPackage, error) {
-	plan := discover(pkg)
+	plan := discover(compilerCtx, pkg)
 	validateDependsOn(compilerCtx, pkg, plan)
-	validateEvaluationConfig(compilerCtx, pkg, plan)
 	testplan.Store(moduleKey(pkg), plan)
 	return pkg, nil
 }
@@ -69,19 +69,23 @@ func validateDependsOn(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 	}
 }
 
-// validateEvaluationConfig reports a compile error for a @test:Config with
-// runs < 1 — jballerina's own TestConfig doesn't validate this, but a Go
-// port dividing by runs (passedIterations / runs) would otherwise compute
-// NaN/Inf silently instead of failing loudly at compile time.
-func validateEvaluationConfig(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage, plan *testplan.TestPlan) {
-	fnPositions := buildFnPositions(pkg)
-	for _, t := range plan.Tests {
-		if t.Runs < 1 {
-			compilerCtx.SemanticError(
-				fmt.Sprintf("'runs' must be at least 1, got %d", t.Runs),
-				fnPositions[t.Name].GetPosition(),
-			)
-		}
+// validateEvaluationConfig reports a compile error for an out-of-range
+// minPassRate or runs, anchored on the whole @test:Config attachment —
+// confirmed live against real jballerina, which rejects both with this
+// exact wording and anchor, contrary to an earlier assumption here that
+// only this port validated runs.
+func validateEvaluationConfig(compilerCtx *context.CompilerContext, att ast.BLangAnnotationAttachment, test testplan.TestFunction) {
+	if test.Runs < 1 {
+		compilerCtx.SemanticError(
+			fmt.Sprintf("invalid config: runs must be a positive integer, found: %d", test.Runs),
+			att.GetPosition(),
+		)
+	}
+	if test.MinPassRate < 0.0 || test.MinPassRate > 1.0 {
+		compilerCtx.SemanticError(
+			fmt.Sprintf("invalid config: minPassRate must be between 0.0 and 1.0, found: %s", values.FormatFloat(test.MinPassRate)),
+			att.GetPosition(),
+		)
 	}
 }
 
@@ -105,7 +109,7 @@ func moduleKey(pkg *ast.BLangPackage) testplan.ModuleKey {
 
 // discover walks every top-level function in pkg and extracts @test:*
 // annotation metadata.
-func discover(pkg *ast.BLangPackage) *testplan.TestPlan {
+func discover(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) *testplan.TestPlan {
 	if pkg == nil {
 		return &testplan.TestPlan{}
 	}
@@ -124,7 +128,9 @@ func discover(pkg *ast.BLangPackage) *testplan.TestPlan {
 			}
 			switch identifierValue(att.AnnotationName) {
 			case "Config":
-				p.Tests = append(p.Tests, parseTestConfig(name, att))
+				test := parseTestConfig(name, att)
+				validateEvaluationConfig(compilerCtx, att, test)
+				p.Tests = append(p.Tests, test)
 			case "BeforeSuite":
 				p.BeforeSuite = append(p.BeforeSuite, testplan.SuiteHook{Name: name})
 			case "AfterSuite":

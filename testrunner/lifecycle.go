@@ -183,13 +183,10 @@ func (r *runner) executeOne(t testplan.TestFunction) []Result {
 }
 
 // executeSingle runs one plain test through its group/each/before/after
-// hooks. A failing before: hook Skips the test without invoking it; a
-// failing after: hook doesn't change the test's own Result. Either cascades.
-//
-// An evaluation test (t.IsEvaluation()) is dispatched to executeEvaluation
-// instead, which manages its own per-iteration each/before/after hooks
-// internally (once per t.Runs, not once overall) — so BeforeEach/AfterEach
-// here must not also wrap it, unlike the plain-test path below.
+// hooks, dispatching an evaluation test (t.IsEvaluation()) to
+// executeEvaluation instead. A failing before: hook Skips the test without
+// invoking it; a failing after: hook doesn't change the test's own Result.
+// Either cascades.
 func (r *runner) executeSingle(t testplan.TestFunction) Result {
 	r.runBeforeGroupHooks(t)
 
@@ -232,19 +229,11 @@ func (r *runner) executeSingle(t testplan.TestFunction) Result {
 }
 
 // executeDataDriven runs a data-driven test: the provider is invoked once
-// up front (a failure skips its whole lifecycle, no dependent cascade ever).
+// up front (a failure skips its whole lifecycle, no dependent cascade ever),
+// dispatching an evaluation test (t.IsEvaluation()) to
+// executeDataDrivenEvaluation instead, with no sub-key filtering applied.
 // Unlike BeforeEach/AfterEach, before:/after: run once per row. A row not
 // matching a --tests sub-key filter gets no Result, but its hooks still run.
-//
-// An evaluation test (t.IsEvaluation()) is dispatched to
-// executeDataDrivenEvaluation instead, which manages its own per-iteration
-// each/before/after hooks internally (once per t.Runs, each iteration
-// re-running every row) — so BeforeEach/AfterEach here must not also wrap
-// it, unlike the plain-test path below. Sub-key filtering doesn't apply to
-// an evaluation: jballerina's executeDataDrivenEvaluation has no such
-// concept, and it exists specifically to narrow --rerun-failed re-runs of a
-// single failed row, which doesn't make sense for a test whose failure is
-// already an average across every row and every run.
 func (r *runner) executeDataDriven(t testplan.TestFunction) []Result {
 	rows, testType, err := r.dataProviderRows(t.DataProvider)
 	if err != nil {
@@ -325,39 +314,33 @@ func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue,
 }
 
 // executeEvaluation runs t.Runs iterations of a non-data-driven evaluation
-// test (t.IsEvaluation(), t.DataProvider == ""), averaging pass/fail across
-// runs against t.MinPassRate — ported from jballerina's
-// executeNonDataDrivenEvaluation (concurrentExecuter.bal's isolated twin is
-// the same logic, collapsed into one path since this port has no
-// isolated/non-isolated execution distinction).
-//
-// Unlike a plain test, an evaluation's outcome is never printed as a live
-// "has failed" console notice — only in WriteConsoleReport's batched
-// pass/fail sections — exactly as jballerina's executeNonDataDrivenEvaluation
-// only ever calls reportData.onPassed/onFailed, never handleTestFuncOutput's
-// live println.
+// test, averaging pass/fail across runs against t.MinPassRate.
 func (r *runner) executeEvaluation(t testplan.TestFunction) (result Result, shouldSkipDependents bool) {
 	passed := 0
 	anyAfterFailed := false
 	var runResults []EvalRun
 	for run := 1; run <= t.Runs; run++ {
-		r.runBeforeEachHooks()
+		// Skip is checked before BeforeEach runs at all, not after — an
+		// already-skipped (e.g. failed dependsOn) evaluation runs zero
+		// each-hooks, confirmed against real jballerina: it never enters
+		// this loop body in the first place.
 		if skip := r.perTestSkip[t.Name] || r.shouldSkip; skip {
-			r.runAfterEachHooks()
 			return Result{Name: t.Name, Status: Skip}, true
 		}
+		r.runBeforeEachHooks()
 		if t.Before != "" && r.invokeHook(t.Before, "before test function for the test", false) {
 			// A before: failure aborts the whole evaluation immediately,
-			// not just this one run — matches jballerina's
-			// executeNonDataDrivenEvaluation, which returns rather than
-			// continuing to the next iteration.
-			r.runAfterEachHooks()
+			// not just this one run, and runs no AfterEach for this
+			// iteration — matches jballerina's
+			// executeNonDataDrivenEvaluation, which returns right after the
+			// before: check, before ever reaching executeAfterEachFunctions.
 			return Result{Name: t.Name, Status: Skip}, true
 		}
 
 		ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, nil)
 		if hardErr != nil {
-			r.runAfterEachHooks()
+			// Also returns before AfterEach, matching jballerina's
+			// InvalidArgumentError branch.
 			return Result{Name: t.Name, Status: Fail, Message: hardErr.Error(), RawMessage: true, Type: EvalTest}, true
 		}
 		if ok {
@@ -375,20 +358,8 @@ func (r *runner) executeEvaluation(t testplan.TestFunction) (result Result, shou
 	return result, result.Status == Fail || anyAfterFailed
 }
 
-// executeDataDrivenEvaluation runs t.Runs iterations of a data-driven
-// evaluation test, each iteration re-running every one of rows (fetched
-// once, up front, same as a plain data-driven test) and computing that
-// iteration's own passedEntries/totalEntries; the final score is the
-// average of those per-iteration rates across all Runs — ported from
-// jballerina's executeDataDrivenEvaluation.
-//
-// Unlike executeEvaluation, an after: hook failure here never cascades a
-// skip to dependents — matching an asymmetry already present in
-// jballerina's own source (executeAfterFunctionIsolated's result is
-// discarded here, unlike executeNonDataDrivenEvaluation's
-// afterFunctionResults tracking) — which costs nothing extra to preserve
-// given this port's data-driven tests never cascade skip to dependents at
-// all (see executeDataDriven's doc comment).
+// executeDataDrivenEvaluation runs every row t.Runs times and averages the
+// per-run pass rates.
 func (r *runner) executeDataDrivenEvaluation(t testplan.TestFunction, rows []dataRow) []Result {
 	if len(rows) == 0 {
 		return []Result{{Name: t.Name, Status: Fail, Message: "the data provider returned no data", RawMessage: true, Type: EvalTest}}
@@ -397,13 +368,13 @@ func (r *runner) executeDataDrivenEvaluation(t testplan.TestFunction, rows []dat
 	var cumulativePassRate float64
 	var runResults []EvalRun
 	for iteration := 1; iteration <= t.Runs; iteration++ {
-		r.runBeforeEachHooks()
+		// Same ordering as executeEvaluation: skip checked before BeforeEach
+		// runs, and no AfterEach on a before:/hard-error return.
 		if skip := r.perTestSkip[t.Name] || r.shouldSkip; skip {
-			r.runAfterEachHooks()
 			return []Result{{Name: t.Name, Status: Skip}}
 		}
+		r.runBeforeEachHooks()
 		if t.Before != "" && r.invokeHook(t.Before, "before test function for the test", false) {
-			r.runAfterEachHooks()
 			return []Result{{Name: t.Name, Status: Skip}}
 		}
 
@@ -412,7 +383,6 @@ func (r *runner) executeDataDrivenEvaluation(t testplan.TestFunction, rows []dat
 		for _, row := range rows {
 			ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, row.args)
 			if hardErr != nil {
-				r.runAfterEachHooks()
 				return []Result{{Name: t.Name, Status: Fail, Message: hardErr.Error(), RawMessage: true, Type: EvalTest}}
 			}
 			if ok {
@@ -434,11 +404,8 @@ func (r *runner) executeDataDrivenEvaluation(t testplan.TestFunction, rows []dat
 	return []Result{evaluationResult(t, cumulativePassRate/float64(t.Runs), runResults)}
 }
 
-// evaluationResult builds the final Pass/Fail Result for an evaluation
-// test given its observed pass rate — shared by executeEvaluation and
-// executeDataDrivenEvaluation, ported from jballerina's "evaluation
-// passed/failed with an average pass rate of X" message (serialExecuter.bal
-// #executeNonDataDrivenEvaluation/#executeDataDrivenEvaluation).
+// evaluationResult builds the final Pass/Fail Result for an evaluation test
+// given its observed pass rate.
 func evaluationResult(t testplan.TestFunction, observedPassRate float64, runs []EvalRun) Result {
 	status, verb := Fail, "failed"
 	if observedPassRate >= t.MinPassRate {
@@ -458,15 +425,9 @@ func evaluationResult(t testplan.TestFunction, observedPassRate float64, runs []
 	}
 }
 
-// invokeEvaluationRun calls fnName once for one run of an evaluation test.
-// passed is true if the call completed with no error. A *values.Error
-// (assertion failure, e.g. test:assertEquals) reports passed=false with its
-// message — one run simply "didn't pass," counted toward the pass rate but
-// not a hard failure. Any other error (bad args, a panic that isn't a
-// *values.Error) is hard: it aborts the whole evaluation immediately rather
-// than being averaged in — jballerina's InvalidArgumentError distinction,
-// the same panic-vs-*values.Error convention this package's own invoke
-// already relies on.
+// invokeEvaluationRun calls fnName once for one run of an evaluation test;
+// hardErr is set only for a non-*values.Error panic, which aborts the whole
+// evaluation instead of counting toward the pass rate.
 func (r *runner) invokeEvaluationRun(fnName string, args []values.BalValue) (passed bool, errMsg string, hardErr error) {
 	defer func() {
 		if rec := recover(); rec != nil {

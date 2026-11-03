@@ -196,9 +196,10 @@ func TestProcessTests_RejectsDependsOnNonTestFunction(t *testing.T) {
 	}
 }
 
-// TestProcessTests_RejectsRunsLessThanOne: a Go port dividing by runs
-// (passedIterations/runs) would otherwise silently compute NaN/Inf instead
-// of failing loudly — see validateEvaluationConfig's doc comment.
+// TestProcessTests_RejectsRunsLessThanOne confirms runs < 1 is a compile
+// error with jballerina's exact wording — confirmed live against real
+// jballerina, which rejects this too (contrary to an earlier assumption
+// that only this port validated it).
 func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
 	compilation := loadTestdataProject(t, "bad-runs")
 	diag := compilation.DiagnosticResult()
@@ -207,7 +208,7 @@ func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
 	}
 	var found bool
 	for _, d := range diag.Diagnostics() {
-		if strings.Contains(d.Message(), "'runs' must be at least 1, got 0") {
+		if strings.Contains(d.Message(), "invalid config: runs must be a positive integer, found: 0") {
 			found = true
 		}
 	}
@@ -217,5 +218,32 @@ func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
 			messages = append(messages, d.Message())
 		}
 		t.Fatalf("expected a runs diagnostic, got: %v", messages)
+	}
+}
+
+// TestProcessTests_RejectsMinPassRateOutOfRange confirms minPassRate outside
+// 0.0-1.0 is a compile error with jballerina's exact wording — confirmed
+// live against real jballerina.
+func TestProcessTests_RejectsMinPassRateOutOfRange(t *testing.T) {
+	compilation := loadTestdataProject(t, "bad-minpassrate")
+	diag := compilation.DiagnosticResult()
+	if !diag.HasErrors() {
+		t.Fatal("expected a compile error for minPassRate out of range")
+	}
+	var foundHigh, foundNeg bool
+	for _, d := range diag.Diagnostics() {
+		if strings.Contains(d.Message(), "invalid config: minPassRate must be between 0.0 and 1.0, found: 1.5") {
+			foundHigh = true
+		}
+		if strings.Contains(d.Message(), "invalid config: minPassRate must be between 0.0 and 1.0, found: -0.5") {
+			foundNeg = true
+		}
+	}
+	if !foundHigh || !foundNeg {
+		var messages []string
+		for _, d := range diag.Diagnostics() {
+			messages = append(messages, d.Message())
+		}
+		t.Fatalf("expected minPassRate diagnostics for both 1.5 and -0.5, got: %v", messages)
 	}
 }
