@@ -64,6 +64,8 @@ type ftpFixture struct {
 	ftpsPort         int64
 	ftpsImplicitPort int64
 	sftpPort         int64
+	sftpProxyPort    int64
+	sftpProxyFrozen  *atomic.Bool
 	busyPort         int64
 	busyReplies      *atomic.Int64
 	certPath         string
@@ -373,6 +375,46 @@ func startSFTPServer(t *testing.T, clientKey ssh.PublicKey) (int64, ssh.PublicKe
 	return int64(ln.Addr().(*net.TCPAddr).Port), hostSigner.PublicKey()
 }
 
+// startFreezingProxy forwards connections to target until frozen, then drops whatever either side
+// sends, as a server that stops responding without closing the connection.
+func startFreezingProxy(t *testing.T, target int64) (int64, *atomic.Bool) {
+	t.Helper()
+	ln := listenLoopback(t)
+	t.Cleanup(func() { _ = ln.Close() })
+	frozen := &atomic.Bool{}
+	forward := func(dst, src net.Conn) {
+		buf := make([]byte, 32*1024)
+		for {
+			n, err := src.Read(buf)
+			if n > 0 && !frozen.Load() {
+				if _, werr := dst.Write(buf[:n]); werr != nil {
+					return
+				}
+			}
+			if err != nil {
+				_ = dst.Close()
+				return
+			}
+		}
+	}
+	go func() {
+		for {
+			client, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			server, err := net.Dial("tcp4", "127.0.0.1:"+strconv.FormatInt(target, 10))
+			if err != nil {
+				_ = client.Close()
+				continue
+			}
+			go forward(server, client)
+			go forward(client, server)
+		}
+	}()
+	return int64(ln.Addr().(*net.TCPAddr).Port), frozen
+}
+
 func serveSFTP(conn net.Conn, config *ssh.ServerConfig, handlers sftp.Handlers) {
 	_, chans, reqs, err := ssh.NewServerConn(conn, config)
 	if err != nil {
@@ -474,6 +516,7 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 	tlsConfig, certPath := selfSignedTLS(t, dir)
 	clientKey, keyPath, encryptedKeyPath := writeClientKeys(t, dir)
 	sftpPort, hostKey := startSFTPServer(t, clientKey)
+	sftpProxyPort, sftpProxyFrozen := startFreezingProxy(t, sftpPort)
 	knownHosts := filepath.Join(dir, "known_hosts")
 	line := "[127.0.0.1]:" + strconv.FormatInt(sftpPort, 10) + " " + string(ssh.MarshalAuthorizedKey(hostKey))
 	if err := os.WriteFile(knownHosts, []byte(line), 0o600); err != nil {
@@ -505,6 +548,8 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 		ftpsPort:         ftpsPort,
 		ftpsImplicitPort: ftpsImplicitPort,
 		sftpPort:         sftpPort,
+		sftpProxyPort:    sftpProxyPort,
+		sftpProxyFrozen:  sftpProxyFrozen,
 		busyPort:         busyPort,
 		busyReplies:      busyReplies,
 		certPath:         certPath,

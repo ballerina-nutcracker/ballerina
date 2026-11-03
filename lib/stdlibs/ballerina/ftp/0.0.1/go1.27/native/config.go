@@ -50,6 +50,7 @@ type endpoint struct {
 	connectTimeout   time.Duration
 	ftpDataTimeout   time.Duration
 	ftpSocketTimeout time.Duration
+	sftpTimeout      time.Duration
 	asciiMode        bool
 
 	tlsConfig   *pal.TLSConfig
@@ -207,6 +208,7 @@ func parseTimeouts(config *values.Map, ep *endpoint) error {
 	}
 	ep.ftpDataTimeout = seconds(getFloat(socketConfig, "ftpDataTimeout"))
 	ep.ftpSocketTimeout = seconds(getFloat(socketConfig, "ftpSocketTimeout"))
+	ep.sftpTimeout = seconds(getFloat(socketConfig, "sftpSessionTimeout"))
 	return nil
 }
 

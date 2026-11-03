@@ -28,6 +28,7 @@ import (
 	"path"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
@@ -436,19 +437,57 @@ func dialSFTP(platform pal.Platform, ep *endpoint) (session, error) {
 	if ep.connectTimeout > 0 {
 		_ = conn.SetDeadline(platform.Time.Now().Add(ep.connectTimeout))
 	}
-	sshConn, chans, reqs, err := ssh.NewClientConn(conn, address, config)
+	timed := &sessionTimeoutConn{Conn: conn, now: platform.Time.Now}
+	sshConn, chans, reqs, err := ssh.NewClientConn(timed, address, config)
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
 	}
 	_ = conn.SetDeadline(time.Time{})
 	sshClient := ssh.NewClient(sshConn, chans, reqs)
+	timed.start(sshClient, ep.sftpTimeout)
 	client, err := sftp.NewClient(sshClient)
 	if err != nil {
 		_ = sshClient.Close()
 		return nil, err
 	}
 	return &sftpSession{ssh: sshClient, client: client}, nil
+}
+
+// sessionTimeoutConn applies sftpSessionTimeout as JSch does: a read that waits that long sends
+// one keepalive request, and a second timeout in a row fails the connection.
+type sessionTimeoutConn struct {
+	net.Conn
+	now     func() time.Time
+	timeout atomic.Int64
+	client  atomic.Pointer[ssh.Client]
+	missed  bool
+}
+
+func (c *sessionTimeoutConn) start(client *ssh.Client, timeout time.Duration) {
+	if timeout <= 0 {
+		return
+	}
+	c.client.Store(client)
+	c.timeout.Store(int64(timeout))
+	_ = c.Conn.SetReadDeadline(c.now().Add(timeout))
+}
+
+func (c *sessionTimeoutConn) Read(b []byte) (int, error) {
+	for {
+		if timeout := time.Duration(c.timeout.Load()); timeout > 0 {
+			_ = c.Conn.SetReadDeadline(c.now().Add(timeout))
+		}
+		n, err := c.Conn.Read(b)
+		var netErr net.Error
+		if n == 0 && !c.missed && c.timeout.Load() > 0 && errors.As(err, &netErr) && netErr.Timeout() {
+			c.missed = true
+			go func() { _, _, _ = c.client.Load().SendRequest("keepalive@jcraft.com", true, nil) }()
+			continue
+		}
+		c.missed = false
+		return n, err
+	}
 }
 
 func sftpEntry(info os.FileInfo) remoteEntry {
