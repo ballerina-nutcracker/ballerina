@@ -193,12 +193,13 @@ public function main() returns error? {
         path: "/home",
         pollingInterval: 0.2
     });
-    check watcher.attach(new CountingService());
+    CountingService counting = new;
+    check watcher.attach(counting);
     check watcher.'start();
     waitForChanges(1);
     check lax->putText("/home/second.txt", "2");
     waitForChanges(2);
-    check watcher.detach(new CountingService());
+    check watcher.detach(counting);
     lock {
         io:println(changes >= 2); // @output true
     }
@@ -213,12 +214,13 @@ public function main() returns error? {
         auth: {credentials: {username: "ballerina", password: "ballerina"}},
         pollingInterval: 0.2
     });
-    check paths.attach(new InboxService(), ["inbox", "orders"]);
+    InboxService inbox = new;
+    check paths.attach(inbox, ["inbox", "orders"]);
     check paths.attach(new OutboxService());
     check paths.'start();
     waitForOutbox(1);
     io:println(inboxCount() >= 1); // @output true
-    check paths.detach(new InboxService());
+    check paths.detach(inbox);
     int outboxAtDetach = outboxCount();
     check lax->putText("/outbox/c.txt", "c");
     waitForOutbox(outboxAtDetach + 1);
@@ -229,7 +231,7 @@ public function main() returns error? {
     waitForOutbox(outboxAfterDetach + 1);
     io:println(outboxCount() >= outboxAfterDetach + 1); // @output true
     io:println(inboxCount() == inboxAfterDetach); // @output true
-    check paths.detach(new InboxService());
+    check paths.detach(inbox);
     check paths.gracefulStop();
 
     ftp:Listener retried = check new ({
@@ -240,8 +242,9 @@ public function main() returns error? {
     });
     error? missingPath = retried.attach(new MissingPathService());
     io:println(missingPath is error); // @output true
-    error? legacyAfterFailure = retried.attach(new CountingService());
+    CountingService retriedCounting = new;
+    error? legacyAfterFailure = retried.attach(retriedCounting);
     io:println(legacyAfterFailure is ()); // @output true
-    check retried.detach(new CountingService());
+    check retried.detach(retriedCounting);
     check lax->close();
 }

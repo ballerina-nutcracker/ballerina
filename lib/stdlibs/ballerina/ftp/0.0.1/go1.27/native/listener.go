@@ -20,6 +20,7 @@ package native
 import (
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -360,30 +361,24 @@ func (m *ftpModule) callerFor(ctx *extern.Context, state *listenerState, multiPa
 	return caller, nil
 }
 
-// deregister removes the service of the same type and closes the connections only it used; the
-// shared consumer and caller of the deprecated single-path mode go with the last service.
+// deregister removes the attached service and closes the connections only it used; the shared
+// consumer and caller of the deprecated single-path mode go with the last service.
 func (m *ftpModule) deregister(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	state := listenerStateOf(args[0].(*values.Object))
 	if state == nil {
 		return nil, nil
 	}
-	typeKey := serviceTypeKey(args[1].(*values.Object))
+	svc := args[1].(*values.Object)
 	state.mu.Lock()
-	var removed *serviceContext
-	var remaining []*serviceContext
-	for _, sc := range state.services {
-		if removed == nil && serviceTypeKey(sc.svc) == typeKey {
-			removed = sc
-			continue
-		}
-		remaining = append(remaining, sc)
-	}
-	if removed == nil {
+	i := slices.IndexFunc(state.services, func(sc *serviceContext) bool { return sc.svc == svc })
+	if i < 0 {
 		state.mu.Unlock()
 		return nil, nil
 	}
+	removed := state.services[i]
+	remaining := slices.Delete(slices.Clone(state.services), i, i+1)
 	state.services = remaining
-	delete(state.typeKeys, typeKey)
+	delete(state.typeKeys, serviceTypeKey(svc))
 	var con *consumer
 	var caller *values.Object
 	if state.multiPath {
@@ -398,7 +393,7 @@ func (m *ftpModule) deregister(ctx *extern.Context, args []values.BalValue) (val
 	}
 	state.mu.Unlock()
 	if con != nil {
-		_ = con.remote.close()
+		con.close()
 	}
 	if caller != nil {
 		if err := closeCaller(ctx, caller); err != nil {
@@ -435,7 +430,7 @@ func (m *ftpModule) cleanup(ctx *extern.Context, args []values.BalValue) (values
 		}
 	}
 	for con := range consumers {
-		_ = con.remote.close()
+		con.close()
 	}
 	if len(errs) > 0 {
 		return m.errorResult(ctx, newError(kindError, "Error occurred while closing the caller: "+errs[0].Error()))
@@ -496,7 +491,13 @@ func (m *ftpModule) pollServices(ctx *extern.Context, args []values.BalValue, re
 	if multiPath {
 		var firstErr error
 		for _, sc := range services {
+			if !state.attached(sc) {
+				continue
+			}
 			event, ok, err := sc.consumer.consume()
+			if !state.attached(sc) {
+				continue
+			}
 			if ok {
 				m.dispatch(ctx, state, sc, event)
 			}
@@ -507,10 +508,26 @@ func (m *ftpModule) pollServices(ctx *extern.Context, args []values.BalValue, re
 		return m.errorResult(ctx, firstErr)
 	}
 	event, ok, err := services[0].consumer.consume()
-	if ok {
-		for _, sc := range services {
+	anyAttached := false
+	for _, sc := range services {
+		if !state.attached(sc) {
+			continue
+		}
+		anyAttached = true
+		if ok {
 			m.dispatch(ctx, state, sc, event)
 		}
 	}
+	if !anyAttached {
+		return nil, nil
+	}
 	return m.errorResult(ctx, err)
+}
+
+// attached reports whether a service of a poll's snapshot is still attached, since detach does not
+// wait for a poll in progress.
+func (s *listenerState) attached(sc *serviceContext) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return slices.Contains(s.services, sc)
 }

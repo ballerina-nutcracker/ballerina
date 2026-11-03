@@ -70,6 +70,13 @@ func (m *ftpModule) newConsumer(state *listenerState, watch watchConfig, failure
 	return &consumer{platform: platform, remote: remote, watch: watch, reported: map[string]struct{}{}}, nil
 }
 
+// close waits for a poll in progress, so a detach does not cut its connection mid-scan.
+func (c *consumer) close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_ = c.remote.close()
+}
+
 func (c *consumer) uri(logical string) string {
 	return vfsURI(c.remote.ep, logical, false)
 }
