@@ -1,0 +1,90 @@
+(C
+  (m
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (simple-var-ref b)
+          (literal 1)))
+    )
+  )
+)
+(chain
+  (bb0 () ()
+    (return
+      (list-constructor-expr
+        (simple-var-ref y)
+        (simple-var-ref z)))
+  )
+)
+(f
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref b)
+        (literal 1)))
+  )
+)
+(g
+  (bb0 () ()
+    (return
+      (invocation fn ()))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal 3) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal x) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal 3)
+          (literal 10))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation g (
+          (literal 5) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation g (
+          (literal s) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chain (
+          (literal 3) <default> <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chain (
+          (literal s) <default> <default>)))))
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation m expr:
+          (simple-var-ref c) (
+          (literal 7) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation m expr:
+          (simple-var-ref c) (
+          (literal y) <default>)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (ternary-expr
+      (type-test-expr is
+        (simple-var-ref a)
+        (value-type int))
+      (simple-var-ref a)
+      (unary-expr -
+        (literal 1)))
+  )
+)
