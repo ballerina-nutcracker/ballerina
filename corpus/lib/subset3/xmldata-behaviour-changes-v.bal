@@ -48,6 +48,14 @@ type OptionalPair record {|
     Person[2] p?;
 |};
 
+type IntRest record {|
+    int...;
+|};
+
+type IntArrayRest record {|
+    int[]...;
+|};
+
 class FailingAfterDocument {
     int count = 0;
 
@@ -129,6 +137,26 @@ public function main() {
     Pair|xmldata:Error absentTraversed = xmldata:parseAsType(xml `<r/>`);
     io:println(absentTraversed is xmldata:Error ? absentTraversed.message() : absentTraversed);
     // @output required field 'p' not present in XML
+
+    // jBallerina stores an element's attributes as a map in a rest field whose type cannot hold one.
+    IntRest|xmldata:Error intRestParsed = xmldata:parseString("<r><a x=\"1\">5</a></r>");
+    io:println(intRestParsed is xmldata:Error ? intRestParsed.message() : intRestParsed);
+    // @output {"a":5}
+    IntRest|xmldata:Error intRestTraversed = xmldata:parseAsType(xml `<r><a x="1">5</a></r>`);
+    io:println(intRestTraversed is xmldata:Error ? intRestTraversed.message() : intRestTraversed);
+    // @output {"a":5}
+    IntArrayRest|xmldata:Error arrayRestTraversed = xmldata:parseAsType(xml `<r><a x="1">5</a><a x="2">6</a></r>`);
+    io:println(arrayRestTraversed is xmldata:Error ? arrayRestTraversed.message() : arrayRestTraversed);
+    // @output {"a":[5,6]}
+    IntRest|xmldata:Error emptyRestParsed = xmldata:parseString("<r><a x=\"1\"/></r>");
+    io:println(emptyRestParsed is xmldata:Error ? emptyRestParsed.message() : emptyRestParsed);
+    // @output field 'a' cannot be converted into the type 'int'
+    IntRest|xmldata:Error nestedRestParsed = xmldata:parseString("<r><a><b>1</b></a></r>");
+    io:println(nestedRestParsed is xmldata:Error ? nestedRestParsed.message() : nestedRestParsed);
+    // @output field 'a' cannot be converted into the type 'int'
+    IntArrayRest|xmldata:Error emptyArrayRestTraversed = xmldata:parseAsType(xml `<r><a x="1"/></r>`);
+    io:println(emptyArrayRestTraversed is xmldata:Error ? emptyArrayRestTraversed.message() : emptyArrayRestTraversed);
+    // @output field 'a' cannot be converted into the type 'int'
 
     // jBallerina returns the stream's own error; this port returns an xmldata:Error with its message.
     stream<byte[], error?> failing = new (new FailingAfterDocument());

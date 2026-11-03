@@ -776,6 +776,9 @@ func (p *xmlParser) fieldFromFieldHierarchy(name qname) (*recordField, error) {
 }
 
 func (p *xmlParser) handleAttributesRest(restType semtypes.SemType, target *mapNode) {
+	if !p.canHoldMap(restType) {
+		return
+	}
 	for _, attribute := range p.reader.attributes {
 		if converted, err := p.convertStringToRestExpType(attribute.value, restType); err == nil {
 			target.put(attribute.name.local, converted)
