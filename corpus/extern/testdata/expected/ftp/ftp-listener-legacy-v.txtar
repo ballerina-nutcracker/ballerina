@@ -32,4 +32,6 @@ Handling CSV content with onFileCsv is not yet supported
 attached
 Failed to register service.
 FTP listener path "ftp://ballerina:***@127.0.0.1:PORT/does/not/exist" does not refer to a folder on the remote file system.
+polled
+Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/gone
 -- stderr --

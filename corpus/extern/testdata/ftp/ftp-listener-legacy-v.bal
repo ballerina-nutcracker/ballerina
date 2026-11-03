@@ -305,6 +305,23 @@ public function main() returns error? {
     error? notFolder = missingPath.attach(new DeletedService());
     io:println(notFolder is error ? scrub(notFolder.message()) : "attached"); // @output FTP listener path "ftp://ballerina:***@127.0.0.1:PORT/does/not/exist" does not refer to a folder on the remote file system.
 
+    check c->putText("/gone/a.txt", "a");
+    ftp:Listener vanishing = check new ({
+        host: "127.0.0.1",
+        port: ftpPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        path: "/gone",
+        pollingInterval: 3600
+    });
+    check vanishing.attach(new DeletedService());
+    error? listed = vanishing.poll();
+    io:println(listed is error ? listed.message() : "polled"); // @output polled
+    check c->delete("/gone/a.txt");
+    check c->rmdir("/gone");
+    error? unlisted = vanishing.poll();
+    io:println(unlisted is ftp:Error ? scrub(unlisted.message()) : "polled"); // @output Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/gone
+    check vanishing.immediateStop();
+
     check validation.immediateStop();
     check c->close();
 }

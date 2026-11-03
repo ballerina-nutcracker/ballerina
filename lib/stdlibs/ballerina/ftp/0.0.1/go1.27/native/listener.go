@@ -494,17 +494,23 @@ func (m *ftpModule) pollServices(ctx *extern.Context, args []values.BalValue, re
 		state.mu.Unlock()
 	}()
 	if multiPath {
+		var firstErr error
 		for _, sc := range services {
-			if event, ok := sc.consumer.consume(); ok {
+			event, ok, err := sc.consumer.consume()
+			if ok {
 				m.dispatch(ctx, state, sc, event)
 			}
+			if firstErr == nil {
+				firstErr = err
+			}
 		}
-		return nil, nil
+		return m.errorResult(ctx, firstErr)
 	}
-	if event, ok := services[0].consumer.consume(); ok {
+	event, ok, err := services[0].consumer.consume()
+	if ok {
 		for _, sc := range services {
 			m.dispatch(ctx, state, sc, event)
 		}
 	}
-	return nil, nil
+	return m.errorResult(ctx, err)
 }
