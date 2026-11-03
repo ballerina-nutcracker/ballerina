@@ -1,0 +1,13 @@
+-- stdout --
+2
+server part
+true
+edited part
+true
+multipart/mixed; boundary=zz
+own boundary
+500
+failed to encode multipart body: bogus-cs
+hello
+replaced
+-- stderr --
