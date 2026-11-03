@@ -423,8 +423,9 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 				},
 			},
 			model.OpaqueFnXMLSlice: {
-				name:   "slice",
-				params: []model.Param{{Name: "x"}, {Name: "startIndex"}, {Name: "endIndex"}},
+				name: "slice",
+				// Declared in lang.xml's source, with `endIndex`'s default.
+				sourceDeclared: true,
 				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
 					semanticError SemanticError, _ bool, args []ast.BLangExpression,
 					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
