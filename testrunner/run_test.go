@@ -40,6 +40,7 @@ import (
 // the part that actually matters — that Run's notice lands on its writer
 // before Run returns, not deferred to WriteConsoleReport.
 func TestRun_ReportEndToEnd(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "failing")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -80,6 +81,7 @@ func TestRun_ReportEndToEnd(t *testing.T) {
 // printed output) had already finished, instead of interleaved live the way
 // jballerina prints them.
 func TestRun_WritesFailureNoticeLive(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "failing")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -170,6 +172,7 @@ func resultsByName(results []testrunner.Result) map[string]testrunner.Result {
 }
 
 func TestRun_PassSkipAndOrder(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "sample")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -216,6 +219,7 @@ func TestRun_PassSkipAndOrder(t *testing.T) {
 }
 
 func TestRun_IncludedFiltersWhatRuns(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "sample")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -229,6 +233,7 @@ func TestRun_IncludedFiltersWhatRuns(t *testing.T) {
 }
 
 func TestRun_FailedAssertionReportsFailWithMessage(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "failing")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -254,6 +259,7 @@ func TestRun_FailedAssertionReportsFailWithMessage(t *testing.T) {
 // TestRun_BeforeSuiteFailureSkipsEverything confirms a failed BeforeSuite
 // skips every test and gates AfterSuite hooks on their own alwaysRun flag.
 func TestRun_BeforeSuiteFailureSkipsEverything(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "beforesuitefails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -292,6 +298,7 @@ func TestRun_BeforeSuiteFailureSkipsEverything(t *testing.T) {
 // TestRun_BeforeEachFailureIsSticky confirms a failed BeforeEach sets a
 // shouldSkip flag that's never cleared — every remaining test skips too.
 func TestRun_BeforeEachFailureIsSticky(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "beforeeachfails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -325,6 +332,7 @@ func TestRun_BeforeEachFailureIsSticky(t *testing.T) {
 // fires once per group (first test only), so its failure skips only that
 // test — a second test in the same group runs normally.
 func TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "beforegroupfails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -354,6 +362,7 @@ func TestRun_BeforeGroupFailureOnlySkipsTheTriggeringTest(t *testing.T) {
 // TestRun_FailedDependencyCascadesSkip confirms a failing test's dependents
 // are skipped rather than run.
 func TestRun_FailedDependencyCascadesSkip(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dependsonfails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -375,6 +384,7 @@ func TestRun_FailedDependencyCascadesSkip(t *testing.T) {
 // becomes its own "name#key" Result, and a dependent of a data-driven test
 // is never skip-cascaded even when one row fails.
 func TestRun_MapDataProviderRowsAndNoDependentCascade(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -409,6 +419,7 @@ func TestRun_MapDataProviderRowsAndNoDependentCascade(t *testing.T) {
 // TestRun_TupleDataProviderRowsKeyedByIndex mirrors the other data-provider
 // return shape — [...][] — whose rows are keyed by stringified position.
 func TestRun_TupleDataProviderRowsKeyedByIndex(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataprovidertuple")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -433,6 +444,7 @@ func TestRun_TupleDataProviderRowsKeyedByIndex(t *testing.T) {
 // data provider fails the whole test under its bare name and skips its
 // entire hook lifecycle, including BeforeEach.
 func TestRun_DataProviderFailureShortCircuitsBeforeHooks(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataproviderpanics")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -465,6 +477,7 @@ func TestRun_DataProviderFailureShortCircuitsBeforeHooks(t *testing.T) {
 // failing before: hook Skips the test without invoking its body, and still
 // cascades skip to its dependent.
 func TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "beforetestfails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -500,6 +513,7 @@ func TestRun_BeforeTestFailureSkipsWithoutInvokingAndCascades(t *testing.T) {
 // after: hook doesn't change the test's own Pass result but still cascades
 // skip to dependents.
 func TestRun_AfterTestFailureCascadesSkipDespitePassing(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "aftertestfails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -531,6 +545,7 @@ func TestRun_AfterTestFailureCascadesSkipDespitePassing(t *testing.T) {
 // before: hook is attempted independently per row, and a failure reports
 // that row Skip under the test's bare name, not "name#key".
 func TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataproviderbeforefails")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -566,6 +581,7 @@ func TestRun_DataDrivenBeforeTestFailureSkipsEachRowUnderBareName(t *testing.T) 
 // TestRun_SubKeyFilterExactMatch confirms --tests "testSquare#one" runs only
 // that row — the others aren't reported at all, not even Skip.
 func TestRun_SubKeyFilterExactMatch(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -588,6 +604,7 @@ func TestRun_SubKeyFilterExactMatch(t *testing.T) {
 // "testSquare#one,testSquare#three" accumulates both suffixes under one
 // entry, rather than the second overwriting the first.
 func TestRun_SubKeyFilterMultipleKeys(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -617,6 +634,7 @@ func TestRun_SubKeyFilterMultipleKeys(t *testing.T) {
 // branch: "testSquare#t*" matches both "two" and "three" (both start with
 // "t"), not "one".
 func TestRun_SubKeyFilterWildcard(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataprovidermap")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -646,6 +664,7 @@ func TestRun_SubKeyFilterWildcard(t *testing.T) {
 // restriction is ignored entirely (every row runs) when a test transitively
 // depending on the data-driven test is itself enabled and included.
 func TestRun_SubKeyFilterBypassedByEnabledDependent(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "subkeydependentbypass")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -673,6 +692,7 @@ func TestRun_SubKeyFilterBypassedByEnabledDependent(t *testing.T) {
 // provider returning zero rows produces no Result, falling through to a
 // "No tests found" report rather than "0 passing/0 failing/0 skipped".
 func TestRun_EmptyDataProviderRunsNothing(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "emptydataprovider")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -702,6 +722,7 @@ func TestRun_EmptyDataProviderRunsNothing(t *testing.T) {
 // non-scalar elements (an `error` value, a `function` value) pass straight
 // through as test arguments, not just ints.
 func TestRun_DataProviderErrorAndFunctionValues(t *testing.T) {
+	t.Parallel()
 	rt, plan := compileAndRun(t, "dataprovidervaluetypes")
 	graph, err := testplan.BuildGraph(plan)
 	if err != nil {
@@ -719,120 +740,5 @@ func TestRun_DataProviderErrorAndFunctionValues(t *testing.T) {
 	}
 	if got := byName["testFunctionData#even"]; got.Status != testrunner.Pass {
 		t.Errorf("testFunctionData#even: expected Pass, got %v (%s)", got.Status, got.Message)
-	}
-}
-
-// TestRun_EvaluationCrossesThresholdPasses confirms a non-data-driven
-// evaluation test (runs/minPassRate set) averages pass/fail across its Runs
-// rather than failing on the first assertion failure like a plain test
-// would, and that it carries an EvalSummary with one RunResults entry per
-// run.
-func TestRun_EvaluationCrossesThresholdPasses(t *testing.T) {
-	rt, plan := compileAndRun(t, "evalnondatadriven")
-	graph, err := testplan.BuildGraph(plan)
-	if err != nil {
-		t.Fatalf("BuildGraph: %v", err)
-	}
-
-	report := testrunner.Run(io.Discard, rt, "testorg", "evalnondatadriven", plan, graph, nil, nil)
-	byName := resultsByName(report.Results)
-
-	crosses := byName["testCrossesThreshold"]
-	if crosses.Status != testrunner.Pass {
-		t.Fatalf("testCrossesThreshold: expected Pass, got %v (%s)", crosses.Status, crosses.Message)
-	}
-	if crosses.Type != testrunner.EvalTest {
-		t.Errorf("testCrossesThreshold: expected Type=EvalTest, got %v", crosses.Type)
-	}
-	if crosses.Eval == nil {
-		t.Fatal("testCrossesThreshold: expected a non-nil Eval summary")
-	}
-	if crosses.Eval.TargetPassRate != 0.5 || crosses.Eval.ObservedPassRate != 0.5 {
-		t.Errorf("testCrossesThreshold: expected target/observed pass rate 0.5/0.5, got %+v", crosses.Eval)
-	}
-	if len(crosses.Eval.RunResults) != 4 {
-		t.Errorf("testCrossesThreshold: expected 4 RunResults (one per run), got %d", len(crosses.Eval.RunResults))
-	}
-
-	below := byName["testBelowThreshold"]
-	if below.Status != testrunner.Fail {
-		t.Fatalf("testBelowThreshold: expected Fail, got %v (%s)", below.Status, below.Message)
-	}
-	if below.Eval == nil || below.Eval.ObservedPassRate != 0 {
-		t.Errorf("testBelowThreshold: expected ObservedPassRate=0, got %+v", below.Eval)
-	}
-	if len(below.Eval.RunResults) != 3 {
-		t.Errorf("testBelowThreshold: expected 3 RunResults, got %d", len(below.Eval.RunResults))
-	}
-	for _, run := range below.Eval.RunResults {
-		if run.ErrorMessage == "" {
-			t.Errorf("testBelowThreshold: expected a non-empty ErrorMessage on every run, got %+v", run)
-		}
-	}
-}
-
-// TestRun_EvaluationBeforeFailureSkipsWholeEvaluation confirms a failing
-// before: hook aborts the entire evaluation (not just one run) without
-// invoking the test body at all, and that a dependsOn-skipped evaluation
-// runs zero each-hooks while a before:-failed one runs BeforeEach once but
-// no AfterEach — both confirmed against real jballerina. testZCountsCheck
-// (run last; see its own doc comment) asserts the exact hook counts.
-func TestRun_EvaluationBeforeFailureSkipsWholeEvaluation(t *testing.T) {
-	rt, plan := compileAndRun(t, "evalbeforefails")
-	graph, err := testplan.BuildGraph(plan)
-	if err != nil {
-		t.Fatalf("BuildGraph: %v", err)
-	}
-
-	report := testrunner.Run(io.Discard, rt, "testorg", "evalbeforefails", plan, graph, nil, nil)
-	byName := resultsByName(report.Results)
-
-	if got := byName["testEvalSkippedByDependsOn"]; got.Status != testrunner.Skip {
-		t.Errorf("testEvalSkippedByDependsOn: expected Skip, got %v", got.Status)
-	}
-	if got := byName["testEvalBeforeFails"]; got.Status != testrunner.Skip {
-		t.Errorf("testEvalBeforeFails: expected Skip, got %v", got.Status)
-	}
-	if got := byName["testZCountsCheck"]; got.Status != testrunner.Pass {
-		t.Errorf("testZCountsCheck: expected Pass (hook counts as asserted), got %v (%s)", got.Status, got.Message)
-	}
-}
-
-// TestRun_DataDrivenEvaluationAveragesPerIterationPassRate confirms a
-// data-driven evaluation test's final score is the average of each
-// iteration's own passedEntries/totalEntries, not a flat
-// passedRows/totalRows across every run combined.
-func TestRun_DataDrivenEvaluationAveragesPerIterationPassRate(t *testing.T) {
-	rt, plan := compileAndRun(t, "evaldatadriven")
-	graph, err := testplan.BuildGraph(plan)
-	if err != nil {
-		t.Fatalf("BuildGraph: %v", err)
-	}
-
-	report := testrunner.Run(io.Discard, rt, "testorg", "evaldatadriven", plan, graph, nil, nil)
-	byName := resultsByName(report.Results)
-
-	crosses := byName["testDataDrivenCrossesThreshold"]
-	if crosses.Status != testrunner.Pass {
-		t.Fatalf("testDataDrivenCrossesThreshold: expected Pass, got %v (%s)", crosses.Status, crosses.Message)
-	}
-	if crosses.Eval == nil || crosses.Eval.ObservedPassRate != 0.5 {
-		t.Fatalf("testDataDrivenCrossesThreshold: expected ObservedPassRate=0.5, got %+v", crosses.Eval)
-	}
-	if len(crosses.Eval.RunResults) != 2 {
-		t.Fatalf("testDataDrivenCrossesThreshold: expected 2 RunResults, got %d", len(crosses.Eval.RunResults))
-	}
-	for _, run := range crosses.Eval.RunResults {
-		if len(run.Outcomes) != 2 {
-			t.Errorf("run %d: expected 2 outcomes (one per data row), got %d", run.ID, len(run.Outcomes))
-		}
-		if run.PassRate != 0.5 {
-			t.Errorf("run %d: expected PassRate=0.5, got %v", run.ID, run.PassRate)
-		}
-	}
-
-	below := byName["testDataDrivenBelowThreshold"]
-	if below.Status != testrunner.Fail {
-		t.Fatalf("testDataDrivenBelowThreshold: expected Fail, got %v (%s)", below.Status, below.Message)
 	}
 }

@@ -23,6 +23,7 @@ import (
 )
 
 func TestParseSubKeyFilters(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		raw  string
@@ -50,6 +51,7 @@ func TestParseSubKeyFilters(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			got := ParseSubKeyFilters(tc.raw)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("ParseSubKeyFilters(%q) = %+v, want %+v", tc.raw, got, tc.want)
@@ -59,6 +61,7 @@ func TestParseSubKeyFilters(t *testing.T) {
 }
 
 func TestSubKeyFilters_Matches(t *testing.T) {
+	t.Parallel()
 	f := SubKeyFilters{"testSquare": {"one", "t*"}}
 
 	tests := []struct {
@@ -89,6 +92,7 @@ func TestSubKeyFilters_Matches(t *testing.T) {
 // Ported from the deleted corpus fixture
 // testerina-dataprovider-special-char-key-v, which is what caught it.
 func TestSubKeyFilters_MatchesSpecialCharacterKey(t *testing.T) {
+	t.Parallel()
 	const rawKey = `a,b"c`
 	escaped := native.EscapeSpecialCharacters(rawKey) // "a%2Cb%22c"
 
@@ -104,6 +108,7 @@ func TestSubKeyFilters_MatchesSpecialCharacterKey(t *testing.T) {
 // TestSubKeyFilters_QuotedKey confirms a quoted sub-key ("name#'key'")
 // behaves the same as its unquoted form.
 func TestSubKeyFilters_QuotedKey(t *testing.T) {
+	t.Parallel()
 	filters := ParseSubKeyFilters("jsonDataProviderTest#'json1'")
 	if !filters.matches("jsonDataProviderTest", "json1") {
 		t.Errorf("expected the quoted sub-key to match the raw row key; got filters=%+v", filters)

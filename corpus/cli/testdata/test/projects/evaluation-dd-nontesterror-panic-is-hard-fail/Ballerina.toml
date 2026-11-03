@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "evaldddhardpanic"
+version = "0.1.0"

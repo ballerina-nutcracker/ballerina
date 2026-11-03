@@ -81,6 +81,7 @@ func loadTestdataProject(t *testing.T, name string) *projects.PackageCompilation
 // producers for field-by-field parity before cli/cmd/test.go's wiring
 // switched over to this package exclusively.
 func TestProcessTests_FiresDuringCompilation(t *testing.T) {
+	t.Parallel()
 	compilation := loadTestdataProject(t, "sample")
 	if diag := compilation.DiagnosticResult(); diag.HasErrors() {
 		var messages []string
@@ -176,6 +177,7 @@ func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 // either disabled or not included." — this turns that into a clear
 // compile-time error instead.
 func TestProcessTests_RejectsDependsOnNonTestFunction(t *testing.T) {
+	t.Parallel()
 	compilation := loadTestdataProject(t, "bad-dependson")
 	diag := compilation.DiagnosticResult()
 	if !diag.HasErrors() {
@@ -201,6 +203,7 @@ func TestProcessTests_RejectsDependsOnNonTestFunction(t *testing.T) {
 // jballerina, which rejects this too (contrary to an earlier assumption
 // that only this port validated it).
 func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
+	t.Parallel()
 	compilation := loadTestdataProject(t, "bad-runs")
 	diag := compilation.DiagnosticResult()
 	if !diag.HasErrors() {
@@ -225,6 +228,7 @@ func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
 // 0.0-1.0 is a compile error with jballerina's exact wording — confirmed
 // live against real jballerina.
 func TestProcessTests_RejectsMinPassRateOutOfRange(t *testing.T) {
+	t.Parallel()
 	compilation := loadTestdataProject(t, "bad-minpassrate")
 	diag := compilation.DiagnosticResult()
 	if !diag.HasErrors() {

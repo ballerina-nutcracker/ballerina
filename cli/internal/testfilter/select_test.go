@@ -42,6 +42,7 @@ func includedNames(t *testing.T, included map[string]bool) []string {
 }
 
 func TestSelect_NoFilters_IncludesEverything(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "a"}, {Name: "b"}}}
 	included, err := testfilter.Select(plan, testfilter.SelectOptions{})
 	if err != nil {
@@ -53,6 +54,7 @@ func TestSelect_NoFilters_IncludesEverything(t *testing.T) {
 }
 
 func TestSelect_PlainNameMatch(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "testA"}, {Name: "testB"}}}
 	included, err := testfilter.Select(plan, testfilter.SelectOptions{Tests: "testB"})
 	if err != nil {
@@ -64,6 +66,7 @@ func TestSelect_PlainNameMatch(t *testing.T) {
 }
 
 func TestSelect_Wildcard(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "testFoo"}, {Name: "testBar"}, {Name: "other"}}}
 	included, err := testfilter.Select(plan, testfilter.SelectOptions{Tests: "test*"})
 	if err != nil {
@@ -75,6 +78,7 @@ func TestSelect_Wildcard(t *testing.T) {
 }
 
 func TestSelect_ModuleQualified(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "testA"}}}
 
 	// Matches: qualifier equals this module.
@@ -101,6 +105,7 @@ func TestSelect_ModuleQualified(t *testing.T) {
 }
 
 func TestSelect_Groups(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "unit", Groups: []string{"unit"}},
 		{Name: "slow", Groups: []string{"slow"}},
@@ -115,6 +120,7 @@ func TestSelect_Groups(t *testing.T) {
 }
 
 func TestSelect_DisableGroups(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "unit", Groups: []string{"unit"}},
 		{Name: "slow", Groups: []string{"slow"}},
@@ -129,6 +135,7 @@ func TestSelect_DisableGroups(t *testing.T) {
 }
 
 func TestSelect_DependsOnTransitiveClosure(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "testFunc"},
 		{Name: "testFunc2", DependsOn: []string{"testFunc"}},
@@ -148,6 +155,7 @@ func TestSelect_DependsOnTransitiveClosure(t *testing.T) {
 // wouldn't itself match any filter — required so execute.bal's "depends on a
 // disabled function" error keeps firing (see the package doc comment).
 func TestSelect_DisabledDependencyStillIncluded(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "testDisabled", Enable: false},
 		{Name: "testDependent", DependsOn: []string{"testDisabled"}},
@@ -167,6 +175,7 @@ func TestSelect_DisabledDependencyStillIncluded(t *testing.T) {
 // is what makes an explicitly-named disabled test invisible to "No tests
 // found" at runtime, not an exclusion here.
 func TestSelect_ExplicitlyNamedDisabledTestStillIncluded(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "testDisabled", Enable: false}}}
 	included, err := testfilter.Select(plan, testfilter.SelectOptions{Tests: "testDisabled"})
 	if err != nil {
@@ -178,6 +187,7 @@ func TestSelect_ExplicitlyNamedDisabledTestStillIncluded(t *testing.T) {
 }
 
 func TestSelect_RerunFailed(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	rerunPath := filepath.Join(dir, "rerun_test.json")
 	data, err := json.Marshal(map[string]any{
@@ -216,9 +226,11 @@ func TestSelect_RerunFailed(t *testing.T) {
 // invalidRerunDataMessage) and is pinned by the rerun-failed golden
 // fixtures, so this package only owns *which* error is reported.
 func TestSelect_RerunFailed_MissingOrInvalidJSON(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "testGood"}}}
 
 	t.Run("missing file", func(t *testing.T) {
+		t.Parallel()
 		_, err := testfilter.Select(plan, testfilter.SelectOptions{
 			RerunFailed: true, RerunJSONPath: filepath.Join(t.TempDir(), "does-not-exist.json"), ModuleName: "mymod",
 		})
@@ -228,6 +240,7 @@ func TestSelect_RerunFailed_MissingOrInvalidJSON(t *testing.T) {
 	})
 
 	t.Run("invalid json", func(t *testing.T) {
+		t.Parallel()
 		dir := t.TempDir()
 		path := filepath.Join(dir, "rerun_test.json")
 		if err := os.WriteFile(path, []byte("{not valid json"), 0o644); err != nil {
@@ -242,6 +255,7 @@ func TestSelect_RerunFailed_MissingOrInvalidJSON(t *testing.T) {
 	})
 
 	t.Run("missing module key", func(t *testing.T) {
+		t.Parallel()
 		dir := t.TempDir()
 		path := filepath.Join(dir, "rerun_test.json")
 		if err := os.WriteFile(path, []byte(`{"someOtherModule":{"testNames":["x"]}}`), 0o644); err != nil {

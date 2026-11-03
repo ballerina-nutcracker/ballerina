@@ -25,6 +25,14 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+// testErrorTypeName is ballerina/test:TestError's runtime values.Error.TypeName
+// (set only because assert.bal's createBallerinaError — TestError's sole
+// constructor — uses the explicit `error TestError(...)` form). Comparing
+// against it is how testrunner tells an assertion failure apart from any
+// other panicked/returned error, e.g. for the "name:" vs "name" console
+// notice form and for evaluation hard-failure handling below.
+const testErrorTypeName = "TestError"
+
 // HookFailure records a suite/group/each hook that panicked, tracked
 // separately from a test Result's own pass/fail/skip outcome.
 type HookFailure struct {
@@ -280,20 +288,30 @@ func (r *runner) executeDataDriven(t testplan.TestFunction) []Result {
 
 // invoke calls fnName and reports the outcome under testName[#suffix] —
 // distinct from fnName so a data-driven row reports as "name#key" while
-// invoking its real function name. A failure also records a console event.
+// invoking its real function name. A failure also records a console event:
+// the "name:" colon form is used for an assertion failure (TestError) or a
+// data-driven row (suffix != ""); any other returned/panicked error (or a
+// framework-level failure like "function not found") prints "name" with no
+// colon, confirmed against real jballerina — it uses the colon form only
+// for a test:TestError or a data-driven row, never a plain returned/
+// panicked error.
 func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue, testType TestType) (result Result) {
 	resultName := testName
 	if suffix != "" {
 		resultName = testName + "#" + suffix
 	}
 	result = Result{Name: resultName, Status: Pass, Type: testType}
+	hasSuffix := suffix != ""
 	defer func() {
 		if rec := recover(); rec != nil {
 			result.Status = Fail
 			result.Message = panicMessage(rec)
+			if balErr, ok := rec.(*values.Error); ok && balErr.TypeName == testErrorTypeName {
+				hasSuffix = true
+			}
 		}
 		if result.Status == Fail {
-			writeConsoleEvent(r.w, ConsoleEvent{TestFailure: &TestFailureNotice{Name: testName, Suffix: suffix, HasSuffix: true}})
+			writeConsoleEvent(r.w, ConsoleEvent{TestFailure: &TestFailureNotice{Name: testName, Suffix: suffix, HasSuffix: hasSuffix}})
 		}
 	}()
 	fn, ok := runtime.LookupFunction(r.rt, r.org, r.module, fnName)
@@ -309,6 +327,9 @@ func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue,
 	} else if errVal, ok := retVal.(*values.Error); ok {
 		result.Status = Fail
 		result.Message = panicMessage(errVal)
+		if errVal.TypeName == testErrorTypeName {
+			hasSuffix = true
+		}
 	}
 	return result
 }
@@ -337,7 +358,7 @@ func (r *runner) executeEvaluation(t testplan.TestFunction) (result Result, shou
 			return Result{Name: t.Name, Status: Skip}, true
 		}
 
-		ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, nil)
+		ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, nil, false)
 		if hardErr != nil {
 			// Also returns before AfterEach, matching jballerina's
 			// InvalidArgumentError branch.
@@ -381,7 +402,7 @@ func (r *runner) executeDataDrivenEvaluation(t testplan.TestFunction, rows []dat
 		passedEntries := 0
 		outcomes := make([]EvalOutcome, 0, len(rows))
 		for _, row := range rows {
-			ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, row.args)
+			ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, row.args, true)
 			if hardErr != nil {
 				return []Result{{Name: t.Name, Status: Fail, Message: hardErr.Error(), RawMessage: true, Type: EvalTest}}
 			}
@@ -426,16 +447,20 @@ func evaluationResult(t testplan.TestFunction, observedPassRate float64, runs []
 }
 
 // invokeEvaluationRun calls fnName once for one run of an evaluation test;
-// hardErr is set only for a non-*values.Error panic, which aborts the whole
+// hardErr is set only for a non-TestError panic, which aborts the whole
 // evaluation instead of counting toward the pass rate.
-func (r *runner) invokeEvaluationRun(fnName string, args []values.BalValue) (passed bool, errMsg string, hardErr error) {
+func (r *runner) invokeEvaluationRun(fnName string, args []values.BalValue, isDataDriven bool) (passed bool, errMsg string, hardErr error) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			if balErr, ok := rec.(*values.Error); ok {
+			if balErr, ok := rec.(*values.Error); ok && balErr.TypeName == testErrorTypeName {
 				errMsg = panicMessage(balErr)
 				return
 			}
-			hardErr = fmt.Errorf("%v", rec)
+			kind := "evaluation"
+			if isDataDriven {
+				kind = "data provider"
+			}
+			hardErr = fmt.Errorf("[fail %s for the function %s]\n%s", kind, fnName, panicMessage(rec))
 		}
 	}()
 	fn, ok := runtime.LookupFunction(r.rt, r.org, r.module, fnName)

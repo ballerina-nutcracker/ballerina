@@ -34,6 +34,7 @@ func mustOrder(t *testing.T, plan *testplan.TestPlan) *testplan.Graph {
 }
 
 func TestBuildGraph_IndependentTestsSortedByName(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
 			{Name: "zTest", Enable: true},
@@ -48,6 +49,7 @@ func TestBuildGraph_IndependentTestsSortedByName(t *testing.T) {
 }
 
 func TestBuildGraph_DependentFollowsDependency(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
 			{Name: "testMain", Enable: true, DependsOn: []string{"testSetup"}},
@@ -70,6 +72,7 @@ func TestBuildGraph_DependentFollowsDependency(t *testing.T) {
 }
 
 func TestBuildGraph_ChainedDependencies(t *testing.T) {
+	t.Parallel()
 	// c depends on b depends on a — must come out in order a, b, c.
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
@@ -88,6 +91,7 @@ func TestBuildGraph_ChainedDependencies(t *testing.T) {
 // testerina-disabled-dependency-v.bal exactly: testB depends on testA, but
 // testA is explicitly disabled — expect an error naming both tests.
 func TestBuildGraph_DisabledDependency(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
 			{Name: "testA", Enable: false},
@@ -104,6 +108,7 @@ func TestBuildGraph_DisabledDependency(t *testing.T) {
 }
 
 func TestBuildGraph_CyclicDependency(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
 			{Name: "a", Enable: true, DependsOn: []string{"b"}},
@@ -123,6 +128,7 @@ func TestBuildGraph_CyclicDependency(t *testing.T) {
 // discovered test at all — defensive handling for a case the discovery
 // plugin's own validation should already have caught at compile time.
 func TestBuildGraph_UnresolvedDependency(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
 			{Name: "testMain", Enable: true, DependsOn: []string{"doesNotExist"}},
@@ -135,6 +141,7 @@ func TestBuildGraph_UnresolvedDependency(t *testing.T) {
 }
 
 func TestBuildGraph_MultipleDependentsOfOneTest(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{
 		Tests: []testplan.TestFunction{
 			{Name: "shared", Enable: true},

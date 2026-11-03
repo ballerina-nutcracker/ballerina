@@ -1,0 +1,32 @@
+-- stdout --
+
+	testFunctionFail1: has failed.
+
+
+	testFunctionFail2: has failed.
+
+		[pass] testFunctionPass1
+		[pass] testFunctionPass2
+
+		[fail] testFunctionFail1:
+
+		    Failed!
+			
+			
+
+		[fail] testFunctionFail2:
+
+		    Failed!
+			
+			
+
+
+		2 passing
+		2 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

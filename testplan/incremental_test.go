@@ -25,6 +25,7 @@ import (
 )
 
 func TestUpdateGraph_NilPrevDelegatesToBuildGraph(t *testing.T) {
+	t.Parallel()
 	plan := &testplan.TestPlan{Tests: []testplan.TestFunction{{Name: "a", Enable: true}}}
 
 	got, err := testplan.UpdateGraph(nil, nil, plan)
@@ -43,6 +44,7 @@ func TestUpdateGraph_NilPrevDelegatesToBuildGraph(t *testing.T) {
 // same resulting plan. This is the equivalence UpdateGraph's doc comment
 // promises for ordinary edits.
 func TestUpdateGraph_MatchesFreshRebuild(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		prevPlan *testplan.TestPlan
@@ -155,6 +157,7 @@ func TestUpdateGraph_MatchesFreshRebuild(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			prevGraph, err := testplan.BuildGraph(tc.prevPlan)
 			if err != nil {
 				t.Fatalf("BuildGraph(prevPlan): unexpected error: %v", err)
@@ -187,6 +190,7 @@ func TestUpdateGraph_MatchesFreshRebuild(t *testing.T) {
 // Dependents entry must be the exact same slice BuildGraph(prevPlan)
 // produced, not a freshly rebuilt one, after an edit that doesn't touch it.
 func TestUpdateGraph_ReusesUnaffectedDependentsSlice(t *testing.T) {
+	t.Parallel()
 	prevPlan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "shared", Enable: true},
 		{Name: "first", Enable: true, DependsOn: []string{"shared"}},
@@ -227,6 +231,7 @@ func TestUpdateGraph_ReusesUnaffectedDependentsSlice(t *testing.T) {
 // removed), UpdateGraph keeps their previous relative order rather than
 // matching what a fresh rebuild would produce from the new plan order.
 func TestUpdateGraph_ReorderedUnaffectedTestsKeepPreviousRelativeOrder(t *testing.T) {
+	t.Parallel()
 	prevPlan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "first", Enable: true},
 		{Name: "second", Enable: true, DependsOn: []string{"first"}},
@@ -255,6 +260,7 @@ func TestUpdateGraph_ReorderedUnaffectedTestsKeepPreviousRelativeOrder(t *testin
 }
 
 func TestUpdateGraph_RemovedDependencyErrorsLikeFreshBuild(t *testing.T) {
+	t.Parallel()
 	prevPlan := &testplan.TestPlan{Tests: []testplan.TestFunction{
 		{Name: "a", Enable: true},
 		{Name: "b", Enable: true, DependsOn: []string{"a"}},

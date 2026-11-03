@@ -25,6 +25,7 @@ import (
 )
 
 func TestBuildModuleStatus(t *testing.T) {
+	t.Parallel()
 	report := RunReport{
 		Results: []Result{
 			{Name: "testA", Status: Pass},
@@ -55,6 +56,7 @@ func TestBuildModuleStatus(t *testing.T) {
 // special character (comma, a --tests list separator) does get escaped —
 // distinguishing "# isn't special" (above) from "nothing is ever escaped."
 func TestBuildModuleStatus_EscapesDelimiterCharactersInNames(t *testing.T) {
+	t.Parallel()
 	report := RunReport{Results: []Result{{Name: "weird,name", Status: Pass}}}
 	status := BuildModuleStatus(report)
 	if got := status.Tests[0].Name; got == "weird,name" {
@@ -63,6 +65,7 @@ func TestBuildModuleStatus_EscapesDelimiterCharactersInNames(t *testing.T) {
 }
 
 func TestBuildModuleStatus_GroupsPassedThenFailedThenSkipped(t *testing.T) {
+	t.Parallel()
 	// Deliberately out of execution order (fail, pass, skip, pass) — the
 	// built Tests slice must still come back grouped pass-then-fail-then-skip,
 	// matching ReportData's three separate arrays, not Results' own order.
@@ -87,6 +90,7 @@ func TestBuildModuleStatus_GroupsPassedThenFailedThenSkipped(t *testing.T) {
 }
 
 func TestWriteModuleStatusFile(t *testing.T) {
+	t.Parallel()
 	status := ModuleStatus{
 		TotalTests: 1, Passed: 1,
 		Tests: []TestStatusEntry{{Name: "testA", Status: "PASSED"}},
@@ -111,6 +115,7 @@ func TestWriteModuleStatusFile(t *testing.T) {
 }
 
 func TestBuildRerunEntry(t *testing.T) {
+	t.Parallel()
 	report := RunReport{
 		Results: []Result{
 			{Name: "testA", Status: Pass},
@@ -148,6 +153,7 @@ func TestBuildRerunEntry(t *testing.T) {
 }
 
 func TestWriteRerunEntry_MergesWithoutClobberingOtherModules(t *testing.T) {
+	t.Parallel()
 	path := filepath.Join(t.TempDir(), "rerun_test.json")
 
 	if err := WriteRerunEntry(path, "moduleA", RerunEntry{TestNames: []string{"testA"}}); err != nil {
@@ -174,6 +180,7 @@ func TestWriteRerunEntry_MergesWithoutClobberingOtherModules(t *testing.T) {
 }
 
 func TestSplitResultName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name, wantPrefix, wantSuffix string
 	}{

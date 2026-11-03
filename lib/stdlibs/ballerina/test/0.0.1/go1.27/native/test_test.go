@@ -31,6 +31,7 @@ import (
 // matching this package's existing convention (see test_io_test.go) of
 // filling gaps corpus genuinely can't reach.
 func TestSprintf(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name   string
 		format string
@@ -51,6 +52,7 @@ func TestSprintf(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 			args := append([]values.BalValue{c.format}, c.args...)
 			got, err := sprintf(nil, args)
 			if err != nil {
@@ -64,6 +66,7 @@ func TestSprintf(t *testing.T) {
 }
 
 func TestSprintf_Errors(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name   string
 		format string
@@ -75,6 +78,7 @@ func TestSprintf_Errors(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 			args := append([]values.BalValue{c.format}, c.args...)
 			if _, err := sprintf(nil, args); err == nil {
 				t.Errorf("sprintf(%q, %v): expected an error, got none", c.format, c.args)
@@ -90,6 +94,7 @@ func TestSprintf_Errors(t *testing.T) {
 // covered end-to-end by the corpus tests (map-comparison paths reach it via
 // assert.bal's getMapValueDiff).
 func TestKeysNotIn(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name     string
 		source   []string
@@ -104,6 +109,7 @@ func TestKeysNotIn(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 			got := keysNotIn(c.source, c.other)
 			if len(got) != len(c.wantDiff) {
 				t.Fatalf("keysNotIn(%v, %v) = %v, want %v", c.source, c.other, got, c.wantDiff)
@@ -123,6 +129,7 @@ func TestKeysNotIn(t *testing.T) {
 // fixture is 3 bytes, so a byte-offset chunk boundary at length 80 is
 // guaranteed to land mid-character; a rune-based boundary never does.
 func TestChunkByLength(t *testing.T) {
+	t.Parallel()
 	s := strings.Repeat("あ", 90)
 	chunks := chunkByLength(s, 80)
 	if len(chunks) != 2 {
@@ -142,6 +149,7 @@ func TestChunkByLength(t *testing.T) {
 }
 
 func TestJoinWithLeadingSpace(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name string
 		keys []string
@@ -153,6 +161,7 @@ func TestJoinWithLeadingSpace(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 			if got := joinWithLeadingSpace(c.keys); got != c.want {
 				t.Errorf("joinWithLeadingSpace(%v) = %q, want %q", c.keys, got, c.want)
 			}
