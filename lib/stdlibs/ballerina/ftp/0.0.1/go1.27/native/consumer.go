@@ -74,13 +74,15 @@ func (c *consumer) uri(logical string) string {
 	return vfsURI(c.remote.ep, logical, false)
 }
 
-func (c *consumer) consume() (fileEvent, bool) {
+// consume returns the poll's failure to list the watched folder; jBallerina only logs it
+// (ballerina-library#9474).
+func (c *consumer) consume() (fileEvent, bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	root := cleanPath(c.watch.path)
 	children, err := c.remote.sess.readDir(c.remote.serverPath(root))
 	if err != nil {
-		return fileEvent{}, false
+		return fileEvent{}, false, operationError("Error during the poll operation: Failed to list "+c.uri(root), err)
 	}
 	rootFiles := make([]string, 0, len(children))
 	for _, child := range children {
@@ -97,7 +99,7 @@ func (c *consumer) consume() (fileEvent, bool) {
 		}
 	}
 	sort.Strings(scan.event.deleted)
-	return scan.event, len(scan.event.added) > 0 || len(scan.event.deleted) > 0
+	return scan.event, len(scan.event.added) > 0 || len(scan.event.deleted) > 0, nil
 }
 
 type pollScan struct {
