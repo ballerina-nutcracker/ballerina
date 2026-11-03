@@ -132,6 +132,15 @@ service class DuplicatePathService {
     }
 }
 
+@ftp:ServiceConfig {path: "/aged/./"}
+service class AliasPathService {
+    *ftp:Service;
+
+    remote function onFileText(string content) returns error? {
+        _ = content;
+    }
+}
+
 service class InvalidMethodService {
     *ftp:Service;
 
@@ -298,6 +307,8 @@ public function main() returns error? {
 
     error? duplicate = multi.attach(new DuplicatePathService());
     io:println(duplicate is ftp:InvalidConfigError ? duplicate.message() : "attached"); // @output Duplicate path '/aged' in @ftp:ServiceConfig. Each service must monitor a unique path.
+    error? alias = multi.attach(new AliasPathService());
+    io:println(alias is ftp:InvalidConfigError ? alias.message() : "attached"); // @output Duplicate path '/aged/./' in @ftp:ServiceConfig. Each service must monitor a unique path.
     error? mixing = multi.attach(new DeletedService());
     io:println(mixing is error ? mixing.message() : "attached"); // @output All services attached to a listener must use @ftp:ServiceConfig annotation when any service uses it. The new service is missing the annotation.
     check multi.gracefulStop();
