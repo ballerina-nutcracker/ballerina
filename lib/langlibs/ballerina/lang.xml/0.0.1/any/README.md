@@ -30,6 +30,6 @@ Support status of the `lang.xml` lang library functions against the public funct
 | map | Supported | Handled by the compiler |
 | setChildren | Supported | |
 | setName | Supported | |
-| slice | Supported | Handled by the compiler |
+| slice | Supported | |
 | strip | Supported | |
 | text | Supported | |

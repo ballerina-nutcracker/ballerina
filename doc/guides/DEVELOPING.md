@@ -165,7 +165,7 @@ SKIP_COMMIT_HOOKS=1 git commit
 The hook requires `golangci-lint`. Install the version used by CI if it is not already available:
 
 ```bash
-go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 ```
 
 ## Code generation

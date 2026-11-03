@@ -25,6 +25,17 @@ public const string lang = "{http://www.w3.org/XML/1998/namespace}lang";
 public const string base = "{http://www.w3.org/XML/1998/namespace}base";
 
 public isolated function length(xml x) returns int = external;
+
+# Returns a subsequence of an xml value.
+#
+# @opaque
+#
+# + x - the xml value
+# + startIndex - start index, inclusive
+# + endIndex - end index, exclusive
+# + return - a subsequence of `x` consisting of items with index >= `startIndex` and < `endIndex`
+public isolated function slice(xml x, int startIndex, int endIndex = length(x)) returns xml = external;
+
 public isolated function concat((xml|string)... xs) returns xml = external;
 public isolated function getName(Element elem) returns string = external;
 public isolated function setName(Element elem, string xName) = external;
