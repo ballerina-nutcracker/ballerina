@@ -62,7 +62,7 @@ Support Levels:
 | Discard all entries | Supported | `invalidateAll` |
 | Check for a key | Supported | `hasKey`; an expired entry is removed and reported as absent (see Notable Behavioural Changes); recency is unchanged |
 | List the keys | Supported | `keys`; the order differs from jBallerina (see Notable Behavioural Changes) |
-| Cache size | Supported | `size`; expired entries are removed lazily, so it counts expired entries not yet removed by `get`, `hasKey`, `invalidate` or the cleanup task |
+| Cache size | Supported | `size`; expired entries are removed lazily, so it and `keys` count an expired entry until `get`, `hasKey`, `invalidate`, `invalidateAll` or the cleanup task removes it, a `put` of the same key replaces it, or it is among the least recently used entries evicted when `put` adds a new key to a full cache |
 | Cache capacity | Supported | `capacity` |
 | Least recently used eviction | Supported | When `put` adds a new key to a full cache it evicts `ceil(capacity * evictionFactor)` entries, computed exactly from the decimal value of `evictionFactor` and clamped to between 1 and `capacity` (see Notable Behavioural Changes) |
 | Entry expiry | Supported | `maxAge` and `defaultMaxAge`, compared at nanosecond precision (see Notable Behavioural Changes) |
