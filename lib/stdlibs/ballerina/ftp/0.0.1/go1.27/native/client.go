@@ -334,8 +334,8 @@ type iteratorError struct {
 
 func (e *iteratorError) Error() string { return e.message }
 
-// streamReader pulls a Ballerina stream lazily into an io.Reader. A zero-length chunk ends the
-// upload, as SequenceInputStream does in jBallerina.
+// streamReader pulls a Ballerina stream lazily into an io.Reader. Only the end of the stream ends
+// the upload; jBallerina also stops at a zero-length chunk and drops the rest (ballerina-library#9476).
 type streamReader struct {
 	stream *values.Stream
 	encode func(values.BalValue) []byte
@@ -359,10 +359,6 @@ func (r *streamReader) Read(p []byte) (int, error) {
 		case *values.Map:
 			value, _ := v.Get("value")
 			r.buf = r.encode(value)
-			if len(r.buf) == 0 {
-				r.done = true
-				return 0, io.EOF
-			}
 		}
 	}
 	n := copy(p, r.buf)

@@ -53,12 +53,12 @@ public function main() returns error? {
     byte[][] parts = [[104, 105], [33], [], [63]];
     check c->putBytesAsStream("/s/bytes.bin", parts.toStream());
     byte[] uploaded = check c->getBytes("/s/bytes.bin");
-    io:println(uploaded); // @output [104,105,33]
+    io:println(uploaded); // @output [104,105,33,63]
 
     byte[][] more = [[1, 2, 3]];
     check c->putBytesAsStream("/s/bytes.bin", more.toStream(), ftp:APPEND);
     uploaded = check c->getBytes("/s/bytes.bin");
-    io:println(uploaded); // @output [104,105,33,1,2,3]
+    io:println(uploaded); // @output [104,105,33,63,1,2,3]
 
     stream<byte[], error?> failing = new (new FailingStream());
     ftp:Error? failed = c->putBytesAsStream("/s/failed.bin", failing);
