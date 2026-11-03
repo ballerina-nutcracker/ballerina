@@ -1,0 +1,13 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type xml)) (expr
+        (xml-element-literal a))))
+    (assignment
+      (wildcard-binding-pattern)
+      (invocation lang.xml slice (
+        (simple-var-ref x)
+        (literal 2) <default>)))
+  )
+)
