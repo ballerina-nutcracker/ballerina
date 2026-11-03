@@ -1,0 +1,141 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function f (
+    (variable a (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable b (type
+      (value-type int)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref a)
+          (value-type int))
+        (simple-var-ref a)
+        (literal 0))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref b)
+          (literal 1)))))
+  (function g (
+    (variable a (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable fn (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_0 () ()
+          (expr-function-body
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref a)
+                (value-type int))
+              (simple-var-ref a)
+              (unary-expr -
+                (literal 1))))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation fn ()))))
+  (function chain (
+    (variable x (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable y (type
+      (value-type int)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref x)
+          (value-type int))
+        (simple-var-ref x)
+        (literal 0))))
+    (variable z (type
+      (value-type int)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref x)
+          (value-type int))
+        (binary-expr +
+          (simple-var-ref y)
+          (literal 1))
+        (unary-expr -
+          (literal 1)))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (simple-var-ref y)
+          (simple-var-ref z)))))
+  (class-definition C
+    (function m (
+      (variable a (type
+        (union-type
+          (value-type int)
+          (value-type string))))
+      (variable b (type
+        (value-type int)) (expr
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type int))
+          (simple-var-ref a)
+          (literal 0))))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref b)
+            (literal 1))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation f (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f (
+            (literal x))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f (
+            (literal 3)
+            (literal 10))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation g (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation g (
+            (literal s))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation chain (
+            (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation chain (
+            (literal s))))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation m expr:
+            (simple-var-ref c) (
+            (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation m expr:
+            (simple-var-ref c) (
+            (literal y)))))))))

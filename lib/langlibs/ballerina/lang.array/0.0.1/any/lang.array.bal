@@ -22,11 +22,6 @@ public isolated function length((any|error)[] arr) returns int = external;
 
 # Returns the index of the first occurrence of a value in an array.
 #
-# The signature is declared here so that the compiler can take the parameter
-# names and the default value of `startIndex` from source. Calls are still
-# monomorphized: `@opaque` marks the declaration as the source form of an
-# opaque function, whose types are decided per call site in the compiler.
-#
 # @opaque
 #
 # + arr - the array
