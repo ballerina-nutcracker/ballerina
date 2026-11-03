@@ -1,0 +1,41 @@
+(C
+  (first
+    (bb0 () ()
+      (return
+        (simple-var-ref v))
+    )
+  )
+)
+(count
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation count (
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation count (
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3))
+          (literal 7))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation first expr:
+          (new
+            (user-defined-type C) ()) (
+          (list-constructor-expr
+            (literal 4)
+            (literal 5)) <default>)))))
+  )
+)

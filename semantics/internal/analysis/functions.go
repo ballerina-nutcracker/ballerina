@@ -31,7 +31,6 @@ type invokableNode interface {
 	ast.BLangNode
 	Symbol() model.SymbolRef
 	IsIsolated() bool
-	IsNative() bool
 	GetName() ast.IdentifierNode
 	GetParameters() []ast.BLangVariable
 	GetRestParam() *ast.BLangVariable
@@ -101,7 +100,7 @@ func validateInvokableNode(cx scope.Context, fn invokableNode) bool {
 	paramsOK := true
 	params := fn.GetParameters()
 	for i := range params {
-		paramsOK = validateParameter(cx, scope.NewExpressionClosure(cx, scope.DefaultParam), fn, &params[i], i) && paramsOK
+		paramsOK = validateParameter(cx, scope.NewDefaultParamClosure(cx, params[:i]), fn, &params[i], i) && paramsOK
 	}
 	signatureOK = validateSignatureTail(cx, fn) && signatureOK
 	bodyOK := true

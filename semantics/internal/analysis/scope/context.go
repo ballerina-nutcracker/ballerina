@@ -52,14 +52,6 @@ type Context interface {
 // closures from the package down to and including it.
 type ScopeID uint16
 
-// ClosureKind is the kind of an expression closure.
-type ClosureKind uint8
-
-const (
-	DefaultParam ClosureKind = iota
-	RecordFieldDefault
-)
-
 type functionKind uint8
 
 const (
@@ -76,7 +68,6 @@ type invokableSignatureNode interface {
 	ast.BLangNode
 	Symbol() model.SymbolRef
 	IsIsolated() bool
-	IsNative() bool
 	GetParameters() []ast.BLangVariable
 	GetRestParam() *ast.BLangVariable
 	Scope() model.Scope
@@ -230,7 +221,7 @@ func NewFunction(parent Context, node invokableSignatureNode) Context {
 	if parent.CompilerCtx().SymbolName(node.Symbol()) == "init" {
 		fc.kind = fnModuleInit
 	}
-	fc.isolated = node.IsIsolated() && !node.IsNative()
+	fc.isolated = node.IsIsolated()
 	return finishFunctionContext(fc, node)
 }
 
@@ -239,7 +230,7 @@ func NewFunction(parent Context, node invokableSignatureNode) Context {
 func NewMethod(parent Context, node invokableSignatureNode, class ClassInfo) Context {
 	fc := newFunctionContext(parent, node)
 	fc.kind = fnMethod
-	fc.isolated = node.IsIsolated() && !node.IsNative()
+	fc.isolated = node.IsIsolated()
 	fc.class = class
 	self, ok := node.Scope().GetSymbol("self")
 	if !ok {
@@ -284,25 +275,34 @@ func finishFunctionContext(fc *functionContext, node invokableSignatureNode) Con
 	return fc
 }
 
-// NewExpressionClosure pushes the closure of a default-parameter expression
-// (parent is the owning invokable's context) or of a record-field default.
-func NewExpressionClosure(parent Context, kind ClosureKind) Context {
+// NewDefaultParamClosure pushes the closure of a parameter's default
+// expression; parent is the owning invokable's context. The closure takes the
+// previous parameters as its own, so a reference to one of them is not a
+// capture.
+func NewDefaultParamClosure(parent Context, previousParams []ast.BLangVariable) Context {
 	enclosing, hasEnclosing := EnclosingFunction(parent)
+	fc := newExpressionClosure(parent, hasEnclosing && enclosing.IsIsolated())
+	defineParameters(fc, previousParams)
+	return fc
+}
+
+// NewRecordFieldDefaultClosure pushes the closure of a record-field default,
+// which is always isolated.
+func NewRecordFieldDefaultClosure(parent Context) Context {
+	return newExpressionClosure(parent, true)
+}
+
+func newExpressionClosure(parent Context, isolated bool) *functionContext {
 	fc := &functionContext{
 		contextBase: contextBase{outer: parent},
 		factsBase:   factsBase{need: false},
 		locals:      make(map[model.SymbolRef]VarDecl),
 		id:          nextScopeID(parent),
 		kind:        fnExpressionClosure,
+		isolated:    isolated,
 	}
-	if hasEnclosing {
+	if enclosing, hasEnclosing := EnclosingFunction(parent); hasEnclosing {
 		fc.class, fc.self = enclosing.class, enclosing.self
-	}
-	switch kind {
-	case DefaultParam:
-		fc.isolated = hasEnclosing && enclosing.IsIsolated()
-	case RecordFieldDefault:
-		fc.isolated = true
 	}
 	fc.active = closureRules(fc.isolated)
 	return fc
@@ -368,12 +368,7 @@ func withoutKind(rules []ruleSet, kind ruleKind) []ruleSet {
 }
 
 func seedParameterLocals(fc *functionContext, node invokableSignatureNode) {
-	params := node.GetParameters()
-	for i := range params {
-		if ast.SymbolIsSet(&params[i]) {
-			defineParameter(fc, params[i].Symbol())
-		}
-	}
+	defineParameters(fc, node.GetParameters())
 	if rest := node.GetRestParam(); rest != nil && ast.SymbolIsSet(rest) {
 		defineParameter(fc, rest.Symbol())
 	}
@@ -390,6 +385,14 @@ func seedParameterLocals(fc *functionContext, node invokableSignatureNode) {
 	}
 	if fc.kind == fnMethod {
 		defineParameter(fc, fc.self)
+	}
+}
+
+func defineParameters(fc *functionContext, params []ast.BLangVariable) {
+	for i := range params {
+		if ast.SymbolIsSet(&params[i]) {
+			defineParameter(fc, params[i].Symbol())
+		}
 	}
 }
 

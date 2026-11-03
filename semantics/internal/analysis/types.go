@@ -172,7 +172,7 @@ func validateRecordField(cx scope.Context, field *ast.BField) bool {
 		return false
 	}
 	if field.Default != nil {
-		closure := scope.NewExpressionClosure(cx, scope.RecordFieldDefault)
+		closure := scope.NewRecordFieldDefaultClosure(cx)
 		if _, ok := validateActionOrExpr(closure, field.Default.Expr, field.Type.Type()); !ok {
 			return false
 		}

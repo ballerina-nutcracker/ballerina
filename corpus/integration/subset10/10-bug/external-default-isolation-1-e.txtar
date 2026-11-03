@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> external-default-isolation-1-e.bal:26:34
+   |
+26 | isolated function depVar(int y = counter, typedesc<anydata> td = <>) returns td = external; // @error
+   |                                  ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> external-default-isolation-1-e.bal:30:34
+   |
+30 | isolated function extVar(int y = counter) returns int = external; // @error
+   |                                  ^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> external-default-isolation-1-e.bal:45:20
+   |
+45 |             return xs.length(); // @error
+   |                    ^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> external-default-isolation-1-e.bal:24:31
+   |
+24 | isolated function dep(int y = next(), typedesc<anydata> td = <>) returns td = external; // @error
+   |                               ^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> external-default-isolation-1-e.bal:28:31
+   |
+28 | isolated function ext(int y = next()) returns int = external; // @error
+   |                               ^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> external-default-isolation-1-e.bal:37:35
+   |
+37 |     isolated function dep(int y = next(), typedesc<anydata> td = <>) returns td = external; // @error
+   |                                   ^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> external-default-isolation-1-e.bal:39:35
+   |
+39 |     isolated function ext(int y = next()) returns int = external; // @error
+   |                                   ^^^^^^

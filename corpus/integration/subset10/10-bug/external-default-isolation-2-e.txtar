@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> external-default-isolation-2-e.bal:23:40
+   |
+23 | isolated function finalMutable(int n = arr.length()) returns int = external; // @error
+   |                                        ^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> external-default-isolation-2-e.bal:32:44
+   |
+32 |     isolated function finalMutable(int n = arr.length()) returns int = external; // @error
+   |                                            ^^^

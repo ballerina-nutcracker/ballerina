@@ -1,0 +1,109 @@
+module $anon.. v 0.0.0;
+class C {
+
+  first([int...],int) -> int{
+    bb0 {
+      %0 = v;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+count([int...],int) -> int{
+  bb0 {
+    %0 = n;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 3
+    %4 = ConstantLoad 3
+    %5 = newArray [int...][%4]{%1, %2, %3}
+    $desugar$0 = %5;
+    %7 = $default$0($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %7;
+    %9 = $desugar$1;
+    %10 = count($desugar$0,%9) -> bb2;
+  }
+  bb2 {
+    %11 = %10;
+    %12 = println(%11) -> bb3;
+  }
+  bb3 {
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad 2
+    %15 = ConstantLoad 3
+    %16 = ConstantLoad 3
+    %17 = newArray [int...][%16]{%13, %14, %15}
+    %18 = ConstantLoad 7
+    %19 = %18;
+    %20 = count(%17,%19) -> bb4;
+  }
+  bb4 {
+    %21 = %20;
+    %22 = println(%21) -> bb5;
+  }
+  bb5 {
+    %23 = ConstantLoad 4
+    %24 = ConstantLoad 5
+    %25 = ConstantLoad 2
+    %26 = newArray [int...][%25]{%23, %24}
+    $desugar$2 = %26;
+    %28 = $default$1($desugar$2) -> bb6;
+  }
+  bb6 {
+    $desugar$3 = %28;
+    %30 = newObject $anon/.:C
+    %31 = %30.init() -> bb7;
+  }
+  bb7 {
+    %33 = %31 is nil
+    %33 ? bb8 : bb9;
+  }
+  bb8 {
+    %32 = %30;
+    GOTO bb10;
+  }
+  bb9 {
+    %32 = %31;
+    GOTO bb10;
+  }
+  bb10 {
+    %34 = $desugar$3;
+    %35 = %32.first($desugar$2,%34) -> bb11;
+  }
+  bb11 {
+    %36 = %35;
+    %37 = println(%36) -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}
+$default$0([int...]) -> int{
+  bb0 {
+    %2 = length(xs) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$default$1([int...]) -> int{
+  bb0 {
+    %3 = ConstantLoad 0
+    %2 = xs[%3];
+    %0 = %2;
+    return;
+  }
+}

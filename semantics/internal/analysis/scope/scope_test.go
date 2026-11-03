@@ -66,12 +66,12 @@ func TestSemanticErrIsForwardedUnchanged(t *testing.T) {
 		"package":                  pkg,
 		"function":                 fn,
 		"lambda":                   lambda,
-		"default parameter":        scope.NewExpressionClosure(fn, scope.DefaultParam),
-		"record field default":     scope.NewExpressionClosure(pkg, scope.RecordFieldDefault),
+		"default parameter":        scope.NewDefaultParamClosure(fn, nil),
+		"record field default":     scope.NewRecordFieldDefaultClosure(pkg),
 		"lock":                     lock,
 		"isolated expression":      scope.NewIsolatedExpr(lock, literal),
 		"lambda in lock":           scope.NewLambda(lock, functions[1]),
-		"isolated expression body": scope.NewExpressionClosure(scope.NewIsolatedExpr(lock, literal), scope.RecordFieldDefault),
+		"isolated expression body": scope.NewRecordFieldDefaultClosure(scope.NewIsolatedExpr(lock, literal)),
 	}
 	for name, cx := range chains {
 		t.Run(name, func(t *testing.T) {
