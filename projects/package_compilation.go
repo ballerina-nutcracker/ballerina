@@ -156,14 +156,9 @@ func (c *PackageCompilation) compileModulesInternal() {
 			return
 		}
 
-		// Phase 2: local node resolution, semantic analysis, CFG, desugar (parallel -
-		// no cross-module dependencies). When GenerateCode is set, BIR generation runs
-		// in the same goroutine right after, pipelined with no barrier between the two —
-		// so a module can finish generating BIR before a sibling's Phase 2 failure is
-		// known. birDiagStart records, per module, the diagnostic count right before its
-		// BIR generation ran; if any module ends up failing Phase 2, that's used below to
-		// drop BIR-gen diagnostics from modules that otherwise compiled cleanly, since
-		// they'd just be noise alongside the real failure.
+		// Phase 2: local node resolution, semantic analysis, CFG, desugar (parallel - no
+		// cross-module dependencies), pipelined with BIR generation when GenerateCode is set.
+		// birDiagStart drops BIR-gen diagnostics if a sibling fails, since they'd only be noise.
 		generateCode := c.compilationOptions.GenerateCode()
 		birDiagStart := make(map[ModuleID]int)
 		var birDiagStartMu sync.Mutex
