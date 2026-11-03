@@ -1,0 +1,40 @@
+{
+  "source": "projects/project/main.bal",
+  "position": {
+    "line": 19,
+    "character": 24
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "imported(int count, string title)",
+          "parameters": [
+            {
+              "label": [
+                9,
+                18
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`count**"
+              }
+            },
+            {
+              "label": [
+                20,
+                32
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

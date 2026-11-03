@@ -1,0 +1,40 @@
+{
+  "source": "projects/dependency-retarget/main.bal",
+  "position": {
+    "line": 18,
+    "character": 36
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(int newCount, string newTitle)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`newCount**"
+              }
+            },
+            {
+              "label": [
+                18,
+                33
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`newTitle**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

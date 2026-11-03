@@ -1,0 +1,18 @@
+{
+  "source": "constructor-fallback.bal",
+  "position": {
+    "line": 21,
+    "character": 22
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Empty()",
+          "parameters": []
+        }
+      ],
+      "activeSignature": 0
+    }
+  ]
+}

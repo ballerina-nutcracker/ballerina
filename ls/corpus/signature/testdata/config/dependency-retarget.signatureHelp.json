@@ -1,0 +1,10 @@
+{
+  "source": "projects/dependency-retarget/main.bal",
+  "position": {
+    "line": 18,
+    "character": 35
+  },
+  "expected": [
+    null
+  ]
+}

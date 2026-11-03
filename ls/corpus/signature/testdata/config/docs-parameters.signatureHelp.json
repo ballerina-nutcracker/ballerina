@@ -1,0 +1,50 @@
+{
+  "source": "docs-parameters.bal",
+  "position": {
+    "line": 18,
+    "character": 22
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "mixed(int count, string title, string... extra)",
+          "parameters": [
+            {
+              "label": [
+                6,
+                15
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`count**"
+              }
+            },
+            {
+              "label": [
+                17,
+                29
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`title**"
+              }
+            },
+            {
+              "label": [
+                31,
+                46
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string...`extra**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 2
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "source": "ast-spread.bal",
+  "position": {
+    "line": 20,
+    "character": 17
+  },
+  "expected": [
+    null
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "source": "utf16.bal",
+  "position": {
+    "line": 18,
+    "character": 15
+  },
+  "expected": [
+    null
+  ]
+}

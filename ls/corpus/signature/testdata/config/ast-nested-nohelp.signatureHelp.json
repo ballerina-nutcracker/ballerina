@@ -1,0 +1,40 @@
+{
+  "source": "ast-nested-nohelp.bal",
+  "position": {
+    "line": 19,
+    "character": 22
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "inner(value, other)",
+          "parameters": [
+            {
+              "label": [
+                6,
+                11
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**value**"
+              }
+            },
+            {
+              "label": [
+                13,
+                18
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**other**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "source": "langlib-empty-push.bal",
+  "position": {
+    "line": 18,
+    "character": 16
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "push([int...] arr, int... vals)",
+          "parameters": [
+            {
+              "label": [
+                5,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`[int...]`arr**"
+              }
+            },
+            {
+              "label": [
+                19,
+                30
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int...`vals**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

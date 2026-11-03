@@ -1,0 +1,22 @@
+{
+  "source": "docs-zero.bal",
+  "position": {
+    "line": 19,
+    "character": 9
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "zero()",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nZero description."
+          },
+          "parameters": []
+        }
+      ],
+      "activeSignature": 0
+    }
+  ]
+}

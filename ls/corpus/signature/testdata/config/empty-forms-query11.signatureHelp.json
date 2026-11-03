@@ -1,0 +1,10 @@
+{
+  "source": "empty-forms.bal",
+  "position": {
+    "line": 25,
+    "character": 19
+  },
+  "expected": [
+    null
+  ]
+}

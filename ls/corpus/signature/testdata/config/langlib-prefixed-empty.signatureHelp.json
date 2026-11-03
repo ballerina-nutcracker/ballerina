@@ -1,0 +1,34 @@
+{
+  "source": "langlib-prefixed-empty.bal",
+  "position": {
+    "line": 17,
+    "character": 33
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "fromString(string s)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nReturns the integer that `s` represents."
+          },
+          "parameters": [
+            {
+              "label": [
+                11,
+                19
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`s**: string representation of an integer"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

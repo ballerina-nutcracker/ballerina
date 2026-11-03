@@ -1,0 +1,10 @@
+{
+  "source": "ast-boundaries.bal",
+  "position": {
+    "line": 19,
+    "character": 11
+  },
+  "expected": [
+    null
+  ]
+}

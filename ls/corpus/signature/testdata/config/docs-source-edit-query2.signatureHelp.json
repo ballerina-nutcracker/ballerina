@@ -1,0 +1,44 @@
+{
+  "source": "projects/documentation-lifetime/main.bal",
+  "position": {
+    "line": 22,
+    "character": 14
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(int count, string title)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nEdited description."
+          },
+          "parameters": [
+            {
+              "label": [
+                4,
+                13
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`count**: Edited count."
+              }
+            },
+            {
+              "label": [
+                15,
+                27
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`title**: Edited title."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "source": "incomplete-implicit.bal",
+  "position": {
+    "line": 26,
+    "character": 21
+  },
+  "expected": [
+    null
+  ]
+}

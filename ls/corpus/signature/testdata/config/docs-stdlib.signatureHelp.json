@@ -1,0 +1,34 @@
+{
+  "source": "docs-stdlib.bal",
+  "position": {
+    "line": 18,
+    "character": 16
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "println(nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object... values)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nPrints `any` or `error` to the standard output stream and terminates the line.\n```ballerinaio:println(\"Start processing the CSV file from \", srcFileName);```"
+          },
+          "parameters": [
+            {
+              "label": [
+                8,
+                136
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...`values**: The value(s) to be printed"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

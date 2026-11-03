@@ -1,0 +1,10 @@
+{
+  "source": "expressions.bal",
+  "position": {
+    "line": 121,
+    "character": 28
+  },
+  "expected": [
+    null
+  ]
+}

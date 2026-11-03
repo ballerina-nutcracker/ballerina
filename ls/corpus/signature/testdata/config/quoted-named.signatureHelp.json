@@ -1,0 +1,10 @@
+{
+  "source": "quoted-named.bal",
+  "position": {
+    "line": 18,
+    "character": 29
+  },
+  "expected": [
+    null
+  ]
+}

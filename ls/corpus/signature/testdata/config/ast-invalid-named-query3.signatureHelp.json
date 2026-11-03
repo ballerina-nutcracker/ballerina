@@ -1,0 +1,10 @@
+{
+  "source": "ast-invalid-named.bal",
+  "position": {
+    "line": 20,
+    "character": 20
+  },
+  "expected": [
+    null
+  ]
+}

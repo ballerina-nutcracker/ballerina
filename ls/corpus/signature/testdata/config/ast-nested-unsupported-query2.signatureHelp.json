@@ -1,0 +1,10 @@
+{
+  "source": "ast-nested-unsupported.bal",
+  "position": {
+    "line": 23,
+    "character": 30
+  },
+  "expected": [
+    null
+  ]
+}
