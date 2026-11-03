@@ -1,0 +1,31 @@
+-- stdout --
+		[pass] testEval
+
+		    evaluation passed with an average pass rate of 0.6666666666666666
+			
+
+		[fail] testEvalFails:
+
+		    evaluation failed with an average pass rate of 0.3333333333333333
+			
+			    evaluation runs:
+
+				    run: 1
+					    message: run 1
+
+				    run: 2
+					    message: passed
+
+				    run: 3
+					    message: run 3
+
+
+		1 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

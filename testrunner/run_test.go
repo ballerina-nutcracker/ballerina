@@ -772,9 +772,11 @@ func TestRun_EvaluationCrossesThresholdPasses(t *testing.T) {
 }
 
 // TestRun_EvaluationBeforeFailureSkipsWholeEvaluation confirms a failing
-// before: hook aborts the entire evaluation (not just one run), skipping it
-// and cascading the skip to its dependent — the same before: hook never
-// invokes the test body at all, across any run.
+// before: hook aborts the entire evaluation (not just one run) without
+// invoking the test body at all, and that a dependsOn-skipped evaluation
+// runs zero each-hooks while a before:-failed one runs BeforeEach once but
+// no AfterEach — both confirmed against real jballerina. testZCountsCheck
+// (run last; see its own doc comment) asserts the exact hook counts.
 func TestRun_EvaluationBeforeFailureSkipsWholeEvaluation(t *testing.T) {
 	rt, plan := compileAndRun(t, "evalbeforefails")
 	graph, err := testplan.BuildGraph(plan)
@@ -785,11 +787,14 @@ func TestRun_EvaluationBeforeFailureSkipsWholeEvaluation(t *testing.T) {
 	report := testrunner.Run(io.Discard, rt, "testorg", "evalbeforefails", plan, graph, nil, nil)
 	byName := resultsByName(report.Results)
 
-	if got := byName["testEvalSkipped"]; got.Status != testrunner.Skip {
-		t.Errorf("testEvalSkipped: expected Skip, got %v", got.Status)
+	if got := byName["testEvalSkippedByDependsOn"]; got.Status != testrunner.Skip {
+		t.Errorf("testEvalSkippedByDependsOn: expected Skip, got %v", got.Status)
 	}
-	if got := byName["testDependent"]; got.Status != testrunner.Skip {
-		t.Errorf("testDependent: expected Skip (cascaded), got %v", got.Status)
+	if got := byName["testEvalBeforeFails"]; got.Status != testrunner.Skip {
+		t.Errorf("testEvalBeforeFails: expected Skip, got %v", got.Status)
+	}
+	if got := byName["testZCountsCheck"]; got.Status != testrunner.Pass {
+		t.Errorf("testZCountsCheck: expected Pass (hook counts as asserted), got %v (%s)", got.Status, got.Message)
 	}
 }
 
