@@ -34,6 +34,9 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+//nolint:staticcheck // error text mirrors jBallerina's mimepull message verbatim
+var errMissingStartBoundary = errors.New("Missing start boundary")
+
 type decodedPart struct {
 	header textproto.MIMEHeader
 	body   []byte
@@ -62,12 +65,12 @@ func entityHeaderValue(obj *values.Object, headerName string) (string, bool) {
 	return s, ok
 }
 
-// multipartBoundary parses a Content-Type header value and reports whether it names a
+// MultipartBoundary parses a Content-Type header value and reports whether it names a
 // composite (multipart/* or message/*, per RFC 2046) media type, along with its
 // boundary parameter. message/* always reports an empty boundary regardless of the
 // Content-Type params: it isn't boundary-delimited, so a "boundary" param present on
 // one must never be handed to multipart.NewReader as if it were.
-func multipartBoundary(contentType string) (baseType, boundary string, isComposite bool) {
+func MultipartBoundary(contentType string) (baseType, boundary string, isComposite bool) {
 	if contentType == "" {
 		return "", "", false
 	}
@@ -86,14 +89,14 @@ func multipartBoundary(contentType string) (baseType, boundary string, isComposi
 	}
 }
 
-// decodeMultipart splits a raw multipart body into per-part Entity values, copying
+// DecodeMultipart splits a raw multipart body into per-part Entity values, copying
 // every part header verbatim and transfer-decoding each part body. A part without a
 // Content-Type header is left without one, as in jBallerina.
 //
-// A missing boundary is a ParserError. jBallerina decodes only a byte-channel body
-// (an inbound HTTP body or setFileAsEntityBody) and returns an empty Entity[] for a
-// setByteArray body.
-func decodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values.List, error) {
+// A missing boundary is an error, and so is non-empty data holding no part, which
+// jBallerina reports as a missing start boundary. Empty data decodes to no parts; callers
+// decide whether an empty body is an error.
+func DecodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values.List, error) {
 	if boundary == "" {
 		return nil, fmt.Errorf("no boundary parameter found in Content-Type")
 	}
@@ -112,6 +115,9 @@ func decodeMultipart(ctx *extern.Context, data []byte, boundary string) (*values
 			return nil, err
 		}
 		decoded = append(decoded, decodedPart{header: part.Header, body: body})
+	}
+	if len(decoded) == 0 && len(data) > 0 {
+		return nil, errMissingStartBoundary
 	}
 	parts, err := newBodyParts(ctx, len(decoded))
 	if err != nil {
@@ -175,6 +181,109 @@ func addEntityHeaders(ctx *extern.Context, obj *values.Object, header textproto.
 	return nil
 }
 
+// EncodeMultipart serializes body parts into multipart wire bytes, generating a boundary when
+// none is given, and returns the boundary actually used. jBallerina does this in its HTTP
+// transport rather than through mime's public API.
+func EncodeMultipart(ctx *extern.Context, parts []*values.Object, boundary string) (data []byte, usedBoundary string, err error) {
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	if boundary != "" {
+		if err := w.SetBoundary(boundary); err != nil {
+			return nil, "", err
+		}
+	}
+	for _, part := range parts {
+		header, partData, err := encodePart(ctx, part)
+		if err != nil {
+			return nil, "", err
+		}
+		pw, err := w.CreatePart(header)
+		if err != nil {
+			return nil, "", err
+		}
+		if _, err := pw.Write(partData); err != nil {
+			return nil, "", err
+		}
+	}
+	usedBoundary = w.Boundary()
+	if err := w.Close(); err != nil {
+		return nil, "", err
+	}
+	return buf.Bytes(), usedBoundary, nil
+}
+
+// encodePart returns a part's wire header and body. A part whose body is itself body parts
+// is encoded recursively, and a generated boundary is added to the header written for it.
+func encodePart(ctx *extern.Context, part *values.Object) (textproto.MIMEHeader, []byte, error) {
+	header := entityHeaders(part)
+	body := getEntityBody(part)
+	if body == nil || body.kind != bodyParts {
+		data, err := bytesForBody(ctx, part)
+		return header, data, err
+	}
+	nested := make([]*values.Object, body.parts.Len())
+	for i := range nested {
+		nested[i], _ = body.parts.Get(i).(*values.Object)
+	}
+	contentType, found := entityHeaderValue(part, "content-type")
+	if !found {
+		contentType = "multipart/form-data"
+	}
+	_, boundary, _ := MultipartBoundary(contentType)
+	data, usedBoundary, err := EncodeMultipart(ctx, nested, boundary)
+	if err != nil {
+		return nil, nil, err
+	}
+	if boundary == "" {
+		setHeaderValue(header, "Content-Type", contentType+"; boundary="+usedBoundary)
+	}
+	return header, data, nil
+}
+
+// setHeaderValue replaces name's value in header, keeping the casing of an existing key.
+func setHeaderValue(header textproto.MIMEHeader, name, value string) {
+	for key := range header {
+		if strings.EqualFold(key, name) {
+			header[key] = []string{value}
+			return
+		}
+	}
+	header[name] = []string{value}
+}
+
+// entityHeaders reads an Entity's headerNames/headerMap fields back into a MIME header,
+// keeping each header name's original casing.
+func entityHeaders(obj *values.Object) textproto.MIMEHeader {
+	result := textproto.MIMEHeader{}
+	namesVal, _ := obj.Get("headerNames")
+	names, ok := namesVal.(*values.List)
+	if !ok {
+		return result
+	}
+	hmVal, _ := obj.Get("headerMap")
+	hm, ok := hmVal.(*values.Map)
+	if !ok {
+		return result
+	}
+	for i := range names.Len() {
+		name, _ := names.Get(i).(string)
+		v, ok := hm.Get(strings.ToLower(name))
+		if !ok {
+			continue
+		}
+		list, ok := v.(*values.List)
+		if !ok {
+			continue
+		}
+		vals := make([]string, list.Len())
+		for j := range list.Len() {
+			vals[j], _ = list.Get(j).(string)
+		}
+		result[name] = vals
+	}
+	return result
+}
+
 func setBodyPartsExtern() extern.NativeFunc {
 	return func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		obj, _ := args[0].(*values.Object)
@@ -192,7 +301,7 @@ func getBodyPartsExtern() extern.NativeFunc {
 			return body.parts, nil
 		}
 		contentType, found := entityHeaderValue(obj, "content-type")
-		baseType, boundary, isComposite := multipartBoundary(contentType)
+		baseType, boundary, isComposite := MultipartBoundary(contentType)
 		if !isComposite {
 			if !found {
 				// jBallerina concatenates the absent Java header value as "null".
@@ -212,7 +321,10 @@ func getBodyPartsExtern() extern.NativeFunc {
 		if body == nil || body.kind != bodyBytes {
 			return newBodyParts(ctx, 0)
 		}
-		parts, err := decodeMultipart(ctx, body.bytes, boundary)
+		parts, err := DecodeMultipart(ctx, body.bytes, boundary)
+		if err == nil && body.fromChannel && parts.Len() == 0 {
+			err = errMissingStartBoundary
+		}
 		if err != nil {
 			return mimeError("ParserError", "Error occurred while extracting body parts from entity: "+err.Error()), nil
 		}
