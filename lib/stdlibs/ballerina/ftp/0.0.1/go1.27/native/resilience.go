@@ -133,8 +133,7 @@ type circuitBreaker struct {
 	startMs         int64
 	lastRequestMs   int64
 	lastUsedBucket  int
-	lastErrorMs     int64
-	hasError        bool
+	openedMs        int64
 }
 
 func millis(f float64) int64 {
@@ -222,11 +221,18 @@ func (cb *circuitBreaker) totals() (int64, int64) {
 	return total, failures
 }
 
+// open measures the resetTime wait from the moment the circuit opens; jBallerina measures it from
+// the last failure (ballerina-library#9473).
+func (cb *circuitBreaker) open() {
+	cb.state = circuitOpen
+	cb.openedMs = cb.nowMs()
+}
+
 func (cb *circuitBreaker) updateState() {
 	cb.prepareRollingWindow()
 	switch cb.state {
 	case circuitOpen:
-		if !cb.hasError || cb.nowMs()-cb.lastErrorMs >= cb.resetMs {
+		if cb.nowMs()-cb.openedMs >= cb.resetMs {
 			cb.state = circuitHalfOpen
 			cb.trialInProgress = false
 		}
@@ -238,7 +244,7 @@ func (cb *circuitBreaker) updateState() {
 				ratio = float32(failures) / float32(total)
 			}
 			if ratio > cb.threshold {
-				cb.state = circuitOpen
+				cb.open()
 			}
 		}
 	}
@@ -292,8 +298,6 @@ func (cb *circuitBreaker) recordFailure() {
 	current := cb.currentBucket()
 	cb.buckets[current].failures++
 	cb.lastUsedBucket = current
-	cb.lastErrorMs = cb.nowMs()
-	cb.hasError = true
 }
 
 func (cb *circuitBreaker) recordOutcome(err error) {
@@ -302,7 +306,7 @@ func (cb *circuitBreaker) recordOutcome(err error) {
 	if cb.state == circuitHalfOpen {
 		if err != nil && cb.countsAsFailure(err) {
 			cb.recordFailure()
-			cb.state = circuitOpen
+			cb.open()
 		} else {
 			cb.state = circuitClosed
 			cb.resetAll()
@@ -318,10 +322,7 @@ func (cb *circuitBreaker) recordOutcome(err error) {
 
 func (cb *circuitBreaker) openError() error {
 	cb.mu.Lock()
-	remaining := int64(0)
-	if cb.hasError {
-		remaining = max(0, cb.resetMs-(cb.nowMs()-cb.lastErrorMs))
-	}
+	remaining := max(0, cb.resetMs-(cb.nowMs()-cb.openedMs))
 	cb.mu.Unlock()
 	secondsLeft := math.Floor(float64(remaining)/1000.0 + 0.5)
 	return newError(kindCircuitBreakerOpen, "FTP server unavailable. Circuit breaker is OPEN. Retry in "+

@@ -25,4 +25,7 @@ true
 true
 false
 true
+true
+true
+CircuitBreakerOpenError: FTP server unavailable. Circuit breaker is OPEN. Retry in 1 seconds.
 -- stderr --
