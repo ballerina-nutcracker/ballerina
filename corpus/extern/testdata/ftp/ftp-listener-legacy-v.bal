@@ -191,6 +191,18 @@ service class CsvService {
     }
 }
 
+ftp:Caller? keptCaller = ();
+
+service class CallerKeepingService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent event, ftp:Caller caller) {
+        _ = event;
+        keptCaller = caller;
+        recordEvent("caller kept");
+    }
+}
+
 @ftp:ServiceConfig {path: "/race/a"}
 service class EarlyService {
     *ftp:Service;
@@ -413,6 +425,28 @@ public function main() returns error? {
     runtime:sleep(0.2);
     io:println(eventCount()); // @output 0
     check heldListener.gracefulStop();
+
+    // The shared caller outlives the detached service that asked for it and is closed on stop.
+    ftp:Listener sharedCaller = check new ({
+        host: "127.0.0.1",
+        port: ftpPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        path: "/held",
+        pollingInterval: 3600
+    });
+    CallerKeepingService keeper = new;
+    check sharedCaller.attach(keeper);
+    check sharedCaller.attach(new DeletedService());
+    check sharedCaller.poll();
+    waitFor(1);
+    printEvents(); // @output caller kept
+    check sharedCaller.detach(keeper);
+    check sharedCaller.gracefulStop();
+    ftp:Caller? kept = keptCaller;
+    if kept is ftp:Caller {
+        boolean|ftp:Error afterStop = kept->exists("/held/a.txt");
+        io:println(afterStop is ftp:Error ? afterStop.message() : afterStop.toString()); // @output FTP Client is already closed, hence further operations are not allowed
+    }
 
     check validation.immediateStop();
     check c->close();
