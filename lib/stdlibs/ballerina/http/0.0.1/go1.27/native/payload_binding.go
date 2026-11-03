@@ -20,6 +20,10 @@
 package native
 
 import (
+	"cmp"
+	"fmt"
+
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -27,22 +31,28 @@ import (
 // The dispatch order mirrors jBallerina's Response.setPayload (http_response.bal:538-557).
 // v is never nil: writeResult intercepts a () resource return before reaching here, and
 // both msgToBody call sites guard against a nil RequestMessage before this is invoked.
-func outboundPayload(tc semtypes.Context, types *httpTypes, v values.BalValue) ([]byte, string, error) {
+// contentType, when non-empty, replaces the inferred type, and a multipart body is encoded with
+// its boundary.
+func outboundPayload(ctx *extern.Context, types *httpTypes, v values.BalValue, contentType string) ([]byte, string, error) {
 	switch p := v.(type) {
 	case string:
-		return []byte(p), "text/plain", nil
+		return []byte(p), cmp.Or(contentType, "text/plain"), nil
 	case values.XMLValue:
-		return []byte(p.XMLString()), "application/xml", nil
+		return []byte(p.XMLString()), cmp.Or(contentType, "application/xml"), nil
 	case *values.List:
-		if !semtypes.IsZero(p.Type) && semtypes.IsSubtype(tc, p.Type, types.byteArrTy) {
-			return p.ToByteSlice(), "application/octet-stream", nil
+		if !semtypes.IsZero(p.Type) && semtypes.IsSubtype(ctx.TypeCtx(), p.Type, types.byteArrTy) {
+			return p.ToByteSlice(), cmp.Or(contentType, "application/octet-stream"), nil
+		}
+		// A list holding objects can only be a mime:Entity[], since anydata excludes objects.
+		if !semtypes.IsZero(p.Type) && !semtypes.IsSubtype(ctx.TypeCtx(), p.Type, types.anydataTy) {
+			return encodeMultipartBody(ctx, p, contentType)
 		}
 	}
 	b, err := toJSONBytes(v)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to serialize body to JSON: %w", err)
 	}
-	return b, "application/json", nil
+	return b, cmp.Or(contentType, "application/json"), nil
 }
 
 // Preserving an already-set Content-Type is jBallerina's rule (http_commons.bal:475-485),
