@@ -136,11 +136,11 @@ func (*bLangExpressionBase) expressionNode()     {}
 
 func NewBLangLiteral(pos diagnostics.Location, kind LiteralKind, value any, originalValue string, isConstant bool) *BLangLiteral {
 	return &BLangLiteral{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		literalKind:         kind,
-		Value:               value,
-		OriginalValue:       originalValue,
-		IsConstant:          isConstant,
+		pos:           pos,
+		literalKind:   kind,
+		Value:         value,
+		OriginalValue: originalValue,
+		IsConstant:    isConstant,
 	}
 }
 
@@ -152,16 +152,16 @@ func NewBLangNumericLiteral(pos diagnostics.Location, kind LiteralKind, value an
 
 func NewBLangTypedescExpr(pos diagnostics.Location, typeDescriptor TypeDescriptor) *BLangTypedescExpr {
 	return &BLangTypedescExpr{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		typeDescriptor:      typeDescriptor,
+		pos:            pos,
+		typeDescriptor: typeDescriptor,
 	}
 }
 
 func NewBLangNamedArgsExpression(pos diagnostics.Location, name IdentifierNode, expr BLangExpression) *BLangNamedArgsExpression {
 	return &BLangNamedArgsExpression{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Name:                name,
-		Expr:                expr,
+		pos:  pos,
+		Name: name,
+		Expr: expr,
 	}
 }
 
@@ -809,7 +809,7 @@ func (n *BLangRemoteMethodCallAction) MethodSymbol() model.SymbolRef {
 
 func NewBLangRemoteMethodCallAction(invocation *BLangInvocation, receiver BLangExpression, pos diagnostics.Location) *BLangRemoteMethodCallAction {
 	action := &BLangRemoteMethodCallAction{
-		bLangNodeBase:       bLangNodeBase{pos: pos},
+		pos:                 pos,
 		bLangInvocationBase: invocation.bLangInvocationBase,
 	}
 	action.Expr = receiver
@@ -898,10 +898,10 @@ func NewBLangTernaryExpr(
 	elseExpr BLangExpression,
 ) *BLangTernaryExpr {
 	return &BLangTernaryExpr{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Condition:           condition,
-		ThenExpr:            thenExpr,
-		ElseExpr:            elseExpr,
+		pos:       pos,
+		Condition: condition,
+		ThenExpr:  thenExpr,
+		ElseExpr:  elseExpr,
 	}
 }
 
@@ -1001,9 +1001,9 @@ func NewBLangNilConditionalExpr(
 	rhsExpr BLangExpression,
 ) *BLangNilConditionalExpr {
 	return &BLangNilConditionalExpr{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		LhsExpr:             lhsExpr,
-		RhsExpr:             rhsExpr,
+		pos:     pos,
+		LhsExpr: lhsExpr,
+		RhsExpr: rhsExpr,
 	}
 }
 
@@ -1158,9 +1158,9 @@ func (b *BLangFieldBaseAccess) SetLax() {
 
 func NewBLangListConstructorExpr(pos Location, exprs []BLangExpression, spreadMembers []bool) *BLangListConstructorExpr {
 	return &BLangListConstructorExpr{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Exprs:               exprs,
-		SpreadMembers:       spreadMembers,
+		pos:           pos,
+		Exprs:         exprs,
+		SpreadMembers: spreadMembers,
 	}
 }
 
@@ -1199,21 +1199,17 @@ func (b *BLangErrorConstructorExpr) GetNamedArgs() []NamedArgNode {
 
 func NewBLangTypeTestExpr(pos Location, expr BLangExpression, ty TypeData, isNegation bool) *BLangTypeTestExpr {
 	return &BLangTypeTestExpr{
-		bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Expr:                expr,
-		TestedType:          ty,
-		isNegation:          isNegation,
+		pos:        pos,
+		Expr:       expr,
+		TestedType: ty,
+		isNegation: isNegation,
 	}
 }
 
 func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, field IdentifierNode, optional bool) *BLangFieldBaseAccess {
 	access := &BLangFieldBaseAccess{
-		bLangAccessExpressionBase: bLangAccessExpressionBase{
-			BLangValueExpressionBase: BLangValueExpressionBase{
-				bLangExpressionBase: bLangExpressionBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-			},
-			Expr: expr,
-		},
+		pos:   pos,
+		Expr:  expr,
 		Field: field,
 	}
 	if optional {

@@ -1012,8 +1012,8 @@ var (
 )
 
 func newBallerinaParserErrorHandlerFromTokenReader(tokenReader *tokenReader) ballerinaParserErrorHandler {
-	this := ballerinaParserErrorHandler{}
-	this.abstractParserErrorHandlerBase = *newAbstractParserErrorHandlerBase(tokenReader)
+	this := ballerinaParserErrorHandler{
+		abstractParserErrorHandlerBase: *newAbstractParserErrorHandlerBase(tokenReader)}
 	this.Self = &this
 	return this
 }

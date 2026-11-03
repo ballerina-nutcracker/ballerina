@@ -216,8 +216,8 @@ func NewPackage(ctx *context.CompilerContext, tyCtx semtypes.Context, pkg *ast.B
 		}
 	}
 	return &packageContext{
-		ruleBase:    ruleBase{active: closureRules(false)},
-		factsBase:   factsBase{need: false},
+		active:      closureRules(false),
+		need:        false,
 		compilerCtx: ctx,
 		tyCtx:       tyCtx,
 		moduleVars:  moduleVars,
@@ -266,11 +266,11 @@ func NewLambda(parent Context, node invokableSignatureNode) Context {
 
 func newFunctionContext(parent Context, node invokableSignatureNode) *functionContext {
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		symbol:      node.Symbol(),
-		id:          nextScopeID(parent),
+		outer:  parent,
+		need:   false,
+		locals: make(map[model.SymbolRef]VarDecl),
+		symbol: node.Symbol(),
+		id:     nextScopeID(parent),
 	}
 	if sig, ok := parent.CompilerCtx().FunctionTypedSignature(node.Symbol()); ok {
 		fc.retTy = sig.ReturnType
@@ -289,11 +289,11 @@ func finishFunctionContext(fc *functionContext, node invokableSignatureNode) Con
 func NewExpressionClosure(parent Context, kind ClosureKind) Context {
 	enclosing, hasEnclosing := EnclosingFunction(parent)
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		id:          nextScopeID(parent),
-		kind:        fnExpressionClosure,
+		outer:  parent,
+		need:   false,
+		locals: make(map[model.SymbolRef]VarDecl),
+		id:     nextScopeID(parent),
+		kind:   fnExpressionClosure,
 	}
 	if hasEnclosing {
 		fc.class, fc.self = enclosing.class, enclosing.self
@@ -320,12 +320,12 @@ func closureRules(isolated bool) []ruleSet {
 func NewLock(parent Context, lock *ast.BLangLock) Context {
 	common.Assert(func() bool { _, nested := EnclosingLock(parent); return !nested })
 	return &lockContext{
-		contextBase: contextBase{outer: parent},
-		ruleBase: ruleBase{active: slices.Concat(withoutKind(parent.rules(), outsideLock),
-			[]ruleSet{lockCandidateRules(), lockTransferRules(), lockCallRules()})},
-		factsBase: factsBase{need: true},
-		lock:      lock,
-		locals:    make(map[model.SymbolRef]struct{}),
+		outer: parent,
+		active: slices.Concat(withoutKind(parent.rules(), outsideLock),
+			[]ruleSet{lockCandidateRules(), lockTransferRules(), lockCallRules()}),
+		need:   true,
+		lock:   lock,
+		locals: make(map[model.SymbolRef]struct{}),
 	}
 }
 
@@ -339,9 +339,9 @@ func NewIsolatedExpr(parent Context, expr ast.BLangExpression) Context {
 		return inLock && semtypes.IsSubtype(tyCtx, expr.Type(), semtypes.CreateIsolated(tyCtx))
 	})
 	return &isolatedExprContext{
-		contextBase: contextBase{outer: parent},
-		ruleBase:    ruleBase{active: withoutKind(parent.rules(), lockTransfer)},
-		factsBase:   factsBase{need: true},
+		outer:  parent,
+		active: withoutKind(parent.rules(), lockTransfer),
+		need:   true,
 	}
 }
 

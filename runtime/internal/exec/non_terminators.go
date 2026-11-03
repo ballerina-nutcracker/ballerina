@@ -310,7 +310,7 @@ func xmlResultReadonly(ctx *extern.Context, op *bir.BIROperand) bool {
 func execEvalTemplateExpr(ctx *extern.Context, instr *bir.EvalTemplateExpr, frame *Frame) {
 	n := len(instr.Insertions)
 	buf := make([]byte, 0, instr.LiteralsTotalLen+8*n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		buf = append(buf, instr.Strings[i]...)
 		buf = append(buf, values.String(getOperandValue(ctx, instr.Insertions[i], frame), nil)...)
 	}

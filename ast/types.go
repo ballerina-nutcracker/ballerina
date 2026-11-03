@@ -379,8 +379,8 @@ func (b *bObjectFieldBase) IsReadonly() bool {
 
 func NewBObjectField(pos Location, name string, ty BType, isPublic bool) *BObjectField {
 	field := &BObjectField{
-		bObjectFieldBase: bObjectFieldBase{bLangNodeBase: bLangNodeBase{pos: pos}, name: name},
-		Ty:               ty,
+		pos: pos, name: name,
+		Ty: ty,
 	}
 	if isPublic {
 		field.flags |= model.FlagPublic
@@ -394,9 +394,9 @@ func (b *BObjectField) MemberKind() ObjectMemberKind {
 
 func NewBMethodDecl(pos Location, name string, kind ObjectMemberKind, isPublic bool, functionFlags model.Flag) *BMethodDecl {
 	method := &BMethodDecl{
-		bObjectFieldBase:  bObjectFieldBase{bLangNodeBase: bLangNodeBase{pos: pos}, name: name},
-		BLangFunctionType: BLangFunctionType{bLangTypeBase: bLangTypeBase{flags: functionFlags}},
-		memberKind:        kind,
+		pos: pos, name: name,
+		bLangTypeBase: bLangTypeBase{flags: functionFlags},
+		memberKind:    kind,
 	}
 	if isPublic {
 		method.flags |= model.FlagPublic
@@ -450,26 +450,26 @@ func NewBField(pos Location, name model.Name, ty BType, defaultExpr BLangExpress
 		def = &BFieldDefault{Expr: defaultExpr}
 	}
 	return BField{
-		bLangNodeBase: bLangNodeBase{pos: pos},
-		Name:          name,
-		Type:          ty,
-		flags:         flags,
-		Default:       def,
+		pos:     pos,
+		Name:    name,
+		Type:    ty,
+		flags:   flags,
+		Default: def,
 	}
 }
 
 func NewBLangUnionTypeNode(pos Location, lhs, rhs TypeData) *BLangUnionTypeNode {
-	return &BLangUnionTypeNode{bLangTypeBase: bLangTypeBase{bLangNodeBase: bLangNodeBase{pos: pos}}, lhs: lhs, rhs: rhs}
+	return &BLangUnionTypeNode{pos: pos, lhs: lhs, rhs: rhs}
 }
 
 func NewBLangIntersectionTypeNode(pos Location, lhs, rhs TypeData) *BLangIntersectionTypeNode {
-	return &BLangIntersectionTypeNode{bLangTypeBase: bLangTypeBase{bLangNodeBase: bLangNodeBase{pos: pos}}, lhs: lhs, rhs: rhs}
+	return &BLangIntersectionTypeNode{pos: pos, lhs: lhs, rhs: rhs}
 }
 
 func NewBLangErrorTypeNode(pos Location, detailType TypeData, distinct bool) *BLangErrorTypeNode {
 	node := &BLangErrorTypeNode{
-		bLangTypeBase: bLangTypeBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		DetailType:    detailType,
+		pos:        pos,
+		DetailType: detailType,
 	}
 	if distinct {
 		node.flags |= model.FlagDistinct
@@ -517,7 +517,7 @@ func (b *BLangErrorTypeNode) IsDistinct() bool {
 
 func NewBLangFunctionType(pos Location, requiredParams []*BLangFunctionTypeParam, restParam *BLangFunctionTypeParam, returnType BType, paramListPos Location, flags model.Flag) *BLangFunctionType {
 	return &BLangFunctionType{
-		bLangTypeBase:        bLangTypeBase{bLangNodeBase: bLangNodeBase{pos: pos}, flags: flags},
+		pos: pos, flags: flags,
 		RequiredParams:       requiredParams,
 		RestParam:            restParam,
 		ReturnTypeDescriptor: returnType,
@@ -707,8 +707,8 @@ func (b *BLangRecordType) GetFields() iter.Seq2[string, *BField] {
 
 func NewBLangObjectType(pos Location) *BLangObjectType {
 	return &BLangObjectType{
-		bLangTypeBase: bLangTypeBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		members:       make(map[string]ObjectMember),
+		pos:     pos,
+		members: make(map[string]ObjectMember),
 	}
 }
 

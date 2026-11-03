@@ -549,7 +549,7 @@ var (
 
 func NewBLangAnnotation(pos Location, name IdentifierNode, typeDescriptor TypeDescriptor, flags model.Flag) *BLangAnnotation {
 	return &BLangAnnotation{
-		bLangNodeBase:  bLangNodeBase{pos: pos},
+		pos:            pos,
 		Name:           name,
 		typeDescriptor: typeDescriptor,
 		flags:          flags,
@@ -619,7 +619,7 @@ func (b *BLangExprFunctionBody) GetExpr() BLangExpression {
 
 func NewBLangIdentifier(pos Location, value, originalValue string) BLangIdentifier {
 	return BLangIdentifier{
-		bLangNodeBase: bLangNodeBase{pos: pos},
+		pos:           pos,
 		Value:         value,
 		OriginalValue: originalValue,
 	}
@@ -627,14 +627,12 @@ func NewBLangIdentifier(pos Location, value, originalValue string) BLangIdentifi
 
 func NewBLangVariable(pos Location, name IdentifierNode, typeNode BType, expr BLangActionOrExpression, isDeclaredWithVar bool, flags model.Flag) *BLangVariable {
 	return &BLangVariable{
-		bLangVariableBase: bLangVariableBase{
-			bLangNodeBase:     bLangNodeBase{pos: pos},
-			typeNode:          typeNode,
-			Expr:              expr,
-			flags:             flags,
-			IsDeclaredWithVar: isDeclaredWithVar,
-		},
-		Name: name,
+		pos:               pos,
+		typeNode:          typeNode,
+		Expr:              expr,
+		flags:             flags,
+		IsDeclaredWithVar: isDeclaredWithVar,
+		Name:              name,
 	}
 }
 
@@ -940,13 +938,13 @@ func newBLangInvokableNodeBase(data InvokableData) bLangInvokableNodeBase {
 	var returnTypeDescriptor *BLangReturnTypeDescriptor
 	if data.ReturnTypeDescriptor != nil {
 		returnTypeDescriptor = &BLangReturnTypeDescriptor{
-			bLangNodeBase:  bLangNodeBase{pos: data.ReturnTypeDescriptor.GetPosition()},
+			pos:            data.ReturnTypeDescriptor.GetPosition(),
 			TypeDescriptor: data.ReturnTypeDescriptor,
 			AnnAttachments: data.ReturnAnnotationAttachments,
 		}
 	}
 	return bLangInvokableNodeBase{
-		bLangNodeBase:        bLangNodeBase{pos: data.Position},
+		pos:                  data.Position,
 		Name:                 data.Name,
 		RequiredParams:       data.RequiredParams,
 		RestParam:            restParam,
@@ -1116,7 +1114,7 @@ func NewBLangTypeDefinition() *BLangTypeDefinition {
 
 func NewBLangTypeDefinitionWithData(pos Location, name IdentifierNode, typeData TypeData, documentation *BLangMarkdownDocumentation, flags model.Flag) *BLangTypeDefinition {
 	return &BLangTypeDefinition{
-		bLangNodeBase:                   bLangNodeBase{pos: pos},
+		pos:                             pos,
 		Name:                            name,
 		typeData:                        typeData,
 		annAttachments:                  []BLangAnnotationAttachment{},
@@ -1159,7 +1157,7 @@ func (b *BLangTypeDefinition) SetCycleDepth(depth int) {
 }
 
 func NewBLangXMLNS(pos Location, namespaceURI BLangExpression, prefix *BLangIdentifier) *BLangXMLNS {
-	return &BLangXMLNS{bLangNodeBase: bLangNodeBase{pos: pos}, namespaceURI: namespaceURI, prefix: prefix}
+	return &BLangXMLNS{pos: pos, namespaceURI: namespaceURI, prefix: prefix}
 }
 
 func (b *BLangXMLNS) GetNamespaceURI() BLangExpression {

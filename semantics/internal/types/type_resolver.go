@@ -5111,7 +5111,7 @@ type queryVariableInfo struct {
 func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []queryVariableInfo {
 	var variables []queryVariableInfo
 	seen := make(map[model.SymbolRef]bool)
-	for i := 0; i < endIndex; i++ {
+	for i := range endIndex {
 		switch clause := queryExpr.QueryClauseList[i].(type) {
 		case *ast.BLangFromClause:
 			variables = appendQueryVariableInfo(variables, seen, clause.VariableDefinitionNode)
@@ -5134,7 +5134,7 @@ func queryVariablesBeforeClause(queryExpr *ast.BLangQueryExpr, endIndex int) []q
 // such clause resolved before this is called, so a clause without recorded keys is a compiler bug.
 func queryGroupAggregatedSymbolsBeforeClause(t typeResolver, q *queryResolution, endIndex int) (map[model.SymbolRef]bool, bool) {
 	aggregated := make(map[model.SymbolRef]bool)
-	for i := 0; i < endIndex; i++ {
+	for i := range endIndex {
 		groupByClause, ok := q.expr.QueryClauseList[i].(*ast.BLangGroupByClause)
 		if !ok {
 			continue

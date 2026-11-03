@@ -20,6 +20,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -195,8 +196,7 @@ func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode) (XMLValue, err
 				return nil, fmt.Errorf("mismatched XML end element")
 			}
 			frame.e.Children = NewNormalizedXMLSequence(frame.children)
-			for i := len(frame.undos) - 1; i >= 0; i-- {
-				undo := frame.undos[i]
+			for _, undo := range slices.Backward(frame.undos) {
 				if undo.hadValue {
 					ctx[undo.prefix] = undo.previous
 				} else {

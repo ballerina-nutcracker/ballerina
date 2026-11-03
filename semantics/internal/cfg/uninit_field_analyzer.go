@@ -17,6 +17,8 @@
 package cfg
 
 import (
+	"maps"
+
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -33,9 +35,7 @@ func newInitState() *initState {
 
 func (s *initState) clone() *initState {
 	c := newInitState()
-	for k, v := range s.initialized {
-		c.initialized[k] = v
-	}
+	maps.Copy(c.initialized, s.initialized)
 	return c
 }
 

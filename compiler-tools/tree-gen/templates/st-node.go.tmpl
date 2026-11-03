@@ -64,14 +64,12 @@ func (n *ST{{.Name}}) ChildBuckets() []STNode {
 
 func (n *ST{{.Name}}) CreateFacade(position int, parent NonTerminalNode) Node {
     return &{{.Name}}{
-        {{if and .Base (ne .Base "Node")}}{{.Base}}: &NonTerminalNodeBase{{else}}NonTerminalNodeBase: NonTerminalNodeBase{{end}}{
-            NodeBase: NodeBase{
-                internalNode: n,
-                position: position,
-                parent: parent,
-            },
+        {{if and .Base (ne .Base "Node")}}{{.Base}}: &NonTerminalNodeBase{
+        {{end}}internalNode: n,
+            position: position,
+            parent: parent,
             childBuckets: make([]Node, n.BucketCount()),
-        },
+        {{if and .Base (ne .Base "Node")}}},{{end}}
     }
 }
 {{end}}

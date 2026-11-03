@@ -976,7 +976,7 @@ func (sw *symbolWriter) writeUntypedFunctionSignature(buf *bytes.Buffer, sig mod
 
 func (sw *symbolWriter) writeDefaultableParams(buf *bytes.Buffer, info *model.DefaultableParamInfo, paramCount int) error {
 	var defaults []int
-	for i := 0; i < paramCount; i++ {
+	for i := range paramCount {
 		if _, ok := info.Get(i); ok {
 			defaults = append(defaults, i)
 		}
@@ -1005,7 +1005,7 @@ func (sw *symbolWriter) writeDefaultableParams(buf *bytes.Buffer, info *model.De
 func (sw *symbolWriter) writeIncludedRecordParams(buf *bytes.Buffer, info *model.IncludedRecordParamInfo, paramCount int) error {
 	var included []int
 	if info != nil {
-		for i := 0; i < paramCount; i++ {
+		for i := range paramCount {
 			if info.IsIncluded(i) {
 				included = append(included, i)
 			}
