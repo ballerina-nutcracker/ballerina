@@ -66,6 +66,11 @@ type moduleContext struct {
 	// is nil either way), so generateCodeInternal doesn't retry and duplicate
 	// diagnostics.
 	birGenAttempted bool
+	// birGenDiagStart is the diagnostic count recorded just before BIR generation
+	// ran, so a caller that only observes the cached result of an earlier attempt
+	// (birGenAttempted already true) can still recover the diagnostics that attempt
+	// added, by slicing getDiagnostics() from this index.
+	birGenDiagStart int
 
 	// compilationUnits and pkgID bridge parseModule (Phase 1a) to
 	// resolveSymbolsAndTypes (Phase 1b).
@@ -548,6 +553,7 @@ func generateCodeInternal(moduleCtx *moduleContext) bool {
 		return false
 	}
 	moduleCtx.birGenAttempted = true
+	moduleCtx.birGenDiagStart = len(moduleCtx.getDiagnostics())
 	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
 	return moduleCtx.birPkg != nil
 }

@@ -288,8 +288,11 @@ func (c CompilationOptions) TraceRecovery() bool {
 }
 
 // GenerateCode returns whether BIR generation runs as part of Compilation, pipelined into
-// Phase 2 with no barrier. Defaults to true. Callers that only need diagnostics/symbols
-// per compile (e.g. a language server) can set this false; NewBallerinaBackend still
+// Phase 2 with no barrier. Defaults to true. Eager BIR-gen diagnostics enter the
+// compilation's own diagnostic result; they're excluded from it (not skipped) when a
+// sibling module fails analysis, since they'd only be noise from an unreliable context —
+// the BIR-gen work itself still runs. Callers that only need diagnostics/symbols per
+// compile (e.g. a language server) can set this false; NewBallerinaBackend still
 // generates any missing BIR on demand afterward.
 func (c CompilationOptions) GenerateCode() bool {
 	return c.generateCode.valueOr(true)
@@ -529,7 +532,8 @@ func (b *CompilationOptionsBuilder) WithTraceRecovery(value bool) *CompilationOp
 }
 
 // WithGenerateCode sets whether BIR generation is pipelined into Compilation. Set false for
-// diagnostics/symbol-only use (e.g. a language server) to skip BIR generation entirely.
+// diagnostics/symbol-only use (e.g. a language server) to skip it during compilation;
+// NewBallerinaBackend can still generate it later, on demand.
 func (b *CompilationOptionsBuilder) WithGenerateCode(value bool) *CompilationOptionsBuilder {
 	b.options.generateCode = optionalBoolOf(value)
 	return b

@@ -151,7 +151,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// resolved across the whole package; running them now produces noisy
 		// cascading diagnostics or panics on nil types.
 		if len(erroredModules) > 0 {
-			c.collectModuleDiagnostics(&allDiagnostics, nil)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
@@ -161,7 +161,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// no cross-module dependencies).
 		runPerModule(modules, true, analyzeAndCreateCFG)
 		if modulesHaveErrors(modules) {
-			c.collectModuleDiagnostics(&allDiagnostics, nil)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
@@ -169,7 +169,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// Phase 3: compiler plugins. This is a package-wide barrier before desugaring.
 		c.compilerPluginManager = newCompilerPluginResolver(modules)
 		if modulesHaveErrors(modules) {
-			c.collectModuleDiagnostics(&allDiagnostics, nil)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
@@ -177,30 +177,19 @@ func (c *PackageCompilation) compileModulesInternal() {
 			c.runCompilerPlugins(module)
 		})
 		if modulesHaveErrors(modules) {
-			c.collectModuleDiagnostics(&allDiagnostics, nil)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
 
 		// Phase 4: desugar (parallel - no cross-module dependencies, and every module
-		// completed plugins without errors). When GenerateCode is set, BIR generation runs
-		// in the same goroutine right after, pipelined with no barrier between the two —
-		// so a module can finish generating BIR before a sibling's Phase 4 failure is
-		// known. birDiagStart records, per module, the diagnostic count right before its
-		// BIR generation ran; if any module ends up failing Phase 4, that's used below to
-		// drop BIR-gen diagnostics from modules that otherwise compiled cleanly, since
-		// they'd just be noise alongside the real failure.
+		// completed plugins without errors), pipelined with BIR generation when
+		// GenerateCode is set.
 		generateCode := c.compilationOptions.GenerateCode()
-		birDiagStart := make(map[ModuleID]int)
-		var birDiagStartMu sync.Mutex
 		runPerModule(modules, true, func(m *moduleContext) {
 			desugarModule(m)
 			if generateCode && m.getCompilationState() == moduleCompilationStateCompiled {
-				start := len(m.getDiagnostics())
 				generateCodeInternal(m)
-				birDiagStartMu.Lock()
-				birDiagStart[m.getModuleID()] = start
-				birDiagStartMu.Unlock()
 			}
 		})
 
@@ -211,12 +200,10 @@ func (c *PackageCompilation) compileModulesInternal() {
 				break
 			}
 		}
-		if !phase4Errored {
-			birDiagStart = nil
-		}
 
-		// Collect diagnostics from all modules
-		c.collectModuleDiagnostics(&allDiagnostics, birDiagStart)
+		// Collect diagnostics from all modules. dropBIRDiags drops BIR-gen diagnostics if a
+		// sibling failed Phase 4, since they'd only be noise from an unreliable context.
+		c.collectModuleDiagnostics(&allDiagnostics, phase4Errored)
 	}
 
 	c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
@@ -306,17 +293,16 @@ func (c *PackageCompilation) runCompilerPlugins(module *moduleContext) {
 	}
 }
 
-// collectModuleDiagnostics appends per-module compilation diagnostics to dst,
-// applying severity filtering for bala projects. birDiagStart, when non-nil,
-// caps how many of a module's diagnostics are included to the count recorded
-// just before that module's (pipelined) BIR generation ran — see the call
+// collectModuleDiagnostics appends per-module compilation diagnostics to dst, applying
+// severity filtering for bala projects. dropBIRDiags, when true, truncates a module's
+// diagnostics to those recorded before its (pipelined) BIR generation ran — see the call
 // site in compileModulesInternal for why.
-func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnostic, birDiagStart map[ModuleID]int) {
+func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnostic, dropBIRDiags bool) {
 	isBala := c.getPackageContext().getProject().Kind() == ProjectKindBala
 	for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
 		diags := moduleCtx.getDiagnostics()
-		if limit, ok := birDiagStart[moduleCtx.getModuleID()]; ok && limit < len(diags) {
-			diags = diags[:limit]
+		if dropBIRDiags && moduleCtx.birGenAttempted {
+			diags = diags[:moduleCtx.birGenDiagStart]
 		}
 		for _, diag := range diags {
 			severity := diag.DiagnosticInfo().Severity()

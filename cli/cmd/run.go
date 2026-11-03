@@ -288,7 +288,8 @@ func compileAndRun(
 		}
 	}
 
-	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG analysis)
+	// Get package compilation (triggers parsing, type checking, semantic analysis, CFG
+	// analysis, and — by default — BIR generation, pipelined per module with no barrier)
 	compilation := pkg.Compilation()
 
 	// Print all diagnostics; only errors abort the run.
@@ -302,13 +303,9 @@ func compileAndRun(
 		return fmt.Errorf("compilation contains errors")
 	}
 
-	// Create backend and generate BIR
+	// BIR was already generated above (the CLI never opts out via WithGenerateCode(false)),
+	// so a failure would already have been caught by compilationDiags.HasErrors() above.
 	backend := projects.NewBallerinaBackend(compilation)
-	backendDiags := backend.DiagnosticResult()
-	if backendDiags.HasErrors() {
-		printDiagnostics(fsys, os.Stderr, backendDiags, !isTerminal(), compilation.DiagnosticEnv())
-		return fmt.Errorf("BIR generation failed")
-	}
 	birPkgs := backend.BIRPackages()
 
 	if len(birPkgs) == 0 {

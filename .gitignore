@@ -55,6 +55,11 @@ parser/testdata/**/*.json
 .idea/
 /tree-gen
 
+# Local build output binaries for compiler-tools/
+/compiler-tools/benchmark/balbench
+/compiler-tools/benchmark-http/httpbench
+/compiler-tools/tree-gen/tree-gen
+
 # Local Go caches (used by tooling like golangci-lint)
 .gopath/
 .gocache/
