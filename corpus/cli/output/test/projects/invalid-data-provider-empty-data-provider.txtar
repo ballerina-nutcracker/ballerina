@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected function() returns error|[[nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]...]|{| [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object...]... |}, got function() returns [int...]
+  --> tests/main_test.bal:15:19
+   |
+15 |     dataProvider: provider2
+   |                   ^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

@@ -99,6 +99,7 @@ service on l2 {
 `
 
 func TestLifecycleGracefulStopSignal(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
 
@@ -115,6 +116,7 @@ func TestLifecycleGracefulStopSignal(t *testing.T) {
 }
 
 func TestLifecycleImmediateStopSignal(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
 
@@ -138,6 +140,7 @@ func TestLifecycleImmediateStopSignal(t *testing.T) {
 // self-loop, which the lifecycle table maps to immediateStopAction — silently
 // escalating a graceful stop into an immediate one instead of no-op'ing.
 func TestRequestGracefulStopConcurrentCallsDoNotEscalate(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
 
@@ -166,6 +169,7 @@ func TestRequestGracefulStopConcurrentCallsDoNotEscalate(t *testing.T) {
 }
 
 func TestLifecycleInitFailureStopsRuntime(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt, err := initLifecycleTestRuntime(t, lifecycleTestSource+`
 
@@ -189,6 +193,7 @@ public function main() returns error? {
 }
 
 func TestLifecycleOnGracefulStopHandlers(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -220,6 +225,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopWithoutListenersExitStatus(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -241,6 +247,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopWithoutListenersHandlerError(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -263,6 +270,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopWithoutListenersAfterInitFailure(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt, err := initLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -288,6 +296,7 @@ public function main() returns error? {
 }
 
 func TestLifecycleOnGracefulStopExternHandler(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt, err := initLifecycleTestRuntimeWithExterns(t, `
 import ballerina/lang.runtime;
@@ -321,6 +330,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopAfterListenReportsCurrentState(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -349,6 +359,7 @@ public function registerAfterListen() {
 }
 
 func TestLifecycleOnGracefulStopAfterInitializationFailsFast(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;

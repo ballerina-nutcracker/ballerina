@@ -6,6 +6,7 @@
 	    setup always fails
 		
 		
+		[pass] testZCountsCheck
 
 		[fail] testA:
 
@@ -14,7 +15,7 @@
 			
 
 
-		0 passing
+		1 passing
 		1 failing
 		2 skipped
 

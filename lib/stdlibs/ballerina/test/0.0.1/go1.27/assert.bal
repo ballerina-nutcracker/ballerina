@@ -38,7 +38,13 @@ type AssertError record {
 public isolated function createBallerinaError(string errorMessage, string category) returns TestError {
     // category is unused in jballerina too; discarded to satisfy the unused-param check.
     _ = category;
-    return error(errorMessage);
+    // The explicit `error TestError(...)` constructor form (rather than the
+    // implicit `error(...)`) is required for birgen to record "TestError" as
+    // this value's runtime TypeName (values.Error.TypeName) — only a
+    // distinct type reference does, per errorConstructorTypeName. testrunner
+    // uses that TypeName to tell an assertion failure apart from any other
+    // panicked/returned error.
+    return error TestError(errorMessage);
 }
 
 # Asserts whether the given condition is true. If it is not, a AssertError is thrown with the given errorMessage.

@@ -1,0 +1,39 @@
+-- stdout --
+
+	testAssertionStillHasColon: has failed.
+
+
+	testPanicsNonAssertion has failed.
+
+
+	testReturnsError has failed.
+
+
+		[fail] testAssertionStillHasColon:
+
+		    boom
+			
+			
+
+		[fail] testPanicsNonAssertion:
+
+		    kaboom
+			
+			
+
+		[fail] testReturnsError:
+
+		    boom
+			
+			
+
+
+		0 passing
+		3 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

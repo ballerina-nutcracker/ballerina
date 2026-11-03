@@ -19,6 +19,7 @@ package testplan
 import "testing"
 
 func TestStoreAndLoad(t *testing.T) {
+	t.Parallel()
 	key := ModuleKey{Org: "testorg", Module: "store_test_mod_a"}
 	plan := &TestPlan{Tests: []TestFunction{{Name: "testA"}}}
 
@@ -33,6 +34,7 @@ func TestStoreAndLoad(t *testing.T) {
 }
 
 func TestLoad_MissingKeyReturnsFalse(t *testing.T) {
+	t.Parallel()
 	_, ok := Load(ModuleKey{Org: "testorg", Module: "store_test_never_stored"})
 	if ok {
 		t.Error("expected Load to report false for a key nothing ever stored")
@@ -40,6 +42,7 @@ func TestLoad_MissingKeyReturnsFalse(t *testing.T) {
 }
 
 func TestStore_OverwritesPreviousEntry(t *testing.T) {
+	t.Parallel()
 	key := ModuleKey{Org: "testorg", Module: "store_test_mod_b"}
 	first := &TestPlan{Tests: []TestFunction{{Name: "old"}}}
 	second := &TestPlan{Tests: []TestFunction{{Name: "new"}}}
@@ -58,6 +61,7 @@ func TestStore_OverwritesPreviousEntry(t *testing.T) {
 // that opens and closes many modules over its lifetime needs an explicit
 // way to bound the store's size.
 func TestForget_RemovesTheEntry(t *testing.T) {
+	t.Parallel()
 	key := ModuleKey{Org: "testorg", Module: "store_test_mod_c"}
 	Store(key, &TestPlan{Tests: []TestFunction{{Name: "testA"}}})
 
@@ -69,6 +73,7 @@ func TestForget_RemovesTheEntry(t *testing.T) {
 }
 
 func TestForget_MissingKeyIsANoOp(t *testing.T) {
+	t.Parallel()
 	// Must not panic for a key that was never stored.
 	Forget(ModuleKey{Org: "testorg", Module: "store_test_never_stored_either"})
 }

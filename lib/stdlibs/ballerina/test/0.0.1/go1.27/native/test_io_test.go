@@ -23,6 +23,7 @@ import (
 )
 
 func TestMatchWildcard(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		name, pattern string
 		want          bool
@@ -48,6 +49,7 @@ func TestMatchWildcard(t *testing.T) {
 }
 
 func TestEscapeSpecialCharacters(t *testing.T) {
+	t.Parallel()
 	got, err := escapeSpecialCharacters(nil, []values.BalValue{`a,b"c`})
 	if err != nil {
 		t.Fatalf("escapeSpecialCharacters: %v", err)
@@ -59,6 +61,7 @@ func TestEscapeSpecialCharacters(t *testing.T) {
 }
 
 func TestIsBalanced(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		s    string
 		want bool

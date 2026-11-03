@@ -1,6 +1,6 @@
 -- stdout --
 
-	test2: has failed.
+	test2 has failed.
 
 		[pass] test1
 		[pass] test5
