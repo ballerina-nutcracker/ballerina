@@ -1,0 +1,290 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition C
+    (function init () ()
+      (block-function-body))
+    (function m (
+      (variable a (type
+        (union-type
+          (value-type int)
+          (value-type string))))
+      (variable b (type
+        (value-type int)) (expr
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type int))
+          (simple-var-ref a)
+          (literal 0))))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref b)
+            (literal 1))))))
+  (function f (
+    (variable a (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable b (type
+      (value-type int)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref a)
+          (value-type int))
+        (simple-var-ref a)
+        (literal 0))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref b)
+          (literal 1)))))
+  (function g (
+    (variable a (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable fn (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_0 () ()
+          (expr-function-body
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref a)
+                (value-type int))
+              (simple-var-ref a)
+              (unary-expr -
+                (literal 1))))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation fn ()))))
+  (function chain (
+    (variable x (type
+      (union-type
+        (value-type int)
+        (value-type string))))
+    (variable y (type
+      (value-type int)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref x)
+          (value-type int))
+        (simple-var-ref x)
+        (literal 0))))
+    (variable z (type
+      (value-type int)) (expr
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref x)
+          (value-type int))
+        (binary-expr +
+          (simple-var-ref y)
+          (literal 1))
+        (unary-expr -
+          (literal 1)))))) (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (simple-var-ref y)
+          (simple-var-ref z)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (literal 3))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (invocation f (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (literal x))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$2))))))
+          (invocation f (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f (
+            (literal 3)
+            (literal 10))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$4 (expr
+              (literal 5))))
+          (var-def
+            (variable $desugar$5 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$4))))))
+          (invocation g (
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$6 (expr
+              (literal s))))
+          (var-def
+            (variable $desugar$7 (expr
+              (invocation $default$1 (
+                (simple-var-ref $desugar$6))))))
+          (invocation g (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$8 (expr
+              (literal 3))))
+          (var-def
+            (variable $desugar$9 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$8))))))
+          (var-def
+            (variable $desugar$10 (expr
+              (invocation $default$3 (
+                (simple-var-ref $desugar$8)
+                (simple-var-ref $desugar$9))))))
+          (invocation chain (
+            (simple-var-ref $desugar$8)
+            (simple-var-ref $desugar$9)
+            (simple-var-ref $desugar$10)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$11 (expr
+              (literal s))))
+          (var-def
+            (variable $desugar$12 (expr
+              (invocation $default$2 (
+                (simple-var-ref $desugar$11))))))
+          (var-def
+            (variable $desugar$13 (expr
+              (invocation $default$3 (
+                (simple-var-ref $desugar$11)
+                (simple-var-ref $desugar$12))))))
+          (invocation chain (
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12)
+            (simple-var-ref $desugar$13)))))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$14 (expr
+              (literal 7))))
+          (var-def
+            (variable $desugar$15 (expr
+              (invocation $default$4 (
+                (simple-var-ref $desugar$14))))))
+          (invocation m expr:
+            (simple-var-ref c) (
+            (simple-var-ref $desugar$14)
+            (simple-var-ref $desugar$15)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$16 (expr
+              (literal y))))
+          (var-def
+            (variable $desugar$17 (expr
+              (invocation $default$4 (
+                (simple-var-ref $desugar$16))))))
+          (invocation m expr:
+            (simple-var-ref c) (
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17)))))))))
+  (function $default$0 (
+    (variable a (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type int))
+          (simple-var-ref a)
+          (literal 0)))))
+  (function $default$1 (
+    (variable a (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (lambda
+          (function $anonFunc$_0 () ()
+            (expr-function-body
+              (ternary-expr
+                (type-test-expr is
+                  (simple-var-ref a)
+                  (value-type int))
+                (simple-var-ref a)
+                (unary-expr -
+                  (literal 1)))))))))
+  (function $default$2 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref x)
+            (value-type int))
+          (simple-var-ref x)
+          (literal 0)))))
+  (function $default$3 (
+    (variable x (type
+      (value-type )))
+    (variable y (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref x)
+            (value-type int))
+          (binary-expr +
+            (simple-var-ref y)
+            (literal 1))
+          (unary-expr -
+            (literal 1))))))
+  (function $default$4 (
+    (variable a (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref a)
+            (value-type int))
+          (simple-var-ref a)
+          (literal 0))))))

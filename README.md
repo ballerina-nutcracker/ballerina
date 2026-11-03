@@ -1,10 +1,7 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="doc/img/logo-dark.svg" width="300">
-  <source media="(prefers-color-scheme: light)" srcset="doc/img/logo-light.svg" width="300">
-  <img alt="Ballerina Nutcracker" src="doc/img/logo-light.svg" width="300">
-</picture>
+<img alt="Ballerina Nutcracker" src="https://raw.githubusercontent.com/ballerina-nutcracker/ballerina/main/doc/img/logo-light.svg#gh-light-mode-only" width="300">
+<img alt="Ballerina Nutcracker" src="https://raw.githubusercontent.com/ballerina-nutcracker/ballerina/main/doc/img/logo-dark.svg#gh-dark-mode-only" width="300">
 
 **A native interpreter for the Ballerina programming language.**
 

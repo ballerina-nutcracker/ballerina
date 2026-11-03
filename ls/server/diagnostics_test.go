@@ -19,6 +19,7 @@ package server
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -186,7 +187,9 @@ func (s *testSession) receiveWithin(timeout time.Duration, method, id string) (p
 
 func (s *testSession) close() {
 	s.closeTransport()
-	<-s.done
+	if err := <-s.done; err != nil && !errors.Is(err, io.ErrClosedPipe) {
+		s.t.Errorf("Serve: %v", err)
+	}
 }
 
 func decodePublishDiagnostics(t *testing.T, message protocol.Message) protocol.PublishDiagnosticsParams {
@@ -294,7 +297,13 @@ func TestDedupNotStaleAfterEviction(t *testing.T) {
 	server := New(transport, projects, compiler, bus)
 	done := make(chan error, 1)
 	go func() { done <- server.Serve() }()
-	t.Cleanup(func() { compiler.Shutdown(); bus.Close(); <-done })
+	t.Cleanup(func() {
+		compiler.Shutdown()
+		bus.Close()
+		if err := <-done; err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			t.Errorf("Serve: %v", err)
+		}
+	})
 
 	session := &testSession{
 		t: t, server: server, clientW: clientWrite, clientR: bufio.NewReader(clientRead), done: done,
