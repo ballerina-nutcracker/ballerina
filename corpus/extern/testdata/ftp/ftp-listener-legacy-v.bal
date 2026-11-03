@@ -176,6 +176,34 @@ service class CsvService {
     }
 }
 
+ftp:Listener? racing = ();
+ftp:Service? lateService = ();
+
+@ftp:ServiceConfig {path: "/race/a"}
+service class DetachingService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent event) returns error? {
+        _ = event;
+        ftp:Listener? l = racing;
+        ftp:Service? late = lateService;
+        if l is ftp:Listener && late is ftp:Service {
+            check l.detach(late);
+        }
+        recordEvent("detached the late service");
+    }
+}
+
+@ftp:ServiceConfig {path: "/race/b"}
+service class LateService {
+    *ftp:Service;
+
+    remote function onFileChange(ftp:WatchEvent event) {
+        _ = event;
+        recordEvent("late service dispatched");
+    }
+}
+
 public function main() returns error? {
     ftp:Client c = check new ({
         host: "127.0.0.1",
@@ -295,6 +323,9 @@ public function main() returns error? {
     io:println(sameType is error ? sameType.message() : "attached"); // @output attached
     error? again = validation.attach(new DeletedService());
     io:println(again is error ? again.message() : "attached"); // @output Failed to register service.
+    check validation.detach(new DeletedService());
+    error? stillAttached = validation.attach(new DeletedService());
+    io:println(stillAttached is error ? stillAttached.message() : "attached"); // @output Failed to register service.
 
     ftp:Listener missingPath = check new ({
         host: "127.0.0.1",
@@ -321,6 +352,29 @@ public function main() returns error? {
     error? unlisted = vanishing.poll();
     io:println(unlisted is ftp:Error ? scrub(unlisted.message()) : "polled"); // @output Error during the poll operation: Failed to list ftp://127.0.0.1:PORT/gone
     check vanishing.immediateStop();
+
+    // The second service is detached while the poll still lists its many folders.
+    check c->putText("/race/a/a.txt", "a");
+    check c->putText("/race/b/b.txt", "b");
+    foreach int i in 0 ..< 100 {
+        check c->mkdir("/race/b/d" + i.toString());
+    }
+    ftp:Listener raceListener = check new ({
+        host: "127.0.0.1",
+        port: ftpPort(),
+        auth: {credentials: {username: "ballerina", password: "ballerina"}},
+        pollingInterval: 3600
+    });
+    LateService late = new;
+    racing = raceListener;
+    lateService = late;
+    check raceListener.attach(new DetachingService());
+    check raceListener.attach(late);
+    check raceListener.poll();
+    waitFor(1);
+    runtime:sleep(0.2);
+    printEvents(); // @output detached the late service
+    check raceListener.gracefulStop();
 
     check validation.immediateStop();
     check c->close();
