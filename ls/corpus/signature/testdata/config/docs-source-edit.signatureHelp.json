@@ -1,0 +1,10 @@
+{
+  "source": "projects/documentation-lifetime/main.bal",
+  "position": {
+    "line": 22,
+    "character": 11
+  },
+  "expected": [
+    null
+  ]
+}

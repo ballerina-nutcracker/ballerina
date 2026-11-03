@@ -1,0 +1,30 @@
+{
+  "source": "constructor-fallback.bal",
+  "position": {
+    "line": 20,
+    "character": 20
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Box(int count)",
+          "parameters": [
+            {
+              "label": [
+                8,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` count**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

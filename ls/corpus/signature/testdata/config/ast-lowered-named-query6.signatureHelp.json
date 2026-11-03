@@ -1,0 +1,10 @@
+{
+  "source": "ast-lowered-named.bal",
+  "position": {
+    "line": 20,
+    "character": 8
+  },
+  "expected": [
+    null
+  ]
+}

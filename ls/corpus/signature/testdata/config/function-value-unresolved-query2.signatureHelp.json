@@ -1,0 +1,10 @@
+{
+  "source": "function-value-unresolved.bal",
+  "position": {
+    "line": 25,
+    "character": 11
+  },
+  "expected": [
+    null
+  ]
+}

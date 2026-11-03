@@ -1,0 +1,10 @@
+{
+  "source": "projects/cancellation/main.bal",
+  "position": {
+    "line": 19,
+    "character": 11
+  },
+  "expected": [
+    null
+  ]
+}

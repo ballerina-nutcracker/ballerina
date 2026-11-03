@@ -1,0 +1,40 @@
+{
+  "source": "empty-nested-defaults.bal",
+  "position": {
+    "line": 19,
+    "character": 22
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "inner(int value, int other)",
+          "parameters": [
+            {
+              "label": [
+                6,
+                15
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` value**"
+              }
+            },
+            {
+              "label": [
+                17,
+                26
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` other**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

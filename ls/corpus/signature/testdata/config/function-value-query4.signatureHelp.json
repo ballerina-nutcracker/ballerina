@@ -1,0 +1,40 @@
+{
+  "source": "function-value.bal",
+  "position": {
+    "line": 23,
+    "character": 6
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "k(int count, string title)",
+          "parameters": [
+            {
+              "label": [
+                2,
+                11
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` count**"
+              }
+            },
+            {
+              "label": [
+                13,
+                25
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

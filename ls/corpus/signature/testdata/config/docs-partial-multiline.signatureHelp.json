@@ -1,0 +1,54 @@
+{
+  "source": "docs-partial-multiline.bal",
+  "position": {
+    "line": 24,
+    "character": 22
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "mixed(int count, string title, string... extra)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nFirst description line.\nSecond description line."
+          },
+          "parameters": [
+            {
+              "label": [
+                6,
+                15
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` count**: First count line.\nSecond count line."
+              }
+            },
+            {
+              "label": [
+                17,
+                29
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` title**"
+              }
+            },
+            {
+              "label": [
+                31,
+                46
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string...` extra**: Extra values."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 2
+    }
+  ]
+}
