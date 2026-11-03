@@ -14,5 +14,11 @@ array size is not compatible with the expected size
 {"title":"t"}
 required field 'p' not present in XML
 required field 'p' not present in XML
+{"a":5}
+{"a":5}
+{"a":[5,6]}
+field 'a' cannot be converted into the type 'int'
+field 'a' cannot be converted into the type 'int'
+field 'a' cannot be converted into the type 'int'
 stream failure
 -- stderr --

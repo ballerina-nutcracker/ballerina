@@ -125,21 +125,18 @@ func (n *arrayNode) last() node {
 }
 
 // build turns a node tree into runtime values.
-func (t *typer) build(v node) (values.BalValue, error) {
-	switch v := v.(type) {
-	case *mapNode:
-		return t.buildMap(v)
-	case *arrayNode:
-		return t.buildArray(v)
-	default:
-		return v, nil
-	}
+func (t *typer) build(root *mapNode) (values.BalValue, error) {
+	return t.buildMap(root)
 }
 
 func (t *typer) buildMap(n *mapNode) (values.BalValue, error) {
+	atomic := semtypes.ToMappingAtomicType(t.tc, n.ty)
+	if atomic == nil {
+		atomic = semtypes.ToMappingAtomicType(t.tc, t.mapType(t.anydataTy))
+	}
 	entries := make([]values.MapEntry, 0, len(n.keys)+len(n.required))
 	for _, key := range n.keys {
-		value, err := t.build(n.values[key])
+		value, err := t.buildMember(n.values[key], atomic.FieldInnerVal(key), key)
 		if err != nil {
 			return nil, err
 		}
@@ -154,14 +151,10 @@ func (t *typer) buildMap(n *mapNode) (values.BalValue, error) {
 		}
 		entries = append(entries, values.MapEntry{Key: field.runtimeName, Value: n.defaults[field.runtimeName]})
 	}
-	atomic := semtypes.ToMappingAtomicType(t.tc, n.ty)
-	if atomic == nil {
-		atomic = semtypes.ToMappingAtomicType(t.tc, t.mapType(t.anydataTy))
-	}
 	return values.NewMap(n.ty, atomic, t.isReadonly(n.ty), entries), nil
 }
 
-func (t *typer) buildArray(n *arrayNode) (values.BalValue, error) {
+func (t *typer) buildArray(n *arrayNode, name string) (values.BalValue, error) {
 	items := make([]values.BalValue, len(n.items))
 	for i, item := range n.items {
 		if item == nil {
@@ -172,7 +165,7 @@ func (t *typer) buildArray(n *arrayNode) (values.BalValue, error) {
 			items[i] = filler
 			continue
 		}
-		value, err := t.build(item)
+		value, err := t.buildMember(item, n.ty.list.MemberAtInnerVal(i), name)
 		if err != nil {
 			return nil, err
 		}
@@ -181,6 +174,28 @@ func (t *typer) buildArray(n *arrayNode) (values.BalValue, error) {
 	atomic := n.ty.list
 	restFiller, _ := values.FillerFactoryFor(t.tc, atomic.Rest())
 	return values.NewList(n.ty.ty, atomic, t.isReadonly(n.ty.ty), restFiller, len(items), items), nil
+}
+
+// buildMember builds a member node, rejecting a map or array the member type cannot hold: the traversal
+// stores attributes as a map without checking that the rest type allows one.
+func (t *typer) buildMember(v node, memberType semtypes.SemType, name string) (values.BalValue, error) {
+	var value values.BalValue
+	var err error
+	switch v := v.(type) {
+	case *mapNode:
+		value, err = t.buildMap(v)
+	case *arrayNode:
+		value, err = t.buildArray(v, name)
+	default:
+		return v, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !t.contains(memberType, value) {
+		return nil, fieldCannotConvertError(name, t.typeName(memberType))
+	}
+	return value, nil
 }
 
 // arrayValueFor is DataUtils.createArrayValue.

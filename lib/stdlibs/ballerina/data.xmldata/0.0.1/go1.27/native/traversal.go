@@ -789,7 +789,11 @@ func (a *analyzer) handleAttributes(element *values.XMLElement, current *mapNode
 	return nil
 }
 
+// handleAttributesRest drops the attributes when the rest type cannot hold a map, as a scalar field does.
 func (a *analyzer) handleAttributesRest(element *values.XMLElement, current *mapNode, restType semtypes.SemType) {
+	if !a.canHoldMap(restType) {
+		return
+	}
 	inner := innerElementNames(element)
 	attributes := elementAttributes(element)
 	prefixes := namespacePrefixes(attributes)

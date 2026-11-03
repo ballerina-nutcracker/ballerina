@@ -501,6 +501,15 @@ func (t *typer) mapTypeFromConstraint(constraint semtypes.SemType) semtypes.SemT
 	}
 }
 
+// canHoldMap reports whether a map built for restType by mapTypeFromConstraint fits the rest member type.
+func (t *typer) canHoldMap(restType semtypes.SemType) bool {
+	member := restType
+	if ti := t.classify(restType); ti.kind == kindArray {
+		member = ti.element
+	}
+	return semtypes.IsSubtype(t.tc, t.mapTypeFromConstraint(restType), member)
+}
+
 // typeName renders ty the way the jBallerina runtime prints a type, as far as a structural type allows:
 // declared type names are not available at runtime.
 func (t *typer) typeName(ty semtypes.SemType) string {
