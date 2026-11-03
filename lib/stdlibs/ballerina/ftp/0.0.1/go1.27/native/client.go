@@ -176,7 +176,7 @@ func (m *ftpModule) initEndpoint(ctx *extern.Context, args []values.BalValue) (v
 		return m.errorResult(ctx, err)
 	}
 	if cbConfig := getMap(config, "circuitBreaker"); cbConfig != nil {
-		breaker, err := newCircuitBreaker(cbConfig, platform.Time.Now)
+		breaker, err := newCircuitBreaker(cbConfig, platform.Time.MonotonicNow)
 		if err != nil {
 			return m.errorResult(ctx, err)
 		}

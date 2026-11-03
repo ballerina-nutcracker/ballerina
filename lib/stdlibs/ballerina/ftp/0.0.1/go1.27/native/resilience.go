@@ -119,7 +119,7 @@ type bucket struct {
 // and the failure ratio exceeds the threshold.
 type circuitBreaker struct {
 	mu         sync.Mutex
-	now        func() time.Time
+	elapsed    func() time.Duration
 	volume     int64
 	threshold  float32
 	resetMs    int64
@@ -141,10 +141,10 @@ func millis(f float64) int64 {
 	return int64(f * 1000)
 }
 
-func newCircuitBreaker(config *values.Map, now func() time.Time) (*circuitBreaker, error) {
+func newCircuitBreaker(config *values.Map, elapsed func() time.Duration) (*circuitBreaker, error) {
 	window := getMap(config, "rollingWindow")
 	cb := &circuitBreaker{
-		now:        now,
+		elapsed:    elapsed,
 		volume:     getInt(window, "requestVolumeThreshold"),
 		threshold:  float32(getFloat(config, "failureThreshold")),
 		resetMs:    millis(getFloat(config, "resetTime")),
@@ -178,7 +178,7 @@ func newCircuitBreaker(config *values.Map, now func() time.Time) (*circuitBreake
 }
 
 func (cb *circuitBreaker) nowMs() int64 {
-	return cb.now().UnixMilli()
+	return cb.elapsed().Milliseconds()
 }
 
 func (cb *circuitBreaker) currentBucket() int {
