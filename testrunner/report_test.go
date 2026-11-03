@@ -33,6 +33,7 @@ import (
 // WriteConsoleReport itself only prints what comes after every test and
 // hook has already run — see its doc comment.
 func TestWriteConsoleReport_MatchesDataProviderSingleFailureGolden(t *testing.T) {
+	t.Parallel()
 	report := RunReport{
 		Results: []Result{
 			{Name: "testSquare#good", Status: Pass, Type: DataDrivenMapOfTuple},
@@ -64,6 +65,7 @@ func TestWriteConsoleReport_MatchesDataProviderSingleFailureGolden(t *testing.T)
 // ("testDependency: has failed." — colon present, nothing after it), plus
 // one skipped dependent.
 func TestWriteConsoleReport_MatchesSkipDependencyFailureGolden(t *testing.T) {
+	t.Parallel()
 	report := RunReport{
 		Results: []Result{
 			{Name: "testDependency", Status: Fail, Message: "dependency setup failed"},
@@ -93,6 +95,7 @@ func TestWriteConsoleReport_MatchesSkipDependencyFailureGolden(t *testing.T) {
 // skipped), confirming the "\t[fail] name[label]:" format and that the
 // skip itself produces no console line (only a count).
 func TestWriteConsoleReport_MatchesBeforeSuiteFailureGolden(t *testing.T) {
+	t.Parallel()
 	hf := HookFailure{Hook: "before test suite function", Message: "beforeSuiteFails\nbeforeSuite failed"}
 	report := RunReport{
 		Results:      []Result{{Name: "testA", Status: Skip}},
@@ -114,6 +117,7 @@ func TestWriteConsoleReport_MatchesBeforeSuiteFailureGolden(t *testing.T) {
 }
 
 func TestWriteConsoleReport_NoTestsFound(t *testing.T) {
+	t.Parallel()
 	var sb strings.Builder
 	WriteConsoleReport(&sb, RunReport{}, false, 0)
 
@@ -124,6 +128,7 @@ func TestWriteConsoleReport_NoTestsFound(t *testing.T) {
 }
 
 func TestWriteConsoleReport_SystemConsoleSuppressesPassLines(t *testing.T) {
+	t.Parallel()
 	report := RunReport{Results: []Result{{Name: "testA", Status: Pass}}}
 
 	var sb strings.Builder
@@ -141,6 +146,7 @@ func TestWriteConsoleReport_SystemConsoleSuppressesPassLines(t *testing.T) {
 // order Run invokes them in), prints in that same order, not
 // all-hooks-then-all-tests.
 func TestWriteConsoleReport_InterleavesHookAndTestFailuresChronologically(t *testing.T) {
+	t.Parallel()
 	hf := HookFailure{Hook: "after test group function for the test", Message: "afterG\nafterG failed"}
 
 	var sb strings.Builder
@@ -155,6 +161,7 @@ func TestWriteConsoleReport_InterleavesHookAndTestFailuresChronologically(t *tes
 }
 
 func TestSummarize(t *testing.T) {
+	t.Parallel()
 	report := RunReport{
 		Results: []Result{
 			{Status: Pass}, {Status: Pass}, {Status: Fail}, {Status: Skip},
@@ -170,6 +177,7 @@ func TestSummarize(t *testing.T) {
 }
 
 func TestSummarize_ExitCodeFromHookFailureAlone(t *testing.T) {
+	t.Parallel()
 	report := RunReport{
 		Results:      []Result{{Status: Pass}},
 		HookFailures: []HookFailure{{Hook: "before test suite function", Message: "f\nmsg"}},
@@ -181,6 +189,7 @@ func TestSummarize_ExitCodeFromHookFailureAlone(t *testing.T) {
 }
 
 func TestSummarize_CleanRunExitsZero(t *testing.T) {
+	t.Parallel()
 	report := RunReport{Results: []Result{{Status: Pass}, {Status: Skip}}}
 	if s := Summarize(report); s.ExitCode != 0 {
 		t.Errorf("expected ExitCode 0, got %d", s.ExitCode)
@@ -188,6 +197,7 @@ func TestSummarize_CleanRunExitsZero(t *testing.T) {
 }
 
 func TestFormatSeconds(t *testing.T) {
+	t.Parallel()
 	if got := formatSeconds(1500 * time.Millisecond); got != "1.500" {
 		t.Errorf("formatSeconds(1.5s) = %q, want %q", got, "1.500")
 	}

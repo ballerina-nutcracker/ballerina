@@ -28,6 +28,7 @@ import (
 // would silently break any consumer that needs a TestPlan to cross process
 // or language boundaries without a serialization step.
 func TestTestPlanTypesStayPlainData(t *testing.T) {
+	t.Parallel()
 	for _, v := range []any{
 		testplan.TestPlan{},
 		testplan.TestFunction{},

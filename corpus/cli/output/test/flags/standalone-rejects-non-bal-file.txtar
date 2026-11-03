@@ -1,0 +1,10 @@
+-- stdout --
+-- stderr --
+ballerina: "<ROOT>/corpus/cli/testdata/test/flags/standalone-rejects-non-bal-file/notes.txt" is not a package directory or a .bal file
+
+USAGE:
+    test [<source-file.bal> | <package-dir>]
+
+For more information try 'bal test --help'
+-- exitcode --
+1

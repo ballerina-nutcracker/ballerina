@@ -1,0 +1,25 @@
+-- stdout --
+
+	testFail: has failed.
+
+		[pass] testPass
+
+		[fail] testFail:
+
+		    boom
+			
+			
+
+
+		1 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Generating Test Report
+	<ROOT>/target/report/test_results.json
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1
