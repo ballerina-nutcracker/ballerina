@@ -37,6 +37,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -59,6 +60,7 @@ const (
 type ftpFixture struct {
 	ftpPort          int64
 	ftpDriver        *ftpTestDriver
+	ftpGate          *openGate
 	ftpsPort         int64
 	ftpsImplicitPort int64
 	sftpPort         int64
@@ -141,6 +143,80 @@ func startFTPServer(t *testing.T, tlsConfig *tls.Config, mode ftpserver.TLSRequi
 	t.Helper()
 	driver := newFTPTestDriver(t, afero.NewMemMapFs(), tlsConfig, mode)
 	return serveFTP(t, driver), driver
+}
+
+// openGate holds the server's first open of an armed path until it is released, so a fixture can
+// act while the client is listing or reading that path.
+type openGate struct {
+	mu      sync.Mutex
+	path    string
+	reached chan struct{}
+	release chan struct{}
+}
+
+func newOpenGate() *openGate {
+	return &openGate{reached: make(chan struct{}), release: make(chan struct{})}
+}
+
+func (g *openGate) hold(p string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.path = path.Clean(p)
+	g.reached = make(chan struct{})
+	g.release = make(chan struct{})
+}
+
+func (g *openGate) pass(name string) {
+	g.mu.Lock()
+	if g.path == "" || path.Clean(name) != g.path {
+		g.mu.Unlock()
+		return
+	}
+	g.path = ""
+	reached, release := g.reached, g.release
+	g.mu.Unlock()
+	close(reached)
+	select {
+	case <-release:
+	case <-time.After(30 * time.Second):
+	}
+}
+
+func (g *openGate) awaitHeld() error {
+	g.mu.Lock()
+	reached := g.reached
+	g.mu.Unlock()
+	select {
+	case <-reached:
+		return nil
+	case <-time.After(30 * time.Second):
+		return errors.New("the held path was not opened")
+	}
+}
+
+func (g *openGate) releaseHeld() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	select {
+	case <-g.release:
+	default:
+		close(g.release)
+	}
+}
+
+type gateFs struct {
+	afero.Fs
+	gate *openGate
+}
+
+func (f gateFs) Open(name string) (afero.File, error) {
+	f.gate.pass(name)
+	return f.Fs.Open(name)
+}
+
+func (f gateFs) OpenFile(name string, flag int, perm os.FileMode) (afero.File, error) {
+	f.gate.pass(name)
+	return f.Fs.OpenFile(name, flag, perm)
 }
 
 func newFTPTestDriver(t *testing.T, fs afero.Fs, tlsConfig *tls.Config, mode ftpserver.TLSRequirement) *ftpTestDriver {
@@ -411,7 +487,9 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 		t.Fatal(err)
 	}
 	busyPort, busyReplies := startBusyFTPServer(t)
-	ftpPort, ftpDriver := startFTPServer(t, nil, ftpserver.ClearOrEncrypted)
+	gate := newOpenGate()
+	ftpDriver := newFTPTestDriver(t, gateFs{Fs: afero.NewMemMapFs(), gate: gate}, nil, ftpserver.ClearOrEncrypted)
+	ftpPort := serveFTP(t, ftpDriver)
 	ftpsPort, _ := startFTPServer(t, tlsConfig, ftpserver.MandatoryEncryption)
 	ftpsImplicitPort, _ := startFTPServer(t, tlsConfig, ftpserver.ImplicitEncryption)
 	hashedKnownHosts := filepath.Join(dir, "known_hosts_hashed")
@@ -423,6 +501,7 @@ func startFtpFixture(t *testing.T) *ftpFixture {
 	return &ftpFixture{
 		ftpPort:          ftpPort,
 		ftpDriver:        ftpDriver,
+		ftpGate:          gate,
 		ftpsPort:         ftpsPort,
 		ftpsImplicitPort: ftpsImplicitPort,
 		sftpPort:         sftpPort,

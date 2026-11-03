@@ -72,6 +72,24 @@ func runFtp(t *testing.T, name string) {
 		Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) {
 			return f.ftpDriver.connections.Load(), nil
 		}})
+	externs = append(externs,
+		testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "holdOpen",
+			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				f.ftpGate.hold(args[0].(string))
+				return nil, nil
+			}},
+		testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "awaitHeld",
+			Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) {
+				if err := f.ftpGate.awaitHeld(); err != nil {
+					return values.NewErrorWithMessage(err.Error()), nil
+				}
+				return nil, nil
+			}},
+		testharness.ExternRegistration{Org: "$anon", Module: name, FuncName: "releaseHeld",
+			Impl: func(*extern.Context, []values.BalValue) (values.BalValue, error) {
+				f.ftpGate.releaseHeld()
+				return nil, nil
+			}})
 	runExtern(t, fileCase("ftp/"+name), &ftpPal{TestPal: testharness.NewTestPal()}, externs)
 }
 
