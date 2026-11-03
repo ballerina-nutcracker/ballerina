@@ -677,3 +677,129 @@ func TestBalaDependency_CompilationErrorPropagates(t *testing.T) {
 		"expected an error diagnostic with file %q (bala prefix applied); errors: %v",
 		wantFileName, diagnosticMessages(diags))
 }
+
+// TestEmptyModuleDoesNotMaskSiblingBIRGenerationFailure covers a package whose
+// default module fails BIR generation while a sibling module has no source
+// files at all. An empty module never reaches moduleCompilationStateCompiled,
+// but it never attempts BIR generation either, so it must not be mistaken for
+// a Phase 4 failure that drops the default module's real BIR-gen diagnostics.
+func TestEmptyModuleDoesNotMaskSiblingBIRGenerationFailure(t *testing.T) {
+	t.Parallel()
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	dir := t.TempDir()
+	writeFile(t, dir, "Ballerina.toml", `[package]
+org = "testorg"
+name = "emptymodproj"
+version = "0.1.0"
+`)
+	// Semantically valid, but BIR generation fails: xml[2] filler
+	// materialization is not yet implemented, so GenBir fails without any
+	// earlier-phase diagnostics.
+	writeFile(t, dir, "main.bal", `public function main() {
+    xml[2] t = [];
+    int n = t.length();
+    _ = n;
+}
+`)
+	if err := os.MkdirAll(filepath.Join(dir, "modules", "empty"), 0o755); err != nil {
+		t.Fatalf("mkdir modules/empty: %v", err)
+	}
+
+	result, err := loadProject(dir)
+	require.NoError(err)
+
+	diags := result.Project().CurrentPackage().Compilation().DiagnosticResult()
+	assert.True(diags.HasErrors(),
+		"expected the BIR-generation failure to surface, got: %v", diagnosticMessages(diags))
+}
+
+// TestRecompilationDoesNotRerunAlreadyCompiledModules covers an incremental
+// edit: after Compilation() has run once, editing one module's document and
+// calling Compilation() again must not rerun phases 2-4 on already-compiled
+// sibling modules, including implicit lang-library modules such as
+// ballerina/io. Redesugaring an already-desugared module reports false
+// errors and loses its BIR package.
+func TestRecompilationDoesNotRerunAlreadyCompiledModules(t *testing.T) {
+	t.Parallel()
+	require := test_util.NewRequire(t)
+	assert := test_util.New(t)
+
+	absPath, err := filepath.Abs(filepath.Join("testdata", "myproject"))
+	require.NoError(err)
+
+	result, err := loadProject(absPath)
+	require.NoError(err)
+
+	pkg := result.Project().CurrentPackage()
+	firstDiags := pkg.Compilation().DiagnosticResult()
+	if firstDiags.HasErrors() {
+		t.Fatalf("unexpected errors on first compile: %v", diagnosticMessages(firstDiags))
+	}
+
+	module := pkg.DefaultModule()
+	docIDs := module.DocumentIDs()
+	require.NotEmpty(docIDs)
+	oldDoc := module.Document(docIDs[0])
+	newContent := oldDoc.TextDocument().String() + "\nfunction extra() returns int { return 1; }\n"
+	updatedDoc := oldDoc.Modify().WithContent(newContent).Apply()
+
+	secondDiags := updatedDoc.Module().PackageInstance().Compilation().DiagnosticResult()
+	assert.False(secondDiags.HasErrors(),
+		"expected the second compilation to succeed, got: %v", diagnosticMessages(secondDiags))
+}
+
+// TestRecompilationDoesNotPanicOnAlreadyDesugaredProjectModule covers the same
+// already-compiled-module reuse as TestRecompilationDoesNotRerunAlreadyCompiledModules,
+// but for a dependency that is a plain module of the project rather than an
+// implicit lang-library module: redesugaring its already-desugared symbols
+// panics instead of just reporting false diagnostics.
+func TestRecompilationDoesNotPanicOnAlreadyDesugaredProjectModule(t *testing.T) {
+	t.Parallel()
+	require := test_util.NewRequire(t)
+
+	dir := t.TempDir()
+	writeFile(t, dir, "Ballerina.toml", `[package]
+org = "testorg"
+name = "reuseproj"
+version = "0.1.0"
+`)
+	writeFile(t, dir, "main.bal", `import testorg/reuseproj.util;
+
+public function main() {
+    _ = util:f();
+}
+`)
+	writeFile(t, dir, filepath.Join("modules", "util", "util.bal"), `public function f() returns string {
+    int[] numbers = [1, 2, 3];
+    int[] doubled = from var n in numbers select n * 2;
+    string result = "";
+    foreach var n in doubled {
+        result = result + string `+"`"+`${n}`+"`"+`;
+    }
+    return result;
+}
+`)
+
+	result, err := loadProject(dir)
+	require.NoError(err)
+
+	pkg := result.Project().CurrentPackage()
+	firstDiags := pkg.Compilation().DiagnosticResult()
+	if firstDiags.HasErrors() {
+		t.Fatalf("unexpected errors on first compile: %v", diagnosticMessages(firstDiags))
+	}
+
+	module := pkg.DefaultModule()
+	docIDs := module.DocumentIDs()
+	require.NotEmpty(docIDs)
+	oldDoc := module.Document(docIDs[0])
+	newContent := oldDoc.TextDocument().String() + "\nfunction extra() {\n}\n"
+	updatedDoc := oldDoc.Modify().WithContent(newContent).Apply()
+
+	secondDiags := updatedDoc.Module().PackageInstance().Compilation().DiagnosticResult()
+	if secondDiags.HasErrors() {
+		t.Fatalf("expected the second compilation to succeed, got: %v", diagnosticMessages(secondDiags))
+	}
+}
