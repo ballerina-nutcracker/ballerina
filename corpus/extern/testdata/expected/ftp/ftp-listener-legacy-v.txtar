@@ -23,6 +23,7 @@ dep data_1.marker
 dep x.flag
 dep y.flag
 Duplicate path '/aged' in @ftp:ServiceConfig. Each service must monitor a unique path.
+Duplicate path '/aged/./' in @ftp:ServiceConfig. Each service must monitor a unique path.
 All services attached to a listener must use @ftp:ServiceConfig annotation when any service uses it. The new service is missing the annotation.
 Invalid remote method. Allowed handlers: onFile, onFileText, onFileJson, onFileXml, onFileCsv (format-specific) or onFileDelete.
 Cannot mix event-based handler (onFileChange) with format-specific handlers (onFile, onFileText, onFileJson, onFileXml, onFileCsv, onFileDelete).

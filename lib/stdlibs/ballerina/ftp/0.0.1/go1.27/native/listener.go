@@ -293,7 +293,7 @@ func (m *ftpModule) register(ctx *extern.Context, args []values.BalValue) (value
 			return m.errorResult(ctx, err)
 		}
 		for _, other := range state.services {
-			if other.consumer.watch.path == watch.path {
+			if cleanPath(other.consumer.watch.path) == cleanPath(watch.path) {
 				return m.errorResult(ctx, newError(kindInvalidConfig, "Duplicate path '"+watch.path+
 					"' in @ftp:ServiceConfig. Each service must monitor a unique path."))
 			}
