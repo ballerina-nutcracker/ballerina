@@ -95,6 +95,8 @@ public function main() {
     // Maps.
     map<int>|yaml:Error ints = yaml:parseString("a: 1\nb: x\nc: 2");
     show(ints);
+    map<int>|yaml:Error tagged = yaml:parseString("a: !!bool true\nb: 2");
+    show(tagged);
     map<string>|yaml:Error strings = yaml:parseString("a: true\nb: 1\nc: null");
     show(strings);
     map<int>|yaml:Error scalar = yaml:parseString("5");
@@ -133,11 +135,12 @@ public function main() {
 // @output required field 'name' not present in YAML
 // @output {"a":"x","b":[1,2]}
 // @output {"a":1,"c":2}
+// @output incompatible expected type 'int' for value 'true'
 // @output {"b":"1"}
 // @output incompatible expected type '{| int... |}' for value '5'
 // @output invalid type '{| int... |}' expected 'list type'
 // @output {"1":"a","null":"b","a b":"c","d":"e"}
-// @output 'cannot have duplicate map entries for '${key.toString()}' at line: '2' column: '3'
+// @output 'cannot have duplicate map entries for 'a'' at line: '2' column: '3'
 // @output {"a":2}
 // @output {"a":3,"b":2}
 // @output {"a":null,"b":2,"c":null}

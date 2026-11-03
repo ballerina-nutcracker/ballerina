@@ -576,7 +576,7 @@ func (p *parser) addPair(m *node, keys map[string]int, key, value *node) error {
 	name := keyString(key)
 	if i, ok := keys[name]; ok {
 		if !p.options.allowMapEntryRedefinition {
-			return p.s.errorHere("cannot have duplicate map entries for '${key.toString()}")
+			return p.s.errorHere("cannot have duplicate map entries for '" + name + "'")
 		}
 		m.pairs[i].value = value
 		return nil
