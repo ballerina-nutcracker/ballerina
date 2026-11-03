@@ -232,8 +232,8 @@ func (w *yamlWriter) flow(v values.BalValue) string {
 	return w.flowScalar(v)
 }
 
-// scalar writes a scalar as jBallerina's emitter does: its string form, with the !!str tag when
-// canonical. Strings are quoted when forceQuotes is set or when they would not read back as the same
+// scalar writes a scalar as its string form, with the !!str tag on a string when canonical. Strings
+// are quoted when forceQuotes is set or when they would not read back as the same
 // string.
 func (w *yamlWriter) scalar(v values.BalValue) string {
 	return w.scalarIn(v, false)
@@ -248,7 +248,7 @@ func (w *yamlWriter) scalarIn(v values.BalValue, inFlow bool) string {
 	if w.options.forceQuotes || (isString && (needsQuotes(text, w.options.schema) || inFlow && strings.ContainsAny(text, ",[]{}"))) {
 		text = w.quote(text)
 	}
-	if w.options.canonical {
+	if w.options.canonical && isString {
 		return "!!str " + text
 	}
 	return text

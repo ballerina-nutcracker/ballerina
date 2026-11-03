@@ -85,6 +85,12 @@ public function main() {
             io:println(yaml:parseString(written, {}, json));
         }
     }
+    // Canonical output tags only strings with !!str, so other scalars read back with their own type.
+    string|error canonical = yaml:toYamlString([1949, true, (), "1949"], {canonical: true});
+    show(canonical);
+    if canonical is string {
+        io:println(yaml:parseString(canonical, {}, json));
+    }
 }
 
 // @output name: Central Library
@@ -125,19 +131,19 @@ public function main() {
 // @output !!str books: !!seq
 // @output -
 // @output   !!str title: !!str "1984"
-// @output   !!str year: !!str 1949
+// @output   !!str year: 1949
 // @output   !!str tags: !!seq
 // @output   - !!str dystopia
 // @output -
 // @output   !!str title: !!str Emma
-// @output   !!str year: !!str 1815
+// @output   !!str year: 1815
 // @output   !!str tags: !!seq []
-// @output !!str open: !!str true
-// @output !!str rating: !!str 4.5
-// @output !!str fee: !!str 2.50
+// @output !!str open: true
+// @output !!str rating: 4.5
+// @output !!str fee: 2.50
 // @output !!str empty: {}
 // @output --
-// @output {!!str name: !!str Central Library, !!str books: !!seq [{!!str title: !!str "1984", !!str year: !!str 1949, !!str tags: !!seq [!!str dystopia]}, {!!str title: !!str Emma, !!str year: !!str 1815, !!str tags: !!seq []}], !!str open: !!str true, !!str rating: !!str 4.5, !!str fee: !!str 2.50, !!str empty: {}}
+// @output {!!str name: !!str Central Library, !!str books: !!seq [{!!str title: !!str "1984", !!str year: 1949, !!str tags: !!seq [!!str dystopia]}, {!!str title: !!str Emma, !!str year: 1815, !!str tags: !!seq []}], !!str open: true, !!str rating: 4.5, !!str fee: 2.50, !!str empty: {}}
 // @output --
 // @output "a": "x"
 // @output "b": "1"
@@ -219,3 +225,9 @@ public function main() {
 // @output ["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
 // @output {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
 // @output {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
+// @output - 1949
+// @output - true
+// @output - null
+// @output - !!str "1949"
+// @output --
+// @output [1949,true,null,"1949"]
