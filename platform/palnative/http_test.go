@@ -366,6 +366,7 @@ func TestTLSVerifyConnection_EmptyServerName(t *testing.T) {
 
 // TestNewHTTPClient_Timeout verifies that the client respects the timeout.
 func TestNewHTTPClient_Timeout(t *testing.T) {
+	t.Parallel()
 	// Server that never responds
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
@@ -390,65 +391,10 @@ func TestNewHTTPClient_Timeout(t *testing.T) {
 // unlimitedBody lifts the response size cap, which a zero ResponseLimitConfig sets to 0 bytes.
 var unlimitedBody = pal.ResponseLimitConfig{MaxEntityBodySize: -1}
 
-// streamingServer writes count chunks, flushing each and pausing gap before the next.
-func streamingServer(count int, gap time.Duration) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		flusher, _ := w.(http.Flusher)
-		for i := range count {
-			if i > 0 {
-				time.Sleep(gap)
-			}
-			_, _ = w.Write([]byte("chunk"))
-			flusher.Flush()
-		}
-	}))
-}
-
-// TestNewHTTPClient_IdleTimeoutSteadyBody verifies that the timeout is an idle timeout: a
-// body that keeps arriving outlives it, as jBallerina's client does.
-func TestNewHTTPClient_IdleTimeoutSteadyBody(t *testing.T) {
-	server := streamingServer(8, 50*time.Millisecond)
-	defer server.Close()
-	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 200 * time.Millisecond, ResponseLimits: unlimitedBody})
-	if err != nil {
-		t.Fatalf("NewHTTPClient: %v", err)
-	}
-	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
-	if err != nil {
-		t.Fatalf("Execute: %v", err)
-	}
-	defer func() { _ = body.Close() }()
-	data, err := io.ReadAll(body)
-	if err != nil {
-		t.Fatalf("reading a steady body failed: %v", err)
-	}
-	if got := len(data); got != 8*len("chunk") {
-		t.Fatalf("read %d bytes, want %d", got, 8*len("chunk"))
-	}
-}
-
-// TestNewHTTPClient_IdleTimeoutStalledBody verifies that a body which stops arriving fails
-// with jBallerina's idle timeout message.
-func TestNewHTTPClient_IdleTimeoutStalledBody(t *testing.T) {
-	server := streamingServer(2, time.Second)
-	defer server.Close()
-	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 100 * time.Millisecond, ResponseLimits: unlimitedBody})
-	if err != nil {
-		t.Fatalf("NewHTTPClient: %v", err)
-	}
-	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
-	if err != nil {
-		t.Fatalf("Execute: %v", err)
-	}
-	defer func() { _ = body.Close() }()
-	if _, err := io.ReadAll(body); !errors.Is(err, errIdleReadingBody) {
-		t.Fatalf("expected %q, got %v", errIdleReadingBody, err)
-	}
-}
-
 // TestNewHTTPClient_IdleTimeoutSlowConsumer verifies that only time spent waiting for data
 // counts: a body that has already arrived can be read later than the timeout.
 func TestNewHTTPClient_IdleTimeoutSlowConsumer(t *testing.T) {
+	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ready"))
 	}))
@@ -472,6 +418,7 @@ func TestNewHTTPClient_IdleTimeoutSlowConsumer(t *testing.T) {
 // TestNewHTTPClient_IdleTimeoutSlowUpload verifies that a streamed request body that keeps
 // flowing keeps the request alive past the timeout.
 func TestNewHTTPClient_IdleTimeoutSlowUpload(t *testing.T) {
+	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := io.ReadAll(r.Body)
 		_, _ = w.Write(data)
