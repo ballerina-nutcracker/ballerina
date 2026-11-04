@@ -145,8 +145,8 @@ func (l *loopTypeResolver) hasImplicitImport(name string) bool {
 	return l.parentResolver.hasImplicitImport(name)
 }
 
-func (l *loopTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
-	return l.parentResolver.ensureResolved(ref, depth)
+func (l *loopTypeResolver) ensureResolved(ref model.SymbolRef) bool {
+	return l.parentResolver.ensureResolved(ref)
 }
 
 func (l *loopTypeResolver) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
@@ -159,14 +159,6 @@ func (l *loopTypeResolver) mappingDefaults(atom *semtypes.MappingAtomicType) ([]
 
 func (l *loopTypeResolver) setObjectMethodTable(atom *semtypes.MappingAtomicType, table model.MethodTable) {
 	l.parentResolver.setObjectMethodTable(atom, table)
-}
-
-func (l *loopTypeResolver) recordDefaultsSchedule() *recordDefaultsInProgressBase {
-	return l.parentResolver.recordDefaultsSchedule()
-}
-
-func (l *loopTypeResolver) recordDefaultsReference(atom *semtypes.MappingAtomicType) (partialRecordReference, bool) {
-	return l.parentResolver.recordDefaultsReference(atom)
 }
 
 func (l *loopTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (model.MethodTable, bool) {
@@ -192,4 +184,8 @@ func validateLoopAssignments(t typeResolver, loopT *loopTypeResolver, bodyEffect
 	}
 	chains = append(chains, loopT.continues...)
 	reportOutsideLoopAssignments(t, chains, loopEntry)
+}
+
+func (l *loopTypeResolver) resolutionContext() *typeResolutionContext {
+	return l.parentResolver.resolutionContext()
 }

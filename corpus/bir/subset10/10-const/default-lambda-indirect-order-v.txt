@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| k: int, r: {| f: isolated function() returns nil|..., never... |}, never... |}{} defaults{r=$anon/.:$default$1, k=$anon/.:$default$2}
+    s = %1;
+    %4 = ConstantLoad f
+    %6 = ConstantLoad r
+    %5 = s[%6];
+    %3 = %5[%4];
+    g = %3;
+    %8 = g() -> bb1;
+  }
+  bb1 {
+    t = %8;
+    %11 = t is {| k: int, r: {| f: isolated function() returns nil|..., never... |}, never... |}
+    %11 ? bb2 : bb3;
+  }
+  bb2 {
+    %13 = ConstantLoad k
+    %12 = t[%13];
+    %10 = %12;
+    GOTO bb4;
+  }
+  bb3 {
+    %14 = ConstantLoad 1
+    %15 = unknown %14;
+    %10 = %15;
+    GOTO bb4;
+  }
+  bb4 {
+    %16 = %10;
+    %17 = println(%16) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$anonFunc$_0() -> nil|{| k: int, r: {| f: isolated function() returns nil|..., never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad r
+    %2 = ConstantLoad f
+    %3 = fp $anon/.:$anonFunc$_1
+    %4 = newMap {| f: isolated function() returns nil|{| k: int, r: {| f: ..., never... |}, never... |}, never... |}{%2=%3} defaults{f=$anon/.:$default$0}
+    %5 = ConstantLoad k
+    %6 = ConstantLoad 5
+    %7 = newMap {| k: int, r: {| f: isolated function() returns nil|..., never... |}, never... |}{%1=%4, %5=%6} defaults{r=$anon/.:$default$1, k=$anon/.:$default$2}
+    %0 = %7;
+    return;
+  }
+}
+$anonFunc$_1() -> nil|{| k: int, r: {| f: isolated function() returns nil|..., never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$0() -> isolated function() returns nil|{| k: int, r: {| f: ..., never... |}, never... |}{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> {| f: isolated function() returns nil|{| k: int, r: ..., never... |}, never... |}{
+  bb0 {
+    %1 = newMap {| f: isolated function() returns nil|{| k: int, r: {| f: ..., never... |}, never... |}, never... |}{} defaults{f=$anon/.:$default$0}
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}

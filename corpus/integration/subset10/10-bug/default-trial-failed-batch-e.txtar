@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no applicable inherent type for mapping constructor
+  --> default-trial-failed-batch-e.bal:20:27
+   |
+20 | final var result = choose({x: // @error failed candidates discard their inline default batches
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |     (from int n in [1]
+   |     ^^^^^^^^^^^^^^^^^^
+22 |      let record {| R r = {}; int x = 1; |} row = {}
+   |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |      select row.x + n - 1)[0]});
+   |      ^^^^^^^^^^^^^^^^^^^^^^^^^

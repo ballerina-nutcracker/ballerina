@@ -1,0 +1,29 @@
+(choose
+  (bb0 () ()
+    (return
+      (simple-var-ref value))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref result)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (user-defined-type A)))))
+    (type-test-expr is
+      (simple-var-ref result)
+      (user-defined-type A))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access y
+          (simple-var-ref result)))))
+  )
+  (bb2 (bb1 bb0) ())
+)

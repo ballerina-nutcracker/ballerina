@@ -1,13 +1,7 @@
 -- stdout --
 -- stderr --
 error[SEMANTIC_ERROR]: cyclic dependency in record field default
-  --> default-cyclic-inclusion-e.bal:18:8
+  --> default-cyclic-inclusion-e.bal:25:13
    |
-18 | type B record {| // @error cyclic dependency in record field default
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 |     *A;
-   |     ^^^
-20 |     int z = 3;
-   |     ^^^^^^^^^^
-21 | |};
-   | ^^
+25 |     B? bb = {}; // @error inherited provider forms a value cycle
+   |             ^^

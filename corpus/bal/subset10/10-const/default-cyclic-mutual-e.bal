@@ -17,11 +17,11 @@
 import ballerina/io;
 
 type A record {|
-    B b = {}; // @error A's default builds B, whose default builds A
+    B b = {};
 |};
 
 type B record {|
-    A? a = {};
+    A? a = {}; // @error omitted defaults form a value cycle
 |};
 
 public function main() {

@@ -1,0 +1,50 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable g (expr
+        (field-based-access f
+          (simple-var-ref r)))))
+    (var-def
+      (variable s (type
+        (union-type
+          (user-defined-type R)
+          (value-type null))) (expr
+        (invocation g ()))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref s)
+            (user-defined-type R))
+          (field-based-access x
+            (simple-var-ref s))
+          (unary-expr -
+            (literal 1))))))
+  )
+)
+($anonFunc$_0
+  (bb0 () (bb1))
+  (bb1 (bb0) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 1))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 2))))
+  )
+  (bb3 (bb1) ()
+    (return
+      (literal <nil>))
+  )
+)

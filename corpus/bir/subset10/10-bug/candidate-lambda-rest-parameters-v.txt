@@ -1,0 +1,52 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad f
+    %2 = fp $anon/.:$anonFunc$_0
+    %3 = newMap {| f: function(int, string...) returns int, never... |}{%1=%2}
+    r = %3;
+    %5 = r is {| f: function(int, string...) returns int, never... |}
+    %6 = %5;
+    %7 = println(%6) -> bb1;
+  }
+  bb1 {
+    %8 = r is {| f: function(int, string...) returns int, never... |}
+    %8 ? bb2 : bb5;
+  }
+  bb2 {
+    PushScopeFrame 10
+    %1 = ConstantLoad f
+    %0 = (1, r)[%1];
+    selected = %0;
+    %3 = ConstantLoad 5
+    %4 = %3;
+    %5 = ConstantLoad a
+    %6 = ConstantLoad b
+    %7 = selected(%4,%5,%6) -> bb3;
+  }
+  bb3 {
+    %8 = %7;
+    %9 = println(%8) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$anonFunc$_0(int,[string...]...) -> int{
+  bb0 {
+    %4 = n;
+    %5 = length(rest) -> bb1;
+  }
+  bb1 {
+    %6 = %5;
+    %3 = + %4 %6;
+    %0 = %3;
+    return;
+  }
+}

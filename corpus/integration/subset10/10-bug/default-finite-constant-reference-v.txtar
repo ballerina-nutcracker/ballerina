@@ -1,0 +1,4 @@
+-- stdout --
+{"next":{"next":null}}
+{"next":null}
+-- stderr --

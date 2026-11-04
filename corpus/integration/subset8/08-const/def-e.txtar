@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: invalid cycle detected for Y
-  --> def-e.bal:21:7
+error[SEMANTIC_ERROR]: invalid cycle detected for X
+  --> def-e.bal:20:7
    |
-21 | const Y = X + 1; // @error
+20 | const X = Y + 1; // @error compile-time dependency cycle
    |       ^

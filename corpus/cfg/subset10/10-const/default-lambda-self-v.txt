@@ -1,0 +1,29 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable g (expr
+        (field-based-access f
+          (simple-var-ref r)))))
+    (var-def
+      (variable s (type
+        (user-defined-type R)) (expr
+        (invocation g ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref s)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 2))))
+  )
+)

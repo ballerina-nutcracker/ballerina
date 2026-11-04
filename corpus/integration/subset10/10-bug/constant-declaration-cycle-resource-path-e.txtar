@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for K
+  --> constant-declaration-cycle-resource-path-e.bal:19:15
+   |
+19 | const boolean K = true ? true : ((<C?>()) == ()); // @error declaration dependency cycle through resource path parameter
+   |               ^
