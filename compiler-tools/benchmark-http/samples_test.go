@@ -29,6 +29,24 @@ import (
 	"testing"
 )
 
+func TestMain(m *testing.M) {
+	for _, entry := range os.Environ() {
+		key, _, _ := strings.Cut(entry, "=")
+		if strings.HasPrefix(key, "GIT_") {
+			if err := os.Unsetenv(key); err != nil {
+				panic(err)
+			}
+		}
+	}
+	if err := os.Setenv("GIT_CONFIG_GLOBAL", os.DevNull); err != nil {
+		panic(err)
+	}
+	if err := os.Setenv("GIT_CONFIG_NOSYSTEM", "1"); err != nil {
+		panic(err)
+	}
+	m.Run()
+}
+
 // Ballerina corpus programs cannot exercise host JSONL persistence or write failures.
 func TestSampleStreamPersistsPartialRole(t *testing.T) {
 	t.Parallel()
@@ -206,6 +224,27 @@ func TestSampleSHAUsesDetachedWorktree(t *testing.T) {
 	}
 	if got != initial || got == git("rev-parse", "HEAD") {
 		t.Fatalf("detached metadata SHA = %s, want %s", got, initial)
+	}
+}
+
+func TestDetachedWorktreeFixtureIgnoresInheritedGitEnvironment(t *testing.T) {
+	t.Parallel()
+	outer := t.TempDir()
+	if out, err := exec.Command("git", "init", "-b", "outer", outer).CombinedOutput(); err != nil {
+		t.Fatalf("init outer repository: %v\n%s", err, out)
+	}
+	bin, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(bin, "-test.run=^TestSampleSHAUsesDetachedWorktree$")
+	cmd.Env = append(cmd.Environ(), "GIT_DIR="+filepath.Join(outer, ".git"), "GIT_WORK_TREE="+outer)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Errorf("detached fixture with inherited Git environment: %v\n%s", err, out)
+	}
+	refs, err := exec.Command("git", "-C", outer, "for-each-ref").CombinedOutput()
+	if err != nil || len(refs) != 0 {
+		t.Fatalf("expected no refs in outer repository, got %q (%v)", refs, err)
 	}
 }
 

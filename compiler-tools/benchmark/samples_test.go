@@ -29,6 +29,24 @@ import (
 	"testing"
 )
 
+func TestMain(m *testing.M) {
+	for _, entry := range os.Environ() {
+		key, _, _ := strings.Cut(entry, "=")
+		if strings.HasPrefix(key, "GIT_") {
+			if err := os.Unsetenv(key); err != nil {
+				panic(err)
+			}
+		}
+	}
+	if err := os.Setenv("GIT_CONFIG_GLOBAL", os.DevNull); err != nil {
+		panic(err)
+	}
+	if err := os.Setenv("GIT_CONFIG_NOSYSTEM", "1"); err != nil {
+		panic(err)
+	}
+	m.Run()
+}
+
 // Ballerina corpus programs cannot exercise host JSONL persistence or write failures.
 func TestSampleStreamPersistsPartialRole(t *testing.T) {
 	t.Parallel()
