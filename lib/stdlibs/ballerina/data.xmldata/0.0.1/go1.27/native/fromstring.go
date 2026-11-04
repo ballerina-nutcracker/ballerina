@@ -160,17 +160,28 @@ func (t *typer) singletonCandidates(value string, ty semtypes.SemType) []singlet
 	return candidates
 }
 
-// convertStringToExpType is DataUtils.convertStringToExpType, used by the traversal.
+// convertStringToExpType is DataUtils.convertStringToExpType, used by the traversal. A recursive type such
+// as `type T string|T[]` is not expanded again below itself.
 func (t *typer) convertStringToExpType(value string, ty semtypes.SemType) (values.BalValue, error) {
+	return t.convertStringVisiting(value, ty, map[string]bool{})
+}
+
+func (t *typer) convertStringVisiting(value string, ty semtypes.SemType, visiting map[string]bool) (values.BalValue, error) {
 	ti := t.classify(ty)
 	switch ti.kind {
 	case kindAnydata, kindJSON:
 		return t.fromString(value, t.jsonTy)
 	case kindArray:
-		return t.convertStringToExpType(value, ti.element)
+		return t.convertStringVisiting(value, ti.element, visiting)
 	case kindUnion:
+		key := semtypes.ToString(t.tc, ty)
+		if visiting[key] {
+			return nil, unionFieldCannotConvertError(t.typeName(ty))
+		}
+		visiting[key] = true
+		defer delete(visiting, key)
 		for _, member := range ti.members {
-			if converted, err := t.convertStringToExpType(value, member); err == nil {
+			if converted, err := t.convertStringVisiting(value, member, visiting); err == nil {
 				return converted, nil
 			}
 		}

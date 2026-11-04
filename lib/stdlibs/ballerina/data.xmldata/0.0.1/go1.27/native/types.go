@@ -412,18 +412,28 @@ func (t *typer) decompose(ty semtypes.SemType) []semtypes.SemType {
 	return parts
 }
 
-// isSimpleType is DataUtils.isSimpleType: whether a value of the type is never a structure.
+// isSimpleType is DataUtils.isSimpleType: whether a value of the type is never a structure. A recursive
+// reference adds no member that the enclosing type does not already have.
 func (t *typer) isSimpleType(ty semtypes.SemType) bool {
+	return t.isSimple(ty, map[string]bool{})
+}
+
+func (t *typer) isSimple(ty semtypes.SemType, visiting map[string]bool) bool {
+	key := semtypes.ToString(t.tc, ty)
+	if visiting[key] {
+		return true
+	}
+	visiting[key] = true
 	ti := t.classify(ty)
 	switch ti.kind {
 	case kindJSON, kindAnydata, kindMap, kindRecord, kindXML, kindXMLElement, kindXMLText, kindXMLOther,
 		kindUnsupported:
 		return false
 	case kindArray:
-		return t.isSimpleType(ti.element)
+		return t.isSimple(ti.element, visiting)
 	case kindUnion:
 		for _, member := range ti.members {
-			if !t.isSimpleType(member) {
+			if !t.isSimple(member, visiting) {
 				return false
 			}
 		}
@@ -469,16 +479,25 @@ func (t *typer) containsUnion(ty semtypes.SemType, visiting map[string]bool) boo
 }
 
 func (t *typer) isSupportedType(ty semtypes.SemType) bool {
+	return t.isSupported(ty, map[string]bool{})
+}
+
+func (t *typer) isSupported(ty semtypes.SemType, visiting map[string]bool) bool {
+	key := semtypes.ToString(t.tc, ty)
+	if visiting[key] {
+		return false
+	}
+	visiting[key] = true
 	ti := t.classify(ty)
 	switch ti.kind {
 	case kindNil, kindInt, kindByte, kindFloat, kindDecimal, kindBoolean, kindString, kindRecord, kindMap,
 		kindJSON, kindAnydata, kindFinite, kindXML, kindXMLElement, kindXMLText:
 		return true
 	case kindArray:
-		return t.isSupportedType(ti.element)
+		return t.isSupported(ti.element, visiting)
 	case kindUnion:
 		for _, member := range ti.members {
-			if t.isSupportedType(member) {
+			if t.isSupported(member, visiting) {
 				return true
 			}
 		}

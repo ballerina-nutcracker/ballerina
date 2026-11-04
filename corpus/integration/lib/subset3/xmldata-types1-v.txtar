@@ -2,6 +2,8 @@
 <x><p>1</p></x>
 <e><q a="1"/></e>
 <t>plain</t>
+{"n":"a"}
+{"n":["a"]}
 2
 <items><b/></items>
 {"id":"1","n":5,"f":true}
