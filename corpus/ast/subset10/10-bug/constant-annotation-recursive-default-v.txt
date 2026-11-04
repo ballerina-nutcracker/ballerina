@@ -1,0 +1,52 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Rec
+    (record-type
+      (field r
+        (union-type
+          (user-defined-type Rec)
+          (value-type null)))
+      (field x
+        (value-type int)
+        (invocation length expr:
+          (simple-var-ref C) ()))))
+  (const C (
+    (constrained-type
+      (builtin-ref-type map)
+      (union-type
+        (user-defined-type Rec)
+        (value-type null)))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal <nil>))
+      (key-value
+        (literal b)
+        (mapping-constructor-expr
+          (key-value
+            (literal r)
+            (literal <nil>))
+          (key-value
+            (literal x)
+            (literal 7)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type Rec)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal r)
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access x
+            (simple-var-ref r)))))
+      (expression-stmt
+        (invocation io println (
+          (optional-field-based-access x
+            (index-based-access
+              (simple-var-ref C)
+              (literal b)))))))))

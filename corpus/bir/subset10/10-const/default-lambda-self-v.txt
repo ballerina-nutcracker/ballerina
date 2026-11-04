@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: isolated function() returns {| f: ..., x: int, never... |}, x: int, never... |}{} defaults{x=$anon/.:$default$0, f=$anon/.:$default$1}
+    r = %1;
+    %4 = ConstantLoad f
+    %3 = r[%4];
+    g = %3;
+    %6 = g() -> bb1;
+  }
+  bb1 {
+    s = %6;
+    %9 = ConstantLoad x
+    %8 = s[%9];
+    %10 = %8;
+    %11 = println(%10) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$anonFunc$_0() -> {| f: isolated function() returns ..., x: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 2
+    %3 = newMap {| f: isolated function() returns {| f: ..., x: int, never... |}, x: int, never... |}{%1=%2} defaults{x=$anon/.:$default$0, f=$anon/.:$default$1}
+    %0 = %3;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> isolated function() returns {| f: ..., x: int, never... |}{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    %0 = %1;
+    return;
+  }
+}

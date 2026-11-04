@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for N
+  --> constant-annotation-cycle-array-length-e.bal:17:15
+   |
+17 | const int|Rec N = 3; // @error the annotation refers back to N through an array length
+   |               ^

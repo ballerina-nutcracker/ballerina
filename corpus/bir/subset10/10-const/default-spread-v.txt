@@ -1,0 +1,64 @@
+module $anon.. v 0.0.0;
+next() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"x":1,"y":5}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad {"x":1,"y":9}
+    %4 = println(%3) -> bb2;
+  }
+  bb2 {
+    %5 = ConstantLoad {"x":1,"y":9}
+    %6 = println(%5) -> bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad {"x":1,"y":3}
+    %8 = println(%7) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad {"x":1,"y":9}
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad {"x":1,"y":9}
+    %12 = %11 is readonly&{| x: 1, y: 9, never... |}
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = next() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}

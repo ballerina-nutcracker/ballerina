@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> default-spread-nonconstant-e.bal:30:19
+   |
+30 | const Runtime A = {...X}; // @error default for y is not constant and the spread does not supply y
+   |                   ^^^^^^

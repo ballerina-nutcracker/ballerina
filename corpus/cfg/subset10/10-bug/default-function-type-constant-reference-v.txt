@@ -1,0 +1,17 @@
+(echo
+  (bb0 () ()
+    (return
+      (simple-var-ref p))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type F)) (expr
+        (simple-var-ref echo))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f ( <default>)))))
+  )
+)

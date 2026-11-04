@@ -1,0 +1,28 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type A)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable b (type
+        (user-defined-type B)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref a)
+          (simple-var-ref CA)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref b)
+          (simple-var-ref CB)))))
+  )
+)

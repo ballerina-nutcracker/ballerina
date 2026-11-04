@@ -30,7 +30,8 @@ type ephemeralState struct {
 	// symbolTypes shadows the compiler context's symbol types while a trial runs. It is non-nil exactly while
 	// depth > 0 and is shared by every trial in the nesting: a trial writes a symbol's type before reading it, so
 	// stale entries from sibling candidates or inner trials are overwritten before they can be read.
-	symbolTypes map[model.SymbolRef]semtypes.SemType
+	symbolTypes     map[model.SymbolRef]semtypes.SemType
+	mappingDefaults map[*semtypes.MappingAtomicType][]model.FieldDefault
 }
 
 func (s *ephemeralState) lookupSymbolType(ref model.SymbolRef) (semtypes.SemType, bool) {
@@ -69,12 +70,14 @@ func enterEphemeral(t typeResolver) func() {
 	}
 	if state.depth == 0 {
 		state.symbolTypes = make(map[model.SymbolRef]semtypes.SemType)
+		state.mappingDefaults = make(map[*semtypes.MappingAtomicType][]model.FieldDefault)
 	}
 	state.depth++
 	return func() {
 		state.depth--
 		if state.depth == 0 {
 			state.symbolTypes = nil
+			state.mappingDefaults = nil
 		}
 	}
 }
@@ -122,9 +125,16 @@ func runTrials[C any](t typeResolver, candidates []C, trial func(C) bool) []C {
 	defer exitEphemeral()
 	var survivors []C
 	for _, candidate := range candidates {
-		if trial(candidate) {
+		if runCandidateTrial(t, candidate, trial) {
 			survivors = append(survivors, candidate)
 		}
 	}
 	return survivors
+}
+
+func runCandidateTrial[C any](t typeResolver, candidate C, trial func(C) bool) bool {
+	context := t.resolutionContext()
+	defaultMark := len(context.defaults)
+	defer func() { context.defaults = context.defaults[:defaultMark] }()
+	return trial(candidate)
 }

@@ -1,0 +1,57 @@
+module $anon.. v 0.0.0;
+runtimeValue() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad next
+    %2 = ConstantLoad <nil>
+    %3 = newMap {| next: nil|{| next: nil|..., runtime: int, never... |}, runtime: int, never... |}{%1=%2} defaults{next=$anon/.:$default$0, runtime=$anon/.:$default$1}
+    r = %3;
+    %5 = println(r) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> nil|{| next: nil|..., runtime: int, never... |}{
+  bb0 {
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %6 = ConstantLoad 0
+    %7 = %6;
+    %3 = / %5 %7;
+    %8 = %3;
+    %9 = ConstantLoad 0
+    %10 = %9;
+    %2 = == %8 %10;
+    %2 ? bb1 : bb2;
+  }
+  bb1 {
+    %11 = ConstantLoad <nil>
+    %1 = %11;
+    GOTO bb3;
+  }
+  bb2 {
+    %12 = newMap {| next: nil|{| next: nil|..., runtime: int, never... |}, runtime: int, never... |}{} defaults{next=$anon/.:$default$0, runtime=$anon/.:$default$1}
+    %1 = %12;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = runtimeValue() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
