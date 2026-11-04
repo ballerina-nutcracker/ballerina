@@ -26,6 +26,10 @@ true
 {"p":{"name":"a"},"c":{"name":"b"}}
 {"p":{"name":"c"}}
 {"p":{"name":"c"}}
+{"i":5}
+{"i":5}
+{"p":"none","c":"RED"}
+{"p":"none","c":"RED"}
 {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
 {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
 {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}

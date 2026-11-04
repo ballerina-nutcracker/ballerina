@@ -60,9 +60,9 @@ func (a *analyzer) snapshot() analyzer {
 	return copied
 }
 
-// resetFrom is XmlAnalyzerData.resetFrom; it leaves the current node as the failed attempt left it.
+// resetFrom is XmlAnalyzerData.resetFrom, except that it also restores the current node, so a failed
+// union member leaves none of its fields behind.
 func (a *analyzer) resetFrom(s analyzer) {
-	currentNode := a.currentNode
 	recordTypeStack := a.recordTypeStack
 	*a = s
 	a.attributeHierarchy = slices.Clone(s.attributeHierarchy)
@@ -71,7 +71,6 @@ func (a *analyzer) resetFrom(s analyzer) {
 	a.fieldHierarchy = slices.Clone(s.fieldHierarchy)
 	a.visitedFieldHierarchy = slices.Clone(s.visitedFieldHierarchy)
 	a.restTypes = slices.Clone(s.restTypes)
-	a.currentNode = currentNode
 	a.recordTypeStack = recordTypeStack
 }
 
