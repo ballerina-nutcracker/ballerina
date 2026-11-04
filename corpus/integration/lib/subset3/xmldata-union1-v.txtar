@@ -26,4 +26,8 @@ true
 {"p":{"name":"a"},"c":{"name":"b"}}
 {"p":{"name":"c"}}
 {"p":{"name":"c"}}
+{"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+{"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+{"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+{"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
 -- stderr --
