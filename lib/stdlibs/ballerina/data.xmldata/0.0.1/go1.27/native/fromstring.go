@@ -71,6 +71,10 @@ func (t *typer) fromString(value string, ty semtypes.SemType) (values.BalValue, 
 		if n, ok := parseJavaLong(value); ok && n >= 0 && n <= 255 {
 			return n, nil
 		}
+	case kindIntSubtype:
+		if n, ok := parseJavaLong(value); ok && t.contains(ty, n) {
+			return n, nil
+		}
 	case kindFloat:
 		if f, ok := parseJavaDouble(value, false); ok {
 			return f, nil
@@ -206,7 +210,7 @@ func (t *typer) convertStringToRestExpType(value string, ty semtypes.SemType) (v
 	switch ti.kind {
 	case kindArray:
 		return t.convertStringToRestExpType(value, ti.element)
-	case kindInt, kindFloat, kindDecimal, kindString, kindBoolean, kindUnion, kindFinite:
+	case kindInt, kindByte, kindIntSubtype, kindFloat, kindDecimal, kindString, kindBoolean, kindUnion, kindFinite:
 		return t.parserConvertStringToExpType(value, ty)
 	case kindAnydata, kindJSON:
 		return t.parserConvertStringToExpType(value, t.jsonTy)

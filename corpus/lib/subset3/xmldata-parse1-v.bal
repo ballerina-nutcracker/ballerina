@@ -137,22 +137,22 @@ public function main() {
     // @output {"tag":["a",""]}
     // @output {"tag":["a",""]}
     both("<r><u>5</u><n>t</n><o>3</o><g>B</g><h>2</h><y>7</y><s>-8</s><f>2</f></r>", Scalars);
-    // @output E: invalid rest type 'byte'
-    // @output E: unsupported input type
+    // @output {"u":5,"n":"t","o":3,"g":"B","h":2,"y":7,"s":-8,"f":2.0}
+    // @output {"u":5,"n":"t","o":3,"g":"B","h":2,"y":7,"s":-8,"f":2.0}
     both("<r><u>x</u><n/><g>A</g><h>1</h><y>255</y><s>127</s><f>1.5</f></r>", Scalars);
-    // @output E: invalid rest type 'byte'
-    // @output E: unsupported input type
+    // @output {"u":"x","g":"A","h":1,"y":255,"s":127,"f":1.5,"n":null}
+    // @output {"u":"x","g":"A","h":1,"y":255,"s":127,"f":1.5,"n":null}
     both("<r><u>x</u><n/><g>C</g><h>1</h><y>255</y><s>127</s><f>1.5</f></r>", Scalars);
     // @output E: 'string' value 'C' cannot be converted to '("A"|"B")'
     // @output E: 'string' value 'C' cannot be converted to '("A"|"B")'
     both("<r><u>x</u><n/><g>A</g><h>1</h><y>256</y><s>127</s><f>1.5</f></r>", Scalars);
-    // @output E: invalid rest type 'byte'
+    // @output E: 'string' value '256' cannot be converted to 'byte'
     // @output E: 'string' value '256' cannot be converted to 'byte'
     both("<r><u>x</u><n/><g>A</g><h>1</h><y>2</y><s>1</s><f>1.5f</f></r>", Scalars);
-    // @output E: invalid rest type 'byte'
-    // @output E: unsupported input type
+    // @output E: 'string' value '1.5f' cannot be converted to 'float'
+    // @output E: 'string' value '1.5f' cannot be converted to 'float'
     both("<r><b>false</b><f>2.5</f><i>1</i><n>4</n><y>3</y></r>", Primitives);
-    // @output E: invalid rest type 'byte'
+    // @output {"b":false,"f":2.5,"i":1,"n":4,"y":3}
     // @output {"b":false,"f":2.5,"i":1,"n":4,"y":3}
     both("<r><b/><f/><i/><n/><y/></r>", Primitives);
     // @output {"b":false,"f":0.0,"i":0,"n":null,"y":0}
@@ -167,7 +167,7 @@ public function main() {
     // @output {"t":" <raw> "}
     // @output {"t":" &lt;raw&gt; "}
     both("<r><t>x<![CDATA[y]]>z</t></r>", Text);
-    // @output {"t":"z"}
+    // @output {"t":"xyz"}
     // @output {"t":"xyz"}
     both("<r><t>x<!-- c -->z</t></r>", Text);
     // @output {"t":"xz"}

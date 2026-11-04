@@ -98,17 +98,18 @@ func (p *xmlParser) parseXMLElements(event staxEvent) (bool, error) {
 		return false, p.readElement()
 	case eventEndElement:
 		return false, p.endElement()
-	case eventCData:
-		return false, p.readText(true)
-	case eventCharacters:
-		return true, p.readText(false)
+	case eventCharacters, eventCData:
+		return true, p.readText()
 	case eventEndDocument:
 		return false, p.buildDocument()
 	}
 	return false, nil
 }
 
+// parseRecordRest parses the rest element the reader is on, up to its own end tag: a descendant with the same
+// name, closed at a deeper level, does not end it.
 func (p *xmlParser) parseRecordRest(startElementName string) error {
+	endDepth := p.reader.depth - 1
 	readNext := false
 	for p.reader.hasNext() {
 		event := p.reader.eventType()
@@ -118,7 +119,7 @@ func (p *xmlParser) parseRecordRest(startElementName string) error {
 				return err
 			}
 		}
-		if event == eventEndElement && p.reader.name.local == startElementName {
+		if event == eventEndElement && p.reader.depth == endDepth && p.reader.name.local == startElementName {
 			if err := p.validateRequiredFields(); err != nil {
 				return err
 			}
@@ -171,20 +172,20 @@ func (p *xmlParser) elementName() qname {
 	return p.qname(name.ns, name.local, name.prefix, stateElement)
 }
 
-// readCharacters is handleTruncatedCharacters: it joins adjacent character events, noting a comment between
-// them, and leaves the reader on the event after them.
+// readCharacters is handleTruncatedCharacters: it joins adjacent character and CDATA events, noting the
+// comments between them, and leaves the reader on the event after them.
 func (p *xmlParser) readCharacters() (string, bool, error) {
 	var text strings.Builder
 	commentInMiddle := false
-	for p.reader.eventType() == eventCharacters {
+	for isCharacterData(p.reader.eventType()) {
 		text.WriteString(p.reader.text)
 		event, err := p.reader.next()
 		if err != nil {
 			return "", false, err
 		}
-		if event == eventComment {
+		for event == eventComment {
 			commentInMiddle = true
-			if _, err := p.reader.next(); err != nil {
+			if event, err = p.reader.next(); err != nil {
 				return "", false, err
 			}
 		}
@@ -192,16 +193,13 @@ func (p *xmlParser) readCharacters() (string, bool, error) {
 	return text.String(), commentInMiddle, nil
 }
 
-func (p *xmlParser) readTextValue(isCData bool) (string, bool, error) {
-	if isCData {
-		return p.reader.text, false, nil
-	}
-	return p.readCharacters()
+func isCharacterData(event staxEvent) bool {
+	return event == eventCharacters || event == eventCData
 }
 
-func (p *xmlParser) readText(isCData bool) error {
+func (p *xmlParser) readText() error {
 	field := p.currentField
-	text, commentInMiddle, err := p.readTextValue(isCData)
+	text, commentInMiddle, err := p.readCharacters()
 	if err != nil {
 		return err
 	}
@@ -354,6 +352,10 @@ func (p *xmlParser) endElement() error {
 		p.currentNode.get(field.runtimeName) == nil {
 		return fieldCannotConvertError(field.name, p.typeName(field.ty))
 	}
+	// A simple field's end tag never closes a record, even when the record's element has the same name.
+	if field != nil && p.isSimpleType(field.ty) {
+		return nil
+	}
 	if len(p.parents) == 0 || !peek(p.parents).contains(elementName) {
 		return nil
 	}
@@ -402,6 +404,8 @@ func (p *xmlParser) readElement() error {
 			p.currentNode = next
 		case !p.allowDataProjection:
 			return undefinedFieldError(local, p.rootRecordName())
+		default:
+			return p.skipElement()
 		}
 		return nil
 	}
@@ -420,6 +424,18 @@ func (p *xmlParser) readElement() error {
 		return foundArrayForNonArrayTypeError(p.typeName(field.ty), field.name)
 	}
 	return p.initializeNextValueBasedOnExpectedType(key, field.ty, existing)
+}
+
+// skipElement consumes the element the reader is on, up to and including its end tag, so that none of its
+// descendants bind to the enclosing record.
+func (p *xmlParser) skipElement() error {
+	depth := p.reader.depth
+	for p.reader.depth >= depth {
+		if _, err := p.reader.next(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (p *xmlParser) initializeNextValueBasedOnExpectedType(key string, fieldType semtypes.SemType, existing node) error {
@@ -571,10 +587,8 @@ func (p *xmlParser) parseRestField() (*mapNode, error) {
 			currentFieldName, err = p.readElementRest()
 		case eventEndElement:
 			exit, err = p.endElementRest()
-		case eventCData:
-			err = p.readTextRest(currentFieldName, true)
-		case eventCharacters:
-			err = p.readTextRest(currentFieldName, false)
+		case eventCharacters, eventCData:
+			err = p.readTextRest(currentFieldName)
 			readNext = true
 		}
 		if err != nil {
@@ -704,8 +718,8 @@ func (p *xmlParser) endElementRest() (bool, error) {
 	return false, nil
 }
 
-func (p *xmlParser) readTextRest(name string, isCData bool) error {
-	text, commentInMiddle, err := p.readTextValue(isCData)
+func (p *xmlParser) readTextRest(name string) error {
+	text, commentInMiddle, err := p.readCharacters()
 	if err != nil {
 		return err
 	}
@@ -743,6 +757,7 @@ func (p *xmlParser) handleAttributes() error {
 	for _, attribute := range p.reader.attributes {
 		name := p.qname(attribute.name.ns, p.attributePrefix+attribute.name.local, attribute.name.prefix, stateAttribute)
 		field, _ := peek(p.attributeHierarchy).remove(name)
+		declared := field != nil
 		if field == nil {
 			name.state = stateNotDefined
 			found, err := p.fieldFromFieldHierarchy(name)
@@ -754,8 +769,12 @@ func (p *xmlParser) handleAttributes() error {
 			}
 			field = found
 		}
-		if converted, err := p.parserConvertStringToExpType(attribute.value, field.ty); err == nil {
+		converted, err := p.parserConvertStringToExpType(attribute.value, field.ty)
+		switch {
+		case err == nil:
 			p.currentNode.put(field.runtimeName, converted)
+		case declared:
+			return err
 		}
 	}
 	return nil
