@@ -52,6 +52,12 @@ type SameSingletonUnion record {|
     Inner|"none" p;
 |};
 
+type NumericSingletonUnion record {|
+    Inner|1.5 f;
+    Inner|2.5d d;
+    Inner|1.5 g;
+|};
+
 type A record {|
     int a;
 |};
@@ -136,4 +142,11 @@ public function main() {
     both("<x><p><name>c</name></p></x>", SameSingletonUnion);
     // @output {"p":{"name":"c"}}
     // @output {"p":{"name":"c"}}
+    foreach int _ in 0 ..< 2 {
+        both("<x><f><name>a</name></f><d><name>b</name></d><g><name>c</name></g></x>", NumericSingletonUnion);
+    }
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
+    // @output {"f":{"name":"a"},"d":{"name":"b"},"g":{"name":"c"}}
 }

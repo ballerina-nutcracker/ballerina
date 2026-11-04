@@ -18,9 +18,11 @@ package native
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
@@ -149,29 +151,63 @@ type typeEntry[V any] struct {
 	value V
 }
 
-// singletonKey records the int and the string a type's int and string parts consist of, when either is a
-// single value. Equal types have equal parts, so they always share a key.
+// singletonKey records the value a type's int, float, decimal and string parts each consist of, when the
+// part is a single value; a part with several values, such as a two-member enum, adds nothing to the key.
+// Equal types have equal parts, so they always share a key.
 type singletonKey struct {
 	intValue    int64
+	floatBits   uint64
+	decimalBits uint64
 	stringValue string
 	hasInt      bool
+	hasFloat    bool
+	hasDecimal  bool
 	hasString   bool
 }
 
 func singletonKeyOf(ty semtypes.SemType) singletonKey {
 	var key singletonKey
 	basic := semtypes.WidenToBasicTypes(ty)
-	if semtypes.ContainsBasicType(basic, semtypes.Int) {
-		if shape := semtypes.SingleShape(semtypes.Intersect(ty, semtypes.Int)); shape.IsPresent() {
-			key.intValue, key.hasInt = shape.Get().Value.(int64)
+	if v, ok := singleValueOf(ty, basic, semtypes.Int); ok {
+		key.intValue, key.hasInt = v.(int64)
+	}
+	if v, ok := singleValueOf(ty, basic, semtypes.Float); ok {
+		var f float64
+		f, key.hasFloat = v.(float64)
+		key.floatBits = floatKeyBits(f)
+	}
+	if v, ok := singleValueOf(ty, basic, semtypes.Decimal); ok {
+		var d *decimal.Decimal
+		if d, key.hasDecimal = v.(*decimal.Decimal); key.hasDecimal {
+			key.decimalBits = floatKeyBits(d.Float64())
 		}
 	}
-	if semtypes.ContainsBasicType(basic, semtypes.String) {
-		if shape := semtypes.SingleShape(semtypes.Intersect(ty, semtypes.String)); shape.IsPresent() {
-			key.stringValue, key.hasString = shape.Get().Value.(string)
-		}
+	if v, ok := singleValueOf(ty, basic, semtypes.String); ok {
+		key.stringValue, key.hasString = v.(string)
 	}
 	return key
+}
+
+func singleValueOf(ty, basic, part semtypes.SemType) (any, bool) {
+	if !semtypes.ContainsBasicType(basic, part) {
+		return nil, false
+	}
+	shape := semtypes.SingleShape(semtypes.Intersect(ty, part))
+	if !shape.IsPresent() {
+		return nil, false
+	}
+	return shape.Get().Value, true
+}
+
+// floatKeyBits gives values that may be the same shape, such as 0.0 and -0.0 or any two NaNs, one key.
+func floatKeyBits(f float64) uint64 {
+	switch {
+	case f == 0:
+		return 0
+	case math.IsNaN(f):
+		return math.Float64bits(math.NaN())
+	}
+	return math.Float64bits(f)
 }
 
 func newTypeKeyed[V any]() typeKeyed[V] {
