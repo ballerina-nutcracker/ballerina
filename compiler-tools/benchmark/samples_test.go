@@ -20,13 +20,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMain(m *testing.M) {
@@ -45,6 +48,77 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	m.Run()
+}
+
+// Phase ordering and raw persistence are host orchestration, outside corpus execution.
+func TestOddWarmupRestartsMeasuredPairOrder(t *testing.T) {
+	t.Parallel()
+	b := &benchmark{config: config{warmup: 1}}
+	var order []int
+	export, err := b.acquirePairs([]string{"B", "H"}, 2, "case", "s", nil, func(role int) (float64, error) {
+		order = append(order, role)
+		if len(order) <= 2 {
+			return 1000, nil
+		}
+		return float64(role + 1), nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(order, []int{0, 1, 0, 1, 1, 0}) {
+		t.Fatal(order)
+	}
+	if got := len(export.Results); got != 2 {
+		t.Fatalf("got %d role results, want 2", got)
+	}
+	for role, result := range export.Results {
+		if !slices.Equal(result.Times, []float64{float64(role + 1), float64(role + 1)}) {
+			t.Fatal(result)
+		}
+	}
+}
+
+// Invalid measurements and disk failures arise at host adapters, outside corpus execution.
+func TestAcquisitionRejectsInvalidValuesAndFailedWriter(t *testing.T) {
+	t.Parallel()
+	for _, value := range []float64{0, -1, math.NaN(), math.Inf(1)} {
+		b := &benchmark{config: config{warmup: 0}}
+		if _, err := b.acquirePairs([]string{"B", "H"}, 1, "case", "s", nil, func(int) (float64, error) { return value, nil }); err == nil {
+			t.Fatalf("accepted %v", value)
+		}
+	}
+	path := filepath.Join(t.TempDir(), "raw.jsonl")
+	w, err := newSampleWriter(path, sampleMetadata{Type: "metadata", Version: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.close(false); err != nil {
+		t.Fatal(err)
+	}
+	calls := 0
+	b := &benchmark{config: config{warmup: 0}}
+	if _, err := b.acquirePairs([]string{"B", "H"}, 1, "case", "s", w, func(int) (float64, error) {
+		calls++
+		return 1, nil
+	}); err == nil || calls != 1 {
+		t.Fatalf("writer failure: calls=%d, err=%v", calls, err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || strings.Contains(string(data), "complete") {
+		t.Fatalf("failed writer produced completion: %s, err=%v", data, err)
+	}
+	if err := w.completeCase("case"); err == nil {
+		t.Fatal("case completion on failed writer succeeded")
+	}
+	if err := w.close(true); err == nil {
+		t.Fatal("stream completion on failed writer succeeded")
+	}
+	if _, err := newSampleWriter(t.TempDir(), sampleMetadata{}); err == nil {
+		t.Fatal("directory accepted as raw output file")
+	}
+	if _, err := resolveSampleSHA(t.TempDir()); err == nil {
+		t.Fatal("non-repository accepted as sample revision")
+	}
 }
 
 // Ballerina corpus programs cannot exercise host JSONL persistence or write failures.
@@ -138,6 +212,9 @@ func TestRunCountsAndStableIDs(t *testing.T) {
 		{`{"version":1,"counts":{"a":12,"x":14}}`, false},
 		{`{"version":1,"counts":{"a":0,"b":14}}`, false},
 		{`{"version":1,"counts":{"a":1.5,"b":14}}`, false},
+		{`{"version":2,"counts":{"a":12,"b":14}}`, false},
+		{`{"version":1,"counts":{"a":12,"b":true}}`, false},
+		{`{"version":1,"counts":`, false},
 	} {
 		path := filepath.Join(t.TempDir(), "counts.json")
 		if err := os.WriteFile(path, []byte(test.data), 0600); err != nil {
@@ -147,6 +224,12 @@ func TestRunCountsAndStableIDs(t *testing.T) {
 		if (err == nil) != test.valid {
 			t.Fatalf("%s: %v", test.data, err)
 		}
+	}
+	if counts, err := loadRunCounts("", []string{"a", "b"}, 10); err != nil || !reflect.DeepEqual(counts, map[string]int{"a": 10, "b": 10}) {
+		t.Fatalf("default counts: %v, %v", counts, err)
+	}
+	if _, err := loadRunCounts(filepath.Join(t.TempDir(), "missing"), []string{"a"}, 10); err == nil {
+		t.Fatal("missing counts file accepted")
 	}
 	for _, test := range []struct {
 		target     benchmarkTarget
@@ -230,8 +313,16 @@ func TestMemoryAdapterBalancedPairs(t *testing.T) {
 func TestRealHyperfineSingleSample(t *testing.T) {
 	t.Parallel()
 	requireHyperfine(t)
+	bin, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := shellQuoteForOS(runtime.GOOS, bin) + " -test.run=TestHyperfineProbeProcess -- hyperfine-probe"
+	if runtime.GOOS == "windows" {
+		command = `"` + command + `"`
+	}
 	b := &benchmark{config: config{warmup: 0}}
-	export, err := b.runTimeBenchmark([]string{"--command-name", "base", "sleep 1", "--command-name", "head", "sleep 1"}, 2, t.TempDir(), "probe", nil)
+	export, err := b.runTimeBenchmark([]string{"--command-name", "base", command, "--command-name", "head", command}, 2, t.TempDir(), "probe", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,6 +330,12 @@ func TestRealHyperfineSingleSample(t *testing.T) {
 		if len(role.Times) != 2 || role.Mean <= 0 || role.Stddev < 0 {
 			t.Fatal(role)
 		}
+	}
+}
+
+func TestHyperfineProbeProcess(t *testing.T) {
+	if os.Args[len(os.Args)-1] == "hyperfine-probe" {
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 

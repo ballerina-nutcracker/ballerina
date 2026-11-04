@@ -129,18 +129,28 @@ programs have no issue-writing token. Checkouts do not persist credentials.
 
 An independent monitor watches this attempt's prepare, exact matrix job names,
 and report job every 30 seconds. Run start, setup, build, queue and report time
-count. At the first poll strictly beyond 330 minutes, unfinished or late-finished
-watched work opens or comments on **perf bench action takes dangerously more time**.
-It does not cancel measurement. The monitor excludes itself, treats missing
+count. The monitor samples the clock before requesting run and job status so an
+older pending snapshot cannot trigger a warning just because the poll crosses
+330 minutes. When a poll starts strictly beyond 330 minutes, unfinished or
+late-finished watched work opens or comments on the warning issue
+**perf bench action takes dangerously more time**. It does not cancel measurement. The monitor excludes itself, treats missing
 expected jobs as pending, and verifies a successful prepare's skip flag before
 treating absent matrix jobs as intentional. A failed prepare waits for the error
 report without inventing missing measurement work.
 
-Measurement and monitor jobs have GitHub's six-hour job limit. A terminated job's
-`always()` upload is best effort; forced runner termination can prevent upload.
-The earlier independent runtime warning does not require measurement artifacts.
-The report job validates this attempt's identities and raw data, reconstructing
-completed final cases when needed. Missing or timed-out suites remain incomplete.
+Measurement and monitor jobs have GitHub's six-hour job limit. On interruption,
+the coordinator gives the running command five seconds after SIGTERM, then kills
+and reaps it if needed so it can recover partial results and clean up. A terminated
+job's `always()` upload is best effort; forced runner termination can prevent upload.
+The independent runtime warning does not require artifacts. If the prepare
+manifest cannot be fetched or validated, the monitor logs the failure and still
+checks the deadline using the jobs it can see. Only a validated manifest can
+confirm a skipped comparison after successful prepare.
+The report job validates this attempt's identities and raw data and uses its own
+reconstructed statistics. Checks of saved derived floating-point statistics allow
+`1e-12` relative or absolute tolerance for host rounding differences. Case
+structure, verdicts, identities, and planned counts must match. Missing or
+timed-out suites remain incomplete.
 
 At least one confirmed completed regression opens an issue for the full base/head
 SHA pair, even alongside incomplete/error/inconclusive data. It contains full
@@ -159,8 +169,9 @@ Publication is serialized per regression SHA pair or repository runtime issue.
 REST operations paginate and retry transient/rate-limit failures three times
 with waits bounded at 60 seconds.
 An uncertain POST is followed by marker re-reading before any retry. After
-exhausted transient GET retries, the monitor waits 30 seconds and resumes polling.
-Nonretryable polling failures and exhausted retries elsewhere fail their jobs.
+exhausted transient run or job polling retries, the monitor waits 30 seconds and
+resumes polling. Nonretryable run or job polling failures and exhausted retries
+on required operations fail their jobs.
 Issue bodies escape dynamic text, suppress mentions and cap content at 60,000
 characters with full-evidence links.
 

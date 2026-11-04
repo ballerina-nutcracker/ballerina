@@ -302,6 +302,101 @@ class CoordinatorTests(unittest.TestCase):
             "no_regression",
         )
 
+    def test_reconstruction_rejects_runtime_estimate_and_sample_identity_corruption(
+        self,
+    ):
+        self.assertEqual(
+            run.run_suite("time", self.manifest, self.output, self.tool), 0
+        )
+        path = self.output / "plan.json"
+        original = path.read_text()
+        document = decode(original)
+        case = next(iter(document["plans"]))
+        for change in (
+            lambda d: d.update(runtime_estimate={}),
+            lambda d: d["runtime_estimate"].update(pilot_wall_seconds=0),
+            lambda d: d["runtime_estimate"].update(final_seconds=-1),
+            lambda d: d["plans"][case].update(estimated_seconds=-1),
+            lambda d: d["plans"][case].update(estimated_seconds=99),
+        ):
+            changed = decode(original)
+            change(changed)
+            path.write_text(json.dumps(changed))
+            with self.assertRaises(ValueError):
+                run.reconstruct("time", self.manifest, self.output)
+        path.write_text(original)
+        final = self.output / "final.jsonl"
+        final.write_text(final.read_text().replace(self.manifest["head_sha"], "f" * 40))
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            run.reconstruct("time", self.manifest, self.output)
+
+    def test_cleanup_failure_preserves_completed_case_results(self):
+        command = run._command
+
+        def fail_cleanup(argv, **kwargs):
+            if list(map(str, argv))[:3] == ["git", "worktree", "remove"]:
+                command(argv, **kwargs)
+                raise OSError("fixture cleanup failure")
+            return command(argv, **kwargs)
+
+        with patch("run._command", side_effect=fail_cleanup):
+            self.assertEqual(
+                run.run_suite("time", self.manifest, self.output, self.tool), 1
+            )
+        result = self.result()
+        self.assertEqual(result["completion"], "error")
+        self.assertIn("cleanup failed", result["message"])
+        self.assertEqual(result["cases"][0]["status"], "no_regression")
+        self.assertEqual(result["cases"][0]["observed_n"], 12)
+        self.clean()
+
+    def test_missing_head_workload_is_operational_failure(self):
+        self.git("rm", "-r", "corpus")
+        self.git("commit", "-m", "remove workload")
+        head = self.git("rev-parse", "HEAD")
+        self.manifest.update(head_sha=head, control_sha=head, tip_sha=head)
+        self.assertEqual(
+            run.run_suite("time", self.manifest, self.output, self.tool), 1
+        )
+        self.assertIn("workload directory missing", self.result()["message"])
+        self.assertFalse(self.log.exists())
+        self.clean()
+
+    def test_manifest_claim_collision_does_not_write_results(self):
+        self.output.mkdir()
+        claimed = {
+            "manifest.json": json.dumps(self.manifest),
+            "result.json": '{"owned_by": "first invocation"}',
+            "report.md": "# First invocation's report\n",
+        }
+        for name, content in claimed.items():
+            (self.output / name).write_text(content)
+        self.assertEqual(run.run_suite("time", self.manifest, self.output, self.tool), 1)
+        for name, content in claimed.items():
+            with self.subTest(artifact=name):
+                self.assertEqual((self.output / name).read_text(), content)
+        self.assertFalse(self.log.exists())
+
+    def test_concurrent_invocation_cannot_write_before_manifest_exists(self):
+        command = run._command
+        attempted = False
+
+        def run_competing_invocation(argv, **kwargs):
+            nonlocal attempted
+            if not attempted:
+                attempted = True
+                wrong_control = dict(self.manifest, control_sha=self.manifest["base_sha"])
+                self.assertFalse((self.output / "manifest.json").exists())
+                self.assertEqual(run.run_suite("time", wrong_control, self.output, self.tool), 1)
+                self.assertFalse((self.output / "result.json").exists())
+                self.assertFalse((self.output / "report.md").exists())
+            return command(argv, **kwargs)
+
+        with patch("run._command", side_effect=run_competing_invocation):
+            self.assertEqual(run.run_suite("time", self.manifest, self.output, self.tool), 0)
+        self.assertTrue(attempted)
+        self.assertEqual(self.result()["completion"], "complete")
+
     def test_output_is_not_resampled_and_control_is_frozen(self):
         self.assertEqual(
             run.run_suite("time", self.manifest, self.output, self.tool), 0
@@ -326,6 +421,9 @@ class CoordinatorTests(unittest.TestCase):
             run.run_suite("time", self.manifest, self.output, self.tool), 1
         )
         self.assertEqual(self.calls(), before)
+        self.assertEqual(self.result()["completion"], "error")
+        self.assertIn("control checkout SHA differs", self.result()["message"])
+        self.assertTrue((self.output / "report.md").is_file())
         self.clean()
 
     def test_skip_never_invokes_tool(self):
@@ -343,6 +441,34 @@ class CoordinatorTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+
+    def test_environment_and_unavailable_version_tools_are_recorded(self):
+        with patch.dict(
+            os.environ,
+            {"GITHUB_TOKEN": "secret", "GH_TOKEN": "secret", "PERF_SAFE": "keep"},
+        ):
+            env = run._environment()
+        self.assertNotIn("GITHUB_TOKEN", env)
+        self.assertNotIn("GH_TOKEN", env)
+        self.assertEqual(env["PERF_SAFE"], "keep")
+        with patch(
+            "run.subprocess.run",
+            side_effect=FileNotFoundError("fixture missing executable"),
+        ):
+            versions = run._versions()
+        for tool in ("go", "hyperfine", "wrk"):
+            self.assertIn("fixture missing executable", versions[tool])
+        for key in ("os", "cpu", "machine", "cpu_count", "python", "numpy", "scipy"):
+            self.assertIn(key, versions)
+        with patch(
+            "run.subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [], 0, "fixture version\n", "diagnostic\n"
+            ),
+        ):
+            versions = run._versions()
+        for tool in ("go", "hyperfine", "wrk"):
+            self.assertEqual(versions[tool], "fixture version\ndiagnostic")
 
     def test_fixture_ignores_inherited_git_environment_and_user_config(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -500,7 +626,10 @@ class CommandTests(unittest.TestCase):
             worker = root / "worker.py"
             worker.write_text(
                 "import os,signal,time,sys\nfrom pathlib import Path\n"
-                f"def stop(*args):\n Path({str(stopped)!r}).write_text('terminated')\n sys.exit(0)\n"
+                "def stop(*args):\n"
+                f" Path({str(stopped.with_suffix('.tmp'))!r}).write_text('terminated')\n"
+                f" Path({str(stopped.with_suffix('.tmp'))!r}).replace({str(stopped)!r})\n"
+                " sys.exit(0)\n"
                 "signal.signal(signal.SIGTERM,stop)\n"
                 f"Path({str(ready)+'.tmp'!r}).write_text(str(os.getpgrp()))\n"
                 f"Path({str(ready)+'.tmp'!r}).replace({str(ready)!r})\n"
@@ -545,6 +674,53 @@ class CommandTests(unittest.TestCase):
                         os.killpg(int(ready.read_text()), signal.SIGKILL)
                     except ProcessLookupError:
                         pass
+
+
+    @unittest.skipUnless(os.name == "posix", "nightly subprocess groups require POSIX")
+    def test_interruption_escalates_when_wrapper_ignores_sigterm(self):
+        import signal
+        import time
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ready = Path(tmp) / "ready"
+            pending = ready.with_suffix(".tmp")
+            wrapper = (
+                "import os,signal,time\nfrom pathlib import Path\n"
+                "signal.signal(signal.SIGTERM,signal.SIG_IGN)\n"
+                f"Path({str(pending)!r}).write_text(str(os.getpgrp()))\n"
+                f"Path({str(pending)!r}).replace({str(ready)!r})\n"
+                "while True:time.sleep(.1)\n"
+            )
+            outer = (
+                "import sys,signal\n"
+                f"sys.path.insert(0,{str(Path(__file__).resolve().parent)!r})\n"
+                "import run\nsignal.signal(signal.SIGTERM,run._terminated)\n"
+                f"try:\n run._command([sys.executable,'-c',{wrapper!r}])\n"
+                "except InterruptedError:\n sys.exit(23)\n"
+            )
+            with subprocess.Popen(
+                [sys.executable, "-c", outer], stdout=subprocess.DEVNULL
+            ) as proc:
+                try:
+                    deadline = time.monotonic() + 60
+                    while not ready.exists() and time.monotonic() < deadline:
+                        self.assertIsNone(
+                            proc.poll(), "coordinator exited before wrapper started"
+                        )
+                        time.sleep(0.05)
+                    self.assertTrue(ready.exists(), "wrapper did not start")
+                    proc.terminate()
+                    self.assertEqual(proc.wait(timeout=12), 23)
+                    with self.assertRaises(ProcessLookupError):
+                        os.killpg(int(ready.read_text()), 0)
+                finally:
+                    if ready.exists():
+                        try:
+                            os.killpg(int(ready.read_text()), signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                    if proc.poll() is None:
+                        proc.kill()
 
 
 if __name__ == "__main__":

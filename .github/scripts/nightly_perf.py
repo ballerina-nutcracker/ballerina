@@ -178,7 +178,8 @@ class GitHubClient:
 
     def request(self, path, *, method="GET", data=None, binary=False, attempts=3):
         url = urljoin(self.base_url, path.lstrip("/"))
-        if urlparse(url).netloc != urlparse(self.base_url).netloc:
+        base, target = urlparse(self.base_url), urlparse(url)
+        if (target.scheme, target.netloc) != (base.scheme, base.netloc):
             raise ValueError("API pagination left trusted host")
         for attempt in range(attempts):
             headers = {
@@ -384,27 +385,35 @@ def monitor_run(repository: str, run_id: int, attempt: int) -> int:
     path = f"repos/{repository}/actions/runs/{run_id}/attempts/{attempt}"
     manifest = None
     while True:
+        observed_at = datetime.now(timezone.utc)
         try:
             run, _ = client.request(path)
             if run.get("conclusion") == "cancelled":
                 return 0
             jobs = list(client.pages(path + "/jobs", "jobs"))
-            prepare = next((j for j in jobs if j["name"] == "prepare"), None)
-            if (
-                manifest is None
-                and prepare
-                and prepare["status"] == "completed"
-                and prepare.get("conclusion") == "success"
-            ):
-                manifest = _remote_manifest(client, repository, run_id, attempt)
         except APIError as exc:
             if not exc.retryable:
                 raise
             time.sleep(30)
             continue
+        prepare = next((j for j in jobs if j["name"] == "prepare"), None)
+        if (
+            manifest is None
+            and prepare
+            and prepare["status"] == "completed"
+            and prepare.get("conclusion") == "success"
+        ):
+            try:
+                manifest = _remote_manifest(client, repository, run_id, attempt)
+            except Exception as exc:
+                # An optional manifest must not prevent checking the deadline.
+                print(
+                    f"Runtime monitor: manifest unavailable: {short_display(exc)}",
+                    file=sys.stderr,
+                )
         state, pending, elapsed = monitor_state(
             _instant(run["run_started_at"]),
-            datetime.now(timezone.utc),
+            observed_at,
             jobs,
             None if manifest is None else bool(manifest["skipped"]),
         )
