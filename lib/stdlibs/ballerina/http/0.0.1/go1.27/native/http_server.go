@@ -651,7 +651,7 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 			holder = &responseBodyHolder{buf: data}
 			wireContentType = ct
 		}
-		writeResponseObject(w, v, holder, wireContentType, timeout)
+		writeResponseObject(w, r, v, holder, wireContentType, timeout)
 	case *values.Stream:
 		resp, err := createSSEResponse(ctx, v)
 		if err != nil {
@@ -659,7 +659,7 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 			return
 		}
 		holder, _ := responseBodyOf(resp)
-		writeResponseObject(w, resp, holder, "", timeout)
+		writeResponseObject(w, r, resp, holder, "", timeout)
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
@@ -700,7 +700,7 @@ func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTyp
 
 // wireContentType, when non-empty, replaces the Content-Type header, carrying the boundary a
 // multipart body was encoded with.
-func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string,
+func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Object, holder *responseBodyHolder, wireContentType string,
 	timeout time.Duration) {
 	statusCodeVal, _ := resp.Get("statusCode")
 	statusCode := http.StatusOK
@@ -744,6 +744,9 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 	// can't be recovered with a JSON error body.
 	if holder.noCache && w.Header().Get("Cache-Control") == "" {
 		w.Header().Set("Cache-Control", "no-cache,public")
+	}
+	if r.ProtoMajor == 1 && r.ProtoMinor == 1 && strings.HasPrefix(w.Header().Get("Content-Type"), "text/event-stream") {
+		w.Header().Set("Connection", "keep-alive")
 	}
 	w.WriteHeader(statusCode)
 	if holder.source != nil {

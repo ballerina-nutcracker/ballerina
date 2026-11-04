@@ -226,6 +226,14 @@ public function testMain() returns error? {
     // @output ["data: hello\n\nid: 1\nevent: update\ndata: a\ndata: b\n\n"]
     io:println([check raw.getTextPayload()]);
 
+    // Over HTTP/1.1 an event stream also carries Connection: keep-alive; other responses do not.
+    http:Response h1Events = check h1->get("/events");
+    io:println(h1Events.getHeader("connection")); // @output keep-alive
+    _ = check h1Events.getTextPayload();
+    http:Response h1Bytes = check h1->get("/bytes");
+    io:println(h1Bytes.hasHeader("connection")); // @output false
+    _ = check h1Bytes.getTextPayload();
+
     http:Response cached = check c->get("/cached");
     io:println(check cached.getHeader("cache-control")); // @output no-store
 
