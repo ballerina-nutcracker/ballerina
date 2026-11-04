@@ -16,11 +16,11 @@
 import ballerina/io;
 
 type R record {|
-    R? r = B;
+    R? r = B; // @error constant B needs this provider again
     int y = 1;
 |};
 
-const R B = {}; // @error B needs R's default r, which is B itself
+const R B = {};
 
 public function main() {
     io:println(B);

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for C
+  --> constant-annotation-cycle-tuple-e.bal:17:17
+   |
+17 | const map<Rec?> C = {a: ()}; // @error the annotation refers back to C through a recursive tuple
+   |                 ^

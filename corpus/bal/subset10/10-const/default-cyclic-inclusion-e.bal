@@ -15,14 +15,14 @@
 // under the License.
 import ballerina/io;
 
-type B record {| // @error cyclic dependency in record field default
+type B record {|
     *A;
     int z = 3;
 |};
 
 type A record {|
     int x = 1;
-    B? bb = {};
+    B? bb = {}; // @error inherited provider forms a value cycle
 |};
 
 public function main() {

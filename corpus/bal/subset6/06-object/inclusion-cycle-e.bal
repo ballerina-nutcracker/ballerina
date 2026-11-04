@@ -19,7 +19,7 @@ type A object { // @error
     int x;
 };
 
-type B object { // @error
+type B object {
     *A;
     int y;
 };

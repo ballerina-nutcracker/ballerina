@@ -21,7 +21,7 @@ function selected(IntValue value = new (later)) returns boolean {
 }
 
 const later = A; // @error
-const A = later; // @error
+const A = later;
 
 public function main() {
 }

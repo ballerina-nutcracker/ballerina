@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> default-foreach-body-failure-e.bal:18:31
+   |
+18 |     foreach record {| int x = true + 1; |} item in [{x: 1}] { // @error invalid default in the iteration type
+   |                               ^^^^^^^^

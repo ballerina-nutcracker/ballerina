@@ -16,11 +16,11 @@
 import ballerina/io;
 
 type A record {|
-    B? b = {}; // @error B selects X, which defers A, whose default builds B
+    B? b = {};
 |};
 
 type B record {|
-    X|Y f = {a: {}};
+    X|Y f = {a: {}}; // @error selected constructor requires a cyclic default
 |};
 
 type X record {|

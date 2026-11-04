@@ -48,7 +48,9 @@ var pureMethods = map[string]map[string]bool{
 // Functions and methods declared in other packages that walks may use, keyed by package path. A method name allows
 // that method on every type of the package, including interface methods.
 var allowedFuncs = map[string]map[string]bool{
-	astPkg: {"Walk": true, "WalkTypeData": true, "Symbol": true},
+	astPkg: {"Walk": true, "WalkTypeData": true, "Symbol": true,
+		"TypeNode": true, "GetTypeData": true, "GetParameters": true, "GetRestParam": true, "GetReturnTypeDescriptor": true,
+		"Lhs": true, "Rhs": true, "FieldPtrs": true, "Members": true},
 	"github.com/ballerina-nutcracker/ballerina/model": {"IsEmpty": true},
 	"sort": {"Ints": true},
 }
@@ -221,7 +223,15 @@ func checkPurity(pass *analysis.Pass, decl ast.Decl) {
 				addWrites(n.Key, n.Value)
 			}
 			if rangesOverFuncValue(info, n.X) {
-				report(n.X, "unresolved call")
+				call, called := ast.Unparen(n.X).(*ast.CallExpr)
+				var iterator *types.Func
+				if called {
+					iterator, _ = typeutil.Callee(info, call).(*types.Func)
+				}
+				if iterator == nil || iterator.Pkg() == nil || iterator.Pkg().Path() != astPkg ||
+					(iterator.Name() != "FieldPtrs" && iterator.Name() != "Members") {
+					report(n.X, "unresolved call")
+				}
 			}
 		case *ast.CallExpr:
 			if tv, ok := info.Types[n.Fun]; ok && tv.IsType() {
