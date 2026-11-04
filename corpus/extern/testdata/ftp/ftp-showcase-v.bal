@@ -124,15 +124,16 @@ public function main() returns error? {
         host: "127.0.0.1",
         port: ftpPort(),
         auth: {credentials: {username: "ballerina", password: "ballerina"}},
-        pollingInterval: 0.5
+        pollingInterval: 3600
     });
     ftp:Service svc = new JsonService();
     check ftpListener.attach(svc);
     check ftpListener.'start();
     Order secondOrder = {id: 2, item: "book"};
     check ftpClient->putJson("/data/in/o2.json", secondOrder);
+    check ftpListener.poll();
 
-    foreach int _ in 0 ..< 100 {
+    foreach int _ in 0 ..< 600 {
         boolean pending = check ftpClient->exists("/data/in/o2.json");
         if !pending {
             break;
