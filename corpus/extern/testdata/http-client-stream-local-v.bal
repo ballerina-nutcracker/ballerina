@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/io;
+import ballerina/lang.runtime;
 
 class Chunks {
     private final string[] parts;
@@ -45,6 +46,37 @@ class Failing {
         self.sent = true;
         return {value: "partial".toBytes()};
     }
+}
+
+class Paced {
+    private int sent = 0;
+
+    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+        if self.sent == 5 {
+            return;
+        }
+        self.sent += 1;
+        runtime:sleep(0.05);
+        return {value: "0123456789".toBytes()};
+    }
+}
+
+class Panicking {
+    private boolean sent = false;
+
+    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+        if self.sent {
+            int[] empty = [];
+            return {value: [<byte>empty[3]]};
+        }
+        self.sent = true;
+        return {value: "abc".toBytes()};
+    }
+}
+
+function postSink(http:Client c, stream<byte[], io:Error?> body) returns string|error {
+    string response = check c->post("/sink", body);
+    return response;
 }
 
 function chunks(string... parts) returns stream<byte[], io:Error?> {
@@ -93,6 +125,16 @@ public function main() returns error? {
 
     string|error failed = c->post("/echo", new stream<byte[], io:Error?>(new Failing()));
     io:println(failed is error ? failed.message() : failed); // @output Error occurred while streaming content: boom
+
+    // The whole body is sent even when the server answers before it has read it.
+    string early = check c->post("/early", new stream<byte[], io:Error?>(new Paced()));
+    io:println(early); // @output read=50
+
+    // A panic in the body stream's next() ends the request instead of leaving it open.
+    string|error panicked = trap postSink(c, new (new Panicking()));
+    io:println(panicked is error ? panicked.message() : panicked); // @output invalid array index: 3
+    string sink = check c->get("/sink-result");
+    io:println(sink); // @output read=3 failed=true
 
     // ---- reading response bodies as byte streams ----
     http:Response download = check c->get("/download");

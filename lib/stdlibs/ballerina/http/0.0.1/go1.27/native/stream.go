@@ -180,11 +180,12 @@ func sendRequest(ctx *extern.Context, client pal.HTTPClient, method, url string,
 	return client.Execute(goCtxOrBackground(ctx), method, url, body.reader, body.length, contentType, headers)
 }
 
-var errResponseReceived = errors.New("response received before the request body was sent")
+var errStreamPanicked = errors.New("request body stream panicked")
 
 // executeStreamed drains a Ballerina byte stream on the calling strand into a pipe the transport
 // reads from, so the stream's next() never runs on a transport goroutine. The body is sent
-// chunked, and stops once the response has arrived.
+// chunked, and keeps flowing after the response arrives, until the stream ends or the transport
+// stops reading it.
 func executeStreamed(goCtx context.Context, client pal.HTTPClient, method, url string, source *values.Stream,
 	contentType string, headers map[string][]string) (int, map[string][]string, io.ReadCloser, error) {
 	type result struct {
@@ -197,8 +198,19 @@ func executeStreamed(goCtx context.Context, client pal.HTTPClient, method, url s
 	done := make(chan result, 1)
 	go func() {
 		status, respHeaders, respBody, err := client.Execute(goCtx, method, url, pr, -1, contentType, headers)
-		_ = pr.CloseWithError(errResponseReceived)
+		if err != nil {
+			_ = pr.CloseWithError(err)
+		}
 		done <- result{status, respHeaders, respBody, err}
+	}()
+	defer func() {
+		if rec := recover(); rec != nil {
+			_ = pw.CloseWithError(errStreamPanicked)
+			if res := <-done; res.body != nil {
+				_ = res.body.Close()
+			}
+			panic(rec)
+		}
 	}()
 	reader := newBalStreamReader(source)
 	buf := make([]byte, 32*1024)
