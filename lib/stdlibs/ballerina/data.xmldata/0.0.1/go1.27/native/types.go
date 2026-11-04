@@ -490,8 +490,8 @@ func (t *typer) isSupported(ty semtypes.SemType, visiting map[string]bool) bool 
 	visiting[key] = true
 	ti := t.classify(ty)
 	switch ti.kind {
-	case kindNil, kindInt, kindByte, kindFloat, kindDecimal, kindBoolean, kindString, kindRecord, kindMap,
-		kindJSON, kindAnydata, kindFinite, kindXML, kindXMLElement, kindXMLText:
+	case kindNil, kindInt, kindByte, kindIntSubtype, kindFloat, kindDecimal, kindBoolean, kindString, kindRecord,
+		kindMap, kindJSON, kindAnydata, kindFinite, kindXML, kindXMLElement, kindXMLText:
 		return true
 	case kindArray:
 		return t.isSupported(ti.element, visiting)

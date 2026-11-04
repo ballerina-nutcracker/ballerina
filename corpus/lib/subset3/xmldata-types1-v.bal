@@ -20,7 +20,6 @@ import ballerina/io;
 type XmlFields record {|
     xml x;
     xml:Element e;
-    xml:Text t;
 |};
 
 type Nested string|Nested[];
@@ -61,13 +60,11 @@ function show(anydata|error v) {
 }
 
 public function main() returns error? {
-    XmlFields fields = check xmldata:parseAsType(xml `<r><x><p>1</p></x><e><q a="1"/></e><t>plain</t></r>`);
+    XmlFields fields = check xmldata:parseAsType(xml `<r><x><p>1</p></x><e><q a="1"/></e></r>`);
     io:println(fields.x);
     // @output <x><p>1</p></x>
     io:println(fields.e);
     // @output <e><q a="1"/></e>
-    io:println(fields.t);
-    // @output <t>plain</t>
     // A recursive field type is classified without expanding it without end.
     RecursiveField|xmldata:Error recursive = xmldata:parseString("<r><n>a</n></r>");
     show(recursive);

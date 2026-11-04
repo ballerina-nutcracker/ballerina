@@ -190,7 +190,7 @@ func (a *analyzer) convertXML(item values.XMLValue, isText bool) error {
 	if ti := a.classify(fieldType); ti.kind == kindUnion {
 		saved := a.snapshot()
 		for _, member := range ti.members {
-			if !existingIsArray && a.classify(member).kind == kindArray {
+			if !existingIsArray && a.classify(member).kind == kindArray || !a.continuesArray(existing, member) {
 				continue
 			}
 			value, err := a.convertedXMLValue(item, isText, member)
@@ -229,8 +229,8 @@ func (a *analyzer) convertXML(item values.XMLValue, isText bool) error {
 			return a.projectionCheck()
 		}
 		if a.classify(fieldInfo.element).kind == kindXMLText {
-			if _, isElement := item.(*values.XMLElement); isElement {
-				return cannotConvertError("xml<lang.xml:Text>", xmlText(item), a.typeName(fieldType))
+			if err := a.rejectElementForText(item, fieldType); err != nil {
+				return err
 			}
 		}
 		array.add(index, converted)
@@ -243,12 +243,25 @@ func (a *analyzer) convertXML(item values.XMLValue, isText bool) error {
 	return nil
 }
 
-// convertedXMLValue converts text content to the field type, or copies an XML item.
+// convertedXMLValue converts text content to the field type, or copies an XML item. An element is rejected
+// for an xml:Text type, which cannot hold it.
 func (a *analyzer) convertedXMLValue(item values.XMLValue, isText bool, ty semtypes.SemType) (node, error) {
-	if !isText {
-		return copyXML(a.tc, item), nil
+	if isText {
+		return a.convertStringToExpType(xmlText(item), ty)
 	}
-	return a.convertStringToExpType(xmlText(item), ty)
+	if a.classify(ty).kind == kindXMLText {
+		if err := a.rejectElementForText(item, ty); err != nil {
+			return nil, err
+		}
+	}
+	return copyXML(a.tc, item), nil
+}
+
+func (a *analyzer) rejectElementForText(item values.XMLValue, ty semtypes.SemType) error {
+	if _, isElement := item.(*values.XMLElement); isElement {
+		return cannotConvertError("xml", xmlText(item), a.typeName(ty))
+	}
+	return nil
 }
 
 func (a *analyzer) convertElement(element *values.XMLElement) error {
@@ -283,7 +296,7 @@ func (a *analyzer) convertElement(element *values.XMLElement) error {
 			if fields.containsLocal(elementLocal) {
 				return undefinedFieldError(elementLocal, a.rootRecordName())
 			}
-			return a.convertToRestType(element, *rest)
+			return a.convertToRestType(element, element.LocalName, *rest)
 		case !a.allowDataProjection:
 			return undefinedFieldError(elementLocal, a.rootRecordName())
 		}
@@ -320,7 +333,7 @@ func (a *analyzer) convertToFieldType(element *values.XMLElement, field *recordF
 	case kindJSON, kindAnydata:
 		a.updateNextMap(ty)
 		a.arrayIndexes = append(a.arrayIndexes, map[string]int{})
-		if err := a.convertToRestType(element, ty); err != nil {
+		if err := a.convertToRestType(element, field.runtimeName, ty); err != nil {
 			return err
 		}
 		a.popExpectedTypeStacks()
@@ -334,24 +347,46 @@ func (a *analyzer) convertToFieldType(element *values.XMLElement, field *recordF
 	return a.convertSequence(childrenOf(element), ty)
 }
 
+// convertFieldTypeToUnion tries each member in turn. Once an earlier element has started an array, a
+// repeated element is converted only into that array's member, so a retry never drops or mixes values.
 func (a *analyzer) convertFieldTypeToUnion(element *values.XMLElement, field *recordField, ti typeInfo, mapValue *mapNode) error {
 	saved := a.snapshot()
+	previous, hadPrevious := mapValue.values[field.runtimeName]
 	for _, member := range ti.members {
-		if semtypes.IsSubtypeSimple(member, semtypes.Error) {
+		if semtypes.IsSubtypeSimple(member, semtypes.Error) || !a.continuesArray(previous, member) {
 			continue
 		}
 		if err := a.convertToFieldType(element, field, member, mapValue); err == nil {
 			return nil
 		}
 		a.resetFrom(saved)
-		mapValue.put(field.runtimeName, nil)
+		if hadPrevious {
+			mapValue.put(field.runtimeName, previous)
+		} else {
+			mapValue.put(field.runtimeName, nil)
+		}
 	}
 	return fieldCannotConvertError(field.name, a.typeName(ti.ty))
 }
 
+// continuesArray reports whether member may take the next element of a field whose value is existing: once
+// an array is started, only its own member type, or json or anydata, which append to it, may.
+func (a *analyzer) continuesArray(existing node, member semtypes.SemType) bool {
+	array, ok := existing.(*arrayNode)
+	if !ok {
+		return true
+	}
+	switch ti := a.classify(member); {
+	case ti.kind == kindArray:
+		return semtypes.IsSameType(a.tc, member, array.ty.ty)
+	default:
+		return ti.isAnydataOrJSON()
+	}
+}
+
 func (a *analyzer) convertToArrayType(element *values.XMLElement, key string, arrayInfo typeInfo, mapValue *mapNode) error {
 	if a.classify(arrayInfo.element).isAnydataOrJSON() {
-		return a.convertToRestType(element, arrayInfo.ty)
+		return a.convertToRestType(element, key, arrayInfo.ty)
 	}
 	if mapValue.get(key) == nil {
 		peek(a.arrayIndexes)[key] = 0
@@ -482,8 +517,7 @@ func (a *analyzer) updateNextMappingValue(ty semtypes.SemType, key string, field
 	return next, nil
 }
 
-func (a *analyzer) convertToRestType(element *values.XMLElement, restType semtypes.SemType) error {
-	name := element.LocalName
+func (a *analyzer) convertToRestType(element *values.XMLElement, name string, restType semtypes.SemType) error {
 	a.currentField = &recordField{name: name, runtimeName: name, ty: restType, optional: true}
 	return a.checkRestTypeAndConvert(element, name, restType, restType, a.currentNode)
 }
@@ -762,6 +796,7 @@ func (a *analyzer) handleAttributes(element *values.XMLElement, current *mapNode
 		}
 		name := a.attributeQName(prefixes, attribute.key, a.attributePrefix)
 		field, _ := peek(a.attributeHierarchy).remove(name)
+		declared := field != nil
 		if field == nil {
 			if inner[name.local] {
 				continue
@@ -782,8 +817,12 @@ func (a *analyzer) handleAttributes(element *values.XMLElement, current *mapNode
 		if !a.isSupportedTypeForAttributes(field.ty) {
 			return cannotConvertAttributeToArrayError(field.name, a.typeName(field.ty))
 		}
-		if converted, err := a.convertStringToExpType(attribute.value, field.ty); err == nil {
+		converted, err := a.convertStringToExpType(attribute.value, field.ty)
+		switch {
+		case err == nil:
 			current.put(field.runtimeName, converted)
+		case declared:
+			return err
 		}
 	}
 	return nil
