@@ -23,9 +23,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
@@ -38,11 +40,11 @@ import (
 )
 
 type completionConfig struct {
-	Position         protocol.Position      `json:"position"`
-	Source           string                 `json:"source"`
-	Description      string                 `json:"description"`
-	TriggerCharacter string                 `json:"triggerCharacter"`
-	Items            []completionConfigItem `json:"items"`
+	Position         protocol.Position `json:"position"`
+	Source           string            `json:"source"`
+	Description      string            `json:"description"`
+	TriggerCharacter string            `json:"triggerCharacter"`
+	Items            []json.RawMessage `json:"items"`
 }
 
 type completionConfigItem struct {
@@ -55,23 +57,45 @@ type completionConfigItem struct {
 }
 
 type completionConfigEnv struct {
-	ConfigDir   string
-	PackageOrg  string
-	PackageName string
-	Repository  string // path under completion/testdata; empty means no repository is configured
-	ProjectRoot string // path under completion/testdata copied into the temporary workspace; empty creates a single-file project
-	Packages    []completion.AvailablePackage
+	ConfigDir      string
+	PackageOrg     string
+	PackageName    string
+	Repository     string // path under completion/testdata; empty means no repository is configured
+	ProjectRoot    string // path under completion/testdata copied into the temporary workspace; empty uses PackageName or an overlay-only single file
+	Packages       []completion.AvailablePackage
+	SnippetSupport bool
+	ExactItems     bool
+}
+
+func TestSingleRequestCompletionConfigs(t *testing.T) {
+	t.Parallel()
+	env := completionConfigEnv{
+		ConfigDir:      "completion/testdata/config",
+		PackageOrg:     "",
+		PackageName:    "",
+		Repository:     "",
+		ProjectRoot:    "",
+		Packages:       nil,
+		SnippetSupport: false,
+		ExactItems:     true,
+	}
+	configs := discoverCompletionConfigs(t, env.ConfigDir)
+	if len(configs) != 10 {
+		t.Fatalf("completion config count = %d, want 10", len(configs))
+	}
+	runCompletionConfigs(t, env, configs)
 }
 
 func TestEnumDeclarationCompletionConfigs(t *testing.T) {
 	t.Parallel()
 	env := completionConfigEnv{
-		ConfigDir:   "completion/testdata/enum_decl_ctx/config",
-		PackageOrg:  "completion",
-		PackageName: "enum_decl_ctx",
-		Repository:  "repository",
-		ProjectRoot: "enum_decl_ctx/source/projectls",
-		Packages:    enumMemberAvailablePackages,
+		ConfigDir:      "completion/testdata/enum_decl_ctx/config",
+		PackageOrg:     "completion",
+		PackageName:    "enum_decl_ctx",
+		Repository:     "repository",
+		ProjectRoot:    "enum_decl_ctx/source/projectls",
+		Packages:       enumMemberAvailablePackages,
+		SnippetSupport: true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
 	if len(configs) != 5 {
@@ -83,11 +107,12 @@ func TestEnumDeclarationCompletionConfigs(t *testing.T) {
 func TestTypeDefinitionCompletionConfigs(t *testing.T) {
 	t.Parallel()
 	env := completionConfigEnv{
-		ConfigDir:   "completion/testdata/type_def/config",
-		PackageOrg:  "completion",
-		PackageName: "type_def",
-		Repository:  "repository",
-		Packages:    typeDefinitionAvailablePackages,
+		ConfigDir:      "completion/testdata/type_def/config",
+		PackageOrg:     "completion",
+		PackageName:    "type_def",
+		Repository:     "repository",
+		Packages:       typeDefinitionAvailablePackages,
+		SnippetSupport: true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
 	if len(configs) != 7 {
@@ -99,11 +124,12 @@ func TestTypeDefinitionCompletionConfigs(t *testing.T) {
 func TestModuleVarContextCompletionConfigs(t *testing.T) {
 	t.Parallel()
 	env := completionConfigEnv{
-		ConfigDir:   "completion/testdata/module_var_context/config",
-		PackageOrg:  "completion",
-		PackageName: "module_var_context",
-		Repository:  "repository",
-		Packages:    typeDefinitionAvailablePackages,
+		ConfigDir:      "completion/testdata/module_var_context/config",
+		PackageOrg:     "completion",
+		PackageName:    "module_var_context",
+		Repository:     "repository",
+		Packages:       typeDefinitionAvailablePackages,
+		SnippetSupport: true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
 	if len(configs) != 1 {
@@ -139,6 +165,7 @@ func skipList() []string {
 
 func runCompletionConfigs(t *testing.T, env completionConfigEnv, configs []string) {
 	t.Helper()
+	client := newCompletionConfigClient(t, env, len(configs))
 	skips := skipList()
 	for _, configPath := range configs {
 		t.Run(path.Base(configPath), func(t *testing.T) {
@@ -151,12 +178,16 @@ func runCompletionConfigs(t *testing.T, env completionConfigEnv, configs []strin
 			if err != nil {
 				t.Fatal(err)
 			}
-			actual := completionConfigRequest(t, env, config.Source, string(source), config.Position)
+			actual := client.complete(t, env, config.Source, string(source), config.Position)
 			if *update {
 				writeCompletionConfigItems(t, configPath, raw, actual)
 				return
 			}
-			compareCompletionConfigItems(t, config.Items, actual)
+			if env.ExactItems {
+				compareExactCompletionConfigItems(t, config.Items, actual)
+			} else {
+				compareCompletionConfigItems(t, config.Items, actual)
+			}
 		})
 	}
 }
@@ -216,8 +247,108 @@ func copyCompletionProject(t *testing.T, from, to string) {
 	}
 }
 
-func completionConfigRequest(t *testing.T, env completionConfigEnv, sourcePath, source string, position protocol.Position) []protocol.CompletionItem {
+type completionConfigClient struct {
+	mu        sync.Mutex
+	transport *stepTransport
+	server    *server.Server
+	workspace *workspace.ProjectService
+	nextID    int
+}
+
+func newCompletionConfigClient(t *testing.T, env completionConfigEnv, configs int) *completionConfigClient {
 	t.Helper()
+	transport := &stepTransport{}
+	bus := event.New()
+	projectService := workspace.New(os.DirFS, bus, workspace.WithMaxProjects(2*configs))
+	compiler := compile.New(projectService, bus, compile.WithDebounce(0), compile.WithMaxStableSnapshots(2*configs))
+	srv := server.New(transport, projectService, compiler, bus, server.WithAvailablePackages(env.Packages))
+	client := &completionConfigClient{
+		mu:        sync.Mutex{},
+		transport: transport,
+		server:    srv,
+		workspace: projectService,
+		nextID:    2,
+	}
+	t.Cleanup(func() {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+		defer bus.Close()
+		defer compiler.Shutdown()
+		client.exchange(t)
+	})
+	initializeParams := map[string]any{}
+	if env.SnippetSupport {
+		initializeParams["capabilities"] = map[string]any{"textDocument": map[string]any{"completion": map[string]any{"completionItem": map[string]any{"snippetSupport": true}}}}
+	}
+	responses := client.exchange(t,
+		completionConfigMessage(1, "initialize", initializeParams),
+		completionConfigMessage(nil, "initialized", map[string]any{}),
+	)
+	completionConfigResult(t, 1, responses)
+	return client
+}
+
+// Callers serialize whole fixture transactions, including repository changes and all asynchronous output.
+func (c *completionConfigClient) exchange(t *testing.T, messages ...protocol.Message) []json.RawMessage {
+	t.Helper()
+	messages = append(messages,
+		completionConfigMessage(nil, "$test/flushRequests", map[string]any{}),
+		completionConfigMessage(nil, "$test/flush", map[string]any{}),
+	)
+	var input bytes.Buffer
+	for _, message := range messages {
+		if err := protocol.WriteMessage(&input, message); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c.transport.writer.Reset()
+	c.transport.reader = bytes.NewReader(input.Bytes())
+	if err := c.server.Serve(); err != nil {
+		t.Fatal(err)
+	}
+	responses, err := readMessages(c.transport.writer.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return responses
+}
+
+func completionConfigResult(t *testing.T, id int, responses []json.RawMessage) json.RawMessage {
+	t.Helper()
+	var result json.RawMessage
+	for _, response := range responses {
+		var message struct {
+			ID     *int               `json:"id"`
+			Result json.RawMessage    `json:"result"`
+			Error  *protocol.RPCError `json:"error"`
+		}
+		if err := json.Unmarshal(response, &message); err != nil {
+			t.Fatal(err)
+		}
+		if message.ID == nil {
+			continue
+		}
+		if *message.ID != id || len(result) != 0 {
+			t.Fatalf("unexpected or duplicate response ID: %d", *message.ID)
+		}
+		if message.Error != nil {
+			t.Fatalf("request %d failed: %+v", id, message.Error)
+		}
+		if len(message.Result) == 0 {
+			t.Fatalf("request %d response has no result", id)
+		}
+		result = message.Result
+	}
+	if len(result) == 0 {
+		t.Fatalf("missing response ID: %d", id)
+	}
+	return result
+}
+
+func (c *completionConfigClient) complete(t *testing.T, env completionConfigEnv, sourcePath, source string, position protocol.Position) []protocol.CompletionItem {
+	t.Helper()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	root := filepath.Join(t.TempDir(), "completion workspace")
 	if err := os.MkdirAll(root, 0o755); err != nil {
 		t.Fatal(err)
@@ -227,7 +358,7 @@ func completionConfigRequest(t *testing.T, env completionConfigEnv, sourcePath, 
 		root = filepath.Join(root, path.Base(env.ProjectRoot))
 		copyCompletionProject(t, filepath.Join("completion/testdata", env.ProjectRoot), root)
 		documentPath = filepath.Join(root, filepath.FromSlash(relative))
-	} else {
+	} else if env.PackageName != "" {
 		toml := fmt.Sprintf("[package]\norg = %q\nname = %q\nversion = \"0.1.0\"\n", env.PackageOrg, env.PackageName)
 		if err := os.WriteFile(filepath.Join(root, "Ballerina.toml"), []byte(toml), 0o644); err != nil {
 			t.Fatal(err)
@@ -235,71 +366,44 @@ func completionConfigRequest(t *testing.T, env completionConfigEnv, sourcePath, 
 		if err := os.WriteFile(documentPath, []byte(source), 0o644); err != nil {
 			t.Fatal(err)
 		}
+	} else {
+		documentPath = filepath.Join(root, path.Base(sourcePath))
 	}
 	documentURI, err := workspace.FileURIFromPath(documentPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	transport := &stepTransport{}
-	bus := event.New()
-	defer bus.Close()
 	var repositories []projects.Repository
 	if env.Repository != "" {
 		repositories = append(repositories, projects.NewFileSystemRepository(os.DirFS(filepath.Join("completion/testdata", env.Repository)), "."))
 	}
-	projectService := workspace.New(os.DirFS, bus, workspace.WithRepositories(repositories))
-	compiler := compile.New(projectService, bus, compile.WithDebounce(0))
-	defer compiler.Shutdown()
-	srv := server.New(transport, projectService, compiler, bus, server.WithAvailablePackages(env.Packages))
-	defer srv.Flush()
-
-	messages := []protocol.Message{
-		completionConfigMessage(1, "initialize", map[string]any{
-			"capabilities": map[string]any{"textDocument": map[string]any{"completion": map[string]any{"completionItem": map[string]any{"snippetSupport": true}}}},
-		}),
-		completionConfigMessage(nil, "initialized", map[string]any{}),
+	workspace.WithRepositories(repositories)(c.workspace)
+	id := c.nextID
+	c.nextID++
+	responses := c.exchange(t,
 		completionConfigMessage(nil, "textDocument/didOpen", map[string]any{
 			"textDocument": map[string]any{
 				"uri": documentURI.String(), "languageId": "ballerina", "version": 1, "text": source,
 			},
 		}),
 		completionConfigMessage(nil, "$test/flush", map[string]any{}),
-		completionConfigMessage(2, "textDocument/completion", map[string]any{
+		completionConfigMessage(id, "textDocument/completion", map[string]any{
 			"textDocument": map[string]any{"uri": documentURI.String()},
 			"position":     position,
 		}),
 		completionConfigMessage(nil, "$test/flushRequests", map[string]any{}),
-	}
-	var input bytes.Buffer
-	for _, message := range messages {
-		if err := protocol.WriteMessage(&input, message); err != nil {
-			t.Fatal(err)
-		}
-	}
-	transport.reader = bytes.NewReader(input.Bytes())
-	if err := srv.Serve(); err != nil {
+		completionConfigMessage(nil, "textDocument/didClose", map[string]any{
+			"textDocument": map[string]any{"uri": documentURI.String()},
+		}),
+	)
+	var items []protocol.CompletionItem
+	if err := json.Unmarshal(completionConfigResult(t, id, responses), &items); err != nil {
 		t.Fatal(err)
 	}
-	responses, err := readMessages(transport.writer.Bytes())
-	if err != nil {
-		t.Fatal(err)
+	if _, ok := c.workspace.Snapshot(documentURI); ok {
+		t.Fatal("completion fixture document is still open")
 	}
-	for _, response := range responses {
-		var message struct {
-			ID     int             `json:"id"`
-			Result json.RawMessage `json:"result"`
-		}
-		if err := json.Unmarshal(response, &message); err != nil || message.ID != 2 {
-			continue
-		}
-		var items []protocol.CompletionItem
-		if err := json.Unmarshal(message.Result, &items); err != nil {
-			t.Fatal(err)
-		}
-		return items
-	}
-	t.Fatal("completion response missing")
-	return nil
+	return items
 }
 
 var enumMemberAvailablePackages = append(append([]completion.AvailablePackage(nil), typeDefinitionAvailablePackages...),
@@ -329,8 +433,23 @@ func completionConfigMessage(id any, method string, params any) protocol.Message
 	return protocol.Message{JSONRPC: "2.0", ID: encodedID, Method: method, Params: encodedParams}
 }
 
+func compareExactCompletionConfigItems(t *testing.T, expected []json.RawMessage, actual []protocol.CompletionItem) {
+	t.Helper()
+	encoded, err := json.Marshal(actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var items []json.RawMessage
+	if err := json.Unmarshal(encoded, &items); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(normalizeMessages(expected), normalizeMessages(items)) {
+		t.Fatalf("completion items mismatch\nactual: %s\nexpected: %s", formatMessages(items), formatMessages(expected))
+	}
+}
+
 // Completion order is ignored, but duplicate counts must match.
-func compareCompletionConfigItems(t *testing.T, expected []completionConfigItem, actual []protocol.CompletionItem) {
+func compareCompletionConfigItems(t *testing.T, expected []json.RawMessage, actual []protocol.CompletionItem) {
 	t.Helper()
 	if len(actual) != len(expected) {
 		t.Fatalf("completion item count = %d, want %d", len(actual), len(expected))
