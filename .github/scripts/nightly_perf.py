@@ -178,7 +178,8 @@ class GitHubClient:
 
     def request(self, path, *, method="GET", data=None, binary=False, attempts=3):
         url = urljoin(self.base_url, path.lstrip("/"))
-        if urlparse(url).netloc != urlparse(self.base_url).netloc:
+        base, target = urlparse(self.base_url), urlparse(url)
+        if (target.scheme, target.netloc) != (base.scheme, base.netloc):
             raise ValueError("API pagination left trusted host")
         for attempt in range(attempts):
             headers = {

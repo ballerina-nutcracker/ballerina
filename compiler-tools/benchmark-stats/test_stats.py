@@ -496,6 +496,47 @@ class FailureBoundaryTests(unittest.TestCase):
     setUp = StreamTests.setUp
     write = StreamTests.write
 
+    def test_unterminated_records_and_metric_shapes(self):
+        metadata = stream_events(sample_set())[0]
+        self.write([metadata])
+        with self.assertRaisesRegex(ValueError, "incomplete sample stream"):
+            read_samples(self.path)
+        self.path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, "unterminated metadata"):
+            read_samples(self.path, allow_partial=True)
+        events = stream_events(sample_set())
+        self.write(events[:-1])
+        self.path.write_text(self.path.read_text().rstrip("\n"))
+        partial = read_samples(self.path, allow_partial=True)
+        self.assertEqual(partial.completed, set())
+        self.assertEqual(len(partial.pairs["a.bal"]), 8)
+        self.write(events[:2])
+        self.path.write_text(self.path.read_text().rstrip("\n"))
+        partial = read_samples(self.path, allow_partial=True)
+        self.assertEqual(partial.pairs["a.bal"], [])
+        for metrics in ({"rss_mib": 1.0}, [], {"rss_mib": True}):
+            events = stream_events(sample_set())
+            events[1]["metrics"] = metrics
+            with self.assertRaises(ValueError):
+                read_samples(self.write(events))
+
+    def test_invalid_manifest_policy_partitions(self):
+        from manifest import validate_manifest
+
+        for key, value in (
+            ("date", "2026-1-04"),
+            ("timezone", "UTC"),
+            ("default_branch", "bad\nbranch"),
+            ("skipped", "unknown"),
+            ("skipped", "insufficient_history"),
+            ("base_sha", None),
+        ):
+            bad = manifest()
+            bad[key] = value
+            with self.subTest(key=key, value=value):
+                with self.assertRaises(ValueError):
+                    validate_manifest(bad)
+
     def test_corrupt_stream_boundaries(self):
         for text in ("", "null\n", "[]\n", "{broken}\n"):
             self.path.write_text(text)

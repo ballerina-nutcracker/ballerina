@@ -254,6 +254,66 @@ class CoordinatorTests(unittest.TestCase):
             "no_regression",
         )
 
+    def test_reconstruction_rejects_runtime_estimate_and_sample_identity_corruption(
+        self,
+    ):
+        self.assertEqual(
+            run.run_suite("time", self.manifest, self.output, self.tool), 0
+        )
+        path = self.output / "plan.json"
+        original = path.read_text()
+        document = decode(original)
+        case = next(iter(document["plans"]))
+        for change in (
+            lambda d: d.update(runtime_estimate={}),
+            lambda d: d["runtime_estimate"].update(pilot_wall_seconds=0),
+            lambda d: d["runtime_estimate"].update(final_seconds=-1),
+            lambda d: d["plans"][case].update(estimated_seconds=-1),
+            lambda d: d["plans"][case].update(estimated_seconds=99),
+        ):
+            changed = decode(original)
+            change(changed)
+            path.write_text(json.dumps(changed))
+            with self.assertRaises(ValueError):
+                run.reconstruct("time", self.manifest, self.output)
+        path.write_text(original)
+        final = self.output / "final.jsonl"
+        final.write_text(final.read_text().replace(self.manifest["head_sha"], "f" * 40))
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            run.reconstruct("time", self.manifest, self.output)
+
+    def test_cleanup_failure_preserves_completed_case_results(self):
+        command = run._command
+
+        def fail_cleanup(argv, **kwargs):
+            if list(map(str, argv))[:3] == ["git", "worktree", "remove"]:
+                command(argv, **kwargs)
+                raise OSError("fixture cleanup failure")
+            return command(argv, **kwargs)
+
+        with patch("run._command", side_effect=fail_cleanup):
+            self.assertEqual(
+                run.run_suite("time", self.manifest, self.output, self.tool), 1
+            )
+        result = self.result()
+        self.assertEqual(result["completion"], "error")
+        self.assertIn("cleanup failed", result["message"])
+        self.assertEqual(result["cases"][0]["status"], "no_regression")
+        self.assertEqual(result["cases"][0]["observed_n"], 12)
+        self.clean()
+
+    def test_missing_head_workload_is_operational_failure(self):
+        self.git("rm", "-r", "corpus")
+        self.git("commit", "-m", "remove workload")
+        head = self.git("rev-parse", "HEAD")
+        self.manifest.update(head_sha=head, control_sha=head, tip_sha=head)
+        self.assertEqual(
+            run.run_suite("time", self.manifest, self.output, self.tool), 1
+        )
+        self.assertIn("workload directory missing", self.result()["message"])
+        self.assertFalse(self.log.exists())
+        self.clean()
+
     def test_output_is_not_resampled_and_control_is_frozen(self):
         self.assertEqual(
             run.run_suite("time", self.manifest, self.output, self.tool), 0
@@ -295,6 +355,34 @@ class CoordinatorTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+
+    def test_environment_and_unavailable_version_tools_are_recorded(self):
+        with patch.dict(
+            os.environ,
+            {"GITHUB_TOKEN": "secret", "GH_TOKEN": "secret", "PERF_SAFE": "keep"},
+        ):
+            env = run._environment()
+        self.assertNotIn("GITHUB_TOKEN", env)
+        self.assertNotIn("GH_TOKEN", env)
+        self.assertEqual(env["PERF_SAFE"], "keep")
+        with patch(
+            "run.subprocess.run",
+            side_effect=FileNotFoundError("fixture missing executable"),
+        ):
+            versions = run._versions()
+        for tool in ("go", "hyperfine", "wrk"):
+            self.assertIn("fixture missing executable", versions[tool])
+        for key in ("os", "cpu", "machine", "cpu_count", "python", "numpy", "scipy"):
+            self.assertIn(key, versions)
+        with patch(
+            "run.subprocess.run",
+            return_value=subprocess.CompletedProcess(
+                [], 0, "fixture version\n", "diagnostic\n"
+            ),
+        ):
+            versions = run._versions()
+        for tool in ("go", "hyperfine", "wrk"):
+            self.assertEqual(versions[tool], "fixture version\ndiagnostic")
 
     def test_inherited_git_environment_cannot_modify_parent_repository(self):
         with tempfile.TemporaryDirectory() as tmp:

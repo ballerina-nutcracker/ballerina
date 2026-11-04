@@ -552,6 +552,76 @@ class LocalServerTests(ServerFixture, unittest.TestCase):
         with self.assertRaises(ValueError):
             perf._remote_manifest(self.client, "other/repo", 123, 2)
 
+    def test_remote_manifest_rejects_duplicate_and_wrong_archive(self):
+        self.assertIsNone(perf._remote_manifest(self.client, REPO, 123, 2))
+        entry = dict(id=1, name=perf.artifact_name(123, 2, "manifest"), expired=False)
+        self.state.artifacts = [entry, entry]
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            perf._remote_manifest(self.client, REPO, 123, 2)
+        self.state.artifacts = [entry]
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as out:
+            out.writestr("unexpected.json", "{}")
+        self.state.archive = archive.getvalue()
+        with self.assertRaisesRegex(ValueError, "archive"):
+            perf._remote_manifest(self.client, REPO, 123, 2)
+
+    def test_monitor_confirms_skip_from_manifest_before_exiting(self):
+        value = manifest()
+        value.update(skipped="unchanged", base_sha=value["head_sha"])
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as out:
+            out.writestr("manifest.json", json.dumps(value))
+        self.state.archive = archive.getvalue()
+        self.state.artifacts = [dict(id=1, name=perf.artifact_name(123, 2, "manifest"))]
+        self.state.jobs = [jobs_at(10)[0], jobs_at(10)[-1]]
+        self.assertEqual(perf.monitor_run(REPO, 123, 2), 0)
+        self.assertTrue(any(path.endswith("/zip") for _, path in self.state.requests))
+        self.assertEqual(self.state.issues, [])
+
+    def test_monitor_polls_until_threshold_then_warns_with_frozen_identity(self):
+        value = manifest()
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as out:
+            out.writestr("manifest.json", json.dumps(value))
+        self.state.archive = archive.getvalue()
+        self.state.artifacts = [dict(id=1, name=perf.artifact_name(123, 2, "manifest"))]
+        self.state.jobs = jobs_at(10, False)
+        instants = iter(
+            [START + timedelta(minutes=329), START + timedelta(minutes=330, seconds=1)]
+        )
+
+        class Clock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return next(instants)
+
+        with patch("nightly_perf.datetime", Clock):
+            self.assertEqual(perf.monitor_run(REPO, 123, 2), 0)
+        self.assertEqual(self.delays, [30])
+        self.assertEqual(len(self.state.issues), 1)
+        self.assertIn(value["base_sha"], self.state.issues[0]["body"])
+        self.assertIn(value["head_sha"], self.state.issues[0]["body"])
+
+    def test_retry_http_date_and_nonretryable_post_failure(self):
+        from email.utils import format_datetime
+
+        error = perf.APIError(
+            "retry",
+            headers={"Retry-After": format_datetime(START + timedelta(seconds=30))},
+        )
+        with patch("nightly_perf.datetime") as clock:
+            clock.now.return_value = START
+            self.client.wait_retry(error, 0)
+        self.assertEqual(self.delays[-1], 30)
+        self.state.post_failures = [401]
+        with self.assertRaises(perf.APIError):
+            self.client.publish(
+                REPO, "<!-- denied -->", "<!-- attempt -->", "title", "body", "run"
+            )
+        self.assertEqual(self.state.posts, 1)
+        self.assertEqual(self.state.issues, [])
+
 
 def jobs_at(seconds, complete=True):
     return [
@@ -570,6 +640,86 @@ def jobs_at(seconds, complete=True):
 
 
 class MonitorCoreTests(unittest.TestCase):
+
+    def test_client_environment_and_monitor_cli_identity(self):
+        with patch.dict(
+            os.environ,
+            {"GITHUB_API_URL": "https://api.example", "GITHUB_TOKEN": "fixture-token"},
+        ):
+            client = perf._client()
+        self.assertEqual(client.base_url, "https://api.example/")
+        self.assertEqual(client.token, "fixture-token")
+        argv = [
+            "nightly_perf.py",
+            "monitor",
+            "--repository",
+            REPO,
+            "--run-id",
+            "123",
+            "--attempt",
+            "2",
+        ]
+        with patch.object(sys, "argv", argv), patch(
+            "nightly_perf.monitor_run", return_value=0
+        ) as monitor:
+            self.assertEqual(perf.main(), 0)
+        monitor.assert_called_once_with(REPO, 123, 2)
+        for flag, value in (
+            ("--repository", "bad/repo/path"),
+            ("--run-id", "0"),
+            ("--attempt", "-1"),
+        ):
+            invalid = list(argv)
+            invalid[invalid.index(flag) + 1] = value
+            with patch.object(sys, "argv", invalid):
+                with self.assertRaisesRegex(ValueError, "invalid run identity"):
+                    perf.main()
+
+    def test_corrupt_job_and_api_data_cannot_be_completion(self):
+        with self.assertRaisesRegex(ValueError, "duplicate watched"):
+            perf.monitor_state(START, START, jobs_at(10) + [jobs_at(10)[0]])
+        jobs = jobs_at(10)
+        jobs[0]["completed_at"] = None
+        with self.assertRaisesRegex(ValueError, "missing timestamp"):
+            perf.monitor_state(START, START, jobs)
+        for text in ('{"key":1,"key":2}', '{"key":NaN}'):
+            with self.assertRaises(ValueError):
+                perf._decode(text)
+        with self.assertRaises(ValueError):
+            perf._instant("2026-11-04T17:30:00")
+
+    def test_pagination_rejects_foreign_host_cycles_and_wrong_shape(self):
+        client = perf.GitHubClient("https://api.example", "private")
+        with self.assertRaisesRegex(ValueError, "trusted host"):
+            client.request("https://other.example/issues")
+        with patch.object(client, "request", return_value=({}, {})):
+            with self.assertRaisesRegex(ValueError, "paginated"):
+                list(client.pages("issues"))
+        with patch.object(
+            client,
+            "request",
+            return_value=([], {"Link": '<issues?per_page=100>; rel="next"'}),
+        ):
+            with self.assertRaisesRegex(ValueError, "cyclic"):
+                list(client.pages("issues"))
+
+    def test_pagination_rejects_same_host_https_downgrade(self):
+        # This CI API client is not reachable from a Ballerina corpus program.
+        client = perf.GitHubClient("https://api.example", "private")
+        first = io.BytesIO(b"[]")
+        first.headers = {
+            "Link": '<http://api.example/issues?page=2>; rel="next"'
+        }
+        second = io.BytesIO(b"[]")
+        second.headers = {}
+        with patch.object(client.opener, "open", side_effect=[first, second]) as opened:
+            with self.assertRaises(ValueError):
+                list(client.pages("issues"))
+            opened.assert_called_once()
+            self.assertEqual(
+                opened.call_args.args[0].full_url,
+                "https://api.example/issues?per_page=100",
+            )
 
     def test_inherited_git_environment_cannot_modify_parent_repository(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -826,6 +976,78 @@ class ReportTests(ServerFixture, unittest.TestCase):
         self.assertIn("Confirmed regressions", body)
         self.assertIn("Regression lower bound", body)
         self.assertIn("/attempts/2", body)
+
+    def test_report_cli_validates_attempt_control_and_reconstructs(self):
+        for suite in perf.SUITES:
+            self.suite(suite)
+        path = self.root / "manifest.json"
+        write_json(path, self.manifest)
+        self.state.jobs = jobs_at(10)
+        argv = [
+            "nightly_perf.py",
+            "report",
+            "--repository",
+            REPO,
+            "--run-id",
+            "123",
+            "--attempt",
+            "2",
+            "--manifest",
+            str(path),
+            "--output",
+            str(self.root),
+        ]
+        with patch.object(sys, "argv", argv), patch(
+            "nightly_perf._git", return_value=self.manifest["control_sha"]
+        ):
+            self.assertEqual(perf.main(), 0)
+        self.assertIn("no_regression", self.summary.read_text())
+        with patch.object(sys, "argv", argv), patch(
+            "nightly_perf._git", return_value="f" * 40
+        ):
+            self.assertEqual(perf.main(), 1)
+        self.assertIn("control SHA mismatch", self.summary.read_text())
+        argv[argv.index("--attempt") + 1] = "3"
+        with patch.object(sys, "argv", argv):
+            self.assertEqual(perf.main(), 1)
+        self.assertIn("attempt identity mismatch", self.summary.read_text())
+        self.assertEqual(self.state.issues, [])
+
+    def test_skips_and_identity_rejection_never_publish(self):
+        skipped = dict(
+            self.manifest, skipped="unchanged", base_sha=self.manifest["head_sha"]
+        )
+        self.assertEqual(perf.publish_report(REPO, skipped, []), 0)
+        self.assertIn("skipped (unchanged)", self.summary.read_text())
+        with self.assertRaisesRegex(ValueError, "repository mismatch"):
+            perf.publish_report("other/repo", self.manifest, [])
+        with self.assertRaisesRegex(ValueError, "suite/manifest"):
+            perf.publish_report(REPO, self.manifest, [])
+        self.assertEqual(self.state.issues, [])
+
+    def test_saved_completion_cannot_upgrade_partial_or_invalid_data(self):
+        path = self.suite("time", 0.2)
+        original = perf.ingest_results(self.manifest, self.root, jobs_at(10))[0]
+        for completion in ("invented", "complete"):
+            saved = dict(original, completion=completion)
+            write_json(path / "result.json", saved)
+            if completion == "complete":
+                raw = path / "final.jsonl"
+                raw.write_text(raw.read_text().rsplit('{"type": "complete"}', 1)[0])
+            result = perf.ingest_results(self.manifest, self.root, jobs_at(10))[0]
+            self.assertEqual(result["completion"], "error")
+            self.assertEqual(result["cases"], [])
+
+    def test_timed_out_job_keeps_valid_completed_case_but_suite_is_incomplete(self):
+        path = self.suite("time", 0.2)
+        original = perf.ingest_results(self.manifest, self.root, jobs_at(10))[0]
+        write_json(path / "result.json", original)
+        jobs = jobs_at(10)
+        jobs[1]["conclusion"] = "timed_out"
+        result = perf.ingest_results(self.manifest, self.root, jobs)[0]
+        self.assertEqual(result["completion"], "incomplete")
+        self.assertEqual(result["cases"][0]["status"], "regression")
+        self.assertIn("timed_out", result["message"])
 
 
 if __name__ == "__main__":
