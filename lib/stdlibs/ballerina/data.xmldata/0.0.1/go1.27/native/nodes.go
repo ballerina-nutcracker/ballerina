@@ -176,8 +176,8 @@ func (t *typer) buildArray(n *arrayNode, name string) (values.BalValue, error) {
 	return values.NewList(n.ty.ty, atomic, t.isReadonly(n.ty.ty), restFiller, len(items), items), nil
 }
 
-// buildMember builds a member node, rejecting a map or array the member type cannot hold: an element
-// without text is stored as a map before its content shows whether the rest type allows one.
+// buildMember builds a member node, rejecting a value the member type cannot hold, so a conversion path
+// that stores the wrong value fails the call instead of returning a value outside its declared type.
 func (t *typer) buildMember(v node, memberType semtypes.SemType, name string) (values.BalValue, error) {
 	var value values.BalValue
 	var err error
@@ -187,7 +187,7 @@ func (t *typer) buildMember(v node, memberType semtypes.SemType, name string) (v
 	case *arrayNode:
 		value, err = t.buildArray(v, name)
 	default:
-		return v, nil
+		value = v
 	}
 	if err != nil {
 		return nil, err
