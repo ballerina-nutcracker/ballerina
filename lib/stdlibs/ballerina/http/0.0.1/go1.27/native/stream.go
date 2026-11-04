@@ -309,13 +309,16 @@ func newSSEFramer(r io.Reader) *sseFramer {
 }
 
 // next returns the next event's bytes including its terminating line breaks, or nil at the end
-// of the body, discarding an unfinished last event.
+// of the body, discarding an unfinished last event and, as #2752 does, blocks of only line breaks.
 func (f *sseFramer) next() ([]byte, error) {
 	for {
 		if end, ok := f.findEventEnd(); ok {
-			event := bytes.Clone(f.pending[f.eventStart:end])
+			event := f.pending[f.eventStart:end]
 			f.eventStart = end
-			return event, nil
+			if len(bytes.Trim(event, "\r\n")) == 0 {
+				continue
+			}
+			return bytes.Clone(event), nil
 		}
 		if f.eof {
 			return nil, nil

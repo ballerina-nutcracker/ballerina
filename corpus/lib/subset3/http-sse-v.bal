@@ -121,7 +121,8 @@ public function main() returns error? {
     io:println(viaPayload.getContentType()); // @output text/event-stream
 
     // ---- parsing a text/event-stream body ----
-    http:Response raw = eventStreamResponse(":ping\r\n", "data: one\r\n\r\n",
+    // A block of only line breaks, like the leading "\n\n" and the "\n\n" after line2, is skipped.
+    http:Response raw = eventStreamResponse("\n\n:ping\r\n", "data: one\r\n\r\n",
         "event:  spaced\nid:5\nretry: soon\ndata\n\n", "data: crlf\r\rfield-only\n\n",
         "data: line1\ndata:line2\n", "\n", "\n\n", "data: m\n\r\ndata: next\n\n", "unknown: x\ndata: partial");
     // @output {"data":"one","comment":"ping"}
@@ -129,7 +130,6 @@ public function main() returns error? {
     // @output {"data":"crlf"}
     // @output {}
     // @output {"data":"line1\nline2"}
-    // @output {}
     // @output {"data":"m"}
     // @output {"data":"next"}
     check printEvents(check raw.getSseEventStream());
