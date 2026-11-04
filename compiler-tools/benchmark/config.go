@@ -30,14 +30,18 @@ const (
 )
 
 type config struct {
-	baseRef     string
-	headRef     string
-	target      string
-	mode        benchmarkMode
-	warmup      int
-	runs        int
-	exportPath  string
-	summaryPath string
+	baseRef      string
+	headRef      string
+	target       string
+	mode         benchmarkMode
+	warmup       int
+	runs         int
+	exportPath   string
+	summaryPath  string
+	samplesPath  string
+	phase        string
+	runsPath     string
+	runsExplicit bool
 }
 
 func parseConfig() (*config, error) {
@@ -47,6 +51,9 @@ func parseConfig() (*config, error) {
 		fs.PrintDefaults()
 	}
 
+	samplesPath := fs.String("samples-jsonl", "", "Raw paired sample stream")
+	phase := fs.String("phase", "fixed", "Sample phase: fixed, pilot, final")
+	runsPath := fs.String("runs-file", "", "Versioned per-case counts JSON")
 	mode := fs.String("mode", string(timeMode), "Benchmark mode: time or memory")
 	warmup := fs.Int("warmup", 4, "Number of warmup iterations")
 	runs := fs.Int("runs", 10, "Number of benchmark runs")
@@ -57,6 +64,12 @@ func parseConfig() (*config, error) {
 		return nil, err
 	}
 
+	runsExplicit := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "runs" {
+			runsExplicit = true
+		}
+	})
 	args := fs.Args()
 	if len(args) < 3 {
 		fs.Usage()
@@ -64,19 +77,32 @@ func parseConfig() (*config, error) {
 	}
 
 	cfg := &config{
-		baseRef:     args[0],
-		headRef:     args[1],
-		target:      args[2],
-		mode:        benchmarkMode(*mode),
-		warmup:      *warmup,
-		runs:        *runs,
-		exportPath:  *exportPath,
-		summaryPath: *summaryPath,
+		baseRef:      args[0],
+		samplesPath:  *samplesPath,
+		phase:        *phase,
+		runsPath:     *runsPath,
+		runsExplicit: runsExplicit,
+		headRef:      args[1],
+		target:       args[2],
+		mode:         benchmarkMode(*mode),
+		warmup:       *warmup,
+		runs:         *runs,
+		exportPath:   *exportPath,
+		summaryPath:  *summaryPath,
 	}
 	return cfg, nil
 }
 
 func (c *config) validate() error {
+	if c.phase == "" {
+		c.phase = "fixed"
+	}
+	if c.phase != "fixed" && c.phase != "pilot" && c.phase != "final" {
+		return fmt.Errorf("invalid phase %q", c.phase)
+	}
+	if c.runsPath != "" && c.runsExplicit {
+		return fmt.Errorf("--runs and --runs-file are mutually exclusive")
+	}
 	if c.baseRef == "" {
 		return fmt.Errorf("baseRef is required")
 	}

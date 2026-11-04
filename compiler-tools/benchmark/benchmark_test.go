@@ -269,7 +269,7 @@ func TestParseMacOSMaxRSSMiB(t *testing.T) {
 func TestHyperfineFlagsWithPositiveWarmup(t *testing.T) {
 	t.Parallel()
 	b := &benchmark{config: config{warmup: 3, runs: 7}}
-	got := b.hyperfineFlags()
+	got := b.hyperfineFlags(b.runs, b.warmup)
 	want := []string{"--show-output", "--warmup", "3", "--runs", "7"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("hyperfineFlags() = %v, want %v", got, want)
@@ -279,8 +279,8 @@ func TestHyperfineFlagsWithPositiveWarmup(t *testing.T) {
 func TestHyperfineFlagsOmitsWarmupWhenZero(t *testing.T) {
 	t.Parallel()
 	b := &benchmark{config: config{warmup: 0, runs: 2}}
-	got := b.hyperfineFlags()
-	want := []string{"--show-output", "--runs", "2"}
+	got := b.hyperfineFlags(b.runs, b.warmup)
+	want := []string{"--show-output", "--warmup", "0", "--runs", "2"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("hyperfineFlags() = %v, want %v", got, want)
 	}
