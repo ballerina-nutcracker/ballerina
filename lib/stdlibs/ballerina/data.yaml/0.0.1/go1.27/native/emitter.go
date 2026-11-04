@@ -20,6 +20,7 @@ package native
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -232,7 +233,7 @@ func (w *yamlWriter) flow(v values.BalValue) string {
 	return w.flowScalar(v)
 }
 
-// scalar writes a scalar as its string form, with the !!str tag on a string when canonical. Strings
+// scalar writes a scalar as its string form, with its type tag when canonical. Strings
 // are quoted when forceQuotes is set or when they would not read back as the same
 // string.
 func (w *yamlWriter) scalar(v values.BalValue) string {
@@ -245,13 +246,48 @@ func (w *yamlWriter) flowScalar(v values.BalValue) string {
 
 func (w *yamlWriter) scalarIn(v values.BalValue, inFlow bool) string {
 	text, isString := scalarText(v)
+	if f, ok := v.(float64); ok && w.options.canonical {
+		text = coreFloatText(f, text)
+	}
 	if w.options.forceQuotes || (isString && (needsQuotes(text, w.options.schema) || inFlow && strings.ContainsAny(text, ",[]{}"))) {
 		text = w.quote(text)
 	}
-	if w.options.canonical && isString {
-		return "!!str " + text
+	if tag := canonicalTag(v, isString); w.options.canonical && tag != "" {
+		return tag + " " + text
 	}
 	return text
+}
+
+// coreFloatText writes infinities and NaN in the YAML core-schema form that a !!float tag requires.
+func coreFloatText(f float64, text string) string {
+	switch {
+	case math.IsInf(f, 1):
+		return ".inf"
+	case math.IsInf(f, -1):
+		return "-.inf"
+	case math.IsNaN(f):
+		return ".nan"
+	}
+	return text
+}
+
+// canonicalTag names the core-schema tag a scalar reads back as; a decimal has none, since !!float
+// would read it back as a float.
+func canonicalTag(v values.BalValue, isString bool) string {
+	switch v.(type) {
+	case nil:
+		return "!!null"
+	case bool:
+		return "!!bool"
+	case int64:
+		return "!!int"
+	case float64:
+		return "!!float"
+	}
+	if isString {
+		return "!!str"
+	}
+	return ""
 }
 
 func scalarText(v values.BalValue) (string, bool) {
