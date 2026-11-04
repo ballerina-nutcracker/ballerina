@@ -253,9 +253,29 @@ func summarizeMultipart(contentType string, body io.Reader) (string, error) {
 // sees no Content-Length), getByteStream on received bodies, and binding a text/event-stream
 // response whose events are split across flushes to stream<http:SseEvent, error?>.
 func TestHttpClientStreamLocal(t *testing.T) {
+	t.Parallel()
+	sinkResult := make(chan string, 1)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		flusher, _ := w.(http.Flusher)
 		switch r.URL.Path {
+		case "/early":
+			rc := http.NewResponseController(w)
+			_ = rc.EnableFullDuplex()
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusOK)
+			_ = rc.Flush()
+			body, _ := io.ReadAll(r.Body)
+			_, _ = fmt.Fprintf(w, "read=%d", len(body))
+		case "/sink":
+			body, err := io.ReadAll(r.Body)
+			sinkResult <- fmt.Sprintf("read=%d failed=%v", len(body), err != nil)
+		case "/sink-result":
+			select {
+			case result := <-sinkResult:
+				_, _ = w.Write([]byte(result))
+			case <-time.After(5 * time.Second):
+				_, _ = w.Write([]byte("request still open"))
+			}
 		case "/echo":
 			body, _ := io.ReadAll(r.Body)
 			w.Header().Set("Content-Type", "text/plain")
