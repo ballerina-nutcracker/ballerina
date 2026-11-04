@@ -31,6 +31,24 @@ REPO = "owner/repo"
 START = datetime(2026, 11, 4, 17, 30, tzinfo=timezone.utc)
 
 
+_git_environment = None
+
+
+def setUpModule():
+    global _git_environment
+    _git_environment = patch.dict(
+        os.environ,
+        {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+        | {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"},
+        clear=True,
+    )
+    _git_environment.start()
+
+
+def tearDownModule():
+    _git_environment.stop()
+
+
 class WorkflowTests(unittest.TestCase):
     def test_pending_recoveries_queue_without_replacing_one_another(self):
         workflow = Path(__file__).resolve().parents[1] / "workflows/nightly-performance.yml"
@@ -570,6 +588,53 @@ def jobs_at(seconds, complete=True):
 
 
 class MonitorCoreTests(unittest.TestCase):
+
+    def test_fixture_ignores_inherited_git_environment_and_user_config(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp) / "parent.git"
+            subprocess.run(
+                ["git", "init", "--bare", str(parent)],
+                check=True,
+                capture_output=True,
+            )
+            before = {
+                str(path.relative_to(parent)): path.read_bytes()
+                for path in parent.rglob("*")
+                if path.is_file()
+            }
+            home = Path(tmp)
+            (home / ".gitconfig").write_text(
+                "[commit]\n    gpgsign = true\n"
+                "[gpg]\n    program = nonexistent-nightly-fixture-signer\n"
+            )
+            env = os.environ.copy()
+            env.update(
+                HOME=str(home),
+                XDG_CONFIG_HOME=str(home),
+                GIT_DIR=str(parent),
+                GIT_INDEX_FILE=str(parent / "test-index"),
+            )
+            child = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "unittest",
+                    "test_nightly_perf.HistoryTests.test_insufficient_unchanged_older_baseline_and_errors",
+                ],
+                cwd=Path(__file__).resolve().parent,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
+            after = {
+                str(path.relative_to(parent)): path.read_bytes()
+                for path in parent.rglob("*")
+                if path.is_file()
+            }
+            self.assertEqual(after, before)
+
     def test_strict_threshold_pending_jobs_and_late_completion(self):
         for seconds, state in (
             (329 * 60 + 59, "wait"),

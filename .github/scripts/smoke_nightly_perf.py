@@ -41,6 +41,16 @@ def executable(path, text):
 
 
 def main():
+    with patch.dict(
+        os.environ,
+        {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+        | {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"},
+        clear=True,
+    ):
+        return smoke()
+
+
+def smoke():
     with tempfile.TemporaryDirectory(prefix="nightly-perf-cli-smoke-") as tmp:
         root = Path(tmp)
         repo = root / "repository"
