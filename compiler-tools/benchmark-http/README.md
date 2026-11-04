@@ -1,6 +1,10 @@
 # httpbench — HTTP throughput regression check
 
-`httpbench` compares the HTTP performance of the Ballerina Nutcracker interpreter between two git refs and reports the delta. It powers the **PR Benchmark HTTP** workflows (`.github/workflows/benchmark-pr-http-{prepare,comment}.yml`), which post the result as a PR comment and fail the check on a significant throughput regression.
+`httpbench` compares HTTP performance between two Git refs. The
+[Nightly Performance workflow](../../.github/workflows/nightly-performance.yml)
+uses its raw balanced samples with the independent pilot/final policy in
+[benchmark-stats](../benchmark-stats/README.md). Local Markdown and result JSON
+retain the existing median-based descriptive threshold policy.
 
 It is a self-contained Go module (its own `go.mod`, standard library only) modeled on `compiler-tools/benchmark/`. It depends on nothing from the `performance/` harness.
 
@@ -13,7 +17,7 @@ For each ref (base and head) it:
 3. Drives load with **`wrk --latency`** — a discarded warmup run, then a measured run.
 4. Parses throughput / avg / p99 / stdev, and reads peak RSS from `/proc/<pid>/status` (Linux).
 
-Runs are **interleaved** (base, head, head, base, …) `--repeats` times so both refs share any drift on the host. It compares the **median** throughput and flags a regression when head is more than `--threshold` percent below base.
+Runs are **interleaved** (base, head, head, base, …) `--repeats` times so both refs share any drift on the host. It compares the **median** throughput and flags a regression when head is at least `--threshold` percent below base.
 
 `bal run` (interpret) is used for the hello service, not `bal build` — no per-ref build step for the service itself, cleanest isolation, and it exercises the same interpreter engine where language/`http` regressions surface. Each worktree still compiles the `bal` CLI via `go build` (step 1) — that build step is unavoidable since it produces the binary under test.
 
@@ -26,7 +30,7 @@ httpbench [flags] <base-ref> <head-ref>
   --warmup DUR       wrk warmup, discarded (default 30s)
   --duration DUR     wrk measured run (default 330s)
   --conns N          wrk concurrent connections (default 50)
-  --threshold PCT    throughput drop % that fails the gate (default 10)
+  --threshold PCT    local descriptive throughput drop threshold % (default 10)
   --export-md PATH   write the markdown report here
   --result-json PATH write the JSON verdict here
 ```
@@ -43,14 +47,18 @@ cd <repo-root>
 
 ## Output
 
-- **`report.md`** — a markdown table (Throughput / Avg / p99 / Startup / Peak RSS; base median±stddev vs head, with the delta) plus a PASS/REGRESSION line. Posted verbatim as the PR comment body.
-- **`result.json`** — `{regressed, error, throughputBase, throughputHead, throughputDelta, thresholdPct}`. The CI gate step fails the check when `regressed` or `error` is true.
+- **`report.md`** — a markdown table (Throughput / Avg / p99 / Startup / Peak RSS; base median±stddev vs head, with the delta) plus a PASS/REGRESSION line. Available as a local descriptive report.
+- **`result.json`** — `{regressed, error, throughputBase, throughputHead, throughputDelta, thresholdPct}`. Local consumers can inspect the descriptive `regressed` and operational `error` fields.
 
-Regression is treated as **data, not an error**: the tool exits 0 with `regressed:true`. It only writes `error:true` (and still exits 0) when it cannot produce a measurement (build/launch/parse failure), so the artifact always uploads and the comment always posts.
+Regression is treated as **data, not an error**: the tool exits 0 with `regressed:true`. It only writes `error:true` (and still exits 0) when it cannot produce a measurement (build/launch/parse failure), for compatibility with existing local consumers. Raw-export mode returns nonzero on operational failure.
 
 ## A note on noise
 
-GitHub-hosted `ubuntu-latest` runners are noisy for throughput (~5–15% run-to-run). The design mitigates this by measuring both refs back-to-back on the same runner and comparing medians, so common-mode noise largely cancels in the delta. The default 10% threshold is deliberately generous — it catches *significant* regressions (the kind a language/`http` change causes) without chasing small noise. Calibrate `--threshold` and `--repeats` against the real runner if needed.
+Adjacent balanced pairs reduce avoidable ordering bias. The local median threshold
+is descriptive. Nightly inference uses fresh final paired log ratios and separate
+one-sided bounds; its nominal model assumes approximately independent normal
+paired log differences. Pairing does not establish host stationarity or an
+unconditional false-alert/power guarantee.
 
 ## Future
 

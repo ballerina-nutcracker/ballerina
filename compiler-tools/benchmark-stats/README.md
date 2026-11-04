@@ -84,6 +84,82 @@ existing result/report artifacts. Operational failures return nonzero; valid reg
 and return zero. Cleanup runs on normal failure and handled interruption.
 
 
+## Workflow, dates, and recovery
+
+[Nightly Performance](../../.github/workflows/nightly-performance.yml) schedules
+`30 17 * * *` UTC (23:00 Asia/Colombo), with a manual `comparison_date` input.
+All jobs require the repository's default branch; dispatch recovery there.
+The workflow serializes comparisons without cancelling active measurement.
+
+Selection uses the Actions run's original creation timestamp, including on a
+rerun. Its date D is the most recent Colombo date whose 23:00 cutoff has passed.
+An explicit dispatch date must be `YYYY-MM-DD` and cannot have a future cutoff.
+The fetched default-branch tip is pinned once; first-parent ancestry order and
+committer timestamps select the first mainline commit strictly before D's
+midnight as base, and the first at or before D's 23:00 as head. Out-of-order
+timestamps retain ancestry-order selection. An older baseline is valid if
+yesterday had no commits. Missing eligible history and equal SHAs are explicit
+skips, with no measurement or regression issue. Git/fetch failures are errors.
+
+The midnight-to-23:00 window leaves a coverage gap: commits from 23:00 to midnight
+can become the next baseline without being a measured head. Git metadata does
+not reconstruct when a commit arrived on the remote branch. GitHub schedules
+can be delayed or dropped; creation delayed more than a day cannot identify the
+missed nominal day. Dispatch its explicit date to recover it. Use **Re-run all
+jobs** for a complete rerun; artifacts are isolated by run ID, attempt and suite,
+and older-attempt measurements are never combined with current ones.
+
+## Notifications and permissions
+
+Measurement runs on three separate Ubuntu 24.04 hosts, one per suite, with Go
+1.27.1 and Python 3.12. Each suite compares both binaries on its own host. The
+workflow verifies the pinned hyperfine 1.20.0 amd64 package's SHA-256 and retains
+artifacts for 30 days. Both interpreted binaries use identical workload sources.
+Only trusted default-branch notification jobs have `issues: write`; measured
+programs have no issue-writing token. Checkouts do not persist credentials.
+
+An independent monitor watches this attempt's prepare, exact matrix job names,
+and report job every 30 seconds. Run start, setup, build, queue and report time
+count. At the first poll strictly beyond 330 minutes, unfinished or late-finished
+watched work opens **perf bench action takes dangerously more time**. It does
+not cancel measurement. The monitor excludes itself, treats missing expected
+jobs as pending, and verifies a successful prepare's skip flag before treating
+absent matrix jobs as intentional. A failed prepare waits for the error report
+without inventing missing measurement work.
+
+Measurement and monitor jobs have GitHub's six-hour job limit. A terminated job's
+`always()` upload is best effort; forced runner termination can prevent upload.
+The earlier independent runtime warning does not require measurement artifacts.
+The report job validates this attempt's identities and raw data, reconstructing
+completed final cases when needed. Missing or timed-out suites remain incomplete.
+
+At least one confirmed completed regression opens an issue for the full base/head
+SHA pair, even alongside incomplete/error/inconclusive data. It contains full
+SHAs, compare/run links, geometric effects, separately one-sided lower bounds,
+practical thresholds, final/pilot counts, alpha, and up to 20 regressed cases.
+Full case data remain in artifacts and the run summary. All-inconclusive data
+produce no regression issue and do not claim a clean pass. Operational failures
+fail jobs; they do not receive separate operational issues beyond the requested
+runtime warning.
+
+Versioned hidden markers deduplicate bot-authored regression issues by SHA pair
+and runtime warnings by repository/run ID. Reruns add at most one comment per
+attempt; closed issues remain closed and human content is preserved. Publication
+is serialized separately for each SHA pair/run ID. REST operations paginate and
+retry transient/rate-limit failures three times with waits bounded at 60 seconds.
+An uncertain POST is followed by marker re-reading before any retry. After
+exhausted transient GET retries, the monitor waits 30 seconds and resumes polling.
+Nonretryable polling failures and exhausted retries elsewhere fail their jobs.
+Issue bodies escape dynamic text, suppress mentions and cap content at 60,000
+characters with full-evidence links.
+
+Before deployment, inspect required-check rules so retired PR comparison checks
+cannot leave PRs pending. The implementation-time upstream check found Ubuntu
+Native Build, Ubuntu WASM Build and CodeRabbit required, with no retired
+benchmark check required. Repository rules were not changed. Native CI retains
+its existing corpus benchmark smoke and functional/race coverage; its added
+Performance Infrastructure Tests job runs mocked Python tests on PRs.
+
 ## Infrastructure tests
 
 ```sh
@@ -96,3 +172,14 @@ HTTP load. Calibration tests check the specified mathematical model, not real
 host stationarity. These orchestration/statistics boundaries cannot be exercised
 by a Ballerina corpus program.
 
+For the dispatch-equivalent CLI fixture smoke (Go, hyperfine-compatible fixture,
+local HTTP service and wrk-compatible fixture):
+
+```sh
+python3 .github/scripts/smoke_nightly_perf.py
+```
+
+It runs the real acquisition CLIs/coordinator on temporary commits and tiny
+fixture interpreters. HTTP adapter durations are one second in this fixture;
+deterministic timing/load stand-ins keep planning independent of host noise.
+This validates control/data plumbing and makes no interpreter performance claim.

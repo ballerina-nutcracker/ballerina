@@ -2,6 +2,14 @@
 
 A tool that compares interpreter performance or memory usage between two Git revisions. It checks out each revision in a temporary worktree, builds `./cli/cmd`, runs the same Ballerina target with both binaries, and writes an HTML report.
 
+## Nightly comparisons
+
+The [Nightly Performance workflow](../../.github/workflows/nightly-performance.yml)
+compares frozen default-branch revisions daily at 23:00 Asia/Colombo.
+[Statistical coordination and recovery](../benchmark-stats/README.md) use a
+separate pilot and final experiment. Local HTML/Markdown reports retain their
+descriptive heuristics; nightly issues use the paired statistical results.
+
 ## Prerequisites
 
 - **Git** — worktrees are created from the current repository
