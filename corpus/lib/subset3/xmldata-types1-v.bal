@@ -23,6 +23,12 @@ type XmlFields record {|
     xml:Text t;
 |};
 
+type Nested string|Nested[];
+
+type RecursiveField record {|
+    Nested n;
+|};
+
 type XmlArray record {|
     xml[] items;
 |};
@@ -62,6 +68,14 @@ public function main() returns error? {
     // @output <e><q a="1"/></e>
     io:println(fields.t);
     // @output <t>plain</t>
+    // A recursive field type is classified without expanding it without end.
+    RecursiveField|xmldata:Error recursive = xmldata:parseString("<r><n>a</n></r>");
+    show(recursive);
+    // @output {"n":"a"}
+    // The traversal tries the array member first (#1380), which also holds the text.
+    RecursiveField|xmldata:Error recursiveTraversed = xmldata:parseAsType(xml `<r><n>a</n></r>`);
+    show(recursiveTraversed);
+    // @output {"n":["a"]}
     XmlArray array = check xmldata:parseAsType(xml `<r><items><a/></items><items><b/></items></r>`);
     io:println(array.items.length());
     // @output 2
