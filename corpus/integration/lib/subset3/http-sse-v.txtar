@@ -11,7 +11,6 @@ text/event-stream
 {"data":"crlf"}
 {}
 {"data":"line1\nline2"}
-{}
 {"data":"m"}
 {"data":"next"}
 {"data":"café"}
