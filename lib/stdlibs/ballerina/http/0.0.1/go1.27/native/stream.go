@@ -242,11 +242,23 @@ func executeStreamed(goCtx context.Context, client pal.HTTPClient, method, url s
 	return res.status, res.headers, res.body, res.err
 }
 
+// streamBodyPanic is a panic raised by a response body stream's next() after the headers were
+// sent, so the handler logs it and aborts the response instead of writing an error body.
+type streamBodyPanic struct{ value any }
+
 // writeStreamedBody writes a byte-stream response body. An event stream is flushed after each
 // event and closed at the end, as jBallerina's EventStreamWriter does; any other byte stream is
 // left open, as jBallerina never closes a byte stream it sent as a body. Each write gets the
 // listener timeout afresh, so a long-lived stream is only cut off when a write stalls.
 func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType string, timeout time.Duration) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			if rec == http.ErrAbortHandler {
+				panic(rec)
+			}
+			panic(streamBodyPanic{rec})
+		}
+	}()
 	eventStream := strings.HasPrefix(contentType, "text/event-stream")
 	rc := http.NewResponseController(w)
 	reader := newBalStreamReader(source)

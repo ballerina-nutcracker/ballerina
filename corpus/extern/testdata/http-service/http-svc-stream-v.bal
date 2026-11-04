@@ -100,6 +100,19 @@ class FailingEvents {
     }
 }
 
+class PanickingEvents {
+    private boolean sent = false;
+
+    public isolated function next() returns record {|http:SseEvent value;|}|error? {
+        if self.sent {
+            int[] empty = [];
+            return {value: {data: empty[5].toString()}};
+        }
+        self.sent = true;
+        return {value: {data: "ok"}};
+    }
+}
+
 class Ticks {
     private final int count;
     private final decimal gap;
@@ -163,6 +176,10 @@ service /streams on new http:Listener(19503) {
         return new (new FailingEvents());
     }
 
+    resource function get panicking() returns stream<http:SseEvent, error?> {
+        return new (new PanickingEvents());
+    }
+
     resource function get ticks() returns stream<http:SseEvent, error?> {
         return new (new Ticks(5, 0.2));
     }
@@ -184,6 +201,7 @@ service /streams on new http:Listener(19503) {
 
 public function testMain() returns error? {
     http:Client c = check new ("http://localhost:19503/streams");
+    http:Client h1 = check new ("http://localhost:19503/streams", {httpVersion: http:HTTP_1_1});
 
     http:Response bytes = check c->get("/bytes");
     io:println(bytes.getContentType()); // @output application/octet-stream
@@ -215,6 +233,12 @@ public function testMain() returns error? {
     http:Response failing = check c->get("/failing");
     // @output ["data: ok\n\nevent: error\ndata: db down\n\n"]
     io:println([check failing.getTextPayload()]);
+
+    // A panic in the resource's event stream after the headers were sent aborts the response
+    // instead of appending an error body to the event stream.
+    stream<http:SseEvent, error?> panicking = check h1->get("/panicking");
+    io:println(check panicking.next()); // @output {"value":{"data":"ok"}}
+    io:println(panicking.next() is error); // @output true
 
     // The client timeout is an idle timeout: a stream that keeps delivering outlives it, and
     // one that stalls for longer fails.
