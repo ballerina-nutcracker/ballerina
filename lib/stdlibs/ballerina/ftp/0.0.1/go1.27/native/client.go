@@ -507,7 +507,11 @@ func readChunk(r io.Reader) ([]byte, error) {
 
 func (m *ftpModule) getFirst(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	state, p := clientArg(args), args[1].(string)
-	r, err := query(state, func(remote *remoteClient) (io.ReadCloser, error) { return remote.openFile(p) })
+	remote, err := state.active()
+	if err != nil {
+		return m.errorResult(ctx, err)
+	}
+	r, err := remote.openFile(p)
 	if err != nil {
 		return m.errorResult(ctx, err)
 	}
@@ -620,9 +624,11 @@ func (m *ftpModule) legacyWrite(ctx *extern.Context, args []values.BalValue, app
 		data = zipContent(path.Base(p), data)
 		p = compressedName(p)
 	}
-	return m.errorResult(ctx, state.run(func(remote *remoteClient) error {
-		return remote.writeBytes(p, data, appendMode)
-	}))
+	remote, err := state.active()
+	if err != nil {
+		return m.errorResult(ctx, err)
+	}
+	return m.errorResult(ctx, remote.writeBytes(p, data, appendMode))
 }
 
 func (m *ftpModule) put(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {

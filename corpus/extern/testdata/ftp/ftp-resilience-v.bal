@@ -140,11 +140,10 @@ public function main() returns error? {
     io:println(opened is ftp:ServiceUnavailableError); // @output true
     var stillOpen = guarded->getText("/present.txt");
     io:println(stillOpen is ftp:CircuitBreakerOpenError); // @output true
-    ftp:Error? legacyPut = guarded->put("/present.txt", "legacy");
-    ftp:Error? legacyAppend = guarded->append("/present.txt", "legacy");
-    var legacyGet = guarded->get("/present.txt");
-    io:println(legacyPut is ftp:CircuitBreakerOpenError, " ", legacyAppend is ftp:CircuitBreakerOpenError, " ",
-            legacyGet is ftp:CircuitBreakerOpenError); // @output true true true
+    ftp:Error? legacyPut = guarded->put("/legacy.txt", "legacy");
+    ftp:Error? legacyAppend = guarded->append("/legacy.txt", "legacy");
+    var legacyGet = guarded->get("/legacy.txt");
+    io:println(legacyPut is (), " ", legacyAppend is (), " ", legacyGet is stream<byte[] & readonly, io:Error?>); // @output true true true
     runtime:sleep(1.1);
     var trial = guarded->getText("/present.txt");
     io:println(trial); // @output here
