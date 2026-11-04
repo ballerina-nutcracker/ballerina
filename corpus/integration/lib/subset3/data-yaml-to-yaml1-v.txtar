@@ -37,19 +37,19 @@ empty: {}
 !!str books: !!seq
 -
   !!str title: !!str "1984"
-  !!str year: 1949
+  !!str year: !!int 1949
   !!str tags: !!seq
   - !!str dystopia
 -
   !!str title: !!str Emma
-  !!str year: 1815
+  !!str year: !!int 1815
   !!str tags: !!seq []
-!!str open: true
-!!str rating: 4.5
+!!str open: !!bool true
+!!str rating: !!float 4.5
 !!str fee: 2.50
 !!str empty: {}
 --
-{!!str name: !!str Central Library, !!str books: !!seq [{!!str title: !!str "1984", !!str year: 1949, !!str tags: !!seq [!!str dystopia]}, {!!str title: !!str Emma, !!str year: 1815, !!str tags: !!seq []}], !!str open: true, !!str rating: 4.5, !!str fee: 2.50, !!str empty: {}}
+{!!str name: !!str Central Library, !!str books: !!seq [{!!str title: !!str "1984", !!str year: !!int 1949, !!str tags: !!seq [!!str dystopia]}, {!!str title: !!str Emma, !!str year: !!int 1815, !!str tags: !!seq []}], !!str open: !!bool true, !!str rating: !!float 4.5, !!str fee: 2.50, !!str empty: {}}
 --
 "a": "x"
 "b": "1"
@@ -131,10 +131,20 @@ a: {}
 ["true","True","null","~","1","1.5","+12","Infinity","0x1p3","0x1F",".inf","a: b"]
 {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
 {"a":"1","b":"1.","c":"true","d":"null","e":"0x1F","f":1}
-- 1949
-- true
-- null
+- !!int 1949
+- !!bool true
+- !!null null
+- !!float 1.5
+- !!float -.inf
 - !!str "1949"
 --
-[1949,true,null,"1949"]
+[1949,true,null,1.5,-Infinity,"1949"]
+- !!int "1949"
+- !!bool "true"
+- !!null "null"
+- !!float "1.5"
+- !!float "-.inf"
+- !!str "1949"
+--
+[1949,true,null,1.5,-Infinity,"1949"]
 -- stderr --
