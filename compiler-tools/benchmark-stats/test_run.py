@@ -52,6 +52,23 @@ if mode in ('partial','corrupt','after-complete') and a.phase=='final':sys.exit(
 """
 
 
+_git_environment = None
+
+
+def setUpModule():
+    global _git_environment
+    _git_environment = patch.dict(
+        os.environ,
+        {key: value for key, value in os.environ.items() if not key.startswith("GIT_")},
+        clear=True,
+    )
+    _git_environment.start()
+
+
+def tearDownModule():
+    _git_environment.stop()
+
+
 class CoordinatorTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -278,6 +295,43 @@ class CoordinatorTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+
+    def test_inherited_git_environment_cannot_modify_parent_repository(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp) / "parent.git"
+            subprocess.run(
+                ["git", "init", "--bare", str(parent)],
+                check=True,
+                capture_output=True,
+            )
+            before = {
+                str(path.relative_to(parent)): path.read_bytes()
+                for path in parent.rglob("*")
+                if path.is_file()
+            }
+            env = os.environ.copy()
+            env.update(GIT_DIR=str(parent), GIT_INDEX_FILE=str(parent / "test-index"))
+            child = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "unittest",
+                    "test_run.CoordinatorTests.test_skip_never_invokes_tool",
+                ],
+                cwd=Path(__file__).resolve().parent,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
+            after = {
+                str(path.relative_to(parent)): path.read_bytes()
+                for path in parent.rglob("*")
+                if path.is_file()
+            }
+            self.assertEqual(after, before)
+
     def test_malformed_manifest_cli_preserves_error_status(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
