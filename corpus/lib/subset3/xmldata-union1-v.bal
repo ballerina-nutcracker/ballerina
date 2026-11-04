@@ -52,6 +52,10 @@ type SameSingletonUnion record {|
     Inner|"none" p;
 |};
 
+type RecordOrInt record {|
+    Inner|int i;
+|};
+
 type NumericSingletonUnion record {|
     Inner|1.5 f;
     Inner|2.5d d;
@@ -142,6 +146,13 @@ public function main() {
     both("<x><p><name>c</name></p></x>", SameSingletonUnion);
     // @output {"p":{"name":"c"}}
     // @output {"p":{"name":"c"}}
+    // A record member that fails on text leaves none of its fields behind for the next member.
+    both("<x><i>5</i></x>", RecordOrInt);
+    // @output {"i":5}
+    // @output {"i":5}
+    both("<x><p>none</p><c>RED</c></x>", SingletonUnion);
+    // @output {"p":"none","c":"RED"}
+    // @output {"p":"none","c":"RED"}
     foreach int _ in 0 ..< 2 {
         both("<x><f><name>a</name></f><d><name>b</name></d><g><name>c</name></g></x>", NumericSingletonUnion);
     }
