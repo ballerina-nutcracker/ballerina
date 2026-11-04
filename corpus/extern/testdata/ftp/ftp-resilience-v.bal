@@ -126,7 +126,7 @@ public function main() returns error? {
     check slowBusy->close();
 
     ftp:CircuitBreakerConfig breaker = {
-        rollingWindow: {requestVolumeThreshold: 2, timeWindow: 10, bucketSize: 1},
+        rollingWindow: {requestVolumeThreshold: 2, timeWindow: 60, bucketSize: 1},
         failureThreshold: 0.4,
         resetTime: 1,
         failureCategories: [ftp:ALL_ERRORS]
@@ -154,7 +154,7 @@ public function main() returns error? {
 
     // With 1 ms buckets each request ends in a later bucket than it started in.
     ftp:Client fineGrained = check connect({
-        rollingWindow: {requestVolumeThreshold: 2, timeWindow: 10, bucketSize: 0.001},
+        rollingWindow: {requestVolumeThreshold: 2, timeWindow: 60, bucketSize: 0.001},
         failureThreshold: 0.4,
         failureCategories: [ftp:ALL_ERRORS]
     });
@@ -166,7 +166,7 @@ public function main() returns error? {
     check fineGrained->close();
 
     ftp:CircuitBreakerConfig connectionOnly = {
-        rollingWindow: {requestVolumeThreshold: 1, timeWindow: 10, bucketSize: 5},
+        rollingWindow: {requestVolumeThreshold: 1, timeWindow: 60, bucketSize: 5},
         failureThreshold: 0.0,
         failureCategories: [ftp:CONNECTION_ERROR, ftp:AUTHENTICATION_ERROR, ftp:TRANSIENT_ERROR]
     };
@@ -182,7 +182,7 @@ public function main() returns error? {
         port: busyPort(),
         auth: {credentials: {username: "drop", password: "x"}},
         circuitBreaker: {
-            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 10, bucketSize: 5},
+            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 60, bucketSize: 5},
             failureThreshold: 0.0,
             failureCategories: [ftp:TRANSIENT_ERROR]
         }
@@ -242,7 +242,7 @@ function opensOnHang(ftp:FailureCategory category) returns boolean|error {
         auth: {credentials: {username: "hang", password: "x"}},
         socketConfig: {ftpSocketTimeout: 1, ftpDataTimeout: 1},
         circuitBreaker: {
-            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 10, bucketSize: 5},
+            rollingWindow: {requestVolumeThreshold: 1, timeWindow: 60, bucketSize: 5},
             failureThreshold: 0.0,
             failureCategories: [category]
         }
