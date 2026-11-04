@@ -168,7 +168,7 @@ func TestRunMemoryBenchmarkUsesTimeOutput(t *testing.T) {
 	defer restore()
 
 	b := &benchmark{config: config{baseRef: baseRef, headRef: headRef, runs: 1}}
-	export, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal")
+	export, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal", b.runs, "case.bal", nil)
 	if err != nil {
 		t.Fatalf("runMemoryBenchmark() returned error: %v", err)
 	}
@@ -185,21 +185,26 @@ func TestRunMemoryBenchmarkUsesTimeOutput(t *testing.T) {
 	}
 }
 
+// Infrastructure acquisition cannot be reached through a Ballerina corpus program.
 func TestRunMemoryCommandUsesWarmupAndRuns(t *testing.T) {
 	skipMemoryBenchmarkUnsupported(t)
 
 	restore := stubExecCommand(t, []memoryCommandStub{
 		{stderr: memoryCommandOutputForMiB(100)},
+		{stderr: memoryCommandOutputForMiB(100)},
 		{stderr: memoryCommandOutputForMiB(1)},
+		{stderr: memoryCommandOutputForMiB(1)},
+		{stderr: memoryCommandOutputForMiB(3)},
 		{stderr: memoryCommandOutputForMiB(3)},
 	})
 	defer restore()
 
 	b := &benchmark{config: config{warmup: 1, runs: 2}}
-	result, err := b.runMemoryCommand("bal", "case.bal")
+	export, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal", b.runs, "case.bal", nil)
 	if err != nil {
 		t.Fatalf("runMemoryCommand() returned error: %v", err)
 	}
+	result := export.Results[0]
 	if result.Mean != 2 || result.Median != 2 || result.Stddev != math.Sqrt(2) {
 		t.Fatalf("unexpected memory result: %+v", result)
 	}
@@ -212,7 +217,7 @@ func TestRunMemoryBenchmarkReportsCommandFailure(t *testing.T) {
 	defer restore()
 
 	b := &benchmark{config: config{baseRef: baseRef, headRef: headRef, runs: 1}}
-	_, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal")
+	_, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal", b.runs, "case.bal", nil)
 	if err == nil || !strings.Contains(err.Error(), "failed to run memory benchmark for "+baseRef) {
 		t.Fatalf("runMemoryBenchmark() error = %v", err)
 	}
@@ -228,7 +233,7 @@ func TestRunMemoryBenchmarkReportsHeadFailure(t *testing.T) {
 	defer restore()
 
 	b := &benchmark{config: config{baseRef: baseRef, headRef: headRef, runs: 1}}
-	_, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal")
+	_, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal", b.runs, "case.bal", nil)
 	if err == nil || !strings.Contains(err.Error(), "failed to run memory benchmark for "+headRef) {
 		t.Fatalf("runMemoryBenchmark() error = %v", err)
 	}
@@ -241,7 +246,7 @@ func TestRunMemoryCommandReportsParseFailure(t *testing.T) {
 	defer restore()
 
 	b := &benchmark{config: config{runs: 1}}
-	_, err := b.runMemoryCommand("bal", "case.bal")
+	_, err := b.runMemoryBenchmark("/base", "/head", "case.bal", "bal", b.runs, "case.bal", nil)
 	if err == nil || !strings.Contains(err.Error(), "failed to parse maximum resident set size") {
 		t.Fatalf("runMemoryCommand() error = %v", err)
 	}
@@ -273,6 +278,8 @@ func TestRunMemorySampleTimesOut(t *testing.T) {
 	}
 }
 
+// Host benchmark acquisition cannot be exercised by Ballerina corpus programs.
+// Not parallel: this test changes PATH.
 func TestRunBenchmarksTimeModeUsesHyperfineExport(t *testing.T) {
 	skipHyperfineStubUnsupported(t)
 
@@ -288,12 +295,17 @@ func TestRunBenchmarksTimeModeUsesHyperfineExport(t *testing.T) {
 		paths: []string{targetPath},
 	}
 	b := &benchmark{config: config{baseRef: baseRef, headRef: headRef, mode: timeMode, runs: 1}}
-	results, err := b.runBenchmarks("/base", "/head", target, "bal", t.TempDir())
+	results, err := b.runBenchmarks("/base", "/head", target, "bal", t.TempDir(), []string{benchmarkCaseID(target, target.paths[0])}, map[string]int{benchmarkCaseID(target, target.paths[0]): 3})
 	if err != nil {
 		t.Fatalf("runBenchmarks() returned error: %v", err)
 	}
 	if len(results) != 1 || results[0].label != targetPath {
 		t.Fatalf("unexpected results: %+v", results)
+	}
+	for role, result := range results[0].export.Results {
+		if len(result.Times) != 3 {
+			t.Fatalf("role %d acquired %d samples, want per-case count 3", role, len(result.Times))
+		}
 	}
 	if got := results[0].export.Results[0].Mean; got != 0.5 {
 		t.Fatalf("mean = %v, want 0.5", got)
@@ -312,12 +324,14 @@ func TestRunBenchmarksTimeModeReturnsHyperfineError(t *testing.T) {
 
 	target := &benchmarkTarget{mode: singleFileMode, label: "case.bal", paths: []string{"case.bal"}}
 	b := &benchmark{config: config{baseRef: baseRef, headRef: headRef, mode: timeMode, runs: 1}}
-	_, err := b.runBenchmarks("/base", "/head", target, "bal", t.TempDir())
+	_, err := b.runBenchmarks("/base", "/head", target, "bal", t.TempDir(), []string{benchmarkCaseID(target, target.paths[0])}, map[string]int{benchmarkCaseID(target, target.paths[0]): b.runs})
 	if err == nil || !strings.Contains(err.Error(), "failed to run hyperfine") {
 		t.Fatalf("runBenchmarks() error = %v", err)
 	}
 }
 
+// Host benchmark acquisition cannot be exercised by Ballerina corpus programs.
+// Not parallel: this test replaces the process execution function.
 func TestRunBenchmarksMemoryMode(t *testing.T) {
 	skipMemoryBenchmarkUnsupported(t)
 
@@ -326,12 +340,17 @@ func TestRunBenchmarksMemoryMode(t *testing.T) {
 
 	target := &benchmarkTarget{mode: singleFileMode, label: "case.bal", paths: []string{"case.bal"}}
 	b := &benchmark{config: config{baseRef: baseRef, headRef: headRef, mode: memoryMode, runs: 1}}
-	results, err := b.runBenchmarks("/base", "/head", target, "bal", t.TempDir())
+	results, err := b.runBenchmarks("/base", "/head", target, "bal", t.TempDir(), []string{benchmarkCaseID(target, target.paths[0])}, map[string]int{benchmarkCaseID(target, target.paths[0]): 3})
 	if err != nil {
 		t.Fatalf("runBenchmarks() returned error: %v", err)
 	}
 	if len(results) != 1 || results[0].label != "case.bal" {
 		t.Fatalf("unexpected results: %+v", results)
+	}
+	for role, result := range results[0].export.Results {
+		if len(result.Times) != 3 {
+			t.Fatalf("role %d acquired %d samples, want per-case count 3", role, len(result.Times))
+		}
 	}
 	if got := results[0].export.Results[0].Mean; got != 1 {
 		t.Fatalf("mean = %v, want 1", got)
@@ -368,7 +387,7 @@ func writeFakeHyperfine(t *testing.T, dir string) {
 while [ "$#" -gt 0 ]; do
   if [ "$1" = "--export-json" ]; then
     shift
-    printf '{"results":[{"command":"base","mean":0.5,"stddev":0.01,"median":0.5},{"command":"head","mean":0.4,"stddev":0.02,"median":0.4}]}' > "$1"
+    printf '{"results":[{"command":"base","mean":0.5,"stddev":0.01,"median":0.5,"times":[0.5]}]}' > "$1"
     exit 0
   fi
   shift

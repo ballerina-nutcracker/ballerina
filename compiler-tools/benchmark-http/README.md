@@ -13,7 +13,7 @@ For each ref (base and head) it:
 3. Drives load with **`wrk --latency`** — a discarded warmup run, then a measured run.
 4. Parses throughput / avg / p99 / stdev, and reads peak RSS from `/proc/<pid>/status` (Linux).
 
-Runs are **interleaved** (base, head, base, head, …) `--repeats` times so both refs share any drift on the host. It compares the **median** throughput and flags a regression when head is more than `--threshold` percent below base.
+Runs are **interleaved** (base, head, head, base, …) `--repeats` times so both refs share any drift on the host. It compares the **median** throughput and flags a regression when head is more than `--threshold` percent below base.
 
 `bal run` (interpret) is used for the hello service, not `bal build` — no per-ref build step for the service itself, cleanest isolation, and it exercises the same interpreter engine where language/`http` regressions surface. Each worktree still compiles the `bal` CLI via `go build` (step 1) — that build step is unavoidable since it produces the binary under test.
 
@@ -55,3 +55,15 @@ GitHub-hosted `ubuntu-latest` runners are noisy for throughput (~5–15% run-to-
 ## Future
 
 - **Passthrough** scenario (proxy to a backend): ship a tiny Go echo server in `testdata/`, start it on :8688, and gate its throughput the same way — no external backend needed.
+
+## Paired raw samples
+
+`--samples-jsonl PATH` exports version-1 metadata, each successful role sample,
+case completion, and stream completion. `--phase fixed|pilot|final` labels the
+stream (default `fixed`). The single stable case ID is `hello`, and the primary
+unit is `req/s`. Each event retains latency, startup, and RSS as descriptive
+metrics. Failed raw-export runs return a nonzero exit status and retain earlier
+flushed events. Existing local median-based JSON/report output remains available.
+
+Balanced adjacent pairs alternate base/head then head/base. Each role still
+launches a fresh service and performs the configured warmup and measured load.
