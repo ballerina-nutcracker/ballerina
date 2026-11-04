@@ -398,9 +398,16 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 				if rec == http.ErrAbortHandler {
 					panic(rec)
 				}
+				bodyPanic, headersSent := rec.(streamBodyPanic)
+				if headersSent {
+					rec = bodyPanic.value
+				}
 				msg := panicMessage(rec)
 				logMsg := fmt.Sprintf("error [ballerina/http]: panic while handling %s %s: %s\n", r.Method, r.URL.Path, msg)
 				_, _ = rt.Platform().IO.Stderr([]byte(logMsg))
+				if headersSent {
+					panic(http.ErrAbortHandler)
+				}
 				writeErrorJSON(rt, w, r, http.StatusInternalServerError, msg)
 			}
 		}()
