@@ -1,0 +1,5 @@
+paths:
+  .github/workflows/nightly-performance.yml:
+    ignore:
+      # GitHub supports concurrency.queue, but actionlint 1.7.12 does not (rhysd/actionlint#657).
+      - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'

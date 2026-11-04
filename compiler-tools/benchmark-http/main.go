@@ -18,9 +18,9 @@
 // interpreter between two git refs. For each ref it checks out a worktree,
 // builds `bal`, runs the embedded hello service via `bal run`, and drives load
 // with wrk — interleaving repeated runs of base and head on the same host so
-// environmental noise is shared. It writes a markdown report and a result.json
-// verdict (used by the CI gate). Regression is data, not an error: the tool
-// exits 0 unless it cannot produce a measurement.
+// environmental noise is shared. Local Markdown and JSON reports give a
+// descriptive verdict; nightly analysis uses raw paired samples. A regression
+// does not change the exit status.
 package main
 
 import (
@@ -55,15 +55,13 @@ func main() {
 	}
 
 	if err := run(cfg); err != nil {
-		// Operational failure (build/launch/parse) — emit an error report so the
-		// PR comment still has something, and let the gate fail on error:true.
 		fmt.Fprintf(os.Stderr, "httpbench: %v\n", err)
 		emitError(cfg, err)
 		if cfg.samplesJSONL != "" {
 			os.Exit(1)
 		}
-		// Exit 0: the artifact + gate handle the failure; a crash here would
-		// skip artifact upload and leave no comment.
+		// Without raw export, exit 0 for compatibility with local consumers
+		// that read the error field in result.json.
 		return
 	}
 }
@@ -80,7 +78,7 @@ func parseConfig(args []string) (config, error) {
 	fs.StringVar(&cfg.warmup, "warmup", "30s", "wrk warmup duration (discarded)")
 	fs.StringVar(&cfg.duration, "duration", "330s", "wrk measured duration")
 	fs.IntVar(&cfg.conns, "conns", 50, "wrk concurrent connections")
-	fs.Float64Var(&cfg.threshold, "threshold", 10, "throughput drop % that fails the gate")
+	fs.Float64Var(&cfg.threshold, "threshold", 10, "throughput drop % that flags a regression in local reports")
 	fs.StringVar(&cfg.exportMD, "export-md", "", "write the markdown report to this path")
 	fs.StringVar(&cfg.resultJSON, "result-json", "", "write the JSON verdict to this path")
 	fs.Usage = func() {

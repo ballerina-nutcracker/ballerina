@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-// result is the machine-readable verdict consumed by the CI gate step.
+// result is the machine-readable verdict for local fixed-count comparisons.
 type result struct {
 	Regressed       bool    `json:"regressed"`
 	Error           bool    `json:"error"`
