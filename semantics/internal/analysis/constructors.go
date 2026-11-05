@@ -185,6 +185,10 @@ func validateErrorConstructor(cx scope.Context, e *ast.BLangErrorConstructorExpr
 		}
 		provided = append(provided, semtypes.FieldFrom(name, argTy, false, false))
 	}
+	for _, fd := range e.FieldDefaults {
+		fieldTy := semtypes.MappingMemberTypeInnerValProj(tyCtx, detailTy, semtypes.StringConst(fd.FieldName))
+		provided = append(provided, semtypes.FieldFrom(fd.FieldName, fieldTy, false, false))
+	}
 	providedDefn := semtypes.NewMappingDefinition()
 	providedTy := semtypes.Intersect(providedDefn.Define(tyCtx.Env(), provided, semtypes.Never), semtypes.ValReadonly)
 	if !semtypes.IsSubtype(tyCtx, providedTy, detailTy) {
