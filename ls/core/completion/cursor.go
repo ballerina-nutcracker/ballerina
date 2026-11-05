@@ -158,10 +158,14 @@ func identifierPrefixAtOffset(text string, offset int) string {
 	start := offset
 	for start > 0 {
 		r, size := utf8.DecodeLastRuneInString(text[:start])
-		if (r == utf8.RuneError && size == 0) || !(r == '_' || r == '\'' || unicode.IsLetter(r) || unicode.IsDigit(r)) {
+		if (r == utf8.RuneError && size == 0) || !isIdentifierRune(r) {
 			break
 		}
 		start -= size
 	}
 	return text[start:offset]
+}
+
+func isIdentifierRune(r rune) bool {
+	return r == '_' || r == '\'' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
