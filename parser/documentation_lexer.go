@@ -17,6 +17,8 @@
 package parser
 
 import (
+	"strings"
+
 	compilercontext "github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/parser/common"
 	"github.com/ballerina-nutcracker/ballerina/st"
@@ -343,7 +345,7 @@ func (dl *documentationLexer) getLeadingTrivia() st.STNode {
 	return trivia
 }
 
-func (dl *documentationLexer) reportLexerError(code common.DiagnosticWarningCode, args ...interface{}) {
+func (dl *documentationLexer) reportLexerError(code common.DiagnosticWarningCode, args ...any) {
 	var diagnosticCode diagnostics.DiagnosticCode = &code
 	diagnostic := st.CreateDiagnostic(diagnosticCode, args...)
 	dl.context.diagnostics = append(dl.context.diagnostics, diagnostic)
@@ -488,15 +490,15 @@ func (dl *documentationLexer) readDocInternalToken() st.STToken {
 func (dl *documentationLexer) processDocumentationReference(nextChar rune) bool {
 	lookAheadChar := nextChar
 	lookAheadCount := 0
-	identifier := ""
+	var identifier strings.Builder
 
 	for isIdentifierInitialChar(lookAheadChar) {
-		identifier += string(lookAheadChar)
+		identifier.WriteString(string(lookAheadChar))
 		lookAheadCount++
 		lookAheadChar = dl.reader.PeekN(lookAheadCount)
 	}
 
-	switch identifier {
+	switch identifier.String() {
 	case typeKeyword, service, variable, varKeyword, annotation, module, function, parameter, constKeyword:
 		for {
 			switch lookAheadChar {

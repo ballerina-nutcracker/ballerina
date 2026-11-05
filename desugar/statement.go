@@ -281,10 +281,8 @@ func createIncrementStmt(loopVar ast.LExpr) *ast.BLangAssignment {
 	basePos := loopVar.GetPosition()
 
 	oneLiteral := &ast.BLangNumericLiteral{
-		BLangLiteral: ast.BLangLiteral{
-			Value:         int64(1),
-			OriginalValue: "1",
-		},
+		Value:         int64(1),
+		OriginalValue: "1",
 	}
 	oneLiteral.Ty = semtypes.Int
 	addExpr := &ast.BLangBinaryExpr{
@@ -368,10 +366,8 @@ func desugarForEachByIndex(cx *functionContext, langLibModule string, collection
 
 	// Step 2: index variable ($desugar$N = 0)
 	zeroLiteral := &ast.BLangNumericLiteral{
-		BLangLiteral: ast.BLangLiteral{
-			Value:         int64(0),
-			OriginalValue: "0",
-		},
+		Value:         int64(0),
+		OriginalValue: "0",
 	}
 	zeroLiteral.Ty = semtypes.Int
 
@@ -537,10 +533,8 @@ func desugarForEachOnMap(cx *functionContext, collection ast.BLangActionOrExpres
 
 	// Step 3: index variable ($desugar$N = 0)
 	zeroLiteral := &ast.BLangNumericLiteral{
-		BLangLiteral: ast.BLangLiteral{
-			Value:         int64(0),
-			OriginalValue: "0",
-		},
+		Value:         int64(0),
+		OriginalValue: "0",
 	}
 	zeroLiteral.Ty = semtypes.Int
 

@@ -117,23 +117,20 @@ var (
 )
 
 func NewBLangFromClause(pos Location, collection BLangExpression, variableDefinition *BLangVariableDef, declaredWithVar bool) *BLangFromClause {
-	return &BLangFromClause{BLangInputClause: BLangInputClause{
-		bLangNodeBase:          bLangNodeBase{pos: pos},
+	return &BLangFromClause{
+		pos:                    pos,
 		Collection:             collection,
 		VariableDefinitionNode: variableDefinition,
-		IsDeclaredWithVarFlag:  declaredWithVar,
-	}}
+		IsDeclaredWithVarFlag:  declaredWithVar}
 }
 
 func NewBLangJoinClause(pos Location, collection BLangExpression, variableDefinition *BLangVariableDef, declaredWithVar, outer bool, onClause *BLangOnClause) *BLangJoinClause {
 	clause := &BLangJoinClause{
-		BLangInputClause: BLangInputClause{
-			bLangNodeBase:          bLangNodeBase{pos: pos},
-			Collection:             collection,
-			VariableDefinitionNode: variableDefinition,
-			IsDeclaredWithVarFlag:  declaredWithVar,
-		},
-		IsOuterJoinFlag: outer,
+		pos:                    pos,
+		Collection:             collection,
+		VariableDefinitionNode: variableDefinition,
+		IsDeclaredWithVarFlag:  declaredWithVar,
+		IsOuterJoinFlag:        outer,
 	}
 	if onClause != nil {
 		clause.OnClause = *onClause
@@ -142,31 +139,31 @@ func NewBLangJoinClause(pos Location, collection BLangExpression, variableDefini
 }
 
 func NewBLangOnClause(pos Location, onExpr, equalsExpr BLangExpression) *BLangOnClause {
-	return &BLangOnClause{bLangNodeBase: bLangNodeBase{pos: pos}, OnExpr: onExpr, EqualsExpr: equalsExpr}
+	return &BLangOnClause{pos: pos, OnExpr: onExpr, EqualsExpr: equalsExpr}
 }
 
 func NewBLangLimitClause(pos Location, expr BLangExpression) *BLangLimitClause {
-	return &BLangLimitClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
+	return &BLangLimitClause{pos: pos, Expression: expr}
 }
 
 func NewBLangSelectClause(pos Location, expr BLangExpression) *BLangSelectClause {
-	return &BLangSelectClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
+	return &BLangSelectClause{pos: pos, Expression: expr}
 }
 
 func NewBLangOnConflictClause(pos Location, expr BLangExpression) *BLangOnConflictClause {
-	return &BLangOnConflictClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr}
+	return &BLangOnConflictClause{pos: pos, Expression: expr}
 }
 
 func NewBLangCollectClause(pos Location, expr BLangExpression, nonGroupingKeys common.Set[string]) *BLangCollectClause {
-	return &BLangCollectClause{bLangNodeBase: bLangNodeBase{pos: pos}, Expression: expr, NonGroupingKeys: nonGroupingKeys}
+	return &BLangCollectClause{pos: pos, Expression: expr, NonGroupingKeys: nonGroupingKeys}
 }
 
 func NewBLangGroupingKeyWithVariableDef(pos Location, variableDef *BLangVariableDef) *BLangGroupingKey {
-	return &BLangGroupingKey{bLangNodeBase: bLangNodeBase{pos: pos}, VariableDef: variableDef}
+	return &BLangGroupingKey{pos: pos, VariableDef: variableDef}
 }
 
 func NewBLangGroupingKeyWithVariableRef(pos Location, variableRef *BLangVarRef) *BLangGroupingKey {
-	return &BLangGroupingKey{bLangNodeBase: bLangNodeBase{pos: pos}, VariableRef: variableRef}
+	return &BLangGroupingKey{pos: pos, VariableRef: variableRef}
 }
 
 var (

@@ -19,6 +19,7 @@ package exec
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
@@ -86,8 +87,7 @@ func formatCallStack(cs *callStack) []string {
 	const maxFrames = 32
 	frames := make([]stackFrame, 0, len(entries))
 	var hiddenLocation bir.Location
-	for i := len(entries) - 1; i >= 0; i-- {
-		entry := entries[i]
+	for _, entry := range slices.Backward(entries) {
 		if isDesugaredFunction(entry.frame.FunctionKey()) {
 			// Keep the innermost hidden location so the panic site is still reported.
 			if bir.IsLocationEmpty(hiddenLocation) {

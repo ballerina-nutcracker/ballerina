@@ -260,7 +260,7 @@ func (b *blockContext) numLocals() int { return len(b.localVars) }
 // plus a LockEnd (ending the BB and continuing in a fresh one) when the block
 // is a lock body. Shared by unwindLoop and unwindFunction.
 func unwindInner(ctx context, curBB *bir.BIRBasicBlock, pos bir.Location) *bir.BIRBasicBlock {
-	curBB.Instructions = append(curBB.Instructions, &bir.PopScopeFrame{BIRInstructionBase: bir.BIRInstructionBase{BIRNodeBase: bir.BIRNodeBase{Pos: pos}}})
+	curBB.Instructions = append(curBB.Instructions, &bir.PopScopeFrame{Pos: pos})
 	if lk, ok := ctx.(*lockBlock); ok {
 		next := ctx.function().addBB()
 		curBB.Terminator = bir.NewLockEnd(lk.key, next, pos)
@@ -345,7 +345,7 @@ func emitBlockBody(blk context, bb *bir.BIRBasicBlock, stmts []ast.StatementNode
 	}
 	// Normal fall-through exit: size the frame and pop it.
 	push.NumLocals = blk.numLocals()
-	cur.Instructions = append(cur.Instructions, &bir.PopScopeFrame{BIRInstructionBase: bir.BIRInstructionBase{BIRNodeBase: bir.BIRNodeBase{Pos: pos}}})
+	cur.Instructions = append(cur.Instructions, &bir.PopScopeFrame{Pos: pos})
 	return statementEffect{block: cur}, true
 }
 
@@ -460,13 +460,13 @@ func addGlobalVar(birPkg *bir.BIRPackage, dcl bir.BIRGlobalVariableDcl) {
 
 func transformGlobalVariableDcl(ctx *packageContext, ast *ast.BLangVariable) bir.BIRGlobalVariableDcl {
 	name := model.Name(ast.GetName().GetValue())
-	dcl := bir.BIRGlobalVariableDcl{}
-	dcl.Pos = birLoc(ctx.CompilerContext.DiagnosticEnv(), ast.GetPosition())
-	dcl.Name = name
-	dcl.PkgID = ctx.packageID
-	dcl.Type = ctx.CompilerContext.SymbolType(ast.Symbol())
-	dcl.Flags = ast.Flags()
-	dcl.GlobalVarLookupKey = buildGlobalVarLookupKey(ctx.packageID, name)
+	dcl := bir.BIRGlobalVariableDcl{
+		Pos:                birLoc(ctx.CompilerContext.DiagnosticEnv(), ast.GetPosition()),
+		Name:               name,
+		PkgID:              ctx.packageID,
+		Type:               ctx.CompilerContext.SymbolType(ast.Symbol()),
+		Flags:              ast.Flags(),
+		GlobalVarLookupKey: buildGlobalVarLookupKey(ctx.packageID, name)}
 	return dcl
 }
 
@@ -509,7 +509,7 @@ func transformNativeFunction(root *funcBlock, astFunc *ast.BLangFunction, selfSy
 	if _, ok := root.fn.pkgCtx.CompilerContext.GetSymbol(astFunc.Symbol()).(model.DependentlyTypedFunctionSymbol); ok {
 		name := model.Name(astFunc.GetName().GetValue())
 		return &bir.BIRFunction{
-			BIRNodeBase:       bir.BIRNodeBase{Pos: root.fn.loc(astFunc.GetPosition())},
+			Pos:               root.fn.loc(astFunc.GetPosition()),
 			Name:              name,
 			OriginalName:      name,
 			Flags:             astFunc.Flags(),
@@ -2710,7 +2710,7 @@ func transformNativeResourceMethod(root *funcBlock, rm *ast.BLangResourceMethod,
 	if _, ok := root.fn.pkgCtx.CompilerContext.GetSymbol(rm.Symbol()).(model.DependentlyTypedFunctionSymbol); ok {
 		name := model.Name(root.fn.pkgCtx.CompilerContext.SymbolName(rm.Symbol()))
 		return &bir.BIRFunction{
-			BIRNodeBase:       bir.BIRNodeBase{Pos: root.fn.loc(rm.GetPosition())},
+			Pos:               root.fn.loc(rm.GetPosition()),
 			Name:              name,
 			OriginalName:      model.Name(rm.GetName().GetValue()),
 			Flags:             rm.Flags(),

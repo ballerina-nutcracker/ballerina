@@ -122,14 +122,12 @@ func Build(ctx *context.CompilerContext, pkg *ast.BLangPackage) *PackageCFG {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	for _, fn := range pkg.Functions {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			fnCfg := analyzeFunction(ctx, fn)
 			mu.Lock()
 			cfg.funcCfgs[fn.Symbol()] = fnCfg
 			mu.Unlock()
-		}()
+		})
 	}
 	if pkg.InitFunction != nil {
 		wg.Add(1)
@@ -562,8 +560,8 @@ func (cfg *functionCFG) markBackedges() {
 	dfs(0)
 	// Reverse post-order gives a topological ordering of the non-backedge DAG.
 	cfg.topoOrder = make([]int, 0, len(cfg.bbs))
-	for i := len(postOrder) - 1; i >= 0; i-- {
-		cfg.topoOrder = append(cfg.topoOrder, postOrder[i])
+	for _, p := range slices.Backward(postOrder) {
+		cfg.topoOrder = append(cfg.topoOrder, p)
 	}
 	// Append any unreachable blocks (not visited by DFS from root) at the end.
 	for i := range cfg.bbs {

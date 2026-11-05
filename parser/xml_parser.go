@@ -31,12 +31,10 @@ type xmlParser struct {
 
 func newXMLParser(tokenReader *tokenReader, interpolationExprs []st.STNode) *xmlParser {
 	p := &xmlParser{
-		abstractParser: abstractParser{
-			tokenReader:          tokenReader,
-			invalidNodeInfoStack: make([]invalidNodeInfo, 0),
-			insertedToken:        nil,
-		},
-		interpolationExprs: interpolationExprs,
+		tokenReader:          tokenReader,
+		invalidNodeInfoStack: make([]invalidNodeInfo, 0),
+		insertedToken:        nil,
+		interpolationExprs:   interpolationExprs,
 	}
 	errorHandler := newXMLParserErrorHandlerFromTokenReader(tokenReader)
 	p.errorHandler = &errorHandler

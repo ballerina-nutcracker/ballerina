@@ -20,6 +20,7 @@ package nodebuilder
 import (
 	"fmt"
 	"iter"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -4629,8 +4630,8 @@ func appendXMLTemplateNamespaceScope(scopes []map[string]struct{}, scope map[str
 }
 
 func isXMLTemplatePrefixInScope(prefix string, scopes []map[string]struct{}) bool {
-	for i := len(scopes) - 1; i >= 0; i-- {
-		if _, ok := scopes[i][prefix]; ok {
+	for _, scope := range slices.Backward(scopes) {
+		if _, ok := scope[prefix]; ok {
 			return true
 		}
 	}
@@ -4638,8 +4639,8 @@ func isXMLTemplatePrefixInScope(prefix string, scopes []map[string]struct{}) boo
 }
 
 func splitXMLTemplateName(name string) (string, string) {
-	if idx := strings.IndexByte(name, ':'); idx >= 0 {
-		return name[:idx], name[idx+1:]
+	if before, after, ok := strings.Cut(name, ":"); ok {
+		return before, after
 	}
 	return "", name
 }
