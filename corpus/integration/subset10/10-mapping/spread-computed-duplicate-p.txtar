@@ -1,4 +1,0 @@
--- stdout --
--- stderr --
-error: duplicate key 'a' in mapping constructor
-        at main(spread-computed-duplicate-p.bal:22)

@@ -16,9 +16,18 @@
 
 import ballerina/io;
 
+type Counts record {|
+    int count?;
+    string...;
+|};
+
+function invalidThenValid(string key) returns Counts {
+    return {[key]: "invalid", [key]: 2};
+}
+
 public function main() {
-    map<int> m = {"a": 1};
-    string k = "a";
-    map<int> r = {[k]: 2, ...m}; // @panic
-    io:println(r);
+    string key = "count";
+    Counts valid = {[key]: 1, [key]: 2};
+    io:println(valid.count); // @output 2
+    io:println((trap invalidThenValid(key)) is error); // @output true
 }

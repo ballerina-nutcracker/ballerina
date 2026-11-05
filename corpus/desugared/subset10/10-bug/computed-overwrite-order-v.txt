@@ -1,0 +1,85 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang map (as lang.map))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (value-type string)) (expr
+          (literal first))))
+      (var-def
+        (variable second (type
+          (value-type string)) (expr
+          (literal second))))
+      (var-def
+        (variable third (type
+          (value-type string)) (expr
+          (literal third))))
+      (var-def
+        (variable seed (type
+          (record-type
+            (field spread
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal spread)
+              (literal 2))))))
+      (var-def
+        (variable ordered (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (simple-var-ref first)
+              (literal 3))
+            (key-value
+              (literal specific)
+              (literal 1))
+            (key-value
+              (simple-var-ref second)
+              (literal 4))
+            (mapping-spread-field
+              (simple-var-ref seed))
+            (key-value
+              (simple-var-ref first)
+              (literal 5))
+            (key-value
+              (simple-var-ref third)
+              (literal 6))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.map keys (
+            (simple-var-ref ordered))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable key (type
+              (value-type string)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref key)
+              (literal :)
+              (index-based-access
+                (simple-var-ref ordered)
+                (simple-var-ref key)))))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1))))))))

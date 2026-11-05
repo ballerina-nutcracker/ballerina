@@ -1,0 +1,7 @@
+-- stdout --
+specific:1
+spread:2
+first:5
+second:4
+third:6
+-- stderr --
