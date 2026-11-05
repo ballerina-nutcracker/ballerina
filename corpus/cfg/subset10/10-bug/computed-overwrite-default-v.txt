@@ -1,0 +1,28 @@
+(defaultValue
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal default))))
+    (return
+      (literal 10))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable key (type
+        (value-type string)) (expr
+        (literal count))))
+    (var-def
+      (variable value (type
+        (user-defined-type Defaulted)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (simple-var-ref key)
+            (literal 20))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access count
+          (simple-var-ref value)))))
+  )
+)

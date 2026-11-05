@@ -1,0 +1,114 @@
+module $anon.. v 0.0.0;
+update({| int... |}) -> nil{
+  bb0 {
+    %2 = ConstantLoad 99
+    %3 = ConstantLoad id
+    value[%3] = %2;
+    return;
+  }
+}
+isReadonly(any) -> boolean{
+  bb0 {
+    %2 = value is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad id
+    key = %1;
+    %3 = ConstantLoad id
+    %4 = ConstantLoad 1
+    %5 = ConstantLoad 2
+    %6 = newMap {| id: int, int... |}{%3=%4, [key]=%5}
+    explicitField = %6;
+    %9 = ConstantLoad id
+    %8 = explicitField[%9];
+    %10 = %8;
+    %11 = println(%10) -> bb1;
+  }
+  bb1 {
+    GOTO bb2;
+  }
+  bb2 {
+    %13 = update(explicitField) -> bb3;
+  }
+  bb3 {
+    %12 = %13;
+    GOTO bb4;
+  }
+  bb4 {
+    %14 = %12 is error
+    %15 = %14;
+    %16 = println(%15) -> bb5;
+  }
+  bb5 {
+    %17 = ConstantLoad 4
+    %18 = ConstantLoad id
+    %19 = ConstantLoad 3
+    %20 = newMap {| id: int, never... |}{[key]=%17, %18=%19}
+    inherentField = %20;
+    %23 = ConstantLoad id
+    %22 = inherentField[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb6;
+  }
+  bb6 {
+    GOTO bb7;
+  }
+  bb7 {
+    %27 = update(inherentField) -> bb8;
+  }
+  bb8 {
+    %26 = %27;
+    GOTO bb9;
+  }
+  bb9 {
+    %28 = %26 is error
+    %29 = %28;
+    %30 = println(%29) -> bb10;
+  }
+  bb10 {
+    %31 = ConstantLoad id
+    %32 = ConstantLoad 5
+    %33 = ConstantLoad 6
+    %34 = newMap {| int... |}{%31=%32, [key]=%33}
+    wholeMap = %34;
+    %37 = ConstantLoad id
+    %36 = wholeMap[%37];
+    %38 = %36;
+    %39 = println(%38) -> bb11;
+  }
+  bb11 {
+    %40 = isReadonly(wholeMap) -> bb12;
+  }
+  bb12 {
+    %41 = %40;
+    %42 = println(%41) -> bb13;
+  }
+  bb13 {
+    GOTO bb14;
+  }
+  bb14 {
+    %44 = update(wholeMap) -> bb15;
+  }
+  bb15 {
+    %43 = %44;
+    GOTO bb16;
+  }
+  bb16 {
+    %45 = %43 is error
+    %46 = %45;
+    %47 = println(%46) -> bb17;
+  }
+  bb17 {
+    return;
+  }
+  
+  error-table {
+    [bb2, bb3] -> bb4, %12
+    [bb7, bb8] -> bb9, %26
+    [bb14, bb15] -> bb16, %43
+  }
+}

@@ -17,7 +17,18 @@
 import ballerina/io;
 
 public function main() {
-    string k = "id";
-    map<int> m = {id: 1, [k]: 2}; // @panic
-    io:println(m);
+    string first = "first";
+    string second = "second";
+    string third = "third";
+    record {| int spread; |} seed = {spread: 2};
+    map<int> ordered = {[first]: 3, specific: 1, [second]: 4,
+        ...seed, [first]: 5, [third]: 6};
+    foreach string key in ordered.keys() {
+        io:println(key, ":", ordered[key]);
+    }
+    // @output specific:1
+    // @output spread:2
+    // @output first:5
+    // @output second:4
+    // @output third:6
 }

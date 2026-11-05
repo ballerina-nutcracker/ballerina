@@ -1,0 +1,61 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad first
+    first = %1;
+    %3 = ConstantLoad second
+    second = %3;
+    %5 = ConstantLoad third
+    third = %5;
+    %7 = ConstantLoad spread
+    %8 = ConstantLoad 2
+    %9 = newMap {| spread: int, never... |}{%7=%8}
+    seed = %9;
+    %11 = ConstantLoad 3
+    %12 = ConstantLoad specific
+    %13 = ConstantLoad 1
+    %14 = ConstantLoad 4
+    %15 = ConstantLoad 5
+    %16 = ConstantLoad 6
+    %17 = newMap {| int... |}{[first]=%11, %12=%13, [second]=%14, ...seed, [first]=%15, [third]=%16}
+    ordered = %17;
+    %19 = keys(ordered) -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %19;
+    %21 = ConstantLoad 0
+    $desugar$1 = %21;
+    %23 = length($desugar$0) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %23;
+    GOTO bb3;
+  }
+  bb3 {
+    %26 = $desugar$1;
+    %27 = $desugar$2;
+    %25 = < %26 %27;
+    %25 ? bb4 : bb5;
+  }
+  bb4 {
+    PushScopeFrame 10
+    %0 = (1, $desugar$0)[(1, $desugar$1)];
+    key = %0;
+    %2 = ConstantLoad :
+    %3 = (1, ordered)[key];
+    %4 = %3;
+    %5 = println(key,%2,%4) -> bb6;
+  }
+  bb5 {
+    return;
+  }
+  bb6 {
+    %7 = (1, $desugar$1);
+    %8 = ConstantLoad 1
+    %9 = %8;
+    %6 = + %7 %9;
+    (1, $desugar$1) = %6;
+    PopScopeFrame
+    GOTO bb3;
+  }
+}

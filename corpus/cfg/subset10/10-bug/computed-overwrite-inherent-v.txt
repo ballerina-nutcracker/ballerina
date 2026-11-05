@@ -1,0 +1,42 @@
+(invalidThenValid
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (simple-var-ref key)
+          (literal invalid))
+        (key-value
+          (simple-var-ref key)
+          (literal 2))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable key (type
+        (value-type string)) (expr
+        (literal count))))
+    (var-def
+      (variable valid (type
+        (user-defined-type Counts)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (simple-var-ref key)
+            (literal 1))
+          (key-value
+            (simple-var-ref key)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access count
+          (simple-var-ref valid)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (group-expr
+            (trap-expr
+              (invocation invalidThenValid (
+                (simple-var-ref key)))))
+          (error-type)))))
+  )
+)

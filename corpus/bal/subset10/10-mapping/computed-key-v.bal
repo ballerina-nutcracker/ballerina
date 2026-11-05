@@ -36,10 +36,10 @@ function nextKey() returns string {
 public function main() {
     string localKey = "b";
     map<int> m = {[moduleKey]: 1, [localKey]: 2, ["c" + "d"]: 3, e: 4};
-    io:println(m); // @output {"a":1,"b":2,"cd":3,"e":4}
+    io:println(m); // @output {"e":4,"a":1,"b":2,"cd":3}
 
     var inferred = {[localKey]: 5, name: "x"};
-    io:println(inferred); // @output {"b":5,"name":"x"}
+    io:println(inferred); // @output {"name":"x","b":5}
     int|string? b = inferred[localKey];
     io:println(b); // @output 5
 

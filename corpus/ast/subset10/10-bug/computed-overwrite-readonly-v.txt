@@ -1,0 +1,114 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition FrozenField
+    (record-type
+      (field id readonly
+        (value-type int))))
+  (function update (
+    (variable value (type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int))))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref value)
+          (literal id))
+        (literal 99))))
+  (function isReadonly (
+    (variable value (type
+      (value-type any)))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref value)
+          (value-type readonly)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable key (type
+          (value-type string)) (expr
+          (literal id))))
+      (var-def
+        (variable explicitField (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (readonly-fields id)
+            (key-value
+              (literal id)
+              (literal 1))
+            (key-value
+              (simple-var-ref key)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref explicitField)
+            (literal id)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (group-expr
+              (trap-expr
+                (invocation update (
+                  (simple-var-ref explicitField)))))
+            (error-type)))))
+      (var-def
+        (variable inherentField (type
+          (user-defined-type FrozenField)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (simple-var-ref key)
+              (literal 4))
+            (key-value
+              (literal id)
+              (literal 3))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access id
+            (simple-var-ref inherentField)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (group-expr
+              (trap-expr
+                (invocation update (
+                  (simple-var-ref inherentField)))))
+            (error-type)))))
+      (var-def
+        (variable wholeMap (type
+          (intersection-type
+            (value-type readonly)
+            (constrained-type
+              (builtin-ref-type map)
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 5))
+            (key-value
+              (simple-var-ref key)
+              (literal 6))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref wholeMap)
+            (literal id)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref wholeMap))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (group-expr
+              (trap-expr
+                (invocation update (
+                  (simple-var-ref wholeMap)))))
+            (error-type))))))))
