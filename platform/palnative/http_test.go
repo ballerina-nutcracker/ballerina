@@ -457,17 +457,17 @@ func TestNewHTTPClient_IdleTimeoutSlowInMemoryUpload(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		buf := make([]byte, 32*1024)
-		for range 100 {
+		for range 250 {
 			if _, err := io.ReadFull(r.Body, buf); err != nil {
 				break
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
 		rest, _ := io.Copy(io.Discard, r.Body)
-		_, _ = fmt.Fprintf(w, "%d", 100*len(buf)+int(rest))
+		_, _ = fmt.Fprintf(w, "%d", 250*len(buf)+int(rest))
 	}))
 	defer server.Close()
-	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 300 * time.Millisecond, ResponseLimits: unlimitedBody})
+	client, err := NewHTTPClient(pal.ClientConfig{Timeout: time.Second, ResponseLimits: unlimitedBody})
 	if err != nil {
 		t.Fatalf("NewHTTPClient: %v", err)
 	}
