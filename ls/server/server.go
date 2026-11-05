@@ -152,17 +152,7 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
-// WithCompletionOptions replaces the completion service with one using options.
-// To retain available packages, include completion.WithAvailablePackages here;
-// this option and WithAvailablePackages overwrite earlier completion options.
-func WithCompletionOptions(options ...completion.Option) Option {
-	return func(s *Server) {
-		s.completion = completion.New(s.compiler, options...)
-	}
-}
-
 // WithAvailablePackages replaces the completion service with one using packages.
-// It discards earlier completion options; use WithCompletionOptions to combine them.
 func WithAvailablePackages(packages []completion.AvailablePackage) Option {
 	return func(s *Server) {
 		s.completion = completion.New(s.compiler, completion.WithAvailablePackages(packages))

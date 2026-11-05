@@ -91,19 +91,6 @@ func completionItemKind(kind model.SymbolKind) protocol.CompletionItemKind {
 	}
 }
 
-func functionSignatureLabel(sig model.UntypedFunctionSignature) string {
-	fixed := sig.FixedParamCount()
-	params := make([]string, 0, len(sig.ParamNames))
-	for i, name := range sig.ParamNames {
-		if sig.HasRest && i == fixed {
-			params = append(params, "..."+name)
-			continue
-		}
-		params = append(params, name)
-	}
-	return "(" + strings.Join(params, ", ") + ")"
-}
-
 func keywordItem(label string) protocol.CompletionItem {
 	return protocol.CompletionItem{
 		Label:      label,

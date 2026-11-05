@@ -22,43 +22,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-func TestFunctionSignatureLabel(t *testing.T) {
-	tests := []struct {
-		name string
-		sig  model.UntypedFunctionSignature
-		want string
-	}{
-		{
-			name: "no params",
-			sig:  model.NewUntypedFunctionSignature(nil, false),
-			want: "()",
-		},
-		{
-			name: "fixed params",
-			sig: model.NewUntypedFunctionSignature([]model.Param{
-				{Name: "a"},
-				{Name: "b"},
-			}, false),
-			want: "(a, b)",
-		},
-		{
-			name: "rest param",
-			sig: model.NewUntypedFunctionSignature([]model.Param{
-				{Name: "a"},
-				{Name: "rest", Flag: model.ParamFlagRestParam},
-			}, true),
-			want: "(a, ...rest)",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if got := functionSignatureLabel(test.sig); got != test.want {
-				t.Errorf("functionSignatureLabel(%+v) = %q, want %q", test.sig, got, test.want)
-			}
-		})
-	}
-}
-
 func TestModuleContentSymbols(t *testing.T) {
 	org, pkg, version := model.Name("testorg"), model.Name("testpkg"), model.Name("0.1.0")
 	pkgID := model.PackageID{OrgName: &org, PkgName: &pkg, Version: &version}

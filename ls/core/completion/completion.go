@@ -21,7 +21,6 @@ import (
 	stdcontext "context"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
-	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
@@ -49,34 +48,15 @@ func WithAvailablePackages(packages []AvailablePackage) Option {
 	}
 }
 
-// WithLogger sets the AST debug logger. A nil logger leaves it unchanged.
-func WithLogger(logger *observability.Logger) Option {
-	return func(s *Service) {
-		if logger != nil {
-			s.logger = logger
-		}
-	}
-}
-
-// WithASTDebugLogging enables cursor AST logging through the WithLogger logger.
-// The default logger discards output.
-func WithASTDebugLogging() Option {
-	return func(s *Service) {
-		s.debugAST = true
-	}
-}
-
 // Service provides completion candidates from sealed compiler modules.
 type Service struct {
 	compiler *compile.CompilationService
 	packages []AvailablePackage
-	logger   *observability.Logger
-	debugAST bool
 }
 
 // New creates a completion service with the given compiler and options.
 func New(compiler *compile.CompilationService, options ...Option) *Service {
-	service := &Service{compiler: compiler, logger: observability.NewNoop()}
+	service := &Service{compiler: compiler}
 	for _, option := range options {
 		option(service)
 	}
@@ -101,10 +81,10 @@ func (s *Service) Complete(ctx stdcontext.Context, req Request) ([]protocol.Comp
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	return completeAt(req, sm, s.packages, s.logger, s.debugAST), nil
+	return completeAt(req, sm, s.packages), nil
 }
 
-func completeAt(req Request, sm compile.SealedModule, packages []AvailablePackage, logger *observability.Logger, debugAST bool) (items []protocol.CompletionItem) {
+func completeAt(req Request, sm compile.SealedModule, packages []AvailablePackage) (items []protocol.CompletionItem) {
 	defer func() {
 		if recover() != nil {
 			items = emptyItems
@@ -113,11 +93,7 @@ func completeAt(req Request, sm compile.SealedModule, packages []AvailablePackag
 	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageSymbolResolved {
 		return emptyItems
 	}
-	c := newCursor(req, sm, packages)
-	if debugAST {
-		dumpCursorAST(logger, c)
-	}
-	return dispatch(c)
+	return dispatch(newCursor(req, sm, packages))
 }
 
 var emptyItems = []protocol.CompletionItem{}
