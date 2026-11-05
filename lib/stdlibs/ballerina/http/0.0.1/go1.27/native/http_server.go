@@ -745,15 +745,50 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 	if holder.noCache && w.Header().Get("Cache-Control") == "" {
 		w.Header().Set("Cache-Control", "no-cache,public")
 	}
-	if r.ProtoMajor == 1 && r.ProtoMinor == 1 && strings.HasPrefix(w.Header().Get("Content-Type"), "text/event-stream") {
+	contentType := w.Header().Get("Content-Type")
+	if r.ProtoMajor == 1 && r.ProtoMinor == 1 && isEventStreamType(contentType) {
 		w.Header().Set("Connection", "keep-alive")
 	}
+	streamed := holder.source != nil || holder.reader != nil
+	if streamed {
+		// The streamed length is unknown, so a Content-Length copied from a backend no longer holds.
+		w.Header().Del("Content-Length")
+	}
 	w.WriteHeader(statusCode)
-	if holder.source != nil {
-		writeStreamedBody(w, holder.source, w.Header().Get("Content-Type"), timeout)
+	switch {
+	case streamed && r.Method == http.MethodHead:
+		// net/http discards a HEAD body, so the stream is never read.
+		releaseStreamedBody(holder, contentType)
+	case holder.source != nil:
+		writeStreamedBody(w, holder.source, contentType, timeout)
+	case holder.reader != nil:
+		_ = holder.writeReader(w)
+	default:
+		_ = holder.writeStream(w)
+	}
+}
+
+// releaseStreamedBody closes a streamed body that is not sent. Like writeStreamedBody, it
+// closes an event stream but leaves any other byte stream set with setByteStream open.
+func releaseStreamedBody(holder *responseBodyHolder, contentType string) {
+	if holder.source == nil {
+		_ = holder.closeReader()
 		return
 	}
-	_ = holder.writeStream(w)
+	if isEventStreamType(contentType) && holder.source.Close != nil {
+		holder.source.Close()
+	}
+}
+
+// writeReader sends the part of a received body that getByteStream has not read.
+func (h *responseBodyHolder) writeReader(w io.Writer) error {
+	r := h.reader
+	h.reader = nil
+	bufp := copyBufPool.Get().(*[]byte)
+	_, err := io.CopyBuffer(onlyWriter{w}, r, *bufp)
+	copyBufPool.Put(bufp)
+	_ = r.Close()
+	return err
 }
 
 // copyBufPool reuses 32 KB buffers for streaming a backend response body to the

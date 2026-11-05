@@ -315,6 +315,27 @@ func TestHttpClientStreamLocal(t *testing.T) {
 				_, _ = w.Write([]byte(part))
 				flusher.Flush()
 			}
+		case "/events-bom":
+			w.Header().Set("Content-Type", "text/event-stream")
+			for _, part := range []string{"\xEF", "\xBB\xBFdata: hi\n\n"} {
+				_, _ = w.Write([]byte(part))
+				flusher.Flush()
+			}
+		case "/events-mixed-case":
+			w.Header().Set("Content-Type", "Text/Event-Stream; charset=UTF-8")
+			_, _ = w.Write([]byte("data: mixed\n\n"))
+		case "/events-extra":
+			w.Header().Set("Content-Type", "text/event-stream-extra")
+			_, _ = w.Write([]byte("data: extra\n\n"))
+		case "/events-burst":
+			w.Header().Set("Content-Type", "text/event-stream")
+			_, _ = w.Write([]byte("data: one\n\ndata: two\n\ndata: three\n\n"))
+		case "/truncated":
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Header().Set("Content-Length", "100")
+			_, _ = w.Write([]byte("0123456789"))
+			flusher.Flush()
+			panic(http.ErrAbortHandler)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}

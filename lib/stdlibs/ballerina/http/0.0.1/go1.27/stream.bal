@@ -158,6 +158,15 @@ isolated function validateSseEvent(SseEvent event) returns error? {
         return error("Invalid value provided as event: "
             + "at least one field is expected to be present in the SseEvent record.");
     }
+    // A line break would end the field early and let the rest of the value forge another event.
+    check validateSingleLine("id", event.id);
+    check validateSingleLine("event", event.event);
+}
+
+isolated function validateSingleLine(string fieldName, string? value) returns error? {
+    if value is string && (value.includes("\n") || value.includes("\r")) {
+        return error(string `Invalid value provided as event: the ${fieldName} field must not contain a line break.`);
+    }
 }
 
 // Called by the listener for a resource function that returns a stream.
