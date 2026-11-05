@@ -253,6 +253,12 @@ service /streams on new http:Listener(19503) {
         return res;
     }
 
+    resource function post echo(http:Request req) returns http:Response|error {
+        http:Response res = new;
+        res.setByteStream(check req.getByteStream());
+        return res;
+    }
+
     resource function post relay(http:Request req) returns string|error {
         stream<byte[], io:Error?> body = check req.getByteStream(5);
         _ = check body.next();
@@ -374,6 +380,10 @@ public function testMain() returns error? {
     string digits = check c->get("/digits");
     string relayed = check h1->post("/relay", digits);
     io:println(relayed); // @output bytes=19995 blocks=5
+
+    // A response can stream the body of the request it answers, over HTTP/1.1 as well.
+    byte[] echoed = check h1->post("/echo", new stream<byte[], io:Error?>(new Repeated(1000, 100)));
+    io:println(echoed.length()); // @output 100000
 
     // A byte-stream body cannot be replayed, so a 307 answering it is returned, not followed.
     http:Client following = check new ("http://localhost:19503/streams", {followRedirects: {enabled: true}});

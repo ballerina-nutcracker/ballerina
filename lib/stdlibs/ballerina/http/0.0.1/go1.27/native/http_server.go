@@ -753,6 +753,9 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 	if streamed {
 		// The streamed length is unknown, so a Content-Length copied from a backend no longer holds.
 		w.Header().Del("Content-Length")
+		// Otherwise an HTTP/1 server consumes the unread request body before the response
+		// starts, which a body streamed from that request still needs.
+		_ = http.NewResponseController(w).EnableFullDuplex()
 	}
 	w.WriteHeader(statusCode)
 	switch {
