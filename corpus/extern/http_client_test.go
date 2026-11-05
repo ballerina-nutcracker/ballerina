@@ -255,6 +255,7 @@ func summarizeMultipart(contentType string, body io.Reader) (string, error) {
 func TestHttpClientStreamLocal(t *testing.T) {
 	t.Parallel()
 	sinkResult := make(chan string, 1)
+	rejectResult := make(chan string, 1)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		flusher, _ := w.(http.Flusher)
 		switch r.URL.Path {
@@ -266,6 +267,23 @@ func TestHttpClientStreamLocal(t *testing.T) {
 			_ = rc.Flush()
 			body, _ := io.ReadAll(r.Body)
 			_, _ = fmt.Fprintf(w, "read=%d", len(body))
+		case "/reject":
+			rc := http.NewResponseController(w)
+			_ = rc.EnableFullDuplex()
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Content-Length", "8")
+			w.WriteHeader(http.StatusRequestEntityTooLarge)
+			_, _ = w.Write([]byte("rejected"))
+			_ = rc.Flush()
+			_ = rc.SetReadDeadline(time.Now().Add(10 * time.Second))
+			n, _ := io.Copy(io.Discard, r.Body)
+			if n == 1000*65536 {
+				rejectResult <- "upload still running"
+			} else {
+				rejectResult <- "upload stopped"
+			}
+		case "/reject-result":
+			_, _ = w.Write([]byte(<-rejectResult))
 		case "/sink":
 			body, err := io.ReadAll(r.Body)
 			sinkResult <- fmt.Sprintf("read=%d failed=%v", len(body), err != nil)
