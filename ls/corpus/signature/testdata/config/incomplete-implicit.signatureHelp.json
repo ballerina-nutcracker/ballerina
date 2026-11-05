@@ -5,6 +5,36 @@
     "character": 21
   },
   "expected": [
-    null
+    {
+      "signatures": [
+        {
+          "label": "new Box(int size, string title)",
+          "parameters": [
+            {
+              "label": [
+                8,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`size**"
+              }
+            },
+            {
+              "label": [
+                18,
+                30
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
   ]
 }

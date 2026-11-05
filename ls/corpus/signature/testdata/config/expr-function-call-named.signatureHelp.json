@@ -5,6 +5,36 @@
     "character": 28
   },
   "expected": [
-    null
+    {
+      "signatures": [
+        {
+          "label": "fooF(a, b)",
+          "parameters": [
+            {
+              "label": [
+                5,
+                6
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**a**"
+              }
+            },
+            {
+              "label": [
+                8,
+                9
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**b**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
   ]
 }

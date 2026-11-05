@@ -5,6 +5,36 @@
     "character": 20
   },
   "expected": [
-    null
+    {
+      "signatures": [
+        {
+          "label": "pair(int first, int second)",
+          "parameters": [
+            {
+              "label": [
+                5,
+                14
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`first**"
+              }
+            },
+            {
+              "label": [
+                16,
+                26
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`second**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
   ]
 }

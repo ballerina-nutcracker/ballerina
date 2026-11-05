@@ -123,6 +123,7 @@ type Server struct {
 	versionSupport    bool
 	signatureOffsets  bool
 	signatureMarkdown bool
+	signatureNoActive bool
 	initialized       bool
 	shuttingDown      bool
 

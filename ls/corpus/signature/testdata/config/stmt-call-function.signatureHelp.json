@@ -5,6 +5,40 @@
     "character": 11
   },
   "expected": [
-    null
+    {
+      "signatures": [
+        {
+          "label": "fooV(float a, boolean b)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nFunction Foo"
+          },
+          "parameters": [
+            {
+              "label": [
+                5,
+                12
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`float`a**: a float"
+              }
+            },
+            {
+              "label": [
+                14,
+                23
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`boolean`b**: b bool"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
   ]
 }

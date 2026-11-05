@@ -5,6 +5,36 @@
     "character": 15
   },
   "expected": [
-    null
+    {
+      "signatures": [
+        {
+          "label": "emoji(string 𐐀name, int count)",
+          "parameters": [
+            {
+              "label": [
+                6,
+                19
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`𐐀name**"
+              }
+            },
+            {
+              "label": [
+                21,
+                30
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`count**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
   ]
 }

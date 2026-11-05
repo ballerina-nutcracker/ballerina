@@ -14,7 +14,9 @@
 package signature
 
 import (
+	"cmp"
 	stdcontext "context"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -51,7 +53,7 @@ func At(ctx stdcontext.Context, sm compile.SealedModule, uri workspace.DocumentU
 	}
 	fileIndex := sm.Context().DiagnosticEnv().FileIndex(name)
 	paths := nodeChainsAtOffset(sm.PackageNode(), offset, fileIndex)
-	node, args, empty := callAtPaths(paths, fileIndex)
+	node, args := callAtPaths(paths, fileIndex)
 	if node == nil {
 		return Help{}, false, nil
 	}
@@ -59,34 +61,23 @@ func At(ctx stdcontext.Context, sm compile.SealedModule, uri workspace.DocumentU
 	if !ok {
 		return Help{}, false, nil
 	}
-	argument := 0
-	if _, lowered := loweredMethodCallAlias(node); empty && lowered {
-		argument = 1
+	parameter, ok := activeParameter(node, args, sig, offset, fileIndex)
+	if !ok {
+		return Help{}, false, nil
 	}
-	if !empty {
-		argument, ok = argumentIndex(node, args, paths[0], offset, fileIndex)
-		if !ok {
-			return Help{}, false, nil
-		}
-		argument, ok = parameterIndex(args, argument, sig)
-		if !ok {
-			return Help{}, false, nil
-		}
-	}
-	help := render(sm, ref, name, sig, argument)
+	help := render(sm, ref, name, sig, parameter)
 	return help, true, ctx.Err()
 }
 
-func callAtPaths(paths [][]ast.BLangNode, fileIndex int) (ast.BLangNode, []ast.BLangExpression, bool) {
+func callAtPaths(paths [][]ast.BLangNode, fileIndex int) (ast.BLangNode, []ast.BLangExpression) {
 	if len(paths) == 0 {
-		return nil, nil, false
+		return nil, nil
 	}
 	node, args := innermostCall(paths[0])
-	empty := emptyCallContext(paths, node, args, fileIndex)
-	if len(paths) > 1 && !empty {
-		return nil, nil, false
+	if len(paths) > 1 && !emptyCallContext(paths, node, args, fileIndex) {
+		return nil, nil
 	}
-	return node, args, empty
+	return node, args
 }
 
 func emptyCallContext(paths [][]ast.BLangNode, call ast.BLangNode, args []ast.BLangExpression, fileIndex int) bool {
@@ -142,7 +133,10 @@ func callWideDefault(node ast.BLangNode, callLoc ast.Location) bool {
 	if _, ok := node.(*ast.BLangDefaultArg); !ok {
 		return false
 	}
-	loc := node.GetPosition()
+	return spansCall(node.GetPosition(), callLoc)
+}
+
+func spansCall(loc, callLoc ast.Location) bool {
 	return locationHasUsableOffsets(loc) && loc.FileIndex() == callLoc.FileIndex() &&
 		loc.StartOffset() == callLoc.StartOffset() && loc.EndOffset() == callLoc.EndOffset()
 }
@@ -163,33 +157,123 @@ func innermostCall(chain []ast.BLangNode) (ast.BLangNode, []ast.BLangExpression)
 	return nil, nil
 }
 
-func argumentIndex(call ast.BLangNode, args []ast.BLangExpression, chain []ast.BLangNode, offset, fileIndex int) (int, bool) {
+// unsupportedParameter marks a malformed argument, such as an unimplemented spread argument.
+const unsupportedParameter = -2
+
+type argumentSlot struct {
+	start, end int
+	parameter  int
+}
+
+// activeParameter returns the parameter index at offset, or -1 when no parameter matches.
+// Type resolution moves argument values into parameter order, so the slots are sorted back
+// into source order by position. The boolean is false when offset is not inside the argument
+// list, is in a malformed argument, or is on an included-record parameter that the type
+// resolver synthesized from named arguments.
+func activeParameter(call ast.BLangNode, args []ast.BLangExpression, sig model.UntypedFunctionSignature, offset, fileIndex int) (int, bool) {
+	if end, ok := calleeEnd(call, fileIndex); ok && offset < end {
+		return 0, false
+	}
+	receivers := 0
+	if _, lowered := loweredMethodCallAlias(call); lowered {
+		receivers = 1
+	}
+	slots, named, synthesized := argumentSlots(call, args, receivers, sig, fileIndex)
+	index := 0
+	for index < len(slots) && slots[index].end < offset {
+		index++
+	}
+	parameter := -1
+	switch {
+	case index < len(slots):
+		parameter = slots[index].parameter
+	case !named:
+		parameter = positionalParameter(receivers+index, sig)
+	}
+	return parameter, parameter != unsupportedParameter && !synthesized[parameter]
+}
+
+// calleeEnd returns the end offset of the call's name or class, which precedes the argument list.
+func calleeEnd(call ast.BLangNode, fileIndex int) (int, bool) {
+	var callee ast.BLangNode
+	switch n := call.(type) {
+	case *ast.BLangInvocation:
+		callee, _ = n.Name.(ast.BLangNode)
+	case *ast.BLangRemoteMethodCallAction:
+		callee, _ = n.Name.(ast.BLangNode)
+	case *ast.BLangNewExpression:
+		if n.TypeDescriptor == nil {
+			loc := n.GetPosition()
+			return loc.StartOffset() + len("new"), locationHasUsableOffsets(loc) && loc.FileIndex() == fileIndex
+		}
+		callee = n.TypeDescriptor
+	}
+	if callee == nil {
+		return 0, false
+	}
+	loc := callee.GetPosition()
+	return loc.EndOffset(), locationHasUsableOffsets(loc) && loc.FileIndex() == fileIndex
+}
+
+func argumentSlots(call ast.BLangNode, args []ast.BLangExpression, receivers int, sig model.UntypedFunctionSignature, fileIndex int) ([]argumentSlot, bool, map[int]bool) {
 	callLoc := call.GetPosition()
-	index := -1
-	for i, arg := range args {
-		if arg == nil || isMalformedArgument(arg) {
+	slots := make([]argumentSlot, 0, len(args))
+	synthesized := make(map[int]bool)
+	named := false
+	for i := receivers; i < len(args); i++ {
+		arg := args[i]
+		if arg == nil {
 			continue
 		}
 		loc := arg.GetPosition()
-		if !locationHasUsableOffsets(loc) || loc.FileIndex() != fileIndex || !locationContains(loc, offset) ||
-			loc.StartOffset() < callLoc.StartOffset() || loc.EndOffset() > callLoc.EndOffset() ||
-			loc.StartOffset() == callLoc.StartOffset() && loc.EndOffset() == callLoc.EndOffset() {
+		if !locationHasUsableOffsets(loc) || loc.FileIndex() != fileIndex ||
+			loc.StartOffset() < callLoc.StartOffset() || loc.EndOffset() > callLoc.EndOffset() {
 			continue
 		}
-		if index >= 0 {
-			return 0, false
+		if isMalformedArgument(arg) {
+			slots = append(slots, argumentSlot{start: loc.StartOffset(), end: loc.EndOffset(), parameter: unsupportedParameter})
+			continue
 		}
-		index = i
+		if spansCall(loc, callLoc) {
+			if record, ok := arg.(*ast.BLangMappingConstructorExpr); ok {
+				synthesized[i] = true
+				slots = appendFieldSlots(slots, record, i, fileIndex)
+			}
+			continue
+		}
+		parameter := -1
+		if namedArg, ok := arg.(*ast.BLangNamedArgsExpression); ok {
+			named = true
+			if index, ok := namedParameterIndex(namedArg, sig); ok {
+				parameter = index
+			}
+		} else if !named {
+			parameter = positionalParameter(i, sig)
+		}
+		slots = append(slots, argumentSlot{start: loc.StartOffset(), end: loc.EndOffset(), parameter: parameter})
 	}
-	if index < 0 {
-		return 0, false
-	}
-	for _, node := range chain {
-		if node == args[index] {
-			return index, true
+	slices.SortStableFunc(slots, func(a, b argumentSlot) int { return cmp.Compare(a.start, b.start) })
+	return slots, named, synthesized
+}
+
+func appendFieldSlots(slots []argumentSlot, record *ast.BLangMappingConstructorExpr, parameter, fileIndex int) []argumentSlot {
+	for _, field := range record.Fields {
+		loc := field.GetPosition()
+		if locationHasUsableOffsets(loc) && loc.FileIndex() == fileIndex {
+			slots = append(slots, argumentSlot{start: loc.StartOffset(), end: loc.EndOffset(), parameter: parameter})
 		}
 	}
-	return 0, false
+	return slots
+}
+
+func positionalParameter(index int, sig model.UntypedFunctionSignature) int {
+	if index < sig.FixedParamCount() {
+		return index
+	}
+	if sig.HasRest {
+		return len(sig.ParamNames) - 1
+	}
+	return -1
 }
 
 // Zero-width bad expressions can mark missing arguments, as in foo(1, ).
@@ -199,32 +283,6 @@ func isMalformedArgument(arg ast.BLangExpression) bool {
 	}
 	loc := arg.GetPosition()
 	return !locationHasUsableOffsets(loc) || loc.StartOffset() != loc.EndOffset()
-}
-
-func parameterIndex(args []ast.BLangExpression, argument int, sig model.UntypedFunctionSignature) (int, bool) {
-	seenNamed := false
-	used := make(map[int]bool)
-	active := argument
-	for i, arg := range args {
-		named, ok := arg.(*ast.BLangNamedArgsExpression)
-		if !ok {
-			if seenNamed {
-				return 0, false
-			}
-			used[i] = true
-			continue
-		}
-		seenNamed = true
-		index, ok := namedParameterIndex(named, sig)
-		if !ok || used[index] {
-			return 0, false
-		}
-		used[index] = true
-		if i == argument {
-			active = index
-		}
-	}
-	return active, true
 }
 
 func namedParameterIndex(named *ast.BLangNamedArgsExpression, sig model.UntypedFunctionSignature) (int, bool) {
@@ -341,7 +399,7 @@ func originRef(cx *context.CompilerContext, ref model.SymbolRef) model.SymbolRef
 	return ref
 }
 
-func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model.UntypedFunctionSignature, argument int) Help {
+func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model.UntypedFunctionSignature, parameter int) Help {
 	var typed model.TypedFunctionSignature
 	ready := false
 	if !ref.IsEmpty() && sm.Stage() >= compile.StageTopLevelTypeResolved {
@@ -406,9 +464,8 @@ func render(sm compile.SealedModule, ref model.SymbolRef, name string, sig model
 	}
 	label.WriteByte(')')
 	help.Label = label.String()
-	if len(sig.ParamNames) > 0 {
-		active := min(argument, len(sig.ParamNames)-1)
-		help.ActiveParameter = &active
+	if parameter >= 0 && parameter < len(sig.ParamNames) {
+		help.ActiveParameter = &parameter
 	}
 	return help
 }

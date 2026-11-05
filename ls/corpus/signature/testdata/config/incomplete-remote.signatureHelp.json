@@ -5,6 +5,36 @@
     "character": 18
   },
   "expected": [
-    null
+    {
+      "signatures": [
+        {
+          "label": "send(int value, string tag)",
+          "parameters": [
+            {
+              "label": [
+                5,
+                14
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`value**"
+              }
+            },
+            {
+              "label": [
+                16,
+                26
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`tag**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
   ]
 }

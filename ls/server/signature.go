@@ -107,13 +107,27 @@ func (s *Server) handleSignature(ctx context.Context, request *signatureRequest)
 		}
 		result.Signatures[0].Documentation = protocol.NewOptional(documentation)
 	}
-	if help.ActiveParameter != nil {
-		result.ActiveParameter = protocol.NewOptionalNullable(protocol.NewOrSignatureHelpActiveParameterUinteger(uint32(*help.ActiveParameter)))
-	}
+	result.ActiveParameter = s.activeParameter(help.ActiveParameter, len(parameters))
 	return trackedResult{handled: true, result: result}
 }
 
+// activeParameter encodes a missing active parameter as null when the client supports it.
+// Otherwise it uses an out-of-range index, because an omitted value defaults to 0.
+func (s *Server) activeParameter(active *int, parameters int) protocol.OptionalNullable[protocol.OrSignatureHelpActiveParameter] {
+	switch {
+	case active != nil:
+		return protocol.NewOptionalNullable(protocol.NewOrSignatureHelpActiveParameterUinteger(uint32(*active)))
+	case parameters == 0:
+		return protocol.OptionalNullable[protocol.OrSignatureHelpActiveParameter]{}
+	case s.signatureNoActive:
+		return protocol.NullOptionalNullable[protocol.OrSignatureHelpActiveParameter]()
+	default:
+		return protocol.NewOptionalNullable(protocol.NewOrSignatureHelpActiveParameterUinteger(uint32(parameters)))
+	}
+}
+
 func (s *Server) configureSignatureInformation(information protocol.ClientSignatureInformationOptions) {
+	s.signatureNoActive, _ = information.NoActiveParameterSupport.Value()
 	if parameters, ok := information.ParameterInformation.Value(); ok {
 		s.signatureOffsets, _ = parameters.LabelOffsetSupport.Value()
 	}
