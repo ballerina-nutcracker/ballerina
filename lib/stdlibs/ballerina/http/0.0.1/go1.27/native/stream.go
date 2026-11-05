@@ -43,11 +43,12 @@ const eventStreamReadSize = 8192
 
 // streamBody is the streaming state shared by request and response bodies.
 type streamBody struct {
-	source   *values.Stream // a body set with setByteStream
-	fromWire bool           // received from the network, so getByteStream can read it
-	reader   io.ReadCloser  // the wire body once getByteStream or getSseEventStream has taken it
-	framer   *sseFramer
-	noCache  bool // set by setSseEventStream; Cache-Control is added when the response is sent
+	source     *values.Stream // a body set with setByteStream
+	fromWire   bool           // received from the network, so getByteStream can read it
+	reader     io.ReadCloser  // the wire body once getByteStream or getSseEventStream has taken it
+	framer     *sseFramer
+	noCache    bool  // set by setSseEventStream; Cache-Control is added when the response is sent
+	pendingErr error // a read failure that arrived with the last block, returned by the next read
 }
 
 func (b *streamBody) closeReader() error {
@@ -66,7 +67,7 @@ func (h *requestBodyHolder) takeWire() (io.ReadCloser, bool) {
 	taken := false
 	h.once.Do(func() {
 		taken = true
-		r = wireReader(h.stream, h.buf)
+		r = wireReader(h.stream, h.buf, nil)
 		h.stream = nil
 		h.buf = []byte{}
 	})
@@ -78,22 +79,64 @@ func (h *responseBodyHolder) takeWire() (io.ReadCloser, bool) {
 	taken := false
 	h.once.Do(func() {
 		taken = true
-		r = wireReader(h.stream, h.buf)
+		r = wireReader(h.stream, h.buf, h.readErr)
 		h.stream = nil
 		h.buf = []byte{}
 	})
 	return r, taken
 }
 
-// wireReader returns nil for an empty body, which jBallerina has no byte channel for.
-func wireReader(stream io.ReadCloser, buf []byte) io.ReadCloser {
+// wireReader returns nil for an empty body, which jBallerina has no byte channel for. A body
+// buffered eagerly ends with the error that cut it short, if any.
+func wireReader(stream io.ReadCloser, buf []byte, readErr error) io.ReadCloser {
 	if stream != nil {
 		return stream
+	}
+	if readErr != nil {
+		return io.NopCloser(io.MultiReader(bytes.NewReader(buf), errorReader{readErr}))
 	}
 	if len(buf) > 0 {
 		return io.NopCloser(bytes.NewReader(buf))
 	}
 	return nil
+}
+
+type errorReader struct{ err error }
+
+func (r errorReader) Read([]byte) (int, error) { return 0, r.err }
+
+// readBlock reads up to size bytes of the wire body, or nil at its end. A read error that
+// arrives with data is kept and returned by the next call, so a truncated body never ends
+// as a clean stream.
+func (b *streamBody) readBlock(size int64) ([]byte, error) {
+	if b.reader == nil {
+		return nil, nil
+	}
+	if b.pendingErr != nil {
+		err := b.pendingErr
+		b.pendingErr = nil
+		_ = b.closeReader()
+		return nil, err
+	}
+	buf := make([]byte, size)
+	n := 0
+	var err error
+	for n < len(buf) && err == nil {
+		var m int
+		m, err = b.reader.Read(buf[n:])
+		n += m
+	}
+	if n > 0 {
+		if err != nil && !errors.Is(err, io.EOF) {
+			b.pendingErr = err
+		}
+		return buf[:n], nil
+	}
+	_ = b.closeReader()
+	if errors.Is(err, io.EOF) {
+		return nil, nil
+	}
+	return nil, err
 }
 
 type messageBody interface {
@@ -254,7 +297,9 @@ type streamBodyPanic struct{ value any }
 // writeStreamedBody writes a byte-stream response body. An event stream is flushed after each
 // event and closed at the end, as jBallerina's EventStreamWriter does; any other byte stream is
 // left open, as jBallerina never closes a byte stream it sent as a body. Each write gets the
-// listener timeout afresh, so a long-lived stream is only cut off when a write stalls.
+// listener timeout afresh, so a long-lived stream is only cut off when a write stalls. The
+// deadline is cleared while the stream produces the next block, since on HTTP/2 an expired
+// deadline resets the stream even with no write in progress.
 func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType string, timeout time.Duration) {
 	defer func() {
 		if rec := recover(); rec != nil {
@@ -264,22 +309,28 @@ func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType
 			panic(streamBodyPanic{rec})
 		}
 	}()
-	eventStream := strings.HasPrefix(contentType, "text/event-stream")
+	eventStream := isEventStreamType(contentType)
 	rc := http.NewResponseController(w)
+	setDeadline := func(deadline time.Time) {
+		if timeout > 0 {
+			_ = rc.SetWriteDeadline(deadline)
+		}
+	}
+	// The handler's final flush runs under the last deadline set here.
+	defer func() { setDeadline(time.Now().Add(timeout)) }()
 	reader := newBalStreamReader(source)
 	buf := make([]byte, 32*1024)
 	for {
 		n, err := reader.Read(buf)
 		if n > 0 {
-			if timeout > 0 {
-				_ = rc.SetWriteDeadline(time.Now().Add(timeout))
-			}
+			setDeadline(time.Now().Add(timeout))
 			if _, writeErr := w.Write(buf[:n]); writeErr != nil {
 				break
 			}
 			if eventStream {
 				_ = rc.Flush()
 			}
+			setDeadline(time.Time{})
 		}
 		if errors.Is(err, io.EOF) {
 			break
@@ -297,7 +348,8 @@ func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType
 // sseFramer splits a text/event-stream body into events, following #2752's
 // BytesToEventStreamGenerator: an event ends at a blank line, that is a line break ('\r\n', '\n'
 // or '\r') followed by another, in any mix. Bytes of an unfinished event carry over to the next
-// read, so a multi-byte character split across reads stays intact.
+// read, so a multi-byte character split across reads stays intact. A UTF-8 byte order mark
+// at the start of the body is dropped, as the WHATWG event-stream format requires.
 type sseFramer struct {
 	reader     io.Reader
 	readBuf    []byte
@@ -306,8 +358,12 @@ type sseFramer struct {
 	scanFrom   int
 	// The last event ended at a '\r', so a '\n' right after it completes that line break.
 	skipLineFeed bool
+	bomChecked   bool
 	eof          bool
+	err          error
 }
+
+var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
 
 func newSSEFramer(r io.Reader) *sseFramer {
 	return &sseFramer{reader: r, readBuf: make([]byte, eventStreamReadSize)}
@@ -315,8 +371,15 @@ func newSSEFramer(r io.Reader) *sseFramer {
 
 // next returns the next event's bytes including its terminating line breaks, or nil at the end
 // of the body, discarding an unfinished last event and, as #2752 does, blocks of only line breaks.
+// A read error is returned once the events completed before it have been handed on.
 func (f *sseFramer) next() ([]byte, error) {
 	for {
+		if !f.skipBOM() {
+			if err := f.read(); err != nil {
+				return nil, err
+			}
+			continue
+		}
 		if end, ok := f.findEventEnd(); ok {
 			event := f.pending[f.eventStart:end]
 			f.eventStart = end
@@ -324,6 +387,9 @@ func (f *sseFramer) next() ([]byte, error) {
 				continue
 			}
 			return bytes.Clone(event), nil
+		}
+		if f.err != nil {
+			return nil, f.err
 		}
 		if f.eof {
 			return nil, nil
@@ -333,14 +399,48 @@ func (f *sseFramer) next() ([]byte, error) {
 			f.scanFrom -= f.eventStart
 			f.eventStart = 0
 		}
-		n, err := f.reader.Read(f.readBuf)
-		f.pending = append(f.pending, f.readBuf[:n]...)
-		if errors.Is(err, io.EOF) {
-			f.eof = true
-		} else if err != nil {
+		if err := f.read(); err != nil {
 			return nil, err
 		}
 	}
+}
+
+// read appends the next read to pending, returning an error only when nothing came with it.
+func (f *sseFramer) read() error {
+	if f.err != nil {
+		return f.err
+	}
+	if f.eof {
+		return nil
+	}
+	n, err := f.reader.Read(f.readBuf)
+	f.pending = append(f.pending, f.readBuf[:n]...)
+	if errors.Is(err, io.EOF) {
+		f.eof = true
+	} else if err != nil {
+		f.err = err
+		if n == 0 {
+			return err
+		}
+	}
+	return nil
+}
+
+// skipBOM drops a leading byte order mark, reporting false while too few bytes have arrived
+// to tell whether the body starts with one.
+func (f *sseFramer) skipBOM() bool {
+	if f.bomChecked {
+		return true
+	}
+	if len(f.pending) < len(utf8BOM) && bytes.HasPrefix(utf8BOM, f.pending) && !f.eof && f.err == nil {
+		return false
+	}
+	if bytes.HasPrefix(f.pending, utf8BOM) {
+		f.eventStart = len(utf8BOM)
+		f.scanFrom = len(utf8BOM)
+	}
+	f.bomChecked = true
+	return true
 }
 
 func (f *sseFramer) findEventEnd() (int, bool) {
@@ -450,7 +550,9 @@ func sseEventBytes(event *values.Map) []byte {
 		return s, ok
 	}
 	if comment, ok := field("comment"); ok {
-		b.WriteString(": " + comment + "\n")
+		for _, line := range splitLines(comment) {
+			b.WriteString(": " + line + "\n")
+		}
 	}
 	if id, ok := field("id"); ok {
 		b.WriteString("id: " + id + "\n")
@@ -470,6 +572,13 @@ func sseEventBytes(event *values.Map) []byte {
 	}
 	b.WriteString("\n")
 	return []byte(b.String())
+}
+
+// isEventStreamType compares the media type case-insensitively and without its parameters,
+// as RFC 9110 section 8.3.1 requires.
+func isEventStreamType(contentType string) bool {
+	mediaType, _, _ := strings.Cut(contentType, ";")
+	return strings.EqualFold(strings.TrimSpace(mediaType), "text/event-stream")
 }
 
 func byteStreamError(kind string, cause *values.Error) *values.Error {
@@ -588,20 +697,14 @@ func registerStreamExterns(rt *runtime.Runtime, types *httpTypes) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externReadBodyBytes",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			body, _ := bodyOf(args[0].(*values.Object))
-			st := body.state()
-			if st.reader == nil {
+			block, err := body.state().readBlock(args[1].(int64))
+			if err != nil {
+				return mimeError("GenericError", "Error occurred while reading stream:"+err.Error()), nil
+			}
+			if block == nil {
 				return nil, nil
 			}
-			buf := make([]byte, args[1].(int64))
-			n, err := io.ReadFull(st.reader, buf)
-			if n > 0 {
-				return byteArrayValue(ctx, types, buf[:n]), nil
-			}
-			_ = st.closeReader()
-			if err == nil || errors.Is(err, io.EOF) {
-				return nil, nil
-			}
-			return mimeError("GenericError", "Error occurred while reading stream:"+err.Error()), nil
+			return byteArrayValue(ctx, types, block), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externCloseBody",
@@ -618,17 +721,21 @@ func registerStreamExterns(rt *runtime.Runtime, types *httpTypes) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externPrepareSseEventStream",
 		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			resp := args[0].(*values.Object)
-			if !strings.HasPrefix(responseContentType(resp), "text/event-stream") {
+			if !isEventStreamType(responseContentType(resp)) {
 				return values.NewError(semtypes.Error,
 					"invalid payload target type. The response is not of text/event-stream content type.",
 					nil, "PayloadBindingClientError", nil), nil
 			}
 			body, kind := bodyOf(resp)
+			st := body.state()
+			if st.framer != nil {
+				// A second event stream carries on from the events the first has not handed on.
+				return nil, nil
+			}
 			source, err := takeByteStream(body, kind)
 			if err != nil {
 				return err, nil
 			}
-			st := body.state()
 			if source != nil {
 				st.framer = newSSEFramer(newBalStreamReader(source))
 			} else {
@@ -698,6 +805,29 @@ func createSSEResponse(ctx *extern.Context, result values.BalValue) (*values.Obj
 // bindEventStream binds a response to a target that is neither http:Response nor anydata,
 // following jBallerina's processResponse.
 func bindEventStream(ctx *extern.Context, resp *values.Object, targetArg values.BalValue) values.BalValue {
+	result := openEventStream(ctx, resp, targetArg)
+	if _, failed := result.(*values.Error); failed {
+		closeUnreadBody(resp)
+	}
+	return result
+}
+
+// closeUnreadBody closes the body of a response that is not handed to the caller, without
+// reading it, so a peer that keeps sending cannot hold the call.
+func closeUnreadBody(resp *values.Object) {
+	body, _ := bodyOf(resp)
+	if body == nil {
+		return
+	}
+	st := body.state()
+	st.framer = nil
+	_ = st.closeReader()
+	if r, _ := body.takeWire(); r != nil {
+		_ = r.Close()
+	}
+}
+
+func openEventStream(ctx *extern.Context, resp *values.Object, targetArg values.BalValue) values.BalValue {
 	isTarget, ok := ctx.LookupFunction(orgName, moduleName, "isEventStreamTarget")
 	if !ok {
 		return values.NewErrorWithMessage("http: internal helper function isEventStreamTarget not found")
@@ -718,6 +848,12 @@ func bindEventStream(ctx *extern.Context, resp *values.Object, targetArg values.
 	eventStream, err := ctx.InvokeFunction(getStream, []values.BalValue{resp})
 	if err != nil {
 		return values.NewErrorWithMessage(err.Error())
+	}
+	// A narrower element type would hold events, such as comment-only ones, outside it.
+	target := targetArg.(*values.TypeDesc).Constraint()
+	if s, ok := eventStream.(*values.Stream); ok && !semtypes.IsSubtype(ctx.TypeCtx(), s.Type, target) {
+		return values.NewError(semtypes.Error, "payload binding failed: "+
+			"Target return type must accept stream<http:SseEvent, error?>", nil, "PayloadBindingClientError", nil)
 	}
 	return eventStream
 }

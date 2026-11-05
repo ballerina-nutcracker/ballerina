@@ -201,4 +201,39 @@ public function main() returns error? {
 
     stream<http:SseEvent, error?>|error missing = c->get("/missing");
     io:println(missing is error ? missing.message() : "stream"); // @output Not Found
+
+    // A body cut short before its Content-Length ends its byte stream with the read error.
+    http:Response truncated = check c->get("/truncated");
+    io:println(blocks(check truncated.getByteStream())); // @output error GenericError ("Error occurred while reading stream:unexpected EOF")
+
+    // A byte order mark at the start of an event stream is dropped, even when split across reads.
+    stream<http:SseEvent, error?> bom = check c->get("/events-bom");
+    io:println(collectEvents(bom)); // @output [{"data":"hi"}]
+
+    // The media type is compared case-insensitively and without its parameters.
+    stream<http:SseEvent, error?> mixedCase = check c->get("/events-mixed-case");
+    io:println(collectEvents(mixedCase)); // @output [{"data":"mixed"}]
+    stream<http:SseEvent, error?>|error extra = c->get("/events-extra");
+    io:println(extra is error ? extra.message() : "stream"); // @output invalid payload target type. The response is not of text/event-stream content type.
+
+    // A second event stream over the same response carries on where the first left off.
+    http:Response burst = check c->get("/events-burst");
+    stream<http:SseEvent, error?> firstEvents = check burst.getSseEventStream();
+    io:println(check firstEvents.next()); // @output {"value":{"data":"one"}}
+    io:println(collectEvents(check burst.getSseEventStream())); // @output [{"data":"two"},{"data":"three"}]
+
+    // A narrower element type could not hold every event, such as a comment-only one.
+    stream<record {|string data;|}, error?>|error narrow = c->get("/events");
+    // @output error PayloadBindingClientError ("payload binding failed: Target return type must accept stream<http:SseEvent, error?>")
+    io:println(narrow);
+}
+
+function collectEvents(stream<http:SseEvent, error?> eventStream) returns http:SseEvent[]|error {
+    http:SseEvent[] received = [];
+    record {|http:SseEvent value;|}? event = check eventStream.next();
+    while event is record {|http:SseEvent value;|} {
+        received.push(event.value);
+        event = check eventStream.next();
+    }
+    return received;
 }

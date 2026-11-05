@@ -444,6 +444,12 @@ func initHttpModule(rt *runtime.Runtime) {
 			if holder.source != nil {
 				return outboundBody{source: holder.source}, ct, nil
 			}
+			if holder.reader != nil {
+				// getByteStream has taken the body; send whatever it has not read.
+				reader := holder.reader
+				holder.reader = nil
+				return outboundBody{reader: reader, length: -1}, ct, nil
+			}
 			buf := holder.materialize()
 			if holder.readErr != nil {
 				return outboundBody{}, "", fmt.Errorf("failed to read request body: %w", holder.readErr)

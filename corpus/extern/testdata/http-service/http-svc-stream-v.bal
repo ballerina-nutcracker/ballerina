@@ -141,6 +141,25 @@ class Numbers {
     }
 }
 
+isolated int blocksPulled = 0;
+
+class CountedBlocks {
+    private int remaining = 1000;
+
+    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+        if self.remaining == 0 {
+            return;
+        }
+        self.remaining -= 1;
+        lock {
+            blocksPulled += 1;
+        }
+        return {value: "block".toBytes()};
+    }
+}
+
+final http:Client backend = check new ("http://localhost:19503/streams");
+
 service /streams on new http:Listener(19503) {
     resource function get bytes() returns http:Response {
         http:Response res = new;
@@ -196,6 +215,67 @@ service /streams on new http:Listener(19503) {
         http:Response res = new;
         res.setByteStream(new stream<byte[], io:Error?>(new Broken()));
         return res;
+    }
+
+    resource function head counted() returns http:Response {
+        http:Response res = new;
+        res.setByteStream(new stream<byte[], io:Error?>(new CountedBlocks()));
+        return res;
+    }
+
+    resource function get pulled() returns int {
+        lock {
+            return blocksPulled;
+        }
+    }
+
+    resource function get hello() returns string => "hello";
+
+    resource function get digits() returns string {
+        string digits = "";
+        foreach int _ in 0 ..< 2000 {
+            digits += "0123456789";
+        }
+        return digits;
+    }
+
+    // The backend response carries Content-Length: 5, which the longer stream replaces.
+    resource function get replaced() returns http:Response|error {
+        http:Response res = check backend->get("/hello");
+        res.setByteStream(new stream<byte[], io:Error?>(new Chunks(["replaced ", "by a stream"])));
+        return res;
+    }
+
+    resource function get remainder() returns http:Response|error {
+        http:Response res = check backend->get("/digits");
+        stream<byte[], io:Error?> body = check res.getByteStream(5);
+        _ = check body.next();
+        return res;
+    }
+
+    resource function post relay(http:Request req) returns string|error {
+        stream<byte[], io:Error?> body = check req.getByteStream(5);
+        _ = check body.next();
+        string counted = check backend->post("/count", req);
+        return counted;
+    }
+
+    resource function post redirect() returns http:Response {
+        http:Response res = new;
+        res.statusCode = 307;
+        res.setHeader("location", "/streams/count");
+        return res;
+    }
+
+    resource function get multiline() returns stream<http:SseEvent, error?> {
+        return new (new Events([{comment: "first\n\ndata: forged", data: "real"}, {id: "1\n\ndata: forged", data: "x"}]));
+    }
+}
+
+service /quick on new http:Listener(19504, {timeout: 0.5}) {
+    // Each gap between events is longer than the listener timeout, which applies to writes only.
+    resource function get ticks() returns stream<http:SseEvent, error?> {
+        return new (new Ticks(3, 0.8));
     }
 }
 
@@ -277,4 +357,45 @@ public function testMain() returns error? {
         incomplete = broken.getTextPayload() is error;
     }
     io:println(incomplete); // @output true
+
+    // A HEAD response never reads its byte-stream body, which would only be discarded.
+    http:Response head = check h1->head("/counted");
+    io:println(head.statusCode); // @output 200
+    int pulled = check c->get("/pulled");
+    io:println(pulled); // @output 0
+
+    // A stream that replaces a backend body drops the backend's Content-Length.
+    string replaced = check h1->get("/replaced");
+    io:println(replaced); // @output replaced by a stream
+
+    // A partly read body sends on the part getByteStream has not read.
+    string remainder = check h1->get("/remainder");
+    io:println(remainder.length(), " ", remainder.substring(0, 10)); // @output 19995 5678901234
+    string digits = check c->get("/digits");
+    string relayed = check h1->post("/relay", digits);
+    io:println(relayed); // @output bytes=19995 blocks=5
+
+    // A byte-stream body cannot be replayed, so a 307 answering it is returned, not followed.
+    http:Client following = check new ("http://localhost:19503/streams", {followRedirects: {enabled: true}});
+    http:Response redirected = check following->post("/redirect", new stream<byte[], io:Error?>(new Chunks(["a"])));
+    io:println(redirected.statusCode); // @output 307
+    string followed = check following->post("/redirect", "text body");
+    io:println(followed); // @output bytes=9 blocks=1
+
+    // Each comment line gets its own prefix, and an id or event name holding a line break is
+    // rejected, so no value can end its event early and forge another.
+    http:Response multiline = check c->get("/multiline");
+    // @output [": first\n: \n: data: forged\ndata: real\n\nevent: error\ndata: Invalid value provided as event: the id field must not contain a line break.\n\n"]
+    io:println([check multiline.getTextPayload()]);
+
+    // A gap between events longer than the listener timeout does not reset an HTTP/2 stream.
+    http:Client quick = check new ("http://localhost:19504/quick");
+    stream<http:SseEvent, error?> quickTicks = check quick->get("/ticks");
+    int quickReceived = 0;
+    record {|http:SseEvent value;|}? quickTick = check quickTicks.next();
+    while quickTick is record {|http:SseEvent value;|} {
+        quickReceived += 1;
+        quickTick = check quickTicks.next();
+    }
+    io:println(quickReceived); // @output 3
 }

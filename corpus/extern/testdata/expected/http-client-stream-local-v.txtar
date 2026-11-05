@@ -21,4 +21,11 @@ error GenericClientError ("Error occurred while retrieving the byte stream from 
 error PayloadBindingClientError ("invalid payload target type. The response is not of text/event-stream content type.")
 error PayloadBindingClientError ("payload binding failed: Target return type must not be a union of stream<http:SseEvent, error?> and anydata")
 Not Found
+error GenericError ("Error occurred while reading stream:unexpected EOF")
+[{"data":"hi"}]
+[{"data":"mixed"}]
+invalid payload target type. The response is not of text/event-stream content type.
+{"value":{"data":"one"}}
+[{"data":"two"},{"data":"three"}]
+error PayloadBindingClientError ("payload binding failed: Target return type must accept stream<http:SseEvent, error?>")
 -- stderr --
