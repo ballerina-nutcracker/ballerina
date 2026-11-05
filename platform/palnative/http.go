@@ -109,6 +109,29 @@ func (p *progressReader) Close() error {
 	return nil
 }
 
+type idleTimerKey struct{}
+
+// trackReplayableBody renews the idle timer as an in-memory body is sent, keeping GetBody so
+// the body can still be replayed on a redirect.
+func trackReplayableBody(req *http.Request, timer *idleTimer) {
+	getBody := req.GetBody
+	req.Body = &progressReader{body: req.Body, timer: timer}
+	req.GetBody = func() (io.ReadCloser, error) {
+		body, err := getBody()
+		if err != nil {
+			return nil, err
+		}
+		return &progressReader{body: body, timer: timer}, nil
+	}
+}
+
+// rearmForRedirect gives each followed redirect hop the whole idle timeout.
+func rearmForRedirect(req *http.Request) {
+	if timer, ok := req.Context().Value(idleTimerKey{}).(*idleTimer); ok {
+		timer.arm(errIdleBeforeResponse)
+	}
+}
+
 // idleBody times each blocked Read of a response body, so the body fails once no data
 // arrives for the idle timeout, however long the whole body takes.
 type idleBody struct {
@@ -175,9 +198,10 @@ func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body
 	if c.idleTimeout > 0 {
 		reqCtx, cancel = context.WithCancelCause(ctx)
 		timer = &idleTimer{timeout: c.idleTimeout, cancel: cancel}
+		reqCtx = context.WithValue(reqCtx, idleTimerKey{}, timer)
 		switch body.(type) {
 		case nil, *bytes.Reader, *bytes.Buffer, *strings.Reader:
-			// written at once, and must stay replayable for redirects
+			// tracked once the request exists, so that redirects can still replay them
 		default:
 			body = &progressReader{body: body, timer: timer}
 		}
@@ -185,12 +209,18 @@ func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body
 	}
 	req, err := http.NewRequestWithContext(reqCtx, method, targetURL, body)
 	if err != nil {
+		if timer != nil {
+			timer.stop()
+		}
 		cancel(nil)
 		return 0, nil, nil, err
 	}
 	// -1 means unknown length (chunked); >=0 tells Go to use Content-Length framing.
 	if contentLength >= 0 {
 		req.ContentLength = contentLength
+	}
+	if timer != nil && req.GetBody != nil && req.ContentLength > 0 {
+		trackReplayableBody(req, timer)
 	}
 	// Set default User-Agent before caller headers so caller can override it if needed.
 	req.Header.Set("User-Agent", "ballerina")
@@ -252,10 +282,13 @@ func (l *limitedBodyReadCloser) Read(p []byte) (int, error) {
 	}
 	if l.n <= 0 {
 		var b [1]byte
-		nn, _ := l.rc.Read(b[:])
+		nn, err := l.rc.Read(b[:])
 		if nn > 0 {
 			l.exceeded = true
 			return 0, fmt.Errorf("response entity body size exceeds: %d bytes", l.limit)
+		}
+		if err != nil && !errors.Is(err, io.EOF) {
+			return 0, err
 		}
 		return 0, io.EOF
 	}
@@ -368,6 +401,7 @@ func NewHTTPClient(cfg pal.ClientConfig) (pal.HTTPClient, error) {
 					req.Header.Set("Proxy-Authorization", proxy)
 				}
 			}
+			rearmForRedirect(req)
 			return nil
 		}
 	}
