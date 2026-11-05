@@ -403,8 +403,9 @@ public class Response {
     # Returns the response body as a stream of byte arrays. Multipart bodies are read with
     # `getBodyParts` instead.
     #
-    # + arraySize - The size of each byte array; every array except the last is filled to this
-    #               size. Defaults to 8 KB
+    # + arraySize - The size of each byte array; for a body received from the network, every
+    #               array except the last is filled to this size. A stream set with
+    #               `setByteStream` is returned as it was set. Defaults to 8 KB
     # + return - The byte stream, or an `error` if `arraySize` is not positive or the body cannot
     #            be read as a stream
     public isolated function getByteStream(int arraySize = 8192) returns stream<byte[], io:Error?>|error {
@@ -625,8 +626,9 @@ public class Request {
     # Returns the request body as a stream of byte arrays. Multipart bodies are read with
     # `getBodyParts` instead.
     #
-    # + arraySize - The size of each byte array; every array except the last is filled to this
-    #               size. Defaults to 8 KB
+    # + arraySize - The size of each byte array; for a body received from the network, every
+    #               array except the last is filled to this size. A stream set with
+    #               `setByteStream` is returned as it was set. Defaults to 8 KB
     # + return - The byte stream, or an `error` if `arraySize` is not positive or the body cannot
     #            be read as a stream
     public isolated function getByteStream(int arraySize = 8192) returns stream<byte[], io:Error?>|error {
