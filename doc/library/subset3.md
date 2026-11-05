@@ -113,7 +113,7 @@ remote isolated function get(string path, map<string|string[]>? headers = (),
         TargetType targetType = <>) returns targetType|error;
 ```
 
-`TargetType` is `typedesc<http:Response|anydata>`. The target is normally inferred from the contextually expected type, so a plain assignment is enough:
+`TargetType` is `typedesc<http:Response|anydata|stream<http:SseEvent, error?>>`. The target is normally inferred from the contextually expected type, so a plain assignment is enough:
 
 ```ballerina
 http:Client c = check new ("https://example.com");
@@ -179,7 +179,7 @@ Not covered in this subset: status code response records (`http:StatusCodeClient
 
 ### Outbound XML
 
-`RequestMessage` is now `anydata|http:Request|mime:Entity[]`, so an `xml` value can be sent directly and is inferred as `application/xml`, and a `mime:Entity[]` is sent as a `multipart/form-data` body:
+`RequestMessage` is now `anydata|http:Request|mime:Entity[]|stream<byte[], io:Error?>`, so an `xml` value can be sent directly and is inferred as `application/xml`, and a `mime:Entity[]` is sent as a `multipart/form-data` body:
 
 ```ballerina
 xml echoed = check c->post("/echo", xml `<p>hi</p>`);
