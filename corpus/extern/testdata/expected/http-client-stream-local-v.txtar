@@ -5,6 +5,8 @@ put body|text/plain|chunked=true
 forwarded|application/octet-stream|chunked=true
 Error occurred while streaming content: boom
 read=50
+413 rejected
+upload stopped
 invalid array index: 3
 read=3 failed=true
 [8192,8192,3616]

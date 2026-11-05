@@ -48,6 +48,20 @@ class Failing {
     }
 }
 
+class Big {
+    private int n = 0;
+
+    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+        if self.n == 1000 {
+            return;
+        }
+        self.n += 1;
+        byte[] b = [];
+        b[65535] = 1;
+        return {value: b};
+    }
+}
+
 class Paced {
     private int sent = 0;
 
@@ -129,6 +143,13 @@ public function main() returns error? {
     // The whole body is sent even when the server answers before it has read it.
     string early = check c->post("/early", new stream<byte[], io:Error?>(new Paced()));
     io:println(early); // @output read=50
+
+    // An error response ends the upload instead of waiting for the server to read the rest.
+    http:Client unbounded = check new ("http://testserver", {timeout: 0});
+    http:Response rejected = check unbounded->post("/reject", new stream<byte[], io:Error?>(new Big()));
+    io:println(rejected.statusCode, " ", check rejected.getTextPayload()); // @output 413 rejected
+    string rejectResult = check c->get("/reject-result");
+    io:println(rejectResult); // @output upload stopped
 
     // A panic in the body stream's next() ends the request instead of leaving it open.
     string|error panicked = trap postSink(c, new (new Panicking()));
