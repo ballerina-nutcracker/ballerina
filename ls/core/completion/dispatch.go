@@ -31,9 +31,10 @@ type handler struct {
 var handlers = []handler{
 	typeDefinitionHandler,
 	enumDeclarationHandler,
-	fieldAccessHandler,
-	invocationHandler,
-	importHandler,
+	// Will be implemented later.
+	// fieldAccessHandler,
+	// invocationHandler,
+	// importHandler,
 	functionDefinitionHandler,
 	moduleHandler,
 	blockHandler,
