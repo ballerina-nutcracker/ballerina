@@ -1,3 +1,8 @@
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
 import unittest
 
 import validate_commits
@@ -50,6 +55,69 @@ class ValidateCommitsTest(unittest.TestCase):
 
         self.assertEqual(validate_commits.validation_errors(at_limit), [])
         self.assertIn("73 characters", validate_commits.validation_errors(over_limit)[0])
+
+
+@unittest.skipIf(os.name == "nt", "The commit hook requires Bash")
+class CommitMessageHookTest(unittest.TestCase):
+    def setUp(self):
+        temporary_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary_directory.cleanup)
+        self.repo = Path(temporary_directory.name)
+        source_root = Path(__file__).resolve().parents[2]
+        scripts = self.repo / ".github" / "scripts"
+        scripts.mkdir(parents=True)
+        shutil.copy(source_root / ".github/scripts/validate_commits.py", scripts)
+        self.hook = self.repo / "commit-msg"
+        shutil.copy(source_root / ".githooks/commit-msg", self.hook)
+        subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
+        commands = self.repo / "bin"
+        commands.mkdir()
+        for command in ("gofmt", "golangci-lint", "make"):
+            executable = commands / command
+            executable.write_text("#!/bin/sh\nexit 0\n")
+            executable.chmod(0o755)
+        self.environment = dict(os.environ)
+        self.environment.pop("SKIP_COMMIT_HOOKS", None)
+        self.environment["PATH"] = str(commands) + os.pathsep + os.environ["PATH"]
+
+    def run_hook(self, subject):
+        message = self.repo / "COMMIT_EDITMSG"
+        message.write_text(subject + "\n\nCommit body.\n")
+        return subprocess.run(
+            ["bash", str(self.hook), str(message)],
+            cwd=self.repo,
+            env=self.environment,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_hook_matches_validator_for_non_merge_subjects(self):
+        for subject in (
+            "fix(semantics): apply detail record defaults in error constructor",
+            "fixup! fix(semantics): apply detail record defaults in error constructor",
+            "squash! fix: change code",
+            "fix: Change code",
+            "fix: " + "a" * 68,
+        ):
+            with self.subTest(subject=subject):
+                result = self.run_hook(subject)
+                expected = 1 if validate_commits.validation_errors(subject) else 0
+                self.assertEqual(result.returncode, expected, result.stderr)
+                if expected:
+                    self.assertIn("Invalid title or subject", result.stderr)
+
+    def test_merge_commit_subject_is_exempt(self):
+        merge_head = subprocess.run(
+            ["git", "hash-object", "-w", "--stdin"],
+            cwd=self.repo,
+            input="",
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        (self.repo / ".git/MERGE_HEAD").write_text(merge_head)
+        result = self.run_hook("Merge branch 'main'")
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

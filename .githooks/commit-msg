@@ -24,9 +24,7 @@ fi
 commit_message_file=$1
 subject=$(head -n 1 "$commit_message_file" | tr -d '\r')
 
-if ! git rev-parse --quiet --verify MERGE_HEAD >/dev/null 2>&1 \
-    && [[ "$subject" != "fixup! "* ]] \
-    && [[ "$subject" != "squash! "* ]]; then
+if ! git rev-parse --quiet --verify MERGE_HEAD >/dev/null 2>&1; then
     repo_root=$(git rev-parse --show-toplevel)
     python3 "$repo_root/.github/scripts/validate_commits.py" "$subject"
 fi
