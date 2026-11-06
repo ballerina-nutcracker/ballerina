@@ -1,0 +1,32 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable crlf (type
+          (value-type string)) (expr
+          (string-template-literal
+            (template-string "a\nb")))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref crlf) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBytes expr:
+            (simple-var-ref crlf) ()))))
+      (var-def
+        (variable cr (type
+          (value-type string)) (expr
+          (string-template-literal
+            (template-string "c\nd")))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (simple-var-ref cr) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation toBytes expr:
+            (simple-var-ref cr) ())))))))

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> source-normalization-diagnostic-e.bal:18:20
+   |
+18 |     string value = 1; // @error incompatible type
+   |                    ^

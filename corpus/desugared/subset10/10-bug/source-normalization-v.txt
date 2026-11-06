@@ -1,0 +1,32 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable crlf (type
+          (value-type string)) (expr
+          (literal a
+b))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (simple-var-ref crlf))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toBytes (
+            (simple-var-ref crlf))))))
+      (var-def
+        (variable cr (type
+          (value-type string)) (expr
+          (literal c
+d))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string length (
+            (simple-var-ref cr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.string toBytes (
+            (simple-var-ref cr)))))))))

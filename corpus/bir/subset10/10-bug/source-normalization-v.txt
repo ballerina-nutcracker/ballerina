@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+b
+    crlf = %1;
+    %3 = length(crlf) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = toBytes(crlf) -> bb3;
+  }
+  bb3 {
+    %7 = println(%6) -> bb4;
+  }
+  bb4 {
+    %8 = ConstantLoad c
+d
+    cr = %8;
+    %10 = length(cr) -> bb5;
+  }
+  bb5 {
+    %11 = %10;
+    %12 = println(%11) -> bb6;
+  }
+  bb6 {
+    %13 = toBytes(cr) -> bb7;
+  }
+  bb7 {
+    %14 = println(%13) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
