@@ -24,6 +24,8 @@ E: 'xml' value '<t>plain</t>' cannot be converted to 'xml:Text'
 E: field 'v' cannot be converted
 E: field 'v' cannot be converted
 {"v":[1,2]}
+true
+{"v":"z"}
 {"s":-8,"y":7}
 {"s":-8,"y":7}
 E: 'string' value '200' cannot be converted to 'lang.int:Signed8'

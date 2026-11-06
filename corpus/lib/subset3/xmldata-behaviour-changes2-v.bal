@@ -166,6 +166,13 @@ public function main() {
     // @output E: field 'v' cannot be converted
     show(xmldata:parseAsType(xml `<r><v>1</v><v>2</v></r>`, {}, ArrayUnion));
     // @output {"v":[1,2]}
+    // A repeated element does not overwrite the single value an earlier element gave an array-or-scalar union.
+    ArrayOrString|error overwritten = xmldata:parseAsType(xml `<r><v>z</v><v>2</v></r>`);
+    io:println(overwritten is error && overwritten.message().indexOf(" for the field 'v' found 'array' value") is int);
+    // @output true
+    ArrayOrString|error single = xmldata:parseAsType(xml `<r><v>z</v></r>`);
+    show(single);
+    // @output {"v":"z"}
 
     // int subtype and byte fields are converted with a range check.
     both("<r><s>-8</s><y>7</y></r>", Signed);
