@@ -1,0 +1,51 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable w (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref w)
+        (literal 5))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable fromModule (type
+          (value-type int)) (expr
+          (simple-var-ref w))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:main:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 7))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable fromWorker (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromModule))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref fromWorker)))))))

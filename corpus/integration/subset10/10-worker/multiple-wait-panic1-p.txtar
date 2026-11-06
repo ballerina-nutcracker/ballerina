@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: boom
+        at main(multiple-wait-panic1-p.bal:23)

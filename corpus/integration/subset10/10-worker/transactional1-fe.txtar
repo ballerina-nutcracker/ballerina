@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: transactional workers are not supported
+  --> transactional1-fe.bal:18:5
+   |
+18 |     transactional worker w returns int { // @error transactional workers are not supported
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         return 1;
+   |         ^^^^^^^^^
+20 |     }
+   |     ^

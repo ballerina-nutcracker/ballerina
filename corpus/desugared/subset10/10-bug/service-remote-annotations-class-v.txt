@@ -1,0 +1,61 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation RemoteCfg
+    (user-defined-type Cfg)
+    (attach-point serviceremotefunction))
+  (annotation RemoteMarker
+    (attach-point serviceremotefunction))
+  (annotation ObjectMarker
+    (attach-point objectfunction))
+  (annotation SourceRemote const
+    (attach-point source serviceremotefunction))
+  (annotation SourceObject const
+    (attach-point source objectfunction))
+  (annotation MixedRemote const
+    (attach-point objectfunction)
+    (attach-point source serviceremotefunction))
+  (annotation MixedObject const
+    (attach-point source objectfunction)
+    (attach-point serviceremotefunction))
+  (annotation Unrestricted)
+  (type-definition Cfg
+    (record-type
+      (field name
+        (value-type string))))
+  (class-definition Svc
+    (function init () ()
+      (block-function-body))
+    (function $remote$ping () (
+      (value-type null))
+      (block-function-body)
+      (annotation-attachment RemoteCfg
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal ping))))
+      (annotation-attachment RemoteMarker
+        (literal true))
+      (annotation-attachment ObjectMarker
+        (literal true))
+      (annotation-attachment SourceRemote
+        (literal true))
+      (annotation-attachment SourceObject
+        (literal true))
+      (annotation-attachment MixedRemote
+        (literal true))
+      (annotation-attachment MixedObject
+        (literal true))
+      (annotation-attachment Unrestricted
+        (literal true))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable svc (type
+          (user-defined-type Svc)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref svc)
+            (object-type service))))))))

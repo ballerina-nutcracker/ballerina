@@ -1,0 +1,28 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1)))
+      (annotation-attachment config
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal alpha)))))
+    (var-def
+      (variable result (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

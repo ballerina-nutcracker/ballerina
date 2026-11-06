@@ -1,0 +1,6 @@
+-- stdout --
+listener init one
+attach one
+listener init two
+-- stderr --
+error: attach failed two

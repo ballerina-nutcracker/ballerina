@@ -35,27 +35,23 @@
         (index-based-access
           (simple-var-ref r)
           (literal foo))
-        (index-based-access
-          (simple-var-ref r)
-          (literal foo)))
+        (optional-field-based-access foo
+          (simple-var-ref r)))
       (expression-stmt
         (invocation io println (
-          (index-based-access
-            (simple-var-ref r)
-            (literal foo)))))
+          (optional-field-based-access foo
+            (simple-var-ref r)))))
       (assignment
         (index-based-access
           (simple-var-ref r)
           (literal foo))
         (binary-expr +
           (type-conversion-expr
-            (index-based-access
-              (simple-var-ref r)
-              (literal foo))
+            (optional-field-based-access foo
+              (simple-var-ref r))
             (value-type int))
           (literal 1)))
       (expression-stmt
         (invocation io println (
-          (index-based-access
-            (simple-var-ref r)
-            (literal foo))))))))
+          (optional-field-based-access foo
+            (simple-var-ref r))))))))

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> narrowing2-e.bal:24:27
+   |
+24 |         int result = wait w; // @error worker referenced more than once
+   |                           ^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> narrowing2-e.bal:35:31
+   |
+35 |             int result = wait w; // @error worker referenced more than once
+   |                               ^

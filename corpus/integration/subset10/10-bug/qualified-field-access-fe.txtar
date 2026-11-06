@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: XML attribute access not supported
+  --> qualified-field-access-fe.bal:22:12
+   |
+22 |     return value.ns:attr; // @error
+   |            ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: XML attribute access not supported
+  --> qualified-field-access-fe.bal:26:12
+   |
+26 |     return value?.ns:attr; // @error
+   |            ^^^^^^^^^^^^^^

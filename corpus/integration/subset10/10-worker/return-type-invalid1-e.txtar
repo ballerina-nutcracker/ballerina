@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: fixed-length array size must be a singleton int
+  --> return-type-invalid1-e.bal:23:26
+   |
+23 |     worker w returns int[n] { // @error array length must be a constant
+   |                          ^
+
+error[SEMANTIC_ERROR]: fixed-length array size must be non-negative
+  --> return-type-invalid1-e.bal:31:26
+   |
+31 |     worker w returns int[NEGATIVE] { // @error array length must not be negative
+   |                          ^^^^^^^^
+
+error[SEMANTIC_ERROR]: intersection type is empty (equivalent to never)
+  --> return-type-invalid1-e.bal:39:22
+   |
+39 |     worker w returns int[] & map<int> { // @error intersection is empty
+   |                      ^^^^^^^^^^^^^^^^

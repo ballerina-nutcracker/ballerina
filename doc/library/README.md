@@ -30,7 +30,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 
 ## Notable Behavioural Changes
 
-Consolidated from each package's README. Only permanent, architectural Go-level divergences are listed here; temporary language gaps are tracked as support-table rows in the per-package tables instead.
+Consolidated from each package's README. Only permanent divergences are listed here: architectural Go-level constraints, and fixes of jBallerina bugs (new entries link their upstream issue). Temporary language gaps are tracked as support-table rows in the per-package tables instead.
 
 ### avro
 
