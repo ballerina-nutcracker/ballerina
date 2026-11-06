@@ -22,11 +22,6 @@ type futureOps struct {
 
 var _ basicTypeOps = &futureOps{}
 
-func newFutureOps() futureOps {
-	this := futureOps{}
-	return this
-}
-
 func (f *futureOps) IsEmpty(cx Context, t subtypeData) bool {
 	return mappingSubtypeIsEmpty(cx, t)
 }
