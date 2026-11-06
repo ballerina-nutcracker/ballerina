@@ -22,11 +22,6 @@ type floatOps struct {
 
 var _ basicTypeOps = &floatOps{}
 
-func newFloatOps() floatOps {
-	this := floatOps{}
-	return this
-}
-
 func (f *floatOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	var values []enumerableType[float64]
 	var v1 enumerableSubtype[float64] = new(t1.(floatSubtype))

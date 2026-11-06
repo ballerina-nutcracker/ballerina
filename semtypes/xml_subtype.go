@@ -54,14 +54,14 @@ func xmlSubtypeFrom(primitives int, sequence bdd) *xmlSubtype {
 	return newXmlSubtypeFromIntBdd(primitives, sequence)
 }
 
-func XMLSingleton(primitives int) SemType {
+func xmlSingleton(primitives int) SemType {
 	return createXmlSemtype(createXmlSubtype(primitives, bddNothing()))
 }
 
 func XMLSequence(constituentType SemType) SemType {
 	common.Assert(func() bool { return IsSubtypeSimple(constituentType, XML) })
 	if IsNever(constituentType) {
-		return XMLSequence(XMLSingleton(xmlPrimitiveNever))
+		return XMLSequence(xmlSingleton(xmlPrimitiveNever))
 	}
 	if constituentType.some() == 0 {
 		return constituentType

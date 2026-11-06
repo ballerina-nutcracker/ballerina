@@ -64,19 +64,6 @@ func decimalSubtypeSingleValue(d subtypeData) common.Optional[decimal.Decimal] {
 	return common.OptionalOf(v.values[0].value)
 }
 
-func decimalSubtypeContains(d subtypeData, f enumerableDecimal) bool {
-	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
-		return allOrNothingSubtype.IsAllSubtype()
-	}
-	v := d.(decimalSubtype)
-	for _, val := range v.values {
-		if val.Compare(&f) == 0 {
-			return v.allowed
-		}
-	}
-	return (!v.allowed)
-}
-
 func createDecimalSubtype(allowed bool, values []enumerableType[decimal.Decimal]) properSubtypeData {
 	if len(values) == 0 {
 		if allowed {

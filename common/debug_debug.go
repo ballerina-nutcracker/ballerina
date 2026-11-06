@@ -46,25 +46,6 @@ func InitDebug(flags uint16, w io.Writer) {
 	}
 }
 
-func DebugFlags() uint16 {
-	debugMu.RLock()
-	defer debugMu.RUnlock()
-	if debugSuppressionDepth != 0 {
-		return 0
-	}
-	return debugFlags
-}
-
-func DebugWriter() io.Writer {
-	debugMu.RLock()
-	defer debugMu.RUnlock()
-	return debugWriter
-}
-
-func DebugEnabled(flag uint16) bool {
-	return DebugFlags()&flag != 0
-}
-
 func DebugWriteLazy(flag uint16, msgFn func() string) {
 	debugMu.RLock()
 	enabled := debugSuppressionDepth == 0 && debugFlags&flag != 0

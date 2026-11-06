@@ -16,12 +16,6 @@
 
 package semtypes
 
-import (
-	"strings"
-
-	"github.com/ballerina-nutcracker/ballerina/decimal"
-)
-
 var SignedInt8 = intWidthSigned(8)
 var SignedInt16 = intWidthSigned(16)
 var SignedInt32 = intWidthSigned(32)
@@ -29,49 +23,10 @@ var UnsignedInt8 = Byte
 var UnsignedInt16 = intWidthUnsigned(16)
 var UnsignedInt32 = intWidthUnsigned(32)
 
-func decimalConstFromStringValue(value string) SemType {
-	if strings.Contains(value, "d") || strings.Contains(value, "D") {
-		value = value[:len(value)-1]
-	}
-	d, err := decimal.FromString(value)
-	if err != nil {
-		panic("failed to parse decimal literal: " + err.Error())
-	}
-	return DecimalConst(*d)
-}
-
-func unionWithSemTypeSemTypesSemType(first SemType, second SemType, rest ...SemType) SemType {
-	u := Union(first, second)
-	for _, s := range rest {
-		u = Union(u, s)
-	}
-	return u
-}
-
-func intersectWithSemTypeSemTypesSemType(first SemType, second SemType, rest ...SemType) SemType {
-	i := Intersect(first, second)
-	for _, s := range rest {
-		i = Intersect(i, s)
-	}
-	return i
-}
-
-func isSubtypeSimpleNotNever(t1 SemType, t2 SemType) bool {
-	return ((!IsNever(t1)) && IsSubtypeSimple(t1, t2))
-}
-
 func ContainsBasicType(t1 SemType, t2 SemType) bool {
 	return ((widenToBasicTypeBits(t1) & t2.all()) != 0)
 }
 
-func containsType(context Context, ty SemType, typeToBeContained SemType) bool {
-	return IsSameType(context, Intersect(ty, typeToBeContained), typeToBeContained)
-}
-
 func ListProj(context Context, t SemType, key SemType) SemType {
 	return listProjInnerVal(context, t, key)
-}
-
-func listMemberType(context Context, t SemType, key SemType) SemType {
-	return ListMemberTypeInnerVal(context, t, key)
 }

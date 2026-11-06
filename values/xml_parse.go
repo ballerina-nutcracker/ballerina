@@ -214,7 +214,7 @@ func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode) (XMLValue, err
 			}
 			appendItem(NewXMLText(body))
 		case xml.Comment:
-			if err := ValidateXMLComment(string(t)); err != nil {
+			if err := validateXMLComment(string(t)); err != nil {
 				return nil, err
 			}
 			appendItem(NewXMLComment(string(t), bc.readonly))
@@ -223,7 +223,7 @@ func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode) (XMLValue, err
 				return nil, fmt.Errorf("reserved XML processing-instruction target %q", t.Target)
 			}
 			if mode != XMLLenientMode {
-				if err := ValidateXMLProcessingInstruction(t.Target, string(t.Inst)); err != nil {
+				if err := validateXMLProcessingInstruction(t.Target, string(t.Inst)); err != nil {
 					return nil, err
 				}
 			}

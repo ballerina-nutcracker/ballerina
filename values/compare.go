@@ -97,19 +97,19 @@ func Compare(x, y BalValue) CompareResult {
 	}
 }
 
-func CompareA(x, y BalValue) CompareResult {
+func compareA(x, y BalValue) CompareResult {
 	return compareForSort(x, y, true)
 }
 
-func CompareD(x, y BalValue) CompareResult {
+func compareD(x, y BalValue) CompareResult {
 	return compareForSort(x, y, false)
 }
 
 func CompareK(x, y BalValue, ascending bool) CompareResult {
 	if ascending {
-		return CompareA(x, y)
+		return compareA(x, y)
 	}
-	return reverseCompareResult(CompareD(x, y))
+	return reverseCompareResult(compareD(x, y))
 }
 
 func compareForSort(x, y BalValue, ascending bool) CompareResult {

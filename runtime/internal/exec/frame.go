@@ -38,13 +38,13 @@ func resolveFrame(frame *Frame, address bir.Address) *Frame {
 	return frame
 }
 
-// Load retrieves the value at the given address in the frame.
-func Load(frame *Frame, address bir.Address) values.BalValue {
+// load retrieves the value at the given address in the frame.
+func load(frame *Frame, address bir.Address) values.BalValue {
 	return resolveFrame(frame, address).Local(address.FrameIndex)
 }
 
-// Store sets the value at the given address in the frame.
-func Store(frame *Frame, address bir.Address, value values.BalValue) {
+// store sets the value at the given address in the frame.
+func store(frame *Frame, address bir.Address, value values.BalValue) {
 	resolveFrame(frame, address).SetLocal(address.FrameIndex, value)
 }
 
@@ -54,7 +54,7 @@ func getOperandValue(ctx *extern.Context, op *bir.BIROperand, currentFrame *Fram
 		value, _ := module.GetGlobal(gv.GlobalVarLookupKey)
 		return value
 	}
-	return Load(currentFrame, op.Address)
+	return load(currentFrame, op.Address)
 }
 
 func setOperandValue(ctx *extern.Context, op *bir.BIROperand, currentFrame *Frame, value values.BalValue) {
@@ -62,7 +62,7 @@ func setOperandValue(ctx *extern.Context, op *bir.BIROperand, currentFrame *Fram
 		module := getModule(ctx, gv.PkgID)
 		module.SetGlobal(gv.GlobalVarLookupKey, value)
 	} else {
-		Store(currentFrame, op.Address, value)
+		store(currentFrame, op.Address, value)
 	}
 }
 

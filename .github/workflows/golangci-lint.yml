@@ -23,5 +23,7 @@ jobs:
         run: python3 .github/scripts/test_check_lint_configs.py
       - name: Test node base visibility checker
         run: go test ./compiler-tools/nodebase
+      - name: Test function usage checker
+        run: go test ./compiler-tools/funcusage
       - name: Run linters
         run: make -j4 lint

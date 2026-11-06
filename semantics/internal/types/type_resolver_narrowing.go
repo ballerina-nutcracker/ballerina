@@ -214,11 +214,7 @@ func narrowByType(t typeResolver, chain *binding, ref model.SymbolRef, ty semtyp
 	}
 }
 
-func unnarrowSymbol(t typeResolver, chain *binding, symbol model.SymbolRef) statementEffect {
-	return unnarrowSymbolAt(t, chain, symbol, diagnostics.Location{})
-}
-
-// unnarrowSymbolAt is unnarrowSymbol but records the position of the
+// unnarrowSymbolAt unnarrows symbol and records the position of the
 // assignment that triggered the unnarrowing. Loop arms use this position to
 // report assignments to variables narrowed outside the loop whose effect
 // reaches the loop top.

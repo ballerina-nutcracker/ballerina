@@ -152,14 +152,6 @@ type nodeBase struct {
 	textRangeWithMinutiae TextRange
 }
 
-func NodeFrom(internalNode STNode, position int, parent NonTerminalNode) Node {
-	return &nodeBase{
-		internalNode: internalNode,
-		position:     position,
-		parent:       parent,
-	}
-}
-
 func (n *nodeBase) Kind() SyntaxKind {
 	return n.internalNode.Kind()
 }
@@ -555,17 +547,3 @@ type LiteralValueToken struct {
 }
 
 var _ Node = &LiteralValueToken{}
-
-func CreateNodeListWithFacade[T Node](nodes []T) NodeList[T] {
-	var internalNodes []STNode
-	for _, node := range nodes {
-		internalNodes = append(internalNodes, node.InternalNode())
-	}
-	stNodeList := CreateNodeList(internalNodes...).(*STNodeList)
-	nodeList := NodeList[T]{
-		internalListNode: *stNodeList,
-		nonTerminalNode:  nil,
-		size:             len(nodes),
-	}
-	return nodeList
-}

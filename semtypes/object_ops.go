@@ -41,11 +41,6 @@ func objectBddIsEmpty(cx Context, b bdd) bool {
 	return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
 }
 
-func newObjectOps() objectOps {
-	this := objectOps{}
-	return this
-}
-
 func (o *objectOps) complement(t subtypeData) subtypeData {
 	return o.objectSubTypeComplement(t)
 }

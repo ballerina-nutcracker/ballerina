@@ -37,6 +37,7 @@ type symbolReader struct {
 	sigHandles      []model.FunctionSignatureRef
 }
 
+//funcusage:test-hook symbol serialization is exercised by roundtrip tests until package writing uses it
 func Unmarshal(env *context.CompilerEnvironment, data []byte) (model.ExportedSymbolSpace, error) {
 	sr := &symbolReader{
 		r:   bytes.NewReader(data),

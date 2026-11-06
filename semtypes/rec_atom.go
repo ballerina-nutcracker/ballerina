@@ -47,11 +47,6 @@ func createDistinctRecAtom(index int) recAtom {
 	return newRecAtomFromInt(index)
 }
 
-func isDistinctRecAtom(atom atom) bool {
-	rec, ok := atom.(*recAtom)
-	return ok && rec.index() < 0
-}
-
 func (r *recAtom) index() int {
 	return r.idx
 }

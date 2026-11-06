@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package bfs
+package memfs
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ import (
 )
 
 // memFS is an in-memory filesystem that supports both files and directories.
-// It implements fs.FS, fs.ReadDirFS, MutableFS, and WritableFS interfaces.
+// It implements fs.FS, fs.ReadDirFS, bfs.MutableFS, and bfs.WritableFS interfaces.
 type memFS struct {
 	entries map[string]*memEntry
 }
@@ -52,7 +52,7 @@ type memDirHandle struct {
 	offset  int
 }
 
-func NewMemFS() *memFS {
+func New() *memFS {
 	return &memFS{
 		entries: make(map[string]*memEntry),
 	}

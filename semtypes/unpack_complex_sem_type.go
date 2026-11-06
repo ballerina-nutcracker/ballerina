@@ -20,11 +20,6 @@ import "math/bits"
 
 type unpackComplexSemType struct{}
 
-func newUnpackComplexSemType() unpackComplexSemType {
-	this := unpackComplexSemType{}
-	return this
-}
-
 func unpack(t SemType) []basicSubtype {
 	some := t.some()
 	var subtypeList []basicSubtype

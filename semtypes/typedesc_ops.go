@@ -34,11 +34,6 @@ func typedescSubtypeIsEmpty(cx Context, t subtypeData) bool {
 	return mappingSubtypeIsEmpty(cx, b)
 }
 
-func newTypedescOps() typedescOps {
-	this := typedescOps{}
-	return this
-}
-
 func (t *typedescOps) complement(d subtypeData) subtypeData {
 	return typedescSubtypeComplement(d)
 }

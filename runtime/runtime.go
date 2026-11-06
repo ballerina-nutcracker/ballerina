@@ -21,7 +21,6 @@ import (
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
-	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/runtime/internal/exec"
@@ -33,10 +32,15 @@ import (
 // LookupFunction resolves a top-level Ballerina function (BIR or native)
 // by qualified name. The returned payload is opaque; pass it to
 // InvokeFunction.
+//
+//funcusage:test-hook test harnesses look up test functions to run them
 func LookupFunction(rt *Runtime, org, module, name string) (any, bool) {
 	return exec.LookupFunction(rt.env, org, module, name)
 }
 
+// InvokeFunction calls fn, a function returned by LookupFunction, with args.
+//
+//funcusage:test-hook test harnesses run test functions through it
 func InvokeFunction(rt *Runtime, fn any, args []values.BalValue) (values.BalValue, error) {
 	cx := exec.CreateContext(rt.env)
 	return exec.Invoke(cx, fn, args)
@@ -253,16 +257,4 @@ func RegisterExternFunction(rt *Runtime, orgName string, moduleName string, func
 // to nativeFunctions for method dispatch.
 func RegisterExternClassDef(rt *Runtime, def *bir.BIRClassDef) {
 	rt.registry().RegisterExternClassDef(def)
-}
-
-// RegisterModuleGlobals makes module-level constants accessible at runtime.
-// When Ballerina source code accesses an extern package's constant (e.g. http:LEADING),
-// the BIR executor looks it up as a global variable in that package's module. Without
-// registration, GetModule returns nil and causes a nil dereference panic.
-func RegisterModuleGlobals(rt *Runtime, pkgId *model.PackageID, globals map[string]values.BalValue) {
-	if existing := rt.registry().GetModule(pkgId); existing != nil {
-		existing.SetGlobals(globals)
-		return
-	}
-	rt.registry().RegisterModule(pkgId, modules.NewBIRModule(semtypes.ContextFrom(rt.env.TypeEnv), nil, globals))
 }
