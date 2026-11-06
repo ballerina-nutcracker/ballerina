@@ -27,8 +27,10 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 //go:embed testdata/hello.bal
@@ -42,6 +44,8 @@ type config struct {
 	threshold        float64 // percent throughput drop that counts as a regression
 	exportMD         string
 	resultJSON       string
+	samplesJSONL     string
+	phase            string
 }
 
 func main() {
@@ -55,6 +59,9 @@ func main() {
 		// PR comment still has something, and let the gate fail on error:true.
 		fmt.Fprintf(os.Stderr, "httpbench: %v\n", err)
 		emitError(cfg, err)
+		if cfg.samplesJSONL != "" {
+			os.Exit(1)
+		}
 		// Exit 0: the artifact + gate handle the failure; a crash here would
 		// skip artifact upload and leave no comment.
 		return
@@ -67,6 +74,8 @@ func main() {
 func parseConfig(args []string) (config, error) {
 	var cfg config
 	fs := flag.NewFlagSet("httpbench", flag.ContinueOnError)
+	fs.StringVar(&cfg.samplesJSONL, "samples-jsonl", "", "Raw paired sample stream")
+	fs.StringVar(&cfg.phase, "phase", "fixed", "Sample phase: fixed, pilot, final")
 	fs.IntVar(&cfg.repeats, "repeats", 2, "measured runs per ref (interleaved base/head)")
 	fs.StringVar(&cfg.warmup, "warmup", "30s", "wrk warmup duration (discarded)")
 	fs.StringVar(&cfg.duration, "duration", "330s", "wrk measured duration")
@@ -86,7 +95,29 @@ func parseConfig(args []string) (config, error) {
 		return config{}, fmt.Errorf("expected exactly 2 positional args (base-ref, head-ref), got %d", fs.NArg())
 	}
 	cfg.baseRef, cfg.headRef = fs.Arg(0), fs.Arg(1)
+	if err := cfg.validate(); err != nil {
+		return config{}, err
+	}
 	return cfg, nil
+}
+
+func (cfg config) validate() error {
+	if cfg.repeats <= 0 || cfg.conns <= 0 {
+		return fmt.Errorf("repeats and connections must be positive")
+	}
+	if math.IsNaN(cfg.threshold) || math.IsInf(cfg.threshold, 0) || cfg.threshold <= 0 || cfg.threshold >= 100 {
+		return fmt.Errorf("threshold must be finite and in (0,100)")
+	}
+	if cfg.phase != "fixed" && cfg.phase != "pilot" && cfg.phase != "final" {
+		return fmt.Errorf("invalid phase %q", cfg.phase)
+	}
+	for _, value := range []string{cfg.warmup, cfg.duration} {
+		d, err := time.ParseDuration(value)
+		if err != nil || d <= 0 {
+			return fmt.Errorf("invalid duration %q", value)
+		}
+	}
+	return nil
 }
 
 func run(cfg config) error {
@@ -136,22 +167,33 @@ func run(cfg config) error {
 		return err
 	}
 
-	var baseS, headS []sample
-	for i := 0; i < cfg.repeats; i++ {
-		fmt.Fprintf(os.Stderr, "Repeat %d/%d: %s...\n", i+1, cfg.repeats, cfg.baseRef)
-		s, err := measureOnce(baseBal, helloFile, cfg, &c)
+	var writer *sampleWriter
+	if cfg.samplesJSONL != "" {
+		base, err := resolveSampleSHA(baseWT)
 		if err != nil {
-			return fmt.Errorf("measuring %s: %w", cfg.baseRef, err)
+			return err
 		}
-		baseS = append(baseS, s)
-
-		fmt.Fprintf(os.Stderr, "Repeat %d/%d: %s...\n", i+1, cfg.repeats, cfg.headRef)
-		s, err = measureOnce(headBal, helloFile, cfg, &c)
+		head, err := resolveSampleSHA(headWT)
 		if err != nil {
-			return fmt.Errorf("measuring %s: %w", cfg.headRef, err)
+			return err
 		}
-		headS = append(headS, s)
+		writer, err = newSampleWriter(cfg.samplesJSONL, sampleMetadata{Type: "metadata", Version: 1, BaseSHA: base, HeadSHA: head, Suite: "http", Phase: cfg.phase, Cases: []string{"hello"}, Counts: map[string]int{"hello": cfg.repeats}, Unit: "req/s"})
+		if err != nil {
+			return err
+		}
+		defer func() { _ = writer.close(false) }()
 	}
+	samples, err := collectHTTPPairs(cfg, writer, func(role int) (sample, error) {
+		s, err := measureOnce([]string{baseBal, headBal}[role], helloFile, cfg, &c)
+		if err != nil {
+			return s, fmt.Errorf("measuring %s: %w", []string{cfg.baseRef, cfg.headRef}[role], err)
+		}
+		return s, nil
+	})
+	if err != nil {
+		return err
+	}
+	baseS, headS := samples[0], samples[1]
 
 	md, res := buildReport(cfg.baseRef, cfg.headRef, baseS, headS, cfg)
 	fmt.Println(md)
@@ -181,4 +223,35 @@ func emitError(cfg config, cause error) {
 	if cfg.resultJSON != "" {
 		_ = writeResultJSON(cfg.resultJSON, res)
 	}
+}
+
+func collectHTTPPairs(cfg config, writer *sampleWriter, measure func(int) (sample, error)) ([][]sample, error) {
+	samples := make([][]sample, 2)
+	for pair := 0; pair < cfg.repeats; pair++ {
+		for position := 0; position < 2; position++ {
+			role := (pair + position) % 2
+			s, err := measure(role)
+			if err != nil {
+				return nil, err
+			}
+			if s.throughput <= 0 || math.IsNaN(s.throughput) || math.IsInf(s.throughput, 0) {
+				return nil, fmt.Errorf("invalid throughput")
+			}
+			samples[role] = append(samples[role], s)
+			if writer != nil {
+				if err := writer.write(sampleEvent{CaseID: "hello", Pair: pair, Role: []string{"base", "head"}[role], Position: position, Value: s.throughput, Unit: "req/s", Metrics: map[string]float64{"avg_ms": s.avgMs, "stdev_ms": s.stdevMs, "max_ms": s.maxMs, "error_pct": s.errPct, "p99_ms": s.p99Ms, "startup_s": s.startupSec, "rss_mib": s.rssMB}}); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	if writer != nil {
+		if err := writer.completeCase("hello"); err != nil {
+			return nil, err
+		}
+		if err := writer.close(true); err != nil {
+			return nil, err
+		}
+	}
+	return samples, nil
 }

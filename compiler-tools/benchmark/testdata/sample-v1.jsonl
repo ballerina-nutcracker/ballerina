@@ -1,0 +1,5 @@
+{"type":"metadata","version":1,"base_sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","head_sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","suite":"time","phase":"fixed","cases":["case.bal"],"counts":{"case.bal":1},"unit":"s"}
+{"type":"sample","case_id":"case.bal","pair":0,"role":"base","position":0,"value":1,"unit":"s"}
+{"type":"sample","case_id":"case.bal","pair":0,"role":"head","position":1,"value":2,"unit":"s"}
+{"type":"case_complete","case_id":"case.bal"}
+{"type":"complete"}

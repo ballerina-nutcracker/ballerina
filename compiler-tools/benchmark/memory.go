@@ -76,41 +76,17 @@ func requireMemoryTool() error {
 	return nil
 }
 
-func (b *benchmark) runMemoryBenchmark(baseWorktree, headWorktree, target string, interpreterBin string) (*benchExport, error) {
-	base, err := b.runMemoryCommand(filepath.Join(baseWorktree, interpreterBin), target)
-	if err != nil {
-		return nil, fmt.Errorf("failed to run memory benchmark for %s: %w", b.baseRef, err)
-	}
-	head, err := b.runMemoryCommand(filepath.Join(headWorktree, interpreterBin), target)
-	if err != nil {
-		return nil, fmt.Errorf("failed to run memory benchmark for %s: %w", b.headRef, err)
-	}
-	return &benchExport{Results: []benchResult{base, head}}, nil
-}
-
-func (b *benchmark) runMemoryCommand(interpreter, target string) (benchResult, error) {
-	for i := 0; i < b.warmup; i++ {
-		if _, err := runMemorySample(interpreter, target); err != nil {
-			return benchResult{}, fmt.Errorf("warmup run %d failed: %w", i+1, err)
-		}
-	}
-
-	samples := make([]float64, 0, b.runs)
-	for i := 0; i < b.runs; i++ {
-		rssMiB, err := runMemorySample(interpreter, target)
+func (b *benchmark) runMemoryBenchmark(baseWorktree, headWorktree, target, interpreterBin string, runs int, caseID string, writer *sampleWriter) (*benchExport, error) {
+	interpreters := []string{filepath.Join(baseWorktree, interpreterBin), filepath.Join(headWorktree, interpreterBin)}
+	commands := []string{formatBenchmarkCommand(interpreters[0], target), formatBenchmarkCommand(interpreters[1], target)}
+	refs := []string{b.baseRef, b.headRef}
+	return b.acquirePairs(commands, runs, caseID, "MiB", writer, func(role int) (float64, error) {
+		value, err := runMemorySample(interpreters[role], target)
 		if err != nil {
-			return benchResult{}, fmt.Errorf("benchmark run %d failed: %w", i+1, err)
+			return 0, fmt.Errorf("failed to run memory benchmark for %s: %w", refs[role], err)
 		}
-		samples = append(samples, rssMiB)
-	}
-
-	mean, stddev, median := memoryStats(samples)
-	return benchResult{
-		Command: formatBenchmarkCommand(interpreter, target),
-		Mean:    mean,
-		Stddev:  stddev,
-		Median:  median,
-	}, nil
+		return value, nil
+	})
 }
 
 func runMemorySample(interpreter, target string) (float64, error) {
@@ -135,7 +111,7 @@ func runMemorySample(interpreter, target string) (float64, error) {
 	return tool.parser(stderr.String())
 }
 
-func memoryStats(samples []float64) (float64, float64, float64) {
+func sampleStats(samples []float64) (float64, float64, float64) {
 	if len(samples) == 0 {
 		return 0, 0, 0
 	}
