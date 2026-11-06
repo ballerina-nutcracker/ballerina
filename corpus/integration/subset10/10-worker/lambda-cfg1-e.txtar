@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> lambda-cfg1-e.bal:20:5
+   |
+20 |     worker w returns int { // @error missing return statement
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |         foreach int i in 0 ..< 2 {
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |             io:println(i);
+   |             ^^^^^^^^^^^^^^
+23 |         }
+   |         ^
+24 |     }
+   |     ^

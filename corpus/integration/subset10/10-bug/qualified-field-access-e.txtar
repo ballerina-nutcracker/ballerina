@@ -1,0 +1,103 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: xml attribute access cannot be used as an lvalue
+  --> qualified-field-access-e.bal:63:5
+   |
+63 |     value.mod:foo = 2; // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access cannot be used as an lvalue
+  --> qualified-field-access-e.bal:64:5
+   |
+64 |     value.mod:foo += 2; // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access cannot be used as an lvalue
+  --> qualified-field-access-e.bal:65:5
+   |
+65 |     x.mod:foo = "a"; // @error
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access cannot be used as an lvalue
+  --> qualified-field-access-e.bal:66:5
+   |
+66 |     x.mod:foo += "a"; // @error
+   |     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:25:9
+   |
+25 |     _ = value?.mod:foo; // @error
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:26:9
+   |
+26 |     _ = value?.'_:foo; // @error
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:30:9
+   |
+30 |     _ = value.mod:foo; // @error
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:34:9
+   |
+34 |     _ = value.mod:foo; // @error
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:35:9
+   |
+35 |     _ = value?.mod:foo; // @error
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:39:9
+   |
+39 |     _ = value?.mod:foo; // @error
+   |         ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:40:9
+   |
+40 |     _ = value.mod:foo; // @error
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:44:9
+   |
+44 |     _ = value.mod:foo; // @error
+   |         ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:48:9
+   |
+48 |     _ = a.mod:b.c; // @error
+   |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:53:16
+   |
+53 |         return value?.mod:foo; // @error
+   |                ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:59:37
+   |
+59 |     _ = from var v in values select v.mod:foo; // @error
+   |                                     ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:73:16
+   |
+73 |         return self.mod:foo; // @error
+   |                ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml attribute access requires an expression of type xml
+  --> qualified-field-access-e.bal:77:16
+   |
+77 |         return self.mod:bar; // @error
+   |                ^^^^^^^^^^^^

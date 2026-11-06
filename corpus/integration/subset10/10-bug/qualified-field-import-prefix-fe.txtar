@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: XML attribute access not supported
+  --> qualified-field-import-prefix-fe.bal:22:14
+   |
+22 |     io:println(x?.lx:XMLNS_NAMESPACE_URI); // @error
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^

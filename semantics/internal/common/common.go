@@ -44,7 +44,7 @@ func ClassFieldDescriptor(field *ast.BLangVariable, ty semtypes.SemType) model.F
 
 func IsSelfFieldAccess(n *ast.BLangFieldBaseAccess) bool {
 	varRef, ok := n.Expr.(*ast.BLangVarRef)
-	return ok && varRef.VariableName.GetValue() == "self"
+	return ok && n.PkgAlias == nil && varRef.VariableName.GetValue() == "self"
 }
 
 // AssignmentTargetError returns the reason a symbol of the given kind cannot be assigned to, if any.
@@ -58,6 +58,8 @@ func AssignmentTargetError(kind model.SymbolKind) (string, bool) {
 		return "cannot assign to function", true
 	case model.SymbolKindType:
 		return "cannot assign to type", true
+	case model.SymbolKindWorker:
+		return "cannot assign to worker", true
 	default:
 		return "", false
 	}

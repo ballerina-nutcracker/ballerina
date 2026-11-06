@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'a' may be evaluated more than once
+  --> repeat-ref-worker1-e.bal:27:25
+   |
+27 |             sum += wait a; // @error reference inside a loop in a sibling worker
+   |                         ^

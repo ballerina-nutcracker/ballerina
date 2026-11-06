@@ -1,0 +1,73 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation spawnThenPanic ())))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref e)
+          (error-type)))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ==
+      (simple-var-ref counter)
+      (literal 0))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation yieldOnce ())))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (assignment
+      (wildcard-binding-pattern)
+      (type-test-expr is
+        (simple-var-ref r)
+        (value-type int)))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref counter))))
+  )
+)
+(spawnThenPanic
+  (bb0 () ()
+    (named-worker w (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (simple-var-ref counter)
+          (literal 1))))
+    (panic
+      (error-constructor-expr (
+        (literal default worker panicked))))
+  )
+)
+(yieldOnce
+  (bb0 () ()
+    (return
+      (literal 0))
+  )
+)
+(worker w
+  (bb0 () ()
+    (assignment
+      (simple-var-ref counter)
+      (literal 1))
+  )
+)

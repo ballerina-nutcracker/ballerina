@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker flush is not supported
+  --> flush1-fe.bal:20:20
+   |
+20 |         error? e = flush receiver; // @error worker flush is not supported
+   |                    ^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> flush1-fe.bal:19:9
+   |
+19 |         1 -> receiver;
+   |         ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> flush1-fe.bal:23:17
+   |
+23 |         int _ = <- sender;
+   |                 ^^^^^^^^^
