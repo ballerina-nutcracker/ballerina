@@ -1,0 +1,28 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function isFuture (
+    (variable f (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type boolean))))) (
+    (value-type boolean))
+    (block-function-body
+      (return
+        (type-test-expr is
+          (simple-var-ref f)
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type boolean))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type boolean))
+        (block-function-body
+          (return
+            (invocation isFuture (
+              (simple-var-ref w))))))
+      (expression-stmt
+        (invocation io println (
+          (literal started)))))))

@@ -1,0 +1,72 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (annotation RemoteMarker
+    (attach-point serviceremotefunction))
+  (annotation ObjectMarker
+    (attach-point objectfunction))
+  (class-definition AnnotationListener
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable path (type
+        (union-type
+          (array-type
+            (value-type string) dimensions: 1 ([]))
+          (union-type
+            (value-type string)
+            (value-type null)))) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref path))))
+        (expression-stmt
+          (invocation io println (
+            (literal attached))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (service
+    (on
+    (new
+      (user-defined-type AnnotationListener) ()))
+    (function $remote$ping () (
+      (value-type null))
+      (block-function-body)
+      (annotation-attachment RemoteMarker
+        (literal true))
+      (annotation-attachment ObjectMarker
+        (literal true))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal main)))))))

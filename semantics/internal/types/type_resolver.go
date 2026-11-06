@@ -1112,7 +1112,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 	case *ast.BLangExternFunctionBody:
 		_ = body
 	case *ast.BLangBlockFunctionBody:
-		resolveBlockStatements(ft, nil, body.Stmts)
+		resolveBlockFunctionBody(ft, nil, body)
 	case *ast.BLangExprFunctionBody:
 		resolveActionOrExpression(ft, nil, body.Expr, ft.retTy)
 	default:
@@ -1261,23 +1261,24 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 	propagateRecordFieldAnnotations(t, pkg)
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
+		isService := classDef.IsService()
 		classPoint := ast.PointClass
-		if classDef.IsService() {
+		if isService {
 			classPoint = ast.PointService
 		}
 		resolveAnnotationAttachments(t, classDef, classPoint, symbolAnnotationSink(t, classDef.Symbol()))
-		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods)
+		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods, isService)
 	}
 	for i := range pkg.Services {
 		svc := pkg.Services[i]
 		resolveAnnotationAttachments(t, svc, ast.PointService, symbolAnnotationSink(t, svc.Symbol()))
-		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods)
+		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods, true)
 	}
 	for i := range pkg.Functions {
-		resolveFunctionAnnotationAttachments(t, pkg.Functions[i], false)
+		resolveInvokableAnnotationAttachments(t, pkg.Functions[i], ast.PointFunction)
 	}
 	if pkg.InitFunction != nil {
-		resolveFunctionAnnotationAttachments(t, pkg.InitFunction, false)
+		resolveInvokableAnnotationAttachments(t, pkg.InitFunction, ast.PointFunction)
 	}
 	for i := range pkg.Constants {
 		resolveAnnotationAttachments(t, pkg.Constants[i], ast.PointConst, nil)
@@ -1294,32 +1295,24 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 }
 
 func resolveClassBodyAnnotationAttachments(t typeResolver, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
-	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod,
+	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, isService bool,
 ) {
 	for _, field := range fields {
 		resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
 	}
 	if initFn != nil {
-		resolveFunctionAnnotationAttachments(t, initFn, true)
+		resolveInvokableAnnotationAttachments(t, initFn, ast.PointObjectMethod)
 	}
 	for _, method := range common.MethodsInResolutionOrder(methods) {
-		resolveFunctionAnnotationAttachments(t, method.Method, true)
+		point := ast.PointObjectMethod
+		if isService && method.Method.IsRemote() {
+			point = ast.PointServiceRemote
+		}
+		resolveInvokableAnnotationAttachments(t, method.Method, point)
 	}
 	for _, method := range resourceMethods {
 		resolveInvokableAnnotationAttachments(t, method, ast.PointObjectMethod)
 	}
-}
-
-func resolveFunctionAnnotationAttachments(
-	t typeResolver,
-	fn *ast.BLangFunction,
-	attached bool,
-) {
-	point := ast.PointFunction
-	if attached {
-		point = ast.PointObjectMethod
-	}
-	resolveInvokableAnnotationAttachments(t, fn, point)
 }
 
 func resolveInvokableAnnotationAttachments(
@@ -2342,6 +2335,97 @@ func buildReturnTypeOp(t typeResolver, chain *binding, params map[string]param, 
 	}
 }
 
+// resolveBlockFunctionBody resolves the three regions of a block function body:
+// the default-worker initialization statements, the named worker declarations,
+// and the remaining default-worker statements. Every worker is resolved with
+// the narrowing state produced by the initialization region, so a worker sees
+// exactly what the default worker had in scope at the startup point.
+func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) {
+	startupChain := chain
+	if len(body.InitStmts) > 0 {
+		startupChain = resolveBlockStatements(t, chain, body.InitStmts).binding
+	}
+	returnTypes := make([]semtypes.SemType, len(body.Workers))
+	for i, worker := range body.Workers {
+		returnTy, workerChain, ok := declareNamedWorkerType(t, startupChain, worker)
+		if !ok {
+			// The worker's declared return type did not resolve, so its body
+			// cannot be checked against anything meaningful and neither can
+			// the trailing statements that wait on it. The failure is already
+			// reported; stop before producing cascading diagnostics.
+			return
+		}
+		returnTypes[i] = returnTy
+		startupChain = workerChain
+	}
+	// Workers run concurrently with each other and with the rest of the
+	// default worker, so every worker's captures are in effect in every worker
+	// body and in the trailing statements.
+	for _, worker := range body.Workers {
+		startupChain = addCaptureGroup(startupChain, worker.CaptureGroup())
+	}
+	for i, worker := range body.Workers {
+		resolveNamedWorker(t, startupChain, worker, returnTypes[i])
+	}
+	resolveBlockStatements(t, startupChain, body.Stmts)
+}
+
+// declareNamedWorkerType resolves a worker's return type and gives its symbol
+// the type future<T>. Every worker's type is declared before any worker body is
+// resolved, so a body can refer to peers declared before or after it. The node
+// builder always supplies a return descriptor, synthesising a nil one when the
+// source omits `returns`, so the only failure is an unresolvable type.
+func declareNamedWorkerType(
+	t typeResolver,
+	chain *binding,
+	worker *ast.BLangNamedWorkerDeclaration,
+) (semtypes.SemType, *binding, bool) {
+	returnTy, chain, ok := resolveBType(t, chain, worker.ReturnType, 0)
+	if !ok {
+		return semtypes.SemType{}, chain, false
+	}
+	updateSymbolType(t, worker, semtypes.FutureContaining(t.typeEnv(), returnTy))
+	resolveAnnotationAttachments(t, worker, ast.PointWorker, nil)
+	resolveAnnotationAttachments(t, worker.ReturnType, ast.PointReturn, nil)
+	return returnTy, chain, true
+}
+
+// resolveNamedWorker resolves a worker body in an independent return context.
+func resolveNamedWorker(
+	t typeResolver,
+	chain *binding,
+	worker *ast.BLangNamedWorkerDeclaration,
+	returnTy semtypes.SemType,
+) {
+	ft := &functionTypeResolver{
+		atomSideTableBase: newAtomSideTableBase(),
+		parentResolver:    t,
+		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
+		retTy:             returnTy,
+		implicitImports:   make(map[string]ast.BLangImportPackage),
+		monoCounters:      make(map[string]int),
+		scope:             worker.Scope(),
+		context:           resolverContextForFunction(isolatedContext(t)),
+		ephemeralState:    resolverEphemeralState(t),
+	}
+
+	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
+	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
+
+}
+
+// waitEventualType returns the type a wait on the given operand yields. A
+// direct reference to a named worker has eventual type T; every other
+// future<T> expression, including an alias of a worker future, has eventual
+// type T|error.
+func waitEventualType(t typeResolver, expression ast.BLangExpression, expressionType semtypes.SemType) semtypes.SemType {
+	eventualTy := semtypes.FutureEventualType(t.typeContext(), expressionType)
+	if ref, ok := expression.(*ast.BLangVarRef); ok && t.getSymbol(ref.Symbol()).Kind() == model.SymbolKindWorker {
+		return eventualTy
+	}
+	return semtypes.Union(eventualTy, semtypes.Error)
+}
+
 func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambdaFunction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	if e.HasInferredParams() {
 		return resolveInferredLambdaFunctionExpr(t, chain, e, expectedType)
@@ -2377,7 +2461,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 
 	switch body := e.Function.Body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		resolveBlockStatements(ft, boundaryChain, body.Stmts)
+		resolveBlockFunctionBody(ft, boundaryChain, body)
 	case *ast.BLangExprFunctionBody:
 		if _, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, ft.retTy); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
@@ -3872,7 +3956,7 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangCheckPanickedExpr:
 		return resolved(resolveCheckedExpr(t, chain, &e.BLangCheckedExpr, expectedType))
 	case *ast.BLangTrapExpr:
-		return resolved(resolveTrapExpr(t, chain, e))
+		return resolved(resolveTrapExpr(t, chain, e, expectedType))
 	case *ast.BLangNamedArgsExpression:
 		result, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
 		if !ok {
@@ -4457,13 +4541,15 @@ func resolveSingleWaitAction(t typeResolver, chain *binding, e *ast.BLangSingleW
 		t.semanticError("wait action requires a future expression", e.FutureExpr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	resultTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+	resultTy := waitEventualType(t, e.FutureExpr, futureTy)
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(sequentialChain(t, futureResult.effect)), true
 }
 
 func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlternateWaitAction) (semtypes.SemType, expressionEffect, bool) {
-	resultTy := semtypes.Error
+	// Each operand contributes its own eventual type. An ordinary future
+	// contributes T|error; a direct named-worker reference contributes T.
+	resultTy := semtypes.Never
 	for _, futureExpr := range e.FutureExprs {
 		futureResult, ok := resolveActionOrExpression(t, chain, futureExpr, semtypes.Future)
 		if !ok {
@@ -4475,7 +4561,7 @@ func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlte
 			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		resultTy = semtypes.Union(resultTy, semtypes.FutureEventualType(t.typeContext(), futureTy))
+		resultTy = semtypes.Union(resultTy, waitEventualType(t, futureExpr, futureTy))
 	}
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(chain), true
@@ -4505,7 +4591,7 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		fieldTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+		fieldTy := waitEventualType(t, futureExpr, futureTy)
 		fields[i] = semtypes.FieldFrom(fieldName, fieldTy, false, false)
 	}
 
@@ -4524,8 +4610,8 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 	return resultTy, defaultExpressionEffect(chain), true
 }
 
-func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semtypes.SemType, expressionEffect, bool) {
-	exprResult, ok := resolveActionOrExpression(t, chain, e.Expr, semtypes.SemType{})
+func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	exprResult, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -6608,6 +6694,9 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	}
 	containerExprTy := containerExprResult.ty
 	chain = sequentialChain(t, containerExprResult.effect)
+	if expr.PkgAlias != nil {
+		return resolveXMLAttributeAccess(t, expr, containerExprTy)
+	}
 	key := expr.Field.GetValue()
 	if expr.IsOptionalAccess() {
 		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprResult, key)
@@ -6649,6 +6738,10 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 		var ok bool
 		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, expr.IsLexpr())
 		if !ok {
+			if !expr.IsLexpr() && optionalFieldIncludesNil(tyCtx, mappingTy, key) {
+				t.semanticError(fmt.Sprintf("field access cannot be used to access optional field '%s' whose type includes nil", key), expr.GetPosition())
+				return expressionResult{}, false
+			}
 			t.semanticError("field base access is only possible for declared fields", expr.GetPosition())
 			return expressionResult{}, false
 		}
@@ -6674,6 +6767,20 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 
 	setNodeType(t, expr, memberTy)
 	return expressionResult{ty: memberTy, effect: defaultExpressionEffect(chain)}, true
+}
+
+func resolveXMLAttributeAccess(t typeResolver, expr *ast.BLangFieldBaseAccess, containerTy semtypes.SemType) (expressionResult, bool) {
+	if expr.IsLexpr() {
+		t.semanticError("xml attribute access cannot be used as an lvalue", expr.GetPosition())
+		return expressionResult{}, false
+	}
+	if !semtypes.IsSubtype(t.typeContext(), containerTy, semtypes.XML) {
+		t.semanticError("xml attribute access requires an expression of type xml", expr.GetPosition())
+		return expressionResult{}, false
+	}
+	// expr.PkgAlias is not resolved to an xmlns prefix or string constant yet
+	t.unimplemented("XML attribute access not supported", expr.GetPosition()) // https://github.com/ballerina-nutcracker/ballerina/issues/560
+	return expressionResult{}, false
 }
 
 func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, container expressionResult, fieldname string) (expressionResult, bool) {
@@ -6766,15 +6873,23 @@ func reportReadonlyMutation(t typeResolver, tyCtx semtypes.Context, containerTy 
 	t.semanticError(fmt.Sprintf("cannot mutate readonly field '%s'", key), loc)
 }
 
+func optionalFieldIncludesNil(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string) bool {
+	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, semtypes.StringConst(key))
+	return semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) && semtypes.ContainsUndef(memberTy) && semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef))
+}
+
 func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, isLexpr bool) (semtypes.SemType, bool) {
 	keyTy := semtypes.StringConst(key)
 	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, keyTy)
 	if !semtypes.ContainsUndef(memberTy) {
 		return memberTy, true
 	}
-	// I think the correct thing to check is if any has an "optional" field by the name but spec if very specific in
-	// same any declared feild (without optional qualifier)
+	// A read of an optional field is rewritten to an optional access only if some declared field has that name and
+	// the member type does not include nil, otherwise an absent field and a field holding () look the same.
 	if !isLexpr && semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
+		if semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef)) {
+			return semtypes.SemType{}, false
+		}
 		return semtypes.Union(semtypes.Diff(memberTy, semtypes.Undef), semtypes.Nil), true
 	}
 	if isLexpr && semtypes.AllMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {

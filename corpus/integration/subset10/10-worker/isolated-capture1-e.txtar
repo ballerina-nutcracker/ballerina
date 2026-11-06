@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-capture1-e.bal:22:16
+   |
+22 |         return x; // @error captured variable is not final
+   |                ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-capture1-e.bal:30:16
+   |
+30 |         return arr.length(); // @error captured variable is not readonly
+   |                ^^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolated-capture1-e.bal:38:9
+   |
+38 |         x = 2; // @error captured variable is not final
+   |         ^

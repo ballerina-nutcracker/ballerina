@@ -1,0 +1,62 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function launch () (
+    (constrained-type
+      (builtin-ref-type future)
+      (value-type int)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:launch:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 7))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (simple-var-ref $desugar$1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable escaped (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (invocation launch ()))))
+      (var-def
+        (variable first (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref escaped)))))
+      (var-def
+        (variable second (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref escaped)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref second)))))))

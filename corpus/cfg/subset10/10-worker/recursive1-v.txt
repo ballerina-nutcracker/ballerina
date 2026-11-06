@@ -1,0 +1,69 @@
+(fib
+  (bb0 () (bb1 bb2)
+    (binary-expr <
+      (simple-var-ref n)
+      (literal 2))
+  )
+  (bb1 (bb0) ()
+    (return
+      (simple-var-ref n))
+  )
+  (bb2 (bb0) ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (invocation fib (
+            (binary-expr -
+              (simple-var-ref n)
+              (literal 1)))))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (invocation fib (
+            (binary-expr -
+              (simple-var-ref n)
+              (literal 2)))))))
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation fib (
+          (literal 15))))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (invocation fib (
+        (binary-expr -
+          (simple-var-ref n)
+          (literal 1)))))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (invocation fib (
+        (binary-expr -
+          (simple-var-ref n)
+          (literal 2)))))
+  )
+)

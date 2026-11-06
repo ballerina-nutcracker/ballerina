@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> trap-inferred-typedesc-e.bal:31:26
+   |
+31 |     R1|R2|error r = trap {a: 1}; // @error ambiguous inherent type
+   |                          ^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer maximal type such that it is a subtype of both anydata and error
+  --> trap-inferred-typedesc-e.bal:30:20
+   |
+30 |     error e = trap v.cloneWithType(); // @error no type that is both anydata and error
+   |                    ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: cannot infer typedesc argument for parameter 't': no contextually expected type
+  --> trap-inferred-typedesc-e.bal:29:18
+   |
+29 |     var x = trap v.cloneWithType(); // @error no contextually expected type
+   |                  ^^^^^^^^^^^^^^^^^

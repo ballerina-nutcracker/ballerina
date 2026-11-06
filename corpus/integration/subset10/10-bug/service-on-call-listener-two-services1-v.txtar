@@ -1,0 +1,13 @@
+-- stdout --
+make a
+listener init a
+attach a
+make b
+listener init b
+attach b
+main
+start a
+start b
+gracefulStop a
+gracefulStop b
+-- stderr --

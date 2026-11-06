@@ -28,8 +28,8 @@ type R1 record {
 
 public function main() {
     R|R1 r = {foo: 10, bar: 10};
-    r.foo = r.foo;
-    io:println(r.foo); // @output 10
-    r.foo = <int>r.foo + 1;
-    io:println(r.foo); // @output 11
+    r.foo = r?.foo;
+    io:println(r?.foo); // @output 10
+    r.foo = <int>r?.foo + 1;
+    io:println(r?.foo); // @output 11
 }

@@ -1,0 +1,11 @@
+-- stdout --
+listener init declared
+service init
+listener init inline
+attach inline
+attach declared
+make call
+listener init call
+attach call
+8
+-- stderr --

@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: arithmetic underflow
+        at main(decimal-rem-large-p.bal:22)
