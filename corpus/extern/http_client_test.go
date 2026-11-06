@@ -249,6 +249,101 @@ func summarizeMultipart(contentType string, body io.Reader) (string, error) {
 	return fmt.Sprintf("%s count=%d%s", mediaType, count, sb.String()), nil
 }
 
+// TestHttpClientStreamLocal exercises byte-stream request bodies (sent chunked, so the server
+// sees no Content-Length), getByteStream on received bodies, and binding a text/event-stream
+// response whose events are split across flushes to stream<http:SseEvent, error?>.
+func TestHttpClientStreamLocal(t *testing.T) {
+	t.Parallel()
+	sinkResult := make(chan string, 1)
+	rejectResult := make(chan string, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		flusher, _ := w.(http.Flusher)
+		switch r.URL.Path {
+		case "/early":
+			rc := http.NewResponseController(w)
+			_ = rc.EnableFullDuplex()
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusOK)
+			_ = rc.Flush()
+			body, _ := io.ReadAll(r.Body)
+			_, _ = fmt.Fprintf(w, "read=%d", len(body))
+		case "/reject":
+			rc := http.NewResponseController(w)
+			_ = rc.EnableFullDuplex()
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Content-Length", "65536")
+			w.WriteHeader(http.StatusRequestEntityTooLarge)
+			_, _ = w.Write([]byte(strings.Repeat("r", 65536)))
+			_ = rc.Flush()
+			_ = rc.SetReadDeadline(time.Now().Add(10 * time.Second))
+			n, err := io.Copy(io.Discard, r.Body)
+			if n == 1000*65536 || os.IsTimeout(err) {
+				rejectResult <- "upload still running"
+			} else {
+				rejectResult <- "upload stopped"
+			}
+		case "/reject-result":
+			_, _ = w.Write([]byte(<-rejectResult))
+		case "/sink":
+			body, err := io.ReadAll(r.Body)
+			sinkResult <- fmt.Sprintf("read=%d failed=%v", len(body), err != nil)
+		case "/sink-result":
+			select {
+			case result := <-sinkResult:
+				_, _ = w.Write([]byte(result))
+			case <-time.After(5 * time.Second):
+				_, _ = w.Write([]byte("request still open"))
+			}
+		case "/echo":
+			body, _ := io.ReadAll(r.Body)
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = fmt.Fprintf(w, "%s|%s|chunked=%v", body, r.Header.Get("Content-Type"), r.ContentLength == -1)
+		case "/download":
+			w.Header().Set("Content-Type", "application/octet-stream")
+			_, _ = w.Write([]byte(strings.Repeat("a", 10000)))
+			flusher.Flush()
+			_, _ = w.Write([]byte(strings.Repeat("b", 10000)))
+		case "/small":
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = w.Write([]byte("small"))
+		case "/empty":
+			w.Header().Set("Content-Type", "text/plain")
+		case "/events":
+			w.Header().Set("Content-Type", "text/event-stream")
+			for _, part := range []string{"data: one\n\n", "id: 2\nevent: tick\ndata: two\n", "data: more\n\n",
+				": note\nretry: 100\ndata: three\r\n\r\n"} {
+				_, _ = w.Write([]byte(part))
+				flusher.Flush()
+			}
+		case "/events-bom":
+			w.Header().Set("Content-Type", "text/event-stream")
+			for _, part := range []string{"\xEF", "\xBB\xBFdata: hi\n\n"} {
+				_, _ = w.Write([]byte(part))
+				flusher.Flush()
+			}
+		case "/events-mixed-case":
+			w.Header().Set("Content-Type", "Text/Event-Stream; charset=UTF-8")
+			_, _ = w.Write([]byte("data: mixed\n\n"))
+		case "/events-extra":
+			w.Header().Set("Content-Type", "text/event-stream-extra")
+			_, _ = w.Write([]byte("data: extra\n\n"))
+		case "/events-burst":
+			w.Header().Set("Content-Type", "text/event-stream")
+			_, _ = w.Write([]byte("data: one\n\ndata: two\n\ndata: three\n\n"))
+		case "/truncated":
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Header().Set("Content-Length", "100")
+			_, _ = w.Write([]byte("0123456789"))
+			flusher.Flush()
+			panic(http.ErrAbortHandler)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-stream-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
 // TestHttpClientCompressionLocal exercises transparent gzip/deflate response
 // decompression (decompressResponseBody + the gzip/deflate ReadClosers). The
 // client factory disables Go's automatic decompression so the compressed body

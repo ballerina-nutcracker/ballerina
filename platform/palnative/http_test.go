@@ -17,6 +17,7 @@
 package palnative
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -25,10 +26,14 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
+	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -364,6 +369,7 @@ func TestTLSVerifyConnection_EmptyServerName(t *testing.T) {
 
 // TestNewHTTPClient_Timeout verifies that the client respects the timeout.
 func TestNewHTTPClient_Timeout(t *testing.T) {
+	t.Parallel()
 	// Server that never responds
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
@@ -380,8 +386,200 @@ func TestNewHTTPClient_Timeout(t *testing.T) {
 	if body != nil {
 		_ = body.Close()
 	}
-	if err == nil {
-		t.Fatal("expected timeout error, got nil")
+	if !errors.Is(err, errIdleBeforeResponse) {
+		t.Fatalf("expected %q, got %v", errIdleBeforeResponse, err)
+	}
+}
+
+// unlimitedBody lifts the response size cap, which a zero ResponseLimitConfig sets to 0 bytes.
+var unlimitedBody = pal.ResponseLimitConfig{MaxEntityBodySize: -1}
+
+// TestNewHTTPClient_IdleTimeoutSlowConsumer verifies that only time spent waiting for data
+// counts: a body that has already arrived can be read later than the timeout.
+func TestNewHTTPClient_IdleTimeoutSlowConsumer(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ready"))
+	}))
+	defer server.Close()
+	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 100 * time.Millisecond, ResponseLimits: unlimitedBody})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	time.Sleep(300 * time.Millisecond)
+	data, err := io.ReadAll(body)
+	if err != nil || string(data) != "ready" {
+		t.Fatalf("got %q, %v; want \"ready\"", data, err)
+	}
+}
+
+// TestNewHTTPClient_IdleTimeoutSlowUpload verifies that a streamed request body that keeps
+// flowing keeps the request alive past the timeout.
+func TestNewHTTPClient_IdleTimeoutSlowUpload(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, _ := io.ReadAll(r.Body)
+		_, _ = w.Write(data)
+	}))
+	defer server.Close()
+	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 200 * time.Millisecond, ResponseLimits: unlimitedBody})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	pr, pw := io.Pipe()
+	go func() {
+		for range 8 {
+			_, _ = pw.Write([]byte("part"))
+			time.Sleep(50 * time.Millisecond)
+		}
+		_ = pw.Close()
+	}()
+	_, _, body, err := client.Execute(context.Background(), "POST", server.URL+"/", pr, -1, "text/plain", nil)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	data, err := io.ReadAll(body)
+	if err != nil || len(data) != 8*len("part") {
+		t.Fatalf("got %d bytes, %v; want %d bytes", len(data), err, 8*len("part"))
+	}
+}
+
+// TestNewHTTPClient_IdleTimeoutSlowInMemoryUpload verifies that an in-memory body the server
+// reads slowly keeps the request alive past the timeout while it keeps flowing. The server
+// reads the rest at full speed, so the bytes buffered in the kernel drain within the timeout.
+func TestNewHTTPClient_IdleTimeoutSlowInMemoryUpload(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		buf := make([]byte, 32*1024)
+		for range 250 {
+			if _, err := io.ReadFull(r.Body, buf); err != nil {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		rest, _ := io.Copy(io.Discard, r.Body)
+		_, _ = fmt.Fprintf(w, "%d", 250*len(buf)+int(rest))
+	}))
+	defer server.Close()
+	client, err := NewHTTPClient(pal.ClientConfig{Timeout: time.Second, ResponseLimits: unlimitedBody})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	payload := bytes.Repeat([]byte("x"), 16<<20)
+	_, _, body, err := client.Execute(context.Background(), "POST", server.URL+"/", bytes.NewReader(payload),
+		int64(len(payload)), "text/plain", nil)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	data, err := io.ReadAll(body)
+	if err != nil || string(data) != strconv.Itoa(len(payload)) {
+		t.Fatalf("got %q, %v; want %d", data, err, len(payload))
+	}
+}
+
+// TestNewHTTPClient_IdleTimeoutUploadAfterResponse verifies that request-body reads after the
+// response arrives do not re-arm the timer, so a consumer slower than the timeout still succeeds.
+func TestNewHTTPClient_IdleTimeoutUploadAfterResponse(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = http.NewResponseController(w).EnableFullDuplex()
+		w.WriteHeader(http.StatusOK)
+		_ = http.NewResponseController(w).Flush()
+		_, _ = io.Copy(io.Discard, r.Body)
+		_, _ = w.Write([]byte("done"))
+	}))
+	defer server.Close()
+	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 100 * time.Millisecond, ResponseLimits: unlimitedBody})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	pr, pw := io.Pipe()
+	responded := make(chan struct{})
+	go func() {
+		<-responded
+		_, _ = pw.Write([]byte("late"))
+		_ = pw.Close()
+	}()
+	_, _, body, err := client.Execute(context.Background(), "POST", server.URL+"/", pr, -1, "text/plain", nil)
+	close(responded)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	time.Sleep(300 * time.Millisecond)
+	data, err := io.ReadAll(body)
+	if err != nil || string(data) != "done" {
+		t.Fatalf("got %q, %v; want \"done\"", data, err)
+	}
+}
+
+// TestNewHTTPClient_IdleTimeoutPerRedirectHop verifies that each followed redirect gets the
+// whole timeout, so a chain longer than the timeout succeeds while every hop answers in time.
+func TestNewHTTPClient_IdleTimeoutPerRedirectHop(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		hop, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/"))
+		if hop > 0 {
+			http.Redirect(w, r, "/"+strconv.Itoa(hop-1), http.StatusFound)
+			return
+		}
+		_, _ = w.Write([]byte("done"))
+	}))
+	defer server.Close()
+	client, err := NewHTTPClient(pal.ClientConfig{
+		Timeout:         250 * time.Millisecond,
+		ResponseLimits:  unlimitedBody,
+		FollowRedirects: pal.FollowRedirects{Enabled: true},
+	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/4", nil, 0, "", nil)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	data, err := io.ReadAll(body)
+	if err != nil || string(data) != "done" {
+		t.Fatalf("got %q, %v; want \"done\"", data, err)
+	}
+}
+
+// TestNewHTTPClient_SizeLimitKeepsReadError verifies that a body that stalls once it reaches
+// maxEntityBodySize fails with the idle timeout instead of ending cleanly at the limit.
+func TestNewHTTPClient_SizeLimitKeepsReadError(t *testing.T) {
+	t.Parallel()
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("four"))
+		w.(http.Flusher).Flush()
+		<-release
+	}))
+	defer server.Close()
+	defer close(release)
+	client, err := NewHTTPClient(pal.ClientConfig{
+		Timeout:        100 * time.Millisecond,
+		ResponseLimits: pal.ResponseLimitConfig{MaxEntityBodySize: 4},
+	})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	_, _, body, err := client.Execute(context.Background(), "GET", server.URL+"/", nil, 0, "", nil)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	data, err := io.ReadAll(body)
+	if !errors.Is(err, errIdleReadingBody) {
+		t.Fatalf("got %q, %v; want %q", data, err, errIdleReadingBody)
 	}
 }
 
