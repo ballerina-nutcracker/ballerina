@@ -2966,13 +2966,6 @@ func newStreamExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangN
 	return expressionEffect{result: result, block: curBB}, true
 }
 
-func appendIfNotNil[T any](slice []T, item *T) []T {
-	if item != nil {
-		slice = append(slice, *item)
-	}
-	return slice
-}
-
 func hasNoStorageIdentity(tyCtx semtypes.Context, ty semtypes.SemType) bool {
 	return semtypes.IsSubtype(tyCtx, ty, semtypes.SimpleBasic)
 }

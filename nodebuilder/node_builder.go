@@ -1858,7 +1858,7 @@ func (n *nodeBuilder) transformServiceDeclaration(serviceDeclarationNode *st.Ser
 }
 
 // serviceQualifierFlags reads the user-controllable qualifiers from the
-// service declaration. The `service` flag is already set by NewBLangService.
+// service declaration. The `service` flag is already set by NewBLangServiceWithFlags.
 func (n *nodeBuilder) serviceQualifierFlags(node *st.ServiceDeclarationNode) (model.Flag, bool) {
 	var flags model.Flag
 	quals := node.Qualifiers()

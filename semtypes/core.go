@@ -17,11 +17,9 @@
 package semtypes
 
 import (
-	"fmt"
 	"math/bits"
 
 	"github.com/ballerina-nutcracker/ballerina/common"
-	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
 const (
@@ -275,34 +273,8 @@ func WidenToBasicTypes(t SemType) SemType {
 	return widenToBasicTypeBits(t).semType()
 }
 
-func wideUnsigned(t SemType) SemType {
-	if t.some() == 0 {
-		return t
-	}
-	if !IsSubtypeSimple(t, Int) {
-		return t
-	}
-	data := intSubtypeWidenUnsigned(subtypeDataAt(t, btInt))
-	if _, ok := data.(allOrNothingSubtype); ok {
-		return Int
-	}
-	return getBasicSubtype(btInt, data.(properSubtypeData))
-}
-
-func getBooleanSubtype(t SemType) subtypeData {
-	return subtypeDataAt(t, btBoolean)
-}
-
 func getIntSubtype(t SemType) subtypeData {
 	return subtypeDataAt(t, btInt)
-}
-
-func getFloatSubtype(t SemType) subtypeData {
-	return subtypeDataAt(t, btFloat)
-}
-
-func getDecimalSubtype(t SemType) subtypeData {
-	return subtypeDataAt(t, btDecimal)
 }
 
 func getStringSubtype(t SemType) subtypeData {
@@ -679,85 +651,6 @@ func SingleShape(t SemType) common.Optional[Value] {
 	return common.OptionalEmpty[Value]()
 }
 
-func singleton(v any) SemType {
-	if v == nil {
-		return Nil
-	}
-
-	if lng, ok := v.(int64); ok {
-		return IntConst(lng)
-	} else if d, ok := v.(float64); ok {
-		return FloatConst(d)
-	} else if s, ok := v.(string); ok {
-		return StringConst(s)
-	} else if b, ok := v.(bool); ok {
-		return BooleanConst(b)
-	} else if r, ok := v.(*decimal.Decimal); ok {
-		return DecimalConst(*r)
-	} else {
-		panic("Unsupported type: " + fmt.Sprintf("%T", v))
-	}
-}
-
-func containsConst(t SemType, v any) bool {
-	if v == nil {
-		return containsNil(t)
-	} else if lng, ok := v.(int64); ok {
-		return containsConstInt(t, lng)
-	} else if d, ok := v.(float64); ok {
-		return containsConstFloat(t, d)
-	} else if s, ok := v.(string); ok {
-		return containsConstString(t, s)
-	} else if b, ok := v.(bool); ok {
-		return containsConstBoolean(t, b)
-	} else {
-		return containsConstDecimal(t, v.(decimal.Decimal))
-	}
-}
-
-func containsNil(t SemType) bool {
-	if t.some() == 0 {
-		return (t.all() & (1 << btNil.Code())) != 0
-	}
-	complexSubtypeData := getComplexSubtypeData(t, btNil).(allOrNothingSubtype)
-	return complexSubtypeData.IsAllSubtype()
-}
-
-func containsConstString(t SemType, s string) bool {
-	if t.some() == 0 {
-		return (t.all() & (1 << btString.Code())) != 0
-	}
-	return stringSubtypeContains(getComplexSubtypeData(t, btString), s)
-}
-
-func containsConstInt(t SemType, n int64) bool {
-	if t.some() == 0 {
-		return (t.all() & (1 << btInt.Code())) != 0
-	}
-	return intSubtypeContains(getComplexSubtypeData(t, btInt), n)
-}
-
-func containsConstFloat(t SemType, n float64) bool {
-	if t.some() == 0 {
-		return (t.all() & (1 << btFloat.Code())) != 0
-	}
-	return floatSubtypeContains(getComplexSubtypeData(t, btFloat), newEnumerableFloatFromFloat64(n))
-}
-
-func containsConstDecimal(t SemType, n decimal.Decimal) bool {
-	if t.some() == 0 {
-		return (t.all() & (1 << btDecimal.Code())) != 0
-	}
-	return decimalSubtypeContains(getComplexSubtypeData(t, btDecimal), enumerableDecimalFrom(n))
-}
-
-func containsConstBoolean(t SemType, b bool) bool {
-	if t.some() == 0 {
-		return (t.all() & (1 << btBoolean.Code())) != 0
-	}
-	return booleanSubtypeContains(getComplexSubtypeData(t, btBoolean), b)
-}
-
 func SingleNumericType(semType SemType) common.Optional[SemType] {
 	numType := Intersect(semType, Number)
 	if IsNever(numType) {
@@ -844,49 +737,6 @@ func CreateClientObject(context Context) SemType {
 	return clientObj
 }
 
-func CreateIterable(context Context) SemType {
-	memo := context.iterableMemo()
-	if !IsZero(memo) {
-		return memo
-	}
-	env := context.Env()
-
-	// Build the broadest next() return type: record {| (any|error) value; |}|error?
-	valueField := FieldFrom("value", Val, false, false)
-	md := NewMappingDefinition()
-	recordTy := md.Define(env, []Field{valueField}, Never)
-	nextReturnTy := Union(recordTy, Union(Error, Nil))
-
-	// next() function type: () -> nextReturnTy
-	ld := NewListDefinition()
-	emptyParams := ld.Define(env, nil, ListMutability(CellMutabilityNone))
-	fd := NewFunctionDefinition()
-	nextFnTy := fd.Define(env, emptyParams, nextReturnTy, FunctionQualifiersFrom(env, false, false))
-
-	// Iterator object type: object { public function next() ... }
-	iteratorMembers := []Member{
-		{Name: "next", ValueType: nextFnTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
-	}
-	iterOd := NewObjectDefinition()
-	iteratorTy := iterOd.Define(env, ObjectQualifiersDefault, iteratorMembers)
-
-	// iterator() function type: () -> iteratorTy
-	ld2 := NewListDefinition()
-	emptyParams2 := ld2.Define(env, nil, ListMutability(CellMutabilityNone))
-	fd2 := NewFunctionDefinition()
-	iteratorFnTy := fd2.Define(env, emptyParams2, iteratorTy, FunctionQualifiersFrom(env, false, false))
-
-	// Iterable object type: object { public function iterator() ... }
-	iterableMembers := []Member{
-		{Name: "iterator", ValueType: iteratorFnTy, Kind: MemberKindMethod, Visibility: VisibilityPublic, Immutable: true},
-	}
-	iterableOd := NewObjectDefinition()
-	iterableTy := iterableOd.Define(env, ObjectQualifiersDefault, iterableMembers)
-
-	context.setIterableMemo(iterableTy)
-	return iterableTy
-}
-
 func createBasicSemType(typeCode basicTypeCode, subtypeData subtypeData) SemType {
 	if _, ok := subtypeData.(allOrNothingSubtype); ok {
 		if isAllSubtype(subtypeData) {
@@ -898,56 +748,6 @@ func createBasicSemType(typeCode basicTypeCode, subtypeData subtypeData) SemType
 		return createComplexSemType(0,
 			basicSubtypeFrom(typeCode, subtypeData.(properSubtypeData)))
 	}
-}
-
-func mappingAtomicTypesInUnion(cx Context, t SemType) common.Optional[[]MappingAtomicType] {
-	matList := []MappingAtomicType{}
-	mappingAtomicInner := MappingAtomicInner
-	if t.some() == 0 {
-		if t.all() == Mapping.all() {
-			matList = append(matList, mappingAtomicInner)
-			return common.OptionalOf(matList)
-		}
-		return common.OptionalEmpty[[]MappingAtomicType]()
-	}
-	env := cx.Env()
-	if !IsSubtypeSimple(t, Mapping) {
-		return common.OptionalEmpty[[]MappingAtomicType]()
-	}
-	if collectBddMappingAtomicTypesInUnion(env,
-		getComplexSubtypeData(t, btMapping).(bdd),
-		mappingAtomicInner, &matList) {
-		return common.OptionalOf(matList)
-	}
-	return common.OptionalEmpty[[]MappingAtomicType]()
-}
-
-func collectBddMappingAtomicTypesInUnion(env Env, bdd bdd, top MappingAtomicType, matList *[]MappingAtomicType) bool {
-	if allOrNothing, ok := bdd.(*bddAllOrNothing); ok {
-		if allOrNothing.IsAll() {
-			*matList = append(*matList, top)
-			return true
-		}
-		return false
-	}
-	bn := bdd.(bddNode)
-	if bddNodeSimple, ok := bn.(*bddNodeSimple); ok {
-		*matList = append(*matList, *env.mappingAtomType(bddNodeSimple.atom()))
-		return true
-	}
-
-	bddNodeImpl := bdd.(*bddNodeImpl)
-	leftBdd := bddNodeImpl.left()
-	rightBdd := bddNodeImpl.right()
-
-	if leftNode, ok := leftBdd.(*bddAllOrNothing); ok && leftNode.IsAll() {
-		if rightNode, ok := rightBdd.(*bddAllOrNothing); ok && rightNode.IsNothing() {
-			*matList = append(*matList, *env.mappingAtomType(bddNodeImpl.atom()))
-			return collectBddMappingAtomicTypesInUnion(env, bddNodeImpl.middle(), top, matList)
-		}
-	}
-
-	return false
 }
 
 func Comparable(cx Context, t1, t2 SemType) bool {

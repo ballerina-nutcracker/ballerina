@@ -7650,19 +7650,6 @@ func finishResolveMethodCall(t typeResolver, chain *binding, receiverTy semtypes
 	return symbolRef, retTy, defaultExpressionEffect(chain), true
 }
 
-func packageResolver(t typeResolver) *packageTypeResolver {
-	switch resolver := t.(type) {
-	case *packageTypeResolver:
-		return resolver
-	case *functionTypeResolver:
-		return packageResolver(resolver.parentResolver)
-	case *loopTypeResolver:
-		return packageResolver(resolver.parentResolver)
-	default:
-		return nil
-	}
-}
-
 func resolveResourceMethodSignature(t typeResolver, isClient bool, isService bool, method *ast.BLangResourceMethod, depth int) bool {
 	if !isClient && !isService {
 		t.semanticError("resource methods are only allowed in client or service classes", method.GetPosition())

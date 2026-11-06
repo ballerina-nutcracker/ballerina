@@ -87,7 +87,7 @@ func isXMLName(name string, allowColon bool) bool {
 
 func isNCName(name string) bool { return !strings.ContainsRune(name, ':') && isXMLName(name, false) }
 
-func ValidateXMLComment(content string) error {
+func validateXMLComment(content string) error {
 	if err := ValidateXMLCharacters(content); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func ValidateXMLComment(content string) error {
 	return nil
 }
 
-func ValidateXMLProcessingInstruction(target, content string) error {
+func validateXMLProcessingInstruction(target, content string) error {
 	if err := ValidateXMLCharacters(target + content); err != nil {
 		return err
 	}

@@ -146,11 +146,6 @@ func cellSubtypeDataEnsureProper(subtypeData subtypeData) properSubtypeData {
 	}
 }
 
-func newCellOps() cellOps {
-	this := cellOps{}
-	return this
-}
-
 func (c *cellOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeUnion(t1, t2)
 }

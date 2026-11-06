@@ -16,43 +16,16 @@
 
 package semtypes
 
-type streamOps struct{}
+type streamOps struct {
+	bddOpsBase
+}
 
 var _ basicTypeOps = &streamOps{}
 
-func streamSubtypeComplement(t subtypeData) subtypeData {
-	return bddSubtypeDiff(listSubtypeStreamTop, t)
+func (*streamOps) complement(t subtypeData) subtypeData {
+	return listBackedComplement(listSubtypeStreamTop, t)
 }
 
-func streamSubtypeIsEmpty(cx Context, t subtypeData) bool {
-	b := t.(bdd)
-	if bddPosMaybeEmpty(b) {
-		b = bddIntersect(b, listSubtypeStreamTop)
-	}
-	return listSubtypeIsEmpty(cx, b)
-}
-
-func newStreamOps() streamOps {
-	this := streamOps{}
-	return this
-}
-
-func (s *streamOps) complement(t subtypeData) subtypeData {
-	return streamSubtypeComplement(t)
-}
-
-func (s *streamOps) IsEmpty(cx Context, t subtypeData) bool {
-	return streamSubtypeIsEmpty(cx, t)
-}
-
-func (s *streamOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
-	return bddSubtypeUnion(d1, d2)
-}
-
-func (s *streamOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
-	return bddSubtypeIntersect(d1, d2)
-}
-
-func (s *streamOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
-	return bddSubtypeDiff(d1, d2)
+func (*streamOps) IsEmpty(cx Context, t subtypeData) bool {
+	return listBackedIsEmpty(cx, listSubtypeStreamTop, t)
 }

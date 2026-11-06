@@ -201,6 +201,19 @@ class CheckLintConfigsTest(unittest.TestCase):
         self.assertCountEqual(output.getvalue().split(), ["ast", "st", "bir", "model"])
         check.assert_not_called()
 
+    def test_strict_module_list_covers_every_restricted_tier(self):
+        with patch("sys.argv", ["check_lint_configs.py", "--strict-modules"]), patch(
+            "sys.stdout", new_callable=StringIO
+        ) as output, patch.object(policy, "check_configs") as check:
+            self.assertEqual(policy.main(), 0)
+        self.assertCountEqual(
+            output.getvalue().split(),
+            [*policy.STRICT, *policy.DATA, *policy.FRONTEND_MODULES],
+        )
+        self.assertIn("semtypes", output.getvalue().split())
+        self.assertIn("semantics", output.getvalue().split())
+        check.assert_not_called()
+
     def test_tier_assignments_are_disjoint(self):
         modules = (*policy.FRONTEND_MODULES, *policy.DATA, *policy.STRICT)
         self.assertEqual(len(modules), len(set(modules)))
