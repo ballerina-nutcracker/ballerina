@@ -44,7 +44,7 @@ class Counter {
     }
     bb4 {
       %11 = ConstantLoad value
-      self[%11] = %10;
+      self[%11] = %10 (unsafe);
       return;
     }
   }

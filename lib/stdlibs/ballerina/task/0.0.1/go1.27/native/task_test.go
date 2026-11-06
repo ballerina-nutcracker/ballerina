@@ -68,7 +68,7 @@ func serviceSpec(name, policy string, retry *retryConfig) *triggerSpec {
 		intervalMs:  1000,
 		group:       triggerGroup,
 		job: &jobDetail{
-			obj:         values.NewObject(semtypes.Object, nil, nil, nil, nil),
+			obj:         values.NewObject(semtypes.Object, nil, nil, nil, nil, nil),
 			errorPolicy: policy,
 			retry:       retry,
 			intervalSec: 1,

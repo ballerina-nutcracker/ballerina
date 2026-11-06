@@ -1,0 +1,80 @@
+(Counter
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access count
+          (simple-var-ref self))
+        (literal 10))
+    )
+  )
+  (bump
+    (bb0 () ()
+      (assignment
+        (field-based-access count
+          (simple-var-ref self))
+        (binary-expr +
+          (field-based-access count
+            (simple-var-ref self))
+          (literal 1)))
+      (compound-assignment +
+        (field-based-access count
+          (simple-var-ref self))
+        (literal 1))
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type null)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type null))
+              (block-function-body
+                (assignment
+                  (field-based-access count
+                    (simple-var-ref self))
+                  (binary-expr +
+                    (field-based-access count
+                      (simple-var-ref self))
+                    (literal 5)))
+                (compound-assignment +
+                  (field-based-access count
+                    (simple-var-ref self))
+                  (literal 1))))))))
+      (expression-stmt
+        (invocation f ()))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation bump expr:
+        (simple-var-ref c) ()))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access count
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (assignment
+      (field-based-access count
+        (simple-var-ref self))
+      (binary-expr +
+        (field-based-access count
+          (simple-var-ref self))
+        (literal 5)))
+    (compound-assignment +
+      (field-based-access count
+        (simple-var-ref self))
+      (literal 1))
+  )
+)

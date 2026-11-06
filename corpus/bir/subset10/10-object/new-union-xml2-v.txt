@@ -1,32 +1,32 @@
 module $anon.. v 0.0.0;
 class IntArg {
-  values [xml...]
   marker int
+  values [xml...]
 
   init(xml,xml,xml,xml,xml,xml,int) -> nil{
     bb0 {
       %9 = ConstantLoad 6
       %10 = newArray [xml...][%9]{children, all, descendants, indexed, filtered, called}
       %11 = ConstantLoad values
-      self[%11] = %10;
+      self[%11] = %10 (unsafe);
       %12 = ConstantLoad marker
-      self[%12] = marker;
+      self[%12] = marker (unsafe);
       return;
     }
   }
 }
 class StringArg {
-  values [xml...]
   marker string
+  values [xml...]
 
   init(xml,xml,xml,xml,xml,xml,string) -> nil{
     bb0 {
       %9 = ConstantLoad 6
       %10 = newArray [xml...][%9]{children, all, descendants, indexed, filtered, called}
       %11 = ConstantLoad values
-      self[%11] = %10;
+      self[%11] = %10 (unsafe);
       %12 = ConstantLoad marker
-      self[%12] = marker;
+      self[%12] = marker (unsafe);
       return;
     }
   }

@@ -10,7 +10,7 @@ class First {
       %8 = marker;
       %4 = + %7 %8;
       %9 = ConstantLoad a
-      self[%9] = %4;
+      self[%9] = %4 (unsafe);
       return;
     }
   }
@@ -29,7 +29,7 @@ class Second {
       %9 = %8;
       %4 = + %7 %9;
       %10 = ConstantLoad a
-      self[%10] = %4;
+      self[%10] = %4 (unsafe);
       return;
     }
   }

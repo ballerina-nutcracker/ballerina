@@ -39,7 +39,7 @@ func newCallerObject(pc net.PacketConn, senderAddr net.Addr, remoteHost string, 
 		"$remote$sendBytes":    "ballerina/udp:Caller.$remote$sendBytes",
 		"$remote$sendDatagram": "ballerina/udp:Caller.$remote$sendDatagram",
 	}
-	obj := values.NewObject(semtypes.Object, fields, methodKeys, nil, nil)
+	obj := values.NewObject(semtypes.Object, fields, methodKeys, nil, nil, nil)
 	obj.Put("$pc", pc)
 	obj.Put("$addr", senderAddr)
 	return obj

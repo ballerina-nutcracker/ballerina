@@ -212,6 +212,8 @@ func execInstruction(ctx *extern.Context, inst bir.BIRNonTerminator, frame *Fram
 			execMapLoad(ctx, v, frame)
 		case bir.InstructionKindObjectStore:
 			execObjectStore(ctx, v, frame)
+		case bir.InstructionKindObjectUnsafeStore:
+			execObjectUnsafeStore(ctx, v, frame)
 		case bir.InstructionKindObjectLoad:
 			execObjectLoad(ctx, v, frame)
 		case bir.InstructionKindStringLoad:

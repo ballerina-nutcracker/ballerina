@@ -6,7 +6,7 @@ class Holder {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad n
-      self[%3] = n;
+      self[%3] = n (unsafe);
       return;
     }
   }

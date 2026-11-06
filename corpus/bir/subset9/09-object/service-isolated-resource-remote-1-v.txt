@@ -48,7 +48,7 @@ class $service$0 {
     bb0 {
       %2 = ConstantLoad foo
       %3 = ConstantLoad foo
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

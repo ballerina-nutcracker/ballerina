@@ -1,0 +1,35 @@
+(package
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (class-definition Holder
+    (variable c (type
+      (user-defined-type C)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal c))
+          (new ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref h)
+            (literal c))
+          (literal a))
+        (literal 2)))))

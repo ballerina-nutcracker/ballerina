@@ -59,7 +59,7 @@ class L {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad n
-      self[%3] = n;
+      self[%3] = n (unsafe);
       %4 = ConstantLoad listener init 
       %5 = println(%4,n) -> bb1;
     }

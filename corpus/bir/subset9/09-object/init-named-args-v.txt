@@ -18,9 +18,9 @@ class Listener {
   init(string,boolean) -> nil|error{
     bb0 {
       %4 = ConstantLoad path
-      self[%4] = path;
+      self[%4] = path (unsafe);
       %5 = ConstantLoad recursive
-      self[%5] = recursive;
+      self[%5] = recursive (unsafe);
       return;
     }
   }

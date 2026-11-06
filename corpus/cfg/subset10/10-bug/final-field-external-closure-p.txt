@@ -1,0 +1,30 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ()))))
+    (var-def
+      (variable f (type
+        (function-type () (
+          (value-type null)))) (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type null))
+            (block-function-body
+              (assignment
+                (field-based-access a
+                  (simple-var-ref c))
+                (literal 2))))))))
+    (expression-stmt
+      (invocation f ()))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (assignment
+      (field-based-access a
+        (simple-var-ref c))
+      (literal 2))
+  )
+)

@@ -5,7 +5,7 @@ class Person {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad name
-      self[%3] = name;
+      self[%3] = name (unsafe);
       return;
     }
   }
@@ -16,7 +16,7 @@ class DistinctPerson {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad name
-      self[%3] = name;
+      self[%3] = name (unsafe);
       return;
     }
   }
@@ -27,7 +27,7 @@ class SomeWhatDistinctPerson {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad name
-      self[%3] = name;
+      self[%3] = name (unsafe);
       return;
     }
   }
@@ -38,7 +38,7 @@ class EvenMoreDistinctPerson {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad name
-      self[%3] = name;
+      self[%3] = name (unsafe);
       return;
     }
   }

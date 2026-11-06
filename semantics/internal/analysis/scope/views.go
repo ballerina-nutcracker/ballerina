@@ -46,6 +46,12 @@ func (f FunctionInfo) IsExpressionClosure() bool { return f.kind == fnExpression
 // isSelf reports whether sym is the closure's self.
 func (f FunctionInfo) isSelf(sym model.SymbolRef) bool { return !f.self.IsEmpty() && sym == f.self }
 
+// isUnnarrowedSelf reports whether sym is the closure's self or a type
+// narrowing of it.
+func (f FunctionInfo) isUnnarrowedSelf(cx Context, sym model.SymbolRef) bool {
+	return !f.self.IsEmpty() && cx.CompilerCtx().UnnarrowedSymbol(sym) == f.self
+}
+
 // isClassInit reports whether the closure is the init method of its class.
 func (f FunctionInfo) isClassInit() bool { return !f.symbol.IsEmpty() && f.symbol == f.class.initFn }
 
@@ -220,7 +226,7 @@ func TargetField(cx Context, inner LValue, access *ast.BLangFieldBaseAccess) LVa
 func FinalFieldReassigned(cx Context, access *ast.BLangFieldBaseAccess, compound bool) (string, bool) {
 	fn, ok := EnclosingFunction(cx)
 	receiver, isRef := access.Expr.(*ast.BLangVarRef)
-	if !ok || !isRef || !fn.isSelf(receiver.Symbol()) {
+	if !ok || !isRef || !fn.isUnnarrowedSelf(cx, receiver.Symbol()) {
 		return "", false
 	}
 	name := access.Field.GetValue()

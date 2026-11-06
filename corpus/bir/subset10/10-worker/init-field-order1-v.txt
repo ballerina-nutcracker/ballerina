@@ -1,7 +1,7 @@
 module $anon.. v 0.0.0;
 class Holder {
-  value int
   seen int
+  value int
 
   init() -> nil{
     bb0 {
@@ -9,11 +9,11 @@ class Holder {
     }
     bb1 {
       %3 = ConstantLoad value
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad 1
       %5 = unknown %4;
       %6 = ConstantLoad seen
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       %7 = createLatch() -> bb2;
     }
     bb2 {
@@ -36,7 +36,7 @@ class Holder {
     bb6 {
       PushScopeFrame 1
       %0 = ConstantLoad seen
-      (1, self)[%0] = (1, observed);
+      (1, self)[%0] = (1, observed) (unsafe);
       PopScopeFrame
       lock-end "$anon/.:Holder.seen" GOTO bb7;
     }

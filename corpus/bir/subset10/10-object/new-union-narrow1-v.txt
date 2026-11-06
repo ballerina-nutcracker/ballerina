@@ -1,28 +1,28 @@
 module $anon.. v 0.0.0;
 class IntArgs {
-  value int
   flag boolean
+  value int
 
   init(int,boolean) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       %5 = ConstantLoad flag
-      self[%5] = flag;
+      self[%5] = flag (unsafe);
       return;
     }
   }
 }
 class StringArgs {
-  value string
   flag boolean
+  value string
 
   init(string,boolean) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       %5 = ConstantLoad flag
-      self[%5] = flag;
+      self[%5] = flag (unsafe);
       return;
     }
   }

@@ -1,28 +1,28 @@
 module $anon.. v 0.0.0;
 class XmlArg {
-  value xml
   marker int
+  value xml
 
   init(xml,int) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       %5 = ConstantLoad marker
-      self[%5] = marker;
+      self[%5] = marker (unsafe);
       return;
     }
   }
 }
 class StringArg {
-  value xml
   marker string
+  value xml
 
   init(xml,string) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = value;
+      self[%4] = value (unsafe);
       %5 = ConstantLoad marker
-      self[%5] = marker;
+      self[%5] = marker (unsafe);
       return;
     }
   }
