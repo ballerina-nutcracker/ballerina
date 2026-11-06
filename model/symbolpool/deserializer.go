@@ -467,6 +467,19 @@ func (sr *symbolReader) readInclusionMembers(space *model.SymbolSpace) []model.I
 	return members
 }
 
+func (sr *symbolReader) readSymbolRefs(space *model.SymbolSpace) []model.SymbolRef {
+	var count int64
+	read(sr.r, &count)
+	if count == 0 {
+		return nil
+	}
+	refs := make([]model.SymbolRef, count)
+	for i := range refs {
+		refs[i] = sr.readSymbolRef(space)
+	}
+	return refs
+}
+
 func (sr *symbolReader) readSymbolRef(space *model.SymbolSpace) model.SymbolRef {
 	var tag uint8
 	read(sr.r, &tag)
@@ -660,8 +673,9 @@ func (sr *symbolReader) readFunctionSignatureTable(space *model.SymbolSpace) {
 	sr.sigHandles = make([]model.FunctionSignatureRef, count)
 	returnIndexes := make([]int64, count)
 	for i := int64(0); i < count; i++ {
-		params, hasRest := sr.readUntypedFunctionSignatureParams(space)
+		params, hasRest, paramNamedTypes, returnNamedTypes := sr.readUntypedFunctionSignature(space)
 		sr.sigHandles[i] = sr.env.AllocateFunctionSignature(params, hasRest)
+		sr.env.UpdateFunctionSignatureNamedTypes(sr.sigHandles[i], paramNamedTypes, returnNamedTypes)
 		read(sr.r, &returnIndexes[i])
 	}
 	for i, returnIndex := range returnIndexes {
@@ -677,12 +691,13 @@ func (sr *symbolReader) readFunctionSignatureTable(space *model.SymbolSpace) {
 	}
 }
 
-func (sr *symbolReader) readUntypedFunctionSignatureParams(space *model.SymbolSpace) ([]model.Param, bool) {
+func (sr *symbolReader) readUntypedFunctionSignature(space *model.SymbolSpace) ([]model.Param, bool, [][]model.SymbolRef, []model.SymbolRef) {
 	var hasRest bool
 	read(sr.r, &hasRest)
 	var paramCount int64
 	read(sr.r, &paramCount)
 	params := make([]model.Param, paramCount)
+	paramNamedTypes := make([][]model.SymbolRef, paramCount)
 	for i := int64(0); i < paramCount; i++ {
 		params[i].Name = sr.readStringCP()
 		var flag uint8
@@ -698,6 +713,7 @@ func (sr *symbolReader) readUntypedFunctionSignatureParams(space *model.SymbolSp
 				params[i].Default.Symbol = sr.readSymbolRef(space)
 			}
 		}
+		paramNamedTypes[i] = sr.readSymbolRefs(space)
 		var hasIncluded bool
 		read(sr.r, &hasIncluded)
 		if !hasIncluded {
@@ -718,7 +734,7 @@ func (sr *symbolReader) readUntypedFunctionSignatureParams(space *model.SymbolSp
 		}
 		params[i].IncludedRecord = metadata
 	}
-	return params, hasRest
+	return params, hasRest, paramNamedTypes, sr.readSymbolRefs(space)
 }
 
 func (sr *symbolReader) readDependentlyTypedFunctionSymbol(space *model.SymbolSpace) {

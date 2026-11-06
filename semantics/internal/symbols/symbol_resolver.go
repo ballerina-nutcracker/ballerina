@@ -2291,8 +2291,15 @@ func resolveVariableDeclaredType(r symbolResolver, variable *ast.BLangVariable, 
 	if typeNode := variable.TypeNode(); typeNode != nil {
 		ok = resolveTypeDesc(r, typeNode) && ok
 		ok = associateFunctionSignatureFromTypeDescriptor(r, owner, typeNode, variable.GetPosition()) && ok
+		associateNamedTypes(r, owner, typeNode)
 	}
 	return ok
+}
+
+func associateNamedTypes(resolver symbolResolver, owner model.SymbolRef, typeNode ast.TypeDescriptor) {
+	if namedTypes := common.NamedTypes(resolver.GetCtx(), typeNode); len(namedTypes) > 0 && !owner.IsEmpty() {
+		resolver.GetCtx().SetDeclaredNamedTypes(owner, namedTypes)
+	}
 }
 
 func resolveAnnotationAttachment(r symbolResolver, a *ast.BLangAnnotationAttachment) bool {

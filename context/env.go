@@ -119,6 +119,7 @@ type CompilerEnvironment struct {
 	// record fields, keyed by the enclosing type definition's symbol ref. Record
 	// types are structural, so a field has no symbol of its own to key on.
 	recordFieldAnnotations sync.Map // model.SymbolRef -> values.FieldAnnotationValues
+	declaredNamedTypes     sync.Map // model.SymbolRef -> []model.SymbolRef
 	statsEnabled           bool
 	diagnosticContext      *diagnostics.DiagnosticEnv
 }
@@ -345,6 +346,10 @@ func (c *CompilerEnvironment) UpdateFunctionSignatureIncludedRecords(ref model.F
 	c.functionSignatures.UpdateIncludedRecords(ref, includedRecords)
 }
 
+func (c *CompilerEnvironment) UpdateFunctionSignatureNamedTypes(ref model.FunctionSignatureRef, paramNamedTypes [][]model.SymbolRef, returnNamedTypes []model.SymbolRef) {
+	c.functionSignatures.UpdateNamedTypes(ref, paramNamedTypes, returnNamedTypes)
+}
+
 func (c *CompilerEnvironment) GetFunctionSignature(fn model.SymbolRef) (model.UntypedFunctionSignature, bool) {
 	return c.functionSignatures.Get(fn)
 }
@@ -424,6 +429,18 @@ func (c *CompilerEnvironment) SymbolIsPublic(symbol model.SymbolRef) bool {
 func (c *CompilerEnvironment) SymbolIsClass(symbol model.SymbolRef) bool {
 	_, ok := c.GetSymbol(symbol).(model.ClassSymbol)
 	return ok
+}
+
+func (c *CompilerEnvironment) SetDeclaredNamedTypes(symbol model.SymbolRef, namedTypes []model.SymbolRef) {
+	c.declaredNamedTypes.Store(symbol, namedTypes)
+}
+
+func (c *CompilerEnvironment) DeclaredNamedTypes(symbol model.SymbolRef) []model.SymbolRef {
+	namedTypes, ok := c.declaredNamedTypes.Load(symbol)
+	if !ok {
+		return nil
+	}
+	return namedTypes.([]model.SymbolRef)
 }
 
 type ValueSymbolMetadata struct {

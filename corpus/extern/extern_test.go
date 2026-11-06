@@ -737,6 +737,7 @@ func TestRecordFieldAnnotations(t *testing.T) {
 				}
 				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 			}},
+		{Org: org, Module: module, FuncName: "annotatedFieldsInferred", Impl: inferredAnnotatedFields},
 		{Org: org, Module: module, FuncName: "fieldMetaName",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				return metaName(ctx, args, fieldMetaKey)
@@ -920,6 +921,7 @@ func TestRecordFieldAnnotationsCrossModule(t *testing.T) {
 				}
 				return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 			}},
+		{Org: org, Module: module, FuncName: "annotatedFieldsInferred", Impl: inferredAnnotatedFields},
 		{Org: org, Module: module, FuncName: "fieldMetaName",
 			Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 				td, ok := args[0].(*values.TypeDesc)
@@ -1383,7 +1385,7 @@ func TestRecordFieldAnnotationsSymbolPoolRoundtrip(t *testing.T) {
 	const nested = "type[] age:{type[typeMeta=imported-age]} list:{type[] x[fieldMeta=imported-x]} " +
 		"node:{type[] value[fieldMeta=imported-value] next:<cycle>}\n"
 	const expected = "name\nimported-name\n<absent>\ncreatedAt,note\nimported-createdAt\n" +
-		"imported-name\nname\nimported-name\n" + nested + nested
+		"imported-name\nname\nimported-name\n" + nested + nested + "name\n"
 	if got := pal.Stdout(); got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
 	}
@@ -1400,6 +1402,7 @@ func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaK
 			}
 			return strings.Join(sortedAnnotatedFields(ctx, td), ","), nil
 		})
+	runtime.RegisterExternFunction(rt, org, module, "annotatedFieldsInferred", inferredAnnotatedFields)
 	runtime.RegisterExternFunction(rt, org, module, "fieldMetaName",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			td, ok := args[0].(*values.TypeDesc)
@@ -1425,6 +1428,17 @@ func registerFieldAnnotationExterns(rt *runtime.Runtime, org, module, fieldMetaK
 			return name, nil
 		})
 	runtime.RegisterExternFunction(rt, org, module, "describeNested", describeNestedExtern)
+}
+
+// inferredAnnotatedFields implements `annotatedFieldsInferred(typedesc<anydata> td = <>) returns td|error`.
+// It returns the annotated fields of the inferred td as an error message, since an error belongs to
+// td|error whatever td is inferred as.
+func inferredAnnotatedFields(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	td, ok := args[0].(*values.TypeDesc)
+	if !ok {
+		return nil, fmt.Errorf("expected typedesc, got %T", args[0])
+	}
+	return values.NewErrorWithMessage(strings.Join(sortedAnnotatedFields(ctx, td), ",")), nil
 }
 
 // sortedAnnotatedFields lists the annotated field names of td in a stable order.
