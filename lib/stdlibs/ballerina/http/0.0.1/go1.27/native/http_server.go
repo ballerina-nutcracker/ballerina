@@ -19,6 +19,7 @@ package native
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -765,9 +766,9 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 	case holder.source != nil:
 		writeStreamedBody(w, holder.source, contentType, timeout)
 	case holder.reader != nil:
-		_ = holder.writeReader(w)
+		_ = holder.writeReader(w, timeout)
 	default:
-		_ = holder.writeStream(w)
+		_ = holder.writeStream(w, timeout)
 	}
 }
 
@@ -784,33 +785,54 @@ func releaseStreamedBody(holder *responseBodyHolder, contentType string) {
 }
 
 // writeReader sends the part of a received body that getByteStream has not read.
-func (h *responseBodyHolder) writeReader(w io.Writer) error {
+func (h *responseBodyHolder) writeReader(w http.ResponseWriter, timeout time.Duration) error {
 	r := h.reader
 	h.reader = nil
-	bufp := copyBufPool.Get().(*[]byte)
-	_, err := io.CopyBuffer(onlyWriter{w}, r, *bufp)
-	copyBufPool.Put(bufp)
+	err := copyWithWriteDeadlines(w, r, timeout)
 	_ = r.Close()
 	return err
 }
 
+// copyWithWriteDeadlines relays r to w, giving each write the listener timeout afresh and
+// clearing the deadline while waiting on r, so a body that keeps arriving is not cut off.
+func copyWithWriteDeadlines(w http.ResponseWriter, r io.Reader, timeout time.Duration) error {
+	rc := http.NewResponseController(w)
+	setDeadline := func(deadline time.Time) {
+		if timeout > 0 {
+			_ = rc.SetWriteDeadline(deadline)
+		}
+	}
+	// The handler's final flush runs under the last deadline set here.
+	defer func() { setDeadline(time.Now().Add(timeout)) }()
+	bufp := copyBufPool.Get().(*[]byte)
+	defer copyBufPool.Put(bufp)
+	buf := *bufp
+	for {
+		setDeadline(time.Time{})
+		n, err := r.Read(buf)
+		if n > 0 {
+			setDeadline(time.Now().Add(timeout))
+			if _, writeErr := w.Write(buf[:n]); writeErr != nil {
+				return writeErr
+			}
+		}
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+	}
+}
+
 // copyBufPool reuses 32 KB buffers for streaming a backend response body to the
-// downstream client. Without it, io.Copy → net/http's response.ReadFrom
-// allocates a fresh 32 KB buffer on every request (kernel splice is unavailable
-// when the source is a userspace stream), which dominates allocations at large
-// payloads.
+// downstream client, so a large relayed body does not allocate a fresh buffer per request.
 var copyBufPool = sync.Pool{New: func() any { b := make([]byte, 32*1024); return &b }}
 
-// onlyWriter exposes only Write, hiding any ReadFrom the underlying writer has,
-// so io.CopyBuffer uses our pooled buffer instead of response.ReadFrom's
-// per-call allocation. Output is identical — the ResponseWriter's Write already
-// handles chunked/content-length framing.
-type onlyWriter struct{ io.Writer }
-
-// writeStream writes the body to w via io.CopyBuffer (streaming, pooled buffer)
+// writeStream writes the body to w via copyWithWriteDeadlines (streaming, pooled buffer)
 // or w.Write (buffered), then closes the stream. After this call the holder is
 // exhausted.
-func (h *responseBodyHolder) writeStream(w io.Writer) error {
+func (h *responseBodyHolder) writeStream(w http.ResponseWriter, timeout time.Duration) error {
 	var (
 		s   io.ReadCloser
 		buf []byte
@@ -826,9 +848,7 @@ func (h *responseBodyHolder) writeStream(w io.Writer) error {
 		}
 	})
 	if s != nil {
-		bufp := copyBufPool.Get().(*[]byte)
-		_, err := io.CopyBuffer(onlyWriter{w}, s, *bufp)
-		copyBufPool.Put(bufp)
+		err := copyWithWriteDeadlines(w, s, timeout)
 		_ = s.Close()
 		return err
 	}
