@@ -1,0 +1,17 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mapping type not found in expected type
+  --> default-cyclic-e.bal:19:20
+   |
+19 |     Cyclic inner = {}; // @error cyclic dependency in record field default
+   |                    ^^
+
+error[SEMANTIC_ERROR]: type definition Cyclic is empty
+  --> default-cyclic-e.bal:18:1
+   |
+18 | type Cyclic record {|
+   | ^^^^^^^^^^^^^^^^^^^^^
+19 |     Cyclic inner = {}; // @error cyclic dependency in record field default
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | |};
+   | ^^^

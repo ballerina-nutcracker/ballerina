@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-cyclic-inclusion-e.bal:25:13
+   |
+25 |     B? bb = {}; // @error inherited provider forms a value cycle
+   |             ^^

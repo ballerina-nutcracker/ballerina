@@ -17,8 +17,8 @@
 // @productions module-const-decl additive-expr
 import ballerina/io;
 
-const X = Y + 1;
-const Y = X + 1; // @error
+const X = Y + 1; // @error compile-time dependency cycle
+const Y = X + 1;
 
 public function main() {
     io:println(X);

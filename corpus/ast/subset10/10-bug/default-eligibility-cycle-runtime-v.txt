@@ -1,0 +1,39 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function runtimeValue () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 7))))
+  (type-definition R
+    (record-type
+      (field next
+        (union-type
+          (user-defined-type R)
+          (value-type null))
+        (ternary-expr
+          (group-expr
+            (binary-expr ==
+              (binary-expr /
+                (literal 1)
+                (literal 0))
+              (literal 0)))
+          (literal <nil>)
+          (mapping-constructor-expr)))
+      (field runtime
+        (value-type int)
+        (invocation runtimeValue ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal next)
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r)))))))

@@ -1,0 +1,64 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (field-based-access leaf
+            (field-based-access branch
+              (simple-var-ref A)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (index-based-access
+            (field-based-access leaves
+              (field-based-access branch
+                (simple-var-ref A)))
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access byName
+            (field-based-access branch
+              (simple-var-ref A)))
+          (literal a)))))
+    (expression-stmt
+      (invocation io println (
+        (index-based-access
+          (field-based-access pairs
+            (simple-var-ref A))
+          (literal 0)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access leaf
+            (field-based-access branch
+              (simple-var-ref A)))
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access leaf
+            (field-based-access branch
+              (simple-var-ref A)))
+          (user-defined-type Leaf)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (value-type readonly)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref A)
+          (simple-var-ref B)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (field-based-access leaf
+            (field-based-access branch
+              (simple-var-ref A)))
+          (field-based-access leaf
+            (field-based-access branch
+              (simple-var-ref B)))))))
+  )
+)

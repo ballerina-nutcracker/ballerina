@@ -1,0 +1,103 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition One
+    (record-type
+      (field x
+        (value-type int)
+        (literal 5))))
+  (type-definition Many
+    (record-type
+      (field x
+        (value-type int)
+        (literal 5))
+      (field s
+        (value-type string)
+        (literal a))
+      (field b
+        (value-type boolean)
+        (literal true))))
+  (type-definition Mixed
+    (record-type
+      (field x
+        (value-type int))
+      (field s
+        (value-type string)
+        (literal a))))
+  (const A (
+    (user-defined-type One)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type Many)) (
+    (mapping-constructor-expr)))
+  (const C (
+    (user-defined-type Many)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal s)
+        (literal z)))))
+  (const D (
+    (user-defined-type Many)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1))
+      (key-value
+        (literal s)
+        (literal z))
+      (key-value
+        (literal b)
+        (literal false)))))
+  (const E (
+    (user-defined-type Mixed)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 7)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access x
+            (simple-var-ref A)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (user-defined-type One)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref E))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref E)
+            (user-defined-type Mixed)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (intersection-type
+              (value-type readonly)
+              (record-type
+                (field x
+                  (finite-type
+                    (literal 5))))))))))))

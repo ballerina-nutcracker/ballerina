@@ -1,0 +1,52 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field s
+        (value-type string)
+        (literal i))))
+  (const I (
+    (user-defined-type Inner)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 2)))))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (simple-var-ref I))
+      (field list
+        (array-type
+          (user-defined-type Inner) dimensions: 1 ([]))
+        (list-constructor-expr
+          (simple-var-ref I)
+          (mapping-constructor-expr)))))
+  (const O (
+    (user-defined-type Outer)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref O))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (field-based-access inner
+              (simple-var-ref O))
+            (simple-var-ref I)))))
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref o)
+            (simple-var-ref O))))))))

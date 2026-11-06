@@ -214,3 +214,18 @@ func foreignVisitors(v ast.Visitor, n *ast.Node) {
 	ast.Walk(promotedVisitor{}, n) // want `foreignVisitors -> promotedVisitor\{\}: visitor method Visit is not declared in walks.go`
 	ast.Walk(v, n)                 // want `foreignVisitors -> v: visitor method Visit is not declared in walks.go` `foreignVisitors -> v: visitor method VisitTypeData is not declared in walks.go`
 }
+
+// The analyzer's accessor allowlist cannot be exercised by a Ballerina corpus program.
+func readDeclarationStructure(n *ast.Node) {
+	for _, field := range n.FieldPtrs() {
+		_ = field.TypeNode()
+	}
+	for member := range n.Members() {
+		_ = member.GetTypeData()
+	}
+	_ = n.GetParameters()
+	_ = n.GetRestParam()
+	_ = n.GetReturnTypeDescriptor()
+	_ = n.Lhs()
+	_ = n.Rhs()
+}

@@ -14,5 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const A = B + 1;
-const B = A + 1; // @error
+const A = B + 1; // @error compile-time dependency cycle
+const B = A + 1;

@@ -1,0 +1,37 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr))))
+  (type-definition Inner
+    (record-type
+      (field port
+        (value-type int)
+        (field-based-access port
+          (literal {"port":8080})))))
+  (type-definition Config
+    (record-type
+      (field port
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (index-based-access
+          (literal {"port":8080})
+          (literal port))))))

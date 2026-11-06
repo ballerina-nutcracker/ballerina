@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> default-lambda-loop-ambiguous-e.bal:25:20
+   |
+25 |             return {y: 2}; // @error both P and Q are applicable
+   |                    ^^^^^^

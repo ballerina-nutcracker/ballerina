@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate field name 'x'
+  --> default-abandoned-unreached-e.bal:23:5
+   |
+23 |     int x; // @error duplicate field name
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: too many arguments
+  --> default-abandoned-unreached-e.bal:27:27
+   |
+27 |     string a = 1.toString(1); // @error too many arguments
+   |                           ^
