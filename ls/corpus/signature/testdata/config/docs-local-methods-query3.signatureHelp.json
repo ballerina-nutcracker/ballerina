@@ -1,0 +1,34 @@
+{
+  "source": "docs-local-methods.bal",
+  "position": {
+    "line": 33,
+    "character": 15
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "send(int value)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nLocal remote method."
+          },
+          "parameters": [
+            {
+              "label": [
+                5,
+                14
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`value**: Sent value."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

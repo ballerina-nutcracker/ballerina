@@ -1,0 +1,54 @@
+{
+  "source": "projects/imported/main.bal",
+  "position": {
+    "line": 18,
+    "character": 36
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "calculate(float x, float y, string operation)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nA calculator function with multiple parameters"
+          },
+          "parameters": [
+            {
+              "label": [
+                10,
+                17
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`float`x**: First operand"
+              }
+            },
+            {
+              "label": [
+                19,
+                26
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`float`y**: Second operand"
+              }
+            },
+            {
+              "label": [
+                28,
+                44
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`operation**: The operation to perform"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

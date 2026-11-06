@@ -1,0 +1,18 @@
+{
+  "source": "docs-lookup-fallback.bal",
+  "position": {
+    "line": 24,
+    "character": 31
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Empty()",
+          "parameters": []
+        }
+      ],
+      "activeSignature": 0
+    }
+  ]
+}

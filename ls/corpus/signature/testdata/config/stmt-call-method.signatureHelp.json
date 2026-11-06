@@ -1,0 +1,44 @@
+{
+  "source": "statements.bal",
+  "position": {
+    "line": 99,
+    "character": 12
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(float a, boolean b)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nReturns foo"
+          },
+          "parameters": [
+            {
+              "label": [
+                4,
+                11
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`float`a**: float"
+              }
+            },
+            {
+              "label": [
+                13,
+                22
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`boolean`b**: boolean"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "source": "projects/imported/main.bal",
+  "position": {
+    "line": 22,
+    "character": 43
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Client(int seed)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nInitialize a client."
+          },
+          "parameters": [
+            {
+              "label": [
+                11,
+                19
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`seed**: Initial seed."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "source": "expressions.bal",
+  "position": {
+    "line": 119,
+    "character": 19
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(a, b)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nFunction Foo"
+          },
+          "parameters": [
+            {
+              "label": [
+                4,
+                5
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**a**: a float"
+              }
+            },
+            {
+              "label": [
+                7,
+                8
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**b**: b bool"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

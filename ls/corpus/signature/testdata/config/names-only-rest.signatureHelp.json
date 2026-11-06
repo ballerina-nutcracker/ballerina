@@ -1,0 +1,50 @@
+{
+  "source": "names-only-rest.bal",
+  "position": {
+    "line": 18,
+    "character": 24
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "unresolved(count, title, ...extra)",
+          "parameters": [
+            {
+              "label": [
+                11,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**count**"
+              }
+            },
+            {
+              "label": [
+                18,
+                23
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**title**"
+              }
+            },
+            {
+              "label": [
+                25,
+                33
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**extra**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 2
+    }
+  ]
+}

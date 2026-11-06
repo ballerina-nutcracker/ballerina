@@ -1,0 +1,34 @@
+{
+  "source": "langlib-empty-string.bal",
+  "position": {
+    "line": 17,
+    "character": 32
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "toUpperAscii(string str)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nConverts occurrences of a character in the ASCII range to uppercase."
+          },
+          "parameters": [
+            {
+              "label": [
+                13,
+                23
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`str**: the string to be converted"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

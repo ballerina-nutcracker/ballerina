@@ -1,0 +1,30 @@
+{
+  "source": "empty-forms.bal",
+  "position": {
+    "line": 26,
+    "character": 21
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "new Box(int size)",
+          "parameters": [
+            {
+              "label": [
+                8,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`size**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

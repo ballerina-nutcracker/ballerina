@@ -1,0 +1,40 @@
+{
+  "source": "projects/project/main.bal",
+  "position": {
+    "line": 23,
+    "character": 17
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "put(int value, string tag)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                13
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`value**"
+              }
+            },
+            {
+              "label": [
+                15,
+                25
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`tag**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "source": "no-active-parameter-null.bal",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "capabilities": {
+          "textDocument": {
+            "signatureHelp": {
+              "signatureInformation": {
+                "noActiveParameterSupport": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/no-active-parameter-null.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/signatureHelp",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/no-active-parameter-null.bal"
+        },
+        "position": {
+          "line": 18,
+          "character": 15
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/no-active-parameter-null.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 18,
+                "character": 15
+              },
+              "end": {
+                "line": 18,
+                "character": 16
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "too many arguments"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "signatures": [
+          {
+            "label": "pair(int first, int second)",
+            "parameters": [
+              {
+                "label": "int first",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`first**"
+                }
+              },
+              {
+                "label": "int second",
+                "documentation": {
+                  "kind": "markdown",
+                  "value": "**Parameter**  \n**`int`second**"
+                }
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0,
+        "activeParameter": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "source": "langlib-plain-empty.bal",
+  "position": {
+    "line": 21,
+    "character": 16
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(int x)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                9
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`x**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

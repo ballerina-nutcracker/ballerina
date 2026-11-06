@@ -1,0 +1,34 @@
+{
+  "source": "docs-format-absent.bal",
+  "position": {
+    "line": 20,
+    "character": 13
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "describe(int value)",
+          "documentation": {
+            "kind": "markdown",
+            "value": "**Description**  \nDescription with `references` unchanged."
+          },
+          "parameters": [
+            {
+              "label": [
+                9,
+                18
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`value**: Documented value."
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}
