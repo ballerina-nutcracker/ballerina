@@ -1,0 +1,87 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable counter (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref counter)
+        (literal 0))))
+  (function spawnThenPanic () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:spawnThenPanic:w () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (assignment
+                  (simple-var-ref counter)
+                  (literal 1))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (panic
+        (error-constructor-expr (
+          (literal default worker panicked))))))
+  (function yieldOnce () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 0))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation spawnThenPanic ())))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref e)
+            (error-type)))))
+      (while
+        (binary-expr ==
+          (simple-var-ref counter)
+          (literal 0))
+        (block-stmt
+          (var-def
+            (variable f (type
+              (constrained-type
+                (builtin-ref-type future)
+                (value-type int))) (expr
+              (start-action
+                (invocation yieldOnce ())))))
+          (var-def
+            (variable r (type
+              (union-type
+                (value-type int)
+                (error-type))) (expr
+              (single-wait-action
+                (simple-var-ref f)))))
+          (assignment
+            (wildcard-binding-pattern)
+            (type-test-expr is
+              (simple-var-ref r)
+              (value-type int)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref counter)))))))

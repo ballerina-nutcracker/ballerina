@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|error
+  --> wait-type6-e.bal:27:13
+   |
+27 |     int r = wait (w); // @error a braced worker name has eventual type int|error
+   |             ^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|error
+  --> wait-type6-e.bal:38:13
+   |
+38 |     int r = wait (flag ? a : b); // @error a conditional over workers has eventual type int|error
+   |             ^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field access cannot be used to access optional field 'i' whose type includes nil
+  --> optional-field-nilable-lvalue-hint-e.bal:22:5
+   |
+22 |     r.i.x = 5; // @error
+   |     ^^^
