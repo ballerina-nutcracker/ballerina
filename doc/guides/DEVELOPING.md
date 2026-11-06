@@ -21,11 +21,12 @@ go build -tags debug -o bal-debug ./cli/cmd
 | `--dump-cfg` | Dump the control flow graph | |
 | `--dump-bir` | Dump the generated BIR | |
 | `--format dot` | Render `--dump-cfg` output as Graphviz `.dot` | |
-| `--stats` / `--stats-oneline` | Print per-stage compilation timing | |
 | `--dump-tokens` | Dump lexer tokens | yes |
 | `--dump-st` | Dump the syntax tree | yes |
 | `--trace-recovery` | Trace parser error recovery | yes |
 | `--log-file <path>` | Write debug output to a file instead of stdout | yes |
+
+A debug build's `bal run` also accepts `--trace[=<path>]`, which writes frontend compilation traces, and `--nested`, which adds the child spans within each traced phase. Release builds reject both flags. See [trace-frontend](../../.agents/skills/trace-frontend/SKILL.md) for usage.
 
 E.g., visualize a CFG:
 

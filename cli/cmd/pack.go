@@ -42,8 +42,6 @@ type packOptions struct {
 	dumpCFG          bool
 	dumpBIR          bool
 	traceRecovery    bool
-	stats            bool
-	statsOneline     bool
 	logFile          string
 	format           string
 	targetDir        string
@@ -81,8 +79,6 @@ func createPackCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
 	cmd.Flags().BoolVar(&opts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	cmd.Flags().BoolVar(&opts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
-	cmd.Flags().BoolVar(&opts.stats, "stats", false, "Print per-stage compilation timing statistics")
-	cmd.Flags().BoolVar(&opts.statsOneline, "stats-oneline", false, "Print per-stage compilation timing totals only")
 	cmd.Flags().StringVar(&opts.logFile, "log-file", "", "Write debug output to specified file")
 	cmd.Flags().StringVar(&opts.format, "format", "", "Output format for dump operations (dot)")
 	cmd.Flags().StringVar(&opts.targetDir, "target-dir", "", "target directory path")
@@ -121,7 +117,6 @@ func runPack(cmd *cobra.Command, args []string, opts *packOptions) error {
 		WithDumpTokens(opts.dumpTokens).
 		WithDumpST(opts.dumpST).
 		WithTraceRecovery(opts.traceRecovery).
-		WithStats(opts.stats || opts.statsOneline).
 		WithTargetDir(targetDirOverride).
 		Build()
 

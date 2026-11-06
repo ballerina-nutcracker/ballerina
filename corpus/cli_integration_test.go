@@ -126,7 +126,20 @@ func TestBalCLI(t *testing.T) {
 		{"BalBuildOutputPathBlocked", testBalBuildOutputPathBlocked},
 		{"BalBuildOutputDirNotWritable", testBalBuildOutputDirNotWritable},
 		{"BalBuildNoHomeNoBalEnv", testBalBuildNoHomeNoBalEnv},
-		{"BalBuildStatsFlags", testBalBuildStatsFlags},
+		{"BalStatsFlagsRemoved", testBalStatsFlagsRemoved},
+		{"BalTraceFlagIsDebugRunOnly", testBalTraceFlagIsDebugRunOnly},
+		{"BalRunWithoutTraceFlagWritesNoTrace", testBalRunWithoutTraceFlagWritesNoTrace},
+		{"BalRunTraceOutputPaths", testBalRunTraceOutputPaths},
+		{"BalRunTraceWriteFailureFailsTheRun", testBalRunTraceWriteFailureFailsTheRun},
+		{"BalRunTraceLabels", testBalRunTraceLabels},
+		{"BalRunTraceOnCompilationFailure", testBalRunTraceOnCompilationFailure},
+		{"BalRunTraceIsCompleteBeforeRuntime", testBalRunTraceIsCompleteBeforeRuntime},
+		{"BalRunTraceRejectsNativeDependencyHandoff", testBalRunTraceRejectsNativeDependencyHandoff},
+		{"BalRunTraceChildSpans", testBalRunTraceChildSpans},
+		{"BalRunTraceChildSpansOnCompilationFailure", testBalRunTraceChildSpansOnCompilationFailure},
+		{"BalRunTraceChildSpansOnBirGenerationFailure", testBalRunTraceChildSpansOnBirGenerationFailure},
+		{"BalRunTraceIsFlatWithoutNested", testBalRunTraceIsFlatWithoutNested},
+		{"BalNestedFlagIsDebugRunOnly", testBalNestedFlagIsDebugRunOnly},
 		{"BalBuildRuntimeStubPathOverride", testBalBuildRuntimeStubPathOverride},
 		{"BalBuildAtomicWriteOnPackFailure", testBalBuildAtomicWriteOnPackFailure},
 		{"BalBuildRebuildPreservesExecutableBit", testBalBuildRebuildPreservesExecutableBit},
@@ -3690,31 +3703,6 @@ func testBalBuildNoHomeNoBalEnv(t *testing.T, cli *balCLI) {
 	}
 	if !strings.Contains(stderr, "resolve ballerina env path") {
 		t.Errorf("expected a 'resolve ballerina env path' error, got stderr:\n%s", stderr)
-	}
-}
-
-// testBalBuildStatsFlags covers --stats and --stats-oneline: both must
-// print a per-stage compilation timing report to stderr without affecting
-// the build's own success or output path.
-func testBalBuildStatsFlags(t *testing.T, cli *balCLI) {
-	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
-	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
-
-	for _, flag := range []string{"--stats", "--stats-oneline"} {
-		t.Run(flag, func(t *testing.T) {
-			t.Parallel()
-			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, flag)
-			if exitCode != 0 {
-				t.Fatalf("bal build %s failed: exit=%d\nstdout:\n%s\nstderr:\n%s", flag, exitCode, stdout, stderr)
-			}
-			if !strings.Contains(stderr, "Compilation Stats:") {
-				t.Errorf("expected a compilation stats report in stderr for %s, got:\n%s", flag, stderr)
-			}
-			if !strings.Contains(stdout, "Created ") {
-				t.Errorf("expected %s to still report a successful build, got stdout:\n%s", flag, stdout)
-			}
-		})
 	}
 }
 

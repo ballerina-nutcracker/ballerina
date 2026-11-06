@@ -98,7 +98,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 		testDocContextMap:      testDocContextMap,
 		testSrcDocIDs:          testSrcDocIDs,
 		moduleDescDependencies: depsCopy,
-		compilerCtx:            newModuleCompilerContext(project.Environment().compilerEnvironment(), moduleConfig.ModuleDescriptor().Name()),
+		compilerCtx:            context.NewCompilerContext(project.Environment().compilerEnvironment()),
 	}
 }
 
@@ -160,14 +160,8 @@ func newModuleContextFromMaps(
 		testDocContextMap:      testDocContextMap,
 		testSrcDocIDs:          testSrcDocIDs,
 		moduleDescDependencies: slices.Clone(moduleDescDependencies),
-		compilerCtx:            newModuleCompilerContext(project.Environment().compilerEnvironment(), moduleDescriptor.Name()),
+		compilerCtx:            context.NewCompilerContext(project.Environment().compilerEnvironment()),
 	}
-}
-
-func newModuleCompilerContext(env *context.CompilerEnvironment, name ModuleName) *context.CompilerContext {
-	compilerCtx := context.NewCompilerContext(env)
-	compilerCtx.InitModuleStats(name.String())
-	return compilerCtx
 }
 
 // getModuleID returns the module identifier.
@@ -252,7 +246,6 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	}
 
 	// Build compilation units from syntax trees.
-	compilerCtx.StartStage(context.StageASTBuild)
 	compilationOptions := moduleCtx.project.BuildOptions().CompilationOptions()
 	compilationUnits := buildCompilationUnits(compilerCtx, syntaxTrees, compilationOptions)
 
@@ -264,7 +257,6 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	for _, cu := range compilationUnits {
 		cu.SetPackageID(pkgID)
 	}
-	compilerCtx.EndStage()
 
 	// Resolve symbols and imports before type resolution.
 	publicSymbols := moduleCtx.getProject().Environment().publicSymbols
@@ -272,7 +264,6 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	// PR-TODO: remove this after migration all lang libraries
 	implicitImports := make(map[string]model.ExportedSymbolSpace)
 	seedMigratedLangLibs(implicitImports, publicSymbols)
-	compilerCtx.StartStage(context.StageSymbolResolution)
 	pkgScope, exported, importedSymbols := semantics.ResolveSymbols(
 		compilerCtx,
 		*pkgID,
@@ -289,7 +280,6 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	pkgNode.PackageID = pkgID
 	pkgNode.Scope = pkgScope
 	moduleCtx.bLangPkg = pkgNode
-	compilerCtx.EndStage()
 
 	if compilerCtx.HasErrors() {
 		// Do not publish a half-built symbol space; dependents would otherwise
@@ -310,9 +300,7 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	}
 
 	// Add type resolution step (this only resolve types of top level nodes)
-	compilerCtx.StartStage(context.StageTopLevelTypeResolution)
 	semantics.ResolvePublicNodeTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
-	compilerCtx.EndStage()
 }
 
 // analyzeAndDesugar performs CFG creation, semantic analysis, CFG analysis, and desugaring.
@@ -331,24 +319,18 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	}
 
 	// Resolve types of function bodies and inner nodes
-	compilerCtx.StartStage(context.StageLocalNodeResolution)
 	semantics.ResolvePrivateNodesTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
-	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
 
-	compilerCtx.StartStage(context.StageSemanticAnalysis)
 	semantics.AnalyzeSemantics(moduleCtx.compilerCtx, pkgNode, moduleCtx.importedSymbols)
-	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
 
 	// Create control flow graph after semantic analysis.
-	compilerCtx.StartStage(context.StageCFGCreation)
 	cfg := semantics.CreateControlFlowGraph(compilerCtx, pkgNode)
-	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
@@ -370,17 +352,13 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	}
 
 	// Run CFG analyses (reachability and explicit return) after semantic analysis.
-	compilerCtx.StartStage(context.StageCFGAnalysis)
 	semantics.AnalyzeCFG(moduleCtx.compilerCtx, pkgNode, cfg)
-	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
 
 	// Desugar package "lowering" AST to an AST that BIR gen can handle.
-	compilerCtx.StartStage(context.StageDesugaring)
 	moduleCtx.bLangPkg = desugar.DesugarPackage(moduleCtx.compilerCtx, moduleCtx.bLangPkg, moduleCtx.importedSymbols)
-	compilerCtx.EndStage()
 	if compilerCtx.HasDiagnostics() {
 		return
 	}
@@ -413,7 +391,7 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			st := dc.parseWithStats(compilerCtx)
+			st := dc.parse(compilerCtx)
 			if st != nil {
 				mu.Lock()
 				syntaxTrees = append(syntaxTrees, st)
@@ -432,7 +410,7 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			dc.parseWithStats(compilerCtx)
+			dc.parse(compilerCtx)
 		}(docCtx)
 	}
 
@@ -501,9 +479,7 @@ func generateCodeInternal(moduleCtx *moduleContext) bool {
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return false
 	}
-	moduleCtx.compilerCtx.StartStage(context.StageBIRGeneration)
 	moduleCtx.birPkg = birgen.GenBir(moduleCtx.compilerCtx, moduleCtx.bLangPkg)
-	moduleCtx.compilerCtx.EndStage()
 	return moduleCtx.birPkg != nil
 }
 
