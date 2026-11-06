@@ -16,6 +16,8 @@
 package completion
 
 import (
+	"unicode/utf8"
+
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -34,7 +36,7 @@ type cursor struct {
 func newCursor(req Request, sm compile.SealedModule, packages []AvailablePackage) *cursor {
 	name, _ := sm.NameOf(req.URI)
 	fileIndex := sm.Context().DiagnosticEnv().FileIndex(name)
-	c := &cursor{req: req, sm: sm, packages: packages, chain: nodeChainAtOffset(sm.PackageNode(), req.Offset, fileIndex)}
+	c := &cursor{req: req, sm: sm, packages: packages, chain: nodeChainAtOffset(sm.PackageNode(), req.Text, req.Offset, fileIndex)}
 	c.winnerNode, c.winnerMatched = nearestChainMatch(c)
 	return c
 }
@@ -45,6 +47,7 @@ func (c *cursor) winner() (ast.BLangNode, bool) {
 
 // Inner contexts take precedence, including blocks nested in invocations.
 func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
+	inBody := false
 	for i := len(c.chain) - 1; i >= 0; i-- {
 		switch node := c.chain[i].(type) {
 		case *ast.BLangFieldBaseAccess, *ast.BLangInvocation, *ast.BLangImportPackage:
@@ -56,11 +59,18 @@ func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
 				return c.chain[i], true
 			}
 		case *ast.BLangBlockStmt, *ast.BLangBlockFunctionBody:
-			if i+1 == len(c.chain) || isBadStatement(c.chain[i+1]) {
+			if i+1 == len(c.chain) {
 				return c.chain[i], true
 			}
+			if isBadStatement(c.chain[i+1]) {
+				if accessOperatorBeforeWord(c.req.Text, c.req.Offset) {
+					return c.chain[i+1], true
+				}
+				return c.chain[i], true
+			}
+			inBody = true
 		case *ast.BLangPackage:
-			if i+1 == len(c.chain) || isBadTopLevel(c.chain[i+1]) || containsBadNode(c.chain[i+1]) {
+			if i+1 == len(c.chain) || isBadTopLevel(c.chain[i+1]) || (!inBody && containsBadNode(c.chain[i+1])) {
 				return c.chain[i], true
 			}
 		}
@@ -76,6 +86,19 @@ func isBadStatement(node ast.BLangNode) bool {
 func isBadTopLevel(node ast.BLangNode) bool {
 	_, ok := node.(*ast.BLangBadTopLevelNode)
 	return ok
+}
+
+// A recovered statement such as `item.` or `mod:` is a member or qualified-name position, not a statement start.
+func accessOperatorBeforeWord(text string, offset int) bool {
+	i := min(max(offset, 0), len(text))
+	for i > 0 {
+		r, size := utf8.DecodeLastRuneInString(text[:i])
+		if !isTypeDefinitionWordRune(r) {
+			break
+		}
+		i -= size
+	}
+	return i > 0 && (text[i-1] == '.' || text[i-1] == ':')
 }
 
 func containsBadNode(node ast.BLangNode) bool {
@@ -101,13 +124,14 @@ func (d *badNodeDetector) Visit(node ast.BLangNode) ast.Visitor {
 
 func (d *badNodeDetector) VisitTypeData(*ast.TypeData) ast.Visitor { return d }
 
-func nodeChainAtOffset(pkg *ast.BLangPackage, offset, fileIndex int) []ast.BLangNode {
-	finder := &chainFinder{offset: offset, fileIndex: fileIndex}
+func nodeChainAtOffset(pkg *ast.BLangPackage, text string, offset, fileIndex int) []ast.BLangNode {
+	finder := &chainFinder{text: text, offset: offset, fileIndex: fileIndex}
 	ast.Walk(finder, pkg)
 	return finder.chain
 }
 
 type chainFinder struct {
+	text      string
 	offset    int
 	fileIndex int
 	stack     []ast.BLangNode
@@ -122,7 +146,7 @@ func (f *chainFinder) Visit(node ast.BLangNode) ast.Visitor {
 		return f
 	}
 	loc := node.GetPosition()
-	if locationHasUsableOffsets(loc) && (!locationContains(loc, f.offset) || loc.FileIndex() != f.fileIndex) {
+	if locationHasUsableOffsets(loc) && (!tokensContain(loc, f.text, f.offset) || loc.FileIndex() != f.fileIndex) {
 		return nil
 	}
 	f.stack = append(f.stack, node)
@@ -140,6 +164,29 @@ func locationHasUsableOffsets(loc ast.Location) bool {
 
 func locationContains(loc ast.Location, offset int) bool {
 	return loc.StartOffset() >= 0 && loc.EndOffset() >= 0 && loc.StartOffset() <= offset && offset <= loc.EndOffset()
+}
+
+// Recovered ASTs give node spans that include leading whitespace and the trailing newline. A cursor in that
+// whitespace, or at the start of the next line, is outside the node.
+func tokensContain(loc ast.Location, text string, offset int) bool {
+	start, end := loc.StartOffset(), loc.EndOffset()
+	if start < 0 || end < start || end > len(text) {
+		return locationContains(loc, offset)
+	}
+	for start < end && isLayoutByte(text[start]) {
+		start++
+	}
+	if end > start && text[end-1] == '\n' {
+		end--
+		if end > start && text[end-1] == '\r' {
+			end--
+		}
+	}
+	return start <= offset && offset <= end
+}
+
+func isLayoutByte(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\r' || b == '\n'
 }
 
 func nearestScope(chain []ast.BLangNode) model.Scope {
