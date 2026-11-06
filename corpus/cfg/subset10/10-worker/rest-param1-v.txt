@@ -1,0 +1,61 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (literal 1)
+          (literal 2)
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum ()))))
+  )
+)
+(sum
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable s (type
+            (value-type int)) (expr
+            (literal 0))))
+        (foreach
+          (var-def
+            (variable x (type
+              (value-type int))))
+          (simple-var-ref xs)
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref s)
+              (simple-var-ref x))))
+        (return
+          (simple-var-ref s))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker w
+  (bb0 () (bb1)
+    (var-def
+      (variable s (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref xs)
+    (var-def
+      (variable x (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref s)
+      (simple-var-ref x))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref s))
+  )
+)

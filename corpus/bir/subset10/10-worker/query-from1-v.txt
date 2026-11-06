@@ -1,0 +1,94 @@
+module $anon.. v 0.0.0;
+observe(future<int>) -> int{
+  bb0 {
+    %3 = f is future<int>
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %4 = ConstantLoad 1
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %5 = ConstantLoad 2
+    %2 = %5;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:main:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = observe($desugar$1) -> bb4;
+  }
+  bb4 {
+    %9 = ConstantLoad 5
+    %10 = ConstantLoad 2
+    %11 = newArray [int, int, never...][%10]{%8, %9}
+    $desugar$3 = %11;
+    %13 = length($desugar$3) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %13;
+    %15 = ConstantLoad 0
+    %16 = newArray list[%15]{}
+    $desugar$5 = %16;
+    %19 = ConstantLoad 0
+    $desugar$6 = %19;
+    GOTO bb6;
+  }
+  bb6 {
+    %22 = $desugar$6;
+    %23 = $desugar$4;
+    %21 = < %22 %23;
+    %21 ? bb7 : bb8;
+  }
+  bb7 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$3)[(1, $desugar$6)];
+    (1, i) = %0;
+    %1 = (1, i);
+    %2 = push((1, $desugar$5),%1) -> bb9;
+  }
+  bb8 {
+    r = $desugar$5;
+    %25 = println(r) -> bb10;
+  }
+  bb9 {
+    %4 = (1, $desugar$6);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, $desugar$6) = %3;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb10 {
+    return;
+  }
+}
+$worker:main:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}

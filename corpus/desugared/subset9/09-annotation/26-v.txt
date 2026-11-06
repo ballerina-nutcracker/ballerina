@@ -4,7 +4,6 @@
   (variable $annotation$0)
   (variable $annotation$1)
   (variable $annotation$2)
-  (variable $desugar$0)
   (variable $moduleListeners)
   (annotation serviceMeta
     (user-defined-type Meta)
@@ -69,7 +68,8 @@
   (service
     (absolute-resource-path annotated)
     (on
-    (simple-var-ref $desugar$0))
+    (new
+      (user-defined-type SimpleListener) ()))
     (function init () ()
       (block-function-body))
     (function alpha (
@@ -118,21 +118,21 @@
           (key-value
             (literal name)
             (invocation betaName ()))))
-      (assignment
-        (simple-var-ref $desugar$0)
-        (new
-          (user-defined-type SimpleListener) ()))
+      (var-def
+        (variable $desugar$0 (expr
+          (service-init))))
+      (var-def
+        (variable $desugar$1 (expr
+          (new
+            (user-defined-type SimpleListener) ()))))
       (expression-stmt
         (invocation lang.array push (
           (simple-var-ref $moduleListeners)
-          (simple-var-ref $desugar$0))))
-      (var-def
-        (variable $desugar$1 (expr
-          (service-init))))
+          (simple-var-ref $desugar$1))))
       (expression-stmt
         (invocation attach expr:
-          (simple-var-ref $desugar$0) (
-          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$1) (
+          (simple-var-ref $desugar$0)
           (list-constructor-expr
             (literal annotated)))))))
   (function annotationName () (

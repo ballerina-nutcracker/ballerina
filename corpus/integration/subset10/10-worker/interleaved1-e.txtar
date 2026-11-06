@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: named worker not allowed here
+  --> interleaved1-e.bal:26:14
+   |
+26 |     int x = 1; // @error named worker not allowed after a default-worker statement
+   |              ^

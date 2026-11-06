@@ -1,0 +1,54 @@
+-- worker-brace-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+// Tokens the parser drops next to a worker body's braces are reported like
+// those next to any other block's braces.
+function strayTokenBeforeCloseBrace() {
+    worker w {
+        int _ = 1;
+        ) // @error invalid token
+    }
+    wait w;
+}
+
+function strayTokenBeforeOpenBrace() {
+    worker w returns int ) { // @error invalid token
+        return 1;
+    }
+    int _ = wait w;
+}
+-- ast --
+(package
+  (bad-top-level function (tokens ("function" 18:1 18:9) ("(" 18:36 18:37) (")" 18:37 18:38) ("{" 18:39 18:40) ("worker" 19:5 19:11) ("{" 19:14 19:15) ("int" 20:9 20:12) ("_" 20:13 20:14) ("=" 20:15 20:16) (";" 20:18 20:19) ("}" 22:5 22:6) ("wait" 23:5 23:9) (";" 23:11 23:12) ("}" 24:1 24:2)))
+  (bad-top-level function (tokens ("function" 26:1 26:9) ("(" 26:35 26:36) (")" 26:36 26:37) ("{" 26:38 26:39) ("worker" 27:5 27:11) ("returns" 27:14 27:21) ("int" 27:22 27:25) ("{" 27:28 27:29) ("return" 28:9 28:15) (";" 28:17 28:18) ("}" 29:5 29:6) ("int" 30:5 30:8) ("_" 30:9 30:10) ("=" 30:11 30:12) ("wait" 30:13 30:17) (";" 30:19 30:20) ("}" 31:1 31:2))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> worker-brace-e.bal:21:1
+   |
+21 |         ) // @error invalid token
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     }
+   |     ^
+23 |     wait w;
+   |
+
+error[SYNTAX_ERROR]: invalid token
+  --> worker-brace-e.bal:27:26
+   |
+27 |     worker w returns int ) { // @error invalid token
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |         return 1;
+   |
