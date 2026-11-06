@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign to worker
+  --> assign1-e.bal:26:5
+   |
+26 |     w = start other(); // @error cannot assign to worker
+   |     ^

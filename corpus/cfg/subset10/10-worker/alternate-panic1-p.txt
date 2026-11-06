@@ -1,0 +1,45 @@
+(main
+  (bb0 () ()
+    (named-worker failing (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal boom))))))
+    (named-worker failed (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (return
+          (error-constructor-expr (
+            (literal normal failure))))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (alternate-wait-action
+          (simple-var-ref failing)
+          (simple-var-ref failed)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker failed
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal normal failure))))
+  )
+)
+(worker failing
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)

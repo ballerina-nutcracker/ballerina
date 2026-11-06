@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+class Svc {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$ping() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Svc
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    svc = %3;
+    %6 = svc is service object
+    %7 = %6;
+    %8 = println(%7) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}

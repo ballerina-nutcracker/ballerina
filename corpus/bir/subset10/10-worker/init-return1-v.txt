@@ -1,0 +1,93 @@
+module $anon.. v 0.0.0;
+started  boolean;
+early(boolean) -> int{
+  bb0 {
+    stop ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 0
+    (1, %0) = %0;
+    PopScopeFrame
+    return;
+  }
+  bb2 {
+    %2 = createLatch() -> bb3;
+  }
+  bb3 {
+    $desugar$0 = %2;
+    %5 = closure_fp $anon/.:$worker:early:w
+    $desugar$2 = %5;
+    %7 = start $desugar$2() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$1 = %7;
+    %8 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %9 = wait $desugar$1 -> bb6;
+  }
+  bb6 {
+    %0 = %9;
+    return;
+  }
+}
+other() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    %2 = %1;
+    %3 = early(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = start other() isolated=false -> bb3;
+  }
+  bb3 {
+    f = %6;
+    %8 = wait f -> bb4;
+  }
+  bb4 {
+    r = %8;
+    %10 = println(r) -> bb5;
+  }
+  bb5 {
+    %11 = println(started) -> bb6;
+  }
+  bb6 {
+    %12 = ConstantLoad false
+    %13 = %12;
+    %14 = early(%13) -> bb7;
+  }
+  bb7 {
+    %15 = %14;
+    %16 = println(%15) -> bb8;
+  }
+  bb8 {
+    %17 = println(started) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}
+$worker:early:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad true
+    started = %2;
+    %3 = ConstantLoad 1
+    %0 = %3;
+    return;
+  }
+}

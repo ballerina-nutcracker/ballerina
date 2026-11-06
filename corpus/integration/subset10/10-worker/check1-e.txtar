@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error type of check expression is not a subtype of the enclosing function's return type
+  --> check1-e.bal:25:21
+   |
+25 |         int value = check parse(); // @error int does not admit the checked error
+   |                     ^^^^^^^^^^^^^

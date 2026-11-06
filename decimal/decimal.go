@@ -220,7 +220,37 @@ func (a *Decimal) Rem(b *Decimal) (*Decimal, *Error) {
 	if b.v.IsZero() {
 		return nil, &Error{Kind: ErrDivisionByZero}
 	}
-	return arith(a, b, context.Rem)
+	out := &Decimal{}
+	cond, err := context.Rem(&out.v, &a.v, &b.v)
+	if cond.DivisionImpossible() {
+		return a.remLargeQuotient(b)
+	}
+	if e := validate(out, cond); e != nil {
+		return nil, e
+	}
+	if err != nil {
+		return nil, &Error{Kind: ErrInvalid}
+	}
+	normalizeUpperExponent(out)
+	return out, nil
+}
+
+// remLargeQuotient returns a % b when the integer quotient a / b has more
+// digits than the decimal128 precision, which apd reports as
+// DivisionImpossible. It requires exp(a) > exp(b).
+func (a *Decimal) remLargeQuotient(b *Decimal) (*Decimal, *Error) {
+	shift := apd.NewBigInt(int64(a.v.Exponent) - int64(b.v.Exponent))
+	out := &Decimal{}
+	out.v.Coeff.Exp(apd.NewBigInt(10), shift, &b.v.Coeff)
+	out.v.Coeff.Mul(&out.v.Coeff, &a.v.Coeff)
+	out.v.Coeff.Rem(&out.v.Coeff, &b.v.Coeff)
+	out.v.Exponent = b.v.Exponent
+	out.v.Negative = a.v.Negative
+	cond, _ := context.Round(&out.v, &out.v)
+	if e := validate(out, cond); e != nil {
+		return nil, e
+	}
+	return out, nil
 }
 
 // Neg returns -a. Negation cannot overflow.

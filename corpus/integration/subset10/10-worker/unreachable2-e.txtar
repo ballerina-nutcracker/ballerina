@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unreachable code
+  --> unreachable2-e.bal:24:9
+   |
+24 |         io:println("after return"); // @error unreachable statement in the worker body
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
