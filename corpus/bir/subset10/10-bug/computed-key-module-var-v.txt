@@ -1,0 +1,21 @@
+module $anon.. v 0.0.0;
+moduleKey  string;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = newMap {| int... |}{} computed{moduleKey=%1}
+    m = %2;
+    %4 = println(m) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad id
+    %6 = ConstantLoad 1
+    %7 = ConstantLoad rest
+    %8 = newMap {| id: int, anydata... |}{%5=%6} computed{moduleKey=%7}
+    r = %8;
+    %10 = println(r) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

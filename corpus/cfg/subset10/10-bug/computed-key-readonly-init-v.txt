@@ -1,0 +1,48 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable k (type
+        (value-type string)) (expr
+        (literal a))))
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1))
+          (computed-key-value
+            (simple-var-ref k)
+            (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref r)))))
+    (var-def
+      (variable result (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation mutate (
+            (simple-var-ref r)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref result)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref r)))))
+  )
+)
+(mutate
+  (bb0 () ()
+    (assignment
+      (index-based-access
+        (simple-var-ref m)
+        (literal a))
+      (literal 3))
+  )
+)

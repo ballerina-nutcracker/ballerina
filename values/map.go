@@ -118,6 +118,14 @@ func (m *Map) Put(tc semtypes.Context, key string, value BalValue) {
 	m.putUnchecked(key, value)
 }
 
+// InitComputedField applies a computed name field of the mapping constructor that created m.
+// Panics if value does not belong to the inherent member type at key.
+func (m *Map) InitComputedField(tc semtypes.Context, key string, value BalValue) {
+	cell := m.atomic.FieldCell(key)
+	checkMemberType(tc, cell, value)
+	m.putUnchecked(key, value)
+}
+
 func (m *Map) putUnchecked(key string, value BalValue) {
 	if e, ok := m.data[key]; ok {
 		e.value = value
@@ -149,12 +157,17 @@ func (m *Map) checkMutable() {
 
 func (m *Map) checkMemberStore(tc semtypes.Context, key string, value BalValue) {
 	cell := m.atomic.FieldCell(key)
+	memberTy := checkMemberType(tc, cell, value)
+	m.checkCellMutable(cell, memberTy, key)
+}
+
+// checkMemberType panics when value does not belong to the inner value type of cell, which it returns.
+func checkMemberType(tc semtypes.Context, cell semtypes.SemType, value BalValue) semtypes.SemType {
 	memberTy := semtypes.CellInnerVal(cell)
-	valueTy := SemTypeForValue(value)
-	if !semtypes.IsSubtype(tc, valueTy, memberTy) {
+	if !semtypes.IsSubtype(tc, SemTypeForValue(value), memberTy) {
 		panic(NewErrorWithMessage("inherent type violation"))
 	}
-	m.checkCellMutable(cell, memberTy, key)
+	return memberTy
 }
 
 func (m *Map) checkFieldMutable(key string) {

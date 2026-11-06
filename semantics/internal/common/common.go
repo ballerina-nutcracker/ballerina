@@ -169,6 +169,16 @@ func MappingKeyName(ctx *context.CompilerContext, key *ast.BLangMappingKey) (str
 	}
 }
 
+// ComputedMappingFieldType returns the type inherentType requires for the value of a computed name
+// field whose key has type keyTy. A key that is not a string is an error reported on the key; the
+// value is then resolved as if the key were any string so that no follow-on error is reported.
+func ComputedMappingFieldType(cx semtypes.Context, inherentType, keyTy semtypes.SemType) semtypes.SemType {
+	if !semtypes.IsSubtype(cx, keyTy, semtypes.String) {
+		keyTy = semtypes.String
+	}
+	return semtypes.MappingMemberTypeInnerValProj(cx, inherentType, keyTy)
+}
+
 func FormatIncompatibleTypeMessage(ctx semtypes.Context, expectedType, actualType semtypes.SemType) string {
 	return fmt.Sprintf("incompatible type: expected %s, got %s", semtypes.ToString(ctx, expectedType), semtypes.ToString(ctx, actualType))
 }

@@ -100,8 +100,7 @@ func validateMappingConstructor(cx scope.Context, e *ast.BLangMappingConstructor
 			if _, ok := validateActionOrExpr(cx, kv.Key.Expr, semtypes.String); !ok {
 				return scope.NoFacts, false
 			}
-			valueExpected = semtypes.MappingMemberTypeInnerVal(cx.TyCtx(), e.Type(),
-				semtypes.Intersect(kv.Key.Expr.Type(), semtypes.String))
+			valueExpected = semcommon.ComputedMappingFieldType(cx.TyCtx(), e.Type(), kv.Key.Expr.Type())
 		} else {
 			keyName, ok := semcommon.MappingKeyName(cx.CompilerCtx(), kv.Key)
 			if !ok {

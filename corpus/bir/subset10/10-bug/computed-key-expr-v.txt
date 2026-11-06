@@ -1,0 +1,73 @@
+module $anon.. v 0.0.0;
+prefix() -> string{
+  bb0 {
+    %1 = ConstantLoad p
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad x
+    %3 = ConstantLoad y
+    %1 = + %2 %3;
+    %4 = ConstantLoad v
+    %6 = prefix() -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 1
+    %5 = + %6 %7;
+    %8 = ConstantLoad w
+    %9 = newMap {| string... |}{} computed{%1=%4, %5=%8}
+    s = %9;
+    %11 = println(s) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad 0
+    %14 = ConstantLoad q
+    %15 = ConstantLoad 1
+    %16 = newArray [string, never...][%15]{%14}
+    $desugar$0 = %16;
+    %18 = length($desugar$0) -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %18;
+    %20 = ConstantLoad 0
+    %21 = newArray list[%20]{}
+    $desugar$2 = %21;
+    %24 = ConstantLoad 0
+    $desugar$3 = %24;
+    GOTO bb4;
+  }
+  bb4 {
+    %27 = $desugar$3;
+    %28 = $desugar$1;
+    %26 = < %27 %28;
+    %26 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 6
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %1 = push((1, $desugar$2),(1, x)) -> bb7;
+  }
+  bb6 {
+    %12 = $desugar$2[%13];
+    %29 = ConstantLoad 1
+    %30 = newMap {| int... |}{} computed{%12=%29}
+    q = %30;
+    %32 = println(q) -> bb8;
+  }
+  bb7 {
+    %3 = (1, $desugar$3);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, $desugar$3) = %2;
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb8 {
+    return;
+  }
+}

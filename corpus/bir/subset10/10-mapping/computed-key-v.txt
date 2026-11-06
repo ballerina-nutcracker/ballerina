@@ -28,7 +28,7 @@ main() -> nil{
     %8 = ConstantLoad 3
     %9 = ConstantLoad e
     %10 = ConstantLoad 4
-    %11 = newMap {| int... |}{[moduleKey]=%3, [localKey]=%4, [%5]=%8, %9=%10}
+    %11 = newMap {| int... |}{%9=%10} computed{moduleKey=%3, localKey=%4, %5=%8}
     m = %11;
     %13 = println(m) -> bb1;
   }
@@ -36,7 +36,7 @@ main() -> nil{
     %14 = ConstantLoad 5
     %15 = ConstantLoad name
     %16 = ConstantLoad x
-    %17 = newMap {| name: string, int... |}{[localKey]=%14, %15=%16}
+    %17 = newMap {| name: string, int... |}{%15=%16} computed{localKey=%14}
     inferred = %17;
     %19 = println(inferred) -> bb2;
   }
@@ -49,7 +49,7 @@ main() -> nil{
     %23 = ConstantLoad id
     %24 = ConstantLoad 1
     %25 = ConstantLoad rest
-    %26 = newMap {| id: int, anydata... |}{%23=%24, [localKey]=%25}
+    %26 = newMap {| id: int, anydata... |}{%23=%24} computed{localKey=%25}
     r = %26;
     %28 = println(r) -> bb4;
   }
@@ -57,7 +57,7 @@ main() -> nil{
     %29 = ConstantLoad id
     %30 = ConstantLoad 2
     %31 = ConstantLoad s
-    %32 = newMap {| id: int, string... |}{%29=%30, [moduleKey]=%31}
+    %32 = newMap {| id: int, string... |}{%29=%30} computed{moduleKey=%31}
     s = %32;
     %34 = println(s) -> bb5;
   }
@@ -70,7 +70,7 @@ main() -> nil{
   }
   bb7 {
     %38 = ConstantLoad 2
-    %39 = newMap {| int... |}{[%35]=%36, [%37]=%38}
+    %39 = newMap {| int... |}{} computed{%35=%36, %37=%38}
     ordered = %39;
     %41 = println(ordered) -> bb8;
   }

@@ -1,0 +1,10 @@
+-- stdout --
+key k1
+val 1
+val 2
+key k2
+val 3
+{"a":2,"k1":1,"k2":3}
+{"z":1}
+error("bad key")
+-- stderr --
