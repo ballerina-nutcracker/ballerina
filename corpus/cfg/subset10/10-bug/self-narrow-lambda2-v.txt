@@ -1,0 +1,47 @@
+(Box
+  (describe
+    (bb0 () (bb1 bb2)
+      (type-test-expr is
+        (simple-var-ref self)
+        (user-defined-type Named))
+    )
+    (bb1 (bb0) ()
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type string)))) (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type string))
+              (block-function-body
+                (return
+                  (invocation name expr:
+                    (simple-var-ref self) ()))))))))
+      (return
+        (invocation f ()))
+    )
+    (bb2 (bb0) ()
+      (return
+        (literal unnamed))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (user-defined-type Box)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe expr:
+          (simple-var-ref b) ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (invocation name expr:
+        (simple-var-ref self) ()))
+  )
+)

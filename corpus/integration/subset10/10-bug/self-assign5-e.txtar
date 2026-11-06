@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'self'
+  --> self-assign5-e.bal:41:9
+   |
+41 |         self = self; // @error self is implicitly final in a service declaration
+   |         ^^^^

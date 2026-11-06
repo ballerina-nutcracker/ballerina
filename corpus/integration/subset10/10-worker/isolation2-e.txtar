@@ -1,0 +1,73 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolation2-e.bal:67:20
+   |
+67 |             return x; // @error captured by the lambda
+   |                    ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated lambda
+  --> isolation2-e.bal:90:28
+   |
+90 |                     return z[0]; // @error query variable is not isolated
+   |                            ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+   --> isolation2-e.bal:103:12
+    |
+103 |         if v is int[] { // @error captured variable is not isolated
+    |            ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+   --> isolation2-e.bal:104:20
+    |
+104 |             return v[0]; // @error narrowed captured variable is not isolated
+    |                    ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:22:16
+   |
+22 |         return x; // @error captured variable is not final
+   |                ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:30:16
+   |
+30 |         return arr[0]; // @error captured variable is not isolated
+   |                ^^^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:40:20
+   |
+40 |             return x + y; // @error captured variables are not final
+   |                    ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:40:24
+   |
+40 |             return x + y; // @error captured variables are not final
+   |                        ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:49:16
+   |
+49 |         return p[0]; // @error captured parameter is not isolated
+   |                ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:57:9
+   |
+57 |         x = 2; // @error captured variable is not final
+   |         ^
+
+error[SEMANTIC_ERROR]: invalid capture of mutable variable in isolated worker
+  --> isolation2-e.bal:78:20
+   |
+78 |             return x; // @error captured by the worker
+   |                    ^
+
+error[SEMANTIC_ERROR]: mutable field access within isolated object must be inside a lock statement
+   --> isolation2-e.bal:116:20
+    |
+116 |             return self.n; // @error mutable field access outside lock
+    |                    ^^^^^^
