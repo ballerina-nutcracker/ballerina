@@ -59,11 +59,25 @@ type idleTimer struct {
 	mu      sync.Mutex
 	timer   *time.Timer
 	cause   error
+	// responded is set once the response headers arrive; later request-body reads no longer renew the timer.
+	responded bool
 }
 
 func (t *idleTimer) arm(cause error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.armLocked(cause)
+}
+
+func (t *idleTimer) armUpload() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if !t.responded {
+		t.armLocked(errIdleBeforeResponse)
+	}
+}
+
+func (t *idleTimer) armLocked(cause error) {
 	t.cause = cause
 	if t.timer == nil {
 		t.timer = time.AfterFunc(t.timeout, t.fire)
@@ -75,6 +89,17 @@ func (t *idleTimer) arm(cause error) {
 func (t *idleTimer) stop() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.stopLocked()
+}
+
+func (t *idleTimer) markResponded() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.responded = true
+	t.stopLocked()
+}
+
+func (t *idleTimer) stopLocked() {
 	if t.timer != nil {
 		t.timer.Stop()
 	}
@@ -97,7 +122,7 @@ type progressReader struct {
 func (p *progressReader) Read(b []byte) (int, error) {
 	n, err := p.body.Read(b)
 	if n > 0 {
-		p.timer.arm(errIdleBeforeResponse)
+		p.timer.armUpload()
 	}
 	return n, err
 }
@@ -240,7 +265,7 @@ func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body
 	}
 	resp, err := c.client.Do(req)
 	if timer != nil {
-		timer.stop()
+		timer.markResponded()
 	}
 	if err != nil {
 		if errors.Is(context.Cause(reqCtx), errIdleBeforeResponse) {
