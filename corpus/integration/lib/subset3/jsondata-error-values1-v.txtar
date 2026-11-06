@@ -1,0 +1,10 @@
+-- stdout --
+error: incompatible expected type '(boolean|string)' for value '1,234,567'
+error: incompatible expected type '(boolean|string)' for value '-12,345.679'
+error: incompatible expected type '(boolean|string)' for value '0.001'
+error: incompatible expected type '(boolean|string)' for value '2.002'
+error: incompatible expected type '(boolean|string)' for value '1,000'
+error: incompatible expected type '(boolean|string)' for value '-9,223,372,036,854,775,808'
+error: incompatible expected type '(boolean|string)' for value '100,000,000,000,000,000,000'
+error: incompatible expected type '(boolean|string)' for value '12'
+-- stderr --
