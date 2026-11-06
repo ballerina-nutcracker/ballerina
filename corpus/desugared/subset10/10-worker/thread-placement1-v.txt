@@ -1,0 +1,75 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function spin () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable acc (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 100000))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref acc)
+            (simple-var-ref i))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (return
+        (simple-var-ref acc))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:main:w () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (assignment
+                  (simple-var-ref x)
+                  (literal 1))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (invocation spin ()))))
+      (var-def
+        (variable observed (type
+          (value-type int)) (expr
+          (simple-var-ref x))))
+      (expression-stmt
+        (single-wait-action
+          (simple-var-ref $desugar$1)))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref observed))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x)))))))

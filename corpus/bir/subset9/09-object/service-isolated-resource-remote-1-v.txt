@@ -1,5 +1,4 @@
 module $anon.. v 0.0.0;
-$desugar$0  object { public function attach(service object, nil|string|[string...]) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; public function start() returns nil|error };
 $moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
 class SimpleListener {
 
@@ -56,7 +55,7 @@ class $service$0 {
 
   $remote$greet() -> string{
     bb0 {
-      lock-start "$anon/.:$service.2355.1.foo" GOTO bb1;
+      lock-start "$anon/.:$service.2358.1.foo" GOTO bb1;
     }
     bb1 {
       PushScopeFrame 2
@@ -64,7 +63,7 @@ class $service$0 {
       %0 = (1, self)[%1];
       (1, %0) = %0;
       PopScopeFrame
-      lock-end "$anon/.:$service.2355.1.foo" GOTO bb2;
+      lock-end "$anon/.:$service.2358.1.foo" GOTO bb2;
     }
     bb2 {
       return;
@@ -77,7 +76,7 @@ class $service$0 {
   resource get hello $resource$get$0(string) -> string{
     bb0 {
       _ = name;
-      lock-start "$anon/.:$service.2355.1.foo" GOTO bb1;
+      lock-start "$anon/.:$service.2358.1.foo" GOTO bb1;
     }
     bb1 {
       PushScopeFrame 4
@@ -87,7 +86,7 @@ class $service$0 {
       %0 = + %1 %2;
       (1, %0) = %0;
       PopScopeFrame
-      lock-end "$anon/.:$service.2355.1.foo" GOTO bb2;
+      lock-end "$anon/.:$service.2358.1.foo" GOTO bb2;
     }
     bb2 {
       return;

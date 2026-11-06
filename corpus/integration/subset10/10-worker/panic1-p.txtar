@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: boom
+        at main(panic1-p.bal:21)

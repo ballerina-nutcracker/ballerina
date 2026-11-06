@@ -1,0 +1,49 @@
+(inc
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable v (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (simple-var-ref arg))))
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type string))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 0))
+  )
+  (bb2 (bb0) ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref v)
+            (literal 1)))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation inc (
+          (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inc (
+          (literal s))))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1)))
+  )
+)

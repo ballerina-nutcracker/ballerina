@@ -94,12 +94,12 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 	case *ast.BLangNumericLiteral:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangVarRef:
-		if replacement := materializeConstantRef(cx, expr); replacement != nil {
+		if replacement := rewriteReference(cx, expr); replacement != nil {
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangConstRef:
-		if replacement := materializeConstantRef(cx, &expr.BLangVarRef); replacement != nil {
+		if replacement := rewriteReference(cx, &expr.BLangVarRef); replacement != nil {
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}

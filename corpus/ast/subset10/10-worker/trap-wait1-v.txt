@@ -1,0 +1,23 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (panic
+            (error-constructor-expr (
+              (literal boom))))))
+      (var-def
+        (variable r (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (single-wait-action
+              (simple-var-ref w))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r)))))))

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: arithmetic underflow
+  --> decimal-rem-large-e.bal:19:19
+   |
+19 | const decimal C = 1E+6144d % 1.000000000000000000000000000000001E-6143d; // @error
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
