@@ -1,0 +1,61 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (expr-function-body
+      (literal 42)))
+  (const A (
+    (record-type
+      (rest
+        (record-type
+          (field y
+            (value-type int)
+            (literal 2)))))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (mapping-constructor-expr))
+      (key-value
+        (literal b)
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 5)))))))
+  (const B (
+    (record-type
+      (rest
+        (record-type
+          (field y
+            (value-type int)
+            (invocation next ())))))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 1)))))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (expr-function-body
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type readonly))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (simple-var-ref A)
+              (literal a)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B)))))))

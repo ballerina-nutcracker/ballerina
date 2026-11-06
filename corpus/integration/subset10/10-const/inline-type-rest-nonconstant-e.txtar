@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> inline-type-rest-nonconstant-e.bal:20:63
+   |
+20 | const record {| record {| int y = next(); |}...; |} A = {"a": {}}; // @error rest field default is not constant
+   |                                                               ^^

@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> field-default-nested-behavioural-e.bal:19:33
+   |
+19 |     function (record {| int y = "a"; |} r) f; // @error default nested in a parameter type is not an int
+   |                                 ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "b"
+  --> field-default-nested-behavioural-e.bal:20:43
+   |
+20 |     function () returns record {| int y = "b"; |} g; // @error default nested in a return type is not an int
+   |                                           ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "c"
+  --> field-default-nested-behavioural-e.bal:21:33
+   |
+21 |     function (record {| int y = "c"; |}... rs) h; // @error default nested in a rest parameter type is not an int
+   |                                 ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "d"
+  --> field-default-nested-behavioural-e.bal:22:30
+   |
+22 |     stream<record {| int y = "d"; |}> s; // @error default nested in a stream type is not an int
+   |                              ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "e"
+  --> field-default-nested-behavioural-e.bal:23:32
+   |
+23 |     object { record {| int y = "e"; |} r; } o; // @error default nested in an object field type is not an int
+   |                                ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "f"
+  --> field-default-nested-behavioural-e.bal:24:41
+   |
+24 |     stream<int, error<record {| int y = "f"; |}>?> sc; // @error default nested in a stream completion type is not an int
+   |                                         ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "g"
+  --> field-default-nested-behavioural-e.bal:25:43
+   |
+25 |     object { function m(record {| int y = "g"; |} r); } om; // @error default nested in an object method declaration is not an int
+   |                                           ^^^

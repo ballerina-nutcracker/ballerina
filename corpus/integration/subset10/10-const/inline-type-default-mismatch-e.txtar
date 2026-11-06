@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> inline-type-default-mismatch-e.bal:18:25
+   |
+18 | const record {| int x = "a"; |} A = {}; // @error default is not an int
+   |                         ^^^
