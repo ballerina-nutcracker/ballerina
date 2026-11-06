@@ -415,16 +415,28 @@ func (t *typer) decompose(ty semtypes.SemType) []semtypes.SemType {
 // isSimpleType is DataUtils.isSimpleType: whether a value of the type is never a structure. A recursive
 // reference adds no member that the enclosing type does not already have.
 func (t *typer) isSimpleType(ty semtypes.SemType) bool {
-	return t.isSimple(ty, map[string]bool{})
+	return t.isSimple(ty, map[any]bool{})
 }
 
-func (t *typer) isSimple(ty semtypes.SemType, visiting map[string]bool) bool {
-	key := semtypes.ToString(t.tc, ty)
-	if visiting[key] {
-		return true
+// cycleKey identifies a classified array or union, the only kinds a recursive type cycles through.
+func cycleKey(ti typeInfo) any {
+	if ti.kind == kindArray {
+		return ti.list
 	}
-	visiting[key] = true
+	if ti.kind == kindUnion && len(ti.members) > 0 {
+		return &ti.members[0]
+	}
+	return nil
+}
+
+func (t *typer) isSimple(ty semtypes.SemType, visiting map[any]bool) bool {
 	ti := t.classify(ty)
+	if key := cycleKey(ti); key != nil {
+		if visiting[key] {
+			return true
+		}
+		visiting[key] = true
+	}
 	switch ti.kind {
 	case kindJSON, kindAnydata, kindMap, kindRecord, kindXML, kindXMLElement, kindXMLText, kindXMLOther,
 		kindUnsupported:
@@ -479,16 +491,17 @@ func (t *typer) containsUnion(ty semtypes.SemType, visiting map[string]bool) boo
 }
 
 func (t *typer) isSupportedType(ty semtypes.SemType) bool {
-	return t.isSupported(ty, map[string]bool{})
+	return t.isSupported(ty, map[any]bool{})
 }
 
-func (t *typer) isSupported(ty semtypes.SemType, visiting map[string]bool) bool {
-	key := semtypes.ToString(t.tc, ty)
-	if visiting[key] {
-		return false
-	}
-	visiting[key] = true
+func (t *typer) isSupported(ty semtypes.SemType, visiting map[any]bool) bool {
 	ti := t.classify(ty)
+	if key := cycleKey(ti); key != nil {
+		if visiting[key] {
+			return false
+		}
+		visiting[key] = true
+	}
 	switch ti.kind {
 	case kindNil, kindInt, kindByte, kindIntSubtype, kindFloat, kindDecimal, kindBoolean, kindString, kindRecord,
 		kindMap, kindJSON, kindAnydata, kindFinite, kindXML, kindXMLElement, kindXMLText:
