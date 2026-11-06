@@ -1,0 +1,21 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unmatchable match clause
+  --> 7-e.bal:29:9
+   |
+29 |         4 => { // @error
+   |         ^^^^^^^^^^^^^^^^
+30 |             io:println("four");
+   |             ^^^^^^^^^^^^^^^^^^^
+31 |         }
+   |         ^
+
+error[SEMANTIC_ERROR]: unreachable match clause
+  --> 7-e.bal:29:9
+   |
+29 |         4 => { // @error
+   |         ^^^^^^^^^^^^^^^^
+30 |             io:println("four");
+   |             ^^^^^^^^^^^^^^^^^^^
+31 |         }
+   |         ^
