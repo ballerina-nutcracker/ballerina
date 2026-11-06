@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/completion"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
@@ -58,6 +59,7 @@ const (
 	rpcMethodNotFound       = -32601
 	rpcInvalidParams        = -32602
 	rpcParseError           = -32700
+	rpcInternalError        = -32603
 )
 
 type requestEntry struct {
@@ -117,8 +119,10 @@ type Server struct {
 	transport      protocol.Transport
 	projects       *workspace.ProjectService
 	compiler       *compile.CompilationService
+	completion     *completion.Service
 	bus            *event.Bus
 	versionSupport bool
+	snippetSupport bool
 	initialized    bool
 	shuttingDown   bool
 
@@ -148,6 +152,13 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
+// WithAvailablePackages replaces the completion service with one using packages.
+func WithAvailablePackages(packages []completion.AvailablePackage) Option {
+	return func(s *Server) {
+		s.completion = completion.New(s.compiler, completion.WithAvailablePackages(packages))
+	}
+}
+
 // New creates a Server using the supplied transport and services, then applies
 // opts in order. A non-nil bus enables event-driven diagnostic publication.
 func New(transport protocol.Transport, projects *workspace.ProjectService, compiler *compile.CompilationService, bus *event.Bus, opts ...Option) *Server {
@@ -155,6 +166,7 @@ func New(transport protocol.Transport, projects *workspace.ProjectService, compi
 		transport:     transport,
 		projects:      projects,
 		compiler:      compiler,
+		completion:    completion.New(compiler),
 		bus:           bus,
 		lastPublished: make(map[string]uint64),
 		registry:      newRequestRegistry(),
@@ -313,6 +325,8 @@ func (s *Server) dispatchTracked(ctx context.Context, message protocol.Message) 
 	switch message.Method {
 	case testBlockMethod:
 		return s.handleTestBlockRequest(ctx, message)
+	case "textDocument/completion":
+		return s.handleCompletion(ctx, message)
 	}
 	return trackedResult{err: &protocol.RPCError{Code: rpcMethodNotFound, Message: "method not found"}, handled: true}
 }
@@ -345,6 +359,13 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 	}
 	s.initialized = true
 	if caps, ok := initializeParams.Capabilities.TextDocument.Value(); ok {
+		if completionCaps, ok := caps.Completion.Value(); ok {
+			if item, ok := completionCaps.CompletionItem.Value(); ok {
+				if snippetSupport, ok := item.SnippetSupport.Value(); ok {
+					s.snippetSupport = snippetSupport
+				}
+			}
+		}
 		if diagCaps, ok := caps.PublishDiagnostics.Value(); ok {
 			if versionSupport, ok := diagCaps.VersionSupport.Value(); ok {
 				s.versionSupport = versionSupport
@@ -357,7 +378,8 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 		Save:      protocol.NewOptional(protocol.NewOrTextDocumentSyncOptionsSaveBoolean(true)),
 	}
 	return protocol.InitializeResult{Capabilities: protocol.ServerCapabilities{
-		TextDocumentSync: protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		TextDocumentSync:   protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		CompletionProvider: protocol.NewOptional(protocol.CompletionOptions{TriggerCharacters: protocol.NewOptional([]string{":", ".", ">", "@", "/", "\\", "?"})}),
 	}}, true
 }
 

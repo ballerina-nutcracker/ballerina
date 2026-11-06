@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 3,
+    "character": 17
+  },
+  "source": "source/typed-initializer-valid.bal",
+  "items": [{"label":"target","kind":6,"detail":"int","sortText":"127","insertText":"target"},{"label":"zInt","kind":6,"detail":"int","sortText":"127","insertText":"zInt"},{"label":"aString","kind":6,"detail":"string","sortText":"128","insertText":"aString"},{"label":"main","kind":3,"detail":"function() returns nil","sortText":"128","insertText":"main"}]
+}
