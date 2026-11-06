@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got any
+  --> cache3-e.bal:22:16
+   |
+22 |     string _ = check c.get("k"); // @error
+   |                ^^^^^^^^^^^^^^^^

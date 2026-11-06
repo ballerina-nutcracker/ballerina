@@ -295,6 +295,11 @@ func (a *Decimal) Ceiling() (*Decimal, *Error) {
 	return a.roundToIntegral(apd.RoundCeiling)
 }
 
+// Truncate returns a with its fractional part discarded, rounding toward zero.
+func (a *Decimal) Truncate() (*Decimal, *Error) {
+	return a.roundToIntegral(apd.RoundDown)
+}
+
 func (a *Decimal) quantizeExp(exp int32, rounding apd.Rounder) (*Decimal, *Error) {
 	ctx := *context
 	ctx.Rounding = rounding
