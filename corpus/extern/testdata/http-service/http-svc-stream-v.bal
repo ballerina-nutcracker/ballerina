@@ -283,6 +283,17 @@ service /quick on new http:Listener(19504, {timeout: 0.5}) {
     resource function get ticks() returns stream<http:SseEvent, error?> {
         return new (new Ticks(3, 0.8));
     }
+
+    resource function get relay() returns http:Response|error {
+        return backend->get("/ticks");
+    }
+
+    resource function get relayRest() returns http:Response|error {
+        http:Response res = check backend->get("/ticks");
+        stream<byte[], io:Error?> body = check res.getByteStream(1);
+        _ = check body.next();
+        return res;
+    }
 }
 
 public function testMain() returns error? {
@@ -408,4 +419,10 @@ public function testMain() returns error? {
         quickTick = check quickTicks.next();
     }
     io:println(quickReceived); // @output 3
+
+    // A relayed body that keeps arriving outlives the listener timeout, whether or not it was partly read.
+    string relayedTicks = check quick->get("/relay");
+    io:println(relayedTicks.length()); // @output 45
+    string relayedRest = check quick->get("/relayRest");
+    io:println(relayedRest.length()); // @output 44
 }

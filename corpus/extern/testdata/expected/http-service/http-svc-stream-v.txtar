@@ -28,6 +28,8 @@ bytes=19995 blocks=5
 bytes=9 blocks=1
 [": first\n: \n: data: forged\ndata: real\n\nevent: error\ndata: Invalid value provided as event: the id field must not contain a line break.\n\n"]
 3
+45
+44
 -- stderr --
 time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("db down")
 error [ballerina/http]: panic while handling GET /streams/panicking: invalid array index: 5
