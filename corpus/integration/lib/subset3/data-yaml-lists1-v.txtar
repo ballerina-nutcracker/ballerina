@@ -1,0 +1,35 @@
+-- stdout --
+[1,2]
+[1,2]
+incompatible expected type 'int[]' for value '5'
+invalid type 'int[]' expected 'map type'
+[1,2]
+array size is not compatible with the expected size
+[1,2]
+[1,0]
+[1,"a"]
+array size is not compatible with the expected size
+[1,"a","b"]
+[1,""]
+["007","1.50","x"]
+[1.50,12345678901234567890.123456789]
+[1,2,3]
+[1,2]
+[{"a":1},{"b":2}]
+required field 'b' not present in YAML
+[{"b":2},{"a":1}]
+[{"b":2},{"a":1},{"a":3}]
+array size is not compatible with the expected size
+5
+[5]
+[5,6]
+[{"a":1},{"b":2}]
+{"a":1}
+[[1,2],[3]]
+
+
+[null,null]
+[]
+'invalid yaml document' at line: '1' column: '0'
+{"a":[1,{"b":"c"}]}
+-- stderr --

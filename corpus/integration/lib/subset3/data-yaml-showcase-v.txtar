@@ -1,0 +1,16 @@
+-- stdout --
+{"name":"demo","servers":[{"host":"localhost","port":8080,"secure":false,"tags":["api","v1"],"weight":null},{"host":"example.com","port":443,"secure":true,"tags":["web"],"weight":1.5}]}
+{"a":[1,2.5,true,null,"text"]}
+{"x":3,"y":3}
+[1,2,3]
+{"key":"value"}
+{"first":1}
+name: demo
+ports:
+- 80
+- 443
+meta:
+  secure: true
+{name: demo, ports: [80, 443]}
+error Error ("'unexpected event' at line: '1' column: '4'")
+-- stderr --
