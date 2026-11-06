@@ -48,25 +48,30 @@ func Dial(ctx context.Context, network, address, localAddr string, tlsCfg *pal.T
 	if tlsCfg == nil {
 		return conn, nil
 	}
-	effectiveTLSCfg := *tlsCfg
-	if effectiveTLSCfg.ServerName == "" {
-		// tls.Client (unlike tls.Dial) never derives ServerName from the
-		// dial address on its own, so hostname verification would otherwise
-		// always fail against an empty expected name. Must be set before
-		// buildTLSConfig runs: it's captured by value into the
-		// VerifyConnection closure when a custom CA is configured.
-		if host, _, splitErr := net.SplitHostPort(address); splitErr == nil {
-			effectiveTLSCfg.ServerName = host
-		} else {
-			effectiveTLSCfg.ServerName = address
-		}
+	serverName := address
+	if host, _, splitErr := net.SplitHostPort(address); splitErr == nil {
+		serverName = host
 	}
-	tlsConfig, err := buildTLSConfig(effectiveTLSCfg)
+	tlsConfig, err := ClientTLSConfig(serverName, tlsCfg)
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
 	}
 	return tlsClientHandshake(ctx, conn, tlsConfig, tlsCfg.HandshakeTimeout)
+}
+
+// ClientTLSConfig is the pal.Net.ClientTLSConfig factory for the native-CLI
+// platform. tls.Client (unlike tls.Dial) never derives ServerName from the
+// dial address on its own, so hostname verification would otherwise always
+// fail against an empty expected name. ServerName must be set before
+// buildTLSConfig runs: it's captured by value into the VerifyConnection
+// closure when a custom CA is configured.
+func ClientTLSConfig(serverName string, tlsCfg *pal.TLSConfig) (*tls.Config, error) {
+	effectiveTLSCfg := *tlsCfg
+	if effectiveTLSCfg.ServerName == "" {
+		effectiveTLSCfg.ServerName = serverName
+	}
+	return buildTLSConfig(effectiveTLSCfg)
 }
 
 // ListenTCP is the pal.Net.Listen factory for the native-CLI platform. It
