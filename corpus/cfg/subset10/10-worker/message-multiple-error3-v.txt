@@ -1,0 +1,248 @@
+(asyncSendFlush
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (invocation failWith (
+              (literal a failed)))))
+        (expression-stmt
+          (worker-async-send-action r
+            (literal 1)))
+        (expression-stmt
+          (checked-expr
+            (worker-flush-action r)))))
+    (named-worker b (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action r
+            (literal 2)))
+        (var-def
+          (variable e (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-flush-action r))))
+        (expression-stmt
+          (invocation io println (
+            (literal flush )
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref e)
+                (error-type))
+              (invocation lang.error message (
+                (simple-var-ref e)))
+              (literal nil)))))))
+    (named-worker r (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (record-type
+              (field a
+                (value-type int))
+              (field b
+                (value-type int)))) (expr
+            (checked-expr
+              (worker-multiple-receive-action a:a b:b)))))))
+    (var-def
+      (variable ra (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable rb (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref b))))))
+    (var-def
+      (variable rr (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ra)
+        (literal  )
+        (simple-var-ref rb)
+        (literal  )
+        (simple-var-ref rr))))
+  )
+)
+(failWith
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (simple-var-ref message))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation syncSend ()))
+    (expression-stmt
+      (invocation asyncSendFlush ()))
+  )
+)
+(syncSend
+  (bb0 () ()
+    (named-worker a (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (checked-expr
+            (invocation failWith (
+              (literal a failed)))))
+        (expression-stmt
+          (checked-expr
+            (worker-sync-send-action r
+              (literal 1))))))
+    (named-worker b (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (return
+          (worker-sync-send-action r
+            (literal 2)))))
+    (named-worker r (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (record-type
+              (field a
+                (value-type int))
+              (field b
+                (value-type int)))) (expr
+            (checked-expr
+              (worker-multiple-receive-action a:a b:b)))))))
+    (var-def
+      (variable ra (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (var-def
+      (variable rb (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (var-def
+      (variable rr (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (single-wait-action
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ra)
+        (literal  )
+        (simple-var-ref rb)
+        (literal  )
+        (simple-var-ref rr))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation failWith (
+          (literal a failed)))))
+    (expression-stmt
+      (checked-expr
+        (worker-sync-send-action r
+          (literal 1))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (checked-expr
+        (invocation failWith (
+          (literal a failed)))))
+    (expression-stmt
+      (worker-async-send-action r
+        (literal 1)))
+    (expression-stmt
+      (checked-expr
+        (worker-flush-action r)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action r
+        (literal 2)))
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-flush-action r))))
+    (expression-stmt
+      (invocation io println (
+        (literal flush )
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref e)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref e)))
+          (literal nil)))))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-sync-send-action r
+        (literal 2)))
+  )
+)
+(worker r
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int)))) (expr
+        (checked-expr
+          (worker-multiple-receive-action a:a b:b)))))
+  )
+)
+(worker r
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int)))) (expr
+        (checked-expr
+          (worker-multiple-receive-action a:a b:b)))))
+  )
+)

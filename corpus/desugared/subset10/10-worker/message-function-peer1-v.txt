@@ -1,0 +1,112 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4))
+      (var-def
+        (variable $desugar$5 (expr
+          (lambda
+            (function $worker:main:$function$body () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$1)
+                    (literal 1))))
+                (var-def
+                  (variable y (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$4))))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref y))))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:main:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$6 (expr
+                    (invocation $desugar$5 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$1))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$4)))))
+                (return
+                  (simple-var-ref $desugar$6))))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (lambda
+            (function $worker:main:a$body () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$3))))))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$2)
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (literal 1)))))
+                (return
+                  (simple-var-ref x))))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (lambda
+            (function $worker:main:a () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$9 (expr
+                    (invocation $desugar$8 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$2))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$3)))))
+                (return
+                  (simple-var-ref $desugar$9))))))))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action
+          (invocation $desugar$7 ())))
+      (assignment
+        (simple-var-ref $desugar$4)
+        (start-action
+          (invocation $desugar$10 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$3))))))

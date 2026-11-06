@@ -1,0 +1,197 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition AErr
+    (error-type))
+  (type-definition BErr
+    (error-type))
+  (function failA (
+    (variable flag (type
+      (value-type boolean)))) (
+    (union-type
+      (user-defined-type AErr)
+      (value-type null)))
+    (block-function-body
+      (return
+        (ternary-expr
+          (simple-var-ref flag)
+          (error-constructor-expr
+            (user-defined-type AErr) (
+            (literal a failed)))
+          (literal <nil>)))))
+  (function failB (
+    (variable flag (type
+      (value-type boolean)))) (
+    (union-type
+      (user-defined-type BErr)
+      (value-type null)))
+    (block-function-body
+      (return
+        (ternary-expr
+          (simple-var-ref flag)
+          (error-constructor-expr
+            (user-defined-type BErr) (
+            (literal b failed)))
+          (literal <nil>)))))
+  (function receives (
+    (variable failing (type
+      (value-type boolean)))) (
+    (value-type string))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (user-defined-type AErr)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failA (
+                (simple-var-ref failing)))))
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 1)))))
+      (named-worker b (
+        (union-type
+          (user-defined-type BErr)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failB (
+                (simple-var-ref failing)))))
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 2)))))
+      (var-def
+        (variable x (type
+          (union-type
+            (value-type int)
+            (user-defined-type AErr))) (expr
+          (worker-receive-action a))))
+      (var-def
+        (variable r (type
+          (union-type
+            (record-type
+              (field b
+                (value-type int)))
+            (user-defined-type BErr))) (expr
+          (worker-multiple-receive-action b:b))))
+      (return
+        (binary-expr +
+          (binary-expr +
+            (group-expr
+              (ternary-expr
+                (type-test-expr is
+                  (simple-var-ref x)
+                  (user-defined-type AErr))
+                (invocation message expr:
+                  (simple-var-ref x) ())
+                (invocation toString expr:
+                  (simple-var-ref x) ())))
+            (literal  ))
+          (group-expr
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref r)
+                (user-defined-type BErr))
+              (invocation message expr:
+                (simple-var-ref r) ())
+              (invocation toString expr:
+                (simple-var-ref r) ())))))))
+  (function sends () (
+    (value-type boolean))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (user-defined-type AErr)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failA (
+                (literal false)))))
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (worker-receive-action function))))
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (worker-receive-action function))))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 1)))
+      (var-def
+        (variable flushed (type
+          (union-type
+            (user-defined-type AErr)
+            (value-type null))) (expr
+          (worker-flush-action a))))
+      (var-def
+        (variable sent (type
+          (union-type
+            (user-defined-type AErr)
+            (value-type null))) (expr
+          (worker-sync-send-action a
+            (literal 2)))))
+      (return
+        (binary-expr &&
+          (type-test-expr is
+            (simple-var-ref flushed)
+            (value-type null))
+          (type-test-expr is
+            (simple-var-ref sent)
+            (value-type null))))))
+  (function fromDefault (
+    (variable failing (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type string)
+      (user-defined-type BErr)))
+    (block-function-body
+      (named-worker a (
+        (value-type string))
+        (block-function-body
+          (var-def
+            (variable r (type
+              (union-type
+                (value-type int)
+                (user-defined-type BErr))) (expr
+              (worker-receive-action function))))
+          (return
+            (ternary-expr
+              (type-test-expr is
+                (simple-var-ref r)
+                (user-defined-type BErr))
+              (invocation message expr:
+                (simple-var-ref r) ())
+              (invocation toString expr:
+                (simple-var-ref r) ())))))
+      (expression-stmt
+        (checked-expr
+          (invocation failB (
+            (simple-var-ref failing)))))
+      (expression-stmt
+        (worker-async-send-action a
+          (literal 5)))
+      (return
+        (single-wait-action
+          (simple-var-ref a)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation receives (
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation receives (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sends ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation fromDefault (
+            (literal false)))))))))

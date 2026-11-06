@@ -1,0 +1,88 @@
+(boom
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal default panicked))))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation run ())))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref e)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref e)))
+          (literal done)))))
+    (var-def
+      (variable f (type
+        (union-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))
+          (value-type null))) (expr
+        (simple-var-ref pending))))
+    (type-test-expr is
+      (simple-var-ref f)
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int)))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable v (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref v))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(run
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable x (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 2)))))
+    (assignment
+      (simple-var-ref pending)
+      (simple-var-ref a))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 5)))
+    (expression-stmt
+      (invocation boom ()))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)

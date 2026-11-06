@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> message-send-value-error1-e.bal:21:6
+   |
+21 |     (1 + "x") -> a; // @error int can't be added to a string
+   |      ^^^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> message-send-value-error1-e.bal:26:10
+   |
+26 |         (1 + "x") ->> function; // @error int can't be added to a string
+   |          ^^^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> message-send-value-error1-e.bal:33:10
+   |
+33 |         (1 + "x") -> function; // @error int can't be added to a string
+   |          ^^^^^^^

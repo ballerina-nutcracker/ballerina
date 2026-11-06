@@ -1,0 +1,4 @@
+-- stdout --
+b panicked
+b panicked
+-- stderr --

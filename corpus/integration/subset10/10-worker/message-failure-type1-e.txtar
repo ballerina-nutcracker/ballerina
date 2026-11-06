@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got error|1
+  --> message-failure-type1-e.bal:27:13
+   |
+27 |     int _ = <- a; // @error the receive's type includes a's failure type
+   |             ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got nil|error
+  --> message-failure-type1-e.bal:43:12
+   |
+43 |     () _ = 1 ->> a; // @error the sync send's type includes a's failure type
+   |            ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected {| a: int, anydata... |}, got error|{| a: int, anydata... |}
+  --> message-failure-type1-e.bal:35:25
+   |
+35 |     record {int a;} _ = <- {a}; // @error the receive's type includes a's failure type
+   |                         ^^^^^^

@@ -1,0 +1,36 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable progress (type
+    (value-type int)) (expr
+    (literal 0)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker a (
+        (value-type null))
+        (block-function-body
+          (assignment
+            (simple-var-ref progress)
+            (literal 1))
+          (expression-stmt
+            (worker-async-send-action function
+              (literal <nil>)))
+          (assignment
+            (simple-var-ref progress)
+            (literal 2))
+          (expression-stmt
+            (worker-sync-send-action function
+              (literal <nil>)))))
+      (expression-stmt
+        (worker-receive-action a))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr >=
+            (simple-var-ref progress)
+            (literal 1)))))
+      (expression-stmt
+        (worker-receive-action a))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref progress)))))))

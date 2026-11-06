@@ -13,7 +13,24 @@
         (var-def
           (variable $desugar$1))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:A.init:$function () (
+                (value-type null))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (assignment
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal value))
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))))))
+        (var-def
+          (variable $desugar$4 (expr
             (lambda
               (function $worker:A.init:w () (
                 (value-type int))
@@ -26,14 +43,15 @@
         (assignment
           (simple-var-ref $desugar$1)
           (start-action
-            (invocation $desugar$2 ())))
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action
+            (invocation $desugar$4 ())))
         (expression-stmt
           (invocation lang.__internal openLatch (
             (simple-var-ref $desugar$0))))
-        (assignment
-          (index-based-access
-            (simple-var-ref self)
-            (literal value))
+        (return
           (single-wait-action
             (simple-var-ref $desugar$1))))))
   (class-definition B
@@ -48,7 +66,24 @@
         (var-def
           (variable $desugar$1))
         (var-def
-          (variable $desugar$2 (expr
+          (variable $desugar$2))
+        (var-def
+          (variable $desugar$3 (expr
+            (lambda
+              (function $worker:B.init:$function () (
+                (value-type null))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (assignment
+                    (index-based-access
+                      (simple-var-ref self)
+                      (literal value))
+                    (single-wait-action
+                      (simple-var-ref $desugar$2)))))))))
+        (var-def
+          (variable $desugar$4 (expr
             (lambda
               (function $worker:B.init:w () (
                 (value-type int))
@@ -61,14 +96,15 @@
         (assignment
           (simple-var-ref $desugar$1)
           (start-action
-            (invocation $desugar$2 ())))
+            (invocation $desugar$3 ())))
+        (assignment
+          (simple-var-ref $desugar$2)
+          (start-action
+            (invocation $desugar$4 ())))
         (expression-stmt
           (invocation lang.__internal openLatch (
             (simple-var-ref $desugar$0))))
-        (assignment
-          (index-based-access
-            (simple-var-ref self)
-            (literal value))
+        (return
           (single-wait-action
             (simple-var-ref $desugar$1))))))
   (function shadowed () (
@@ -80,7 +116,21 @@
       (var-def
         (variable $desugar$1))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:shadowed:$function () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (single-wait-action
+                    (simple-var-ref $desugar$2)))))))))
+      (var-def
+        (variable $desugar$4 (expr
           (lambda
             (function $worker:shadowed:w () (
               (value-type int))
@@ -93,7 +143,11 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$2 ())))
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))

@@ -1,0 +1,103 @@
+(Counter
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access base
+          (simple-var-ref self))
+        (simple-var-ref base))
+      (named-worker a (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (worker-receive-action function))))
+          (return
+            (binary-expr *
+              (simple-var-ref x)
+              (literal 2)))))
+      (expression-stmt
+        (worker-async-send-action a
+          (field-based-access base
+            (simple-var-ref self))))
+      (assignment
+        (field-based-access total
+          (simple-var-ref self))
+        (single-wait-action
+          (simple-var-ref a)))
+    )
+  )
+  (add
+    (bb0 () ()
+      (named-worker a (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (worker-receive-action function))))
+          (return
+            (binary-expr +
+              (simple-var-ref x)
+              (field-based-access total
+                (simple-var-ref self))))))
+      (expression-stmt
+        (worker-async-send-action a
+          (simple-var-ref n)))
+      (var-def
+        (variable r (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (assignment
+        (field-based-access total
+          (simple-var-ref self))
+        (simple-var-ref r))
+      (return
+        (simple-var-ref r))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new (
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access total
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add expr:
+          (simple-var-ref c) (
+          (literal 4))))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr +
+        (simple-var-ref x)
+        (field-based-access total
+          (simple-var-ref self))))
+  )
+)
