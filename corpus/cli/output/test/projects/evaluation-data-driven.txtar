@@ -1,0 +1,44 @@
+-- stdout --
+		[pass] testDataDrivenCrossesThreshold
+
+		    evaluation passed with an average pass rate of 0.5
+			
+
+		[fail] testDataDrivenBelowThreshold:
+
+		    evaluation failed with an average pass rate of 0.5
+			
+			    evaluation runs:
+
+				    run: 1
+
+					    entry: good
+					    message: passed
+
+					    entry: bad
+					    message: Assertion Failed!
+							 
+							expected: '999'
+							actual	: '9'
+
+				    run: 2
+
+					    entry: good
+					    message: passed
+
+					    entry: bad
+					    message: Assertion Failed!
+							 
+							expected: '999'
+							actual	: '9'
+
+
+		1 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

@@ -1,0 +1,17 @@
+-- stdout --
+	[fail] afterUnitGroupFails[after test group function for the test]:
+	    afterGroups failed
+		
+		
+		[pass] testInGroup
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

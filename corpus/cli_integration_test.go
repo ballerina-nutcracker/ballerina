@@ -77,6 +77,9 @@ func TestBalCLI(t *testing.T) {
 		{"BalRunCorpus", testBalRunCorpus},
 		{"BalRunWorkspaceCorpus", testBalRunWorkspaceCorpus},
 		{"BalRunTargetDir", testBalRunTargetDir},
+		{"BalTestCorpus", testBalTestCorpus},
+		{"BalTestFlagsCorpus", testBalTestFlagsCorpus},
+		{"BalTestStepsCorpus", testBalTestStepsCorpus},
 		{"BalPackCorpus", testBalPackCorpus},
 		{"BalPackCorpus_IncludeField", testBalPackCorpus_IncludeField},
 		{"BalPackCorpus_InvalidIncludePattern", testBalPackCorpus_InvalidIncludePattern},
@@ -262,7 +265,49 @@ func testBalRunWorkspaceCorpus(t *testing.T, cli *balCLI) {
 	})
 }
 
-// testBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
+// TestBalRunCompilerPluginManifestCorpus runs member pkga of the
+// compiler-plugin workspace once per manifest in
+// testdata/run/compiler-plugin-manifests, installed as the CompilerPlugin.toml
+// of the imported member pkgb, and compares the result with the golden of the
+// same name in output/run/compiler-plugin-manifests. Both modules of pkga
+// import pkgb, so each golden also shows a provider error is reported once.
+func TestBalRunCompilerPluginManifestCorpus(t *testing.T) {
+	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
+		t.Skip("skipping CLI integration test on WASM (js/wasm)")
+	}
+	cli := newBalCLI(t)
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+	testDataRoot := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "run", "compiler-plugin-manifests")
+	workspace := filepath.Join(testDataRoot, "workspaces", "compiler-plugin")
+
+	manifests, err := filepath.Glob(filepath.Join(testDataRoot, "compiler-plugin-manifests", "*.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(manifests) == 0 {
+		t.Fatal("no compiler plugin manifests found")
+	}
+	for _, manifest := range manifests {
+		name := strings.TrimSuffix(filepath.Base(manifest), ".toml")
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			sandbox := t.TempDir()
+			copyDir(t, workspace, sandbox)
+			content, err := os.ReadFile(manifest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(sandbox, "pkgb", "CompilerPlugin.toml"), content, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			assertBalRunMatchesTxtar(t, balBin, repoRoot, coverDir, filepath.Join(sandbox, "pkga"),
+				filepath.Join(outputsRoot, name+".txtar"))
+		})
+	}
+}
+
+// TestBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
 // doesn't break execution. Unlike build/pack, run's --target-dir only
 // produces a visible artifact (<dir>/bin/bal) when the package has a
 // genuine third-party native-Go .bala dependency — embedded stdlibs like
@@ -1729,12 +1774,12 @@ func testBalNewCorpus(t *testing.T, cli *balCLI) {
 
 	t.Run("package-with-template", func(t *testing.T) {
 		for _, tc := range []struct {
-			template, sourceFile, sourceContains string
+			template, sourceFile, sourceContains, testFile, testContains string
 		}{
-			{"default", "main.bal", "public function main()"},
-			{"main", "main.bal", "public function main()"},
-			{"service", "service.bal", "service / on new http:Listener"},
-			{"lib", "lib.bal", "public function hello(string? name) returns string"},
+			{"default", "main.bal", "public function main()", "main_test.bal", "@test:Config {}"},
+			{"main", "main.bal", "public function main()", "main_test.bal", "@test:Config {}"},
+			{"service", "service.bal", "service / on new http:Listener", "service_test.bal", "@test:Config {}"},
+			{"lib", "lib.bal", "public function hello(string? name) returns string", "lib_test.bal", "test:assertEquals"},
 		} {
 			t.Run(tc.template, func(t *testing.T) {
 				t.Parallel()
@@ -1748,6 +1793,19 @@ func testBalNewCorpus(t *testing.T, cli *balCLI) {
 					t.Errorf("%s missing %q:\n%s", tc.sourceFile, tc.sourceContains, sourceContent)
 				}
 				assertOnlyTemplateSourceExists(t, pkgPath, tc.sourceFile)
+
+				// The sample test file scaffolded alongside the source file
+				// (see cli/templates/{main,lib,service}_test.bal) — matches
+				// the chosen template, imports ballerina/test, and is the
+				// only one of the three test templates present.
+				testContent := readFileT(t, filepath.Join(pkgPath, "tests", tc.testFile))
+				if !strings.Contains(testContent, tc.testContains) {
+					t.Errorf("%s missing %q:\n%s", tc.testFile, tc.testContains, testContent)
+				}
+				if !strings.Contains(testContent, "import ballerina/test;") {
+					t.Errorf("%s missing 'import ballerina/test;':\n%s", tc.testFile, testContent)
+				}
+				assertOnlyTemplateTestExists(t, pkgPath, tc.testFile)
 			})
 		}
 	})
@@ -2117,8 +2175,25 @@ func assertNewPackageStructure(t *testing.T, projectPath string) {
 	if _, err := os.Stat(filepath.Join(projectPath, ".gitignore")); os.IsNotExist(err) {
 		t.Errorf(".gitignore does not exist: %s", projectPath)
 	}
+	if _, err := os.Stat(filepath.Join(projectPath, "tests", "main_test.bal")); os.IsNotExist(err) {
+		t.Errorf("tests/main_test.bal does not exist: %s", projectPath)
+	}
 	if _, err := os.Stat(filepath.Join(projectPath, "Package.md")); err == nil {
 		t.Errorf("Package.md should not exist for default template: %s", projectPath)
+	}
+}
+
+// assertOnlyTemplateTestExists verifies that of main_test.bal/lib_test.bal/
+// service_test.bal under dir/tests, only wantFile exists.
+func assertOnlyTemplateTestExists(t *testing.T, dir, wantFile string) {
+	t.Helper()
+	for _, other := range []string{"main_test.bal", "lib_test.bal", "service_test.bal"} {
+		if other == wantFile {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(dir, "tests", other)); err == nil {
+			t.Errorf("unexpected test file %s exists alongside %s", other, wantFile)
+		}
 	}
 }
 
@@ -5529,27 +5604,33 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 	t.Helper()
 	t.Run(strings.ReplaceAll(outputKey, string(filepath.Separator), "_"), func(t *testing.T) {
 		t.Parallel()
-		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", runPath)
-		expectedPath := filepath.Join(outputsRoot, outputKey+".txtar")
-		actualOutput := normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
-		actualError := normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
-		actualExitCode := strconv.Itoa(exitCode)
-
-		expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
-		if err != nil {
-			t.Fatalf("failed to parse txtar file %s: %v", expectedPath, err)
-		}
-		if expectedOutput != actualOutput || expectedError != actualError || expectedExitCode != actualExitCode {
-			t.Fatalf(
-				"unexpected output for %s\nexpected stdout:\n%s\nactual stdout:\n%s\nexpected stderr:\n%s\nactual stderr:\n%s\nexpected exitcode: %s\nactual exitcode: %s",
-				runPath,
-				expectedOutput,
-				actualOutput,
-				expectedError,
-				actualError,
-				expectedExitCode,
-				actualExitCode,
-			)
-		}
+		assertBalRunMatchesTxtar(t, balBin, repoRoot, coverDir, runPath, filepath.Join(outputsRoot, outputKey+".txtar"))
 	})
+}
+
+// assertBalRunMatchesTxtar runs `bal run runPath` and requires its stdout,
+// stderr and exit code to equal those of the txtar at expectedPath.
+func assertBalRunMatchesTxtar(t *testing.T, balBin, repoRoot, coverDir, runPath, expectedPath string) {
+	t.Helper()
+	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", runPath)
+	actualOutput := normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	actualError := normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
+	actualExitCode := strconv.Itoa(exitCode)
+
+	expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
+	if err != nil {
+		t.Fatalf("failed to parse txtar file %s: %v", expectedPath, err)
+	}
+	if expectedOutput != actualOutput || expectedError != actualError || expectedExitCode != actualExitCode {
+		t.Fatalf(
+			"unexpected output for %s\nexpected stdout:\n%s\nactual stdout:\n%s\nexpected stderr:\n%s\nactual stderr:\n%s\nexpected exitcode: %s\nactual exitcode: %s",
+			runPath,
+			expectedOutput,
+			actualOutput,
+			expectedError,
+			actualError,
+			expectedExitCode,
+			actualExitCode,
+		)
+	}
 }

@@ -23,8 +23,10 @@ import (
 )
 
 type SyntaxTree struct {
-	RootNode     Node
-	filePath     string
+	RootNode Node
+	filePath string
+	// IsTest is true if parsed from a module's tests/ directory.
+	IsTest       bool
 	textDocument text.TextDocument
 	// lineRange    LineRange
 }

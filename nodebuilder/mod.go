@@ -69,6 +69,9 @@ func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLan
 		case *ast.BLangService:
 			pkg.Services = append(pkg.Services, node)
 		case *ast.BLangFunction:
+			if compilationUnit.IsTest {
+				node.SetTestable()
+			}
 			if node.Name.GetValue() == "init" {
 				pkg.InitFunction = node
 			} else {

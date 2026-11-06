@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "skipaftereachfails"
+version = "0.1.0"

@@ -38,6 +38,15 @@ const (
 
 	// LibReadme is the README.md template file name for library packages.
 	LibReadme = "lib-readme.md"
+
+	// MainTestBal is the tests/main_test.bal template file name for the default/main template.
+	MainTestBal = "main_test.bal"
+
+	// LibTestBal is the tests/lib_test.bal template file name for library packages.
+	LibTestBal = "lib_test.bal"
+
+	// ServiceTestBal is the tests/service_test.bal template file name for service packages.
+	ServiceTestBal = "service_test.bal"
 )
 
 // Template placeholder constants for string replacement.
@@ -50,6 +59,7 @@ const (
 )
 
 //go:embed main.bal lib.bal service.bal manifest-app.toml gitignore lib-readme.md
+//go:embed main_test.bal lib_test.bal service_test.bal
 var FS embed.FS
 
 // ReadTemplate reads a template file and returns its content as a string.

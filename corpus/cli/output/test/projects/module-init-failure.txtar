@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+error: divide by zero
+        at testorg/initfailmod:init(main_test.bal:3)
+-- exitcode --
+1

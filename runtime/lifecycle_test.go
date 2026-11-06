@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -98,6 +99,7 @@ service on l2 {
 `
 
 func TestLifecycleGracefulStopSignal(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
 
@@ -114,6 +116,7 @@ func TestLifecycleGracefulStopSignal(t *testing.T) {
 }
 
 func TestLifecycleImmediateStopSignal(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
 
@@ -129,7 +132,44 @@ func TestLifecycleImmediateStopSignal(t *testing.T) {
 	}
 }
 
+// TestRequestGracefulStopConcurrentCallsDoNotEscalate guards against a
+// check-then-transition race in RequestGracefulStop: if the StateListening
+// check and the transition to StateGracefulStopping aren't atomic, two
+// concurrent callers can both observe StateListening, and the second one's
+// transition then lands on the StateGracefulStopping->StateGracefulStopping
+// self-loop, which the lifecycle table maps to immediateStopAction — silently
+// escalating a graceful stop into an immediate one instead of no-op'ing.
+func TestRequestGracefulStopConcurrentCallsDoNotEscalate(t *testing.T) {
+	t.Parallel()
+	pal := newLifecycleTestPal(t)
+	rt := newLifecycleTestRuntime(t, lifecycleTestSource, pal)
+
+	rt.Listen()
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			rt.RequestGracefulStop()
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	code := readExitStatus(t, rt)
+	if code != 0 {
+		t.Fatalf("expected successful exit code 0 from concurrent RequestGracefulStop calls, got %d", code)
+	}
+	if got, want := pal.Stdout(), "start:one\nstart:two\ngraceful:one\ngraceful:two\n"; got != want {
+		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
+	}
+}
+
 func TestLifecycleInitFailureStopsRuntime(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt, err := initLifecycleTestRuntime(t, lifecycleTestSource+`
 
@@ -153,6 +193,7 @@ public function main() returns error? {
 }
 
 func TestLifecycleOnGracefulStopHandlers(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -184,6 +225,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopWithoutListenersExitStatus(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -205,6 +247,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopWithoutListenersHandlerError(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -227,6 +270,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopWithoutListenersAfterInitFailure(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt, err := initLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -252,6 +296,7 @@ public function main() returns error? {
 }
 
 func TestLifecycleOnGracefulStopExternHandler(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt, err := initLifecycleTestRuntimeWithExterns(t, `
 import ballerina/lang.runtime;
@@ -285,6 +330,7 @@ public function main() {
 }
 
 func TestLifecycleOnGracefulStopAfterListenReportsCurrentState(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;
@@ -313,6 +359,7 @@ public function registerAfterListen() {
 }
 
 func TestLifecycleOnGracefulStopAfterInitializationFailsFast(t *testing.T) {
+	t.Parallel()
 	pal := newLifecycleTestPal(t)
 	rt := newLifecycleTestRuntime(t, `
 import ballerina/lang.runtime;

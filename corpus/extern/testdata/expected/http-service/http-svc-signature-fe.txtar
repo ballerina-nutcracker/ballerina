@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: http resource method parameters other than http:Request
+  --> http-svc-signature-fe.bal:40:33
+   |
+40 |     resource function get query(int value) returns string { // @error
+   |                                 ^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: http resource method parameters other than http:Request
+  --> http-svc-signature-fe.bal:44:58
+   |
+44 |     resource function post withRequest(http:Request req, string name) { // @error
+   |                                                          ^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: http resource method parameters other than http:Request
+  --> http-svc-signature-fe.bal:55:37
+   |
+55 |     resource function patch checked(string value) { // @error
+   |                                     ^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: http resource method rest parameters
+  --> http-svc-signature-fe.bal:49:32
+   |
+49 |     resource function put rest(http:Request... requests) { // @error
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^

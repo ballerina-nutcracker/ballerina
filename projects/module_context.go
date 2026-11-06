@@ -60,19 +60,22 @@ type moduleContext struct {
 	bPackageSymbol  any // TODO(S3): BPackageSymbol once compiler symbol types are migrated
 	compilerCtx     *context.CompilerContext
 	importedSymbols map[string]model.ExportedSymbolSpace
+	explicitImports []moduleImport
+	cfg             *semantics.PackageCFG
 	birPkg          *bir.BIRPackage
 }
 
 // newModuleContext creates a moduleContext from ModuleConfig.
 func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxTree bool) *moduleContext {
-	diagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor())
+	srcDiagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor(), false)
+	testDiagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor(), true)
 
 	// Build source document context map
 	srcDocContextMap := make(map[DocumentID]*documentContext)
 	srcDocIDs := make([]DocumentID, 0, len(moduleConfig.SourceDocs()))
 	for _, srcDocConfig := range moduleConfig.SourceDocs() {
 		docID := srcDocConfig.DocumentID()
-		srcDocContextMap[docID] = newDocumentContext(srcDocConfig, disableSyntaxTree, diagKeyPrefix)
+		srcDocContextMap[docID] = newDocumentContext(srcDocConfig, disableSyntaxTree, srcDiagKeyPrefix)
 		srcDocIDs = append(srcDocIDs, docID)
 	}
 
@@ -81,7 +84,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 	testSrcDocIDs := make([]DocumentID, 0, len(moduleConfig.TestSourceDocs()))
 	for _, testDocConfig := range moduleConfig.TestSourceDocs() {
 		docID := testDocConfig.DocumentID()
-		testDocContextMap[docID] = newDocumentContext(testDocConfig, disableSyntaxTree, diagKeyPrefix)
+		testDocContextMap[docID] = newDocumentContext(testDocConfig, disableSyntaxTree, testDiagKeyPrefix)
 		testSrcDocIDs = append(testSrcDocIDs, docID)
 	}
 
@@ -109,7 +112,14 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 //   - workspace member:   "<member-dir>/[modules/<moduleNamePart>/]"
 //   - build named module: "modules/<moduleNamePart>/"
 //   - default module:     ""
-func buildDiagKeyPrefix(project Project, md ModuleDescriptor) string {
+//
+// buildDiagKeyPrefix builds the prefix documentContext.registrationKey()
+// combines with a document's bare name. isTest adds a "tests/" segment so a
+// test document's key (and hence the path printDiagnostic/printSourceSnippet
+// read the file back from) matches its real on-disk location — without it, a
+// diagnostic in tests/a_test.bal printed as the bare "a_test.bal", and
+// snippet rendering silently failed trying to read that nonexistent path.
+func buildDiagKeyPrefix(project Project, md ModuleDescriptor, isTest bool) string {
 	if project.Kind() == ProjectKindBala {
 		return md.Org().Value() + "/" + md.Name().String() + "/" + md.Version().String() + "::"
 	}
@@ -125,6 +135,9 @@ func buildDiagKeyPrefix(project Project, md ModuleDescriptor) string {
 	}
 	if !md.Name().IsDefaultModuleName() {
 		prefix += ModulesDir + "/" + md.Name().ModuleNamePart() + "/"
+	}
+	if isTest {
+		prefix += "tests/"
 	}
 	return prefix
 }
@@ -238,13 +251,24 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 
 	compilerCtx := moduleCtx.compilerCtx
 
-	// Parse all source and test documents in parallel.
+	// Parse all source and test documents in parallel. Test documents only
+	// flow into the compiled package (symbol/type resolution, BIR, and hence
+	// test discovery — see lib/stdlibs/ballerina/test's compilerplugin
+	// package) when SkipTests is explicitly disabled, i.e. for `bal test`;
+	// `bal build`/`bal run` leave it at its default (true) and never compile
+	// test sources.
+	includeTestTrees := !moduleCtx.project.BuildOptions().SkipTests()
+	// A single-file project has no tests/ dir — its one file plays both
+	// roles, so its functions must be testable too.
+	treatSourceAsTestable := includeTestTrees && moduleCtx.project.Kind() == ProjectKindSingleFile
 	syntaxTrees := parseDocumentsParallel(
 		compilerCtx,
 		moduleCtx.srcDocIDs,
 		moduleCtx.srcDocContextMap,
 		moduleCtx.testSrcDocIDs,
 		moduleCtx.testDocContextMap,
+		includeTestTrees,
+		treatSourceAsTestable,
 	)
 
 	if compilerCtx.HasDiagnostics() || len(syntaxTrees) == 0 {
@@ -255,8 +279,9 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	compilerCtx.StartStage(context.StageASTBuild)
 	compilationOptions := moduleCtx.project.BuildOptions().CompilationOptions()
 	compilationUnits := buildCompilationUnits(compilerCtx, syntaxTrees, compilationOptions)
+	moduleCtx.explicitImports = collectExplicitImports(compilationUnits, moduleCtx.moduleDescriptor.Org().Value())
 
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -315,9 +340,8 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 	compilerCtx.EndStage()
 }
 
-// analyzeAndDesugar performs CFG creation, semantic analysis, CFG analysis, and desugaring.
-// This phase can run in parallel across modules after all modules complete Phase 1.
-func analyzeAndDesugar(moduleCtx *moduleContext) {
+// analyzeAndCreateCFG performs local type resolution, semantic analysis, and CFG analysis.
+func analyzeAndCreateCFG(moduleCtx *moduleContext) {
 	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return
 	}
@@ -326,7 +350,7 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx := moduleCtx.compilerCtx
 	compilationOptions := moduleCtx.project.BuildOptions().CompilationOptions()
 
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -334,14 +358,14 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx.StartStage(context.StageLocalNodeResolution)
 	semantics.ResolvePrivateNodesTypes(compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	compilerCtx.StartStage(context.StageSemanticAnalysis)
 	semantics.AnalyzeSemantics(moduleCtx.compilerCtx, pkgNode, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -349,7 +373,7 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx.StartStage(context.StageCFGCreation)
 	cfg := semantics.CreateControlFlowGraph(compilerCtx, pkgNode)
 	compilerCtx.EndStage()
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -365,7 +389,7 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 		fmt.Fprintln(os.Stderr, "===================END CFG===================")
 	}
 
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
@@ -373,29 +397,71 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 	compilerCtx.StartStage(context.StageCFGAnalysis)
 	semantics.AnalyzeCFG(moduleCtx.compilerCtx, pkgNode, cfg)
 	compilerCtx.EndStage()
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
+	moduleCtx.cfg = cfg
+}
 
+func desugarModule(moduleCtx *moduleContext) {
+	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil || moduleCtx.cfg == nil {
+		return
+	}
+	compilerCtx := moduleCtx.compilerCtx
 	// Desugar package "lowering" AST to an AST that BIR gen can handle.
 	compilerCtx.StartStage(context.StageDesugaring)
 	moduleCtx.bLangPkg = desugar.DesugarPackage(moduleCtx.compilerCtx, moduleCtx.bLangPkg, moduleCtx.importedSymbols)
 	compilerCtx.EndStage()
-	if compilerCtx.HasDiagnostics() {
+	if compilerCtx.HasErrors() {
 		return
 	}
 
 	moduleCtx.compilationState = moduleCompilationStateCompiled
 }
 
-// parseDocumentsParallel parses source and test documents in parallel.
-// Returns syntax trees from source documents only (test docs are parsed but not returned).
+type moduleImport struct {
+	org        string
+	moduleName string
+	position   diagnostics.Location
+}
+
+func collectExplicitImports(compilationUnits []*ast.BLangCompilationUnit, defaultOrg string) []moduleImport {
+	var imports []moduleImport
+	for _, unit := range compilationUnits {
+		for _, node := range unit.GetTopLevelNodes() {
+			importNode, ok := node.(*ast.BLangImportPackage)
+			if !ok {
+				continue
+			}
+			org := defaultOrg
+			if importNode.OrgName != nil && importNode.OrgName.Value != "" {
+				org = importNode.OrgName.Value
+			}
+			parts := make([]string, len(importNode.PkgNameComps))
+			for i := range importNode.PkgNameComps {
+				parts[i] = importNode.PkgNameComps[i].Value
+			}
+			imports = append(imports, moduleImport{
+				org:        org,
+				moduleName: strings.Join(parts, "."),
+				position:   importNode.GetPosition(),
+			})
+		}
+	}
+	return imports
+}
+
+// parseDocumentsParallel parses source and test documents in parallel,
+// returning test trees too only when includeTestTrees is set (otherwise
+// test docs are still parsed for diagnostics, but their trees are dropped).
 func parseDocumentsParallel(
 	compilerCtx *context.CompilerContext,
 	srcDocIDs []DocumentID,
 	srcDocContextMap map[DocumentID]*documentContext,
 	testDocIDs []DocumentID,
 	testDocContextMap map[DocumentID]*documentContext,
+	includeTestTrees bool,
+	treatSourceAsTestable bool,
 ) []*st.SyntaxTree {
 	var (
 		mu          sync.Mutex
@@ -415,6 +481,7 @@ func parseDocumentsParallel(
 			defer wg.Done()
 			st := dc.parseWithStats(compilerCtx)
 			if st != nil {
+				st.IsTest = treatSourceAsTestable
 				mu.Lock()
 				syntaxTrees = append(syntaxTrees, st)
 				mu.Unlock()
@@ -422,7 +489,7 @@ func parseDocumentsParallel(
 		}(docCtx)
 	}
 
-	// Parse test documents - no syntax trees collected
+	// Parse test documents - only collect syntax trees if requested
 	for _, docID := range testDocIDs {
 		docCtx := testDocContextMap[docID]
 		if docCtx == nil {
@@ -432,7 +499,13 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			dc.parseWithStats(compilerCtx)
+			st := dc.parseWithStats(compilerCtx)
+			if includeTestTrees && st != nil {
+				st.IsTest = true
+				mu.Lock()
+				syntaxTrees = append(syntaxTrees, st)
+				mu.Unlock()
+			}
 		}(docCtx)
 	}
 
@@ -459,6 +532,7 @@ func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*st.Syntax
 		} else {
 			cu = nodebuilder.GetCompilationUnit(cx, st)
 		}
+		cu.IsTest = st.IsTest
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
 		}

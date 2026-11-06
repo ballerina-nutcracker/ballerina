@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: beforeFuncNonExist
+ --> tests/main_test.bal:4:13
+  |
+4 |     before: beforeFuncNonExist
+  |             ^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

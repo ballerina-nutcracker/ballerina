@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "dependson"
+version = "0.1.0"

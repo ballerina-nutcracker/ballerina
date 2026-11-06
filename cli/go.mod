@@ -13,6 +13,8 @@ require (
 	github.com/ballerina-nutcracker/ballerina/projects v0.7.0
 	github.com/ballerina-nutcracker/ballerina/runtime v0.7.0
 	github.com/ballerina-nutcracker/ballerina/semtypes v0.7.0
+	github.com/ballerina-nutcracker/ballerina/testplan v0.7.0
+	github.com/ballerina-nutcracker/ballerina/testrunner v0.7.0
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.43.0

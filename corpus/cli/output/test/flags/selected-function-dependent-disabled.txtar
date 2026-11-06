@@ -1,0 +1,6 @@
+-- stdout --
+test "testDependentDisabledFunc" depends on function "testDisabledFunc", but it is either disabled or not included
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1
