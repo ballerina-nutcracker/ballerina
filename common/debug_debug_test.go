@@ -20,15 +20,35 @@ package common
 
 import (
 	"bytes"
+	"io"
 	"strings"
 	"sync"
 	"testing"
 )
 
+func activeDebugFlags() uint16 {
+	debugMu.RLock()
+	defer debugMu.RUnlock()
+	if debugSuppressionDepth != 0 {
+		return 0
+	}
+	return debugFlags
+}
+
+func activeDebugWriter() io.Writer {
+	debugMu.RLock()
+	defer debugMu.RUnlock()
+	return debugWriter
+}
+
+func debugEnabled(flag uint16) bool {
+	return activeDebugFlags()&flag != 0
+}
+
 // Corpus tests cannot control overlapping debug scopes or recover their Go panics.
 func TestWithSuppressedDebugOverlapping(t *testing.T) {
 	// Debug configuration is global, so this test must not run in parallel.
-	flags, writer := DebugFlags(), DebugWriter()
+	flags, writer := activeDebugFlags(), activeDebugWriter()
 	t.Cleanup(func() { InitDebug(flags, writer) })
 	var output bytes.Buffer
 	InitDebug(DUMP_TOKENS, &output)
@@ -42,7 +62,7 @@ func TestWithSuppressedDebugOverlapping(t *testing.T) {
 			close(firstReady)
 			<-finishFirst
 			WithSuppressedDebug(func() {
-				nestedFlags <- DebugFlags()
+				nestedFlags <- activeDebugFlags()
 				panic("suppressed panic")
 			})
 		})
@@ -60,8 +80,8 @@ func TestWithSuppressedDebugOverlapping(t *testing.T) {
 	<-secondReady
 	close(finishFirst)
 	recovered := <-firstDone
-	flagsWhileSecondActive := DebugFlags()
-	enabledWhileSecondActive := DebugEnabled(DUMP_TOKENS)
+	flagsWhileSecondActive := activeDebugFlags()
+	enabledWhileSecondActive := debugEnabled(DUMP_TOKENS)
 	calledWhileSecondActive := false
 	DebugWriteLazy(DUMP_TOKENS, func() string {
 		calledWhileSecondActive = true
@@ -79,7 +99,7 @@ func TestWithSuppressedDebugOverlapping(t *testing.T) {
 	if flagsWhileSecondActive != 0 || enabledWhileSecondActive || calledWhileSecondActive {
 		t.Error("debug output became enabled while the second suppression was active")
 	}
-	if got := DebugFlags(); got != DUMP_TOKENS {
+	if got := activeDebugFlags(); got != DUMP_TOKENS {
 		t.Errorf("restored flags = %d, want %d", got, DUMP_TOKENS)
 	}
 	DebugWriteLazy(DUMP_TOKENS, func() string { return "restored" })
@@ -91,7 +111,7 @@ func TestWithSuppressedDebugOverlapping(t *testing.T) {
 // Corpus tests cannot supply concurrent Go writers or reentrant debug callbacks.
 func TestDebugWriteLazyConcurrent(t *testing.T) {
 	// Debug configuration is global, so this test must not run in parallel.
-	flags, writer := DebugFlags(), DebugWriter()
+	flags, writer := activeDebugFlags(), activeDebugWriter()
 	t.Cleanup(func() { InitDebug(flags, writer) })
 	var output bytes.Buffer
 	InitDebug(DUMP_ST, &output)

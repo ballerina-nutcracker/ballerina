@@ -23,9 +23,9 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 )
 
-// NumericConvertToInt converts a numeric BalValue (int64, float64, or *decimal.Decimal)
+// numericConvertToInt converts a numeric BalValue (int64, float64, or *decimal.Decimal)
 // to int64 using Ballerina's NumericConvert rules: float/decimal are rounded to nearest even.
-func NumericConvertToInt(value BalValue) (int64, error) {
+func numericConvertToInt(value BalValue) (int64, error) {
 	switch v := value.(type) {
 	case int64:
 		return v, nil
@@ -50,9 +50,9 @@ func NumericConvertToInt(value BalValue) (int64, error) {
 	}
 }
 
-// NumericConvertToFloat converts a numeric BalValue (int64, float64, or *decimal.Decimal)
+// numericConvertToFloat converts a numeric BalValue (int64, float64, or *decimal.Decimal)
 // to float64 using Ballerina's NumericConvert rules.
-func NumericConvertToFloat(value BalValue) (float64, error) {
+func numericConvertToFloat(value BalValue) (float64, error) {
 	switch v := value.(type) {
 	case int64:
 		return float64(v), nil
@@ -65,10 +65,10 @@ func NumericConvertToFloat(value BalValue) (float64, error) {
 	}
 }
 
-// NumericConvertToDecimal converts a numeric BalValue (int64, float64, or *decimal.Decimal)
+// numericConvertToDecimal converts a numeric BalValue (int64, float64, or *decimal.Decimal)
 // to *decimal.Decimal using Ballerina's NumericConvert rules.
 // Non-finite floats (NaN, ±Inf) are rejected.
-func NumericConvertToDecimal(value BalValue) (*decimal.Decimal, error) {
+func numericConvertToDecimal(value BalValue) (*decimal.Decimal, error) {
 	switch v := value.(type) {
 	case int64:
 		return decimal.FromInt64(v), nil

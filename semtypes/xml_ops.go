@@ -24,11 +24,6 @@ var (
 	_             basicTypeOps = &xmlOps{}
 )
 
-func newXmlOps() xmlOps {
-	this := xmlOps{}
-	return this
-}
-
 func (x *xmlOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	v1 := d1.(*xmlSubtype)
 	v2 := d2.(*xmlSubtype)

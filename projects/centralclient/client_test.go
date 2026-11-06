@@ -28,7 +28,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ballerina-nutcracker/ballerina/common/bfs"
+	"github.com/ballerina-nutcracker/ballerina/test_util/memfs"
 
 	"golang.org/x/tools/txtar"
 )
@@ -96,7 +96,7 @@ func TestPullPackageSuccessWithDeprecation(t *testing.T) {
 	mockClient := newDeprecatedPackageMockClient(balaContent, expectedBalaFileName)
 	client := newTestCentralAPIClient(mockClient)
 
-	memFS := bfs.NewMemFS()
+	memFS := memfs.New()
 	clientContext := ClientContext{IsBuild: false}
 
 	err = client.PullPackage("wso2", "sf", "1.3.5", memFS,
@@ -137,7 +137,7 @@ func TestPullPackageConnectionResetRetry(t *testing.T) {
 	mockClient := newRetryMockClient(balaContent, expectedBalaFileName, &attemptCount, &downloadAttempts)
 	client := newTestCentralAPIClient(mockClient)
 
-	memFS := bfs.NewMemFS()
+	memFS := memfs.New()
 	clientContext := ClientContext{IsBuild: false}
 
 	err = client.PullPackage("foo", "sf", "1.3.5", memFS,
@@ -301,7 +301,7 @@ func createGetTriggerRunner(args []string) TestRunner {
 
 func createPullPackageRunner(args []string) TestRunner {
 	return func(client CentralAPIClient) (string, string) {
-		memFS := bfs.NewMemFS()
+		memFS := memfs.New()
 		clientContext := ClientContext{IsBuild: false}
 		err := client.PullPackage(args[0], args[1], args[2], memFS, args[3], args[4], args[5], clientContext)
 		if err != nil {

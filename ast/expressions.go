@@ -81,14 +81,14 @@ type Channel struct {
 }
 
 func (c *Channel) WorkerPairId() string {
-	return WorkerPairId(c.Sender, c.Receiver)
+	return workerPairId(c.Sender, c.Receiver)
 }
 
 func (c *Channel) ChannelId() string {
 	return c.Sender + "->" + c.Receiver + ":" + strconv.Itoa(c.EventIndex)
 }
 
-func WorkerPairId(sender, receiver string) string {
+func workerPairId(sender, receiver string) string {
 	return sender + "->" + receiver
 }
 

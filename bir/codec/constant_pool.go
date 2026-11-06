@@ -60,7 +60,7 @@ type ConstantPool struct {
 	entryMap map[string]int
 }
 
-func NewConstantPool() *ConstantPool {
+func newConstantPool() *ConstantPool {
 	return &ConstantPool{
 		entries:  make([]CPEntry, 0),
 		entryMap: make(map[string]int),

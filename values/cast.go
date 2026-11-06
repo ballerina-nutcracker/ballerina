@@ -31,7 +31,7 @@ func CastValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.Sem
 		return value, nil
 	}
 
-	converted, err := ConvertNumericValue(typeCtx, value, targetType)
+	converted, err := convertNumericValue(typeCtx, value, targetType)
 	if err != nil {
 		return nil, err
 	}
@@ -41,12 +41,12 @@ func CastValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.Sem
 	return converted, nil
 }
 
-// ConvertNumericValue performs the numeric conversion behind the `<Type>` cast
+// convertNumericValue performs the numeric conversion behind the `<Type>` cast
 // operator, sharing the same NumericConvertTo* rules used by cloneWithType and
 // fromJsonWithType. Any conversion failure is reported as a bad-type-cast error.
 // Only a numeric value converts to a target that also admits non-numeric types,
 // such as `int?`.
-func ConvertNumericValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, error) {
+func convertNumericValue(typeCtx semtypes.Context, value BalValue, targetType semtypes.SemType) (BalValue, error) {
 	numericType := semtypes.Intersect(targetType, semtypes.Number)
 	switch {
 	case semtypes.IsEmpty(typeCtx, numericType):
@@ -54,19 +54,19 @@ func ConvertNumericValue(typeCtx semtypes.Context, value BalValue, targetType se
 	case !isNumericValue(value) && !semtypes.IsSubtype(typeCtx, targetType, semtypes.Number):
 		return nil, ErrBadTypeCast
 	case semtypes.IsSubtype(typeCtx, numericType, semtypes.Int):
-		n, err := NumericConvertToInt(value)
+		n, err := numericConvertToInt(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return n, nil
 	case semtypes.IsSubtype(typeCtx, numericType, semtypes.Float):
-		f, err := NumericConvertToFloat(value)
+		f, err := numericConvertToFloat(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}
 		return f, nil
 	case semtypes.IsSubtype(typeCtx, numericType, semtypes.Decimal):
-		d, err := NumericConvertToDecimal(value)
+		d, err := numericConvertToDecimal(value)
 		if err != nil {
 			return nil, fmt.Errorf("bad type cast: %w", err)
 		}

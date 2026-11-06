@@ -21,11 +21,6 @@ type basicTypeOpsPanicImpl struct {
 
 var _ basicTypeOps = &basicTypeOpsPanicImpl{}
 
-func newBasicTypeOpsPanicImpl() basicTypeOpsPanicImpl {
-	this := basicTypeOpsPanicImpl{}
-	return this
-}
-
 func (b *basicTypeOpsPanicImpl) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	panic("Binary operation should not be called")
 }

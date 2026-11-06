@@ -25,25 +25,25 @@ import (
 func TestCompareASpecialValues(t *testing.T) {
 	nan := math.NaN()
 
-	assertCompareResult(t, CompareA(int64(2), nil), CmpLT, "CompareA(2,())")
-	assertCompareResult(t, CompareA(nil, int64(2)), CmpGT, "CompareA((),2)")
-	assertCompareResult(t, CompareA(float64(2), nan), CmpLT, "CompareA(2.0,NaN)")
-	assertCompareResult(t, CompareA(nan, float64(2)), CmpGT, "CompareA(NaN,2.0)")
-	assertCompareResult(t, CompareA(nan, nil), CmpLT, "CompareA(NaN,())")
-	assertCompareResult(t, CompareA(nan, nan), CmpEQ, "CompareA(NaN,NaN)")
-	assertCompareResult(t, CompareA(nil, nil), CmpEQ, "CompareA((),())")
+	assertCompareResult(t, compareA(int64(2), nil), CmpLT, "compareA(2,())")
+	assertCompareResult(t, compareA(nil, int64(2)), CmpGT, "compareA((),2)")
+	assertCompareResult(t, compareA(float64(2), nan), CmpLT, "compareA(2.0,NaN)")
+	assertCompareResult(t, compareA(nan, float64(2)), CmpGT, "compareA(NaN,2.0)")
+	assertCompareResult(t, compareA(nan, nil), CmpLT, "compareA(NaN,())")
+	assertCompareResult(t, compareA(nan, nan), CmpEQ, "compareA(NaN,NaN)")
+	assertCompareResult(t, compareA(nil, nil), CmpEQ, "compareA((),())")
 }
 
 func TestCompareDSpecialValues(t *testing.T) {
 	nan := math.NaN()
 
-	assertCompareResult(t, CompareD(nil, int64(2)), CmpLT, "CompareD((),2)")
-	assertCompareResult(t, CompareD(int64(2), nil), CmpGT, "CompareD(2,())")
-	assertCompareResult(t, CompareD(nan, float64(2)), CmpLT, "CompareD(NaN,2.0)")
-	assertCompareResult(t, CompareD(float64(2), nan), CmpGT, "CompareD(2.0,NaN)")
-	assertCompareResult(t, CompareD(nil, nan), CmpLT, "CompareD((),NaN)")
-	assertCompareResult(t, CompareD(nan, nan), CmpEQ, "CompareD(NaN,NaN)")
-	assertCompareResult(t, CompareD(nil, nil), CmpEQ, "CompareD((),())")
+	assertCompareResult(t, compareD(nil, int64(2)), CmpLT, "compareD((),2)")
+	assertCompareResult(t, compareD(int64(2), nil), CmpGT, "compareD(2,())")
+	assertCompareResult(t, compareD(nan, float64(2)), CmpLT, "compareD(NaN,2.0)")
+	assertCompareResult(t, compareD(float64(2), nan), CmpGT, "compareD(2.0,NaN)")
+	assertCompareResult(t, compareD(nil, nan), CmpLT, "compareD((),NaN)")
+	assertCompareResult(t, compareD(nan, nan), CmpEQ, "compareD(NaN,NaN)")
+	assertCompareResult(t, compareD(nil, nil), CmpEQ, "compareD((),())")
 }
 
 func TestCompareAAndDLists(t *testing.T) {
@@ -53,13 +53,13 @@ func TestCompareAAndDLists(t *testing.T) {
 	withNaN := newList(int64(1), nan)
 	withNil := newList(int64(1), nil)
 
-	assertCompareResult(t, CompareA(short, plain), CmpLT, "CompareA([1],[1,2.0])")
-	assertCompareResult(t, CompareA(plain, withNaN), CmpLT, "CompareA([1,2.0],[1,NaN])")
-	assertCompareResult(t, CompareA(withNaN, withNil), CmpLT, "CompareA([1,NaN],[1,()])")
+	assertCompareResult(t, compareA(short, plain), CmpLT, "compareA([1],[1,2.0])")
+	assertCompareResult(t, compareA(plain, withNaN), CmpLT, "compareA([1,2.0],[1,NaN])")
+	assertCompareResult(t, compareA(withNaN, withNil), CmpLT, "compareA([1,NaN],[1,()])")
 
-	assertCompareResult(t, CompareD(withNil, withNaN), CmpLT, "CompareD([1,()],[1,NaN])")
-	assertCompareResult(t, CompareD(withNaN, plain), CmpLT, "CompareD([1,NaN],[1,2.0])")
-	assertCompareResult(t, CompareD(short, plain), CmpLT, "CompareD([1],[1,2.0])")
+	assertCompareResult(t, compareD(withNil, withNaN), CmpLT, "compareD([1,()],[1,NaN])")
+	assertCompareResult(t, compareD(withNaN, plain), CmpLT, "compareD([1,NaN],[1,2.0])")
+	assertCompareResult(t, compareD(short, plain), CmpLT, "compareD([1],[1,2.0])")
 }
 
 func TestCompareK(t *testing.T) {
