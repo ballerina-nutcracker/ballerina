@@ -1,0 +1,37 @@
+(Counter
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access n
+          (simple-var-ref self)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation read (
+          (new ()))))))
+  )
+)
+(read
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (invocation get expr:
+            (simple-var-ref c) ()))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (invocation get expr:
+        (simple-var-ref c) ()))
+  )
+)

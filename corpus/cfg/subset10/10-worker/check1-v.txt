@@ -1,0 +1,59 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (union-type
+        (value-type int)
+        (error-type)))
+      (block-function-body
+        (var-def
+          (variable value (type
+            (value-type int)) (expr
+            (checked-expr
+              (invocation parse (
+                (literal false)))))))
+        (expression-stmt
+          (invocation io println (
+            (literal not reached))))
+        (return
+          (simple-var-ref value))))
+    (var-def
+      (variable result (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref result))))
+  )
+)
+(parse
+  (bb0 () (bb1 bb2)
+    (simple-var-ref ok)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 1))
+  )
+  (bb2 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal parse failed))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (value-type int)) (expr
+        (checked-expr
+          (invocation parse (
+            (literal false)))))))
+    (expression-stmt
+      (invocation io println (
+        (literal not reached))))
+    (return
+      (simple-var-ref value))
+  )
+)

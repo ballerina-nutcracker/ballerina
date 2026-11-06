@@ -154,12 +154,6 @@ fatal[UNIMPLEMENTED_ERROR]: transformLetExpression unimplemented
 33 |     int l = let int y = 1 in y; // @error
    |             ^^^^^^^^^^^^^^^^^^
 
-fatal[UNIMPLEMENTED_ERROR]: transformSyncSendAction unimplemented
-  --> recovered-kinds-e.bal:35:13
-   |
-35 |     int x = a ->> b; // @error
-   |             ^^^^^^^
-
 fatal[UNIMPLEMENTED_ERROR]: transformTableTypeDescriptor unimplemented
   --> recovered-kinds-e.bal:29:9
    |
@@ -173,3 +167,9 @@ fatal[UNIMPLEMENTED_ERROR]: transformTransactionStatement unimplemented
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 38 | }
    |
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> recovered-kinds-e.bal:35:13
+   |
+35 |     int x = a ->> b; // @error
+   |             ^^^^^^^

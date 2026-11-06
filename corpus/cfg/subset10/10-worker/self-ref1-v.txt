@@ -1,0 +1,30 @@
+(isFuture
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref f)
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type boolean))))
+  )
+)
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type boolean))
+      (block-function-body
+        (return
+          (invocation isFuture (
+            (simple-var-ref w))))))
+    (expression-stmt
+      (invocation io println (
+        (literal started))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (invocation isFuture (
+        (simple-var-ref w))))
+  )
+)

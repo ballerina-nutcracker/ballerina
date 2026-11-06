@@ -1,0 +1,91 @@
+module $anon.. v 0.0.0;
+counter  int;
+spawnThenPanic() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:spawnThenPanic:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = ConstantLoad default worker panicked
+    %9 = newError error(%8)
+    panic %9;
+  }
+}
+yieldOnce() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = spawnThenPanic() -> bb2;
+  }
+  bb2 {
+    %1 = %2;
+    GOTO bb3;
+  }
+  bb3 {
+    e = %1;
+    %4 = e is error
+    %5 = %4;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    GOTO bb5;
+  }
+  bb5 {
+    %8 = ConstantLoad 0
+    %9 = %8;
+    %7 = == counter %9;
+    %7 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 6
+    %0 = start yieldOnce() isolated=false -> bb8;
+  }
+  bb7 {
+    %10 = println(counter) -> bb10;
+  }
+  bb8 {
+    f = %0;
+    %2 = wait f -> bb9;
+  }
+  bb9 {
+    r = %2;
+    %4 = r is int
+    %5 = %4;
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb10 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+  }
+}
+$worker:spawnThenPanic:w() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    counter = %2;
+    return;
+  }
+}

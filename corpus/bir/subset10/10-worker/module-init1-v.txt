@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+moduleValue  int;
+spin() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    i = %1;
+    %3 = ConstantLoad 0
+    acc = %3;
+    GOTO bb1;
+  }
+  bb1 {
+    %6 = i;
+    %7 = ConstantLoad 5000
+    %8 = %7;
+    %5 = < %6 %8;
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 7
+    %1 = (1, acc);
+    %2 = (1, i);
+    %0 = + %1 %2;
+    (1, acc) = %0;
+    %4 = (1, i);
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, i) = %3;
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb3 {
+    %0 = acc;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    return;
+  }
+}
+$worker:init:reader() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %0 = moduleValue;
+    return;
+  }
+}

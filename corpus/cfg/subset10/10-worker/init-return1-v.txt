@@ -1,0 +1,72 @@
+(early
+  (bb0 () (bb1 bb2)
+    (simple-var-ref stop)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 0))
+  )
+  (bb2 (bb0) ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (assignment
+          (simple-var-ref started)
+          (literal true))
+        (return
+          (literal 1))))
+    (return
+      (single-wait-action
+        (simple-var-ref w)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation early (
+          (literal true))))))
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int))) (expr
+        (start-action
+          (invocation other ())))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref started))))
+    (expression-stmt
+      (invocation io println (
+        (invocation early (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref started))))
+  )
+)
+(other
+  (bb0 () ()
+    (return
+      (literal 2))
+  )
+)
+(worker w
+  (bb0 () ()
+    (assignment
+      (simple-var-ref started)
+      (literal true))
+    (return
+      (literal 1))
+  )
+)

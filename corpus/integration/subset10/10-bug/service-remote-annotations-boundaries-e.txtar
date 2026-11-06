@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'RemoteMarker' is not allowed on function
+  --> service-remote-annotations-boundaries-e.bal:37:1
+   |
+37 | @RemoteMarker // @error
+   | ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'RemoteMarker' is not allowed on objectfunction
+  --> service-remote-annotations-boundaries-e.bal:20:5
+   |
+20 |     @RemoteMarker // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'RemoteMarker' is not allowed on objectfunction
+  --> service-remote-annotations-boundaries-e.bal:23:5
+   |
+23 |     @RemoteMarker // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'RemoteMarker' is not allowed on objectfunction
+  --> service-remote-annotations-boundaries-e.bal:26:5
+   |
+26 |     @RemoteMarker // @error
+   |     ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'RemoteMarker' is not allowed on objectfunction
+  --> service-remote-annotations-boundaries-e.bal:33:5
+   |
+33 |     @RemoteMarker // @error
+   |     ^^^^^^^^^^^^^

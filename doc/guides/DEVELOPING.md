@@ -96,7 +96,7 @@ Most interpreter behavior is validated with **corpus tests** rather than hand-wr
 | `*-p.bal` | Runtime panic — first panicking line marked with `// @panic` |
 | `*-f{v,e,p}.bal` | Valid in principle, intentionally unsupported for now — must raise an *unimplemented* error at each marked line |
 
-Prefer adding a corpus test over a unit test when validating interpreter behavior. See [AGENTS.md](../../AGENTS.md#tests) for the full layout and conventions.
+Prefer adding a corpus test over a unit test when validating interpreter behavior. See the [manage-corpus-tests skill](../../.agents/skills/manage-corpus-tests/SKILL.md) for the full layout and conventions.
 
 Refresh golden output after an intentional change:
 

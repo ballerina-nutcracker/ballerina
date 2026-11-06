@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing return statement
+  --> fn-return1-e.bal:22:5
+   |
+22 |     y += 1; // @error missing return: w's return does not return from the function
+   |     ^^^^^^^

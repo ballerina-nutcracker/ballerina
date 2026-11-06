@@ -1,0 +1,52 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function fib (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (binary-expr <
+          (simple-var-ref n)
+          (literal 2))
+        (block-stmt
+          (return
+            (simple-var-ref n))) ())
+      (named-worker a (
+        (value-type int))
+        (block-function-body
+          (return
+            (invocation fib (
+              (binary-expr -
+                (simple-var-ref n)
+                (literal 1)))))))
+      (named-worker b (
+        (value-type int))
+        (block-function-body
+          (return
+            (invocation fib (
+              (binary-expr -
+                (simple-var-ref n)
+                (literal 2)))))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (var-def
+        (variable y (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref b)))))
+      (return
+        (binary-expr +
+          (simple-var-ref x)
+          (simple-var-ref y)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation fib (
+            (literal 15)))))))))

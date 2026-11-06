@@ -201,7 +201,14 @@ type functionContext struct {
 	loopVarStack         []ast.LExpr // Stack to track loop variables (nil for while, varRef for desugared foreach)
 	defaultClosureVars   map[model.SymbolRef]model.SymbolRef
 	generatedFunctions   []*ast.BLangFunction
-	trapDepth            int
+	workerFutureSlots    map[model.SymbolRef]*ast.BLangVarRef
+	// uniqueNamePrefix is unique within the module. Append to it to build
+	// unique names for generated functions, prefixing the result with a
+	// `$<kind>` tag (see constants.WorkerClosurePrefix) so generated names group by
+	// the construct they came from and never collide with source names.
+	uniqueNamePrefix string
+	isIsolated       bool
+	trapDepth        int
 	// typeContext is the non-shared type context for this function. It is owned
 	// by the goroutine desugaring this function and must not be shared.
 	typeContext semtypes.Context
@@ -659,17 +666,16 @@ func desugarInitFn(pkgCtx *packageContext, compilerCtx *context.CompilerContext,
 	clearModuleInitExprs(pkg)
 
 	for i := range pkg.Services {
-		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, pkg.Services[i])...)
+		initStmts = append(initStmts, buildServiceInitStmts(pkgCtx, pkg, pkg.Services[i], moduleListenersRef)...)
 	}
 	body := pkg.InitFunction.Body.(*ast.BLangBlockFunctionBody)
-	if initFnCreated {
-		body.Stmts = initStmts
-	} else {
-		// We prepend desugard statements before users init statments.
-		body.Stmts = append(initStmts, body.Stmts...)
-	}
+	// The generated module initialization runs before anything the user wrote.
+	// It goes in the initialization region rather than ahead of the trailing
+	// statements, because a named worker declared in the user's `init` is
+	// started between the two regions and may read module state.
+	body.InitStmts = append(initStmts, body.InitStmts...)
 
-	initFn, generatedFunctions := desugarFunction(pkgCtx, pkg.InitFunction)
+	initFn, generatedFunctions := desugarFunction(pkgCtx, "", pkg.InitFunction)
 	*pkg.InitFunction = *initFn
 
 	if hasListeners {
@@ -829,15 +835,24 @@ func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListene
 	assign.SetPosition(pos)
 
 	stmts := []ast.StatementNode{assign}
+	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerVarRef, pos)
+	if registerStmt == nil {
+		return stmts
+	}
+	return append(stmts, registerStmt)
+}
 
+// buildListenerRegistration builds the statement that pushes a listener value
+// into `$moduleListeners`.
+func buildListenerRegistration(pkgCtx *packageContext, moduleListenersRef, listenerRef *ast.BLangVarRef, pos diagnostics.Location) ast.StatementNode {
 	mlRef := *moduleListenersRef
-	pushSrc := *listenerVarRef
+	pushSrc := *listenerRef
 	inv := createArrayPushInvocation(pkgCtx, &mlRef, &pushSrc)
 	if inv == nil {
 		pkgCtx.internalError("failed to create array:push invocation for module listener", pos)
-		return stmts
+		return nil
 	}
-	return append(stmts, createExpressionStmt(inv, pos))
+	return createExpressionStmt(inv, pos)
 }
 
 func pickInitFunctionPosition(nodes []moduleInitNode, pkg *ast.BLangPackage) diagnostics.Location {
@@ -937,10 +952,11 @@ func addModuleListenersGlobal(pkgCtx *packageContext, pkg *ast.BLangPackage, pos
 
 // buildServiceInitStmts produces the statements that, for each service
 // declaration in the module, construct the service instance into a synthetic
-// local in the init function and call `attach` on each listener in the
-// service's `on` clause. The statements run in the module init function
-// after all module-level variable initializers.
-func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *ast.BLangService) []ast.StatementNode {
+// local in the init function and then, for each expression in the service's
+// `on` clause in order, evaluate it, register the listener and call `attach`
+// on it (spec 8.3.2). The statements run in the module init function after
+// all module-level variable initializers.
+func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *ast.BLangService, moduleListenersRef *ast.BLangVarRef) []ast.StatementNode {
 	svcTy := svc.GetTypeData().Type
 	if semtypes.IsZero(svcTy) || semtypes.IsZero(svc.ObjectBodyType) {
 		pkgCtx.internalError("service types unresolved at desugar", svc.GetPosition())
@@ -954,8 +970,13 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 	stmts := []ast.StatementNode{varDef}
 
 	for _, listenerExpr := range svc.AttachedExprs {
+		listenerRef, listenerStmts := buildServiceListenerInit(pkgCtx, pkg, listenerExpr, moduleListenersRef)
+		if listenerRef == nil {
+			continue
+		}
+		stmts = append(stmts, listenerStmts...)
 		refCopy := *svcRef
-		attachInv := buildListenerAttachInvocation(pkgCtx, svc, listenerExpr, &refCopy)
+		attachInv := buildListenerAttachInvocation(pkgCtx, svc, listenerRef, &refCopy)
 		if attachInv == nil {
 			continue
 		}
@@ -964,47 +985,31 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 	return stmts
 }
 
-// hoistInlineServiceListeners replaces each inline listener expression in
-// the `on` clause of a service with a reference to a synthetic module-level
-// `listener` variable initialized to that expression.
-func hoistInlineServiceListeners(pkgCtx *packageContext, pkg *ast.BLangPackage) {
-	for i := range pkg.Services {
-		svc := pkg.Services[i]
-		for j, listenerExpr := range svc.AttachedExprs {
-			_, ok := listenerExpr.(*ast.BLangVarRef)
-			if ok {
-				continue
-			}
-
-			pos := listenerExpr.GetPosition()
-			exprTy := listenerExpr.Type()
-			if semtypes.IsZero(exprTy) {
-				pkgCtx.internalError("inline listener expression has no type at desugar", pos)
-				return
-			}
-			ty := semtypes.Diff(exprTy, semtypes.Error)
-			name := pkgCtx.nextDesugarSymbolName()
-			sym := model.NewVariableSymbol(name, false, false, false, pos)
-			sym.SetListener()
-			symRef := pkgCtx.addModuleSymbol(name, &sym)
-			pkgCtx.setSymbolType(symRef, ty)
-
-			ident := newIdentifier(name)
-			ident.SetPosition(pos)
-
-			gv := &ast.BLangVariable{Name: ident}
-			gv.SetSymbol(symRef)
-			gv.SetInitialExpression(listenerExpr)
-			gv.SetPosition(pos)
-			pkg.AddGlobalVariable(gv)
-
-			ref := &ast.BLangVarRef{VariableName: ident}
-			ref.SetSymbol(symRef)
-			ref.Ty = ty
-			ref.SetPosition(pos)
-			svc.AttachedExprs[j] = ref
-		}
+// buildServiceListenerInit returns the expression a service attaches to for
+// one expression in its `on` clause, with the statements that must run first.
+// A variable reference is used as is and is not registered here, which is
+// correct only for `listener` variables (registered by their own
+// initializer). Any other expression is evaluated into a synthetic local in
+// the init function and the resulting listener is registered in
+// `$moduleListeners`.
+func buildServiceListenerInit(pkgCtx *packageContext, pkg *ast.BLangPackage, listenerExpr ast.BLangExpression, moduleListenersRef *ast.BLangVarRef) (ast.BLangExpression, []ast.StatementNode) {
+	if _, ok := listenerExpr.(*ast.BLangVarRef); ok {
+		return listenerExpr, nil
 	}
+	pos := listenerExpr.GetPosition()
+	exprTy := listenerExpr.Type()
+	if semtypes.IsZero(exprTy) {
+		pkgCtx.internalError("listener expression has no type at desugar", pos)
+		return nil, nil
+	}
+	listenerTy := semtypes.Diff(exprTy, semtypes.Error)
+	varDef, listenerRef := createDesugaredLocal(pkgCtx, pkg.InitFunction.Scope(), listenerTy, wrapInCheck(listenerExpr), pos)
+
+	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerRef, pos)
+	if registerStmt == nil {
+		return nil, nil
+	}
+	return listenerRef, []ast.StatementNode{varDef, registerStmt}
 }
 
 func createDesugaredLocal(pkgCtx *packageContext, scope model.Scope, ty semtypes.SemType, initExpr ast.BLangExpression, pos diagnostics.Location) (*ast.BLangVariableDef, *ast.BLangVarRef) {
@@ -1629,31 +1634,33 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 
 	desugarObject := func(class *ast.BLangClassDefinition) []*ast.BLangFunction {
 		desugarClassDefinition(pkgCtx, class)
+		className := class.Name.GetValue()
 		var generatedFunctions []*ast.BLangFunction
 		for name, method := range class.Methods {
-			fn, generated := desugarFunction(pkgCtx, method)
+			fn, generated := desugarFunction(pkgCtx, className, method)
 			class.Methods[name] = fn
 			generatedFunctions = append(generatedFunctions, generated...)
 		}
 		for _, rm := range class.ResourceMethods {
-			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, className, rm)...)
 		}
-		fn, generated := desugarFunction(pkgCtx, class.InitFunction)
+		fn, generated := desugarFunction(pkgCtx, className, class.InitFunction)
 		*class.InitFunction = *fn
 		return append(generatedFunctions, generated...)
 	}
 	desugarService := func(svc *ast.BLangService) []*ast.BLangFunction {
 		desugarServiceDefinition(pkgCtx, svc)
+		serviceName := pkgCtx.compilerCtx.SymbolName(svc.Symbol())
 		var generatedFunctions []*ast.BLangFunction
 		for name, method := range svc.Methods {
-			fn, generated := desugarFunction(pkgCtx, method)
+			fn, generated := desugarFunction(pkgCtx, serviceName, method)
 			svc.Methods[name] = fn
 			generatedFunctions = append(generatedFunctions, generated...)
 		}
 		for _, rm := range svc.ResourceMethods {
-			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, rm)...)
+			generatedFunctions = append(generatedFunctions, desugarResourceMethod(pkgCtx, serviceName, rm)...)
 		}
-		fn, generated := desugarFunction(pkgCtx, svc.InitFunction)
+		fn, generated := desugarFunction(pkgCtx, serviceName, svc.InitFunction)
 		*svc.InitFunction = *fn
 		return append(generatedFunctions, generated...)
 	}
@@ -1661,7 +1668,6 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 		ensureServiceDefaultInitFunction(pkgCtx, pkg.Services[i])
 	}
 
-	hoistInlineServiceListeners(pkgCtx, pkg)
 	generatedFunctions := desugarInitFn(pkgCtx, compilerCtx, pkg)
 
 	// Each worker writes generated functions to its own result slot. The slots
@@ -1674,7 +1680,7 @@ func DesugarPackage(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage,
 			defer recoverPanic(&pos)
 			function := pkg.Functions[i]
 			pos = function.GetPosition()
-			fn, generated := desugarFunction(pkgCtx, function)
+			fn, generated := desugarFunction(pkgCtx, "", function)
 			pkg.Functions[i] = fn
 			functionResults[i] = generated
 		})
@@ -1794,15 +1800,23 @@ func desugarClassBodyInit(pkgCtx *packageContext, classScope model.Scope, fields
 
 	if len(initStmts) > 0 {
 		body := initFn.Body.(*ast.BLangBlockFunctionBody)
-		body.Stmts = append(initStmts, body.Stmts...)
+		// Field initializers belong to the initialization region: the named
+		// workers of `init` are started after that region and a worker body
+		// may read `self.f`.
+		body.InitStmts = append(initStmts, body.InitStmts...)
 	}
 }
 
-func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
+func desugarResourceMethod(pkgCtx *packageContext, typeName string, rm *ast.BLangResourceMethod) []*ast.BLangFunction {
 	if rm.Body == nil {
 		return nil
 	}
-	cx := &functionContext{pkgCtx: pkgCtx, owner: rm.Symbol()}
+	cx := &functionContext{
+		pkgCtx:           pkgCtx,
+		owner:            rm.Symbol(),
+		uniqueNamePrefix: uniqueName(pkgCtx, typeName, rm.Symbol()),
+		isIsolated:       rm.IsIsolated(),
+	}
 	cx.pushScope(rm.Scope())
 	defer cx.popScope()
 	switch body := rm.Body.(type) {
@@ -1815,15 +1829,36 @@ func desugarResourceMethod(pkgCtx *packageContext, rm *ast.BLangResourceMethod) 
 }
 
 // desugarFunction returns a desugared function and functions generated while
-// desugaring it.
-func desugarFunction(pkgCtx *packageContext, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
-	cx := &functionContext{pkgCtx: pkgCtx, owner: fn.Symbol()}
+// desugaring it. parentPrefix is the enclosing class or service name, empty for a
+// function that is not a method.
+func desugarFunction(pkgCtx *packageContext, parentPrefix string, fn *ast.BLangFunction) (*ast.BLangFunction, []*ast.BLangFunction) {
+	cx := &functionContext{
+		pkgCtx:           pkgCtx,
+		owner:            fn.Symbol(),
+		uniqueNamePrefix: uniqueName(pkgCtx, parentPrefix, fn.Symbol()),
+		isIsolated:       fn.IsIsolated(),
+	}
 	return desugarFunctionWithContext(cx, fn), cx.generatedFunctions
 }
 
+func uniqueName(pkgCtx *packageContext, parentPrefix string, owner model.SymbolRef) string {
+	name := pkgCtx.compilerCtx.SymbolName(owner)
+	if parentPrefix == "" {
+		return name
+	}
+	return parentPrefix + "." + name
+}
+
 func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLangFunction {
-	fn, generated := desugarFunction(cx.pkgCtx, fn)
-	cx.generatedFunctions = append(cx.generatedFunctions, generated...)
+	nested := &functionContext{
+		pkgCtx:            cx.pkgCtx,
+		owner:             fn.Symbol(),
+		uniqueNamePrefix:  uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
+		workerFutureSlots: cx.workerFutureSlots,
+		isIsolated:        fn.IsIsolated(),
+	}
+	fn = desugarFunctionWithContext(nested, fn)
+	cx.generatedFunctions = append(cx.generatedFunctions, nested.generatedFunctions...)
 	return fn
 }
 

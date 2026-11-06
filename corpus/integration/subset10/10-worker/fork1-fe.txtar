@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: fork statements are not supported
+  --> fork1-fe.bal:18:5
+   |
+18 |     fork { // @error fork statements are not supported
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         worker w returns int {
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+20 |             return 1;
+   |             ^^^^^^^^^
+21 |         }
+   |         ^
+22 |     }
+   |     ^
