@@ -48,8 +48,12 @@ public function main() {
     io:println(fieldMetaName(types:PersonAlias, "name")); //@output imported-name
     io:println(annotatedFields(LocalFromAlias)); //@output name
     io:println(fieldMetaName(LocalAlias, "name")); //@output imported-name
+    io:println(describeNested(types:Outer)); //@output type[] age:{type[typeMeta=imported-age]} list:{type[] x[fieldMeta=imported-x]} node:{type[] value[fieldMeta=imported-value] next:<cycle>}
+    io:println(describeNested(types:outerType())); //@output type[] age:{type[typeMeta=imported-age]} list:{type[] x[fieldMeta=imported-x]} node:{type[] value[fieldMeta=imported-value] next:<cycle>}
 }
 
 function annotatedFields(typedesc<anydata> td) returns string = external;
 
 function fieldMetaName(typedesc<anydata> td, string fieldName) returns string = external;
+
+function describeNested(typedesc<anydata> td) returns string = external;

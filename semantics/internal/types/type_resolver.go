@@ -2975,6 +2975,7 @@ func createFieldDescriptor(name string, field ast.BField) model.FieldDescriptor 
 	if field.Default != nil {
 		fd.DefaultFnRef = field.Default.FnRef
 	}
+	fd.TypeRef = common.NamedTypeRef(field.Type)
 	return fd
 }
 

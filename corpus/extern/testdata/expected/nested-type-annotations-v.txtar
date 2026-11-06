@@ -1,0 +1,4 @@
+-- stdout --
+type[] age:{type[meta=age]} frozen:{type[] x[meta=x]} inner:{type[] x[meta=x]} list:{type[] x[meta=x]} maybe:{type[] x[meta=x]} names:{type[meta=names]} nilFirst:{type[] x[meta=x]} node:{type[] value[meta=value] next:<cycle>} tree:{type[] data:{type[] x[meta=x]} left:<cycle>} wrapper:{type[] inner:{type[] x[meta=x]}}
+type[]
+-- stderr --
