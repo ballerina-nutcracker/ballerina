@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-dead-empty-pred-e.bal:21:9
+   |
+21 |         int x = 1; // @error
+   |         ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-dead-empty-pred-e.bal:22:12
+   |
+22 |         if false { // @error
+   |            ^^^^^
+
+error[SEMANTIC_ERROR]: unreachable code
+  --> uninit-dead-empty-pred-e.bal:23:13
+   |
+23 |             x = 2; // @error
+   |             ^^^^^^
