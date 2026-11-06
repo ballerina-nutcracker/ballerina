@@ -1,0 +1,39 @@
+-- stdout --
+{"item":{"item":"text","name":"x"}}
+{"item":{"item":"text","name":"x"}}
+{"item":{"item":"text","name":"x"}}
+{"item":{"item":"text","name":"x"}}
+{"t":"xy"}
+{"t":"xy"}
+{"t":"yz"}
+{"t":"ab"}
+{}
+{}
+{"name":"good"}
+{"name":"good"}
+E: 'string' value 'not-an-int' cannot be converted to 'int'
+E: 'string' value 'not-an-int' cannot be converted to 'int'
+E: 'string' value 'not-an-int' cannot be converted to 'int'
+E: 'string' value 'not-an-int' cannot be converted to 'int'
+E: 'xml' value '<t>plain</t>' cannot be converted to 'xml:Text'
+{"data":1}
+{"data":1}
+{"data":{"k":"v"}}
+{"data":{"k":"v"}}
+{"data":[1,2]}
+E: field 'v' cannot be converted
+E: field 'v' cannot be converted
+{"v":[1,2]}
+true
+{"v":"z"}
+{"s":-8,"y":7}
+{"s":-8,"y":7}
+E: 'string' value '200' cannot be converted to 'lang.int:Signed8'
+E: 'string' value '200' cannot be converted to 'lang.int:Signed8'
+{"s":-8}
+{"s":-8}
+E: 'string' value '200' cannot be converted to 'lang.int:Signed8'
+E: 'string' value '200' cannot be converted to 'lang.int:Signed8'
+{"a":-8}
+{"a":-8}
+-- stderr --

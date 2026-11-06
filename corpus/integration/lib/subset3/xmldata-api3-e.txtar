@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'uri'
+  --> xmldata-api3-e.bal:20:33
+   |
+20 |     xmldata:NamespaceConfig _ = {prefix: "p"}; // @error
+   |                                 ^^^^^^^^^^^^^
