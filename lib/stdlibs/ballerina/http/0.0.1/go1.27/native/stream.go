@@ -225,8 +225,6 @@ func sendRequest(ctx *extern.Context, client pal.HTTPClient, method, url string,
 
 var errStreamPanicked = errors.New("request body stream panicked")
 
-var errUploadRejected = errors.New("request body not sent after an error response")
-
 // executeStreamed drains a Ballerina byte stream on the calling strand into a pipe the transport
 // reads from, so the stream's next() never runs on a transport goroutine. The body is sent
 // chunked, and keeps flowing after a success response arrives, until the stream ends or the
@@ -247,7 +245,7 @@ func executeStreamed(goCtx context.Context, client pal.HTTPClient, method, url s
 		case err != nil:
 			_ = pr.CloseWithError(err)
 		case status >= http.StatusMultipleChoices:
-			_ = pr.CloseWithError(errUploadRejected)
+			_ = pw.Close()
 		}
 		done <- result{status, respHeaders, respBody, err}
 	}()

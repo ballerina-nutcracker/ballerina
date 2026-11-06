@@ -271,13 +271,13 @@ func TestHttpClientStreamLocal(t *testing.T) {
 			rc := http.NewResponseController(w)
 			_ = rc.EnableFullDuplex()
 			w.Header().Set("Content-Type", "text/plain")
-			w.Header().Set("Content-Length", "8")
+			w.Header().Set("Content-Length", "65536")
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
-			_, _ = w.Write([]byte("rejected"))
+			_, _ = w.Write([]byte(strings.Repeat("r", 65536)))
 			_ = rc.Flush()
 			_ = rc.SetReadDeadline(time.Now().Add(10 * time.Second))
-			n, _ := io.Copy(io.Discard, r.Body)
-			if n == 1000*65536 {
+			n, err := io.Copy(io.Discard, r.Body)
+			if n == 1000*65536 || os.IsTimeout(err) {
 				rejectResult <- "upload still running"
 			} else {
 				rejectResult <- "upload stopped"

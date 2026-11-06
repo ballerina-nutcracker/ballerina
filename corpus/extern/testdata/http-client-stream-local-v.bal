@@ -147,7 +147,7 @@ public function main() returns error? {
     // An error response ends the upload instead of waiting for the server to read the rest.
     http:Client unbounded = check new ("http://testserver", {timeout: 0});
     http:Response rejected = check unbounded->post("/reject", new stream<byte[], io:Error?>(new Big()));
-    io:println(rejected.statusCode, " ", check rejected.getTextPayload()); // @output 413 rejected
+    io:println(rejected.statusCode, " ", (check rejected.getTextPayload()).length()); // @output 413 65536
     string rejectResult = check c->get("/reject-result");
     io:println(rejectResult); // @output upload stopped
 
