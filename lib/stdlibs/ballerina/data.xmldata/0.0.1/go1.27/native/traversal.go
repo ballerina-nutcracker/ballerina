@@ -270,7 +270,7 @@ func (a *analyzer) convertElement(element *values.XMLElement) error {
 	var field *recordField
 	if peek(a.visitedFieldHierarchy).contains(elementName) {
 		field, _ = peek(a.visitedFieldHierarchy).get(elementName)
-		if field != nil && !a.isArrayValueAssignable(field.ty) {
+		if field != nil && (!a.isArrayValueAssignable(field.ty) || a.holdsSingleUnionValue(field)) {
 			return foundArrayForNonArrayTypeError(a.typeName(field.ty), field.name)
 		}
 	} else if f, _ := fields.get(elementName); f != nil {
@@ -307,6 +307,25 @@ func (a *analyzer) convertElement(element *values.XMLElement) error {
 		return unsupportedTypeError()
 	}
 	return a.convertToFieldType(element, field, field.ty, a.currentNode)
+}
+
+// holdsSingleUnionValue reports whether an earlier element gave a union field a non-array value that no json
+// or anydata member could append to, so a repeated element would overwrite it.
+func (a *analyzer) holdsSingleUnionValue(field *recordField) bool {
+	ti := a.classify(field.ty)
+	if ti.kind != kindUnion {
+		return false
+	}
+	existing := a.currentNode.get(field.runtimeName)
+	if _, isArray := existing.(*arrayNode); existing == nil || isArray {
+		return false
+	}
+	for _, member := range ti.members {
+		if a.classify(member).isAnydataOrJSON() {
+			return false
+		}
+	}
+	return true
 }
 
 func (a *analyzer) isArrayValueAssignable(ty semtypes.SemType) bool {
