@@ -376,8 +376,8 @@ func (a *analyzer) continuesArray(existing node, member semtypes.SemType) bool {
 	if !ok {
 		return true
 	}
-	switch ti := a.classify(member); {
-	case ti.kind == kindArray:
+	switch ti := a.classify(member); ti.kind {
+	case kindArray:
 		return semtypes.IsSameType(a.tc, member, array.ty.ty)
 	default:
 		return ti.isAnydataOrJSON()
