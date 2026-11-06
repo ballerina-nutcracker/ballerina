@@ -484,6 +484,42 @@ func TestNewHTTPClient_IdleTimeoutSlowInMemoryUpload(t *testing.T) {
 	}
 }
 
+// TestNewHTTPClient_IdleTimeoutUploadAfterResponse verifies that request-body reads after the
+// response arrives do not re-arm the timer, so a consumer slower than the timeout still succeeds.
+func TestNewHTTPClient_IdleTimeoutUploadAfterResponse(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = http.NewResponseController(w).EnableFullDuplex()
+		w.WriteHeader(http.StatusOK)
+		_ = http.NewResponseController(w).Flush()
+		_, _ = io.Copy(io.Discard, r.Body)
+		_, _ = w.Write([]byte("done"))
+	}))
+	defer server.Close()
+	client, err := NewHTTPClient(pal.ClientConfig{Timeout: 100 * time.Millisecond, ResponseLimits: unlimitedBody})
+	if err != nil {
+		t.Fatalf("NewHTTPClient: %v", err)
+	}
+	pr, pw := io.Pipe()
+	responded := make(chan struct{})
+	go func() {
+		<-responded
+		_, _ = pw.Write([]byte("late"))
+		_ = pw.Close()
+	}()
+	_, _, body, err := client.Execute(context.Background(), "POST", server.URL+"/", pr, -1, "text/plain", nil)
+	close(responded)
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	defer func() { _ = body.Close() }()
+	time.Sleep(300 * time.Millisecond)
+	data, err := io.ReadAll(body)
+	if err != nil || string(data) != "done" {
+		t.Fatalf("got %q, %v; want \"done\"", data, err)
+	}
+}
+
 // TestNewHTTPClient_IdleTimeoutPerRedirectHop verifies that each followed redirect gets the
 // whole timeout, so a chain longer than the timeout succeeds while every hop answers in time.
 func TestNewHTTPClient_IdleTimeoutPerRedirectHop(t *testing.T) {
