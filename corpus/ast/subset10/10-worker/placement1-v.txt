@@ -1,0 +1,94 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable value (type
+      (value-type int)))
+    (function init (
+      (variable seed (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (return
+              (binary-expr +
+                (simple-var-ref seed)
+                (literal 1)))))
+        (assignment
+          (field-based-access value
+            (simple-var-ref self))
+          (single-wait-action
+            (simple-var-ref w)))))
+    (function doubled () (
+      (value-type int))
+      (block-function-body
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (return
+              (binary-expr *
+                (field-based-access value
+                  (simple-var-ref self))
+                (literal 2)))))
+        (return
+          (single-wait-action
+            (simple-var-ref w))))))
+  (class-definition Greeter
+    (resource-function get name:greeting
+      (value-type string)
+      (block-function-body
+        (named-worker w (
+          (value-type string))
+          (block-function-body
+            (return
+              (literal hello))))
+        (return
+          (single-wait-action
+            (simple-var-ref w))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable counter (type
+          (user-defined-type Counter)) (expr
+          (new (
+            (literal 41))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access value
+            (simple-var-ref counter)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation doubled expr:
+            (simple-var-ref counter) ()))))
+      (var-def
+        (variable greeter (type
+          (user-defined-type Greeter)) (expr
+          (new ()))))
+      (var-def
+        (variable greeting (type
+          (value-type string)) (expr
+          (client-resource-access get expr:
+            (simple-var-ref greeter) name:greeting))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref greeting))))
+      (var-def
+        (variable anon (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (named-worker w (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (literal 5))))
+                (return
+                  (single-wait-action
+                    (simple-var-ref w)))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation anon ())))))))

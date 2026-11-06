@@ -21,7 +21,8 @@ Fixes #<Issue Number>
 
 ## Checklist
 - [ ] Read the [Contributing Guide](https://github.com/ballerina-nutcracker/ballerina/blob/main/CONTRIBUTING.md)
-- [ ] Added or updated [corpus tests](https://github.com/ballerina-nutcracker/ballerina/blob/main/AGENTS.md#corpus-tests)
+- [ ] Added or updated [corpus tests](https://github.com/ballerina-nutcracker/ballerina/blob/main/.agents/skills/manage-corpus-tests/SKILL.md)
+- [ ] Updated `doc/lang/subset<N>.md` for compiler language features or fixes
 
 ## Remarks
 > Add any additional context, known issues, or TODOs related to this PR.

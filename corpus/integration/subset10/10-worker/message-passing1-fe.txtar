@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> message-passing1-fe.bal:21:9
+   |
+21 |         1 -> receiver; // @error worker message passing is not supported
+   |         ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> message-passing1-fe.bal:22:9
+   |
+22 |         2 ->> receiver; // @error worker message passing is not supported
+   |         ^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> message-passing1-fe.bal:25:17
+   |
+25 |         int _ = <- sender;
+   |                 ^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> message-passing1-fe.bal:26:17
+   |
+26 |         int _ = <- sender;
+   |                 ^^^^^^^^^

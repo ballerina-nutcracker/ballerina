@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: named worker not allowed here
+  --> worker-in-worker1-e.bal:26:5
+   |
+26 |     } // @error named worker not allowed here
+   |     ^

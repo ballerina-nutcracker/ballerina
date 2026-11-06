@@ -1,0 +1,43 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (literal 1))))
+    (binary-expr >
+      (simple-var-ref x)
+      (literal 0))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (literal positive))))
+  )
+  (bb2 (bb1 bb0) ()
+    (var-def
+      (variable y (type
+        (value-type int)) (expr
+        (literal 2))))
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref y))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (simple-var-ref r)
+          (simple-var-ref y)))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (simple-var-ref y))
+  )
+)

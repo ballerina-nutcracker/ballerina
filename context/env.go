@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/capturegroups"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/functionsignatures"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -521,7 +522,7 @@ func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.Packa
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
 	c.anonCountMu.Unlock()
-	return anonPrefix + "Func$_" + strconv.Itoa(nextValue)
+	return constants.AnonFunctionPrefix + "_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {

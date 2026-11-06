@@ -260,6 +260,7 @@ const (
 	SymbolKindFunction
 	SymbolKindAnnotation
 	SymbolKindXMLNS
+	SymbolKindWorker
 )
 
 const sourceAnnotationAttachPointPrefix = "source:"
@@ -355,6 +356,12 @@ type (
 	}
 
 	TypeSymbol struct {
+		symbolBase
+	}
+
+	// workerSymbol is the symbol of a named worker declaration. Its resolved
+	// type is future<T> where T is the worker's return type.
+	workerSymbol struct {
 		symbolBase
 	}
 
@@ -1138,25 +1145,12 @@ func (as *AnnotationSymbol) AllowsAttachPoint(point string) bool {
 	if as.attachPoints == 0 {
 		return true
 	}
-	if as.hasAttachPoint(point) {
-		return true
-	}
-	if point == "recordfield" || point == "objectfield" {
-		if as.hasAttachPoint("field") || as.hasSourceAttachPoint("field") {
-			return true
-		}
-	}
-	return as.hasSourceAttachPoint(point)
+	points := compatibleAnnotationAttachPoints(point)
+	return as.attachPoints.has(points | points<<sourceAnnotationAttachPointShift)
 }
 
 func (as *AnnotationSymbol) IsRuntimeVisibleAt(point string) bool {
-	if as.attachPoints == 0 {
-		return true
-	}
-	if point == "recordfield" || point == "objectfield" {
-		return as.hasAttachPoint(point) || as.hasAttachPoint("field")
-	}
-	return as.hasAttachPoint(point)
+	return as.attachPoints == 0 || as.attachPoints.has(compatibleAnnotationAttachPoints(point))
 }
 
 func AnnotationKey(pkg PackageIdentifier, name string) string {
@@ -1167,14 +1161,18 @@ func SourceAnnotationAttachPointKey(point string) string {
 	return sourceAnnotationAttachPointPrefix + point
 }
 
-func (as *AnnotationSymbol) hasAttachPoint(point string) bool {
-	bit, ok := annotationAttachPointBit(point)
-	return ok && as.attachPoints.has(bit)
-}
-
-func (as *AnnotationSymbol) hasSourceAttachPoint(point string) bool {
-	bit, ok := annotationAttachPointBit(point)
-	return ok && as.attachPoints.has(bit<<sourceAnnotationAttachPointShift)
+func compatibleAnnotationAttachPoints(point string) annotationAttachPointSet {
+	bit, _ := annotationAttachPointBit(point)
+	switch point {
+	case "serviceremotefunction":
+		objectFunction, _ := annotationAttachPointBit("objectfunction")
+		return bit | objectFunction
+	case "recordfield", "objectfield":
+		field, _ := annotationAttachPointBit("field")
+		return bit | field
+	default:
+		return bit
+	}
 }
 
 func (s annotationAttachPointSet) has(bit annotationAttachPointSet) bool {
@@ -1551,6 +1549,23 @@ func NewXMLNSSymbol(prefix, uri string, location diagnostics.Location) *XMLNSSym
 	return &XMLNSSymbol{
 		symbolBase: symbolBase{name: prefix, isPublic: true, location: location},
 		uri:        uri,
+	}
+}
+
+func (ws *workerSymbol) Kind() SymbolKind {
+	return SymbolKindWorker
+}
+
+// Copy exists only to satisfy Symbol. The one caller is narrowing, which never
+// targets a worker reference, so nothing copies a worker symbol.
+func (ws *workerSymbol) Copy() Symbol {
+	cp := *ws
+	return &cp
+}
+
+func NewWorkerSymbol(name string, location diagnostics.Location) Symbol {
+	return &workerSymbol{
+		symbolBase: symbolBase{name: name, location: location},
 	}
 }
 

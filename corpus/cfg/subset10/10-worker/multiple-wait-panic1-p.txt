@@ -1,0 +1,41 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal boom))))))
+    (named-worker v (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (var-def
+      (variable r (type
+        (record-type
+          (field a
+            (value-type int))
+          (field b
+            (value-type int)))) (expr
+        (multiple-wait-action a
+          (simple-var-ref w) b
+          (simple-var-ref v)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker v
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker w
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal boom))))
+  )
+)

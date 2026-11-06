@@ -1,0 +1,18 @@
+(Svc
+  ($remote$ping
+    (bb0 () ())
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable svc (type
+        (user-defined-type Svc)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref svc)
+          (object-type service)))))
+  )
+)
