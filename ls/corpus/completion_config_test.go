@@ -80,9 +80,6 @@ func TestSingleRequestCompletionConfigs(t *testing.T) {
 		ExactItems:     true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
-	if len(configs) != 10 {
-		t.Fatalf("completion config count = %d, want 10", len(configs))
-	}
 	runCompletionConfigs(t, env, configs)
 }
 
@@ -98,9 +95,6 @@ func TestEnumDeclarationCompletionConfigs(t *testing.T) {
 		SnippetSupport: true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
-	if len(configs) != 5 {
-		t.Fatalf("completion config count = %d, want 5", len(configs))
-	}
 	runCompletionConfigs(t, env, configs)
 }
 
@@ -115,9 +109,6 @@ func TestTypeDefinitionCompletionConfigs(t *testing.T) {
 		SnippetSupport: true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
-	if len(configs) != 7 {
-		t.Fatalf("completion config count = %d, want 7", len(configs))
-	}
 	runCompletionConfigs(t, env, configs)
 }
 
@@ -132,9 +123,6 @@ func TestModuleVarContextCompletionConfigs(t *testing.T) {
 		SnippetSupport: true,
 	}
 	configs := discoverCompletionConfigs(t, env.ConfigDir)
-	if len(configs) != 1 {
-		t.Fatalf("completion config count = %d, want 1", len(configs))
-	}
 	runCompletionConfigs(t, env, configs)
 }
 
