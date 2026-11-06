@@ -1,0 +1,31 @@
+-- stdout --
+Request is not initialized to retrieve headers
+200 abc ["a","b"] true false true missing
+200 changed
+201 text abc
+500 invalid multiple http:Headers parameter: b
+200 id=abc num=7
+400 no header value found for 'x-id'
+400 header binding failed for parameter: 'X-Num'
+400 no header value found for 'x-id'
+200 ["a","b"]
+200 ["a, b"]
+200 a
+200 nil
+200 nil
+200 [v]
+200 i 3 ["m1","m2"] nil
+200 i 3 ["m"] o
+400 no header value found for 'x-num'
+400 header binding failed for parameter: 'x-num'
+200 nil
+200 false
+200 [1.5,2]
+400 header binding failed for parameter: 'x-d'
+200 RED
+400 header binding failed for parameter: 'h'
+200 abc z abc
+500 invalid type of header param m: expected one of the following types is expected: string,int,float,decimal,boolean, an array of the above types or a record which consists of the above types
+500 invalid type of header param h: expected one of the following types is expected: string,int,float,decimal,boolean, an array of the above types or a record which consists of the above types
+500 invalid multiple resource parameter annotations for a: expected one of the following types: http:Payload, http:CallerInfo, http:Header, http:Query
+-- stderr --
