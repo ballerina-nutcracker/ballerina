@@ -200,10 +200,6 @@ func mappingAtomicApplicableMemberTypesInner(atomic MappingAtomicType, key subty
 	return memberTypes
 }
 
-func newMappingOps() mappingOps {
-	return mappingOps{}
-}
-
 func (m *mappingOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeUnion(d1, d2)
 }

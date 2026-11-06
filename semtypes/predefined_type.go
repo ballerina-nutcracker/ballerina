@@ -78,13 +78,13 @@ var (
 	predefTypeEnv                     = predefinedTypeEnvGetInstance()
 	Byte                              = intWidthUnsigned(8)
 	Char                              = makeStringChar()
-	ReadonlyXMLElement                = XMLSingleton(xmlPrimitiveElementReadonly)
-	XMLElement                        = XMLSingleton((xmlPrimitiveElementReadonly | xmlPrimitiveElementRw))
-	ReadonlyXMLComment                = XMLSingleton(xmlPrimitiveCommentReadonly)
-	XMLComment                        = XMLSingleton((xmlPrimitiveCommentReadonly | xmlPrimitiveCommentRw))
-	XMLText                           = XMLSequence(XMLSingleton(xmlPrimitiveText))
-	ReadonlyXMLProcessingInstruction  = XMLSingleton(xmlPrimitiveProcessingInstructionReadonly)
-	XMLProcessingInstruction          = XMLSingleton((xmlPrimitiveProcessingInstructionReadonly | xmlPrimitivePiRw))
+	ReadonlyXMLElement                = xmlSingleton(xmlPrimitiveElementReadonly)
+	XMLElement                        = xmlSingleton((xmlPrimitiveElementReadonly | xmlPrimitiveElementRw))
+	ReadonlyXMLComment                = xmlSingleton(xmlPrimitiveCommentReadonly)
+	XMLComment                        = xmlSingleton((xmlPrimitiveCommentReadonly | xmlPrimitiveCommentRw))
+	XMLText                           = XMLSequence(xmlSingleton(xmlPrimitiveText))
+	ReadonlyXMLProcessingInstruction  = xmlSingleton(xmlPrimitiveProcessingInstructionReadonly)
+	XMLProcessingInstruction          = xmlSingleton((xmlPrimitiveProcessingInstructionReadonly | xmlPrimitivePiRw))
 	bddRecAtomReadonly                = 0
 	bddSubtypeRo                      = bddAtom(new(createRecAtom(bddRecAtomReadonly)))
 	mappingRo                         = getBasicSubtype(btMapping, bddSubtypeRo)
@@ -159,10 +159,6 @@ var (
 
 func basicTypeUnion(bitset basicTypeBitSet) SemType {
 	return bitset.semType()
-}
-
-func basicType(code basicTypeCode) SemType {
-	return basicTypeBitSet(1 << code.Code()).semType()
 }
 
 func getBasicSubtype(code basicTypeCode, data properSubtypeData) SemType {

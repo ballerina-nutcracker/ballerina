@@ -118,13 +118,13 @@ func (e *XMLElement) SetXMLChildren(children XMLValue) {
 		panic(NewErrorWithMessage("cannot mutate readonly XML element"))
 	}
 	normalized := NewNormalizedXMLSequence([]XMLValue{children})
-	if XMLContainsElement(normalized, e) {
+	if xmlContainsElement(normalized, e) {
 		panic(NewErrorWithMessage("XML child cycle"))
 	}
 	e.Children = normalized
 }
 
-func XMLContainsElement(value XMLValue, target *XMLElement) bool {
+func xmlContainsElement(value XMLValue, target *XMLElement) bool {
 	visited := map[*XMLElement]bool{}
 	var contains func(XMLValue) bool
 	contains = func(value XMLValue) bool {
@@ -327,7 +327,7 @@ func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProce
 }
 
 func NewValidatedXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
-	if err := ValidateXMLProcessingInstruction(target, data); err != nil {
+	if err := validateXMLProcessingInstruction(target, data); err != nil {
 		panic(NewErrorWithMessage(err.Error()))
 	}
 	return NewXMLProcessingInstruction(target, data, isReadonly)
@@ -351,7 +351,7 @@ func NewXMLComment(body string, isReadonly bool) *XMLComment {
 }
 
 func NewValidatedXMLComment(body string, isReadonly bool) *XMLComment {
-	if err := ValidateXMLComment(body); err != nil {
+	if err := validateXMLComment(body); err != nil {
 		panic(NewErrorWithMessage(err.Error()))
 	}
 	return NewXMLComment(body, isReadonly)
