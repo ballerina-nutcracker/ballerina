@@ -1,0 +1,66 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable started (type
+    (value-type boolean)) (expr
+    (literal false)))
+  (function early (
+    (variable stop (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (if
+        (simple-var-ref stop)
+        (block-stmt
+          (return
+            (literal 0))) ())
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (assignment
+            (simple-var-ref started)
+            (literal true))
+          (return
+            (literal 1))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function other () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation early (
+            (literal true))))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation other ())))))
+      (var-def
+        (variable r (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref started))))
+      (expression-stmt
+        (invocation io println (
+          (invocation early (
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref started)))))))

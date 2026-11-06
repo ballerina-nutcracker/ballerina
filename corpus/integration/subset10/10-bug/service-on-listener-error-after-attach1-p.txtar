@@ -1,0 +1,6 @@
+-- stdout --
+listener init one
+attach one
+make two
+-- stderr --
+error: make failed two

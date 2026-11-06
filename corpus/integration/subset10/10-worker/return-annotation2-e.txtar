@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> return-annotation2-e.bal:28:39
+   |
+28 |     worker w returns @onReturn {name: 1} int { // @error 1 is not a string
+   |                                       ^

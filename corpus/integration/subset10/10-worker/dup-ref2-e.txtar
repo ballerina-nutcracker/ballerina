@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'producer' is referenced more than once
+  --> dup-ref2-e.bal:27:21
+   |
+27 |         return wait producer; // @error second reference from a sibling worker
+   |                     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: worker 'producer' is referenced more than once
+  --> dup-ref2-e.bal:42:25
+   |
+42 |     future<int> alias = producer; // @error split between a worker and the default worker
+   |                         ^^^^^^^^

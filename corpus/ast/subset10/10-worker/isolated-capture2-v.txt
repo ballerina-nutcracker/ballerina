@@ -1,0 +1,36 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Counter
+    (variable n (type
+      (value-type int)) (expr
+      (literal 3)))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (field-based-access n
+                (simple-var-ref self))))))))
+  (function read (
+    (variable c (type
+      (user-defined-type Counter)))) (
+    (value-type int))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (invocation get expr:
+              (simple-var-ref c) ()))))
+      (return
+        (single-wait-action
+          (simple-var-ref w)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation read (
+            (new ())))))))))

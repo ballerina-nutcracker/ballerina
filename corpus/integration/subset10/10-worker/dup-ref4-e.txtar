@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> dup-ref4-e.bal:29:22
+   |
+29 |     boolean r = wait w; // @error w is also referenced in its own body
+   |                      ^

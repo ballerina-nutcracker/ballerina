@@ -37,16 +37,9 @@ public function main() {
           (union-type
             (value-type int)
             (value-type null))) (expr
-          (bad-expr-or-action optional-field-access (tokens ("?." 19:19 19:21) (":" 19:24 19:25)))))))))
+          (optional-field-based-access mod:(bad-identifier)
+            (simple-var-ref value))))))))
 -- stderr --
-error[SEMANTIC_ERROR]: unused variable 'value'
-  --> optional-field-qualified-underscore-e.bal:18:1
-   |
-18 |     record {int mod;}? value = ();
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-19 |     int? x = value?.mod:_; // @error
-   |
-
 error[SEMANTIC_ERROR]: unused variable 'x'
   --> optional-field-qualified-underscore-e.bal:19:1
    |

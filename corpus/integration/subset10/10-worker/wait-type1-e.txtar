@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|error
+  --> wait-type1-e.bal:32:18
+   |
+32 |     int result = wait alias; // @error waiting on an ordinary future has eventual type int|error
+   |                  ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got int
+  --> wait-type1-e.bal:23:21
+   |
+23 |     string result = wait w; // @error a direct worker wait has eventual type int
+   |                     ^^^^^^

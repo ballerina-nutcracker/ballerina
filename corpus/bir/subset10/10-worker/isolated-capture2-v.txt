@@ -1,0 +1,95 @@
+module $anon.. v 0.0.0;
+class Counter {
+  n int
+
+  get() -> int{
+    bb0 {
+      lock-start "$anon/.:Counter.n" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 2
+      %1 = ConstantLoad n
+      %0 = (1, self)[%1];
+      (1, %0) = %0;
+      PopScopeFrame
+      lock-end "$anon/.:Counter.n" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 3
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+read(isolated object { isolated function get() returns int; public function init() returns nil; private int n }) -> int{
+  bb0 {
+    %2 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %5 = closure_fp $anon/.:$worker:read:w
+    $desugar$2 = %5;
+    %7 = start $desugar$2() isolated=true -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %7;
+    %8 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %9 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %9;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %5 = read(%3) -> bb5;
+  }
+  bb5 {
+    %6 = %5;
+    %7 = println(%6) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$worker:read:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, c).get() -> bb2;
+  }
+  bb2 {
+    %0 = %2;
+    return;
+  }
+}

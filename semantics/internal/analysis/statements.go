@@ -104,10 +104,11 @@ func validateIf(cx scope.Context, stmt *ast.BLangIf) {
 // validateWhile validates the condition, the body and the on-fail clause; an
 // error in the condition does not abandon the body.
 func validateWhile(cx scope.Context, stmt *ast.BLangWhile) {
-	validateActionOrExpr(cx, stmt.Expr, semtypes.Boolean)
-	validateBlock(cx, stmt.Body.Stmts)
+	loopCx := scope.NewRepeatedRegion(cx)
+	validateActionOrExpr(loopCx, stmt.Expr, semtypes.Boolean)
+	validateBlock(loopCx, stmt.Body.Stmts)
 	if stmt.OnFailClause.Body != nil {
-		validateOnFail(cx, &stmt.OnFailClause)
+		validateOnFail(loopCx, &stmt.OnFailClause)
 	}
 }
 
@@ -117,9 +118,10 @@ func validateForeach(cx scope.Context, stmt *ast.BLangForeach) {
 	if ast.SymbolIsSet(stmt.VariableDef.Var) {
 		validateForeachHeader(cx, stmt, scope.DefineBoundLocal(cx, stmt.VariableDef))
 	}
-	validateBlock(cx, stmt.Body.Stmts)
+	loopCx := scope.NewRepeatedRegion(cx)
+	validateBlock(loopCx, stmt.Body.Stmts)
 	if stmt.OnFailClause != nil {
-		validateOnFail(cx, stmt.OnFailClause)
+		validateOnFail(loopCx, stmt.OnFailClause)
 	}
 }
 

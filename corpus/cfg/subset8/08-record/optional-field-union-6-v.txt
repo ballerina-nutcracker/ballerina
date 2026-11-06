@@ -15,24 +15,24 @@
     (assignment
       (field-based-access foo
         (simple-var-ref r))
-      (field-based-access foo
+      (optional-field-based-access foo
         (simple-var-ref r)))
     (expression-stmt
       (invocation io println (
-        (field-based-access foo
+        (optional-field-based-access foo
           (simple-var-ref r)))))
     (assignment
       (field-based-access foo
         (simple-var-ref r))
       (binary-expr +
         (type-conversion-expr
-          (field-based-access foo
+          (optional-field-based-access foo
             (simple-var-ref r))
           (value-type int))
         (literal 1)))
     (expression-stmt
       (invocation io println (
-        (field-based-access foo
+        (optional-field-based-access foo
           (simple-var-ref r)))))
   )
 )

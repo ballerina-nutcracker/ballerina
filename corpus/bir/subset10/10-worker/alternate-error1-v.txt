@@ -1,0 +1,53 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %5 = closure_fp $anon/.:$worker:main:failed
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:main:succeeded
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %12 = wait $desugar$1 | $desugar$2 -> bb5;
+  }
+  bb5 {
+    r = %12;
+    %14 = println(r) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$worker:main:failed() -> int|error{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad first failed
+    %3 = newError error(%2)
+    %0 = %3;
+    return;
+  }
+}
+$worker:main:succeeded() -> int|error{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 5
+    %0 = %2;
+    return;
+  }
+}
