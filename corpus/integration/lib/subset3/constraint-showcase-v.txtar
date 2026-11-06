@@ -1,0 +1,8 @@
+-- stdout --
+true
+Validation failed for '$.age:minValue','$.name:minLength','$.score:maxFractionDigits' constraint(s).
+true
+true
+true
+true
+-- stderr --
