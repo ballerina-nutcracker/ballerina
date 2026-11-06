@@ -56,14 +56,15 @@ func (b *BallerinaBackend) performCodeGen() {
 		if moduleCtx.getCompilationState() != moduleCompilationStateCompiled {
 			continue
 		}
-		diagnosticCount := len(moduleCtx.getDiagnostics())
 		if generateCodeInternal(moduleCtx) {
 			continue
 		}
 
+		// birGenDiagStart marks where BIR-gen's diagnostics start even when this call
+		// only observed a cached failure from an earlier (e.g. eager) attempt.
 		var codeGenDiagnostics []diagnostics.Diagnostic
 		moduleDiagnostics := moduleCtx.getDiagnostics()
-		for _, diagnostic := range moduleDiagnostics[diagnosticCount:] {
+		for _, diagnostic := range moduleDiagnostics[moduleCtx.birGenDiagStart:] {
 			codeGenDiagnostics = append(codeGenDiagnostics,
 				newPackageDiagnostic(diagnostic, moduleCtx.getDescriptor(), moduleCtx.getProject(), false))
 		}

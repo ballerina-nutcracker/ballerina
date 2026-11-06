@@ -168,10 +168,9 @@ func (c *PackageCompilation) compileModulesInternal() {
 			}
 			analyzeAndDesugar(m)
 			if generateCode && m.getCompilationState() == moduleCompilationStateCompiled {
-				start := len(m.getDiagnostics())
 				generateCodeInternal(m)
 				birDiagStartMu.Lock()
-				birDiagStart[m.getModuleID()] = start
+				birDiagStart[m.getModuleID()] = m.birGenDiagStart
 				birDiagStartMu.Unlock()
 			}
 		})
