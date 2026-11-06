@@ -1,0 +1,43 @@
+module $anon.. v 0.0.0;
+w  int;
+main() -> nil{
+  bb0 {
+    fromModule = w;
+    %2 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %2;
+    %5 = closure_fp $anon/.:$worker:main:w
+    $desugar$2 = %5;
+    %7 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %7;
+    %8 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %9 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    fromWorker = %9;
+    %11 = fromModule;
+    %12 = println(%11) -> bb5;
+  }
+  bb5 {
+    %13 = fromWorker;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$worker:main:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 7
+    %0 = %2;
+    return;
+  }
+}

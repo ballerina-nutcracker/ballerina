@@ -1,0 +1,10 @@
+-- stdout --
+service init
+listener init one
+attach one
+listener init two
+attach two
+5
+start one
+start two
+-- stderr --

@@ -1,0 +1,91 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition L
+    (variable n (type
+      (value-type string)))
+    (function init (
+      (variable n (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access n
+            (simple-var-ref self))
+          (simple-var-ref n))
+        (expression-stmt
+          (invocation io println (
+            (literal listener init )
+            (simple-var-ref n))))))
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (literal attach )
+            (field-based-access n
+              (simple-var-ref self)))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (function makeListener (
+    (variable n (type
+      (value-type string)))) (
+    (union-type
+      (user-defined-type L)
+      (error-type)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal make )
+          (simple-var-ref n))))
+      (return
+        (error-constructor-expr (
+          (binary-expr +
+            (literal make failed )
+            (simple-var-ref n)))))))
+  (service
+    (on
+    (new
+      (user-defined-type L) (
+      (literal one)))
+    (invocation makeListener (
+      (literal two)))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

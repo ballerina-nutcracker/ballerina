@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+counter  int;
+spawn() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:spawn:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+yieldOnce() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = spawn() -> bb1;
+  }
+  bb1 {
+    GOTO bb2;
+  }
+  bb2 {
+    %3 = ConstantLoad 0
+    %4 = %3;
+    %2 = == counter %4;
+    %2 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 6
+    %0 = start yieldOnce() isolated=false -> bb5;
+  }
+  bb4 {
+    %5 = println(counter) -> bb7;
+  }
+  bb5 {
+    f = %0;
+    %2 = wait f -> bb6;
+  }
+  bb6 {
+    r = %2;
+    %4 = r is int
+    %5 = %4;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb7 {
+    return;
+  }
+}
+$worker:spawn:w() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    counter = %2;
+    return;
+  }
+}

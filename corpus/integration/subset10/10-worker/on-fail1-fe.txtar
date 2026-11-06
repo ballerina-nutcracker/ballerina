@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker on fail clauses are not supported
+  --> on-fail1-fe.bal:20:7
+   |
+20 |     } on fail error e { // @error worker on fail clauses are not supported
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 |         return 0;
+   |         ^^^^^^^^^
+22 |     }
+   |     ^

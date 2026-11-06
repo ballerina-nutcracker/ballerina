@@ -1,0 +1,260 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 2.675
+    %2 = %1;
+    %3 = ConstantLoad 2
+    %4 = %3;
+    %5 = round(%2,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5;
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad 2.675
+    %9 = unknown %8;
+    %10 = %9;
+    %11 = ConstantLoad 2
+    %12 = %11;
+    %13 = round(%10,%12) -> bb3;
+  }
+  bb3 {
+    %14 = %13;
+    %15 = println(%14) -> bb4;
+  }
+  bb4 {
+    %16 = ConstantLoad 0.15
+    %17 = %16;
+    %18 = ConstantLoad 1
+    %19 = %18;
+    %20 = round(%17,%19) -> bb5;
+  }
+  bb5 {
+    %21 = %20;
+    %22 = println(%21) -> bb6;
+  }
+  bb6 {
+    %23 = ConstantLoad 0.35
+    %24 = %23;
+    %25 = ConstantLoad 1
+    %26 = %25;
+    %27 = round(%24,%26) -> bb7;
+  }
+  bb7 {
+    %28 = %27;
+    %29 = println(%28) -> bb8;
+  }
+  bb8 {
+    %30 = ConstantLoad 0.45
+    %31 = %30;
+    %32 = ConstantLoad 1
+    %33 = %32;
+    %34 = round(%31,%33) -> bb9;
+  }
+  bb9 {
+    %35 = %34;
+    %36 = println(%35) -> bb10;
+  }
+  bb10 {
+    %37 = ConstantLoad 0.45
+    %38 = unknown %37;
+    %39 = %38;
+    %40 = ConstantLoad 1
+    %41 = %40;
+    %42 = round(%39,%41) -> bb11;
+  }
+  bb11 {
+    %43 = %42;
+    %44 = println(%43) -> bb12;
+  }
+  bb12 {
+    %45 = ConstantLoad 9.995
+    %46 = %45;
+    %47 = ConstantLoad 2
+    %48 = %47;
+    %49 = round(%46,%48) -> bb13;
+  }
+  bb13 {
+    %50 = %49;
+    %51 = println(%50) -> bb14;
+  }
+  bb14 {
+    %52 = ConstantLoad 9.96
+    %53 = %52;
+    %54 = ConstantLoad 1
+    %55 = %54;
+    %56 = round(%53,%55) -> bb15;
+  }
+  bb15 {
+    %57 = %56;
+    %58 = println(%57) -> bb16;
+  }
+  bb16 {
+    %59 = ConstantLoad 1.005
+    %60 = %59;
+    %61 = ConstantLoad 2
+    %62 = %61;
+    %63 = round(%60,%62) -> bb17;
+  }
+  bb17 {
+    %64 = %63;
+    %65 = println(%64) -> bb18;
+  }
+  bb18 {
+    %66 = ConstantLoad 0.125
+    %67 = %66;
+    %68 = ConstantLoad 2
+    %69 = %68;
+    %70 = round(%67,%69) -> bb19;
+  }
+  bb19 {
+    %71 = %70;
+    %72 = println(%71) -> bb20;
+  }
+  bb20 {
+    %73 = ConstantLoad 0.375
+    %74 = %73;
+    %75 = ConstantLoad 2
+    %76 = %75;
+    %77 = round(%74,%76) -> bb21;
+  }
+  bb21 {
+    %78 = %77;
+    %79 = println(%78) -> bb22;
+  }
+  bb22 {
+    %80 = ConstantLoad 0.125
+    %81 = unknown %80;
+    %82 = %81;
+    %83 = ConstantLoad 2
+    %84 = %83;
+    %85 = round(%82,%84) -> bb23;
+  }
+  bb23 {
+    %86 = %85;
+    %87 = println(%86) -> bb24;
+  }
+  bb24 {
+    %88 = ConstantLoad 1250
+    %89 = %88;
+    %90 = ConstantLoad 2
+    %91 = unknown %90;
+    %92 = %91;
+    %93 = round(%89,%92) -> bb25;
+  }
+  bb25 {
+    %94 = %93;
+    %95 = println(%94) -> bb26;
+  }
+  bb26 {
+    %96 = ConstantLoad 1350
+    %97 = %96;
+    %98 = ConstantLoad 2
+    %99 = unknown %98;
+    %100 = %99;
+    %101 = round(%97,%100) -> bb27;
+  }
+  bb27 {
+    %102 = %101;
+    %103 = println(%102) -> bb28;
+  }
+  bb28 {
+    %104 = ConstantLoad 1350
+    %105 = unknown %104;
+    %106 = %105;
+    %107 = ConstantLoad 2
+    %108 = unknown %107;
+    %109 = %108;
+    %110 = round(%106,%109) -> bb29;
+  }
+  bb29 {
+    %111 = %110;
+    %112 = println(%111) -> bb30;
+  }
+  bb30 {
+    %113 = ConstantLoad 6e+307
+    %114 = %113;
+    %115 = ConstantLoad 308
+    %116 = unknown %115;
+    %117 = %116;
+    %118 = round(%114,%117) -> bb31;
+  }
+  bb31 {
+    %119 = %118;
+    %120 = println(%119) -> bb32;
+  }
+  bb32 {
+    %121 = ConstantLoad 4e+307
+    %122 = %121;
+    %123 = ConstantLoad 308
+    %124 = unknown %123;
+    %125 = %124;
+    %126 = round(%122,%125) -> bb33;
+  }
+  bb33 {
+    %127 = %126;
+    %128 = println(%127) -> bb34;
+  }
+  bb34 {
+    %129 = ConstantLoad 1.7e+308
+    %130 = %129;
+    %131 = ConstantLoad 308
+    %132 = unknown %131;
+    %133 = %132;
+    %134 = round(%130,%133) -> bb35;
+  }
+  bb35 {
+    %135 = %134;
+    %136 = println(%135) -> bb36;
+  }
+  bb36 {
+    %137 = ConstantLoad 1.7e+308
+    %138 = unknown %137;
+    %139 = %138;
+    %140 = ConstantLoad 308
+    %141 = unknown %140;
+    %142 = %141;
+    %143 = round(%139,%142) -> bb37;
+  }
+  bb37 {
+    %144 = %143;
+    %145 = println(%144) -> bb38;
+  }
+  bb38 {
+    %146 = ConstantLoad 5e-324
+    %147 = %146;
+    %148 = ConstantLoad 323
+    %149 = %148;
+    %150 = round(%147,%149) -> bb39;
+  }
+  bb39 {
+    %151 = %150;
+    %152 = println(%151) -> bb40;
+  }
+  bb40 {
+    %153 = ConstantLoad 5e-324
+    %154 = %153;
+    %155 = ConstantLoad 324
+    %156 = %155;
+    %157 = round(%154,%156) -> bb41;
+  }
+  bb41 {
+    %158 = %157;
+    %159 = println(%158) -> bb42;
+  }
+  bb42 {
+    %160 = ConstantLoad 5e-324
+    %161 = %160;
+    %162 = ConstantLoad 1073
+    %163 = %162;
+    %164 = round(%161,%163) -> bb43;
+  }
+  bb43 {
+    %165 = %164;
+    %166 = println(%165) -> bb44;
+  }
+  bb44 {
+    return;
+  }
+}

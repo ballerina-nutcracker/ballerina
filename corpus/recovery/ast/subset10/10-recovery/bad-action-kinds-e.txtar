@@ -118,23 +118,11 @@ error[SYNTAX_ERROR]: qualifier not allowed
 25 |     any g = client->/path.get(; // @error
    |             ^^^^^^
 
-fatal[UNIMPLEMENTED_ERROR]: transformAsyncSendAction unimplemented
-  --> bad-action-kinds-e.bal:23:1
-   |
-23 |     value -> worker1; // @error
-   |     ^^^^^^^^^^^^^^^^
-
 fatal[UNIMPLEMENTED_ERROR]: transformCommitAction unimplemented
   --> bad-action-kinds-e.bal:22:13
    |
 22 |     any e = commit; // @error
    |             ^^^^^^
-
-fatal[UNIMPLEMENTED_ERROR]: transformFlushAction unimplemented
-  --> bad-action-kinds-e.bal:21:13
-   |
-21 |     any d = flush worker1; // @error
-   |             ^^^^^^^^^^^^^
 
 fatal[UNIMPLEMENTED_ERROR]: transformQueryAction unimplemented
   --> bad-action-kinds-e.bal:27:1
@@ -142,8 +130,20 @@ fatal[UNIMPLEMENTED_ERROR]: transformQueryAction unimplemented
 27 |     from int x in [1] do {}; // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^
 
-fatal[UNIMPLEMENTED_ERROR]: transformReceiveAction unimplemented
+fatal[UNIMPLEMENTED_ERROR]: worker flush is not supported
+  --> bad-action-kinds-e.bal:21:13
+   |
+21 |     any d = flush worker1; // @error
+   |             ^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
   --> bad-action-kinds-e.bal:20:13
    |
 20 |     any c = <- worker1; // @error
    |             ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message passing is not supported
+  --> bad-action-kinds-e.bal:23:1
+   |
+23 |     value -> worker1; // @error
+   |     ^^^^^^^^^^^^^^^^

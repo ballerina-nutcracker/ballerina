@@ -1,0 +1,48 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function parse (
+    (variable ok (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (if
+        (simple-var-ref ok)
+        (block-stmt
+          (return
+            (literal 1))) ())
+      (block-stmt
+        (return
+          (error-constructor-expr (
+            (literal parse failed)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (union-type
+          (value-type int)
+          (error-type)))
+        (block-function-body
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (checked-expr
+                (invocation parse (
+                  (literal false)))))))
+          (expression-stmt
+            (invocation io println (
+              (literal not reached))))
+          (return
+            (simple-var-ref value))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref w)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result)))))))

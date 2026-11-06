@@ -11,7 +11,7 @@ If the user wants to port a brand-new stdlib (`lib/stdlibs/ballerina/<name>/` do
 
 Coding rules and the PAL constraint live in `AGENTS.md` at the repo root — read it before editing. Shared templates and patterns live in `add-stdlib-support`'s directory (`../add-stdlib-support/templates/`, `../add-stdlib-support/references/`) — this skill points there rather than repeating them.
 
-**Golden rule** (same as `add-stdlib-support`): the Ballerina public interface must stay identical to jBallerina's, and if the jBallerina reference ships a `docs/spec/spec.md`, its prose must exactly match the Go implementation's actual behaviour for the surface being touched. A spec/implementation mismatch is a defect to resolve before the gap-fill is done — not something to leave unreconciled.
+**Golden rule** (same as `add-stdlib-support`): the Ballerina public interface must stay identical to jBallerina's, and if the jBallerina reference ships a `docs/spec/spec.md`, its prose must exactly match the Go implementation's actual behaviour for the surface being touched. A spec/implementation mismatch is a defect to resolve before the gap-fill is done — not something to leave unreconciled. Matching jBallerina's runtime behaviour is the default, not an absolute: where jBallerina's behaviour is a bug, implement the correct behaviour and record the divergence; never copy the bug (see `add-stdlib-support` Step 5).
 
 ## 1. Identify the gap
 
@@ -52,11 +52,11 @@ Do not assume you know what a jBallerina feature does from prior training. Imple
 
 ## 3. Quick parity check
 
-Produce a focused 3-column table for the touched surface only:
+Produce a focused 4-column table for the touched surface only:
 
-| Feature | Risk | Resolution |
-|---|---|---|
-| ... | ... | ... |
+| Feature | Risk | Classification | Resolution |
+|---|---|---|---|
+| ... | ... | `match` / `unavoidable divergence` / `jBallerina bug` | ... |
 
 Check the hot-spots in `../add-stdlib-support/references/parity-risks.md`, scoped to just this surface (decimal precision, UTF-8 vs UTF-16 string ops, NaN/overflow, error-message wording on the outer error, plus the module's domain-specific risks). Where a row's behaviour is verifiable by running code, verify it with the **`run-jballerina`** skill — run a small probe on jBallerina (`bal run`) and on this interpreter, and compare — rather than reasoning from documentation.
 
@@ -65,6 +65,7 @@ If `docs/spec/spec.md` exists: check every behavioural claim it makes about the 
 Rules:
 - **Avoidable** divergences — fix during Step 4.
 - **Unavoidable** divergences — record in the README under **Notable Behavioural Changes** during Step 5.
+- **jBallerina bugs** (jBallerina contradicts its spec or API docs, or is clearly defective; see the defect patterns in `../add-stdlib-support/references/parity-risks.md`) — confirm the classification with the user, implement the correct behaviour, and record it under **Notable Behavioural Changes** with the upstream issue link. Get that link per `../add-stdlib-support/references/reporting-limitations.md`: link an existing issue if one is found, otherwise draft one, file it once the user confirms, and use its real link. The fix isn't complete without that link, and never file a duplicate. Don't write a corpus `@output` that asserts the bug; cite the upstream issue in a comment next to each corrected `@output`.
 - **A genuine bug** — either in this stdlib's own previously-`Supported` behaviour, or in a stdlib it depends on, rather than a new architectural constraint — isn't just an "unavoidable" row: also follow `../add-stdlib-support/references/reporting-limitations.md` to get it tracked upstream.
 
 If every row is "No risk identified", say so and move on.
@@ -109,9 +110,9 @@ Coding rules: follow `AGENTS.md` (license header on every new file, no per-line 
 
 Library corpus tests live under `corpus/lib/subset<N>/` — a flat directory of `<name>-<suffix>.bal` files, e.g. `corpus/lib/subset2/crypto-hash1-v.bal` — a sibling of `corpus/bal/` (the generic `corpus/bal/subset1..9/NN-category/` language-feature tests) and of `corpus/project/`. Each `lib/subset<N>` is a released library-support milestone documented in `doc/library/subset<N>.md`.
 
-Find this stdlib's existing tests first: `find corpus/lib -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per `AGENTS.md`: `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts. **`*-v.bal` tests must produce empty stderr** — structure the test (e.g. filtered log levels) so nothing is emitted there.
+Find this stdlib's existing tests first: `find corpus/lib -name '<name>-*.bal'` locates which `subset<N>` it currently lives in — reuse that one by default. **Ask the developer to confirm** rather than assuming, though: if this gap-fill is significant enough to be its own release milestone, they may want it filed under a *new* `subset<N+1>` instead (create `doc/library/subset<N+1>.md` following `subset2.md`'s intro-paragraph pattern in that case). Suffixes per the [manage-corpus-tests skill](../manage-corpus-tests/SKILL.md): `*-v.bal` (valid), `*-e.bal` (compile errors), `*-p.bal` (panics). No leading zeros in numeric parts. **`*-v.bal` tests must produce empty stderr** — structure the test (e.g. filtered log levels) so nothing is emitted there.
 
-Cover the new behaviour from `.bal` — a corpus test exercises the full compiler → BIR → interpreter pipeline and is measured by the native-coverage harness (`-coverpkg=./lib/stdlibs/...` over `./corpus/...`). Add a Go unit test only for branches genuinely unreachable from Ballerina (defensive type/arity guards, nil guards, interface-contract paths), kept minimal with a comment explaining why. Don't write wrong-type extern arg guards — the type checker rejects wrong types at compile time. See the **`manage-corpus-tests`** "Test philosophy" section. If you find existing native code that can never execute through Ballerina, remove it rather than testing it.
+Cover the new behaviour from `.bal` — a corpus test exercises the full compiler → BIR → interpreter pipeline and is measured by the native-coverage harness (`-coverpkg=./lib/stdlibs/...` over `./corpus/...`). Add a Go unit test only for branches genuinely unreachable from Ballerina (defensive type/arity guards, nil guards, interface-contract paths), kept minimal with a comment explaining why. Don't write wrong-type extern arg guards — the type checker rejects wrong types at compile time. See the [manage-corpus-tests "Test selection and layout" section](../manage-corpus-tests/SKILL.md#test-selection-and-layout).
 
 **Coverage gate, same as `add-stdlib-support`:** `.github/workflows/native-ci.yml` uploads coverage to Codecov (`flags: native`), and `codecov.yml`'s `coverage.status.patch.default.target: 80%` fails the PR if **patch coverage** — coverage of just the lines this change adds or touches — drops below 80%. Unlike a brand-new stdlib, the package's overall coverage % is *not* a reliable stand-in here: the existing, already-tested code dilutes it, so a poorly-tested new function can hide inside a healthy-looking package total. Check the touched lines directly:
 
@@ -125,9 +126,9 @@ or open an annotated view of just the new/changed lines with `go tool cover -htm
 
 Regenerate goldens via the **`manage-corpus-tests`** skill:
 ```shell
-go test ./corpus -update
+go test ./corpus -run 'TestLibIntegration/lib/subset<N>/<test-file>.bal' -update
 ```
-Review `git diff corpus/` before committing, and revert any unrelated golden drift `-update` introduces (some stages have non-deterministic ordering).
+Scope `-run` to each new or changed test; an unscoped `-update` regenerates every integration golden in `./corpus`, including unrelated ones. Review `git diff corpus/` before committing, and revert any unrelated golden drift `-update` introduces (some stages have non-deterministic ordering).
 
 A library test's `-update` run only ever writes `corpus/integration/lib/**.txtar`: it has no `ExpectedPath` (see `add-stdlib-support`), so it never touches `corpus/ast/`, `corpus/bir/`, `corpus/cfg/` or `corpus/desugared/`. A diff appearing there for this test means something is misconfigured.
 
@@ -136,7 +137,7 @@ A library test's `-update` run only ever writes `corpus/integration/lib/**.txtar
 Update the README row via the **`stdlib-readme-format`** skill:
 
 - Promote the affected row's status (`Not Yet Supported` → `Supported`, or `Partially Supported` → `Supported` if the caveats are resolved).
-- If the parity check in Step 3 surfaced an unavoidable divergence, add it to **Notable Behavioural Changes**.
+- If the parity check in Step 3 surfaced an unavoidable divergence or a jBallerina bug fix, add it to **Notable Behavioural Changes**.
 - Update the aggregator `doc/library/README.md`: recount this package's row and recompute the **Total** footer; if a behavioural change was added or removed, mirror it into the package's `### <name>` subsection of the consolidated section. Then update the repo-root `README.md` **Standard library coverage** summary sentence (overall %, package count, Supported / Partially Supported / Not Yet Supported totals) to match the new Total footer.
 - Re-run the full `stdlib-readme-format` validation checklist against the updated README (catches pre-existing violations too).
 - Update `doc/library/subset<N>.md` (the subset the tests were added to above) to document the newly-covered surface — this is separate from, and in addition to, the per-package `README.md`.
@@ -153,7 +154,8 @@ Update the README row via the **`stdlib-readme-format`** skill:
 - [ ] README row status reflects what's now implemented.
 - [ ] `doc/library/README.md` aggregator updated (package row recounted, Total footer recomputed, behavioural changes mirrored if any changed), and the repo-root `README.md` coverage summary matches its Total footer.
 - [ ] `stdlib-readme-format` validation checklist passes.
-- [ ] Any unavoidable divergence is in **Notable Behavioural Changes**.
+- [ ] Any unavoidable divergence or jBallerina bug fix is in **Notable Behavioural Changes**, bug fixes with their upstream issue link.
+- [ ] Every `jBallerina bug` row reproduced on jBallerina and agreed with the user; no corpus test asserts it, and each corrected `@output` cites its upstream issue in a comment.
 - [ ] **Run the `validate-stdlib-contract` skill on this package** (at minimum, review its diff output for the touched surface) — the verdict must be PASS, or PASS with notes that you have reviewed.
 - [ ] If a new `import ballerina/<dep>` was added to the `.bal` source: `Dependencies.toml` updated with the new entry and `dependencies = [...]` field.
 - [ ] PAL fields (if any added) implemented in `palnative/` and wired into `TestPal`.
@@ -162,4 +164,4 @@ Update the README row via the **`stdlib-readme-format`** skill:
 
 ### Final report
 
-In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/lib/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.
+In one short paragraph: which row was promoted, what was added (function names, file paths), which `corpus/lib/subset<N>/` the tests landed in (and whether `doc/library/subset<N>.md` was created or extended), any divergences recorded, the upstream issue link for each `jBallerina bug` fix, the `validate-stdlib-contract` verdict, confirmation that the new/touched lines are covered (per the coverage-gate check above), and any language-limitation or dependency-bug issue drafted for upstream reporting.

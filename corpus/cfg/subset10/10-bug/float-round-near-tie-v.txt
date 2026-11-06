@@ -1,0 +1,148 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 2.675))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (unary-expr -
+              (literal 2.675)))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.15))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.35))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.45))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (unary-expr -
+              (literal 0.45)))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 9.995))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 9.96))
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 1.005))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.125))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 0.375))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (unary-expr -
+              (literal 0.125)))
+          (literal 2))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 1250))
+          (unary-expr -
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 1350))
+          (unary-expr -
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (unary-expr -
+              (literal 1350)))
+          (unary-expr -
+            (literal 2)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 6e+307))
+          (unary-expr -
+            (literal 308)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 4e+307))
+          (unary-expr -
+            (literal 308)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 1.7e+308))
+          (unary-expr -
+            (literal 308)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (unary-expr -
+              (literal 1.7e+308)))
+          (unary-expr -
+            (literal 308)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 5e-324))
+          (literal 323))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 5e-324))
+          (literal 324))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.float round (
+          (group-expr
+            (literal 5e-324))
+          (literal 1073))))))
+  )
+)

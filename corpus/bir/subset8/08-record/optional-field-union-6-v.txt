@@ -7,28 +7,28 @@ main() -> nil{
     %4 = ConstantLoad 10
     %5 = newMap {| bar: int, foo: nil|int, anydata... |}{%1=%2, %3=%4}
     r = %5;
-    %8 = ConstantLoad foo
-    %7 = r[%8];
+    %7 = ConstantLoad foo
+    %8 = r[%7];
     %9 = ConstantLoad foo
-    r[%9] = %7;
-    %11 = ConstantLoad foo
-    %10 = r[%11];
-    %12 = %10;
+    r[%9] = %8;
+    %10 = ConstantLoad foo
+    %11 = r[%10];
+    %12 = %11;
     %13 = println(%12) -> bb1;
   }
   bb1 {
-    %16 = ConstantLoad foo
-    %15 = r[%16];
-    %17 = <int>(%15)
+    %15 = ConstantLoad foo
+    %16 = r[%15];
+    %17 = <int>(%16)
     %18 = %17;
     %19 = ConstantLoad 1
     %20 = %19;
     %14 = + %18 %20;
     %21 = ConstantLoad foo
     r[%21] = %14;
-    %23 = ConstantLoad foo
-    %22 = r[%23];
-    %24 = %22;
+    %22 = ConstantLoad foo
+    %23 = r[%22];
+    %24 = %23;
     %25 = println(%24) -> bb2;
   }
   bb2 {

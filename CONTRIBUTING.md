@@ -28,7 +28,7 @@ See [doc/guides/DEVELOPING.md](doc/guides/DEVELOPING.md) for more details on deb
 ## Submit your contribution
 
 1. Make your changes in the source code.
-2. Add or update tests as needed. Prefer [corpus tests](AGENTS.md#corpus-tests) for interpreter stages; use `-update` to refresh expected output when appropriate.
+2. Add or update tests as needed. Prefer [corpus tests](.agents/skills/manage-corpus-tests/SKILL.md) for interpreter stages; use `-update` to refresh expected output when appropriate.
 3. Commit and push to your fork, then open a Pull Request (PR).
 
    **Commit message guidelines:**

@@ -1,0 +1,46 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (var-def
+      (variable r (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable i (type
+                (value-type int))))
+            (list-constructor-expr
+              (invocation observe (
+                (simple-var-ref w)))
+              (literal 5)))
+          (select-clause
+            (simple-var-ref i))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(observe
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref f)
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)))
+        (literal 1)
+        (literal 2)))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)

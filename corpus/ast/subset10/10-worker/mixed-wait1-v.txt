@@ -1,0 +1,123 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function one () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 1))))
+  (function multiple () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 2))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation one ())))))
+      (var-def
+        (variable both (type
+          (record-type
+            (field w
+              (value-type int))
+            (field f
+              (union-type
+                (value-type int)
+                (error-type))))) (expr
+          (multiple-wait-action w
+            (simple-var-ref w) f
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access w
+            (simple-var-ref both)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access f
+            (simple-var-ref both)))))))
+  (function alternate () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 1))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation one ())))))
+      (var-def
+        (variable first (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (alternate-wait-action
+            (simple-var-ref w)
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref first))))))
+  (function claimed () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (literal 2))))
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation one ())))))
+      (var-def
+        (variable claim (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref claim))))
+      (var-def
+        (variable both (type
+          (record-type
+            (field w
+              (value-type int))
+            (field f
+              (union-type
+                (value-type int)
+                (error-type))))) (expr
+          (multiple-wait-action w
+            (simple-var-ref w) f
+            (simple-var-ref f)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access w
+            (simple-var-ref both)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access f
+            (simple-var-ref both)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation multiple ()))
+      (expression-stmt
+        (invocation alternate ()))
+      (expression-stmt
+        (invocation claimed ())))))

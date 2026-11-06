@@ -68,6 +68,7 @@ const (
 	fnMethod
 	fnLambda
 	fnExpressionClosure
+	fnWorker
 )
 
 // invokableSignatureNode is implemented by functions, methods, lambdas'
@@ -116,6 +117,9 @@ type (
 		id       ScopeID
 		kind     functionKind
 		isolated bool
+		// workerRefs maps each named worker declared in the function's body to
+		// the one value reference already seen for it, nil until one is.
+		workerRefs map[model.SymbolRef]*ast.BLangVarRef
 	}
 
 	lockContext struct {
@@ -140,6 +144,12 @@ type (
 		ruleBase
 		factsBase
 	}
+
+	repeatedRegionContext struct {
+		contextBase
+		ruleBase
+		factsBase
+	}
 )
 
 var (
@@ -148,6 +158,7 @@ var (
 	_ Context = (*lockContext)(nil)
 	_ Context = (*isolatedExprContext)(nil)
 	_ Context = (*factsContext)(nil)
+	_ Context = (*repeatedRegionContext)(nil)
 )
 
 func (c contextBase) parent() Context { return c.outer }
