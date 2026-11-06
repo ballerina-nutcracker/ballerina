@@ -1,0 +1,74 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function siblingDeclaredLater () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker a (
+          (value-type int))
+          (block-function-body
+            (var-def
+              (variable x (type
+                (value-type int)) (expr
+                (single-wait-action
+                  (simple-var-ref b)))))
+            (return
+              (binary-expr +
+                (simple-var-ref x)
+                (literal 1)))))
+        (named-worker b (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 1)))))
+      (var-def
+        (variable r (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref a)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function inInitStatements () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker f (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 10))))
+        (named-worker g (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 20)))))
+      (named-worker w (
+        (value-type int))
+        (block-function-body
+          (return
+            (single-wait-action
+              (simple-var-ref f)))))
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref g)))))
+      (var-def
+        (variable y (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref w)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref x)
+            (simple-var-ref y)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation siblingDeclaredLater ()))
+      (expression-stmt
+        (invocation inInitStatements ())))))

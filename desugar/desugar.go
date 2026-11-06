@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -708,7 +709,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		paramList := ld.Define(pkgCtx.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 		retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
-		fnSymName := "$" + methodName + "Method"
+		fnSymName := constants.ListenerMethodFunctionPrefix + methodName + "Method"
 		fnSym := &desugaredSymbol{name: fnSymName, ty: fnTy, kind: model.SymbolKindFunction, location: initPos}
 		scope.AddSymbol(fnSymName, fnSym)
 		fnSymRef, _ := scope.GetSymbol(fnSymName)

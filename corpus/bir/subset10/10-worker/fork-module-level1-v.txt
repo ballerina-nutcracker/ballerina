@@ -1,0 +1,173 @@
+module $anon.. v 0.0.0;
+fromModuleInit  int;
+moduleInit  function() returns int;
+class Holder {
+  fieldInit function() returns int
+
+  init() -> nil{
+    bb0 {
+      %2 = closure_fp $anon/.:$anonFunc$_1
+      %3 = ConstantLoad fieldInit
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+withDefault(function() returns int) -> int{
+  bb0 {
+    %2 = f() -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = println(fromModuleInit) -> bb1;
+  }
+  bb1 {
+    %2 = newObject $anon/.:Holder
+    %3 = %2.init() -> bb2;
+  }
+  bb2 {
+    %5 = %3 is nil
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    %4 = %2;
+    GOTO bb5;
+  }
+  bb4 {
+    %4 = %3;
+    GOTO bb5;
+  }
+  bb5 {
+    h = %4;
+    %8 = ConstantLoad fieldInit
+    %7 = h[%8];
+    fieldInit = %7;
+    %10 = fieldInit() -> bb6;
+  }
+  bb6 {
+    %11 = %10;
+    %12 = println(%11) -> bb7;
+  }
+  bb7 {
+    %13 = $default$0() -> bb8;
+  }
+  bb8 {
+    $desugar$0 = %13;
+    %15 = withDefault($desugar$0) -> bb9;
+  }
+  bb9 {
+    %16 = %15;
+    %17 = println(%16) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:init.$anonFunc$_0:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:Holder.init.$anonFunc$_1:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:$default$0.$anonFunc$_2:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$default$0() -> function() returns int{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_2
+    %0 = %1;
+    return;
+  }
+}
+$worker:$default$0.$anonFunc$_2:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 300
+    %0 = %2;
+    return;
+  }
+}
+$worker:Holder.init.$anonFunc$_1:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 20
+    %0 = %2;
+    return;
+  }
+}
+$worker:init.$anonFunc$_0:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}

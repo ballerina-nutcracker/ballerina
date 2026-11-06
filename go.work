@@ -11,6 +11,7 @@ use (
 	./common
 	./compiler-tools/benchmark
 	./compiler-tools/benchmark-http
+	./compiler-tools/generatednames
 	./compiler-tools/tree-gen
 	./compiler-tools/walkpurity
 	./context

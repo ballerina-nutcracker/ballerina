@@ -14,10 +14,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-function forkStatement() {
-    fork { // @error fork statements are not supported
-        worker w returns int {
-            return 1;
+function boom() returns int {
+    panic error("a panicked"); // @panic
+}
+
+// The receive re-raises the sender's panic with the sender's stack.
+public function main() {
+    fork {
+        worker a {
+            int x = boom();
+            x -> b;
+        }
+        worker b returns int {
+            return <- a;
         }
     }
+    int _ = wait b;
 }

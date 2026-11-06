@@ -220,9 +220,17 @@ func Walk(v Visitor, node BLangNode) {
 		for _, stmt := range node.InitStmts {
 			Walk(v, stmt.(BLangNode))
 		}
-		for _, worker := range node.Workers {
-			Walk(v, worker)
+		if node.Region != nil {
+			for _, worker := range node.Region.Workers {
+				Walk(v, worker)
+			}
+			Walk(v, node.Region.DefaultWorker)
 		}
+		for _, stmt := range node.Stmts {
+			Walk(v, stmt.(BLangNode))
+		}
+
+	case *BLangDefaultWorker:
 		for _, stmt := range node.Stmts {
 			Walk(v, stmt.(BLangNode))
 		}
@@ -304,6 +312,11 @@ func Walk(v Visitor, node BLangNode) {
 
 	case *BLangLock:
 		Walk(v, &node.Body)
+
+	case *BLangFork:
+		for _, worker := range node.Region.Workers {
+			Walk(v, worker)
+		}
 
 	case *BLangMatchStatement:
 		if node.Expr != nil {

@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-flush-peer1-e.bal:24:30
+   |
+24 |             error? _ = flush named; // @error named isn't a peer of a
+   |                              ^^^^^
+
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-flush-peer1-e.bal:34:22
+   |
+34 |     error? _ = flush a; // @error a isn't a peer of the default worker
+   |                      ^
+
+error[SEMANTIC_ERROR]: worker interactions are only allowed between peers
+  --> fork-flush-peer1-e.bal:40:30
+   |
+40 |             error? _ = flush function; // @error a fork has no default worker
+   |                              ^^^^^^^^

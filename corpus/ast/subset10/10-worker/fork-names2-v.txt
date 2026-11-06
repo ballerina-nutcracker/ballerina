@@ -1,0 +1,77 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function forksAroundLambda () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (if
+        (literal true)
+        (block-stmt
+          (fork
+            (named-worker w (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 1)))))
+          (compound-assignment +
+            (simple-var-ref sum)
+            (single-wait-action
+              (simple-var-ref w)))) ())
+      (block-stmt
+        (if
+          (literal true)
+          (block-stmt
+            (fork
+              (named-worker w (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (literal 10)))))
+            (compound-assignment +
+              (simple-var-ref sum)
+              (single-wait-action
+                (simple-var-ref w)))) ())
+        (block-stmt
+          (var-def
+            (variable g (expr
+              (lambda
+                (function $anonFunc$_0 () (
+                  (value-type int))
+                  (block-function-body
+                    (fork
+                      (named-worker w (
+                        (value-type int))
+                        (block-function-body
+                          (return
+                            (literal 100)))))
+                    (return
+                      (single-wait-action
+                        (simple-var-ref w)))))))))
+          (if
+            (literal true)
+            (block-stmt
+              (fork
+                (named-worker w (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (literal 1000)))))
+              (compound-assignment +
+                (simple-var-ref sum)
+                (single-wait-action
+                  (simple-var-ref w)))) ())
+          (block-stmt
+            (return
+              (binary-expr +
+                (simple-var-ref sum)
+                (invocation g ()))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation forksAroundLambda ())))))))
