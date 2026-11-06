@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> value-clone-lock-module-var-e.bal:22:16
+   |
+22 |         return counts.clone(); // @error isolated function accesses a non-isolated module variable
+   |                ^^^^^^

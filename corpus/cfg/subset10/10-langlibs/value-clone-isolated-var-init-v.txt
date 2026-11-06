@@ -1,0 +1,21 @@
+(count
+  (bb0 () ()
+    (return
+      (invocation lang.array length (
+        (simple-var-ref data))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref base)
+        (literal 3))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref base))))
+    (expression-stmt
+      (invocation io println (
+        (invocation count ()))))
+  )
+)

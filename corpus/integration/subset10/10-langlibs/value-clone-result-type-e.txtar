@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected readonly&[int...], got [int...]
+  --> value-clone-result-type-e.bal:21:26
+   |
+21 |     readonly & int[] r = a.clone(); // @error clone of a mutable type is not readonly
+   |                          ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected {| string... |}, got {| int... |}
+  --> value-clone-result-type-e.bal:24:21
+   |
+24 |     map<string> s = m.clone(); // @error clone has the argument's type
+   |                     ^^^^^^^^^

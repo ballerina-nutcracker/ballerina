@@ -1,0 +1,39 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function same (
+    (variable a (type
+      (value-type any)))
+    (variable b (type
+      (value-type any)))) (
+    (value-type boolean))
+    (expr-function-body
+      (binary-expr ===
+        (simple-var-ref a)
+        (simple-var-ref b))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable element (type
+          (intersection-type
+            (value-type readonly)
+            (value-type xml))) (expr
+          (xml-element-literal a
+            (xml-element-literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation same (
+            (invocation clone expr:
+              (simple-var-ref element) ())
+            (simple-var-ref element))))))
+      (var-def
+        (variable widened (type
+          (value-type xml)) (expr
+          (simple-var-ref element))))
+      (expression-stmt
+        (invocation io println (
+          (invocation same (
+            (invocation clone expr:
+              (simple-var-ref widened) ())
+            (simple-var-ref element)))))))))

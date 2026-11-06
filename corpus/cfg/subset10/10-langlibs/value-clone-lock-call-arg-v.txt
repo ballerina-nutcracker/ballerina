@@ -1,0 +1,44 @@
+(get
+  (bb0 () ()
+    (return
+      (invocation lang.value clone (
+        (simple-var-ref data))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable xs (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation store (
+        (simple-var-ref xs))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref xs)
+        (literal 3))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get ()))))
+  )
+)
+(store
+  (bb0 () ()
+    (assignment
+      (simple-var-ref data)
+      (invocation twice (
+        (invocation lang.value clone (
+          (simple-var-ref xs))))))
+  )
+)
+(twice
+  (bb0 () ()
+    (list-constructor-expr
+      (simple-var-ref xs)
+      (simple-var-ref xs))
+  )
+)

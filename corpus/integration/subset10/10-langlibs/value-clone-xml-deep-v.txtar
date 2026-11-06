@@ -1,0 +1,8 @@
+-- stdout --
+p
+r
+<p id="1"><q>inner</q></p>
+<p id="1"><q>inner</q></p>
+<r id="2"><s>inner</s></r>
+<p id="1"><q>inner</q></p>
+-- stderr --

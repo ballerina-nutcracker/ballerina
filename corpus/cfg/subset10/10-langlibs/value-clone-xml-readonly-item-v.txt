@@ -1,0 +1,75 @@
+(firstItem
+  (bb0 () (bb1)
+    (var-def
+      (variable items (type
+        (array-type
+          (value-type xml) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref sequence)
+    (var-def
+      (variable item (type
+        (value-type xml))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref items)
+        (simple-var-ref item))))
+  )
+  (bb3 (bb1) ()
+    (return
+      (index-based-access
+        (simple-var-ref items)
+        (literal 0)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable frozen (type
+        (intersection-type
+          (value-type readonly)
+          (value-type xml))) (expr
+        (xml-element-literal a))))
+    (var-def
+      (variable sequence (type
+        (value-type xml)) (expr
+        (binary-expr +
+          (simple-var-ref frozen)
+          (xml-element-literal b)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation same (
+          (invocation firstItem (
+            (simple-var-ref sequence)))
+          (simple-var-ref frozen))))))
+    (var-def
+      (variable sequenceClone (type
+        (value-type xml)) (expr
+        (invocation lang.value clone (
+          (simple-var-ref sequence))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation same (
+          (simple-var-ref sequenceClone)
+          (simple-var-ref sequence))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation same (
+          (invocation firstItem (
+            (simple-var-ref sequenceClone)))
+          (simple-var-ref frozen))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref sequenceClone))))
+  )
+)
+(same
+  (bb0 () ()
+    (binary-expr ===
+      (simple-var-ref a)
+      (simple-var-ref b))
+  )
+)
