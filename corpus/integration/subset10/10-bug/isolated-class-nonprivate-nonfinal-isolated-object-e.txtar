@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-nonfinal-isolated-object-e.bal:26:5
+   |
+26 |     IsoObj a = new Iso(); // @error isolated object type but not final
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-nonfinal-isolated-object-e.bal:27:5
+   |
+27 |     public Iso b = new; // @error public isolated class type but not final
+   |     ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-nonfinal-isolated-object-e.bal:28:5
+   |
+28 |     final IsoObj|Plain c = new Plain(); // @error union with a non-isolated object type
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-nonfinal-isolated-object-e.bal:29:5
+   |
+29 |     final any d = 1; // @error any is not a subtype of readonly
+   |     ^^^^^^^^^^^^^^^^
