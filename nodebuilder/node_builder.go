@@ -3948,7 +3948,7 @@ func (n *nodeBuilder) transformTypeCastExpression(typeCastExpression *st.TypeCas
 	if !n.expectToken(typeCastExpression.GtToken()) {
 		return nil, false
 	}
-	typeConversionNode.Expression = n.transformExpr(typeCastExpression.Expression())
+	typeConversionNode.Expression = n.transformActionOrExpr(typeCastExpression.Expression())
 	return typeConversionNode, true
 }
 
@@ -5309,7 +5309,7 @@ func (n *nodeBuilder) transformSelectClause(selectClauseNode *st.SelectClauseNod
 	if !n.expectNode(selectClauseNode) || !n.expectToken(selectClauseNode.SelectKeyword()) {
 		return nil, false
 	}
-	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.transformExpr(selectClauseNode.Expression())), true
+	return ast.NewBLangSelectClause(n.getPosition(selectClauseNode), n.transformActionOrExpr(selectClauseNode.Expression())), true
 }
 
 func (n *nodeBuilder) transformCollectClause(collectClauseNode *st.CollectClauseNode) (*ast.BLangCollectClause, bool) {
