@@ -1,0 +1,47 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+class A {
+    private int x = 1;
+
+    private function f() returns int {
+        return 1;
+    }
+}
+
+class B {
+    int x = 2;
+
+    function f() returns int {
+        return 2;
+    }
+}
+
+function methodReference(A a) returns int {
+    var g = a.f; // @error private method is not visible outside the class
+    return g();
+}
+
+function unionField(A|B v) returns int {
+    return v.x; // @error x is private in A
+}
+
+function unionMethod(A|B v) returns int {
+    return v.f(); // @error f is private in A
+}
+
+public function main() {
+}
