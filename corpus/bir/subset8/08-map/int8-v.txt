@@ -16,7 +16,7 @@ main() -> nil{
     %13 = println(im2) -> bb1;
   }
   bb1 {
-    %14 = unknown im im2;
+    %14 = === im im2;
     %15 = %14;
     %16 = println(%15) -> bb2;
   }

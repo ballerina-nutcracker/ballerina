@@ -37,7 +37,7 @@ foo(any) -> int{
     %0 = ConstantLoad 1
     (2, n) = %0;
     %1 = ConstantLoad 1
-    %2 = unknown %1;
+    %2 = - %1;
     (2, %0) = %2;
     PopScopeFrame
     PopScopeFrame

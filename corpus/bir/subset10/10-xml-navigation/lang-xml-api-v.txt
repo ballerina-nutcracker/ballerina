@@ -345,7 +345,7 @@ main() -> nil|error{
     %126 = concat(exactSource) -> bb46;
   }
   bb46 {
-    %125 = unknown %126 exactSource;
+    %125 = === %126 exactSource;
     %127 = %125;
     %128 = println(%127) -> bb47;
   }
@@ -492,7 +492,7 @@ main() -> nil|error{
   }
   bb76 {
     commentFilter = %211;
-    %213 = unknown commentGet narrowComment;
+    %213 = === commentGet narrowComment;
     %214 = %213;
     %215 = println(%214,commentSlice,commentMap,commentFilter) -> bb77;
   }
@@ -529,7 +529,7 @@ main() -> nil|error{
   }
   bb82 {
     piFilter = %236;
-    %238 = unknown piGet narrowPI;
+    %238 = === piGet narrowPI;
     %239 = %238;
     %240 = println(%239,piSlice,piMap,piFilter) -> bb83;
   }
@@ -731,7 +731,7 @@ main() -> nil|error{
     %344 = ConstantLoad live
     %345 = ConstantLoad id
     attributes1[%345] = %344;
-    %346 = unknown attributes1 attributes2;
+    %346 = === attributes1 attributes2;
     %347 = %346;
     %348 = println(%347) -> bb129;
   }
@@ -992,7 +992,7 @@ main() -> nil|error{
     %479 = get(mixed,%478) -> bb192;
   }
   bb192 {
-    %476 = unknown filtered %479;
+    %476 = === filtered %479;
     %480 = %476;
     %481 = println(%480) -> bb193;
   }
@@ -1055,7 +1055,7 @@ main() -> nil|error{
     %524 = get(commentItem,%523) -> bb201;
   }
   bb201 {
-    %521 = unknown %524 commentItem;
+    %521 = === %524 commentItem;
     %525 = %521;
     %526 = println(%525) -> bb202;
   }
@@ -1065,7 +1065,7 @@ main() -> nil|error{
     %530 = get(piItem,%529) -> bb203;
   }
   bb203 {
-    %527 = unknown %530 piItem;
+    %527 = === %530 piItem;
     %531 = %527;
     %532 = println(%531) -> bb204;
   }

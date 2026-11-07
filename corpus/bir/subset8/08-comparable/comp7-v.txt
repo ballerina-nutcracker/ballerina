@@ -18,7 +18,7 @@ main() -> nil{
     %15 = ConstantLoad 5
     %16 = ConstantLoad 1
     %17 = ConstantLoad 1
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = ConstantLoad 4
     %20 = newArray [int, float, int, int, never...][%19]{%14, %15, %16, %18}
     c = %20;

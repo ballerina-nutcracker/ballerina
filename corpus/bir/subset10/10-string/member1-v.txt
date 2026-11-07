@@ -74,7 +74,7 @@ main() -> nil{
   }
   bb13 {
     %46 = ConstantLoad 1
-    %47 = unknown %46;
+    %47 = - %46;
     %45 = s[%47];
     %44 = %45;
     GOTO bb14;

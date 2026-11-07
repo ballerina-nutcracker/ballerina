@@ -12,7 +12,7 @@ main() -> nil{
   }
   bb2 {
     %7 = ConstantLoad 9223372036854775807
-    %8 = unknown %7;
+    %8 = - %7;
     %9 = %8;
     %10 = println(%9) -> bb3;
   }

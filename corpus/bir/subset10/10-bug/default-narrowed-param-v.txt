@@ -218,7 +218,7 @@ $anonFunc$_0() -> int{
   }
   bb2 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %1 = %4;
     GOTO bb3;
   }
@@ -287,7 +287,7 @@ $default$3(int|string,int) -> int{
   }
   bb2 {
     %9 = ConstantLoad 1
-    %10 = unknown %9;
+    %10 = - %9;
     %3 = %10;
     GOTO bb3;
   }

@@ -12,11 +12,11 @@ main() -> nil{
   }
   bb1 {
     %9 = ConstantLoad 3.16923250480252e+21
-    %10 = unknown %9;
+    %10 = - %9;
     negative = %10;
     %13 = negative;
     %14 = ConstantLoad 3.16923250480252e+21
-    %15 = unknown %14;
+    %15 = - %14;
     %16 = %15;
     %12 = == %13 %16;
     %17 = %12;

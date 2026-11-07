@@ -8,7 +8,7 @@ main() -> nil{
     %1 = / %3 %5;
     nan0 = %1;
     %8 = ConstantLoad 0
-    %9 = unknown %8;
+    %9 = - %8;
     %10 = %9;
     %11 = ConstantLoad 0
     %12 = %11;
@@ -21,7 +21,7 @@ main() -> nil{
     %14 = / %16 %18;
     pInf = %14;
     %21 = ConstantLoad 1
-    %22 = unknown %21;
+    %22 = - %21;
     %23 = %22;
     %24 = ConstantLoad 0
     %25 = %24;
@@ -60,7 +60,7 @@ main() -> nil{
     %45 = ConstantLoad 0
     %46 = %45;
     %47 = ConstantLoad 0
-    %48 = unknown %47;
+    %48 = - %47;
     %49 = %48;
     %50 = exactEq(%46,%49) -> bb7;
   }
@@ -220,10 +220,10 @@ exactEq(float,float) -> any{
 exactEqAF(any,float) -> string{
   bb0 {
     %4 = f2;
-    %3 = unknown f1 %4;
+    %3 = === f1 %4;
     eq = %3;
     %7 = f2;
-    %6 = unknown f1 %7;
+    %6 = !== f1 %7;
     neEq = %6;
     %10 = eq;
     %11 = neEq;
@@ -259,10 +259,10 @@ exactEqAF(any,float) -> string{
 exactEqFA(float,any) -> string{
   bb0 {
     %4 = f1;
-    %3 = unknown %4 f2;
+    %3 = === %4 f2;
     eq = %3;
     %7 = f1;
-    %6 = unknown %7 f2;
+    %6 = !== %7 f2;
     neEq = %6;
     %10 = eq;
     %11 = neEq;
@@ -297,9 +297,9 @@ exactEqFA(float,any) -> string{
 }
 exactEqAA(any,any) -> string{
   bb0 {
-    %3 = unknown f1 f2;
+    %3 = === f1 f2;
     eq = %3;
-    %5 = unknown f1 f2;
+    %5 = !== f1 f2;
     neEq = %5;
     %8 = eq;
     %9 = neEq;

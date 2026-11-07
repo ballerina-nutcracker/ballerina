@@ -12,11 +12,11 @@ main() -> nil{
   }
   bb1 {
     %9 = ConstantLoad 1.8446744073709552e+19
-    %10 = unknown %9;
+    %10 = - %9;
     negative = %10;
     %13 = negative;
     %14 = ConstantLoad 1.8446744073709552e+19
-    %15 = unknown %14;
+    %15 = - %14;
     %16 = %15;
     %12 = == %13 %16;
     %17 = %12;
@@ -50,7 +50,7 @@ main() -> nil{
     %34 = ConstantLoad 9.223372036854776e+18
     aboveMaximum = %34;
     %36 = ConstantLoad 9.223372036854776e+18
-    %37 = unknown %36;
+    %37 = - %36;
     belowMinimum = %37;
     %41 = aboveMaximum;
     %42 = ConstantLoad 9.223372036854776e+18
@@ -62,7 +62,7 @@ main() -> nil{
   bb6 {
     %45 = belowMinimum;
     %46 = ConstantLoad 9.223372036854776e+18
-    %47 = unknown %46;
+    %47 = - %46;
     %48 = %47;
     %44 = == %45 %48;
     %39 = %44;

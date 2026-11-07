@@ -23,13 +23,13 @@ main() -> nil{
   }
   bb3 {
     %15 = ConstantLoad 0
-    %16 = unknown %15;
+    %16 = - %15;
     %17 = %16;
     %18 = println(%17) -> bb4;
   }
   bb4 {
     %19 = ConstantLoad 2.225073858507202e-308
-    %20 = unknown %19;
+    %20 = - %19;
     %21 = %20;
     %22 = println(%21) -> bb5;
   }
@@ -53,7 +53,7 @@ main() -> nil{
   }
   bb7 {
     %38 = ConstantLoad 1
-    %39 = unknown %38;
+    %39 = - %38;
     %40 = %39;
     %41 = ConstantLoad 0
     %42 = %41;

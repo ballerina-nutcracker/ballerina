@@ -43,7 +43,7 @@ $anonFunc$_1() -> int{
   bb0 {
     %2 = (3, a);
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %1 = * %2 %5;
     %0 = %1;

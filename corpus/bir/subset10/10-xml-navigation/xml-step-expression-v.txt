@@ -9034,7 +9034,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$7(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "name"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9055,7 +9055,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$8(xml:Element) -> xml<xml:Element>{
   bb2 {
     %6 = xmlFilter(%5, [{"", "iname"}])
     %7 = ConstantLoad 1
-    %8 = unknown %7;
+    %8 = - %7;
     %9 = %8;
     %10 = $stepIndex(%6,%9) -> bb3;
   }
@@ -9193,7 +9193,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$16(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "price"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9261,7 +9261,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$20(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9331,7 +9331,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$24(xml:Element) -> xml<xml:Element>{
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = xmlFilter(%3, [{"", "c"}])
     %5 = ConstantLoad 1
-    %6 = unknown %5;
+    %6 = - %5;
     %7 = %6;
     %8 = $stepIndex(%4,%7) -> bb2;
   }
@@ -9394,7 +9394,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$28(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9425,7 +9425,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$30(xml:Element) -> xml<xml:Element>{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -9475,7 +9475,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$33(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9506,7 +9506,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$35(xml:Element) -> xml<xml:Element>{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -9546,7 +9546,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$37(xml:Element) -> xml<xml:Element>{
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = xmlFilter(%3, [{"", "a"}])
     %5 = ConstantLoad 1
-    %6 = unknown %5;
+    %6 = - %5;
     %7 = %6;
     %8 = $stepIndex(%4,%7) -> bb2;
   }
@@ -9578,7 +9578,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$39(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9611,7 +9611,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$41(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9643,7 +9643,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$43(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9676,7 +9676,7 @@ $xmlStep$testXmlIndexedAndFilterStepExtend$45(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9733,7 +9733,7 @@ $xmlStep$testXmlIndexedStepExtend$3(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -9828,7 +9828,7 @@ $xmlStep$testXmlIndexedStepExtend$8(xml:Element) -> xml{
   }
   bb2 {
     %6 = ConstantLoad 1
-    %7 = unknown %6;
+    %7 = - %6;
     %8 = %7;
     %9 = $stepIndex(%5,%8) -> bb3;
   }
@@ -9843,7 +9843,7 @@ $xmlStep$testXmlIndexedStepExtend$9(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -9889,7 +9889,7 @@ $xmlStep$testXmlIndexedStepExtend$12(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "price"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -9970,7 +9970,7 @@ $xmlStep$testXmlIndexedStepExtend$16(xml:Element) -> xml<xml:Element>{
   }
   bb2 {
     %7 = ConstantLoad 1
-    %8 = unknown %7;
+    %8 = - %7;
     %9 = %8;
     %10 = $stepIndex(%6,%9) -> bb3;
   }
@@ -10016,7 +10016,7 @@ $xmlStep$testXmlIndexedStepExtend$19(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "name"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10097,7 +10097,7 @@ $xmlStep$testXmlIndexedStepExtend$23(xml:Element) -> xml<xml:Element>{
   }
   bb2 {
     %7 = ConstantLoad 1
-    %8 = unknown %7;
+    %8 = - %7;
     %9 = %8;
     %10 = $stepIndex(%6,%9) -> bb3;
   }
@@ -10158,7 +10158,7 @@ $xmlStep$testXmlIndexedStepExtend$27(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "name"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10219,7 +10219,7 @@ $xmlStep$testXmlIndexedStepExtend$31(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "name"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10304,7 +10304,7 @@ $xmlStep$testXmlIndexedStepExtend$37(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -10365,7 +10365,7 @@ $xmlStep$testXmlIndexedStepExtend$41(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10426,7 +10426,7 @@ $xmlStep$testXmlIndexedStepExtend$45(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10455,7 +10455,7 @@ $xmlStep$testXmlIndexedStepExtend$47(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -10486,7 +10486,7 @@ $xmlStep$testXmlIndexedStepExtend$49(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10517,7 +10517,7 @@ $xmlStep$testXmlIndexedStepExtend$51(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10546,7 +10546,7 @@ $xmlStep$testXmlIndexedStepExtend$53(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -10577,7 +10577,7 @@ $xmlStep$testXmlIndexedStepExtend$55(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10608,7 +10608,7 @@ $xmlStep$testXmlIndexedStepExtend$57(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10637,7 +10637,7 @@ $xmlStep$testXmlIndexedStepExtend$59(xml:Element) -> xml{
   }
   bb1 {
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = $stepIndex(%2,%5) -> bb2;
   }
@@ -10668,7 +10668,7 @@ $xmlStep$testXmlIndexedStepExtend$61(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "b"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
@@ -10699,7 +10699,7 @@ $xmlStep$testXmlIndexedStepExtend$63(xml:Element) -> xml<xml:Element>{
   bb1 {
     %3 = xmlFilter(%2, [{"", "c"}])
     %4 = ConstantLoad 1
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = $stepIndex(%3,%6) -> bb2;
   }
