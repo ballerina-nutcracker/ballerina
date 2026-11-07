@@ -76,6 +76,7 @@ func TestBalCLI(t *testing.T) {
 		{"BalRunDumpFlags", testBalRunDumpFlags},
 		{"BalRunCorpus", testBalRunCorpus},
 		{"BalRunWorkspaceCorpus", testBalRunWorkspaceCorpus},
+		{"BalRunCompilerPluginManifestCorpus", testBalRunCompilerPluginManifestCorpus},
 		{"BalRunTargetDir", testBalRunTargetDir},
 		{"BalPackCorpus", testBalPackCorpus},
 		{"BalPackCorpus_IncludeField", testBalPackCorpus_IncludeField},
@@ -260,6 +261,44 @@ func testBalRunWorkspaceCorpus(t *testing.T, cli *balCLI) {
 			[]string{"run", filepath.Join(wsRoot, "notamember")},
 			filepath.Join(outputsRoot, "missing-member.txtar"))
 	})
+}
+
+// testBalRunCompilerPluginManifestCorpus runs member pkga of the
+// compiler-plugin workspace once per manifest in
+// testdata/run/compiler-plugin-manifests, installed as the CompilerPlugin.toml
+// of the imported member pkgb, and compares the result with the golden of the
+// same name in output/run/compiler-plugin-manifests. Both modules of pkga
+// import pkgb, so each golden also shows a provider error is reported once.
+func testBalRunCompilerPluginManifestCorpus(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+	testDataRoot := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run")
+	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "run", "compiler-plugin-manifests")
+	workspace := filepath.Join(testDataRoot, "workspaces", "compiler-plugin")
+
+	manifests, err := filepath.Glob(filepath.Join(testDataRoot, "compiler-plugin-manifests", "*.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(manifests) == 0 {
+		t.Fatal("no compiler plugin manifests found")
+	}
+	for _, manifest := range manifests {
+		name := strings.TrimSuffix(filepath.Base(manifest), ".toml")
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			sandbox := t.TempDir()
+			copyDir(t, workspace, sandbox)
+			content, err := os.ReadFile(manifest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(sandbox, "pkgb", "CompilerPlugin.toml"), content, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			assertBalRunMatchesTxtar(t, balBin, repoRoot, coverDir, filepath.Join(sandbox, "pkga"),
+				filepath.Join(outputsRoot, name+".txtar"))
+		})
+	}
 }
 
 // testBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
@@ -5529,27 +5568,33 @@ func runBalRunCorpusCase(t *testing.T, balBin, repoRoot, coverDir, outputsRoot, 
 	t.Helper()
 	t.Run(strings.ReplaceAll(outputKey, string(filepath.Separator), "_"), func(t *testing.T) {
 		t.Parallel()
-		stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", runPath)
-		expectedPath := filepath.Join(outputsRoot, outputKey+".txtar")
-		actualOutput := normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
-		actualError := normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
-		actualExitCode := strconv.Itoa(exitCode)
-
-		expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
-		if err != nil {
-			t.Fatalf("failed to parse txtar file %s: %v", expectedPath, err)
-		}
-		if expectedOutput != actualOutput || expectedError != actualError || expectedExitCode != actualExitCode {
-			t.Fatalf(
-				"unexpected output for %s\nexpected stdout:\n%s\nactual stdout:\n%s\nexpected stderr:\n%s\nactual stderr:\n%s\nexpected exitcode: %s\nactual exitcode: %s",
-				runPath,
-				expectedOutput,
-				actualOutput,
-				expectedError,
-				actualError,
-				expectedExitCode,
-				actualExitCode,
-			)
-		}
+		assertBalRunMatchesTxtar(t, balBin, repoRoot, coverDir, runPath, filepath.Join(outputsRoot, outputKey+".txtar"))
 	})
+}
+
+// assertBalRunMatchesTxtar runs `bal run runPath` and requires its stdout,
+// stderr and exit code to equal those of the txtar at expectedPath.
+func assertBalRunMatchesTxtar(t *testing.T, balBin, repoRoot, coverDir, runPath, expectedPath string) {
+	t.Helper()
+	stdout, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir, "run", runPath)
+	actualOutput := normalizePaths(test_util.NormalizeNewlines(stdout), repoRoot)
+	actualError := normalizePaths(test_util.NormalizeNewlines(stderr), repoRoot)
+	actualExitCode := strconv.Itoa(exitCode)
+
+	expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(expectedPath)
+	if err != nil {
+		t.Fatalf("failed to parse txtar file %s: %v", expectedPath, err)
+	}
+	if expectedOutput != actualOutput || expectedError != actualError || expectedExitCode != actualExitCode {
+		t.Fatalf(
+			"unexpected output for %s\nexpected stdout:\n%s\nactual stdout:\n%s\nexpected stderr:\n%s\nactual stderr:\n%s\nexpected exitcode: %s\nactual exitcode: %s",
+			runPath,
+			expectedOutput,
+			actualOutput,
+			expectedError,
+			actualError,
+			expectedExitCode,
+			actualExitCode,
+		)
+	}
 }

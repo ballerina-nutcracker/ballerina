@@ -37,6 +37,7 @@ var analysisStages = []context.CompilationStage{
 	context.StageSemanticAnalysis,
 	context.StageCFGCreation,
 	context.StageCFGAnalysis,
+	context.StageCompilerPlugin,
 }
 
 func formatStatsReport(allStats []*context.ModuleStats) string {
