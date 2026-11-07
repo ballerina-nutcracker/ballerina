@@ -15,10 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-int[] '_ = [0]; // @error malformed module variable name
+int[] ' = [0]; // @error malformed module variable name
 
 function surviving() returns int {
-    int[] '_ = [0]; // @error malformed local variable name
+    int[] ' = [0]; // @error malformed local variable name
     return 7;
 }
 
@@ -45,14 +45,14 @@ public int sibling = surviving();
       (return
         (literal 7)))))
 -- stderr --
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+error[SYNTAX_ERROR]: incomplete quoted identifier
   --> malformed-typed-binding-e.bal:17:7
    |
-17 | int[] '_ = [0]; // @error malformed module variable name
-   |       ^^^
+17 | int[] ' = [0]; // @error malformed module variable name
+   |       ^^
 
-error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+error[SYNTAX_ERROR]: incomplete quoted identifier
   --> malformed-typed-binding-e.bal:20:11
    |
-20 |     int[] '_ = [0]; // @error malformed local variable name
-   |           ^^^
+20 |     int[] ' = [0]; // @error malformed local variable name
+   |           ^^

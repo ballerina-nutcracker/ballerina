@@ -1,0 +1,15 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad m
+    %2 = ConstantLoad _
+    %3 = ConstantLoad 2
+    %4 = newMap mapping{%2=%3}
+    %5 = newError error<readonly&{| _: int, never... |}>(%1, %4)
+    e = %5;
+    %7 = println(e) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}

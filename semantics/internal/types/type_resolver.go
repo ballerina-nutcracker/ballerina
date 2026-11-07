@@ -7112,7 +7112,7 @@ func laxFieldMemberType(t typeResolver, expr *ast.BLangFieldBaseAccess, containe
 		return semtypes.SemType{}, semtypes.SemType{}, false
 	}
 	mappingTy := semtypes.Intersect(containerTy, semtypes.Mapping)
-	rawMemberTy = semtypes.MappingMemberTypeInner(t.typeContext(), mappingTy, semtypes.StringConst(expr.Field.GetValue()))
+	rawMemberTy = semtypes.MappingMemberTypeInner(t.typeContext(), mappingTy, semtypes.StringConst(expr.FieldName(mappingTy)))
 	memberTy = semtypes.Diff(rawMemberTy, semtypes.Undef)
 	return rawMemberTy, memberTy, true
 }
@@ -7127,7 +7127,7 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	if expr.PkgAlias != nil {
 		return resolveXMLAttributeAccess(t, expr, containerExprTy)
 	}
-	key := expr.Field.GetValue()
+	key := expr.FieldName(containerExprTy)
 	if expr.IsOptionalAccess() {
 		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprResult, key)
 	}
