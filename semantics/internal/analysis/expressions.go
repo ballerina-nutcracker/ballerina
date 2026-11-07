@@ -28,14 +28,13 @@ import (
 )
 
 // validateActionOrExpr validates an expression or action against expected
-// (zero for none). Inside a lock an expression whose type is a subtype of
-// Isolated is an isolated expression: references to variables outside the
+// (zero for none). Inside a lock an expression that is isolated whatever its
+// operands is an isolated expression: references to variables outside the
 // lock are allowed within it.
 func validateActionOrExpr(cx scope.Context, e ast.BLangActionOrExpression, expected semtypes.SemType) (scope.Facts, bool) {
 	exprCx := cx
 	if expr, isExpr := e.(ast.BLangExpression); isExpr {
-		tyCtx := cx.TyCtx()
-		if _, inLock := scope.EnclosingLock(cx); inLock && semtypes.IsSubtype(tyCtx, expr.Type(), semtypes.CreateIsolated(tyCtx)) {
+		if _, inLock := scope.EnclosingLock(cx); inLock && scope.IsolatedWhateverOperands(cx, expr) {
 			exprCx = scope.NewIsolatedExpr(cx, expr)
 		}
 	}

@@ -1,0 +1,74 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang value (as lang.value))
+  (function sum (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref xs))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (simple-var-ref x))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref total))))
+  (function startSum (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action isolated
+            (invocation sum (
+              (invocation lang.value clone (
+                (simple-var-ref xs)))))))))
+      (return
+        (check-panicked-expr
+          (single-wait-action
+            (simple-var-ref f))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation startSum (
+            (list-constructor-expr
+              (literal 1)
+              (literal 2)
+              (literal 3))))))))))

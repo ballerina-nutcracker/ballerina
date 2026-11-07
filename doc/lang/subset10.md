@@ -241,6 +241,7 @@ These are intentional departures from the [language specification](https://balle
     - `message`
     - `cause`
   - `ballerina/lang.value`
+    - `clone`
     - `cloneWithType`
     - `fromJsonWithType`
     - `toString`
@@ -302,6 +303,7 @@ These are intentional departures from the [language specification](https://balle
 
 ### Other invocation restrictions
 
+- Langlib functions whose type depends on their arguments (for example `value:clone` and `map:remove`) can only be called; they cannot be used as function values.
 - Client resource access actions require an atomic client receiver. Dispatch is not supported when more than one resource method matches the access path.
 - Method call syntax can be used for calling the following langlib functions:
   - `array:length`
@@ -330,6 +332,7 @@ These are intentional departures from the [language specification](https://balle
   - `string:indexOf`, `string:includes`, `string:substring` and `string:equalsIgnoreCaseAscii`
   - `string:toLowerAscii`, `string:toUpperAscii` and `string:trim`
   - `string:toBytes`
+  - `value:clone`
   - `value:cloneWithType`
   - `value:fromJsonWithType`
   - `value:toString` and `value:toBalString`

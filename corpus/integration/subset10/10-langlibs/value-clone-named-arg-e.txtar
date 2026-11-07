@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: no such parameter x
+  --> value-clone-named-arg-e.bal:20:21
+   |
+20 |     _ = value:clone(x = xs); // @error no parameter named x
+   |                     ^^^^^^
+
+error[SEMANTIC_ERROR]: repeated values for parameter v
+  --> value-clone-named-arg-e.bal:21:18
+   |
+21 |     _ = xs.clone(v = xs); // @error the receiver already supplies v
+   |                  ^^^^^^

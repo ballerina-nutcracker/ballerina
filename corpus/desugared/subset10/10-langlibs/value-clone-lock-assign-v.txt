@@ -1,0 +1,58 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (import-package ballerina lang value (as lang.value))
+  (variable data (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref data)
+        (list-constructor-expr
+          (literal 1)
+          (literal 2)))))
+  (function replace (
+    (variable xs (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))) (
+    (value-type null))
+    (block-function-body
+      (lock
+        (block-stmt
+          (assignment
+            (simple-var-ref data)
+            (invocation lang.value clone (
+              (simple-var-ref xs))))))))
+  (function snapshot () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (lock
+        (block-stmt
+          (return
+            (invocation lang.value clone (
+              (simple-var-ref data))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable xs (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 5)
+            (literal 6)))))
+      (expression-stmt
+        (invocation replace (
+          (simple-var-ref xs))))
+      (expression-stmt
+        (invocation lang.array push (
+          (simple-var-ref xs)
+          (literal 7))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref xs))))
+      (expression-stmt
+        (invocation io println (
+          (invocation snapshot ())))))))

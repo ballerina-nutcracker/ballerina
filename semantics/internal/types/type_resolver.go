@@ -5961,6 +5961,10 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, q *queryRes
 
 func resolveSimpleVarRef(t typeResolver, chain *binding, expr *ast.BLangVarRef) (expressionResult, bool) {
 	baseSymbol := expr.Symbol()
+	if _, ok := t.getSymbol(baseSymbol).(*model.OpaqueFunctionSymbol); ok {
+		t.unimplemented("'"+expr.VariableName.GetValue()+"' cannot be used as a function value", expr.GetPosition())
+		return expressionResult{}, false
+	}
 	sym, isNarrowed := lookupBinding(t, chain, baseSymbol)
 	if isNarrowed {
 		setNodeSymbol(t, expr, sym)

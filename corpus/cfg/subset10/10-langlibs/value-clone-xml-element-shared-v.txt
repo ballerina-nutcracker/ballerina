@@ -1,0 +1,54 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable element (type
+        (value-type xml)) (expr
+        (xml-element-literal a))))
+    (var-def
+      (variable sequence (type
+        (value-type xml)) (expr
+        (binary-expr +
+          (simple-var-ref element)
+          (simple-var-ref element)))))
+    (var-def
+      (variable sequenceClone (type
+        (value-type xml)) (expr
+        (invocation lang.value clone (
+          (simple-var-ref sequence))))))
+    (var-def
+      (variable items (type
+        (array-type
+          (value-type xml) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref sequenceClone)
+    (var-def
+      (variable item (type
+        (value-type xml))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref items)
+        (simple-var-ref item))))
+  )
+  (bb3 (bb1) ()
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (index-based-access
+            (simple-var-ref items)
+            (literal 0))
+          (index-based-access
+            (simple-var-ref items)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ===
+          (index-based-access
+            (simple-var-ref items)
+            (literal 0))
+          (simple-var-ref element)))))
+  )
+)

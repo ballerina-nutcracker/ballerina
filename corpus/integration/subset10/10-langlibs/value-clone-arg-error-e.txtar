@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> value-clone-arg-error-e.bal:20:21
+   |
+20 |     _ = value:clone(1 + "a"); // @error operand types are not compatible
+   |                     ^^^^^^^

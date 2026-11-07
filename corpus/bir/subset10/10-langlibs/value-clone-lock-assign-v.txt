@@ -1,0 +1,66 @@
+module $anon.. v 0.0.0;
+data  [int...];
+replace([int...]) -> nil{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = clone((1, xs)) -> bb2;
+  }
+  bb2 {
+    data = %0;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+snapshot() -> [int...]{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = clone(data) -> bb2;
+  }
+  bb2 {
+    (1, %0) = %0;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+  bb4 {
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    %2 = ConstantLoad 6
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    xs = %4;
+    %6 = replace(xs) -> bb1;
+  }
+  bb1 {
+    %7 = ConstantLoad 7
+    %8 = %7;
+    %9 = push(xs,%8) -> bb2;
+  }
+  bb2 {
+    %10 = println(xs) -> bb3;
+  }
+  bb3 {
+    %11 = snapshot() -> bb4;
+  }
+  bb4 {
+    %12 = println(%11) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
