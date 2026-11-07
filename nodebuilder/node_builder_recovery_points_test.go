@@ -131,7 +131,7 @@ func parseTestSourceWithContext(t *testing.T, source string) (*context.CompilerC
 func newTestNodeBuilder(t *testing.T, source string, rangeOf rangeFn) (*nodeBuilder, *st.SyntaxTree) {
 	t.Helper()
 	cx, syntaxTree := parseTestSourceWithContext(t, source)
-	return newNodeBuilder(cx, rangeOf), syntaxTree
+	return newNodeBuilder(cx, cx.GetDefaultPackage(), rangeOf), syntaxTree
 }
 
 func findSTNode[T st.Node](t *testing.T, root st.Node) T {

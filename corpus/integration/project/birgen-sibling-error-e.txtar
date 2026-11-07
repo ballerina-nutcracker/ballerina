@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> modules/m1/m1.bal:18:13
+   |
+18 |     int x = "a"; // @error
+   |             ^^^

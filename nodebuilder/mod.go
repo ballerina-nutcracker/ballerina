@@ -21,20 +21,21 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // GetCompilationUnit builds the AST of a syntax tree, reporting its syntax errors and substituting bad nodes for
 // the constructs that contain them.
-func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
-	builder := newNodeBuilder(cx, st.Node.TextRange)
+func GetCompilationUnit(cx *context.CompilerContext, pkgID *model.PackageID, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	builder := newNodeBuilder(cx, pkgID, st.Node.TextRange)
 	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 }
 
 // GetRecoveredCompilationUnit is GetCompilationUnit with node positions that include surrounding minutiae.
-func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
-	builder := newNodeBuilder(cx, st.Node.TextRangeWithMinutiae)
+func GetRecoveredCompilationUnit(cx *context.CompilerContext, pkgID *model.PackageID, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	builder := newNodeBuilder(cx, pkgID, st.Node.TextRangeWithMinutiae)
 	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 }
 

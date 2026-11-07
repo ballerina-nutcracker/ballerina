@@ -97,6 +97,7 @@ func (t *distinctTypeTracker) symbolRef(id int) (model.SymbolRef, bool) {
 
 // CompilerEnvironment maintain the shared state of the frontend.
 type CompilerEnvironment struct {
+	anonCountMu                sync.Mutex // guards anonTypeCount and anonFuncCount only
 	anonTypeCount              map[*model.PackageID]int
 	anonFuncCount              map[*model.PackageID]int
 	packageInterner            *model.PackageIDInterner
@@ -517,14 +518,18 @@ const (
 )
 
 func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.PackageID) string {
+	c.anonCountMu.Lock()
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
+	c.anonCountMu.Unlock()
 	return constants.AnonFunctionPrefix + "_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {
+	c.anonCountMu.Lock()
 	nextValue := c.anonTypeCount[packageID]
 	c.anonTypeCount[packageID] = nextValue + 1
+	c.anonCountMu.Unlock()
 	if packageID != nil && model.ANNOTATIONS_PKG != packageID {
 		return builtinAnonType + "_" + strconv.Itoa(nextValue)
 	}
