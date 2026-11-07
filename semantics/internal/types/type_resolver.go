@@ -19,6 +19,7 @@ package types
 import (
 	"fmt"
 	"maps"
+	"math/big"
 	"slices"
 	"sort"
 	"strconv"
@@ -3382,7 +3383,8 @@ func resolveAsInt(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bool) 
 	case int64:
 		intVal = v
 	case float64:
-		intVal = int64(v)
+		t.semanticError(fmt.Sprintf("int literal out of range: %s", text), n.GetPosition())
+		return semtypes.SemType{}, false
 	default:
 		t.internalError(fmt.Sprintf("invalid int literal: %s", text), n.GetPosition())
 		return semtypes.SemType{}, false
@@ -3422,12 +3424,11 @@ func resolveAsDecimal(t typeResolver, n *ast.BLangLiteral) (semtypes.SemType, bo
 	case int64:
 		decVal = decimal.FromInt64(v)
 	case float64:
-		d, err := decimal.FromString(strconv.FormatFloat(v, 'g', -1, 64))
-		if err != nil {
-			t.internalError(fmt.Sprintf("failed to convert float %v to decimal: %v", v, err), n.GetPosition())
+		parsed, ok := parseDecimalValue(t, outOfRangeIntLiteralDigits(n, text), n.GetPosition())
+		if !ok {
 			return semtypes.SemType{}, false
 		}
-		decVal = d
+		decVal = parsed
 	default:
 		parsed, ok := parseDecimalValue(t, stripFloatingPointTypeSuffix(text), n.GetPosition())
 		if !ok {
@@ -3452,6 +3453,19 @@ func stripFloatingPointTypeSuffix(s string) string {
 		return s[:len(s)-1]
 	}
 	return s
+}
+
+// outOfRangeIntLiteralDigits returns the decimal digits of an int literal that
+// did not fit in int; text of other literals is returned unchanged.
+func outOfRangeIntLiteralDigits(n *ast.BLangLiteral, text string) string {
+	if n.GetLiteralKind() != ast.LiteralKindInt || !balCommon.HasHexIndicator(text) {
+		return text
+	}
+	val, ok := new(big.Int).SetString(text, 0)
+	if !ok {
+		return text
+	}
+	return val.String()
 }
 
 func parseFloatValue(t typeResolver, strValue string, pos diagnostics.Location) (float64, bool) {
