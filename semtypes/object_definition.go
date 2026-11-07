@@ -93,6 +93,9 @@ func stripDistinctAtomsFromSemType(ty SemType, typeCode basicTypeCode, stripBdd 
 //	      Function value;
 //	   }
 //	}
+//
+// For a readonly object every member and the rest member are immutable cells, and each
+// field's value type (Val above) is intersected with readonly.
 func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members []Member) SemType {
 	common.Assert(func() bool { return objectDefinitionValidateMembers(members) })
 	var mut CellMutability
@@ -103,7 +106,7 @@ func (o *ObjectDefinition) Define(env Env, qualifiers ObjectQualifiers, members 
 	}
 	var memberStream []cellField
 	for _, member := range members {
-		memberStream = append(memberStream, memberField(env, &member, mut))
+		memberStream = append(memberStream, memberField(env, &member, mut, qualifiers.readonly))
 	}
 	qualifierStream := []cellField{qualifiers.Field(env)}
 	var cellFields []cellField
@@ -160,10 +163,15 @@ func (o *ObjectDefinition) restMemberType(env Env, mut CellMutability, immutable
 	return cellContainingWithEnvSemTypeCellMutability(env, Union(fieldMemberType, methodMemberType), mut)
 }
 
-func memberField(env Env, member *Member, mut CellMutability) cellField {
+func memberField(env Env, member *Member, mut CellMutability, immutableObject bool) cellField {
 	md := NewMappingDefinition()
+	immutable := member.Immutable || immutableObject
+	valueTy := member.ValueType
+	if immutableObject {
+		valueTy = Intersect(valueTy, ValReadonly)
+	}
 	var fieldMut CellMutability
-	if member.Immutable {
+	if immutable {
 		fieldMut = CellMutabilityNone
 	} else {
 		fieldMut = mut
@@ -171,7 +179,7 @@ func memberField(env Env, member *Member, mut CellMutability) cellField {
 	semtype := md.Define(
 		env,
 		[]Field{
-			FieldFrom("value", member.ValueType, member.Immutable, false),
+			FieldFrom("value", valueTy, immutable, false),
 			(&member.Kind).field(),
 			visibilityField(member.Visibility),
 		},

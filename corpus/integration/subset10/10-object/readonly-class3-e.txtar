@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected readonly&object { public int x }, got object { public function init() returns nil; public int x }
+  --> readonly-class3-e.bal:26:26
+   |
+26 |     readonly & Point _ = new MutablePoint(); // @error mutable class value is not readonly
+   |                          ^^^^^^^^^^^^^^^^^^

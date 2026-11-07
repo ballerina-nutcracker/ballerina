@@ -392,6 +392,10 @@ func validateTargetField(cx scope.Context, access *ast.BLangFieldBaseAccess) (sc
 	if !ok {
 		return inner, false
 	}
+	if scope.ReadonlyObjectFieldUpdated(cx, access) {
+		cx.SemanticErr(strings.Join([]string{"cannot update field '", access.Field.GetValue(), "' of a readonly object"}, ""), access.GetPosition())
+		return inner, false
+	}
 	scope.ApplyFieldAccess(cx, access, scope.ReceiverSymbol(access))
 	lv := scope.TargetField(cx, inner, access)
 	if !validateResolvedType(cx, access, semtypes.SemType{}) {
