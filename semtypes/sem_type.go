@@ -20,7 +20,7 @@ package semtypes
 type SemType struct {
 	allBits  basicTypeBitSet
 	someBits basicTypeBitSet
-	dataList []properSubtypeData
+	dataList []subtypeData
 }
 
 func (t SemType) all() basicTypeBitSet {
@@ -31,6 +31,6 @@ func (t SemType) some() basicTypeBitSet {
 	return t.someBits & basicTypeMask
 }
 
-func (t SemType) subtypeDataList() []properSubtypeData {
+func (t SemType) subtypeDataList() []subtypeData {
 	return t.dataList
 }

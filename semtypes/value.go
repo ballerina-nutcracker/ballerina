@@ -26,6 +26,7 @@ func newValue(value any) Value {
 	}
 }
 
+//shallow:allow shared semantic-value constructor keeps shape and filler construction consistent
 func valueFrom(value any) Value {
 	return newValue(value)
 }

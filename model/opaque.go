@@ -67,14 +67,6 @@ const (
 	OpaqueFnValueClone = 0
 )
 
-func newOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
-	return newOpaqueFunctionSymbolWithVisibility(name, id, true)
-}
-
-func newPrivateOpaqueFunctionSymbol(name string, id int) *OpaqueFunctionSymbol {
-	return newOpaqueFunctionSymbolWithVisibility(name, id, false)
-}
-
 func newOpaqueFunctionSymbolWithVisibility(name string, id int, public bool) *OpaqueFunctionSymbol {
 	return &OpaqueFunctionSymbol{name: name, ID: id, public: public}
 }
@@ -142,20 +134,20 @@ func OpaqueSymbols(pkg PackageIdentifier) []Symbol {
 		return langXMLOpaqueSymbols()
 	case "lang.array":
 		return []Symbol{
-			newOpaqueFunctionSymbol("push", OpaqueFnArrayPush),
-			newOpaqueFunctionSymbol("map", OpaqueFnArrayMap),
-			newOpaqueFunctionSymbol("indexOf", OpaqueFnArrayIndexOf),
-			newOpaqueFunctionSymbol("remove", OpaqueFnArrayRemove),
-			newOpaqueFunctionSymbol("removeAll", OpaqueFnArrayRemoveAll),
-			newOpaqueFunctionSymbol("toStream", OpaqueFnArrayToStream),
+			newOpaqueFunctionSymbolWithVisibility("push", OpaqueFnArrayPush, true),
+			newOpaqueFunctionSymbolWithVisibility("map", OpaqueFnArrayMap, true),
+			newOpaqueFunctionSymbolWithVisibility("indexOf", OpaqueFnArrayIndexOf, true),
+			newOpaqueFunctionSymbolWithVisibility("remove", OpaqueFnArrayRemove, true),
+			newOpaqueFunctionSymbolWithVisibility("removeAll", OpaqueFnArrayRemoveAll, true),
+			newOpaqueFunctionSymbolWithVisibility("toStream", OpaqueFnArrayToStream, true),
 		}
 	case "lang.map":
 		return []Symbol{
-			newOpaqueFunctionSymbol("remove", OpaqueFnMapRemove),
-			newOpaqueFunctionSymbol("get", OpaqueFnMapGet),
+			newOpaqueFunctionSymbolWithVisibility("remove", OpaqueFnMapRemove, true),
+			newOpaqueFunctionSymbolWithVisibility("get", OpaqueFnMapGet, true),
 		}
 	case "lang.value":
-		return []Symbol{newOpaqueFunctionSymbol("clone", OpaqueFnValueClone)}
+		return []Symbol{newOpaqueFunctionSymbolWithVisibility("clone", OpaqueFnValueClone, true)}
 	default:
 		return nil
 	}
@@ -198,12 +190,12 @@ func langXMLOpaqueSymbols() []Symbol {
 	for i, def := range defs {
 		syms[i] = newOpaqueTypeSymbol(def.name, def.ty, i)
 	}
-	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbol("iterator", OpaqueFnXMLIterator)
-	syms[OpaqueFnXMLGet] = newOpaqueFunctionSymbol("get", OpaqueFnXMLGet)
-	syms[OpaqueFnXMLSlice] = newOpaqueFunctionSymbol("slice", OpaqueFnXMLSlice)
-	syms[OpaqueFnXMLMap] = newOpaqueFunctionSymbol("map", OpaqueFnXMLMap)
-	syms[OpaqueFnXMLForEach] = newOpaqueFunctionSymbol("forEach", OpaqueFnXMLForEach)
-	syms[OpaqueFnXMLFilter] = newOpaqueFunctionSymbol("filter", OpaqueFnXMLFilter)
-	syms[OpaqueFnXMLStepIndex] = newPrivateOpaqueFunctionSymbol("$stepIndex", OpaqueFnXMLStepIndex)
+	syms[OpaqueFnXMLIterator] = newOpaqueFunctionSymbolWithVisibility("iterator", OpaqueFnXMLIterator, true)
+	syms[OpaqueFnXMLGet] = newOpaqueFunctionSymbolWithVisibility("get", OpaqueFnXMLGet, true)
+	syms[OpaqueFnXMLSlice] = newOpaqueFunctionSymbolWithVisibility("slice", OpaqueFnXMLSlice, true)
+	syms[OpaqueFnXMLMap] = newOpaqueFunctionSymbolWithVisibility("map", OpaqueFnXMLMap, true)
+	syms[OpaqueFnXMLForEach] = newOpaqueFunctionSymbolWithVisibility("forEach", OpaqueFnXMLForEach, true)
+	syms[OpaqueFnXMLFilter] = newOpaqueFunctionSymbolWithVisibility("filter", OpaqueFnXMLFilter, true)
+	syms[OpaqueFnXMLStepIndex] = newOpaqueFunctionSymbolWithVisibility("$stepIndex", OpaqueFnXMLStepIndex, false)
 	return syms
 }

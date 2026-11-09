@@ -221,14 +221,14 @@ func (dl *documentationLexer) getLiteral(tokenKind st.SyntaxKind) st.STToken {
 	leadingTrivia := dl.getLeadingTrivia()
 	lexeme := dl.getLexeme()
 	trailingTrivia := dl.processTrailingTrivia()
-	return st.CreateLiteralValueToken(tokenKind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueTokenWithDiagnostics(tokenKind, lexeme, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) getDocSyntaxToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := dl.getLeadingTrivia()
 	trailingTrivia := dl.processTrailingTrivia()
 	dl.checkAndTerminateCurrentMode(trailingTrivia)
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) getDocLiteralToken(kind st.SyntaxKind) st.STToken {
@@ -236,7 +236,7 @@ func (dl *documentationLexer) getDocLiteralToken(kind st.SyntaxKind) st.STToken 
 	lexeme := dl.getLexeme()
 	trailingTrivia := dl.processTrailingTrivia()
 	dl.checkAndTerminateCurrentMode(trailingTrivia)
-	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueTokenWithDiagnostics(kind, lexeme, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) getDocIdentifierToken() st.STToken {
@@ -259,7 +259,7 @@ func (dl *documentationLexer) getDocSyntaxTokenWithoutTrivia(kind st.SyntaxKind)
 	}
 
 	trailingTrivia = st.CreateNodeList(triviaList...)
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) getDocLiteralWithoutTrivia(kind st.SyntaxKind) st.STToken {
@@ -277,7 +277,7 @@ func (dl *documentationLexer) getDocLiteralWithoutTrivia(kind st.SyntaxKind) st.
 	}
 
 	trailingTrivia = st.CreateNodeList(triviaList...)
-	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueTokenWithDiagnostics(kind, lexeme, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) getCodeStartBacktickToken(kind st.SyntaxKind) st.STToken {
@@ -295,7 +295,7 @@ func (dl *documentationLexer) getCodeStartBacktickToken(kind st.SyntaxKind) st.S
 	}
 
 	trailingTrivia = st.CreateNodeList(triviaList...)
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) getCodeLineStartHashToken() st.STToken {
@@ -329,7 +329,7 @@ func (dl *documentationLexer) getCodeLineStartHashToken() st.STToken {
 	}
 
 	trailingTrivia = st.CreateNodeList(triviaList...)
-	return st.CreateTokenFrom(st.HASH_TOKEN, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(st.HASH_TOKEN, leadingTrivia, trailingTrivia, nil)
 }
 
 func (dl *documentationLexer) checkAndTerminateCurrentMode(trailingTrivia st.STNode) {

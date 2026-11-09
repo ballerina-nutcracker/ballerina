@@ -149,6 +149,8 @@ func lookupBinding(t typeResolver, chain *binding, ref model.SymbolRef) (model.S
 // lookupQueryAggregatedBinding reports unconditional query aggregation, which is
 // not a conditional refinement, so the eligibility policy never applies to it and
 // it needs no resolver.
+//
+//shallow:allow shared aggregation query starts before crossing a binding boundary
 func lookupQueryAggregatedBinding(chain *binding, ref model.SymbolRef) bool {
 	return lookupQueryAggregatedBindingInner(chain, ref, false)
 }
@@ -479,6 +481,8 @@ func mergeStatementEffects(t typeResolver, s1, s2 statementEffect) statementEffe
 // sequentialChain is the chain that continues after an expression evaluated for
 // its value rather than tested as a condition. Both outcomes of that expression
 // are possible, so they join the same way a variable initializer joins them.
+//
+//shallow:allow shared effect-join operation consistently combines both outcomes after value evaluation
 func sequentialChain(t typeResolver, effect expressionEffect) *binding {
 	return mergeChains(t, effect.ifTrue, effect.ifFalse, semtypes.Union)
 }

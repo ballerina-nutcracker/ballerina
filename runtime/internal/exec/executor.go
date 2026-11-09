@@ -66,7 +66,7 @@ func createFunctionFrame(ctx *extern.Context, birFunc *bir.BIRFunction, args []v
 	initLocalsForFunction(ctx, birFunc, args, frame)
 	pushFrame(ctx, frame)
 	if callStackDepth(ctx) > maxRecursionDepth {
-		panic(values.NewErrorWithMessage("stack overflow"))
+		panic(values.NewError(semtypes.Error, "stack overflow", nil, "", nil))
 	}
 	return frame
 }
@@ -78,7 +78,7 @@ func initLocalsForFunction(ctx *extern.Context, birFunc *bir.BIRFunction, args [
 	argOffset := paramLocalOffset - 1
 	requiredCount := len(birFunc.RequiredParams)
 	if len(args) < requiredCount+argOffset {
-		panic(values.NewErrorWithMessage("not enough arguments"))
+		panic(values.NewError(semtypes.Error, "not enough arguments", nil, "", nil))
 	}
 	if argOffset != 0 {
 		frame.SetLocal(1, args[0])
@@ -101,7 +101,7 @@ func initLocalsForFunction(ctx *extern.Context, birFunc *bir.BIRFunction, args [
 		frame.SetLocal(restParamIdx, list)
 	} else {
 		if len(args) > requiredCount+argOffset {
-			panic(values.NewErrorWithMessage("too many arguments"))
+			panic(values.NewError(semtypes.Error, "too many arguments", nil, "", nil))
 		}
 	}
 }
@@ -179,7 +179,7 @@ func execInstruction(ctx *extern.Context, inst bir.BIRNonTerminator, frame *Fram
 		frame.Free()
 		return parent
 	case *bir.ConstantLoad:
-		execConstantLoad(ctx, v, frame)
+		setOperandValue(ctx, v.LhsOp, frame, v.Value)
 	case *bir.Move:
 		execMove(ctx, v, frame)
 	case *bir.NewArray:

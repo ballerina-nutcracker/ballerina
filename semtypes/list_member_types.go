@@ -32,6 +32,7 @@ func newListMemberTypesFromRangesSemTypes(ranges []intRange, semTypes []SemType)
 	return this
 }
 
+//shallow:allow shared list-member constructor preserves the copying construction contract
 func listMemberTypesFrom(ranges []intRange, semTypes []SemType) ListMemberTypes {
 	return newListMemberTypesFromRangesSemTypes(ranges, semTypes)
 }

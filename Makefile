@@ -30,7 +30,7 @@ VET_MODULE_TARGETS := $(addprefix vet-module/,$(WORKSPACE_MODULES))
 LINT_MODULE_TARGETS := $(addprefix lint-module/,$(LINT_MODULES))
 TEST_RUNNER = .github/scripts/run_native_tests.py
 
-.PHONY: build vet lint lint-configs lint-walks lint-node-bases lint-func-usage force test test-coverage test-race check update-testdata release install-hooks \
+.PHONY: build vet lint lint-configs lint-walks lint-node-bases lint-func-usage lint-shallow force test test-coverage test-race check update-testdata release install-hooks \
 	test-wasm test-wasm-corpus-light test-wasm-corpus-integration benchmark-corpus
 
 force:
@@ -63,12 +63,12 @@ vet-module/%: force
 	@echo "Vetting $*"
 	@(cd "$*" && go vet ./...)
 
-lint: $(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage
+lint: $(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage lint-shallow
 
 lint-configs:
 	@$(PYTHON) .github/scripts/check_lint_configs.py
 
-$(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage: | lint-configs
+$(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage lint-shallow: | lint-configs
 
 $(addprefix lint-module/,$(DATA_MODULES)): lint-node-bases
 
@@ -79,6 +79,13 @@ lint-node-bases:
 lint-func-usage:
 	@echo "Checking function usage"
 	@go run ./compiler-tools/funcusage $(STRICT_MODULES)
+
+SHALLOW_PATTERNS := $(addprefix ./,$(addsuffix /...,$(STRICT_MODULES)))
+
+lint-shallow:
+	@echo "Checking shallow declarations"
+	@go run ./compiler-tools/shallow/cmd/shallow -test=false $(SHALLOW_PATTERNS)
+	@GOFLAGS="$$(go env GOFLAGS) -tags=debug,native_interp" go run ./compiler-tools/shallow/cmd/shallow -test=false $(SHALLOW_PATTERNS)
 
 lint-walks:
 	@echo "Checking AST walk purity"

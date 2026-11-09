@@ -358,6 +358,8 @@ func NewIsolatedExpr(parent Context, expr ast.BLangExpression) Context {
 
 // NewStartCall pushes the scope of a start action's call. Its facts decide
 // whether the started strand is isolated, so they are demanded.
+//
+//shallow:allow named start-action scope constructor exposes the private facts-context constructor
 func NewStartCall(parent Context) Context {
 	return newFactsContext(parent)
 }

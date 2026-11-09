@@ -34,7 +34,7 @@ type cryptoTypes struct {
 
 // cryptoError builds a Ballerina Error value with the given message.
 func cryptoError(msg string) *values.Error {
-	return values.NewErrorWithMessage(msg)
+	return values.NewError(semtypes.Error, msg, nil, "", nil)
 }
 
 // mapString reads a string field from a Ballerina Map.

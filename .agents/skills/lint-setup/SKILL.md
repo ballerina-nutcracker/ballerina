@@ -36,14 +36,14 @@ A tier is a minimum: the policy checker allows extra enabled linters. When chang
 | Tier | Baseline and additional checks | Modules assigned directly to this tier | Config |
 |---|---|---|---|
 | Basic | `errcheck`, `govet`, `ineffassign`, `staticcheck`, `depguard`, `usetesting` | root (`.`), `cli`, `lib`, `platform`, `projects`, `tools`, `compiler-tools/benchmark`, `compiler-tools/benchmark-http`, `compiler-tools/tree-gen`, `compiler-tools/walkpurity` | `.golangci.yml` |
-| Strict | `modernize`, `dupl`, `exhaustive`, `gochecksumtype`, `iface`, `iotamixing`, `reassign`, `unparam`, `wastedassign`, plus the workspace-wide `funcusage` check; `decimal` also enables `forbidigo`, configured to prohibit `panic` | `semtypes`, `common`, `decimal`, `prettyprint`, `runtime`, `values` | `.golangci/strict.yml` plus `make lint-func-usage`; `decimal/.golangci.yml` for `decimal` |
+| Strict | `modernize`, `dupl`, `exhaustive`, `gochecksumtype`, `iface`, `iotamixing`, `reassign`, `unparam`, `wastedassign`, plus the workspace-wide `funcusage` check and the `shallow` analyzer; `decimal` also enables `forbidigo`, configured to prohibit `panic` | `semtypes`, `common`, `decimal`, `prettyprint`, `runtime`, `values` | `.golangci/strict.yml` plus `make lint-func-usage` and `make lint-shallow`; `decimal/.golangci.yml` for `decimal` |
 | Data | Strict baseline plus `nodebase`: prohibit exported type names ending in `Base`; panics are allowed | `ast`, `st`, `bir`, `model` | `.golangci/data.yml` plus `make lint-node-bases` |
 | Frontend | Strict baseline plus `forbidigo`, configured to prohibit `panic` | `birgen`, `desugar`, `nodebuilder`, `parser`, `context` | `.golangci/frontend.yml` |
 | Semantics | Frontend baseline plus scoped `gochecknoglobals`, custom `forbidigo` rules, import allowlists, and the separate walk-purity check | `semantics` | `semantics/.golangci.yml` |
 
 Sources: `.golangci.yml:3`, `.golangci/strict.yml:3`, `decimal/.golangci.yml:3`, `.golangci/data.yml:3`, `.golangci/frontend.yml:3`, `semantics/.golangci.yml:3`; restricted-tier assignments are encoded in `.github/scripts/check_lint_configs.py:34`. Basic modules are the remaining workspace modules using root-config fallback; verify against `go.work:5` and their actual symlinks.
 
-The YAML files are separate complete configs, not YAML inheritance. Module-local `.golangci.yml` symlinks select shared configs; semantics and decimal have their own regular files. Data modules use `.golangci/data.yml`, retaining Strict's enabled lints and adding the private-AST-base diagnostic exclusion. They additionally run the base-visibility checker through Make and allow panics. The Makefile uses a module-local config when present and otherwise explicitly selects the root config (`Makefile:80`).
+The YAML files are separate complete configs, not YAML inheritance. Module-local `.golangci.yml` symlinks select shared configs; semantics and decimal have their own regular files. Data modules use `.golangci/data.yml`, retaining Strict's enabled lints and adding the private-AST-base diagnostic exclusion. They additionally run the base-visibility checker through Make and allow panics. The Makefile uses a module-local config when present and otherwise explicitly selects the root config (the `lint-module/%` target in `Makefile`).
 
 ## Shared settings and existing exceptions
 
@@ -55,13 +55,13 @@ The YAML files are separate complete configs, not YAML inheritance. Module-local
 
 ## Data-tier rules
 
-`DATA` in `.github/scripts/check_lint_configs.py:37` assigns `ast`, `st`, `bir`, and `model` to this tier. Data requires the Strict baseline and allows panics; a Data config may still add a panic ban. `NO_PANIC` (frontend modules, semantics and `decimal`) requires the no-panic rule. Make obtains the Data module list with `check_lint_configs.py --data-modules`; update this assignment rather than maintaining a second list in Make (`Makefile:20`).
+`DATA` in `.github/scripts/check_lint_configs.py:37` assigns `ast`, `st`, `bir`, and `model` to this tier. Data requires the Strict baseline and allows panics; a Data config may still add a panic ban. `NO_PANIC` (frontend modules, semantics and `decimal`) requires the no-panic rule. Make obtains the Data module list with `check_lint_configs.py --data-modules`; update this assignment rather than maintaining a second list in Make (`DATA_MODULES` in `Makefile`).
 
 `make lint-node-bases` runs `compiler-tools/nodebase` over those modules. It rejects every exported package-level type name ending in `Base`, including aliases and grouped declarations. It parses generated files, test files, and files for other build tags; the rule is independent of the current build platform (`compiler-tools/nodebase/main.go:57`, `compiler-tools/nodebase/main.go:90`).
 
 The diagnostic is: `do not expose Base type <name>; keep base types private and expose concrete implementation types instead` (`compiler-tools/nodebase/main.go:35`). Make shared node bases private and expose concrete implementation types. Update generation templates when a generated reference changes. Preserve inherited expression markers on the shared bases and explicitly list concrete implementations in exhaustive switches; keep `ast.SetType` exhaustive. Do not replace inherited markers with per-implementation marker methods or export replacement base aliases to satisfy an external switch.
 
-`make lint` and every Data module's `lint-module` target include this check. CI tests the checker with `go test ./compiler-tools/nodebase` before running `make lint` (`Makefile:64`, `.github/workflows/golangci-lint.yml:24`).
+`make lint` and every Data module's `lint-module` target include this check. CI tests the checker with `go test ./compiler-tools/nodebase` before running `make lint` (the `lint` target in `Makefile`, `.github/workflows/golangci-lint.yml:24`).
 
 ## Semantics-specific rules
 
@@ -74,17 +74,18 @@ Read `semantics/.golangci.yml` before changing its policy. It additionally enabl
 
 Semantics preserves scoped exceptions: explicit path exclusions exempt its existing non-analysis packages and analysis tests from the analysis-specific rules and global-variable check. `NoFacts` and `AllFacts` have explicit global-variable exemptions. Do not describe its global-variable prohibition as module-wide (`semantics/.golangci.yml:136`).
 
-`make lint-walks` separately runs `go run ./compiler-tools/walkpurity/cmd/walkpurity -test=false ./semantics/internal/types`; it is not a golangci-lint plugin (`Makefile:78`).
+`make lint-walks` separately runs `go run ./compiler-tools/walkpurity/cmd/walkpurity -test=false ./semantics/internal/types`; it is not a golangci-lint plugin (the `lint-walks` target in `Makefile`).
 
 ## Enforcement
 
-1. **Config-policy gate:** `make lint-configs` runs `.github/scripts/check_lint_configs.py`. It checks strict, data, frontend, and semantics modules. It resolves configs, rejects broken symlinks, and uses `golangci-lint linters --json` to compare effective enabled sets with required minimums. This gate checks golangci-lint configuration; node-base visibility is checked separately against source. It does not impose the stronger baseline on Basic-tier modules (`Makefile:66`, `.github/scripts/check_lint_configs.py:109`).
+1. **Config-policy gate:** `make lint-configs` runs `.github/scripts/check_lint_configs.py`. It checks strict, data, frontend, and semantics modules. It resolves configs, rejects broken symlinks, and uses `golangci-lint linters --json` to compare effective enabled sets with required minimums. This gate checks golangci-lint configuration; node-base visibility is checked separately against source. It does not impose the stronger baseline on Basic-tier modules (the `lint-configs` target in `Makefile`, `.github/scripts/check_lint_configs.py:109`).
 2. **Effective-rule probes:** the checker copies each relevant config into a temporary Go module, sets `GOWORK=off`, and runs isolated restriction checks. Only modules in `NO_PANIC` are probed: frontend, semantics and `decimal` must report panics in production and tests. Semantics must also report production globals, preserving its test-global exception. Strict and Data are minimums, so an extra panic ban there is accepted. These probes catch ineffective or blanket-excluded rules; they do not exhaustively validate every semantics-specific rule (`.github/scripts/check_lint_configs.py:57`).
-3. **Data base-visibility gate:** `make lint-node-bases` rejects exported base types in the modules assigned to `DATA`. It runs after config validation and before golangci-lint for those modules (`Makefile:69`).
+3. **Data base-visibility gate:** `make lint-node-bases` rejects exported base types in the modules assigned to `DATA`. It runs after config validation and before golangci-lint for those modules (the `lint-node-bases` target in `Makefile`).
 4. **Function usage gate:** `make lint-func-usage` runs the function usage checker over every Strict-and-above module after config validation (`Makefile`, `compiler-tools/funcusage/main.go`).
-5. **Module linting:** `make lint` discovers all workspace modules using `go list -m`, runs the config gate before module linting and the custom checks, and runs golangci-lint separately inside each module with `--allow-parallel-runners --concurrency 1`. `make -j4 lint` parallelizes the module jobs (`Makefile:18`, `Makefile:64`).
-6. **CI:** `.github/workflows/golangci-lint.yml` runs on pull requests and pushes to `main`, installs Go `1.27.1` and golangci-lint `v2.15.0`, runs the policy-checker, node-base-checker and function-usage-checker tests, then `make -j4 lint` (`.github/workflows/golangci-lint.yml:1`). Verify the workflow before installing a version; these pins can change.
-7. **Local commit hook:** when installed with `make install-hooks`, `.githooks/commit-msg` checks Go formatting and runs `make -j4 build lint` (`Makefile:35`, `.githooks/commit-msg:68`).
+5. **Shallow declaration gate:** `make lint-shallow` runs the `shallow` analyzer over every Strict-and-above module after config validation, once in the default build configuration and once with `-tags=debug,native_interp` added to `GOFLAGS` (`Makefile`, `compiler-tools/shallow/analyzer.go`).
+6. **Module linting:** `make lint` discovers all workspace modules using `go list -m`, runs the config gate before module linting and the custom checks, and runs golangci-lint separately inside each module with `--allow-parallel-runners --concurrency 1`. `make -j4 lint` parallelizes the module jobs (`LIST_WORKSPACE_MODULES` and the `lint` target in `Makefile`).
+7. **CI:** `.github/workflows/golangci-lint.yml` runs on pull requests and pushes to `main`, installs Go `1.27.1` and golangci-lint `v2.15.0`, runs the policy-checker, node-base-checker, function-usage-checker and shallow-analyzer tests, then `make -j4 lint` (`.github/workflows/golangci-lint.yml:1`). Verify the workflow before installing a version; these pins can change.
+8. **Local commit hook:** when installed with `make install-hooks`, `.githooks/commit-msg` checks Go formatting and runs `make -j4 build lint` (the `install-hooks` target in `Makefile`, `.githooks/commit-msg:68`).
 
 A successful config-policy check proves the required checks are active, not that the module's Go source passes them. Report config validation and source lint results separately. Do not record transient finding counts in this skill.
 
@@ -98,9 +99,11 @@ Run from the repository root as appropriate to the change:
 python3 .github/scripts/test_check_lint_configs.py
 go test ./compiler-tools/nodebase
 go test ./compiler-tools/funcusage
+go test ./compiler-tools/shallow/...
 make lint-configs
 make lint-node-bases
 make lint-func-usage
+make lint-shallow
 golangci-lint config verify --config .golangci/strict.yml
 make lint-module/runtime
 make -j4 lint

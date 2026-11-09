@@ -152,7 +152,7 @@ func (n *STLiteralValueToken) ChildInBucket(bucket int) STNode {
 }
 
 func (n *STLiteralValueToken) CreateFacade(position int, parent NonTerminalNode) Node {
-	return &LiteralValueToken{
+	return &tokenBase{
 		internalNode: n,
 		position:     position,
 		parent:       parent,
@@ -344,14 +344,6 @@ func createInvalidTokenMinutiaeNode(token STToken) *STInvalidTokenMinutiaeNode {
 	}, token).(*STInvalidTokenMinutiaeNode)
 }
 
-func CreateLiteralValueToken(kind SyntaxKind,
-	text string,
-	leadingTrivia STNode,
-	trailingTrivia STNode,
-) STToken {
-	return CreateLiteralValueTokenWithDiagnostics(kind, text, leadingTrivia, trailingTrivia, nil)
-}
-
 func CreateLiteralValueTokenWithDiagnostics(kind SyntaxKind,
 	text string,
 	leadingTrivia STNode,
@@ -375,10 +367,6 @@ func CreateDiagnostic(code diagnostics.DiagnosticCode, args ...any) STNodeDiagno
 	}
 }
 
-func CreateTokenFrom(kind SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode) STToken {
-	return CreateTokenWithDiagnostics(kind, leadingMinutiae, trailingMinutiae, nil)
-}
-
 func CreateTokenWithDiagnostics(kind SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode, diagnostics []STNodeDiagnostic) STToken {
 	width := uint16(len(kind.StrValue()))
 	return createNodeAndAddChildren(&stTokenBase{
@@ -388,11 +376,6 @@ func CreateTokenWithDiagnostics(kind SyntaxKind, leadingMinutiae STNode, trailin
 		trailingMinutiae: trailingMinutiae,
 		diagnostics:      diagnostics,
 	}, leadingMinutiae, trailingMinutiae).(*stTokenBase)
-}
-
-// FIXME: remove this
-func CreateNodeListFromNodes(nodes ...STNode) STNode {
-	return CreateNodeList(nodes...)
 }
 
 func CreateNodeList(nodes ...STNode) STNode {
@@ -1040,6 +1023,8 @@ func kindStrValue(kind SyntaxKind) string {
 }
 
 // toSexpr converts an STNode to S-expression format: (Kind width flags (diagnostics) *children)
+//
+//shallow:allow public formatting entry point keeps recursive indentation state private
 func ToSexpr(node STNode) string {
 	return toSexprIndented(node, 0)
 }
@@ -1190,14 +1175,6 @@ func CreateMissingToken(expectedKind SyntaxKind, diagnosticList []STNodeDiagnost
 	}
 }
 
-func AddDiagnostic[T STNode](node T, diagnosticCode diagnostics.DiagnosticCode, args ...any) T {
-	return AddSyntaxDiagnostic(node, CreateDiagnostic(diagnosticCode, args...))
-}
-
-func CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(toClone STNode, invalidNode STNode) STNode {
-	return CloneWithTrailingInvalidNodeMinutiae(toClone, invalidNode, nil, nil)
-}
-
 // CloneWithTrailingInvalidNodeMinutiae clones a node/token with invalid node as trailing minutiae
 // Port from Java SyntaxErrors.java:506-514 (STNode) and 525-533 (STToken)
 func CloneWithTrailingInvalidNodeMinutiae(toClone STNode, invalidNode STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) STNode {
@@ -1255,7 +1232,7 @@ func convertInvalidNodeToMinutiae(invalidNode STNode, diagnosticCode diagnostics
 		if !token.IsMissing() {
 			// Add diagnostic to first invalid token only
 			if diagnosticCode != nil {
-				token = AddDiagnostic(token, diagnosticCode, args...)
+				token = AddSyntaxDiagnostic(token, CreateDiagnostic(diagnosticCode, args...))
 				diagnosticCode = nil // Only add to first token
 			}
 
@@ -1396,7 +1373,7 @@ func createNodeAndAddChildren(base STNode, children ...STNode) STNode {
 func UpdateAllNodesInNodeListWithDiagnostic(nodeList *STNodeList, diagnosticCode diagnostics.DiagnosticCode) STNode {
 	newList := make([]STNode, nodeList.Size())
 	for i := 0; i < nodeList.Size(); i++ {
-		newList[i] = AddDiagnostic(nodeList.Get(i), diagnosticCode)
+		newList[i] = AddSyntaxDiagnostic(nodeList.Get(i), CreateDiagnostic(diagnosticCode))
 	}
 	return CreateNodeList(newList...)
 }
@@ -2895,11 +2872,6 @@ func CreateWaitFieldNode(fieldName STNode, colon STNode, waitFutureExpr STNode) 
 	}, fieldName, colon, waitFutureExpr)
 }
 
-func CreateToken(kind SyntaxKind, leadingMinutiae STNode, trailingMinutiae STNode) STToken {
-	// FIXME: remove this
-	return CreateTokenFrom(kind, leadingMinutiae, trailingMinutiae)
-}
-
 // ConditionalExprResolver
 func GetSimpleNameRefNode(modulePrefixIdentifier STNode) STNode {
 	identifier := ToToken(modulePrefixIdentifier)
@@ -2907,20 +2879,15 @@ func GetSimpleNameRefNode(modulePrefixIdentifier STNode) STNode {
 	text := identifier.Text()
 	switch text {
 	case "boolean":
-		syntaxToken = CreateTokenFrom(BOOLEAN_KEYWORD,
-			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
+		syntaxToken = CreateTokenWithDiagnostics(BOOLEAN_KEYWORD, identifier.LeadingMinutiae(), identifier.TrailingMinutiae(), nil)
 	case "decimal":
-		syntaxToken = CreateTokenFrom(DECIMAL_KEYWORD,
-			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
+		syntaxToken = CreateTokenWithDiagnostics(DECIMAL_KEYWORD, identifier.LeadingMinutiae(), identifier.TrailingMinutiae(), nil)
 	case "float":
-		syntaxToken = CreateTokenFrom(FLOAT_KEYWORD,
-			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
+		syntaxToken = CreateTokenWithDiagnostics(FLOAT_KEYWORD, identifier.LeadingMinutiae(), identifier.TrailingMinutiae(), nil)
 	case "int":
-		syntaxToken = CreateTokenFrom(INT_KEYWORD,
-			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
+		syntaxToken = CreateTokenWithDiagnostics(INT_KEYWORD, identifier.LeadingMinutiae(), identifier.TrailingMinutiae(), nil)
 	case "string":
-		syntaxToken = CreateTokenFrom(STRING_KEYWORD,
-			identifier.LeadingMinutiae(), identifier.TrailingMinutiae())
+		syntaxToken = CreateTokenWithDiagnostics(STRING_KEYWORD, identifier.LeadingMinutiae(), identifier.TrailingMinutiae(), nil)
 	default:
 		return CreateSimpleNameReferenceNode(identifier)
 	}
@@ -3856,7 +3823,6 @@ func (n *STAmbiguousCollectionNode) BucketCount() int {
 
 func (n *STAmbiguousCollectionNode) ChildInBucket(bucket int) STNode {
 	switch bucket {
-
 	case 0:
 		return n.CollectionStartToken
 

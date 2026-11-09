@@ -28,6 +28,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -211,7 +212,8 @@ func encodeExtern() extern.NativeFunc {
 		charset, _ := args[1].(string)
 		enc := resolveEncoding(charset)
 		if enc == nil {
-			return values.NewErrorWithMessage(fmt.Sprintf("Error occurred while encoding. %s", charset)), nil
+			return values.NewError(semtypes.Error, fmt.Sprintf("Error occurred while encoding. %s", charset), nil, "", nil),
+				nil
 		}
 
 		var raw []byte
@@ -220,7 +222,9 @@ func encodeExtern() extern.NativeFunc {
 		} else {
 			converted, err := enc.NewEncoder().Bytes([]byte(value))
 			if err != nil {
-				return values.NewErrorWithMessage(fmt.Sprintf("Error occurred while encoding. %s", err.Error())), nil
+				message := fmt.Sprintf("Error occurred while encoding. %s", err.Error())
+				return values.NewError(semtypes.Error, message, nil, "", nil),
+					nil
 			}
 			raw = converted
 		}
@@ -237,11 +241,14 @@ func decodeExtern() extern.NativeFunc {
 		charset, _ := args[1].(string)
 		enc := resolveEncoding(charset)
 		if enc == nil {
-			return values.NewErrorWithMessage(fmt.Sprintf("Error occurred while decoding. %s", charset)), nil
+			return values.NewError(semtypes.Error, fmt.Sprintf("Error occurred while decoding. %s", charset), nil, "", nil),
+				nil
 		}
 		result, err := decodeWithCharset(value, enc)
 		if err != nil {
-			return values.NewErrorWithMessage("Error occurred while decoding. " + err.Error()), nil
+			message := "Error occurred while decoding. " + err.Error()
+			return values.NewError(semtypes.Error, message, nil, "", nil),
+				nil
 		}
 		return result, nil
 	}

@@ -240,13 +240,6 @@ func (c *CompilerEnvironment) NewModuleScope(pkg model.PackageID, prefixes map[s
 	}
 }
 
-func (c *CompilerEnvironment) NewFunctionScope(parent model.Scope, pkg model.PackageID) *model.FunctionScope {
-	return &model.FunctionScope{
-		Parent: parent,
-		Main:   c.NewSymbolSpace(pkg),
-	}
-}
-
 func (c *CompilerEnvironment) NewBlockScope(parent model.Scope, pkg model.PackageID) *model.BlockScope {
 	return &model.BlockScope{
 		Parent: parent,

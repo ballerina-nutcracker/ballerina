@@ -22,10 +22,6 @@ type typedescOps struct {
 
 var _ basicTypeOps = &typedescOps{}
 
-func typedescSubtypeComplement(t subtypeData) subtypeData {
-	return bddComplement(t.(bdd))
-}
-
 func typedescSubtypeIsEmpty(cx Context, t subtypeData) bool {
 	b := t.(bdd)
 	if bddPosMaybeEmpty(b) {
@@ -35,7 +31,7 @@ func typedescSubtypeIsEmpty(cx Context, t subtypeData) bool {
 }
 
 func (t *typedescOps) complement(d subtypeData) subtypeData {
-	return typedescSubtypeComplement(d)
+	return bddComplement(d.(bdd))
 }
 
 func (t *typedescOps) IsEmpty(cx Context, d subtypeData) bool {

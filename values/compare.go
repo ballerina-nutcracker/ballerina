@@ -21,6 +21,7 @@ import (
 	"math"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type CompareResult int8
@@ -93,14 +94,17 @@ func Compare(x, y BalValue) CompareResult {
 		v2 := y.(*List)
 		return compareList(v1, v2)
 	default:
-		panic(NewErrorWithMessage(fmt.Sprintf("unsupported type for comparison: %T", x)))
+		message := fmt.Sprintf("unsupported type for comparison: %T", x)
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
+//shallow:allow preserves the specification's CompareA operation
 func compareA(x, y BalValue) CompareResult {
 	return compareForSort(x, y, true)
 }
 
+//shallow:allow preserves the specification's CompareD operation
 func compareD(x, y BalValue) CompareResult {
 	return compareForSort(x, y, false)
 }
@@ -154,7 +158,8 @@ func compareForSort(x, y BalValue, ascending bool) CompareResult {
 
 	r := Compare(x, y)
 	if r == CmpUN {
-		panic(NewErrorWithMessage(fmt.Sprintf("unsupported type for comparison: %T and %T", x, y)))
+		message := fmt.Sprintf("unsupported type for comparison: %T and %T", x, y)
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return r
 }

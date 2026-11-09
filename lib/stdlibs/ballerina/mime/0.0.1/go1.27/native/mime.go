@@ -136,7 +136,7 @@ func mimeError(typeName, msg string) values.BalValue {
 }
 
 func mimeErrorWithCause(typeName, msg string, cause error) values.BalValue {
-	return values.NewError(semtypes.Error, msg, values.NewErrorWithMessage(cause.Error()), typeName, nil)
+	return values.NewError(semtypes.Error, msg, values.NewError(semtypes.Error, cause.Error(), nil, "", nil), typeName, nil)
 }
 
 // invokeChannelMethod calls a no-argument io:ReadableByteChannel method through the

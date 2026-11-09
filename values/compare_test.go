@@ -17,9 +17,10 @@
 package values
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"math"
 	"testing"
+
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 func TestCompareASpecialValues(t *testing.T) {

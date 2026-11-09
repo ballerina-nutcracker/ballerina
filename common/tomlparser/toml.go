@@ -85,7 +85,7 @@ func (t *Toml) Validate(schema Schema) error {
 }
 
 func (t *Toml) Get(dottedKey string) (any, bool) {
-	keys := splitDottedKey(dottedKey)
+	keys := strings.Split(dottedKey, ".")
 	return t.getValueByPath(keys)
 }
 
@@ -351,10 +351,6 @@ func normaliseValue(v any) any {
 	default:
 		return v
 	}
-}
-
-func splitDottedKey(dottedKey string) []string {
-	return strings.Split(dottedKey, ".")
 }
 
 func (t *Toml) getValueByPath(keys []string) (any, bool) {

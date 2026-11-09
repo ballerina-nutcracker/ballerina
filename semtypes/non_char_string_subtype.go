@@ -30,6 +30,7 @@ func newNonCharStringSubtypeFromBoolEnumerableStrings(allowed bool, values []enu
 	return this
 }
 
+//shallow:allow semantic subtype factory is kept consistently with the other subtype factories
 func nonCharStringSubtypeFrom(allowed bool, values []enumerableType[string]) nonCharStringSubtype {
 	return newNonCharStringSubtypeFromBoolEnumerableStrings(allowed, values)
 }

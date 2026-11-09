@@ -22,6 +22,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -101,11 +102,13 @@ func decimalCeiling(_ *extern.Context, args []values.BalValue) (values.BalValue,
 func decimalFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	s := args[0].(string)
 	if !decimalFloatingPointStringPattern.MatchString(s) {
-		return values.NewErrorWithMessage("invalid decimal floating point string: " + s), nil
+		return values.NewError(semtypes.Error, "invalid decimal floating point string: "+s, nil, "", nil), nil
 	}
 	n, err := decimal.FromLiteral(s)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error()), nil
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil),
+			nil
 	}
 	return n, nil
 }

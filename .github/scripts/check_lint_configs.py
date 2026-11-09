@@ -144,7 +144,7 @@ def main() -> int:
     parser.add_argument("--data-modules", action="store_true",
                         help="print modules requiring the node-base visibility check")
     parser.add_argument("--strict-modules", action="store_true",
-                        help="print modules requiring the function usage check")
+                        help="print modules requiring the function usage and shallow declaration checks")
     args = parser.parse_args()
     if args.data_modules:
         print(" ".join(DATA))

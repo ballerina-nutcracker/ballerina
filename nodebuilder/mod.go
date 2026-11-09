@@ -23,7 +23,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/st"
-	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // GetCompilationUnit builds the AST of a syntax tree, reporting its syntax errors and substituting bad nodes for
@@ -52,7 +51,7 @@ func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits
 		if pkg.PackageID == nil {
 			pkg.PackageID = packageID
 		} else if packageID != nil && pkg.PackageID != packageID {
-			reportPackageAssemblyError(cx, "compilation units have different package IDs", compilationUnit.GetPosition())
+			cx.InternalError("compilation units have different package IDs", compilationUnit.GetPosition())
 			return pkg
 		}
 		addCompilationUnitNodesToPackage(cx, pkg, compilationUnit)
@@ -103,12 +102,8 @@ func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLan
 			if node != nil {
 				pos = node.GetPosition()
 			}
-			reportPackageAssemblyError(cx, fmt.Sprintf("unexpected top-level node type: %T", node), pos)
+			cx.InternalError(fmt.Sprintf("unexpected top-level node type: %T", node), pos)
 			return
 		}
 	}
-}
-
-func reportPackageAssemblyError(cx *context.CompilerContext, message string, pos diagnostics.Location) {
-	cx.InternalError(message, pos)
 }

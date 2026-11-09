@@ -27,7 +27,7 @@ type intSubtype struct {
 	Ranges []intRange
 }
 
-var _ properSubtypeData = &intSubtype{}
+var _ subtypeData = &intSubtype{}
 
 func newIntSubtypeFromRanges(ranges []intRange) intSubtype {
 	this := intSubtype{}
@@ -35,6 +35,7 @@ func newIntSubtypeFromRanges(ranges []intRange) intSubtype {
 	return this
 }
 
+//shallow:allow shared integer-subtype factory exposes a variadic range construction API
 func createIntSubtype(ranges ...intRange) intSubtype {
 	return newIntSubtypeFromRanges(ranges)
 }

@@ -32,10 +32,6 @@ func isEscapedNumericEscape(leadingSlashes string) bool {
 	return len(leadingSlashes)&1 != 0
 }
 
-func unescapeBallerinaString(s string) string {
-	return unescapeBackslashEscapes(unescapeUnicodeCodepoints(s))
-}
-
 func unescapeIdentifier(s string) string {
 	s = unescapeUnicodeCodepoints(s)
 	var b strings.Builder

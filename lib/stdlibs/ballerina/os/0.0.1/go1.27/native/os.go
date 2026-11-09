@@ -51,7 +51,7 @@ func getHandle(self *values.Object) pal.ProcessHandle {
 }
 
 func osError(msg string) values.BalValue {
-	return values.NewErrorWithMessage(msg)
+	return values.NewError(semtypes.Error, msg, nil, "", nil)
 }
 
 func initOSModule(rt *runtime.Runtime) {
@@ -115,7 +115,6 @@ func initOSModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "listEnv",
 		func(ctx *extern.Context, _ []values.BalValue) (values.BalValue, error) {
-
 			envMap := rt.Platform().OS.ListEnv()
 			m := values.NewMap(strMapTy, strMapAtomic, false, nil)
 			for k, v := range envMap {
@@ -178,7 +177,6 @@ func initOSModule(rt *runtime.Runtime) {
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Process.output",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-
 			self, _ := args[0].(*values.Object)
 			stream, _ := args[1].(int64)
 			handle := getHandle(self)

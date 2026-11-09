@@ -18,16 +18,17 @@ package parser
 
 import (
 	"fmt"
-	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
-	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	"github.com/ballerina-nutcracker/ballerina/st"
 	"runtime/debug"
 	"slices"
 	"strings"
+
+	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/parser/common"
+	"github.com/ballerina-nutcracker/ballerina/st"
 )
 
 func logRecoveredPanic(location string, recovered any) {
-	traceRecovery(func() string {
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
 		stackTrace := debug.Stack()
 		return fmt.Sprintf("[parser] recovered panic in %s: %v\n[parser] stack trace:\n%s", location, recovered, stackTrace)
 	})
@@ -36,10 +37,6 @@ func logRecoveredPanic(location string, recovered any) {
 // ============================================================================
 // String formatting helpers for error recovery tracing
 // ============================================================================
-
-func formatParserRuleContext(ctx common.ParserRuleContext) string {
-	return ctx.String()
-}
 
 func formatSTToken(token st.STToken) string {
 	if token == nil {
@@ -87,7 +84,7 @@ func formatSolution(sol *solution) string {
 	if kindStr == "" {
 		kindStr = fmt.Sprintf("KIND_%d", sol.TokenKind.Tag())
 	}
-	return fmt.Sprintf("%s:%s:%s", actionStr, formatParserRuleContext(sol.Ctx), kindStr)
+	return fmt.Sprintf("%s:%s:%s", actionStr, sol.Ctx.String(), kindStr)
 }
 
 func formatContextStack(stack []common.ParserRuleContext) string {
@@ -99,7 +96,7 @@ func formatContextStack(stack []common.ParserRuleContext) string {
 	}
 	parts := make([]string, len(stack))
 	for i, ctx := range stack {
-		parts[i] = formatParserRuleContext(ctx)
+		parts[i] = ctx.String()
 	}
 	return fmt.Sprintf("[%s]", strings.Join(parts, " "))
 }
@@ -124,10 +121,6 @@ func formatResultValue(result recoveryResult) string {
 	return fmt.Sprintf("matches:%d removeFixes:%d fixes:%d solution:%s", result.matches, result.removeFixes, len(result.fixes), solutionStr)
 }
 
-func traceRecovery(messageFn func() string) {
-	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, messageFn)
-}
-
 // ============================================================================
 // Solution struct - represents a fix for a parser error
 // ============================================================================
@@ -140,10 +133,6 @@ type solution struct {
 	RecoveredNode st.STNode
 	RemovedToken  st.STToken
 	Depth         int
-}
-
-func newSolution(action action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string) *solution {
-	return newSolutionWithDepth(action, ctx, tokenKind, tokenText, -1)
 }
 
 func newSolutionWithDepth(action action, ctx common.ParserRuleContext, tokenKind st.SyntaxKind, tokenText string, depth int) *solution {
@@ -340,15 +329,14 @@ func (m *abstractParserErrorHandlerMethods) internalError(message string) {
 }
 
 func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRuleContext, nextToken st.STToken, isCompletion bool) (result *solution) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(Recover start %s %s %s)",
-			formatParserRuleContext(currentCtx),
-			formatSTToken(nextToken),
-			formatBool(isCompletion))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(Recover start %s %s %s)", currentCtx.String(), formatSTToken(nextToken), formatBool(isCompletion))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(Recover end (%s %s %s) %s)", formatParserRuleContext(currentCtx), formatSTToken(nextToken), formatBool(isCompletion), formatSolution(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(Recover end (%s %s %s) %s)", currentCtx.String(), formatSTToken(nextToken), formatBool(isCompletion), formatSolution(result))
+		})
+	}()
 
 	currentTokenIndex := m.Self.GetTokenReader().GetCurrentTokenIndex()
 	if currentTokenIndex == m.Self.GetPreviousTokenIndex() {
@@ -370,25 +358,19 @@ func (m *abstractParserErrorHandlerMethods) Recover(currentCtx common.ParserRule
 	// Fail safe. This means we can't find a path to recover.
 	if isCompletion {
 		if m.Self.GetItterCount() == completionItterLimit {
-			traceRecovery(func() string {
-				return "fail safe reached"
-			})
+			debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "fail safe reached" })
 		}
 	} else {
 		if m.Self.GetItterCount() == resolutionItterLimit {
-			traceRecovery(func() string {
-				return "fail safe reached"
-			})
+			debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "fail safe reached" })
 		}
 	}
 	return m.getFailSafeSolution(currentCtx, nextToken)
 }
 
 func (m *abstractParserErrorHandlerMethods) getResolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *solution {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(getResolution start %s %s)",
-			formatParserRuleContext(currentCtx),
-			formatSTToken(nextToken))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(getResolution start %s %s)", currentCtx.String(), formatSTToken(nextToken))
 	})
 	bestMatch := m.seekMatchStart(currentCtx)
 	m.validateSolution(bestMatch, currentCtx, nextToken)
@@ -400,7 +382,7 @@ func (m *abstractParserErrorHandlerMethods) getResolution(currentCtx common.Pars
 }
 
 func (m *abstractParserErrorHandlerMethods) getFailSafeSolution(currentCtx common.ParserRuleContext, nextToken st.STToken) *solution {
-	sol := newSolution(actionRemove, currentCtx, nextToken.Kind(), nextToken.Text())
+	sol := newSolutionWithDepth(actionRemove, currentCtx, nextToken.Kind(), nextToken.Text(), -1)
 	sol.RemovedToken = m.Self.ConsumeInvalidToken()
 	return sol
 }
@@ -411,7 +393,7 @@ func (m *abstractParserErrorHandlerMethods) validateSolution(bestMatch *recovery
 		return
 	}
 	if (sol.Action == actionKeep) && (nextToken.Kind() == st.DOCUMENTATION_STRING) {
-		bestMatch.solution = newSolution(actionRemove, currentCtx, st.DOCUMENTATION_STRING, currentCtx.String())
+		bestMatch.solution = newSolutionWithDepth(actionRemove, currentCtx, st.DOCUMENTATION_STRING, currentCtx.String(), -1)
 	}
 	if (sol.Action != actionInsert) || (bestMatch.fixesSize() < 2) {
 		return
@@ -448,12 +430,10 @@ func (m *abstractParserErrorHandlerMethods) getCompletion(context common.ParserR
 }
 
 func (m *abstractParserErrorHandlerMethods) ConsumeInvalidToken() (result st.STToken) {
-	traceRecovery(func() string {
-		return "(ConsumeInvalidToken start)"
-	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(ConsumeInvalidToken end %s)", formatSTToken(result))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(ConsumeInvalidToken start)" })
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(ConsumeInvalidToken end %s)", formatSTToken(result)) })
+	}()
 	return m.Self.GetTokenReader().Read()
 }
 
@@ -471,7 +451,7 @@ func (m *abstractParserErrorHandlerMethods) applyFix(fix *solution) {
 }
 
 func (m *abstractParserErrorHandlerMethods) handleMissingToken(fix *solution) st.STNode {
-	return createMissingTokenWithDiagnosticsFromParserRules(fix.TokenKind, fix.Ctx)
+	return st.CreateMissingTokenWithDiagnostics(fix.TokenKind, fix.Ctx.GetErrorCode())
 }
 
 func (m *abstractParserErrorHandlerMethods) getCtxStackSnapshot() []common.ParserRuleContext {
@@ -482,12 +462,12 @@ func (m *abstractParserErrorHandlerMethods) getCtxStackSnapshot() []common.Parse
 }
 
 func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.ParserRuleContext) (bestMatch *recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchStart start %s)", formatParserRuleContext(currentCtx))
-	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchStart end (%s) %s)", formatParserRuleContext(currentCtx), formatResult(bestMatch))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(seekMatchStart start %s)", currentCtx.String()) })
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(seekMatchStart end (%s) %s)", currentCtx.String(), formatResult(bestMatch))
+		})
+	}()
 	tempCtxStack := m.Self.GetCtxStack()
 	func() {
 		defer func() {
@@ -498,7 +478,7 @@ func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 					return
 				}
 				bestMatch = newResult(make([]*solution, 0), lookaheadLimit-1)
-				bestMatch.solution = newSolution(actionRemove, currentCtx, st.SyntaxKind(0), currentCtx.String())
+				bestMatch.solution = newSolutionWithDepth(actionRemove, currentCtx, st.SyntaxKind(0), currentCtx.String(), -1)
 			}
 		}()
 		bestMatch = m.seekMatchInSubTree(currentCtx, 1, 0, true)
@@ -509,12 +489,14 @@ func (m *abstractParserErrorHandlerMethods) seekMatchStart(currentCtx common.Par
 }
 
 func (m *abstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInSubTree start %s %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(seekMatchInSubTree start %s %d %d %s)", currentCtx.String(), lookahead, currentDepth, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInSubTree end (%s %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint), formatResult(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(seekMatchInSubTree end (%s %d %d %s) %s)", currentCtx.String(), lookahead, currentDepth, formatBool(isEntryPoint), formatResult(result))
+		})
+	}()
 	tempCtxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(m.getCtxStackSnapshot())
 	result = m.Self.SeekMatch(currentCtx, lookahead, currentDepth, isEntryPoint)
@@ -523,57 +505,41 @@ func (m *abstractParserErrorHandlerMethods) seekMatchInSubTree(currentCtx common
 }
 
 func (m *abstractParserErrorHandlerMethods) StartContext(context common.ParserRuleContext) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(StartContext start %s)", formatParserRuleContext(context))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(StartContext start %s)", context.String()) })
 	ctxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(append(ctxStack, context))
-	traceRecovery(func() string {
-		return fmt.Sprintf("(StartContext end (%s))", formatParserRuleContext(context))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(StartContext end (%s))", context.String()) })
 }
 
 func (m *abstractParserErrorHandlerMethods) EndContext() {
-	traceRecovery(func() string {
-		return "(EndContext start)"
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(EndContext start)" })
 	ctxStack := m.Self.GetCtxStack()
 	m.Self.SetCtxStack(ctxStack[:len(ctxStack)-1])
-	traceRecovery(func() string {
-		return "(EndContext end)"
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(EndContext end)" })
 }
 
 func (m *abstractParserErrorHandlerMethods) SwitchContext(context common.ParserRuleContext) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(SwitchContext start %s)", formatParserRuleContext(context))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(SwitchContext start %s)", context.String()) })
 	ctxStack := m.Self.GetCtxStack()
 	ctxStack = ctxStack[:len(ctxStack)-1]
 	m.Self.SetCtxStack(append(ctxStack, context))
-	traceRecovery(func() string {
-		return "(SwitchContext end)"
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(SwitchContext end)" })
 }
 
 func (m *abstractParserErrorHandlerMethods) GetParentContext() (result common.ParserRuleContext) {
-	traceRecovery(func() string {
-		return "(GetParentContext start)"
-	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(GetParentContext end %s)", formatParserRuleContext(result))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(GetParentContext start)" })
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(GetParentContext end %s)", result.String()) })
+	}()
 	ctxStack := m.Self.GetCtxStack()
 	return ctxStack[len(ctxStack)-1]
 }
 
 func (m *abstractParserErrorHandlerMethods) GetGrandParentContext() (result common.ParserRuleContext) {
-	traceRecovery(func() string {
-		return "(GetGrandParentContext start)"
-	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(GetGrandParentContext end %s)", formatParserRuleContext(result))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(GetGrandParentContext start)" })
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(GetGrandParentContext end %s)", result.String()) })
+	}()
 	ctxStack := m.Self.GetCtxStack()
 	parent := ctxStack[len(ctxStack)-1]
 	ctxStack = ctxStack[:len(ctxStack)-1]
@@ -585,33 +551,33 @@ func (m *abstractParserErrorHandlerMethods) GetGrandParentContext() (result comm
 }
 
 func (m *abstractParserErrorHandlerMethods) HasAncestorContext(context common.ParserRuleContext) (result bool) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(HasAncestorContext start %s)", formatParserRuleContext(context))
-	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(HasAncestorContext end (%s) %s)", formatParserRuleContext(context), formatBool(result))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(HasAncestorContext start %s)", context.String()) })
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(HasAncestorContext end (%s) %s)", context.String(), formatBool(result))
+		})
+	}()
 	ctxStack := m.Self.GetCtxStack()
 	return slices.Contains(ctxStack, context)
 }
 
 func (m *abstractParserErrorHandlerMethods) GetContextStack() (result []common.ParserRuleContext) {
-	traceRecovery(func() string {
-		return "(GetContextStack start)"
-	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(GetContextStack end %s)", formatContextStack(result))
-	})
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return "(GetContextStack start)" })
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string { return fmt.Sprintf("(GetContextStack end %s)", formatContextStack(result)) })
+	}()
 	return m.Self.GetCtxStack()
 }
 
 func (m *abstractParserErrorHandlerMethods) seekInAlternativesPaths(lookahead int, currentDepth int, currentMatches int, alternativeRules []common.ParserRuleContext, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(func() string {
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
 		return fmt.Sprintf("(seekInAlternativesPaths start %d %d %d %s %s)", lookahead, currentDepth, currentMatches, formatContextStack(alternativeRules), formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(seekInAlternativesPaths end (%d %d %d %s %s) %s)", lookahead, currentDepth, currentMatches, formatContextStack(alternativeRules), formatBool(isEntryPoint), formatResult(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(seekInAlternativesPaths end (%d %d %d %s %s) %s)", lookahead, currentDepth, currentMatches, formatContextStack(alternativeRules), formatBool(isEntryPoint), formatResult(result))
+		})
+	}()
 	results := make([][]*recoveryResult, lookaheadLimit)
 	bestMatchIndex := 0
 
@@ -685,39 +651,45 @@ func (m *abstractParserErrorHandlerMethods) hasFoundBestAlternative(result *reco
 }
 
 func (m *abstractParserErrorHandlerMethods) getFinalResult(currentMatches int, bestMatch *recoveryResult) (result *recoveryResult) {
-	traceRecovery(func() string {
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
 		return fmt.Sprintf("(getFinalResult start %d %s)", currentMatches, formatResult(bestMatch))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(getFinalResult end (%d %s) %s)", currentMatches, formatResult(bestMatch), formatResult(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(getFinalResult end (%d %s) %s)", currentMatches, formatResult(bestMatch), formatResult(result))
+		})
+	}()
 	bestMatch.matches += currentMatches
 	return bestMatch
 }
 
 func (m *abstractParserErrorHandlerMethods) fixAndContinue(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(fixAndContinue start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(fixAndContinue start %s %d %d %d %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(fixAndContinue end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResult(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(fixAndContinue end (%s %d %d %d %s) %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResult(result))
+		})
+	}()
 	fixedPathResult := m.fixAndContinueCore(currentCtx, lookahead, currentDepth)
 	if isEntryPoint {
 		fixedPathResult.solution = fixedPathResult.peekFix()
 	} else {
-		fixedPathResult.solution = newSolution(actionKeep, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String())
+		fixedPathResult.solution = newSolutionWithDepth(actionKeep, currentCtx, m.Self.GetExpectedTokenKind(currentCtx), currentCtx.String(), -1)
 	}
 	return m.getFinalResult(matchingRulesCount, fixedPathResult)
 }
 
 func (m *abstractParserErrorHandlerMethods) fixAndContinueCore(currentCtx common.ParserRuleContext, lookahead int, currentDepth int) (fixedPathResult *recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(fixAndContinueCore start %s %d %d)", formatParserRuleContext(currentCtx), lookahead, currentDepth)
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(fixAndContinueCore start %s %d %d)", currentCtx.String(), lookahead, currentDepth)
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(fixAndContinueCore end (%s %d %d) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatResult(fixedPathResult))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(fixAndContinueCore end (%s %d %d) %s)", currentCtx.String(), lookahead, currentDepth, formatResult(fixedPathResult))
+		})
+	}()
 	deletionResult := m.seekMatchInSubTree(currentCtx, lookahead+1, currentDepth+1, false)
 	nextCtx := m.Self.GetNextRule(currentCtx, lookahead)
 	insertionResult := m.seekMatchInSubTree(nextCtx, lookahead, currentDepth+1, false)
@@ -1037,12 +1009,14 @@ func (b *ballerinaParserErrorHandler) isEndOfObjectTypeNode(nextLookahead int) b
 }
 
 func (b *ballerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, isEntryPoint bool) (result *recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(SeekMatch start %s %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(SeekMatch start %s %d %d %s)", currentCtx.String(), lookahead, currentDepth, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(SeekMatch end (%s %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, formatBool(isEntryPoint), formatResult(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(SeekMatch end (%s %d %d %s) %s)", currentCtx.String(), lookahead, currentDepth, formatBool(isEntryPoint), formatResult(result))
+		})
+	}()
 	var hasMatch bool
 	var skipRule bool
 	matchingRulesCount := 0
@@ -1299,7 +1273,7 @@ func (b *ballerinaParserErrorHandler) SeekMatch(currentCtx common.ParserRuleCont
 		currentCtx = b.GetNextRule(currentCtx, lookahead)
 	}
 	result = newResult(make([]*solution, 0), matchingRulesCount)
-	result.solution = newSolution(actionKeep, currentCtx, st.NONE, currentCtx.String())
+	result.solution = newSolutionWithDepth(actionKeep, currentCtx, st.NONE, currentCtx.String(), -1)
 	return result
 }
 
@@ -2117,12 +2091,14 @@ func (b *ballerinaParserErrorHandler) getShortestAlternative(currentCtx common.P
 }
 
 func (b *ballerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(seekMatchInAlternativePaths start %s %d %d %d %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInAlternativePaths end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(seekMatchInAlternativePaths end (%s %d %d %d %s) %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
+		})
+	}()
 	var alternativeRules []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_TOP_LEVEL_NODE:
@@ -2369,12 +2345,14 @@ func (b *ballerinaParserErrorHandler) seekMatchInAlternativePaths(currentCtx com
 }
 
 func (b *ballerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths start %s %d %d %d %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(seekMatchInStmtRelatedAlternativePaths end (%s %d %d %d %s) %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
+		})
+	}()
 	var alternativeRules []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_VAR_DECL_STMT_RHS:
@@ -2559,12 +2537,14 @@ func (b *ballerinaParserErrorHandler) seekMatchInStmtRelatedAlternativePaths(cur
 }
 
 func (b *ballerinaParserErrorHandler) seekMatchInExprRelatedAlternativePaths(currentCtx common.ParserRuleContext, lookahead int, currentDepth int, matchingRulesCount int, isEntryPoint bool) (result recoveryResult) {
-	traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths start %s %d %d %d %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
+	debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+		return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths start %s %d %d %d %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint))
 	})
-	defer traceRecovery(func() string {
-		return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths end (%s %d %d %d %s) %s)", formatParserRuleContext(currentCtx), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
-	})
+	defer func() {
+		debugcommon.DebugWriteLazy(debugcommon.DEBUG_ERROR_RECOVERY, func() string {
+			return fmt.Sprintf("(seekMatchInExprRelatedAlternativePaths end (%s %d %d %d %s) %s)", currentCtx.String(), lookahead, currentDepth, matchingRulesCount, formatBool(isEntryPoint), formatResultValue(result))
+		})
+	}()
 	var alternativeRules []common.ParserRuleContext
 	switch currentCtx {
 	case common.PARSER_RULE_CONTEXT_EXPRESSION, common.PARSER_RULE_CONTEXT_TERMINAL_EXPRESSION:
@@ -5259,7 +5239,7 @@ func (b *ballerinaParserErrorHandler) isParameter(ctx common.ParserRuleContext) 
 func (b *ballerinaParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *solution {
 	kind := b.GetExpectedTokenKind(ctx)
 	if kind != st.NONE {
-		return newSolution(actionInsert, ctx, kind, ctx.String())
+		return newSolutionWithDepth(actionInsert, ctx, kind, ctx.String(), -1)
 	}
 	if b.HasAlternativePaths(ctx) {
 		ctx = b.getShortestAlternative(ctx)

@@ -18,6 +18,7 @@ package symbolpool
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"sort"
 
@@ -137,7 +138,7 @@ func (sw *symbolWriter) serialize(exported model.ExportedSymbolSpace) ([]byte, e
 		return nil, fmt.Errorf("writing magic: %v", err)
 	}
 	tpBytes := tpEncoding.Bytes()
-	if err := write(buf, int64(len(tpBytes))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(tpBytes))); err != nil {
 		return nil, err
 	}
 	if _, err := buf.Write(tpBytes); err != nil {
@@ -185,14 +186,14 @@ func (sw *symbolWriter) writeMappingDefaults(buf *bytes.Buffer, tpEncoding semty
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].atomIndex < entries[j].atomIndex
 	})
-	if err := write(buf, int64(len(entries))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(entries))); err != nil {
 		return err
 	}
 	for _, entry := range entries {
-		if err := write(buf, entry.atomIndex); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, entry.atomIndex); err != nil {
 			return err
 		}
-		if err := write(buf, int64(len(entry.defaults))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(len(entry.defaults))); err != nil {
 			return err
 		}
 		for _, fieldDefault := range entry.defaults {
@@ -229,11 +230,11 @@ func (sw *symbolWriter) writeObjectMethodTables(buf *bytes.Buffer, tpEncoding se
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].atomIndex < entries[j].atomIndex
 	})
-	if err := write(buf, int64(len(entries))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(entries))); err != nil {
 		return err
 	}
 	for _, entry := range entries {
-		if err := write(buf, entry.atomIndex); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, entry.atomIndex); err != nil {
 			return err
 		}
 		if err := sw.writeSymbolRef(buf, entry.table.Owner); err != nil {
@@ -244,7 +245,7 @@ func (sw *symbolWriter) writeObjectMethodTables(buf *bytes.Buffer, tpEncoding se
 			names = append(names, name)
 		}
 		sort.Strings(names)
-		if err := write(buf, int64(len(names))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(len(names))); err != nil {
 			return err
 		}
 		for _, name := range names {
@@ -276,7 +277,7 @@ const symbolSpaceNilSentinel = int64(-1)
 func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.SymbolSpace) error {
 	spaces = compactSymbolSpaces(spaces)
 	if len(spaces) == 0 {
-		return write(buf, symbolSpaceNilSentinel)
+		return binary.Write(buf, binary.BigEndian, symbolSpaceNilSentinel)
 	}
 
 	snapshots := make([][]model.SymbolRef, len(spaces))
@@ -287,7 +288,7 @@ func (sw *symbolWriter) writeSymbolSpaces(buf *bytes.Buffer, spaces []*model.Sym
 		}
 		totalLen += len(snapshots[i])
 	}
-	if err := write(buf, int64(totalLen)); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(totalLen)); err != nil {
 		return err
 	}
 	if err := sw.writePackageIdentifier(buf, spaces[0].Pkg); err != nil {
@@ -340,7 +341,7 @@ func (sw *symbolWriter) collectFunctionSignatureRef(ref model.FunctionSignatureR
 }
 
 func (sw *symbolWriter) writeFunctionSignatureTable(buf *bytes.Buffer) error {
-	if err := write(buf, int64(len(sw.sigRefs))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(sw.sigRefs))); err != nil {
 		return err
 	}
 	for _, ref := range sw.sigRefs {
@@ -355,7 +356,7 @@ func (sw *symbolWriter) writeFunctionSignatureTable(buf *bytes.Buffer) error {
 			}
 			returnIndex = int64(index)
 		}
-		if err := write(buf, returnIndex); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, returnIndex); err != nil {
 			return err
 		}
 	}
@@ -374,10 +375,10 @@ func compactSymbolSpaces(spaces []*model.SymbolSpace) []*model.SymbolSpace {
 
 func (sw *symbolWriter) writeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.Symbol) error {
 	if op, ok := sym.(model.OpaqueSymbol); ok {
-		if err := write(buf, symTagOpaque); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, symTagOpaque); err != nil {
 			return err
 		}
-		if err := write(buf, int32(op.OpaqueID())); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int32(op.OpaqueID())); err != nil {
 			return err
 		}
 		return sw.writeFunctionSignatureIndex(buf, ref)
@@ -430,14 +431,14 @@ func (sw *symbolWriter) writeSymbolBaseWithType(buf *bytes.Buffer, sym model.Sym
 	if err := sw.writeStringCP(buf, sym.Name()); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsPublic()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsPublic()); err != nil {
 		return err
 	}
 	return writeType(buf, ty)
 }
 
 func (sw *symbolWriter) writeTypeSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.TypeSymbol, annotations values.AnnotationValues) error {
-	if err := write(buf, symTagType); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagType); err != nil {
 		return err
 	}
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
@@ -458,7 +459,7 @@ func (sw *symbolWriter) writeRecordSymbol(
 	annotations values.AnnotationValues,
 	fieldAnnotations values.FieldAnnotationValues,
 ) error {
-	if err := write(buf, symTagRecord); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagRecord); err != nil {
 		return err
 	}
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
@@ -474,7 +475,7 @@ func (sw *symbolWriter) writeRecordSymbol(
 }
 
 func (sw *symbolWriter) writeObjectTypeSymbol(buf *bytes.Buffer, sym *model.ObjectTypeSymbol, annotations values.AnnotationValues) error {
-	if err := write(buf, symTagObjectType); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagObjectType); err != nil {
 		return err
 	}
 	if err := sw.writeObjectSymbolBase(buf, sym); err != nil {
@@ -490,7 +491,7 @@ func (sw *symbolWriter) writeObjectTypeSymbol(buf *bytes.Buffer, sym *model.Obje
 }
 
 func (sw *symbolWriter) writeErrorTypeSymbol(buf *bytes.Buffer, sym *model.ErrorTypeSymbol, annotations values.AnnotationValues) error {
-	if err := write(buf, symTagErrorType); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagErrorType); err != nil {
 		return err
 	}
 	if err := sw.writeErrorSymbolBase(buf, sym); err != nil {
@@ -503,7 +504,7 @@ func (sw *symbolWriter) writeErrorTypeSymbol(buf *bytes.Buffer, sym *model.Error
 }
 
 func (sw *symbolWriter) writeDistinctTypeIDs(buf *bytes.Buffer, ids []int) error {
-	if err := write(buf, int64(len(ids))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(ids))); err != nil {
 		return err
 	}
 	for _, id := range ids {
@@ -519,13 +520,13 @@ func (sw *symbolWriter) writeDistinctTypeIDs(buf *bytes.Buffer, ids []int) error
 }
 
 func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model.InclusionMember) error {
-	if err := write(buf, int64(len(members))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(members))); err != nil {
 		return err
 	}
 	for _, m := range members {
 		switch member := m.(type) {
 		case *model.FieldDescriptor:
-			if err := write(buf, inclusionMemberTagField); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, inclusionMemberTagField); err != nil {
 				return err
 			}
 			if err := sw.writeStringCP(buf, member.MemberName()); err != nil {
@@ -534,7 +535,7 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 			if err := sw.writeType(buf, member.MemberType()); err != nil {
 				return err
 			}
-			if err := write(buf, member.IsPublic()); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, member.IsPublic()); err != nil {
 				return err
 			}
 			var flags uint8
@@ -550,14 +551,14 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 			if member.IsFinal() {
 				flags |= 8
 			}
-			if err := write(buf, flags); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, flags); err != nil {
 				return err
 			}
 			if err := sw.writeSymbolRef(buf, member.DefaultFnRef); err != nil {
 				return err
 			}
 		case *model.MethodDescriptor:
-			if err := write(buf, inclusionMemberTagMethod); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, inclusionMemberTagMethod); err != nil {
 				return err
 			}
 			if err := sw.writeStringCP(buf, member.MemberName()); err != nil {
@@ -566,17 +567,18 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 			if err := sw.writeType(buf, member.MemberType()); err != nil {
 				return err
 			}
-			if err := write(buf, uint8(member.MemberKind())); err != nil {
+
+			if err := binary.Write(buf, binary.BigEndian, uint8(member.MemberKind())); err != nil {
 				return err
 			}
-			if err := write(buf, member.IsPublic()); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, member.IsPublic()); err != nil {
 				return err
 			}
 			if err := sw.writeSymbolRef(buf, member.MethodRef); err != nil {
 				return err
 			}
 		case *model.RestTypeDescriptor:
-			if err := write(buf, inclusionMemberTagRestType); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, inclusionMemberTagRestType); err != nil {
 				return err
 			}
 			if err := sw.writeType(buf, member.MemberType()); err != nil {
@@ -591,19 +593,19 @@ func (sw *symbolWriter) writeInclusionMembers(buf *bytes.Buffer, members []model
 
 func (sw *symbolWriter) writeSymbolRef(buf *bytes.Buffer, ref model.SymbolRef) error {
 	if ref.IsEmpty() {
-		return write(buf, symbolRefTagEmpty)
+		return binary.Write(buf, binary.BigEndian, symbolRefTagEmpty)
 	}
 	if idx, ok := sw.refMap[ref]; ok {
-		if err := write(buf, symbolRefTagLocal); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, symbolRefTagLocal); err != nil {
 			return err
 		}
-		return write(buf, int32(idx))
+		return binary.Write(buf, binary.BigEndian, int32(idx))
 	}
 	idx := sw.externalSymbolRefIndex(ref)
-	if err := write(buf, symbolRefTagExternal); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symbolRefTagExternal); err != nil {
 		return err
 	}
-	return write(buf, int32(idx))
+	return binary.Write(buf, binary.BigEndian, int32(idx))
 }
 
 func (sw *symbolWriter) externalSymbolRefIndex(ref model.SymbolRef) int {
@@ -628,7 +630,7 @@ func (sw *symbolWriter) externalSymbolRefIndex(ref model.SymbolRef) int {
 }
 
 func (sw *symbolWriter) writeExternalSymbolRefPool(buf *bytes.Buffer) error {
-	if err := write(buf, int64(len(sw.externalRefKeys))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(sw.externalRefKeys))); err != nil {
 		return err
 	}
 	for _, key := range sw.externalRefKeys {
@@ -643,7 +645,7 @@ func (sw *symbolWriter) writeExternalSymbolRefPool(buf *bytes.Buffer) error {
 }
 
 func (sw *symbolWriter) writeClassSymbol(buf *bytes.Buffer, tag uint8, sym model.ClassSymbol, annotations values.AnnotationValues) error {
-	if err := write(buf, tag); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, tag); err != nil {
 		return err
 	}
 	if err := sw.writeObjectSymbolBase(buf, sym); err != nil {
@@ -660,7 +662,7 @@ func (sw *symbolWriter) writeClassSymbol(buf *bytes.Buffer, tag uint8, sym model
 	}
 	if tag == symTagNetworkClass {
 		refs := sym.(*model.NetworkClassSymbol).ResourceMethods()
-		if err := write(buf, int64(len(refs))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(len(refs))); err != nil {
 			return err
 		}
 		for _, ref := range refs {
@@ -673,7 +675,7 @@ func (sw *symbolWriter) writeClassSymbol(buf *bytes.Buffer, tag uint8, sym model
 }
 
 func (sw *symbolWriter) writeValueSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.VariableSymbol) error {
-	if err := write(buf, symTagValue); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagValue); err != nil {
 		return err
 	}
 	return sw.writeValueSymbolBody(buf, ref, sym)
@@ -683,29 +685,31 @@ func (sw *symbolWriter) writeValueSymbolBody(buf *bytes.Buffer, ref model.Symbol
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
 		return err
 	}
-	if err := write(buf, sym.Kind() == model.SymbolKindConstant); err != nil {
+
+	if err := binary.Write(buf, binary.BigEndian, sym.Kind() == model.SymbolKindConstant); err != nil {
 		return err
 	}
-	if err := write(buf, sym.Kind() == model.SymbolKindParemeter); err != nil {
+
+	if err := binary.Write(buf, binary.BigEndian, sym.Kind() == model.SymbolKindParemeter); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsFinal()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsFinal()); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsConfigurable()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsConfigurable()); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsIsolated()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsIsolated()); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsTopLevel()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsTopLevel()); err != nil {
 		return err
 	}
 	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
 func (sw *symbolWriter) writeConstantValueSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym *model.ConstantValueSymbol) error {
-	if err := write(buf, symTagConstantValue); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagConstantValue); err != nil {
 		return err
 	}
 	if err := sw.writeValueSymbolBody(buf, ref, &sym.VariableSymbol); err != nil {
@@ -715,18 +719,18 @@ func (sw *symbolWriter) writeConstantValueSymbol(buf *bytes.Buffer, ref model.Sy
 }
 
 func (sw *symbolWriter) writeAnnotationSymbol(buf *bytes.Buffer, sym *model.AnnotationSymbol) error {
-	if err := write(buf, symTagAnnotation); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagAnnotation); err != nil {
 		return err
 	}
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsConst()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsConst()); err != nil {
 		return err
 	}
 	keys := sym.AttachPointKeys()
 	sort.Strings(keys)
-	if err := write(buf, int64(len(keys))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(keys))); err != nil {
 		return err
 	}
 	for _, key := range keys {
@@ -738,7 +742,7 @@ func (sw *symbolWriter) writeAnnotationSymbol(buf *bytes.Buffer, sym *model.Anno
 }
 
 func (sw *symbolWriter) writeFunctionSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.FunctionSymbol) error {
-	if err := write(buf, symTagFunction); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagFunction); err != nil {
 		return err
 	}
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
@@ -748,7 +752,7 @@ func (sw *symbolWriter) writeFunctionSymbol(buf *bytes.Buffer, ref model.SymbolR
 }
 
 func (sw *symbolWriter) writeFunctionSignatureBody(buf *bytes.Buffer, ref model.SymbolRef, sig model.TypedFunctionSignature) error {
-	if err := write(buf, int64(len(sig.ParamTypes))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(sig.ParamTypes))); err != nil {
 		return err
 	}
 	for _, pt := range sig.ParamTypes {
@@ -759,7 +763,8 @@ func (sw *symbolWriter) writeFunctionSignatureBody(buf *bytes.Buffer, ref model.
 	if err := sw.writeType(buf, sig.ReturnType); err != nil {
 		return err
 	}
-	if err := write(buf, !semtypes.IsZero(sig.RestParamType)); err != nil {
+
+	if err := binary.Write(buf, binary.BigEndian, !semtypes.IsZero(sig.RestParamType)); err != nil {
 		return err
 	}
 	if !semtypes.IsZero(sig.RestParamType) {
@@ -767,14 +772,14 @@ func (sw *symbolWriter) writeFunctionSignatureBody(buf *bytes.Buffer, ref model.
 			return err
 		}
 	}
-	if err := write(buf, uint8(sig.Flags)); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, uint8(sig.Flags)); err != nil {
 		return err
 	}
 	return sw.writeFunctionSignatureIndex(buf, ref)
 }
 
 func (sw *symbolWriter) writeResourceMethodSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.ResourceMethodSymbol) error {
-	if err := write(buf, symTagResourceMethod); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagResourceMethod); err != nil {
 		return err
 	}
 	if err := sw.writeSymbolBase(buf, sym); err != nil {
@@ -790,13 +795,13 @@ func (sw *symbolWriter) writeResourceMethodSymbol(buf *bytes.Buffer, ref model.S
 }
 
 func (sw *symbolWriter) writeDependentlyTypedResourceMethodSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.DependentlyTypedResourceMethodSymbol) error {
-	if err := write(buf, symTagDependentlyTypedResourceMethod); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagDependentlyTypedResourceMethod); err != nil {
 		return err
 	}
 	if err := sw.writeStringCP(buf, sym.Name()); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsPublic()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsPublic()); err != nil {
 		return err
 	}
 	if err := sw.writeStringCP(buf, sym.MethodName()); err != nil {
@@ -806,7 +811,7 @@ func (sw *symbolWriter) writeDependentlyTypedResourceMethodSymbol(buf *bytes.Buf
 		return err
 	}
 	paramTypes := sym.ParamTypes()
-	if err := write(buf, int64(len(paramTypes))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(paramTypes))); err != nil {
 		return err
 	}
 	for _, pt := range paramTypes {
@@ -814,7 +819,7 @@ func (sw *symbolWriter) writeDependentlyTypedResourceMethodSymbol(buf *bytes.Buf
 			return err
 		}
 	}
-	if err := write(buf, uint8(sym.FuncFlags())); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, uint8(sym.FuncFlags())); err != nil {
 		return err
 	}
 	if err := sw.writeFunctionSignatureIndex(buf, ref); err != nil {
@@ -824,17 +829,17 @@ func (sw *symbolWriter) writeDependentlyTypedResourceMethodSymbol(buf *bytes.Buf
 }
 
 func (sw *symbolWriter) writeDependentlyTypedFunctionSymbol(buf *bytes.Buffer, ref model.SymbolRef, sym model.DependentlyTypedFunctionSymbol) error {
-	if err := write(buf, symTagDependentlyTypedFunction); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, symTagDependentlyTypedFunction); err != nil {
 		return err
 	}
 	if err := sw.writeStringCP(buf, sym.Name()); err != nil {
 		return err
 	}
-	if err := write(buf, sym.IsPublic()); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sym.IsPublic()); err != nil {
 		return err
 	}
 	paramTypes := sym.ParamTypes()
-	if err := write(buf, int64(len(paramTypes))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(paramTypes))); err != nil {
 		return err
 	}
 	for _, pt := range paramTypes {
@@ -842,7 +847,7 @@ func (sw *symbolWriter) writeDependentlyTypedFunctionSymbol(buf *bytes.Buffer, r
 			return err
 		}
 	}
-	if err := write(buf, uint8(sym.FuncFlags())); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, uint8(sym.FuncFlags())); err != nil {
 		return err
 	}
 	if err := sw.writeFunctionSignatureIndex(buf, ref); err != nil {
@@ -854,15 +859,15 @@ func (sw *symbolWriter) writeDependentlyTypedFunctionSymbol(buf *bytes.Buffer, r
 func (sw *symbolWriter) writeTypeOp(buf *bytes.Buffer, op model.TypeOp) error {
 	switch o := op.(type) {
 	case *model.IdentityTypeOp:
-		if err := write(buf, typeOpTagIdentity); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, typeOpTagIdentity); err != nil {
 			return err
 		}
 		return sw.writeType(buf, o.Type)
 	case *model.RefTypeOp:
-		if err := write(buf, typeOpTagRef); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, typeOpTagRef); err != nil {
 			return err
 		}
-		return write(buf, int64(o.Index))
+		return binary.Write(buf, binary.BigEndian, int64(o.Index))
 	case *model.BinaryTypeOp:
 		var tag uint8
 		if o.Kind == model.TypeOpUnion {
@@ -870,7 +875,7 @@ func (sw *symbolWriter) writeTypeOp(buf *bytes.Buffer, op model.TypeOp) error {
 		} else {
 			tag = typeOpTagIntersect
 		}
-		if err := write(buf, tag); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, tag); err != nil {
 			return err
 		}
 		if err := sw.writeTypeOp(buf, o.Lhs); err != nil {
@@ -878,16 +883,16 @@ func (sw *symbolWriter) writeTypeOp(buf *bytes.Buffer, op model.TypeOp) error {
 		}
 		return sw.writeTypeOp(buf, o.Rhs)
 	case *model.ArrayTypeOp:
-		if err := write(buf, typeOpTagArray); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, typeOpTagArray); err != nil {
 			return err
 		}
 		if err := sw.writeTypeOp(buf, o.Element); err != nil {
 			return err
 		}
-		if err := write(buf, int64(o.Length)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(o.Length)); err != nil {
 			return err
 		}
-		return write(buf, o.IsOpen)
+		return binary.Write(buf, binary.BigEndian, o.IsOpen)
 	default:
 		return fmt.Errorf("unsupported TypeOp: %T", op)
 	}
@@ -903,14 +908,14 @@ func (sw *symbolWriter) writeFunctionSignatureIndex(buf *bytes.Buffer, ref model
 		}
 		index = int64(sigIndex)
 	}
-	return write(buf, index)
+	return binary.Write(buf, binary.BigEndian, index)
 }
 
 func (sw *symbolWriter) writeUntypedFunctionSignature(buf *bytes.Buffer, sig model.UntypedFunctionSignature) error {
-	if err := write(buf, sig.HasRest); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, sig.HasRest); err != nil {
 		return err
 	}
-	if err := write(buf, int64(len(sig.ParamNames))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(sig.ParamNames))); err != nil {
 		return err
 	}
 	for i, name := range sig.ParamNames {
@@ -921,18 +926,18 @@ func (sw *symbolWriter) writeUntypedFunctionSignature(buf *bytes.Buffer, sig mod
 		if i < len(sig.ParamFlags) {
 			flag = sig.ParamFlags[i]
 		}
-		if err := write(buf, uint8(flag)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, uint8(flag)); err != nil {
 			return err
 		}
 		var dp *model.DefaultableParam
 		if i < len(sig.Default) {
 			dp = sig.Default[i]
 		}
-		if err := write(buf, dp != nil); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, dp != nil); err != nil {
 			return err
 		}
 		if dp != nil {
-			if err := write(buf, uint8(dp.Kind)); err != nil {
+			if err := binary.Write(buf, binary.BigEndian, uint8(dp.Kind)); err != nil {
 				return err
 			}
 			if dp.Kind != model.DefaultableParamKindInferredTypedesc {
@@ -942,17 +947,17 @@ func (sw *symbolWriter) writeUntypedFunctionSignature(buf *bytes.Buffer, sig mod
 			}
 		}
 		metadata := sig.IncludedRecordMetadata[i]
-		if err := write(buf, metadata != nil); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, metadata != nil); err != nil {
 			return err
 		}
 		if metadata == nil {
 			continue
 		}
-		if err := write(buf, metadata.IsOpen); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, metadata.IsOpen); err != nil {
 			return err
 		}
 		nFields := len(metadata.RequiredFields) + len(metadata.NeverFields)
-		if err := write(buf, int64(nFields)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(nFields)); err != nil {
 			return err
 		}
 		for _, name := range metadata.RequiredFields {
@@ -982,15 +987,15 @@ func (sw *symbolWriter) writeDefaultableParams(buf *bytes.Buffer, info *model.De
 			defaults = append(defaults, i)
 		}
 	}
-	if err := write(buf, int64(len(defaults))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(defaults))); err != nil {
 		return err
 	}
 	for _, idx := range defaults {
-		if err := write(buf, int64(idx)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(idx)); err != nil {
 			return err
 		}
 		param, _ := info.Get(idx)
-		if err := write(buf, uint8(param.Kind)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, uint8(param.Kind)); err != nil {
 			return err
 		}
 		if param.Kind == model.DefaultableParamKindInferredTypedesc {
@@ -1012,15 +1017,15 @@ func (sw *symbolWriter) writeIncludedRecordParams(buf *bytes.Buffer, info *model
 			}
 		}
 	}
-	if err := write(buf, int64(len(included))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(included))); err != nil {
 		return err
 	}
 	for _, idx := range included {
-		if err := write(buf, int64(idx)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(idx)); err != nil {
 			return err
 		}
 		fields := info.Fields(idx)
-		if err := write(buf, int64(len(fields))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(len(fields))); err != nil {
 			return err
 		}
 		for _, name := range fields {
@@ -1033,26 +1038,26 @@ func (sw *symbolWriter) writeIncludedRecordParams(buf *bytes.Buffer, info *model
 }
 
 func (sw *symbolWriter) writeStringCP(buf *bytes.Buffer, s string) error {
-	return write(buf, sw.cp.addString(s))
+	return binary.Write(buf, binary.BigEndian, sw.cp.addString(s))
 }
 
 func (sw *symbolWriter) writeType(buf *bytes.Buffer, ty semtypes.SemType) error {
 	if semtypes.IsZero(ty) {
-		return write(buf, int32(-1))
+		return binary.Write(buf, binary.BigEndian, int32(-1))
 	}
-	return write(buf, int32(sw.tp.Put(ty)))
+	return binary.Write(buf, binary.BigEndian, int32(sw.tp.Put(ty)))
 }
 
 func (sw *symbolWriter) writeObjectDefinitionType(buf *bytes.Buffer, ty semtypes.SemType) error {
 	if semtypes.IsZero(ty) {
-		return write(buf, int32(-1))
+		return binary.Write(buf, binary.BigEndian, int32(-1))
 	}
-	return write(buf, int32(sw.tp.PutObjectDefinition(ty)))
+	return binary.Write(buf, binary.BigEndian, int32(sw.tp.PutObjectDefinition(ty)))
 }
 
 func (sw *symbolWriter) writeErrorDefinitionType(buf *bytes.Buffer, ty semtypes.SemType) error {
 	if semtypes.IsZero(ty) {
-		return write(buf, int32(-1))
+		return binary.Write(buf, binary.BigEndian, int32(-1))
 	}
-	return write(buf, int32(sw.tp.PutErrorDefinition(ty)))
+	return binary.Write(buf, binary.BigEndian, int32(sw.tp.PutErrorDefinition(ty)))
 }

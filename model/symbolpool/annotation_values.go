@@ -18,6 +18,7 @@ package symbolpool
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"sort"
 
@@ -48,7 +49,7 @@ func (sw *symbolWriter) writeAnnotationValues(buf *bytes.Buffer, annotations val
 	}
 	sort.Strings(keys)
 
-	if err := write(buf, int64(len(keys))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(keys))); err != nil {
 		return err
 	}
 	for _, key := range keys {
@@ -67,7 +68,7 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 	if err != nil {
 		return err
 	}
-	if err := write(buf, int8(tag)); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int8(tag)); err != nil {
 		return err
 	}
 
@@ -86,9 +87,9 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 		case int8:
 			val = int64(v)
 		}
-		return write(buf, val)
+		return binary.Write(buf, binary.BigEndian, val)
 	case annotationValueTagByte:
-		return write(buf, value.(byte))
+		return binary.Write(buf, binary.BigEndian, value.(byte))
 	case annotationValueTagFloat:
 		var val float64
 		switch v := value.(type) {
@@ -97,7 +98,7 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 		case float32:
 			val = float64(v)
 		}
-		return write(buf, val)
+		return binary.Write(buf, binary.BigEndian, val)
 	case annotationValueTagDecimal:
 		return sw.writeStringCP(buf, value.(*decimal.Decimal).String())
 	case annotationValueTagString:
@@ -111,7 +112,7 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 			return sw.writeStringCP(buf, *v)
 		}
 	case annotationValueTagBoolean:
-		return write(buf, value.(bool))
+		return binary.Write(buf, binary.BigEndian, value.(bool))
 	case annotationValueTagNil:
 		return nil
 	case annotationValueTagMap:
@@ -119,11 +120,11 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 		if err := sw.writeType(buf, m.Type); err != nil {
 			return err
 		}
-		if err := write(buf, m.IsReadonly()); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, m.IsReadonly()); err != nil {
 			return err
 		}
 		keys := m.Keys()
-		if err := write(buf, int64(len(keys))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(len(keys))); err != nil {
 			return err
 		}
 		for _, key := range keys {
@@ -141,10 +142,10 @@ func (sw *symbolWriter) writeAnnotationValue(buf *bytes.Buffer, value values.Ann
 		if err := sw.writeType(buf, list.Type); err != nil {
 			return err
 		}
-		if err := write(buf, list.IsReadonly()); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, list.IsReadonly()); err != nil {
 			return err
 		}
-		if err := write(buf, int64(list.Len())); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(list.Len())); err != nil {
 			return err
 		}
 		for i := 0; i < list.Len(); i++ {
@@ -290,7 +291,7 @@ func (sw *symbolWriter) writeFieldAnnotationValues(buf *bytes.Buffer, fieldAnnot
 		fields = append(fields, field)
 	}
 	sort.Strings(fields)
-	if err := write(buf, int64(len(fields))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(fields))); err != nil {
 		return err
 	}
 	for _, field := range fields {

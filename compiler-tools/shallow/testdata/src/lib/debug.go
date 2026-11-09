@@ -1,4 +1,4 @@
-// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -14,10 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package parser
+//go:build debug
 
-import "github.com/ballerina-nutcracker/ballerina/st"
+package lib
 
-func generateJSON(node st.STNode) string {
-	return st.GenerateJSON(node, kindName)
-}
+func (s5) m()        {}
+func (s21) m()       {}
+func (*g4[K, V]) m() {}
+func (g5[T]) m()     {}
+func (e10) m()       {}
+
+type s20 struct{ y int }
+
+func (s20) m() {}
+
+type s22 struct{ y int }

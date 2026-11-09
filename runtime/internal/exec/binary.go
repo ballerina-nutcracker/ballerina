@@ -23,6 +23,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -32,10 +33,10 @@ func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 	case int64:
 		v2 := op2.(int64)
 		if v1 > 0 && v2 > 0 && v1 > math.MaxInt64-v2 {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		if v1 < 0 && v2 < 0 && v1 < math.MinInt64-v2 {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		setOperandValue(ctx, binaryOp.LhsOp, frame, v1+v2)
 	case float64:
@@ -48,7 +49,7 @@ func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		case values.XMLValue:
 			setOperandValue(ctx, binaryOp.LhsOp, frame, values.ConcatXML(values.NewXMLText(v1), v2))
 		default:
-			panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
+			panic(values.NewError(semtypes.Error, fmt.Sprintf("unsupported type combination: %T + %T", op1, op2), nil, "", nil))
 		}
 	case *decimal.Decimal:
 		v2 := op2.(*decimal.Decimal)
@@ -60,10 +61,11 @@ func execBinaryOpAdd(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		case string:
 			setOperandValue(ctx, binaryOp.LhsOp, frame, values.ConcatXML(v1, values.NewXMLText(v2)))
 		default:
-			panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
+			panic(values.NewError(semtypes.Error, fmt.Sprintf("unsupported type combination: %T + %T", op1, op2), nil, "", nil))
 		}
 	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)))
+		message := fmt.Sprintf("unsupported type combination: %T + %T", op1, op2)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -73,10 +75,10 @@ func execBinaryOpSub(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 	case int64:
 		v2 := op2.(int64)
 		if v2 > 0 && v1 < math.MinInt64+v2 {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		if v2 < 0 && v1 > math.MaxInt64+v2 {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		setOperandValue(ctx, binaryOp.LhsOp, frame, v1-v2)
 	case float64:
@@ -86,7 +88,8 @@ func execBinaryOpSub(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		v2 := op2.(*decimal.Decimal)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Sub, v2))
 	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T - %T", op1, op2)))
+		message := fmt.Sprintf("unsupported type combination: %T - %T", op1, op2)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -98,7 +101,7 @@ func execBinaryOpMul(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		v2 := op2.(int64)
 		result := v1 * v2
 		if v1 != 0 && v2 != 0 && ((v1 == math.MinInt64 && v2 == -1) || (v1 == -1 && v2 == math.MinInt64) || result/v2 != v1) {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		setOperandValue(ctx, binaryOp.LhsOp, frame, result)
 	case float64:
@@ -108,7 +111,8 @@ func execBinaryOpMul(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		v2 := op2.(*decimal.Decimal)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Mul, v2))
 	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T * %T", op1, op2)))
+		message := fmt.Sprintf("unsupported type combination: %T * %T", op1, op2)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -119,10 +123,10 @@ func execBinaryOpDiv(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 	case int64:
 		v2 := op2.(int64)
 		if v2 == 0 {
-			panic(values.NewErrorWithMessage("divide by zero"))
+			panic(values.NewError(semtypes.Error, "divide by zero", nil, "", nil))
 		}
 		if v1 == math.MinInt64 && v2 == -1 {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		setOperandValue(ctx, binaryOp.LhsOp, frame, v1/v2)
 	case float64:
@@ -132,7 +136,8 @@ func execBinaryOpDiv(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		v2 := op2.(*decimal.Decimal)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Quo, v2))
 	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T / %T", op1, op2)))
+		message := fmt.Sprintf("unsupported type combination: %T / %T", op1, op2)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -143,7 +148,7 @@ func execBinaryOpMod(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 	case int64:
 		v2 := op2.(int64)
 		if v2 == 0 {
-			panic(values.NewErrorWithMessage("divide by zero"))
+			panic(values.NewError(semtypes.Error, "divide by zero", nil, "", nil))
 		}
 		setOperandValue(ctx, binaryOp.LhsOp, frame, v1%v2)
 	case float64:
@@ -153,7 +158,8 @@ func execBinaryOpMod(ctx *extern.Context, binaryOp *bir.BinaryOp, frame *Frame) 
 		v2 := op2.(*decimal.Decimal)
 		setOperandValue(ctx, binaryOp.LhsOp, frame, decimalArith(v1.Rem, v2))
 	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type combination: %T %% %T", op1, op2)))
+		message := fmt.Sprintf("unsupported type combination: %T %% %T", op1, op2)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -183,7 +189,7 @@ func promoteMultiplicativeOperands(op1, op2 values.BalValue, isMul bool) (values
 		case *decimal.Decimal:
 			return v1, decimal.FromInt64(v2)
 		default:
-			panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported numeric type: %T", op1)))
+			panic(values.NewError(semtypes.Error, fmt.Sprintf("unsupported numeric type: %T", op1), nil, "", nil))
 		}
 	}
 	if !isMul {
@@ -196,7 +202,8 @@ func promoteMultiplicativeOperands(op1, op2 values.BalValue, isMul bool) (values
 		case *decimal.Decimal:
 			return decimal.FromInt64(v1), op2
 		default:
-			panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported numeric type: %T", op2)))
+			message := fmt.Sprintf("unsupported numeric type: %T", op2)
+			panic(values.NewError(semtypes.Error, message, nil, "", nil))
 		}
 	}
 	return op1, op2
@@ -207,7 +214,8 @@ func promoteMultiplicativeOperands(op1, op2 values.BalValue, isMul bool) (values
 func decimalArith(op func(*decimal.Decimal) (*decimal.Decimal, *decimal.Error), b *decimal.Decimal) *decimal.Decimal {
 	out, err := op(b)
 	if err != nil {
-		panic(values.NewErrorWithMessage(err.Error()))
+		message := err.Error()
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return out
 }
@@ -260,11 +268,12 @@ func execBinaryOpAnnotAccess(ctx *extern.Context, binaryOp *bir.BinaryOp, frame 
 	op1, op2 := getBinaryRhsValues(ctx, binaryOp, frame)
 	typedesc, ok := op1.(*values.TypeDesc)
 	if !ok {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("annotation access requires typedesc, got %T", op1)))
+		panic(values.NewError(semtypes.Error, fmt.Sprintf("annotation access requires typedesc, got %T", op1), nil, "", nil))
 	}
 	key, ok := op2.(string)
 	if !ok {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("annotation key must be string, got %T", op2)))
+		message := fmt.Sprintf("annotation key must be string, got %T", op2)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	var value values.BalValue
 	if typedesc.Annotations != nil {
@@ -272,7 +281,7 @@ func execBinaryOpAnnotAccess(ctx *extern.Context, binaryOp *bir.BinaryOp, frame 
 	}
 	value, ok = dereferenceAnnotationValue(ctx, value)
 	if !ok {
-		panic(values.NewErrorWithMessage("runtime annotation value is not loaded"))
+		panic(values.NewError(semtypes.Error, "runtime annotation value is not loaded", nil, "", nil))
 	}
 	setOperandValue(ctx, binaryOp.LhsOp, frame, value)
 }
@@ -381,7 +390,7 @@ func execUnaryOpNegate(ctx *extern.Context, unaryOp *bir.UnaryOp, frame *Frame) 
 	switch v := op.(type) {
 	case int64:
 		if v == math.MinInt64 {
-			panic(values.NewErrorWithMessage("arithmetic overflow"))
+			panic(values.NewError(semtypes.Error, "arithmetic overflow", nil, "", nil))
 		}
 		setOperandValue(ctx, unaryOp.LhsOp, frame, -v)
 	case float64:
@@ -389,7 +398,8 @@ func execUnaryOpNegate(ctx *extern.Context, unaryOp *bir.UnaryOp, frame *Frame) 
 	case *decimal.Decimal:
 		setOperandValue(ctx, unaryOp.LhsOp, frame, v.Neg())
 	default:
-		panic(values.NewErrorWithMessage(fmt.Sprintf("unsupported type: %T (expected int64, float64, or *decimal.Decimal)", op)))
+		message := fmt.Sprintf("unsupported type: %T (expected int64, float64, or *decimal.Decimal)", op)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 

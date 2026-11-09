@@ -37,6 +37,7 @@ type InvokableHandle struct {
 	firstParam int
 }
 
+//shallow:allow runtime constructor creates a top-level function handle without a parent frame
 func NewBIRHandle(fn *bir.BIRFunction) *InvokableHandle {
 	return newBIRHandle(fn, nil)
 }
