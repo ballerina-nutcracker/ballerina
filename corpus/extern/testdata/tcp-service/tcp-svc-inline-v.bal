@@ -14,9 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Exercises the anonymous `service on new tcp:Listener(...) { ... }`
-// declaration style, now that tcp:Service/tcp:ConnectionService are plain
-// (non-distinct) service object types.
+// Exercises the anonymous `service on new tcp:Listener(...) { ... }` declaration style.
 import ballerina/io;
 import ballerina/tcp;
 
