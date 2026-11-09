@@ -20,7 +20,6 @@
 package native
 
 import (
-	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -82,6 +81,7 @@ type parser struct {
 	rowIndex int
 
 	headers        []string
+	seenHeaders    map[string]struct{}
 	fieldHierarchy map[string]*recordField
 	fieldNames     map[string]*recordField
 
@@ -434,9 +434,13 @@ func (p *parser) addHeader(trim bool) error {
 			delete(p.fieldHierarchy, value)
 		}
 	}
-	if slices.Contains(p.headers, value) {
+	if _, dup := p.seenHeaders[value]; dup {
 		return duplicateHeaderError(value)
 	}
+	if p.seenHeaders == nil {
+		p.seenHeaders = map[string]struct{}{}
+	}
+	p.seenHeaders[value] = struct{}{}
 	p.headers = append(p.headers, value)
 	return nil
 }
