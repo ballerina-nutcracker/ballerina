@@ -203,7 +203,7 @@ public function main() {
     show(sequence);
     // @output E: xml root element is missing
 
-    // Elements nest at most 1000 levels deep, as in jBallerina.
+    // Elements nest at most 1000 levels deep, as in jBallerina's parseString with a record target.
     record {}|error atLimit = xmldata:parseString(nested(1000));
     io:println(atLimit is record {});
     // @output true
@@ -213,6 +213,7 @@ public function main() {
     record {}|error tooDeepBytes = xmldata:parseBytes(nested(1001).toBytes());
     show(tooDeepBytes);
     // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    // jBallerina panics with a TypeCastError for a union target and applies no limit in parseAsType.
     record {|record {}|string a?;|}|error tooDeepUnion = xmldata:parseString(nested(1001));
     show(tooDeepUnion);
     // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded

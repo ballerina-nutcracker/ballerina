@@ -77,8 +77,8 @@ func traverseXML(t *typer, opts sourceOptions, source values.XMLValue, target se
 	return t.build(a.currentNode)
 }
 
-// exceedsElementDepth reports whether v nests elements deeper than maxElementDepth: jBallerina's parseAsType
-// re-parses the value as text, so the same limit applies.
+// exceedsElementDepth reports whether v nests elements deeper than maxElementDepth. jBallerina's parseAsType has
+// no limit and fails on deep values with a stack overflow; this applies parseString's limit instead.
 func exceedsElementDepth(v values.XMLValue) bool {
 	type frame struct {
 		item  values.XMLValue
