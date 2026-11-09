@@ -35,6 +35,18 @@ const maxElementDepth = 1000
 
 var errElementDepthExceeded = fmt.Errorf("Maximum Element Depth limit (%d) Exceeded", maxElementDepth) //nolint:staticcheck // jBallerina's message verbatim
 
+// exceedsElementDepthInText reports whether reading input hits the element depth limit before any other error,
+// so a caller that builds an XML value first can fail before that build, which is quadratic in the depth.
+func exceedsElementDepthInText(input string) bool {
+	r := newStaxReader(input)
+	for r.hasNext() {
+		if _, err := r.next(); err != nil {
+			return errors.Is(err, errElementDepthExceeded)
+		}
+	}
+	return false
+}
+
 type staxEvent int
 
 const (

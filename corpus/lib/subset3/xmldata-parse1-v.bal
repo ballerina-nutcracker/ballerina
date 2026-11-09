@@ -216,6 +216,10 @@ public function main() {
     record {|record {}|string a?;|}|error tooDeepUnion = xmldata:parseString(nested(1001));
     show(tooDeepUnion);
     // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    // The limit applies before building the XML value for a union target, which takes time quadratic in the depth.
+    record {|record {}|string a?;|}|error millionDeepUnion = xmldata:parseString(repeat("<a>", 1000000) + repeat("</a>", 1000000));
+    show(millionDeepUnion);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
     record {}|error valueAtLimit = xmldata:parseAsType(nestedValue(1000));
     io:println(valueAtLimit is record {});
     // @output true
@@ -240,4 +244,12 @@ function nested(int depth) returns string {
         close += "</a>";
     }
     return open + close;
+}
+
+function repeat(string s, int n) returns string {
+    if n == 0 {
+        return "";
+    }
+    string half = repeat(s, n / 2);
+    return n % 2 == 0 ? half + half : half + half + s;
 }
