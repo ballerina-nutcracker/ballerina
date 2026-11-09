@@ -70,6 +70,22 @@ class Broken {
     }
 }
 
+class LargeBroken {
+    private boolean sent = false;
+
+    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+        if self.sent {
+            return error("disk failure");
+        }
+        self.sent = true;
+        string block = "";
+        foreach int _ in 0 ..< 1024 {
+            block += "0123456789abcdef";
+        }
+        return {value: block.toBytes()};
+    }
+}
+
 class Events {
     private final http:SseEvent[] events;
     private int index = 0;
@@ -214,6 +230,23 @@ service /streams on new http:Listener(19503) {
     resource function get broken() returns http:Response {
         http:Response res = new;
         res.setByteStream(new stream<byte[], io:Error?>(new Broken()));
+        return res;
+    }
+
+    resource function get largeBroken() returns http:Response {
+        http:Response res = new;
+        res.setByteStream(new stream<byte[], io:Error?>(new LargeBroken()));
+        return res;
+    }
+
+    resource function get relayBroken() returns http:Response|error {
+        return backend->get("/largeBroken");
+    }
+
+    resource function get relayBrokenRest() returns http:Response|error {
+        http:Response res = check backend->get("/largeBroken");
+        stream<byte[], io:Error?> body = check res.getByteStream(1);
+        _ = check body.next();
         return res;
     }
 
@@ -370,10 +403,24 @@ public function testMain() returns error? {
     // client never sees a complete body.
     boolean incomplete = true;
     http:Response|error broken = c->get("/broken");
-    if broken is http:Response {
+    if broken !is error {
         incomplete = broken.getTextPayload() is error;
     }
     io:println(incomplete); // @output true
+
+    // A relayed body whose backend fails part-way is aborted too, whether or not it was partly read.
+    boolean relayIncomplete = true;
+    http:Response|error relayBroken = c->get("/relayBroken");
+    if relayBroken !is error {
+        relayIncomplete = relayBroken.getTextPayload() is error;
+    }
+    io:println(relayIncomplete); // @output true
+    boolean relayRestIncomplete = true;
+    http:Response|error relayBrokenRest = c->get("/relayBrokenRest");
+    if relayBrokenRest !is error {
+        relayRestIncomplete = relayBrokenRest.getTextPayload() is error;
+    }
+    io:println(relayRestIncomplete); // @output true
 
     // A HEAD response never reads its byte-stream body, which would only be discarded.
     http:Response head = check h1->head("/counted");

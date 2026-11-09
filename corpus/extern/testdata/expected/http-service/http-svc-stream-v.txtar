@@ -18,6 +18,8 @@ true
 Error occurred while reading stream: Idle timeout triggered while reading inbound response entity body
 500
 true
+true
+true
 200
 0
 replaced by a stream

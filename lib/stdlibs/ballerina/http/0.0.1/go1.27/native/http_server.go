@@ -765,10 +765,15 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 		releaseStreamedBody(holder, contentType)
 	case holder.source != nil:
 		writeStreamedBody(w, holder.source, contentType, timeout)
+	// Aborting tells the client that a relayed body which failed part-way is incomplete.
 	case holder.reader != nil:
-		_ = holder.writeReader(w, timeout)
+		if err := holder.writeReader(w, timeout); err != nil {
+			panic(http.ErrAbortHandler)
+		}
 	default:
-		_ = holder.writeStream(w, timeout)
+		if err := holder.writeStream(w, timeout); err != nil {
+			panic(http.ErrAbortHandler)
+		}
 	}
 }
 
