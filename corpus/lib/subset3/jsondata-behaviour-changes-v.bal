@@ -24,6 +24,10 @@ type Pair record {|
     int b;
 |};
 
+type DeepNode record {
+    DeepNode a?;
+};
+
 function show(anydata|error v) {
     if v is error {
         io:println(v is jsondata:Error, " ", v.message());
@@ -113,4 +117,16 @@ public function main() {
     // @output 0.5
     // @output [0,-0.5]
     // @output {"a":0.0}
+    string open = "{\"a\":";
+    string close = "}";
+    foreach int _ in 0 ..< 12 {
+        open += open;
+        close += close;
+    }
+    DeepNode|jsondata:Error r13 = jsondata:parseString(open + "{}" + close);
+    io:println(r13 is DeepNode);
+    // @output true
+    json|jsondata:Error r14 = jsondata:parseString(open + open + "{}" + close + close);
+    io:println(r14 is json);
+    // @output true
 }
