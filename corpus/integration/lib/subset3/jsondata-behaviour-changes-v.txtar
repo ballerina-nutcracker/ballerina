@@ -35,4 +35,6 @@ true 'leading zero in number '-00.5'' at line: '1' column: '12'
 {"a":0.0}
 true
 true
+true
+true the value is nested more than 10000 levels deep
 -- stderr --

@@ -100,6 +100,8 @@ func undefinedFieldError(fieldName string) *jsonError {
 	return newJSONError("undefined field '%s'", fieldName)
 }
 
+var errTooDeep = newJSONError("the value is nested more than %d levels deep", maxTraverseDepth)
+
 func cyclicReferenceError() *jsonError {
 	return newJSONError("the value has a cyclic reference")
 }

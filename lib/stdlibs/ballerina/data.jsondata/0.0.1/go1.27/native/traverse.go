@@ -21,6 +21,7 @@
 package native
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -45,7 +46,12 @@ type traverser struct {
 	restTypes      []restEntry
 	// fieldNames is jBallerina's field-name deque, oldest entry first.
 	fieldNames []string
+	depth      int
 }
+
+// maxTraverseDepth bounds the nesting of mappings and lists in a converted value: the traverser recurses per
+// level, and Go aborts the process when a goroutine overflows its stack. encoding/json uses the same bound.
+const maxTraverseDepth = 10000
 
 func traverse(t *typer, opts projection, json values.BalValue, target semtypes.SemType) (values.BalValue, error) {
 	tr := &traverser{typer: t, projection: opts}
@@ -113,8 +119,8 @@ func (tr *traverser) traverseUnion(json values.BalValue, ti typeInfo) (values.Ba
 	for _, member := range tr.orderedMembers(ti.members, json) {
 		hierarchySize, restSize, namesSize := len(tr.fieldHierarchy), len(tr.restTypes), len(tr.fieldNames)
 		result, err := tr.traverseJSON(json, member)
-		if err == nil {
-			return result, nil
+		if err == nil || errors.Is(err, errTooDeep) {
+			return result, err
 		}
 		tr.fieldHierarchy = tr.fieldHierarchy[:min(hierarchySize, len(tr.fieldHierarchy))]
 		tr.restTypes = tr.restTypes[:min(restSize, len(tr.restTypes))]
@@ -141,6 +147,11 @@ func (tr *traverser) orderedMembers(members []semtypes.SemType, json values.BalV
 }
 
 func (tr *traverser) traverseMapOrArray(json values.BalValue, node any, ti typeInfo) (values.BalValue, error) {
+	if tr.depth == maxTraverseDepth {
+		return nil, errTooDeep
+	}
+	tr.depth++
+	defer func() { tr.depth-- }()
 	switch json := json.(type) {
 	case *values.Map:
 		if builder, ok := node.(*mappingBuilder); ok {

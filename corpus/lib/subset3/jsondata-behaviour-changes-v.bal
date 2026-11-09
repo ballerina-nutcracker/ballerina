@@ -28,6 +28,18 @@ type DeepNode record {
     DeepNode a?;
 };
 
+type UnionNode record {
+    UnionNode? a;
+};
+
+function repeat(string s, int n) returns string {
+    if n == 0 {
+        return "";
+    }
+    string half = repeat(s, n / 2);
+    return n % 2 == 0 ? half + half : half + half + s;
+}
+
 function show(anydata|error v) {
     if v is error {
         io:println(v is jsondata:Error, " ", v.message());
@@ -129,4 +141,10 @@ public function main() {
     json|jsondata:Error r14 = jsondata:parseString(open + open + "{}" + close + close);
     io:println(r14 is json);
     // @output true
+    UnionNode|jsondata:Error r15 = jsondata:parseString(repeat("{\"a\":", 10001) + "null" + repeat("}", 10001));
+    io:println(r15 is UnionNode);
+    // @output true
+    UnionNode|jsondata:Error r16 = jsondata:parseString(repeat("{\"a\":", 10002) + "null" + repeat("}", 10002));
+    show(r16);
+    // @output true the value is nested more than 10000 levels deep
 }
