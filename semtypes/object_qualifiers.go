@@ -69,6 +69,7 @@ func IsIsolatedObject(ctx Context, ty SemType) bool {
 	return IsSubtype(ctx, isolatedTy, BooleanConst(true))
 }
 
+//shallow:allow public object qualifier query hides the private network qualifier encoding
 func IsClientObject(ctx Context, ty SemType) bool {
 	return objectHasNetworkQualifier(ctx, ty, networkQualifierClientTag)
 }

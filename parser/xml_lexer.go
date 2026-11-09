@@ -70,7 +70,7 @@ func (l *xmlLexer) NextToken() st.STToken {
 		token = l.readTokenInXMLCommentOrCDATA(true)
 	default:
 		l.internalError("xmlLexer.NextToken: unexpected parser mode")
-		return failedToken()
+		return st.CreateTokenWithDiagnostics(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList(), nil)
 	}
 
 	if len(l.context.diagnostics) > 0 {
@@ -115,7 +115,7 @@ func (l *xmlLexer) processXMLTrivia(triviaList *[]st.STNode, isLeading bool) {
 func (l *xmlLexer) getXMLSyntaxToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	trailingTrivia := l.processTrailingXMLTrivia()
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *xmlLexer) getXMLSyntaxTokenChecked(kind st.SyntaxKind, allowLeadingWS, allowTrailingWS bool) st.STToken {
@@ -127,20 +127,20 @@ func (l *xmlLexer) getXMLSyntaxTokenChecked(kind st.SyntaxKind, allowLeadingWS, 
 	if !allowTrailingWS && trailingTrivia.BucketCount() != 0 {
 		l.reportLexerError(common.ERROR_INVALID_WHITESPACE_AFTER, kindStringValue(kind))
 	}
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *xmlLexer) getXMLSyntaxTokenWithoutTrailingWS(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	trailingTrivia := st.CreateEmptyNodeList()
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *xmlLexer) getXMLLiteralValueToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	trailingTrivia := l.processTrailingXMLTrivia()
-	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueTokenWithDiagnostics(kind, lexeme, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *xmlLexer) getXMLText() st.STToken {

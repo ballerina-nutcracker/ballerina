@@ -16,10 +16,12 @@
 
 package semtypes
 
+//shallow:allow named cell constructor supplies the limited-mutability policy
 func cellContaining(env Env, ty SemType) SemType {
 	return cellContainingWithEnvSemTypeCellMutability(env, ty, CellMutabilityLimited)
 }
 
+//shallow:allow named cell constructor supplies the readonly-mutability policy
 func roCellContaining(env Env, ty SemType) SemType {
 	return cellContainingWithEnvSemTypeCellMutability(env, ty, CellMutabilityNone)
 }

@@ -29,10 +29,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-func execConstantLoad(ctx *extern.Context, constantLoad *bir.ConstantLoad, frame *Frame) {
-	setOperandValue(ctx, constantLoad.LhsOp, frame, constantLoad.Value)
-}
-
 func execMove(ctx *extern.Context, moveIns *bir.Move, frame *Frame) {
 	setOperandValue(ctx, moveIns.LhsOp, frame, getOperandValue(ctx, moveIns.RhsOp, frame))
 }
@@ -92,7 +88,7 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 	}
 	for _, entry := range computedEntries {
 		if !semtypes.IsSubtype(ctx.TypeCtx(), values.SemTypeForValue(entry.Value), atomic.FieldInnerVal(entry.Key)) {
-			panic(values.NewErrorWithMessage("inherent type violation"))
+			panic(values.NewError(semtypes.Error, "inherent type violation", nil, "", nil))
 		}
 		entries = append(entries, entry)
 	}
@@ -133,7 +129,8 @@ func execArrayStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) 
 	list := getOperandValue(ctx, access.LhsOp, frame).(*values.List)
 	idx := int(getOperandValue(ctx, access.KeyOp, frame).(int64))
 	if idx < 0 {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", idx)))
+		message := fmt.Sprintf("invalid array index: %d", idx)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	list.FillingSet(ctx.TypeCtx(), idx, getOperandValue(ctx, access.RhsOp, frame))
 }
@@ -142,7 +139,8 @@ func execArrayLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
 	list := getOperandValue(ctx, access.RhsOp, frame).(*values.List)
 	idx := int(getOperandValue(ctx, access.KeyOp, frame).(int64))
 	if idx < 0 || idx >= list.Len() {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", idx)))
+		message := fmt.Sprintf("invalid array index: %d", idx)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	setOperandValue(ctx, access.LhsOp, frame, list.Get(idx))
 }
@@ -151,7 +149,8 @@ func execArrayFillingLoad(ctx *extern.Context, access *bir.FieldAccess, frame *F
 	list := getOperandValue(ctx, access.RhsOp, frame).(*values.List)
 	idx := int(getOperandValue(ctx, access.KeyOp, frame).(int64))
 	if idx < 0 {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", idx)))
+		message := fmt.Sprintf("invalid array index: %d", idx)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	setOperandValue(ctx, access.LhsOp, frame, list.FillingGet(idx))
 }
@@ -160,7 +159,8 @@ func execMapStore(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) {
 	container := getOperandValue(ctx, access.LhsOp, frame)
 	keyStr := getOperandValue(ctx, access.KeyOp, frame).(string)
 	if container == nil {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("missing key: %q", keyStr)))
+		message := fmt.Sprintf("missing key: %q", keyStr)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	m := container.(*values.Map)
 	valueVal := getOperandValue(ctx, access.RhsOp, frame)
@@ -175,7 +175,8 @@ func execMapFillingLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Fra
 	container := getOperandValue(ctx, access.RhsOp, frame)
 	key := getOperandValue(ctx, access.KeyOp, frame).(string)
 	if container == nil {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("missing key: %q", key)))
+		message := fmt.Sprintf("missing key: %q", key)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	setOperandValue(ctx, access.LhsOp, frame, container.(*values.Map).FillingGet(ctx.TypeCtx(), key))
 }
@@ -210,7 +211,8 @@ func execStringLoad(ctx *extern.Context, access *bir.FieldAccess, frame *Frame) 
 	idx := getOperandValue(ctx, access.KeyOp, frame).(int64)
 	char, ok := codePointAt(s, idx)
 	if !ok {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("string index out of range: index: %d, size: %d", idx, utf8.RuneCountInString(s))))
+		message := fmt.Sprintf("string index out of range: index: %d, size: %d", idx, utf8.RuneCountInString(s))
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	setOperandValue(ctx, access.LhsOp, frame, char)
 }
@@ -261,13 +263,11 @@ func castValue(ctx *extern.Context, value values.BalValue, targetType semtypes.S
 		return converted
 	}
 	if errors.Is(err, values.ErrBadTypeCast) {
-		panic(badTypeCastError())
+		panic(values.NewError(semtypes.Error, "bad type cast", nil, "", nil))
 	}
-	panic(values.NewErrorWithMessage(err.Error()))
-}
 
-func badTypeCastError() *values.Error {
-	return values.NewErrorWithMessage("bad type cast")
+	message := err.Error()
+	panic(values.NewError(semtypes.Error, message, nil, "", nil))
 }
 
 func execNewXMLText(ctx *extern.Context, instr *bir.NewXMLText, frame *Frame) {

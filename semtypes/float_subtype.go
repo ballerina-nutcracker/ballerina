@@ -23,7 +23,7 @@ type floatSubtype struct {
 	values  []enumerableFloat
 }
 
-var _ properSubtypeData = &floatSubtype{}
+var _ subtypeData = &floatSubtype{}
 
 func newFloatSubtypeFromBoolEnumerableFloat(allowed bool, value enumerableFloat) floatSubtype {
 	this := floatSubtype{}
@@ -61,7 +61,7 @@ func floatSubtypeSingleValue(d subtypeData) common.Optional[float64] {
 	return common.OptionalOf(v.values[0].value)
 }
 
-func createFloatSubtype(allowed bool, values []enumerableType[float64]) properSubtypeData {
+func createFloatSubtype(allowed bool, values []enumerableType[float64]) subtypeData {
 	if len(values) == 0 {
 		if allowed {
 			return createNothing()

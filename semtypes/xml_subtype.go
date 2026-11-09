@@ -41,7 +41,7 @@ const (
 	xmlPrimitiveAllMask                       = (xmlPrimitiveRoMask | xmlPrimitiveRwMask)
 )
 
-var _ properSubtypeData = &xmlSubtype{}
+var _ subtypeData = &xmlSubtype{}
 
 func newXmlSubtypeFromIntBdd(primitives int, sequence bdd) *xmlSubtype {
 	return &xmlSubtype{
@@ -50,6 +50,7 @@ func newXmlSubtypeFromIntBdd(primitives int, sequence bdd) *xmlSubtype {
 	}
 }
 
+//shallow:allow semantic subtype factory is kept consistently with the other subtype factories
 func xmlSubtypeFrom(primitives int, sequence bdd) *xmlSubtype {
 	return newXmlSubtypeFromIntBdd(primitives, sequence)
 }
@@ -121,7 +122,7 @@ func createXmlSemtype(xmlSubtype subtypeData) SemType {
 			return Never
 		}
 	} else {
-		return getBasicSubtype(btXML, xmlSubtype.(properSubtypeData))
+		return getBasicSubtype(btXML, xmlSubtype)
 	}
 }
 

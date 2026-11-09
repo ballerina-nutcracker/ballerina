@@ -104,7 +104,7 @@ func (m *Map) FillingGet(tc semtypes.Context, key string) BalValue {
 	m.checkFieldMutable(key)
 	v, ok := FillerValue(tc, m.atomic.FieldInnerVal(key))
 	if !ok {
-		panic(NewErrorWithMessage("no filler value"))
+		panic(NewError(semtypes.Error, "no filler value", nil, "", nil))
 	}
 	m.putUnchecked(key, v)
 	return v
@@ -143,7 +143,7 @@ func (m *Map) Delete(tc semtypes.Context, key string) {
 
 func (m *Map) checkMutable() {
 	if m.isReadonly {
-		panic(NewErrorWithMessage("inherent type violation: cannot mutate readonly value"))
+		panic(NewError(semtypes.Error, "inherent type violation: cannot mutate readonly value", nil, "", nil))
 	}
 }
 
@@ -152,7 +152,7 @@ func (m *Map) checkMemberStore(tc semtypes.Context, key string, value BalValue) 
 	memberTy := semtypes.CellInnerVal(cell)
 	valueTy := SemTypeForValue(value)
 	if !semtypes.IsSubtype(tc, valueTy, memberTy) {
-		panic(NewErrorWithMessage("inherent type violation"))
+		panic(NewError(semtypes.Error, "inherent type violation", nil, "", nil))
 	}
 	m.checkCellMutable(cell, memberTy, key)
 }
@@ -168,7 +168,8 @@ func (m *Map) checkFieldMutable(key string) {
 func (m *Map) checkFieldRemovable(tc semtypes.Context, key string) {
 	m.checkFieldMutable(key)
 	if !m.atomic.IsOptional(tc, key) {
-		panic(NewErrorWithMessage(fmt.Sprintf("inherent type violation: cannot remove required field '%s'", key)))
+		message := fmt.Sprintf("inherent type violation: cannot remove required field '%s'", key)
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -182,7 +183,8 @@ func (m *Map) checkCellMutable(cell semtypes.SemType, memberTy semtypes.SemType,
 		return
 	}
 	if semtypes.CellMut(cell) == semtypes.CellMutabilityNone {
-		panic(NewErrorWithMessage(fmt.Sprintf("inherent type violation: cannot mutate readonly field '%s'", key)))
+		message := fmt.Sprintf("inherent type violation: cannot mutate readonly field '%s'", key)
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 }
 
@@ -227,15 +229,15 @@ func (m *Map) Keys() []string {
 }
 
 func (m *Map) String(visited map[uintptr]bool) string {
-	return m.stringify(visited, strconv.Quote, toStringNested)
+	return m.stringify(visited, strconv.Quote, func(v BalValue, visited map[uintptr]bool) string { return toString(v, visited, false) })
 }
 
 func (m *Map) BalString(visited map[uintptr]bool) string {
 	return m.stringify(visited, balStringLiteral, BalString)
 }
 
-// stringify: keyFormat and valueFormat must use matching escaping
-// conventions (strconv.Quote/toStringNested, or balStringLiteral/BalString).
+// stringify requires matching key and value escaping conventions: Go-style
+// quoting for String, or Ballerina-style literals for BalString.
 func (m *Map) stringify(visited map[uintptr]bool, keyFormat func(string) string, valueFormat func(BalValue, map[uintptr]bool) string) string {
 	ptr := uintptr(unsafe.Pointer(m))
 	if visited[ptr] {

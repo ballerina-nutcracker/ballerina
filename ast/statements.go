@@ -49,6 +49,7 @@ type (
 		FailureBreakMode FailureBreakMode
 		IsLetExpr        bool
 	}
+	//shallow:allow marker struct
 	BLangBreak struct {
 		bLangStatementBase
 	}
@@ -59,6 +60,7 @@ type (
 		Expr   BLangActionOrExpression
 		OpKind model.OperatorKind
 	}
+	//shallow:allow marker struct
 	BLangContinue struct {
 		bLangStatementBase
 	}

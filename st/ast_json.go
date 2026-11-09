@@ -24,8 +24,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 	"strings"
+
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // ========== Constants (ported from ParserTestConstants.java) ==========
@@ -165,22 +166,13 @@ func getJSON(treeNode STNode, kindName func(SyntaxKind) string) any {
 		addTrivia(token, jsonNode, kindName)
 		// else do nothing
 	} else {
-		addChildren(treeNode, jsonNode, kindName)
+		addNodeList(treeNode, jsonNode, childrenField, kindName)
 	}
 
 	return jsonNode
 }
 
 // ========== Helper Methods for Children ==========
-
-// Ported from: SyntaxTreeJSONGenerator.java:134-136
-//
-//	private static void addChildren(STNode tree, JsonObject node) {
-//	    addNodeList(tree, node, CHILDREN_FIELD);
-//	}
-func addChildren(tree STNode, node *orderedJSONObject, kindName func(SyntaxKind) string) {
-	addNodeList(tree, node, childrenField, kindName)
-}
 
 // Ported from: SyntaxTreeJSONGenerator.java:138-150
 //

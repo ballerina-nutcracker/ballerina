@@ -33,10 +33,12 @@ func newFixedLengthArrayFromInitialFixedLength(initial []SemType, fixedLength in
 	return this
 }
 
+//shallow:allow shared fixed-length array factory preserves the copying construction contract
 func fixedLengthArrayFrom(initial []SemType, fixedLength int) fixedLengthArray {
 	return newFixedLengthArrayFromInitialFixedLength(initial, fixedLength)
 }
 
+//shallow:allow named empty-array factory is shared by predefined and projected list types
 func fixedLengthArrayEmpty() fixedLengthArray {
 	return fixedLengthArrayFrom(nil, 0)
 }
