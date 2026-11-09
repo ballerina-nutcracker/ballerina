@@ -67,11 +67,42 @@ func isCommentOrPI(v values.XMLValue) bool {
 
 func traverseXML(t *typer, opts sourceOptions, source values.XMLValue, target semtypes.SemType) (result values.BalValue, err error) {
 	defer recoverAsParseError(&err)
+	if exceedsElementDepth(source) {
+		return nil, newXMLError("failed to parse xml: %s", errElementDepthExceeded)
+	}
 	a := &analyzer{typer: t, sourceOptions: opts}
 	if err := a.traverseToType(source, target); err != nil {
 		return nil, err
 	}
 	return t.build(a.currentNode)
+}
+
+// exceedsElementDepth reports whether v nests elements deeper than maxElementDepth: jBallerina's parseAsType
+// re-parses the value as text, so the same limit applies.
+func exceedsElementDepth(v values.XMLValue) bool {
+	type frame struct {
+		item  values.XMLValue
+		depth int
+	}
+	stack := []frame{{v, 0}}
+	for len(stack) > 0 {
+		f := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		switch item := f.item.(type) {
+		case *values.XMLSequence:
+			for _, child := range item.Children {
+				stack = append(stack, frame{child, f.depth})
+			}
+		case *values.XMLElement:
+			if f.depth >= maxElementDepth {
+				return true
+			}
+			if item.Children != nil {
+				stack = append(stack, frame{item.Children, f.depth + 1})
+			}
+		}
+	}
+	return false
 }
 
 func (a *analyzer) traverseToType(source values.XMLValue, target semtypes.SemType) error {

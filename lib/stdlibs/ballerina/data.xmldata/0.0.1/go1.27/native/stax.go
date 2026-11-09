@@ -30,6 +30,11 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+// maxElementDepth is jBallerina's element nesting limit, which also bounds the recursion that builds the value.
+const maxElementDepth = 1000
+
+var errElementDepthExceeded = fmt.Errorf("Maximum Element Depth limit (%d) Exceeded", maxElementDepth) //nolint:staticcheck // jBallerina's message verbatim
+
 type staxEvent int
 
 const (
@@ -124,6 +129,9 @@ func (r *staxReader) accept(token xml.Token, offset int64) (staxEvent, bool, err
 	case xml.StartElement:
 		if r.depth == 0 && r.seenRoot {
 			return eventNone, false, r.syntaxError("multiple root elements")
+		}
+		if r.depth >= maxElementDepth {
+			return eventNone, false, errElementDepthExceeded
 		}
 		if err := r.startElement(t); err != nil {
 			return eventNone, false, err

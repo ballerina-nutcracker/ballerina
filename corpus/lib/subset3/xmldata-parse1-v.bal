@@ -202,4 +202,42 @@ public function main() {
     Text|xmldata:Error sequence = xmldata:parseAsType(xml `<r><t>a</t></r><r><t>b</t></r>`);
     show(sequence);
     // @output E: xml root element is missing
+
+    // Elements nest at most 1000 levels deep, as in jBallerina.
+    record {}|error atLimit = xmldata:parseString(nested(1000));
+    io:println(atLimit is record {});
+    // @output true
+    record {}|error tooDeep = xmldata:parseString(nested(1001));
+    show(tooDeep);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    record {}|error tooDeepBytes = xmldata:parseBytes(nested(1001).toBytes());
+    show(tooDeepBytes);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    record {|record {}|string a?;|}|error tooDeepUnion = xmldata:parseString(nested(1001));
+    show(tooDeepUnion);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    record {}|error valueAtLimit = xmldata:parseAsType(nestedValue(1000));
+    io:println(valueAtLimit is record {});
+    // @output true
+    record {}|error tooDeepValue = xmldata:parseAsType(nestedValue(1001));
+    show(tooDeepValue);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+}
+
+function nestedValue(int depth) returns xml {
+    xml element = xml:createElement("a");
+    foreach int _ in 1 ..< depth {
+        element = xml:createElement("a", {}, element);
+    }
+    return element;
+}
+
+function nested(int depth) returns string {
+    string open = "";
+    string close = "";
+    foreach int _ in 0 ..< depth {
+        open += "<a>";
+        close += "</a>";
+    }
+    return open + close;
 }

@@ -57,4 +57,10 @@ E: required field 'c' not present in XML
 E: required field 'c' not present in XML
 E: xml root element is missing
 E: xml root element is missing
+true
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+true
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
 -- stderr --
