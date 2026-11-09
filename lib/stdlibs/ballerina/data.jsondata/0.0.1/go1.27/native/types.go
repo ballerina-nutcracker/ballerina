@@ -171,21 +171,32 @@ type typeCache struct {
 	mu       sync.Mutex
 	interner *semtypes.SemTypeInterner
 	infos    map[semtypes.InternHandle]typeInfo
+	// distinct holds one classification per semantically distinct type.
+	distinct []typeInfo
 }
 
 func newTypeCache() *typeCache {
 	return &typeCache{interner: semtypes.NewSemtypeInterner(), infos: make(map[semtypes.InternHandle]typeInfo)}
 }
 
-func (c *typeCache) getOrClassify(ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
+func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	handle := c.interner.Intern(ty)
 	if ti, ok := c.infos[handle]; ok {
 		return ti
 	}
+	// Classifying a field of a recursive record can mint a new copy of a type already classified; reusing
+	// that classification keeps nested values of the record from minting a new type at every level.
+	for _, ti := range c.distinct {
+		if semtypes.IsSameType(tc, ty, ti.ty) {
+			c.infos[handle] = ti
+			return ti
+		}
+	}
 	ti := classify(ty)
 	c.infos[handle] = ti
+	c.distinct = append(c.distinct, ti)
 	return ti
 }
 
@@ -210,7 +221,7 @@ func (t *typer) classify(ty semtypes.SemType) typeInfo {
 	if !cacheable(ty) {
 		return t.classifyType(ty)
 	}
-	return t.cache.getOrClassify(ty, t.classifyType)
+	return t.cache.getOrClassify(t.tc, ty, t.classifyType)
 }
 
 func (t *typer) classifyType(ty semtypes.SemType) typeInfo {
