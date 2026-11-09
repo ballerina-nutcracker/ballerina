@@ -385,7 +385,7 @@ Connection-oriented TCP client and listener that exchange raw bytes with no fram
 
 The service rules that jBallerina's compiler plugin enforces on `service on` declarations are checked at runtime, for service classes as well: `attach` returns `tcp:Error` for an invalid `tcp:Service`, and an invalid connection service returned from `onConnect` is logged and its connection closed. `tcp:Error` is not a `distinct` type. The `Caller` passed to a service does not carry its `tcp:Caller` class type, so `caller is tcp:Caller` on a value held as `any` returns `false` ([#510](https://github.com/ballerina-nutcracker/ballerina/issues/510)).
 
-Not covered in this subset: `ClientSecureSocket.sessionTimeout`, `ListenerSecureSocket.sessionTimeout`, and `CertKey.keyPassword` (an encrypted private key fails at the TLS handshake).
+Not covered in this subset: `ClientSecureSocket.sessionTimeout`, `ListenerSecureSocket.sessionTimeout`, and `CertKey.keyPassword` (`Listener.start()` returns an error for an encrypted private key).
 
 ## [udp](https://github.com/ballerina-platform/module-ballerina-udp/blob/master/docs/spec/spec.md)
 

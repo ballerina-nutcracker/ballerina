@@ -63,7 +63,7 @@ Support Levels:
 | Client initialization with local interface binding and read/write timeouts | Supported | |
 | Client secure connection using a certificate file path | Partially Supported | `ClientSecureSocket.sessionTimeout` is ignored. |
 | Listener initialization | Supported | |
-| Listener secure connection using a certificate and private key file pair | Partially Supported | `CertKey.keyPassword` is ignored, so an encrypted private key file fails at the TLS handshake. `ListenerSecureSocket.sessionTimeout` is ignored. |
+| Listener secure connection using a certificate and private key file pair | Partially Supported | `CertKey.keyPassword` is ignored, so `Listener.start()` returns an `Error` for an encrypted private key file. `ListenerSecureSocket.sessionTimeout` is ignored. |
 | Client secure connection using a trust store | Cannot Support | Extracting every certificate from a PKCS12 trust store isn't implemented for this module; supplying a trust store value for `ClientSecureSocket.cert` returns an `Error` at runtime. Use a PEM certificate file path instead. |
 | Listener secure connection using a key store | Cannot Support | Supplying a key store value for `ListenerSecureSocket.key` returns an `Error` at runtime. Use a certificate and private key file pair instead. |
 | TLS version selection and cipher suite restriction | Supported | |
