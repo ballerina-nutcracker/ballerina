@@ -75,6 +75,22 @@ public function main() {
     io:println(csv:parseString("a,b\n1,x", {}, ReadonlyRows));
     // Duplicate headers are an error.
     io:println(csv:parseString("a,a\n1,2", {}, OpenRows));
+    // A repeated custom or list header keeps the position of its first column and the value of its last.
+    io:println(csv:parseString("1,2,3,4,5", {header: (), customHeadersIfHeadersAbsent: ["b", "a", "c", "b", "a"]}, OpenRows));
+    io:println(csv:parseList([["b", "a", "c", "b", "a"], ["1", "2", "3", "4", "5"]], {headerRows: 1}, OpenRows));
+    string[] headers = ["a"];
+    string[] row = ["0"];
+    string line = "0";
+    foreach int i in 0 ..< 20 {
+        headers.push("c" + i.toString());
+        row.push((i + 1).toString());
+        line += "," + (i + 1).toString();
+    }
+    headers.push("c3", "a", "c0");
+    row.push("21", "22", "23");
+    line += ",21,22,23";
+    io:println(csv:parseString(line, {header: (), customHeadersIfHeadersAbsent: headers}, OpenRows));
+    io:println(csv:parseList([headers, row], {headerRows: 1}, OpenRows));
 }
 
 // @output [{"a":1,"b":"x"}]
@@ -97,3 +113,7 @@ public function main() {
 // @output [{"a":1},{}]
 // @output [{"a":1,"b":"x"}]
 // @output error Error ("duplicate header found: 'a'")
+// @output [{"a":5,"b":4,"c":3}]
+// @output [{"a":5,"b":4,"c":3}]
+// @output [{"a":22,"c0":23,"c1":2,"c2":3,"c3":21,"c4":5,"c5":6,"c6":7,"c7":8,"c8":9,"c9":10,"c10":11,"c11":12,"c12":13,"c13":14,"c14":15,"c15":16,"c16":17,"c17":18,"c18":19,"c19":20}]
+// @output [{"a":22,"c0":23,"c1":2,"c2":3,"c3":21,"c4":5,"c5":6,"c6":7,"c7":8,"c8":9,"c9":10,"c10":11,"c11":12,"c12":13,"c13":14,"c14":15,"c15":16,"c16":17,"c17":18,"c18":19,"c19":20}]

@@ -398,29 +398,54 @@ type rowBuilder struct {
 	shape    *rowShape
 	declared []values.MapEntry
 	rest     []values.MapEntry
-	items    []values.BalValue
+	// positions maps each key to its index in declared or rest once a row outgrows a linear scan.
+	positions map[string]int
+	items     []values.BalValue
 }
+
+// indexThreshold is the entry count past which keys are looked up through positions.
+const indexThreshold = 16
 
 func newRowBuilder(shape *rowShape) *rowBuilder {
 	return &rowBuilder{shape: shape}
 }
 
+// put sets a key's value. A repeated key overwrites the earlier value and keeps its position.
 func (b *rowBuilder) put(key string, v values.BalValue) {
+	entries := &b.rest
 	if _, declared := b.shape.fields[key]; declared {
-		b.declared = upsert(b.declared, key, v)
+		entries = &b.declared
+	}
+	if i, ok := b.indexOf(*entries, key); ok {
+		(*entries)[i].Value = v
 		return
 	}
-	b.rest = upsert(b.rest, key, v)
-}
-
-func upsert(entries []values.MapEntry, key string, v values.BalValue) []values.MapEntry {
-	for i := range entries {
-		if entries[i].Key == key {
-			entries[i].Value = v
-			return entries
+	*entries = append(*entries, values.MapEntry{Key: key, Value: v})
+	switch {
+	case b.positions != nil:
+		b.positions[key] = len(*entries) - 1
+	case len(b.declared)+len(b.rest) > indexThreshold:
+		b.positions = make(map[string]int, 2*indexThreshold)
+		for i, e := range b.declared {
+			b.positions[e.Key] = i
+		}
+		for i, e := range b.rest {
+			b.positions[e.Key] = i
 		}
 	}
-	return append(entries, values.MapEntry{Key: key, Value: v})
+}
+
+func (b *rowBuilder) indexOf(entries []values.MapEntry, key string) (int, bool) {
+	if b.positions != nil {
+		i, ok := b.positions[key]
+		return i, ok
+	}
+	for i := range entries {
+		if entries[i].Key == key {
+			return i, true
+		}
+	}
+	return 0, false
 }
 
 func (b *rowBuilder) set(index int, v values.BalValue) {
@@ -430,13 +455,10 @@ func (b *rowBuilder) set(index int, v values.BalValue) {
 	b.items[index] = v
 }
 
-func (b *rowBuilder) has(key string) bool {
-	for _, e := range b.declared {
-		if e.Key == key {
-			return true
-		}
-	}
-	return false
+// has reports whether a declared field has a value.
+func (b *rowBuilder) has(name string) bool {
+	_, ok := b.indexOf(b.declared, name)
+	return ok
 }
 
 // build creates the row value. As jBallerina's record creation does, a required nilable field that never
