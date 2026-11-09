@@ -57,7 +57,7 @@ public isolated client class Caller {
 
 
 // Represents TCP module related errors.
-// Note: distinct error types are not yet supported; Error is currently an alias for error.
+// Note: the natives build plain errors, so Error is an alias for error rather than distinct as in jBallerina.
 public type Error error;
 
 
