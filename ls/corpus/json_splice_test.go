@@ -87,6 +87,7 @@ func isJSONSpace(b byte) bool {
 }
 
 func TestSpliceTopLevelJSONFieldReplacesOnlyTargetValue(t *testing.T) {
+	t.Parallel()
 	raw := []byte(`{
   "position": {"line": 1, "character": 2},
   "source": "type_def/source/source1.bal",
@@ -111,6 +112,7 @@ func TestSpliceTopLevelJSONFieldReplacesOnlyTargetValue(t *testing.T) {
 }
 
 func TestSpliceTopLevelJSONFieldPreservesUnrelatedBytes(t *testing.T) {
+	t.Parallel()
 	raw := []byte("{\"a\":1,   \"items\"\n:\n   [1,2,3],\"z\":\"tail\"}")
 	got, err := spliceTopLevelJSONField(raw, "items", []byte(`[]`))
 	if err != nil {
@@ -123,12 +125,14 @@ func TestSpliceTopLevelJSONFieldPreservesUnrelatedBytes(t *testing.T) {
 }
 
 func TestSpliceTopLevelJSONFieldMissingKey(t *testing.T) {
+	t.Parallel()
 	if _, err := spliceTopLevelJSONField([]byte(`{"a":1}`), "items", []byte(`[]`)); err == nil {
 		t.Fatal("expected an error for a missing key")
 	}
 }
 
 func TestSpliceTopLevelJSONFieldNotAnObject(t *testing.T) {
+	t.Parallel()
 	if _, err := spliceTopLevelJSONField([]byte(`[1,2,3]`), "items", []byte(`[]`)); err == nil {
 		t.Fatal("expected an error for a non-object document")
 	}
