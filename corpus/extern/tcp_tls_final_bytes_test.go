@@ -287,7 +287,7 @@ public function main() {
 }
 
 // TestTcpServiceTLSHandshakeBeforeOnConnect verifies that only a peer that completes the TLS
-// handshake reaches onConnect, and that handshakeTimeout drops a peer that never starts one.
+// handshake reaches onConnect, and that a fractional handshakeTimeout drops a peer that never starts one.
 func TestTcpServiceTLSHandshakeBeforeOnConnect(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)
@@ -368,7 +368,7 @@ service class CountingServer {
 }
 
 listener tcp:Listener tlsListener = new (19416, localHost = "127.0.0.1",
-    secureSocket = {key: <tcp:CertKey>{certFile: %q, keyFile: %q}, handshakeTimeout: 1}
+    secureSocket = {key: <tcp:CertKey>{certFile: %q, keyFile: %q}, handshakeTimeout: 0.5}
 );
 
 function init() returns error? {
