@@ -37,6 +37,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -88,6 +89,31 @@ func rewriteClient(serverURL string) func(pal.ClientConfig) (pal.HTTPClient, err
 			client:    &http.Client{Timeout: cfg.Timeout},
 		}, nil
 	}
+}
+
+// nativeRewriteClient returns a NewClient factory that forwards every request to serverURL
+// through the native client, so its idle timeout and response limits apply.
+func nativeRewriteClient(serverURL string) func(pal.ClientConfig) (pal.HTTPClient, error) {
+	return func(cfg pal.ClientConfig) (pal.HTTPClient, error) {
+		client, err := palnative.NewHTTPClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return &rewritingNativeClient{serverURL: serverURL, client: client}, nil
+	}
+}
+
+type rewritingNativeClient struct {
+	serverURL string
+	client    pal.HTTPClient
+}
+
+func (c *rewritingNativeClient) Execute(ctx context.Context, method, url string, body io.Reader, contentLength int64, contentType string, reqHeaders map[string][]string) (int, map[string][]string, io.ReadCloser, error) {
+	const prefix = "http://testserver"
+	if !strings.HasPrefix(url, prefix) {
+		return 0, nil, nil, fmt.Errorf("rewritingNativeClient: expected URL with prefix %q, got %q", prefix, url)
+	}
+	return c.client.Execute(ctx, method, c.serverURL+url[len(prefix):], body, contentLength, contentType, reqHeaders)
 }
 
 func TestHttpClientGet(t *testing.T) {
@@ -432,18 +458,62 @@ func TestHttpClientTLSInsecure(t *testing.T) {
 	runExtern(t, fileCase("http-client-tls-v"), newHTTPPal(clientFactory), nil)
 }
 
-// TestHttpClientTimeout verifies that a 1-second client timeout fires before
-// a deliberately slow local server responds, and that the resulting error
-// propagates to Ballerina as an error value. Uses a local server (rather than
-// a real remote delay endpoint) so the test is hermetic and doesn't depend on
-// a third party's network behavior.
+// TestHttpClientTimeout exercises the native client's idle timeout against a local server: it
+// fires before a slow server responds, is renewed by upload progress and by each redirect hop,
+// still applies to a body read up to maxEntityBodySize, and ends an upload the server stops
+// reading after it has responded. Uses a local server (rather than a real remote delay endpoint)
+// so the test is hermetic and doesn't depend on a third party's network behavior.
 func TestHttpClientTimeout(t *testing.T) {
+	release := make(chan struct{})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(1500 * time.Millisecond)
-		w.WriteHeader(200)
+		switch {
+		case r.URL.Path == "/delay":
+			time.Sleep(1500 * time.Millisecond)
+			w.WriteHeader(200)
+		case r.URL.Path == "/slow-read":
+			// The first 2.5 s of reads outlast the timeout; the rest drains at full speed.
+			buf := make([]byte, 32*1024)
+			for range 250 {
+				if _, err := io.ReadFull(r.Body, buf); err != nil {
+					break
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			rest, _ := io.Copy(io.Discard, r.Body)
+			_, _ = fmt.Fprintf(w, "%d", 250*len(buf)+int(rest))
+		case r.URL.Path == "/early":
+			rc := http.NewResponseController(w)
+			_ = rc.EnableFullDuplex()
+			w.WriteHeader(http.StatusOK)
+			_ = rc.Flush()
+			_, _ = io.Copy(io.Discard, r.Body)
+			_, _ = w.Write([]byte("done"))
+		case strings.HasPrefix(r.URL.Path, "/hop/"):
+			time.Sleep(100 * time.Millisecond)
+			hop, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/hop/"))
+			if hop > 0 {
+				http.Redirect(w, r, "/hop/"+strconv.Itoa(hop-1), http.StatusFound)
+				return
+			}
+			_, _ = w.Write([]byte("done"))
+		case r.URL.Path == "/stall-body":
+			_, _ = w.Write([]byte("four"))
+			w.(http.Flusher).Flush()
+			<-release
+		case r.URL.Path == "/stall-upload":
+			rc := http.NewResponseController(w)
+			_ = rc.EnableFullDuplex()
+			w.Header().Set("Content-Length", "2")
+			_, _ = w.Write([]byte("ok"))
+			_ = rc.Flush()
+			<-release
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
 	}))
 	defer server.Close()
-	runExtern(t, fileCase("http-client-timeout-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+	defer close(release)
+	runExtern(t, fileCase("http-client-timeout-v"), newHTTPPal(nativeRewriteClient(server.URL)), nil)
 }
 
 // TestHttpClientConnectionError verifies that a DNS resolution failure for an

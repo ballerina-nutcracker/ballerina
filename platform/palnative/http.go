@@ -49,6 +49,7 @@ type httpClient struct {
 var (
 	errIdleBeforeResponse = errors.New("Idle timeout triggered before initiating inbound response")         //nolint:staticcheck // jBallerina's message verbatim
 	errIdleReadingBody    = errors.New("Idle timeout triggered while reading inbound response entity body") //nolint:staticcheck // jBallerina's message verbatim
+	errIdleWritingBody    = errors.New("Idle timeout triggered while writing outbound request entity body") //nolint:staticcheck // jBallerina's message verbatim
 )
 
 // idleTimer cancels a request once it has gone timeout without progress, with the
@@ -61,6 +62,11 @@ type idleTimer struct {
 	cause   error
 	// responded is set once the response headers arrive; later request-body reads no longer renew the timer.
 	responded bool
+	// After the response, a streamed upload that stops flowing is ended with abortUpload instead,
+	// as its writer is otherwise left waiting on a server that no longer reads.
+	abortUpload func()
+	uploadTimer *time.Timer
+	uploadEnded bool
 }
 
 func (t *idleTimer) arm(cause error) {
@@ -74,6 +80,28 @@ func (t *idleTimer) armUpload() {
 	defer t.mu.Unlock()
 	if !t.responded {
 		t.armLocked(errIdleBeforeResponse)
+		return
+	}
+	t.armUploadLocked()
+}
+
+func (t *idleTimer) armUploadLocked() {
+	if t.abortUpload == nil || t.uploadEnded {
+		return
+	}
+	if t.uploadTimer == nil {
+		t.uploadTimer = time.AfterFunc(t.timeout, t.abortUpload)
+		return
+	}
+	t.uploadTimer.Reset(t.timeout)
+}
+
+func (t *idleTimer) endUpload() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.uploadEnded = true
+	if t.uploadTimer != nil {
+		t.uploadTimer.Stop()
 	}
 }
 
@@ -97,6 +125,7 @@ func (t *idleTimer) markResponded() {
 	defer t.mu.Unlock()
 	t.responded = true
 	t.stopLocked()
+	t.armUploadLocked()
 }
 
 func (t *idleTimer) stopLocked() {
@@ -124,10 +153,14 @@ func (p *progressReader) Read(b []byte) (int, error) {
 	if n > 0 {
 		p.timer.armUpload()
 	}
+	if err != nil {
+		p.timer.endUpload()
+	}
 	return n, err
 }
 
 func (p *progressReader) Close() error {
+	p.timer.endUpload()
 	if c, ok := p.body.(io.Closer); ok {
 		return c.Close()
 	}
@@ -228,6 +261,9 @@ func (c *httpClient) Execute(ctx context.Context, method, targetURL string, body
 		case nil, *bytes.Reader, *bytes.Buffer, *strings.Reader:
 			// tracked once the request exists, so that redirects can still replay them
 		default:
+			if pipe, ok := body.(interface{ CloseWithError(error) error }); ok {
+				timer.abortUpload = func() { _ = pipe.CloseWithError(errIdleWritingBody) }
+			}
 			body = &progressReader{body: body, timer: timer}
 		}
 		timer.arm(errIdleBeforeResponse)
