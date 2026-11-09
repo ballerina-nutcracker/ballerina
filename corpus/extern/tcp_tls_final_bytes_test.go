@@ -20,7 +20,9 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -282,4 +284,106 @@ public function main() {
 	if elapsed := time.Since(start); elapsed > 5*time.Second {
 		t.Fatalf("handshake took %v, want it bounded by handshakeTimeout", elapsed)
 	}
+}
+
+// TestTcpServiceTLSHandshakeBeforeOnConnect verifies that only a peer that completes the TLS
+// handshake reaches onConnect, and that handshakeTimeout drops a peer that never starts one.
+func TestTcpServiceTLSHandshakeBeforeOnConnect(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	caCertPEM, _, certFile, keyFile := writeTLSCertFiles(t)
+	roots := x509.NewCertPool()
+	roots.AppendCertsFromPEM(caCertPEM)
+
+	const module = "tcp-svc-tls-handshake-v"
+	externs := []testharness.ExternRegistration{
+		{Org: "$anon", Module: module, FuncName: "connectPeers",
+			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				addr := fmt.Sprintf("127.0.0.1:%d", args[0].(int64))
+				plain, err := net.Dial("tcp", addr)
+				if err != nil {
+					return values.NewErrorWithMessage("dial: " + err.Error()), nil
+				}
+				_, _ = plain.Write([]byte("hello plaintext\n"))
+				_ = plain.Close()
+				bare, err := net.Dial("tcp", addr)
+				if err != nil {
+					return values.NewErrorWithMessage("dial: " + err.Error()), nil
+				}
+				_ = bare.Close()
+				conn, err := tls.Dial("tcp", addr, &tls.Config{RootCAs: roots, ServerName: "127.0.0.1"})
+				if err != nil {
+					return values.NewErrorWithMessage("tls dial: " + err.Error()), nil
+				}
+				defer func() { _ = conn.Close() }()
+				_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
+				if _, err := conn.Write([]byte("hi")); err != nil {
+					return values.NewErrorWithMessage("write: " + err.Error()), nil
+				}
+				buf := make([]byte, 2)
+				if _, err := io.ReadFull(conn, buf); err != nil {
+					return values.NewErrorWithMessage("read: " + err.Error()), nil
+				}
+				return nil, nil
+			}},
+		{Org: "$anon", Module: module, FuncName: "silentPeerDropped",
+			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", args[0].(int64)))
+				if err != nil {
+					return values.NewErrorWithMessage("dial: " + err.Error()), nil
+				}
+				defer func() { _ = conn.Close() }()
+				_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+				_, err = conn.Read(make([]byte, 1))
+				var netErr net.Error
+				timedOut := errors.As(err, &netErr) && netErr.Timeout()
+				return !timedOut, nil
+			}},
+	}
+
+	runInlineCase(t, module, fmt.Sprintf(`
+import ballerina/io;
+import ballerina/tcp;
+
+isolated int connects = 0;
+
+service class EchoService {
+    *tcp:ConnectionService;
+
+    remote function onBytes(readonly & byte[] data) returns byte[] {
+        return data;
+    }
+}
+
+service class CountingServer {
+    *tcp:Service;
+
+    remote function onConnect(tcp:Caller caller) returns tcp:ConnectionService {
+        _ = caller.id;
+        lock {
+            connects += 1;
+        }
+        return new EchoService();
+    }
+}
+
+listener tcp:Listener tlsListener = new (19416, localHost = "127.0.0.1",
+    secureSocket = {key: <tcp:CertKey>{certFile: %q, keyFile: %q}, handshakeTimeout: 1}
+);
+
+function init() returns error? {
+    check tlsListener.attach(new CountingServer());
+}
+
+isolated function connectPeers(int port) returns error? = external;
+isolated function silentPeerDropped(int port) returns boolean|error = external;
+
+public function testMain() returns error? {
+    check connectPeers(19416);
+    lock {
+        io:println(connects); // @output 1
+    }
+    io:println(check silentPeerDropped(19416)); // @output true
+}
+`, certFile, keyFile), externs)
 }

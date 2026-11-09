@@ -18,6 +18,7 @@
 package native
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -25,6 +26,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -255,6 +257,26 @@ func sendReturnedBytes(rt *runtime.Runtime, ctx *extern.Context, connSvcObj *val
 	}
 }
 
+// tlsHandshaker is the part of *tls.Conn needed to finish a TLS listener's lazy handshake.
+type tlsHandshaker interface {
+	HandshakeContext(ctx context.Context) error
+}
+
+// completeHandshake finishes the handshake of a TLS connection, within timeout when it is positive; a plain connection needs none.
+func completeHandshake(conn net.Conn, timeout time.Duration) bool {
+	hs, ok := conn.(tlsHandshaker)
+	if !ok {
+		return true
+	}
+	ctx := context.Background()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	return hs.HandshakeContext(ctx) == nil
+}
+
 // connHandler is the per-connection dispatch state fixed once onConnect resolves; connSvcObj is nil when onConnect returned no connection service.
 type connHandler struct {
 	cs            *connState
@@ -264,7 +286,12 @@ type connHandler struct {
 }
 
 // handleConnection owns one accepted connection: onConnect once, then a read loop dispatching onBytes/onError, ending in at most one onClose.
-func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object, conn net.Conn) {
+func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object, conn net.Conn, handshakeTimeout time.Duration) {
+	if !completeHandshake(conn, handshakeTimeout) {
+		// As in jBallerina, a peer that fails the TLS handshake never reaches the service.
+		_ = conn.Close()
+		return
+	}
 	cs := &connState{conn: conn}
 	h := &connHandler{cs: cs, callerObj: newCallerObject(conn, cs)}
 

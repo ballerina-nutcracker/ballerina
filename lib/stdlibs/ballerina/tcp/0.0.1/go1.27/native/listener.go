@@ -33,14 +33,16 @@ import (
 
 // listenerState is the Go-side state of a tcp:Listener, stored on its "$state" field. Unlike http, only one service may be attached.
 type listenerState struct {
-	host    string
-	port    int
-	tlsCfg  *pal.ServerTLSConfig
-	mu      sync.RWMutex
-	svcObj  *values.Object
-	ln      net.Listener
-	conns   map[net.Conn]struct{}
-	stopped bool // set by gracefulStop/immediateStop; rejects later connections and makes gracefulStop idempotent
+	host   string
+	port   int
+	tlsCfg *pal.ServerTLSConfig
+	// handshakeTimeout bounds a TLS peer's handshake, which completes before onConnect; 0 means no limit, as in jBallerina.
+	handshakeTimeout time.Duration
+	mu               sync.RWMutex
+	svcObj           *values.Object
+	ln               net.Listener
+	conns            map[net.Conn]struct{}
+	stopped          bool // set by gracefulStop/immediateStop; rejects later connections and makes gracefulStop idempotent
 }
 
 func stateOf(self *values.Object) *listenerState {
@@ -98,6 +100,9 @@ func listenerInit(rt *runtime.Runtime) extern.NativeFunc {
 					return tlsErr, nil
 				}
 				state.tlsCfg = tlsCfg
+				if d, ok := decimalArg(ssMap, "handshakeTimeout"); ok {
+					state.handshakeTimeout = decimalToDuration(d)
+				}
 			}
 		}
 		self.Put("$state", state)
@@ -220,7 +225,7 @@ func acceptLoop(rt *runtime.Runtime, types tcpTypes, state *listenerState, ln ne
 				delete(state.conns, conn)
 				state.mu.Unlock()
 			}()
-			handleConnection(rt, types, svcObj, conn)
+			handleConnection(rt, types, svcObj, conn, state.handshakeTimeout)
 		}()
 	}
 }
