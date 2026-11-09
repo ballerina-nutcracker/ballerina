@@ -17,6 +17,7 @@ package corpus
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -28,7 +29,9 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
@@ -72,6 +75,48 @@ type diskWriteAction struct {
 
 const diskWriteMethod = "$test/writeFile"
 const diskDeleteMethod = "$test/deleteFile"
+
+const awaitSignatureDependency = "$test/awaitSignatureDependency"
+const releaseSignatureDependency = "$test/releaseSignatureDependency"
+
+// Block dependency resolution so fixtures can issue requests before a generation seals.
+type signatureGateRepository struct {
+	projects.Repository
+	entered     chan struct{}
+	released    chan struct{}
+	enterOnce   sync.Once
+	releaseOnce sync.Once
+}
+
+func newSignatureGateRepository(repository projects.Repository) *signatureGateRepository {
+	return &signatureGateRepository{Repository: repository, entered: make(chan struct{}), released: make(chan struct{})}
+}
+
+func (r *signatureGateRepository) await(ctx context.Context) error {
+	r.enterOnce.Do(func() { close(r.entered) })
+	select {
+	case <-r.released:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (r *signatureGateRepository) release() { r.releaseOnce.Do(func() { close(r.released) }) }
+
+func (r *signatureGateRepository) GetPackageVersions(ctx context.Context, org, name string, options projects.ResolutionOptions) ([]projects.PackageVersion, error) {
+	if err := r.await(ctx); err != nil {
+		return nil, err
+	}
+	return r.Repository.GetPackageVersions(ctx, org, name, options)
+}
+
+func (r *signatureGateRepository) GetPackage(ctx context.Context, org, name, version string, options projects.ResolutionOptions) (*projects.Package, error) {
+	if err := r.await(ctx); err != nil {
+		return nil, err
+	}
+	return r.Repository.GetPackage(ctx, org, name, version, options)
+}
 
 func TestCorpus(t *testing.T) {
 	t.Parallel()
@@ -200,7 +245,11 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 				t.Fatal("signature dependency action needs holdSignatureDependency")
 			}
 			if seg.signatureAction == awaitSignatureDependency {
-				<-gate.entered
+				select {
+				case <-gate.entered:
+				case <-time.After(time.Minute):
+					t.Fatal("no dependency fetch started within one minute")
+				}
 				if _, _, sealed := compiler.DiagnosticsFor(rootPath); sealed {
 					t.Fatal("signature dependency gate must precede a sealed generation")
 				}
