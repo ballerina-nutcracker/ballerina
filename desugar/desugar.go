@@ -178,8 +178,8 @@ func (ctx *packageContext) symbolType(symbol model.SymbolRef) semtypes.SemType {
 	return ctx.compilerCtx.SymbolType(symbol)
 }
 
-func (ctx *packageContext) newFunctionScope(parent model.Scope) *model.FunctionScope {
-	return ctx.compilerCtx.NewFunctionScope(parent, *ctx.pkg.PackageID)
+func (ctx *packageContext) newFunctionScope(parent model.Scope) *model.BlockScope {
+	return ctx.compilerCtx.NewBlockScope(parent, *ctx.pkg.PackageID)
 }
 
 func (ctx *packageContext) getSymbol(ref model.SymbolRef) model.Symbol {
@@ -365,7 +365,7 @@ func (ctx *functionContext) addSymbolToSameSpace(ref model.SymbolRef, name strin
 	return ctx.pkgCtx.addSymbolToSameSpace(ref, name, symbol)
 }
 
-func (ctx *functionContext) newFunctionScope(parent model.Scope) *model.FunctionScope {
+func (ctx *functionContext) newFunctionScope(parent model.Scope) *model.BlockScope {
 	return ctx.pkgCtx.newFunctionScope(parent)
 }
 
@@ -389,7 +389,7 @@ type desugarContext interface {
 	packageContext() *packageContext
 	nextDesugarSymbolName() string
 	addSymbolToSameSpace(ref model.SymbolRef, name string, symbol model.Symbol) model.SymbolRef
-	newFunctionScope(parent model.Scope) *model.FunctionScope
+	newFunctionScope(parent model.Scope) *model.BlockScope
 	setSymbolType(ref model.SymbolRef, ty semtypes.SemType)
 	symbolType(ref model.SymbolRef) semtypes.SemType
 	getSymbol(ref model.SymbolRef) model.Symbol
@@ -827,7 +827,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		symbolSpace.AddSymbol(fnName, fnSymbol)
 		symRef, _ := symbolSpace.GetSymbol(fnName)
 		fn.SetSymbol(symRef)
-		fnScope := compilerCtx.NewFunctionScope(nil, *pkgID)
+		fnScope := compilerCtx.NewBlockScope(nil, *pkgID)
 		fn.SetScope(fnScope)
 
 		foreachStmt := buildForeach(fnScope, listenerMethodFor(fnName))
@@ -959,7 +959,7 @@ func createInitFunction(compilerCtx *context.CompilerContext, pkg *ast.BLangPack
 	symbolSpace.AddSymbol("init", initSymbol)
 	symRef, _ := symbolSpace.GetSymbol("init")
 	pkg.InitFunction.SetSymbol(symRef)
-	fnScope := compilerCtx.NewFunctionScope(nil, *pkgID)
+	fnScope := compilerCtx.NewBlockScope(nil, *pkgID)
 	pkg.InitFunction.SetScope(fnScope)
 }
 

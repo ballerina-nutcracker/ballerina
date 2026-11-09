@@ -22,10 +22,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
-func failedToken() st.STToken {
-	return st.CreateToken(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList())
-}
-
 type tokenReader struct {
 	lexer             tokenLexer
 	currentToken      st.STToken
@@ -83,7 +79,7 @@ func (t *tokenReader) Peek() st.STToken {
 func (t *tokenReader) PeekN(n int) st.STToken {
 	if n >= bufferSize {
 		t.internalError("n is too large")
-		return failedToken()
+		return st.CreateTokenWithDiagnostics(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList(), nil)
 	}
 	remaining := n - t.tokenBuffer.size
 	for remaining > 0 {
@@ -160,7 +156,7 @@ func (t *tokenBuffer) peek() st.STToken {
 func (t *tokenBuffer) peekN(n int) st.STToken {
 	if n > t.size {
 		t.internalError("n is too large")
-		return failedToken()
+		return st.CreateTokenWithDiagnostics(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList(), nil)
 	}
 
 	index := t.startIndex + n - 1

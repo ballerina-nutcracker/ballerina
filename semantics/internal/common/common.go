@@ -93,6 +93,7 @@ func MethodsInResolutionOrder(methods map[string]*ast.BLangFunction) []NamedClas
 	return result
 }
 
+//shallow:allow shared semantic predicate keeps the definition of numeric types consistent across stages
 func IsNumericType(ctx semtypes.Context, ty semtypes.SemType) bool {
 	return semtypes.IsSubtype(ctx, ty, semtypes.Number)
 }

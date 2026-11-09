@@ -29,6 +29,8 @@ type refPair struct {
 }
 
 // DeepEquals implements DeepEquals abstract operation [https://ballerina.io/spec/lang/master/#DeepEquals].
+//
+//shallow:allow public equality entry point keeps cycle-detection state private
 func DeepEquals(v1, v2 BalValue) bool {
 	return deepEqual(v1, v2, nil)
 }

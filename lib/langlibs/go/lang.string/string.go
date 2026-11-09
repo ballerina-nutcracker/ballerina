@@ -87,7 +87,7 @@ func stringFromBytes(_ *extern.Context, args []values.BalValue) (values.BalValue
 	list := args[0].(*values.List)
 	data := list.ToByteSlice()
 	if !utf8.Valid(data) {
-		return values.NewErrorWithMessage("invalid UTF-8 byte array"), nil
+		return values.NewError(semtypes.Error, "invalid UTF-8 byte array", nil, "", nil), nil
 	}
 	return string(data), nil
 }
@@ -99,7 +99,8 @@ func stringSubstring(_ *extern.Context, args []values.BalValue) (values.BalValue
 	runes := []rune(s)
 	length := int64(len(runes))
 	if startIndex < 0 || startIndex > length || endIndex < startIndex || endIndex > length {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("string index out of range: startIndex=%d endIndex=%d length=%d", startIndex, endIndex, length)))
+		message := fmt.Sprintf("string index out of range: startIndex=%d endIndex=%d length=%d", startIndex, endIndex, length)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return string(runes[startIndex:endIndex]), nil
 }

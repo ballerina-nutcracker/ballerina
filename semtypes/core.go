@@ -86,7 +86,7 @@ func Diff(t1, t2 SemType) SemType {
 			data = ops[code.Code()].Diff(data1, data2)
 		}
 		if allOrNothing, ok := data.(allOrNothingSubtype); !ok {
-			subtypes = append(subtypes, basicSubtypeFrom(code, data.(properSubtypeData)))
+			subtypes = append(subtypes, basicSubtypeFrom(code, data))
 		} else if allOrNothing.IsAllSubtype() {
 			c := code.Code()
 			all = all | (1 << c)
@@ -146,7 +146,7 @@ func Union(t1, t2 SemType) SemType {
 			c := code.Code()
 			all = all | (1 << c)
 		} else {
-			subtypes = append(subtypes, basicSubtypeFrom(code, data.(properSubtypeData)))
+			subtypes = append(subtypes, basicSubtypeFrom(code, data))
 		}
 	}
 	if len(subtypes) == 0 {
@@ -199,7 +199,7 @@ func Intersect(t1, t2 SemType) SemType {
 			data = ops[code.Code()].Intersect(data1, data2)
 		}
 		if allOrNothing, ok := data.(allOrNothingSubtype); !ok || allOrNothing.IsAllSubtype() {
-			subtypes = append(subtypes, basicSubtypeFrom(code, data.(properSubtypeData)))
+			subtypes = append(subtypes, basicSubtypeFrom(code, data))
 		}
 	}
 	if len(subtypes) == 0 {
@@ -222,6 +222,7 @@ func intersectMemberSemTypes(env Env, t1, t2 SemType) SemType {
 	return cellContainingWithEnvSemTypeCellMutability(env, atomicType.Ty, mut)
 }
 
+//shallow:allow named semantic-type complement operation retains the Val universe
 func complement(t SemType) SemType {
 	return Diff(Val, t)
 }
@@ -273,10 +274,12 @@ func WidenToBasicTypes(t SemType) SemType {
 	return widenToBasicTypeBits(t).semType()
 }
 
+//shallow:allow shared integer-subtype accessor hides the basic-type code selection
 func getIntSubtype(t SemType) subtypeData {
 	return subtypeDataAt(t, btInt)
 }
 
+//shallow:allow shared string-subtype accessor hides the basic-type code selection
 func getStringSubtype(t SemType) subtypeData {
 	return subtypeDataAt(t, btString)
 }
@@ -678,6 +681,7 @@ func subtypeDataAt(s SemType, code basicTypeCode) subtypeData {
 	return getComplexSubtypeData(s, code)
 }
 
+//shallow:allow public context factory preserves the semtypes API
 func TypeCheckContext(env Env) Context {
 	return ContextFrom(env)
 }
@@ -737,16 +741,16 @@ func CreateClientObject(context Context) SemType {
 	return clientObj
 }
 
-func createBasicSemType(typeCode basicTypeCode, subtypeData subtypeData) SemType {
-	if _, ok := subtypeData.(allOrNothingSubtype); ok {
-		if isAllSubtype(subtypeData) {
+func createBasicSemType(typeCode basicTypeCode, data subtypeData) SemType {
+	if _, ok := data.(allOrNothingSubtype); ok {
+		if isAllSubtype(data) {
 			return basicTypeBitSet(1 << typeCode.Code()).semType()
 		} else {
 			return Never
 		}
 	} else {
 		return createComplexSemType(0,
-			basicSubtypeFrom(typeCode, subtypeData.(properSubtypeData)))
+			basicSubtypeFrom(typeCode, data))
 	}
 }
 

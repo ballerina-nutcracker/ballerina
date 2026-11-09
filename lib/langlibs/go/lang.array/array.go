@@ -54,7 +54,7 @@ func arrayFromBase64(byteArrTy semtypes.SemType) extern.NativeFunc {
 		s := args[0].(string)
 		data, err := base64.StdEncoding.DecodeString(s)
 		if err != nil {
-			return values.NewErrorWithMessage("failed to decode base64 string"), nil
+			return values.NewError(semtypes.Error, "failed to decode base64 string", nil, "", nil), nil
 		}
 		return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), data), nil
 	}
@@ -65,7 +65,7 @@ func arrayFromBase16(byteArrTy semtypes.SemType) extern.NativeFunc {
 		s := args[0].(string)
 		data, err := hex.DecodeString(s)
 		if err != nil {
-			return values.NewErrorWithMessage("failed to decode base16 string"), nil
+			return values.NewError(semtypes.Error, "failed to decode base16 string", nil, "", nil), nil
 		}
 		return values.ByteSliceToList(byteArrTy, ctx.TypeEnv(), data), nil
 	}
@@ -116,7 +116,8 @@ func arrayIndexOf(_ *extern.Context, args []values.BalValue) (values.BalValue, e
 	val := args[1]
 	startIndex := args[2].(int64)
 	if startIndex < 0 {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", startIndex)))
+		message := fmt.Sprintf("invalid array index: %d", startIndex)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	if startIndex >= int64(list.Len()) {
 		return nil, nil
@@ -133,7 +134,8 @@ func arrayRemove(ctx *extern.Context, args []values.BalValue) (values.BalValue, 
 	list := args[0].(*values.List)
 	index := args[1].(int64)
 	if index < 0 || index >= int64(list.Len()) {
-		panic(values.NewErrorWithMessage(fmt.Sprintf("invalid array index: %d", index)))
+		message := fmt.Sprintf("invalid array index: %d", index)
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return list.RemoveAt(ctx.TypeCtx(), int(index)), nil
 }
@@ -171,7 +173,8 @@ func arrayToStream(ctx *extern.Context, args []values.BalValue) (values.BalValue
 			return nil
 		}
 		if cursor >= source.Len() {
-			panic(values.NewErrorWithMessage(fmt.Sprintf("array index out of range: index: %d, size: %d", cursor, source.Len())))
+			message := fmt.Sprintf("array index out of range: index: %d, size: %d", cursor, source.Len())
+			panic(values.NewError(semtypes.Error, message, nil, "", nil))
 		}
 		value := source.Get(cursor)
 		cursor++

@@ -22,10 +22,6 @@ type cellOps struct {
 
 var _ basicTypeOps = &cellOps{}
 
-func cellFormulaIsEmpty(cx Context, t subtypeData) bool {
-	return bddEvery(cx, t.(bdd), conjunctionNil, conjunctionNil, cellFormulaIsEmptyInner)
-}
-
 func cellFormulaIsEmptyInner(cx Context, posList conjunctionHandle, negList conjunctionHandle) bool {
 	var combined cellAtomicType
 	if posList == conjunctionNil {
@@ -116,24 +112,24 @@ func intersectCellAtomicType(c1 *cellAtomicType, c2 *cellAtomicType) cellAtomicT
 	return cellAtomicTypeFrom(ty, mut)
 }
 
-func cellSubtypeUnion(t1 subtypeData, t2 subtypeData) properSubtypeData {
+func cellSubtypeUnion(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeUnion(t1, t2))
 }
 
-func cellSubtypeIntersect(t1 subtypeData, t2 subtypeData) properSubtypeData {
+func cellSubtypeIntersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeIntersect(t1, t2))
 }
 
-func cellSubtypeDiff(t1 subtypeData, t2 subtypeData) properSubtypeData {
+func cellSubtypeDiff(t1 subtypeData, t2 subtypeData) subtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeDiff(t1, t2))
 }
 
-func cellSubtypeComplement(t subtypeData) properSubtypeData {
+func cellSubtypeComplement(t subtypeData) subtypeData {
 	return cellSubtypeDataEnsureProper(bddSubtypeComplement(t))
 }
 
-func cellSubtypeDataEnsureProper(subtypeData subtypeData) properSubtypeData {
-	if allOrNothingSubtype, ok := subtypeData.(allOrNothingSubtype); ok {
+func cellSubtypeDataEnsureProper(data subtypeData) subtypeData {
+	if allOrNothingSubtype, ok := data.(allOrNothingSubtype); ok {
 		var a atom
 		if allOrNothingSubtype.IsAllSubtype() {
 			a = atomCellVal
@@ -142,7 +138,7 @@ func cellSubtypeDataEnsureProper(subtypeData subtypeData) properSubtypeData {
 		}
 		return bddAtom(a)
 	} else {
-		return subtypeData.(properSubtypeData)
+		return data
 	}
 }
 
@@ -163,7 +159,7 @@ func (c *cellOps) complement(t subtypeData) subtypeData {
 }
 
 func (c *cellOps) IsEmpty(cx Context, t subtypeData) bool {
-	return cellFormulaIsEmpty(cx, t)
+	return bddEvery(cx, t.(bdd), conjunctionNil, conjunctionNil, cellFormulaIsEmptyInner)
 }
 
 func cellMutabilityMin(m1 CellMutability, m2 CellMutability) CellMutability {

@@ -33,6 +33,7 @@ import (
 // by qualified name. The returned payload is opaque; pass it to
 // InvokeFunction.
 //
+//shallow:allow public facade exposes function lookup implemented in runtime/internal/exec
 //funcusage:test-hook test harnesses look up test functions to run them
 func LookupFunction(rt *Runtime, org, module, name string) (any, bool) {
 	return exec.LookupFunction(rt.env, org, module, name)

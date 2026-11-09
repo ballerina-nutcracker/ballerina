@@ -18,16 +18,17 @@ package semtypes
 
 type basicSubtype struct {
 	basicTypeCode basicTypeCode
-	subtypeData   properSubtypeData
+	subtypeData   subtypeData
 }
 
-func newBasicSubtypeFromBasicTypeCodeProperSubtypeData(basicTypeCode basicTypeCode, properSubtypeData properSubtypeData) basicSubtype {
+func newBasicSubtypeFromBasicTypeCodeProperSubtypeData(basicTypeCode basicTypeCode, data subtypeData) basicSubtype {
 	this := basicSubtype{}
 	this.basicTypeCode = basicTypeCode
-	this.subtypeData = properSubtypeData
+	this.subtypeData = data
 	return this
 }
 
-func basicSubtypeFrom(typeCode basicTypeCode, data properSubtypeData) basicSubtype {
+//shallow:allow semantic constructor keeps basic-subtype construction consistent with other subtype factories
+func basicSubtypeFrom(typeCode basicTypeCode, data subtypeData) basicSubtype {
 	return newBasicSubtypeFromBasicTypeCodeProperSubtypeData(typeCode, data)
 }

@@ -384,6 +384,7 @@ const moduleXMLStepOwner = "$module"
 // xmlStepFnPrefix starts the name of every function an XML step lowers to.
 const xmlStepFnPrefix = "$xmlStep$"
 
+//shallow:allow shared XML step naming helper keeps module and function owner keys consistent
 func xmlStepFnName(owner string, idx int) string {
 	return fmt.Sprintf("%s%s$%d", xmlStepFnPrefix, owner, idx)
 }
@@ -633,18 +634,22 @@ func (f *functionTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicTyp
 func (f *functionTypeResolver) currentScope() model.Scope     { return f.scope }
 func (f *functionTypeResolver) setCurrentScope(s model.Scope) { f.scope = s }
 
+//shallow:allow named resolver-context accessor selects the isolated-context flag
 func isolatedContext(t typeResolver) bool {
 	return hasResolverContext(t, resolverContextIsolated)
 }
 
+//shallow:allow named resolver-context operation selects the isolated-context flag
 func setIsolatedContext(t typeResolver, isolated bool) func() {
 	return setResolverContext(t, resolverContextIsolated, isolated)
 }
 
+//shallow:allow named resolver-context operation selects the isolated XML step flag
 func setIsolatedXMLStepContext(t typeResolver, isolated bool) func() {
 	return setResolverContext(t, resolverContextIsolatedXMLStep, isolated)
 }
 
+//shallow:allow named resolver-context accessor selects the isolated XML step flag
 func isolatedXMLStepContext(t typeResolver) bool {
 	return hasResolverContext(t, resolverContextIsolatedXMLStep)
 }
@@ -3824,6 +3829,7 @@ func associateInferredFunctionSignature(t typeResolver, variable *ast.BLangVaria
 	return true
 }
 
+//shallow:allow shared resolution entry point initializes the recursive resolution depth
 func resolveSimpleVariable(t typeResolver, chain *binding, node *ast.BLangVariable) (*binding, bool) {
 	return resolveSimpleVariableInner(t, chain, node, 0)
 }
@@ -9805,7 +9811,7 @@ func lowerXMLStepExpr(t typeResolver, expr *ast.BLangXMLStepExpression) (ast.BLa
 	param.SetPosition(pos)
 	param.SetRequiredParam()
 
-	fnScope := t.compilerContext().NewFunctionScope(t.currentScope(), *t.packageID())
+	fnScope := t.compilerContext().NewBlockScope(t.currentScope(), *t.packageID())
 	paramSymbol := model.NewVariableSymbol(paramName, false, false, true, pos)
 	fnScope.AddSymbol(paramName, &paramSymbol)
 	paramRef, _ := fnScope.GetSymbol(paramName)
