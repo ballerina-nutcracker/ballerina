@@ -22,14 +22,23 @@ true
 true
 200
 0
+204
+304
+0
+200
 replaced by a stream
 19995 5678901234
 bytes=19995 blocks=5
+["data: two\n\ndata: three\n\n"]
+["data: two\n\ndata: three\n\n"]
+4
+3
 100000
 307
 bytes=9 blocks=1
 [": first\n: \n: data: forged\ndata: real\n\nevent: error\ndata: Invalid value provided as event: the id field must not contain a line break.\n\n"]
 3
+2
 45
 44
 -- stderr --

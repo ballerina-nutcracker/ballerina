@@ -132,20 +132,20 @@ class PanickingEvents {
 class Ticks {
     private final int count;
     private final decimal gap;
+    private final decimal first;
     private int sent = 0;
 
-    isolated function init(int count, decimal gap) {
+    isolated function init(int count, decimal gap, decimal first = 0) {
         self.count = count;
         self.gap = gap;
+        self.first = first;
     }
 
     public isolated function next() returns record {|http:SseEvent value;|}|error? {
         if self.sent >= self.count {
             return;
         }
-        if self.sent > 0 {
-            runtime:sleep(self.gap);
-        }
+        runtime:sleep(self.sent > 0 ? self.gap : self.first);
         self.sent += 1;
         return {value: {data: self.sent.toString()}};
     }
@@ -172,6 +172,28 @@ class CountedBlocks {
         }
         return {value: "block".toBytes()};
     }
+}
+
+class Endless {
+    private final byte[] block;
+
+    isolated function init() {
+        byte[] bytes = [];
+        bytes[8191] = 120;
+        self.block = bytes;
+    }
+
+    public isolated function next() returns record {|byte[] value;|}|io:Error? {
+        runtime:sleep(0.05);
+        return {value: self.block};
+    }
+}
+
+function burstResponse() returns http:Response {
+    http:Response res = new;
+    res.setByteStream(new stream<byte[], io:Error?>(new Chunks(["data: one\n\ndata: two\n\ndata: three\n\n"])),
+            "text/event-stream");
+    return res;
 }
 
 final http:Client backend = check new ("http://localhost:19503/streams");
@@ -256,6 +278,63 @@ service /streams on new http:Listener(19503) {
         return res;
     }
 
+    resource function get noContent() returns http:Response {
+        http:Response res = new;
+        res.statusCode = 204;
+        res.setByteStream(new stream<byte[], io:Error?>(new CountedBlocks()));
+        return res;
+    }
+
+    resource function get notModified() returns http:Response {
+        http:Response res = new;
+        res.statusCode = 304;
+        res.setByteStream(new stream<byte[], io:Error?>(new CountedBlocks()));
+        return res;
+    }
+
+    resource function get endless() returns http:Response {
+        http:Response res = new;
+        res.setByteStream(new stream<byte[], io:Error?>(new Endless()));
+        return res;
+    }
+
+    resource function head relayEndless() returns http:Response|error {
+        return backend->get("/endless");
+    }
+
+    resource function get burst() returns http:Response {
+        return burstResponse();
+    }
+
+    resource function get burstRest() returns http:Response|error {
+        http:Response res = burstResponse();
+        stream<http:SseEvent, error?> events = check res.getSseEventStream();
+        _ = check events.next();
+        return res;
+    }
+
+    resource function get relayBurstRest() returns http:Response|error {
+        http:Response res = check backend->get("/burst");
+        stream<http:SseEvent, error?> events = check res.getSseEventStream();
+        _ = check events.next();
+        return res;
+    }
+
+    resource function get slowTicks() returns stream<http:SseEvent, error?> {
+        return new (new Ticks(4, 0.5));
+    }
+
+    resource function get relaySlowTicks() returns http:Response|error {
+        return backend->get("/slowTicks");
+    }
+
+    resource function get relaySlowTicksRest() returns http:Response|error {
+        http:Response res = check backend->get("/slowTicks");
+        stream<http:SseEvent, error?> events = check res.getSseEventStream();
+        _ = check events.next();
+        return res;
+    }
+
     resource function get pulled() returns int {
         lock {
             return blocksPulled;
@@ -315,6 +394,10 @@ service /quick on new http:Listener(19504, {timeout: 0.5}) {
     // Each gap between events is longer than the listener timeout, which applies to writes only.
     resource function get ticks() returns stream<http:SseEvent, error?> {
         return new (new Ticks(3, 0.8));
+    }
+
+    resource function get late() returns stream<http:SseEvent, error?> {
+        return new (new Ticks(2, 0.1, 0.8));
     }
 
     resource function get relay() returns http:Response|error {
@@ -428,6 +511,17 @@ public function testMain() returns error? {
     int pulled = check c->get("/pulled");
     io:println(pulled); // @output 0
 
+    // Nor does a 204 or 304 response, or a HEAD response relaying an unread backend body.
+    http:Response noContent = check h1->get("/noContent");
+    io:println(noContent.statusCode); // @output 204
+    http:Response notModified = check h1->get("/notModified");
+    io:println(notModified.statusCode); // @output 304
+    pulled = check c->get("/pulled");
+    io:println(pulled); // @output 0
+    http:Client h1Impatient = check new ("http://localhost:19503/streams", {httpVersion: http:HTTP_1_1, timeout: 1});
+    http:Response|error headRelay = h1Impatient->head("/relayEndless");
+    io:println(headRelay is error ? headRelay.message() : headRelay.statusCode.toString()); // @output 200
+
     // A stream that replaces a backend body drops the backend's Content-Length.
     string replaced = check h1->get("/replaced");
     io:println(replaced); // @output replaced by a stream
@@ -438,6 +532,31 @@ public function testMain() returns error? {
     string digits = check c->get("/digits");
     string relayed = check h1->post("/relay", digits);
     io:println(relayed); // @output bytes=19995 blocks=5
+
+    // A body partly read with getSseEventStream sends on the events not yet handed on.
+    string burstRest = check h1->get("/burstRest");
+    io:println([burstRest]); // @output ["data: two\n\ndata: three\n\n"]
+    string relayedBurstRest = check h1->get("/relayBurstRest");
+    io:println([relayedBurstRest]); // @output ["data: two\n\ndata: three\n\n"]
+
+    // A relayed event stream is flushed per event, so a client whose timeout is shorter than the
+    // whole stream receives each event as it arrives.
+    stream<http:SseEvent, error?> slowTicks = check h1Impatient->get("/relaySlowTicks");
+    int slowReceived = 0;
+    record {|http:SseEvent value;|}? slowTick = check slowTicks.next();
+    while slowTick is record {|http:SseEvent value;|} {
+        slowReceived += 1;
+        slowTick = check slowTicks.next();
+    }
+    io:println(slowReceived); // @output 4
+    stream<http:SseEvent, error?> slowTicksRest = check h1Impatient->get("/relaySlowTicksRest");
+    int slowRestReceived = 0;
+    record {|http:SseEvent value;|}? slowRestTick = check slowTicksRest.next();
+    while slowRestTick is record {|http:SseEvent value;|} {
+        slowRestReceived += 1;
+        slowRestTick = check slowTicksRest.next();
+    }
+    io:println(slowRestReceived); // @output 3
 
     // A response can stream the body of the request it answers, over HTTP/1.1 as well.
     byte[] echoed = check h1->post("/echo", new stream<byte[], io:Error?>(new Repeated(1000, 100)));
@@ -466,6 +585,16 @@ public function testMain() returns error? {
         quickTick = check quickTicks.next();
     }
     io:println(quickReceived); // @output 3
+
+    // So does a first event that takes longer than the listener timeout to produce.
+    stream<http:SseEvent, error?> lateTicks = check quick->get("/late");
+    int lateReceived = 0;
+    record {|http:SseEvent value;|}? lateTick = check lateTicks.next();
+    while lateTick is record {|http:SseEvent value;|} {
+        lateReceived += 1;
+        lateTick = check lateTicks.next();
+    }
+    io:println(lateReceived); // @output 2
 
     // A relayed body that keeps arriving outlives the listener timeout, whether or not it was partly read.
     string relayedTicks = check quick->get("/relay");

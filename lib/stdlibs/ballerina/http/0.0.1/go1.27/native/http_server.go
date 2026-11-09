@@ -759,48 +759,59 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 		_ = http.NewResponseController(w).EnableFullDuplex()
 	}
 	w.WriteHeader(statusCode)
+	eventStream := isEventStreamType(contentType)
 	switch {
-	case streamed && r.Method == http.MethodHead:
-		// net/http discards a HEAD body, so the stream is never read.
-		releaseStreamedBody(holder, contentType)
+	case (streamed || holder.stream != nil) && !bodyAllowed(r.Method, statusCode):
+		// net/http discards the body, so the stream is never read.
+		releaseUnsentBody(holder, eventStream)
 	case holder.source != nil:
-		writeStreamedBody(w, holder.source, contentType, timeout)
+		writeStreamedBody(w, holder.unsent(newBalStreamReader(holder.source)), holder.source, eventStream, timeout)
 	// Aborting tells the client that a relayed body which failed part-way is incomplete.
 	case holder.reader != nil:
-		if err := holder.writeReader(w, timeout); err != nil {
+		if err := holder.writeReader(w, eventStream, timeout); err != nil {
 			panic(http.ErrAbortHandler)
 		}
 	default:
-		if err := holder.writeStream(w, timeout); err != nil {
+		if err := holder.writeStream(w, eventStream, timeout); err != nil {
 			panic(http.ErrAbortHandler)
 		}
 	}
 }
 
-// releaseStreamedBody closes a streamed body that is not sent. Like writeStreamedBody, it
-// closes an event stream but leaves any other byte stream set with setByteStream open.
-func releaseStreamedBody(holder *responseBodyHolder, contentType string) {
+func bodyAllowed(method string, statusCode int) bool {
+	return method != http.MethodHead && statusCode != http.StatusNoContent && statusCode != http.StatusNotModified
+}
+
+// releaseUnsentBody closes a streamed or unread received body that is not sent, without reading
+// it. Like writeStreamedBody, it closes an event stream but leaves any other byte stream set with
+// setByteStream open.
+func releaseUnsentBody(holder *responseBodyHolder, eventStream bool) {
 	if holder.source == nil {
 		_ = holder.closeReader()
+		if r, _ := holder.takeWire(); r != nil {
+			_ = r.Close()
+		}
 		return
 	}
-	if isEventStreamType(contentType) && holder.source.Close != nil {
+	if eventStream && holder.source.Close != nil {
 		holder.source.Close()
 	}
 }
 
-// writeReader sends the part of a received body that getByteStream has not read.
-func (h *responseBodyHolder) writeReader(w http.ResponseWriter, timeout time.Duration) error {
+// writeReader sends the part of a received body that getByteStream or getSseEventStream has
+// not handed on.
+func (h *responseBodyHolder) writeReader(w http.ResponseWriter, flush bool, timeout time.Duration) error {
 	r := h.reader
 	h.reader = nil
-	err := copyWithWriteDeadlines(w, r, timeout)
+	err := copyWithWriteDeadlines(w, h.unsent(r), flush, timeout)
 	_ = r.Close()
 	return err
 }
 
 // copyWithWriteDeadlines relays r to w, giving each write the listener timeout afresh and
-// clearing the deadline while waiting on r, so a body that keeps arriving is not cut off.
-func copyWithWriteDeadlines(w http.ResponseWriter, r io.Reader, timeout time.Duration) error {
+// clearing the deadline while waiting on r, so a body that keeps arriving is not cut off. With
+// flush set, as for an event stream, each write is sent at once.
+func copyWithWriteDeadlines(w http.ResponseWriter, r io.Reader, flush bool, timeout time.Duration) error {
 	rc := http.NewResponseController(w)
 	setDeadline := func(deadline time.Time) {
 		if timeout > 0 {
@@ -820,6 +831,11 @@ func copyWithWriteDeadlines(w http.ResponseWriter, r io.Reader, timeout time.Dur
 			if _, writeErr := w.Write(buf[:n]); writeErr != nil {
 				return writeErr
 			}
+			if flush {
+				if flushErr := rc.Flush(); flushErr != nil {
+					return flushErr
+				}
+			}
 		}
 		if errors.Is(err, io.EOF) {
 			return nil
@@ -837,7 +853,7 @@ var copyBufPool = sync.Pool{New: func() any { b := make([]byte, 32*1024); return
 // writeStream writes the body to w via copyWithWriteDeadlines (streaming, pooled buffer)
 // or w.Write (buffered), then closes the stream. After this call the holder is
 // exhausted.
-func (h *responseBodyHolder) writeStream(w http.ResponseWriter, timeout time.Duration) error {
+func (h *responseBodyHolder) writeStream(w http.ResponseWriter, flush bool, timeout time.Duration) error {
 	var (
 		s   io.ReadCloser
 		buf []byte
@@ -853,7 +869,7 @@ func (h *responseBodyHolder) writeStream(w http.ResponseWriter, timeout time.Dur
 		}
 	})
 	if s != nil {
-		err := copyWithWriteDeadlines(w, s, timeout)
+		err := copyWithWriteDeadlines(w, s, flush, timeout)
 		_ = s.Close()
 		return err
 	}

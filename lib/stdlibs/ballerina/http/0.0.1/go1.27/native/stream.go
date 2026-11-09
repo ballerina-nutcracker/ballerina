@@ -292,13 +292,14 @@ func executeStreamed(goCtx context.Context, client pal.HTTPClient, method, url s
 // sent, so the handler logs it and aborts the response instead of writing an error body.
 type streamBodyPanic struct{ value any }
 
-// writeStreamedBody writes a byte-stream response body. An event stream is flushed after each
-// event and closed at the end, as jBallerina's EventStreamWriter does; any other byte stream is
-// left open, as jBallerina never closes a byte stream it sent as a body. Each write gets the
-// listener timeout afresh, so a long-lived stream is only cut off when a write stalls. The
-// deadline is cleared while the stream produces the next block, since on HTTP/2 an expired
-// deadline resets the stream even with no write in progress.
-func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType string, timeout time.Duration) {
+// writeStreamedBody writes a byte-stream response body, read from source through reader. An
+// event stream is flushed after each event and closed at the end, as jBallerina's
+// EventStreamWriter does; any other byte stream is left open, as jBallerina never closes a byte
+// stream it sent as a body. Each write gets the listener timeout afresh, so a long-lived stream
+// is only cut off when a write stalls. The deadline is cleared while the stream produces each
+// block, the first included, since on HTTP/2 an expired deadline resets the stream even with no
+// write in progress.
+func writeStreamedBody(w http.ResponseWriter, reader io.Reader, source *values.Stream, eventStream bool, timeout time.Duration) {
 	defer func() {
 		if rec := recover(); rec != nil {
 			if rec == http.ErrAbortHandler {
@@ -307,7 +308,6 @@ func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType
 			panic(streamBodyPanic{rec})
 		}
 	}()
-	eventStream := isEventStreamType(contentType)
 	rc := http.NewResponseController(w)
 	setDeadline := func(deadline time.Time) {
 		if timeout > 0 {
@@ -316,9 +316,9 @@ func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType
 	}
 	// The handler's final flush runs under the last deadline set here.
 	defer func() { setDeadline(time.Now().Add(timeout)) }()
-	reader := newBalStreamReader(source)
 	buf := make([]byte, 32*1024)
 	for {
+		setDeadline(time.Time{})
 		n, err := reader.Read(buf)
 		if n > 0 {
 			setDeadline(time.Now().Add(timeout))
@@ -328,7 +328,6 @@ func writeStreamedBody(w http.ResponseWriter, source *values.Stream, contentType
 			if eventStream {
 				_ = rc.Flush()
 			}
-			setDeadline(time.Time{})
 		}
 		if errors.Is(err, io.EOF) {
 			break
@@ -422,6 +421,32 @@ func (f *sseFramer) read() error {
 		}
 	}
 	return nil
+}
+
+// remaining reads the body on from the first byte not handed on as an event.
+func (f *sseFramer) remaining() io.Reader {
+	unread := f.pending[f.eventStart:]
+	if f.skipLineFeed && len(unread) > 0 && unread[0] == '\n' {
+		unread = unread[1:]
+	}
+	switch {
+	case f.err != nil:
+		return io.MultiReader(bytes.NewReader(unread), errorReader{f.err})
+	case f.eof:
+		return bytes.NewReader(unread)
+	}
+	return io.MultiReader(bytes.NewReader(unread), f.reader)
+}
+
+// unsent returns what is left to send of the body r reads: when getSseEventStream has read part
+// of it, the bytes its framer holds but has not handed on, then the rest of r.
+func (b *streamBody) unsent(r io.Reader) io.Reader {
+	if b.framer == nil {
+		return r
+	}
+	f := b.framer
+	b.framer = nil
+	return f.remaining()
 }
 
 // skipBOM drops a leading byte order mark, reporting false while too few bytes have arrived
