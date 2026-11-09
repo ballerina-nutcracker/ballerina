@@ -17,6 +17,7 @@
 package native
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -25,6 +26,7 @@ import (
 // TestTypeCacheReusesRecursiveFieldType walks the field of a recursive record level by level, as parsing nested
 // input does, and checks the classifications stay bounded instead of growing with the depth.
 func TestTypeCacheReusesRecursiveFieldType(t *testing.T) {
+	t.Parallel()
 	env := semtypes.CreateTypeEnv()
 	cx := semtypes.ContextFrom(env)
 	md := semtypes.NewMappingDefinition()
@@ -42,5 +44,40 @@ func TestTypeCacheReusesRecursiveFieldType(t *testing.T) {
 	}
 	if n := len(typer.cache.infos); n > 4 {
 		t.Fatalf("cached %d classifications for one recursive record", n)
+	}
+}
+
+// TestTypeCacheMissComparesOnlyEnclosingTypes classifies many unrelated recursive records, as parsing into each
+// of them does, and checks a cache miss is compared with the types enclosing it rather than with every type
+// classified before.
+func TestTypeCacheMissComparesOnlyEnclosingTypes(t *testing.T) {
+	t.Parallel()
+	env := semtypes.CreateTypeEnv()
+	cx := semtypes.ContextFrom(env)
+	cache := newTypeCache()
+	comparisons := 0
+	cache.sameType = func(cx semtypes.Context, a, b semtypes.SemType) bool {
+		comparisons++
+		return semtypes.IsSameType(cx, a, b)
+	}
+	const records = 100
+	for i := range records {
+		md := semtypes.NewMappingDefinition()
+		ld := semtypes.NewListDefinition()
+		list := ld.Define(env, nil, semtypes.ListRest(md.GetSemType(env)))
+		record := md.Define(env, []semtypes.Field{
+			semtypes.FieldFrom(fmt.Sprintf("f%d", i), semtypes.Int, false, false),
+			semtypes.FieldFrom("k", list, false, true),
+		}, semtypes.CreateAnydata(cx))
+		record = semtypes.Intersect(record, semtypes.CreateAnydata(cx))
+		typer := newTyper(cache, cx, record, nil)
+		ty := record
+		for range 3 {
+			listInfo := typer.classify(typer.classify(ty).mapping.FieldInnerVal("k"))
+			ty = listInfo.list.Rest()
+		}
+	}
+	if comparisons > 4*records {
+		t.Fatalf("compared %d types to classify %d records", comparisons, records)
 	}
 }

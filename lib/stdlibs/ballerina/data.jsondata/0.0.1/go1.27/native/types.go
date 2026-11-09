@@ -171,12 +171,24 @@ type typeCache struct {
 	mu       sync.Mutex
 	interner *semtypes.SemTypeInterner
 	infos    map[semtypes.InternHandle]typeInfo
-	// distinct holds one classification per semantically distinct type.
-	distinct []typeInfo
+	// enclosing holds, for each member type of a classified type not classified yet, the types enclosing it.
+	enclosing map[semtypes.InternHandle]*enclosingType
+	sameType  func(semtypes.Context, semtypes.SemType, semtypes.SemType) bool
+}
+
+// enclosingType is a classified type and, through outer, the types it is a member of.
+type enclosingType struct {
+	ti    typeInfo
+	outer *enclosingType
 }
 
 func newTypeCache() *typeCache {
-	return &typeCache{interner: semtypes.NewSemtypeInterner(), infos: make(map[semtypes.InternHandle]typeInfo)}
+	return &typeCache{
+		interner:  semtypes.NewSemtypeInterner(),
+		infos:     make(map[semtypes.InternHandle]typeInfo),
+		enclosing: make(map[semtypes.InternHandle]*enclosingType),
+		sameType:  semtypes.IsSameType,
+	}
 }
 
 func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
@@ -186,18 +198,53 @@ func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, clas
 	if ti, ok := c.infos[handle]; ok {
 		return ti
 	}
-	// Classifying a field of a recursive record can mint a new copy of a type already classified; reusing
-	// that classification keeps nested values of the record from minting a new type at every level.
-	for _, ti := range c.distinct {
-		if semtypes.IsSameType(tc, ty, ti.ty) {
-			c.infos[handle] = ti
-			return ti
+	outer := c.enclosing[handle]
+	delete(c.enclosing, handle)
+	// A member of a recursive type can be a new copy of an enclosing type; reusing that classification keeps
+	// nested values of the type from minting a new copy at every level.
+	for e := outer; e != nil; e = e.outer {
+		if c.sameType(tc, ty, e.ti.ty) {
+			c.infos[handle] = e.ti
+			return e.ti
 		}
 	}
 	ti := classify(ty)
 	c.infos[handle] = ti
-	c.distinct = append(c.distinct, ti)
+	enclosing := &enclosingType{ti: ti, outer: outer}
+	for _, member := range memberTypes(ti) {
+		if !cacheable(member) {
+			continue
+		}
+		memberHandle := c.interner.Intern(member)
+		if _, ok := c.infos[memberHandle]; ok {
+			continue
+		}
+		if _, ok := c.enclosing[memberHandle]; !ok {
+			c.enclosing[memberHandle] = enclosing
+		}
+	}
 	return ti
+}
+
+// memberTypes lists the types the members of a value of the classified type are converted to.
+func memberTypes(ti typeInfo) []semtypes.SemType {
+	switch {
+	case ti.mapping != nil:
+		names := ti.mapping.FieldNames()
+		members := make([]semtypes.SemType, 0, len(names)+1)
+		for _, name := range names {
+			members = append(members, ti.mapping.FieldInnerVal(name))
+		}
+		return append(members, ti.mapping.Rest())
+	case ti.list != nil:
+		members := make([]semtypes.SemType, 0, ti.list.FixedLength()+1)
+		for i := range ti.list.FixedLength() {
+			members = append(members, ti.list.MemberAtInnerVal(i))
+		}
+		return append(members, ti.list.Rest())
+	default:
+		return ti.members
+	}
 }
 
 var valueBasicTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String}
