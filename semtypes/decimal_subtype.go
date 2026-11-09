@@ -26,7 +26,7 @@ type decimalSubtype struct {
 	values  []enumerableDecimal
 }
 
-var _ properSubtypeData = &decimalSubtype{}
+var _ subtypeData = &decimalSubtype{}
 
 func newDecimalSubtypeFromBoolEnumerableDecimal(allowed bool, value enumerableDecimal) decimalSubtype {
 	this := decimalSubtype{}
@@ -64,7 +64,7 @@ func decimalSubtypeSingleValue(d subtypeData) common.Optional[decimal.Decimal] {
 	return common.OptionalOf(v.values[0].value)
 }
 
-func createDecimalSubtype(allowed bool, values []enumerableType[decimal.Decimal]) properSubtypeData {
+func createDecimalSubtype(allowed bool, values []enumerableType[decimal.Decimal]) subtypeData {
 	if len(values) == 0 {
 		if allowed {
 			return createNothing()

@@ -38,7 +38,7 @@ func mapGet(_ *extern.Context, args []values.BalValue) (values.BalValue, error) 
 	key := args[1].(string)
 	value, found := m.Get(key)
 	if !found {
-		panic(values.NewErrorWithMessage("missing map key '" + key + "'"))
+		panic(values.NewError(semtypes.Error, "missing map key '"+key+"'", nil, "", nil))
 	}
 	return value, nil
 }
@@ -64,7 +64,7 @@ func mapRemove(ctx *extern.Context, args []values.BalValue) (values.BalValue, er
 	key := args[1].(string)
 	val, found := m.Get(key)
 	if !found {
-		panic(values.NewErrorWithMessage("missing map key '" + key + "'"))
+		panic(values.NewError(semtypes.Error, "missing map key '"+key+"'", nil, "", nil))
 	}
 	m.Delete(ctx.TypeCtx(), key)
 	return val, nil

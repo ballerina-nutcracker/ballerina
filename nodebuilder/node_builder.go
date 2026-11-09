@@ -66,7 +66,7 @@ func (n *nodeBuilder) unimplemented(message string, node st.Node) {
 			for _, diagnostic := range diagnosticNode.Diagnostics() {
 				textRange := diagnostic.TextRange(diagnosticNode, position)
 				location := diagnostics.NewLocation(n.de(), getFileName(node), textRange.StartOffset, textRange.EndOffset)
-				n.cx.SyntaxError(diagnosticMessage(diagnostic), location)
+				n.cx.SyntaxError(strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " "), location)
 			}
 		}
 		if !found {
@@ -140,7 +140,7 @@ func (n *nodeBuilder) expectNode(node st.NonTerminalNode) bool {
 		return true
 	}
 	for _, diagnostic := range nodeDiagnostics {
-		n.cx.SyntaxError(diagnosticMessage(diagnostic), n.getPosition(node))
+		n.cx.SyntaxError(strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " "), n.getPosition(node))
 	}
 	return false
 }
@@ -152,7 +152,7 @@ func (n *nodeBuilder) reportTokenDiagnostics(tok st.Token) {
 		return
 	}
 	for _, diagnostic := range deepest.Diagnostics() {
-		n.cx.SyntaxError(diagnosticMessage(diagnostic), n.getPosition(tok))
+		n.cx.SyntaxError(strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " "), n.getPosition(tok))
 	}
 }
 
@@ -595,10 +595,6 @@ func (n *nodeBuilder) createBLangModulePrefixIdentifier(token st.Token) (ast.BLa
 func getFileName(node st.Node) string {
 	st := node.SyntaxTree()
 	return st.FilePath()
-}
-
-func diagnosticMessage(diagnostic st.STNodeDiagnostic) string {
-	return strings.ReplaceAll(strings.TrimPrefix(diagnostic.DiagnosticCode().MessageKey(), "error."), ".", " ")
 }
 
 func (n *nodeBuilder) getPosition(node st.Node) diagnostics.Location {
@@ -1390,7 +1386,7 @@ func (n *nodeBuilder) createSimpleLiteralFromText(literal st.Node, textValue str
 			// Try to unescape, but handle errors gracefully
 			// We may reach here when the string literal has syntax diagnostics.
 			// Therefore mock the compiler with an empty string on error.
-			text = unescapeBallerinaString(text)
+			text = unescapeBackslashEscapes(unescapeUnicodeCodepoints(text))
 		}
 
 		literalKind = ast.LiteralKindString
@@ -3443,11 +3439,7 @@ func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) (*ast.BL
 	if !ok {
 		return nil, false
 	}
-	return fieldNameLiteral(n.getPosition(fieldName), identifier.Value), true
-}
-
-func fieldNameLiteral(pos diagnostics.Location, name string) *ast.BLangLiteral {
-	return ast.NewBLangLiteral(pos, ast.LiteralKindString, name, name, false)
+	return ast.NewBLangLiteral(n.getPosition(fieldName), ast.LiteralKindString, identifier.Value, identifier.Value, false), true
 }
 
 // shorthandFieldName returns the field name of a `{x}` shorthand field from tokens already checked by the
@@ -3702,7 +3694,7 @@ func (n *nodeBuilder) addSpecificField(mappingConstructor *ast.BLangMappingConst
 		if !ok || !n.expectOptionalToken(specificField.Colon()) {
 			return false
 		}
-		keyLiteral = fieldNameLiteral(n.getPosition(fieldName), name)
+		keyLiteral = ast.NewBLangLiteral(n.getPosition(fieldName), ast.LiteralKindString, name, name, false)
 	} else {
 		var ok bool
 		keyLiteral, ok = n.createSpecificFieldNameLiteral(fieldName)

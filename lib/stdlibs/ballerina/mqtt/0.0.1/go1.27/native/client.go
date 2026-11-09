@@ -21,6 +21,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 	"github.com/eclipse/paho.golang/paho"
 )
@@ -143,7 +144,8 @@ func (m *mqttModule) invokeIteratorMethod(iterator *values.Object, name string) 
 	handle, _ := ctx.LookupObjectMethod(iterator, name)
 	v, err := ctx.InvokeMethod(handle, []values.BalValue{iterator})
 	if err != nil {
-		panic(values.NewErrorWithMessage(err.Error()))
+		message := err.Error()
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return v
 }

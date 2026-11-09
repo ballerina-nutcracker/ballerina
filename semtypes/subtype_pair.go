@@ -18,11 +18,11 @@ package semtypes
 
 type subtypePair struct {
 	basicTypeCode basicTypeCode
-	SubtypeData1  properSubtypeData
-	SubtypeData2  properSubtypeData
+	SubtypeData1  subtypeData
+	SubtypeData2  subtypeData
 }
 
-func newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicTypeCode basicTypeCode, subtypeData1 properSubtypeData, subtypeData2 properSubtypeData) subtypePair {
+func newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicTypeCode basicTypeCode, subtypeData1 subtypeData, subtypeData2 subtypeData) subtypePair {
 	this := subtypePair{}
 	this.basicTypeCode = basicTypeCode
 	this.SubtypeData1 = subtypeData1
@@ -30,6 +30,7 @@ func newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicType
 	return this
 }
 
-func createSubTypePair(basicTypeCode basicTypeCode, subtypeData1 properSubtypeData, subtypeData2 properSubtypeData) subtypePair {
+//shallow:allow shared subtype-pair constructor keeps iterator representation behind the factory
+func createSubTypePair(basicTypeCode basicTypeCode, subtypeData1 subtypeData, subtypeData2 subtypeData) subtypePair {
 	return newSubtypePairFromBasicTypeCodeProperSubtypeDataProperSubtypeData(basicTypeCode, subtypeData1, subtypeData2)
 }

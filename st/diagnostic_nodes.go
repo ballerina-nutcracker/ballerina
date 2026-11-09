@@ -20,6 +20,8 @@ import "iter"
 
 // DiagnosticSTNodes visits every node with its own diagnostics, including invalid
 // minutiae. Positions include leading minutiae, like Node.Position().
+//
+//shallow:allow public iterator keeps diagnostic traversal policy private
 func DiagnosticSTNodes(node STNode, position int) iter.Seq2[STNode, int] {
 	return positionedSTNodes(node, position, true)
 }

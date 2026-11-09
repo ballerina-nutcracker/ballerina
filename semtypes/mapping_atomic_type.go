@@ -169,6 +169,7 @@ func bddMappingAtomsMatch(cx Context, bdd bdd, quantifier matchQuantifier, predi
 	panic("unreachable")
 }
 
+//shallow:allow named mapping field lookup keeps representation access in one helper
 func mappingAtomHasFieldByName(atom *MappingAtomicType, key string) bool {
 	return slices.Contains(atom.names, key)
 }

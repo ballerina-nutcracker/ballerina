@@ -44,7 +44,7 @@ type udpTypes struct {
 }
 
 func udpError(msg string) *values.Error {
-	return values.NewErrorWithMessage(msg)
+	return values.NewError(semtypes.Error, msg, nil, "", nil)
 }
 
 // resolveUDPAddr uses JoinHostPort so IPv6 literals are bracketed.

@@ -32,6 +32,7 @@ func (bddOpsBase) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeDiff(d1, d2)
 }
 
+//shallow:allow shared list-backed complement operation adapts the specified type universe
 func listBackedComplement(top bdd, t subtypeData) subtypeData {
 	return bddSubtypeDiff(top, t)
 }

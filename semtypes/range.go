@@ -28,6 +28,7 @@ func newRangeFromIntInt(min, max int64) intRange {
 	return this
 }
 
+//shallow:allow shared range constructor keeps semantic range construction consistent
 func rangeFrom(min, max int64) intRange {
 	return newRangeFromIntInt(min, max)
 }
