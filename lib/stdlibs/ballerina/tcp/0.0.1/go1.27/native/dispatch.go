@@ -263,10 +263,10 @@ type tlsHandshaker interface {
 }
 
 // completeHandshake finishes the handshake of a TLS connection, within timeout when it is positive; a plain connection needs none.
-func completeHandshake(conn net.Conn, timeout time.Duration) bool {
+func completeHandshake(conn net.Conn, timeout time.Duration) error {
 	hs, ok := conn.(tlsHandshaker)
 	if !ok {
-		return true
+		return nil
 	}
 	ctx := context.Background()
 	if timeout > 0 {
@@ -274,7 +274,12 @@ func completeHandshake(conn net.Conn, timeout time.Duration) bool {
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
-	return hs.HandshakeContext(ctx) == nil
+	return hs.HandshakeContext(ctx)
+}
+
+// isSilentHandshakeFailure reports the failures jBallerina does not log: a peer that closes before sending a ClientHello, and a handshake timeout.
+func isSilentHandshakeFailure(err error) bool {
+	return errors.Is(err, io.EOF) || errors.Is(err, context.DeadlineExceeded)
 }
 
 // connHandler is the per-connection dispatch state fixed once onConnect resolves; connSvcObj is nil when onConnect returned no connection service.
@@ -287,8 +292,11 @@ type connHandler struct {
 
 // handleConnection owns one accepted connection: onConnect once, then a read loop dispatching onBytes/onError, ending in at most one onClose.
 func handleConnection(rt *runtime.Runtime, types tcpTypes, svcObj *values.Object, conn net.Conn, handshakeTimeout time.Duration) {
-	if !completeHandshake(conn, handshakeTimeout) {
+	if err := completeHandshake(conn, handshakeTimeout); err != nil {
 		// As in jBallerina, a peer that fails the TLS handshake never reaches the service.
+		if !isSilentHandshakeFailure(err) {
+			logError(rt, "Error while SSL handshake: "+err.Error())
+		}
 		_ = conn.Close()
 		return
 	}
