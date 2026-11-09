@@ -91,6 +91,10 @@ type SignedRest record {|
     int:Signed8...;
 |};
 
+type RecursiveNode record {
+    RecursiveNode a?;
+};
+
 function show(anydata|error v) {
     io:println(v is error ? "E: " + v.message() : v.toString());
 }
@@ -190,4 +194,7 @@ public function main() {
     both("<r><a>-8</a></r>", SignedRest);
     // @output {"a":-8}
     // @output {"a":-8}
+    both("<a><a><a/></a></a>", RecursiveNode);
+    // @output {"a":{"a":{}}}
+    // @output {"a":{"a":{}}}
 }

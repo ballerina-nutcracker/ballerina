@@ -36,4 +36,6 @@ E: 'string' value '200' cannot be converted to 'lang.int:Signed8'
 E: 'string' value '200' cannot be converted to 'lang.int:Signed8'
 {"a":-8}
 {"a":-8}
+{"a":{"a":{}}}
+{"a":{"a":{}}}
 -- stderr --
