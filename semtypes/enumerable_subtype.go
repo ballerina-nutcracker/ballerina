@@ -154,6 +154,7 @@ func enumerableListDiff[T any](v1 []enumerableType[T], v2 []enumerableType[T], r
 	}
 }
 
+//shallow:allow shared generic comparison adapter keeps enumerable operations consistent
 func compareEnumerable[T any](v1 enumerableType[T], v2 enumerableType[T]) int {
 	return v1.Compare(v2)
 }

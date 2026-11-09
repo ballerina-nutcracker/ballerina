@@ -22,6 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -48,7 +49,7 @@ func intFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, 
 	s := args[0].(string)
 	n, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return values.NewErrorWithMessage("'int' from string: invalid number format: " + s), nil
+		return values.NewError(semtypes.Error, "'int' from string: invalid number format: "+s, nil, "", nil), nil
 	}
 	return n, nil
 }
@@ -65,21 +66,21 @@ func intFromHexString(_ *extern.Context, args []values.BalValue) (values.BalValu
 		input = input[1:]
 	}
 	if len(input) == 0 {
-		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+		return values.NewError(semtypes.Error, "invalid hex string: \""+s+"\"", nil, "", nil), nil
 	}
 	n, err := strconv.ParseUint(input, 16, 64)
 	if err != nil {
-		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+		return values.NewError(semtypes.Error, "invalid hex string: \""+s+"\"", nil, "", nil), nil
 	}
 	const maxMagnitude = uint64(math.MaxInt64) + 1
 	if negative {
 		if n > maxMagnitude {
-			return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+			return values.NewError(semtypes.Error, "invalid hex string: \""+s+"\"", nil, "", nil), nil
 		}
 		return -int64(n-1) - 1, nil
 	}
 	if n > math.MaxInt64 {
-		return values.NewErrorWithMessage("invalid hex string: \"" + s + "\""), nil
+		return values.NewError(semtypes.Error, "invalid hex string: \""+s+"\"", nil, "", nil), nil
 	}
 	return int64(n), nil
 }

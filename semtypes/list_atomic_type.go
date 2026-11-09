@@ -30,6 +30,7 @@ func newListAtomicTypeFromMembersRest(members fixedLengthArray, rest SemType) Li
 	return this
 }
 
+//shallow:allow semantic constructor keeps list-atomic construction consistent across type operations
 func listAtomicTypeFrom(members fixedLengthArray, rest SemType) ListAtomicType {
 	return newListAtomicTypeFromMembersRest(members, rest)
 }

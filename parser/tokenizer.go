@@ -23,7 +23,7 @@ import (
 )
 
 func failedToken() st.STToken {
-	return st.CreateToken(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList())
+	return st.CreateTokenWithDiagnostics(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList(), nil)
 }
 
 type tokenReader struct {

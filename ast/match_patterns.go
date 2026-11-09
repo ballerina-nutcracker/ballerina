@@ -43,6 +43,7 @@ type (
 		Expr BLangExpression
 	}
 
+	//shallow:allow marker struct
 	BLangWildCardMatchPattern struct {
 		bLangMatchPatternBase
 	}

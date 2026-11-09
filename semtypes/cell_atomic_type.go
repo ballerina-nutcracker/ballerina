@@ -38,6 +38,7 @@ func newCellAtomicTypeFromTyMut(ty SemType, mut CellMutability) cellAtomicType {
 	return this
 }
 
+//shallow:allow semantic constructor keeps cell-atomic construction consistent across type operations
 func cellAtomicTypeFrom(ty SemType, mut CellMutability) cellAtomicType {
 	return newCellAtomicTypeFromTyMut(ty, mut)
 }

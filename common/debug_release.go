@@ -28,4 +28,6 @@ const (
 
 func InitDebug(_ uint16, _ io.Writer)          {}
 func DebugWriteLazy(_ uint16, _ func() string) {}
-func WithSuppressedDebug(fn func())            { fn() }
+
+//shallow:allow release variant preserves the debug-build suppression API
+func WithSuppressedDebug(fn func()) { fn() }

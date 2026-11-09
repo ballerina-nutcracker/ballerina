@@ -30,8 +30,8 @@ const (
 
 type subtypePairIterator struct {
 	cache subtypePair
-	list1 []properSubtypeData
-	list2 []properSubtypeData
+	list1 []subtypeData
+	list2 []subtypeData
 	some1 basicTypeBitSet
 	some2 basicTypeBitSet
 	bits  basicTypeBitSet
