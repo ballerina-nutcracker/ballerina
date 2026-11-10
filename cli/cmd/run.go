@@ -45,6 +45,7 @@ var runOpts struct {
 	dumpAST          bool
 	dumpRecoveredAST bool
 	dumpCFG          bool
+	dumpDesugaredAST bool
 	dumpBIR          bool
 	traceRecovery    bool
 	stats            bool
@@ -92,6 +93,7 @@ func init() {
 	runCmd.Flags().BoolVar(&runOpts.dumpAST, "dump-ast", false, "Dump abstract syntax tree")
 	runCmd.Flags().BoolVar(&runOpts.dumpRecoveredAST, "dump-recovered-ast", false, "Dump recovered abstract syntax tree")
 	runCmd.Flags().BoolVar(&runOpts.dumpCFG, "dump-cfg", false, "Dump control flow graph")
+	runCmd.Flags().BoolVar(&runOpts.dumpDesugaredAST, "dump-desugared-ast", false, "Dump abstract syntax tree after desugaring")
 	runCmd.Flags().BoolVar(&runOpts.dumpBIR, "dump-bir", false, "Dump Ballerina Intermediate Representation")
 	runCmd.Flags().BoolVar(&runOpts.traceRecovery, "trace-recovery", false, "Enable error recovery tracing")
 	runCmd.Flags().BoolVar(&runOpts.stats, "stats", false, "Print per-stage compilation timing statistics")
@@ -121,6 +123,7 @@ func runBallerina(cmd *cobra.Command, args []string) error {
 		WithDumpRecoveredAST(runOpts.dumpRecoveredAST).
 		WithDumpBIR(runOpts.dumpBIR).
 		WithDumpCFG(runOpts.dumpCFG).
+		WithDumpDesugaredAST(runOpts.dumpDesugaredAST).
 		WithDumpCFGFormat(projects.ParseCFGFormat(runOpts.format)).
 		WithDumpTokens(runOpts.dumpTokens).
 		WithDumpST(runOpts.dumpST).

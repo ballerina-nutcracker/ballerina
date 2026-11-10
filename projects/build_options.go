@@ -198,6 +198,12 @@ func (b BuildOptions) DumpCFG() bool {
 	return b.compilationOptions.DumpCFG()
 }
 
+// DumpDesugaredAST returns whether desugared AST dumping is enabled.
+// Delegated to CompilationOptions.
+func (b BuildOptions) DumpDesugaredAST() bool {
+	return b.compilationOptions.DumpDesugaredAST()
+}
+
 // DumpCFGFormat returns the CFG dump format.
 // Delegated to CompilationOptions.
 func (b BuildOptions) DumpCFGFormat() CFGFormat {
@@ -414,6 +420,13 @@ func (b *BuildOptionsBuilder) WithDumpBIRFile(value bool) *BuildOptionsBuilder {
 // Delegates to CompilationOptionsBuilder.
 func (b *BuildOptionsBuilder) WithDumpCFG(value bool) *BuildOptionsBuilder {
 	b.compilationOptionsBuilder.WithDumpCFG(value)
+	return b
+}
+
+// WithDumpDesugaredAST sets whether desugared AST dumping is enabled.
+// Delegates to CompilationOptionsBuilder.
+func (b *BuildOptionsBuilder) WithDumpDesugaredAST(value bool) *BuildOptionsBuilder {
+	b.compilationOptionsBuilder.WithDumpDesugaredAST(value)
 	return b
 }
 

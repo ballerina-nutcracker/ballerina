@@ -385,6 +385,13 @@ func analyzeAndDesugar(moduleCtx *moduleContext) {
 		return
 	}
 
+	if compilationOptions.DumpDesugaredAST() {
+		prettyPrinter := ast.PrettyPrinter{Fallback: desugar.PrettyPrintFallback}
+		// Single write so concurrently compiled modules do not interleave.
+		fmt.Fprintf(os.Stderr, "\n==================BEGIN DESUGARED AST==================\n%s\n===================END DESUGARED AST===================\n",
+			strings.TrimSpace(prettyPrinter.Print(moduleCtx.bLangPkg)))
+	}
+
 	moduleCtx.compilationState = moduleCompilationStateCompiled
 }
 

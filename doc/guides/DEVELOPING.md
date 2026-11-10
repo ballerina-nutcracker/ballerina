@@ -19,6 +19,7 @@ go build -tags debug -o bal-debug ./cli/cmd
 | `--dump-ast` | Dump the abstract syntax tree | |
 | `--dump-recovered-ast` | Dump the AST after error recovery | |
 | `--dump-cfg` | Dump the control flow graph | |
+| `--dump-desugared-ast` | Dump the AST after desugaring | |
 | `--dump-bir` | Dump the generated BIR | |
 | `--format dot` | Render `--dump-cfg` output as Graphviz `.dot` | |
 | `--stats` / `--stats-oneline` | Print per-stage compilation timing | |
