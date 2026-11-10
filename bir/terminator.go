@@ -34,13 +34,13 @@ const (
 )
 
 type (
-	BIRTerminatorBase struct {
-		BIRInstructionBase
+	birTerminatorBase struct {
+		birInstructionBase
 		ThenBB *BIRBasicBlock
 	}
 
 	Goto struct {
-		BIRTerminatorBase
+		birTerminatorBase
 	}
 
 	CallSite struct {
@@ -56,7 +56,7 @@ type (
 	}
 
 	Call struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		CallSite
 		CachedBIRFunc *BIRFunction
 		// CachedMethodLookupKey is used only for method calls. It ensures CachedBIRFunc
@@ -66,54 +66,54 @@ type (
 	}
 
 	Return struct {
-		BIRTerminatorBase
+		birTerminatorBase
 	}
 
 	Branch struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		Op      *BIROperand
 		TrueBB  *BIRBasicBlock
 		FalseBB *BIRBasicBlock
 	}
 
 	Panic struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		ErrorOp *BIROperand
 	}
 
 	LockStart struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		LockKey string
 	}
 
 	LockEnd struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		LockKey string
 	}
 
 	ResourceFunctionCall struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		CallSite
 	}
 
 	StartAction struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		Call       CallSite
 		IsIsolated bool
 	}
 
 	SingleWaitAction struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		Future BIROperand
 	}
 
 	AlternateWaitAction struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		Futures []BIROperand
 	}
 
 	MultipleWaitAction struct {
-		BIRTerminatorBase
+		birTerminatorBase
 		Futures    []BIROperand
 		FieldNames []string
 		Type       semtypes.SemType

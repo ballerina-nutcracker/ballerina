@@ -32,15 +32,15 @@ func SetType(node BLangActionOrExpression, ty semtypes.SemType) {
 		n.Ty = ty
 	case *bLangActionBase:
 		n.Ty = ty
-	case *BLangValueExpressionBase:
+	case *bLangValueExpressionBase:
 		n.Ty = ty
-	case *BLangVariableReferenceBase:
+	case *bLangVariableReferenceBase:
 		n.Ty = ty
 	case *bLangAccessExpressionBase:
 		n.Ty = ty
-	case *BLangWorkerSendReceiveExprBase:
+	case *bLangWorkerSendReceiveExprBase:
 		n.Ty = ty
-	case *BLangWorkerSendExprBase:
+	case *bLangWorkerSendExprBase:
 		n.Ty = ty
 	case *BLangLiteral:
 		n.Ty = ty

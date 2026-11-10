@@ -438,7 +438,7 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 		bw.writeStringCPEntry(buf, term.FalseBB.ID.Value())
 	case *bir.Call:
 		bw.writeCallSite(buf, term.CallSite)
-		bw.writeCallContinuation(buf, &term.BIRTerminatorBase)
+		bw.writeCallContinuation(buf, term.LhsOp, term.ThenBB)
 	case *bir.Return:
 	case *bir.Panic:
 		bw.writeOperand(buf, term.ErrorOp)
@@ -451,7 +451,7 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 	case *bir.StartAction:
 		bw.writeCallSite(buf, term.Call)
 		write(buf, term.IsIsolated)
-		bw.writeCallContinuation(buf, &term.BIRTerminatorBase)
+		bw.writeCallContinuation(buf, term.LhsOp, term.ThenBB)
 	case *bir.SingleWaitAction:
 		bw.writeOperand(buf, &term.Future)
 		bw.writeOperand(buf, term.LhsOp)
@@ -474,7 +474,7 @@ func (bw *birWriter) writeTerminator(buf *bytes.Buffer, term bir.BIRTerminator) 
 		bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
 	case *bir.ResourceFunctionCall:
 		bw.writeCallSite(buf, term.CallSite)
-		bw.writeCallContinuation(buf, &term.BIRTerminatorBase)
+		bw.writeCallContinuation(buf, term.LhsOp, term.ThenBB)
 	default:
 		panic(fmt.Sprintf("unsupported terminator type: %T", term))
 	}
@@ -511,12 +511,12 @@ func (bw *birWriter) writeCallSite(buf *bytes.Buffer, call bir.CallSite) {
 	}
 }
 
-func (bw *birWriter) writeCallContinuation(buf *bytes.Buffer, term *bir.BIRTerminatorBase) {
-	write(buf, term.LhsOp != nil)
-	if term.LhsOp != nil {
-		bw.writeOperand(buf, term.LhsOp)
+func (bw *birWriter) writeCallContinuation(buf *bytes.Buffer, lhsOp *bir.BIROperand, thenBB *bir.BIRBasicBlock) {
+	write(buf, lhsOp != nil)
+	if lhsOp != nil {
+		bw.writeOperand(buf, lhsOp)
 	}
-	bw.writeStringCPEntry(buf, term.ThenBB.ID.Value())
+	bw.writeStringCPEntry(buf, thenBB.ID.Value())
 }
 
 func (bw *birWriter) writeOperand(buf *bytes.Buffer, op *bir.BIROperand) {
