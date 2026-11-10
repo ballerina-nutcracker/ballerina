@@ -48,8 +48,6 @@ type Severity uint8
 const (
 	SeverityError Severity = iota
 	SeverityWarning
-	SeverityInformation
-	SeverityHint
 )
 
 // CompilerDiagnostic uses zero-based lines and byte columns, not UTF-16 code
@@ -651,10 +649,6 @@ func toCoreSeverity(sev diagnostics.DiagnosticSeverity) Severity {
 		return SeverityError
 	case diagnostics.Warning:
 		return SeverityWarning
-	case diagnostics.Info:
-		return SeverityInformation
-	case diagnostics.Hint:
-		return SeverityHint
 	default:
 		return SeverityError
 	}

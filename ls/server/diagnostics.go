@@ -50,10 +50,6 @@ func toLSPSeverity(severity compile.Severity) protocol.DiagnosticSeverity {
 		return protocol.DiagnosticSeverityError
 	case compile.SeverityWarning:
 		return protocol.DiagnosticSeverityWarning
-	case compile.SeverityInformation:
-		return protocol.DiagnosticSeverityInformation
-	case compile.SeverityHint:
-		return protocol.DiagnosticSeverityHint
 	default:
 		return protocol.DiagnosticSeverityError
 	}

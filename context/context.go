@@ -283,6 +283,7 @@ func (c *CompilerContext) HasErrors() bool {
 		switch diag.DiagnosticInfo().Severity() {
 		case diagnostics.Error, diagnostics.Fatal:
 			return true
+		case diagnostics.Warning:
 		}
 	}
 	return false
