@@ -1,0 +1,230 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$3 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$4 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$5 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$6 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$7))
+      (var-def
+        (variable $desugar$8))
+      (var-def
+        (variable $desugar$9))
+      (var-def
+        (variable $desugar$10 (expr
+          (lambda
+            (function $worker:main:$function$body () (
+              (value-type null))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (value-type int)) (expr
+                    (literal 0))))
+                (assignment
+                  (simple-var-ref x)
+                  (invocation lang.__internal getWorkerMessageValue (
+                    (simple-var-ref $desugar$4)
+                    (simple-var-ref $desugar$9))))
+                (assignment
+                  (wildcard-binding-pattern)
+                  (invocation lang.__internal getWorkerMessageValue (
+                    (simple-var-ref $desugar$5)
+                    (simple-var-ref $desugar$9))))
+                (var-def
+                  (variable y (type
+                    (union-type
+                      (value-type int)
+                      (error-type))) (expr
+                    (literal 0))))
+                (assignment
+                  (simple-var-ref y)
+                  (check-panicked-expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$6)
+                      (simple-var-ref $desugar$9)))))
+                (var-def
+                  (variable e (type
+                    (union-type
+                      (error-type)
+                      (value-type null))) (expr
+                    (literal <nil>))))
+                (assignment
+                  (simple-var-ref e)
+                  (expression-thunk
+                  (expression-stmt
+                    (invocation lang.__internal setWorkerMessageValue (
+                      (simple-var-ref $desugar$1)
+                      (literal 1))))
+                  (invocation lang.__internal waitWorkerMessageReceived (
+                    (simple-var-ref $desugar$1)
+                    (simple-var-ref $desugar$8)))))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$2)
+                    (literal 10))))
+                (assignment
+                  (simple-var-ref e)
+                  (invocation lang.__internal flushWorkerMessages (
+                    (list-constructor-expr
+                      (list-constructor-expr
+                        (simple-var-ref $desugar$2)))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$8)))))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$3)
+                    (literal 100))))
+                (expression-stmt
+                  (invocation lang.__internal waitWorkerMessageReceived (
+                    (simple-var-ref $desugar$3)
+                    (simple-var-ref $desugar$8))))
+                (var-def
+                  (variable r (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$8)))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref x)
+                    (literal  )
+                    (simple-var-ref y)
+                    (literal  )
+                    (type-test-expr is
+                      (simple-var-ref e)
+                      (value-type null))
+                    (literal  )
+                    (simple-var-ref r))))))))))
+      (var-def
+        (variable $desugar$12 (expr
+          (lambda
+            (function $worker:main:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$11 (expr
+                    (invocation $desugar$10 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$2))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$8)))))
+                (return
+                  (simple-var-ref $desugar$11))))))))
+      (var-def
+        (variable $desugar$13 (expr
+          (lambda
+            (function $worker:main:a () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable x (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$1)
+                      (simple-var-ref $desugar$7))))))
+                (var-def
+                  (variable y (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$2)
+                      (simple-var-ref $desugar$7))))))
+                (var-def
+                  (variable z (type
+                    (value-type int)) (expr
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$7))))))
+                (return
+                  (binary-expr +
+                    (binary-expr +
+                      (simple-var-ref x)
+                      (simple-var-ref y))
+                    (simple-var-ref z)))))))))
+      (var-def
+        (variable $desugar$14 (expr
+          (lambda
+            (function $worker:main:b$body () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$4)
+                    (literal 2))))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$5)
+                    (literal 3))))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$6)
+                    (literal 4))))))))))
+      (var-def
+        (variable $desugar$16 (expr
+          (lambda
+            (function $worker:main:b () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$15 (expr
+                    (invocation $desugar$14 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$4)
+                      (simple-var-ref $desugar$5)
+                      (simple-var-ref $desugar$6))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$7)
+                      (simple-var-ref $desugar$7)
+                      (simple-var-ref $desugar$7)))))
+                (return
+                  (simple-var-ref $desugar$15))))))))
+      (assignment
+        (simple-var-ref $desugar$7)
+        (start-action
+          (invocation $desugar$12 ())))
+      (assignment
+        (simple-var-ref $desugar$8)
+        (start-action
+          (invocation $desugar$13 ())))
+      (assignment
+        (simple-var-ref $desugar$9)
+        (start-action
+          (invocation $desugar$16 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$7))))))

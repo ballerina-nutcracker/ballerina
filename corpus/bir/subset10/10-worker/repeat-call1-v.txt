@@ -5,19 +5,25 @@ counted(int) -> int{
   }
   bb1 {
     $desugar$0 = %2;
-    %5 = closure_fp $anon/.:$worker:counted:w
-    $desugar$2 = %5;
-    %7 = start $desugar$2() isolated=false -> bb2;
+    %6 = closure_fp $anon/.:$worker:counted:$function
+    $desugar$3 = %6;
+    %8 = closure_fp $anon/.:$worker:counted:w
+    $desugar$4 = %8;
+    %10 = start $desugar$3() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %7;
-    %8 = openLatch($desugar$0) -> bb3;
+    $desugar$1 = %10;
+    %11 = start $desugar$4() isolated=false -> bb3;
   }
   bb3 {
-    %9 = wait $desugar$1 -> bb4;
+    $desugar$2 = %11;
+    %12 = openLatch($desugar$0) -> bb4;
   }
   bb4 {
-    %0 = %9;
+    %13 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %0 = %13;
     return;
   }
 }
@@ -50,6 +56,18 @@ main() -> nil{
     %15 = println(%14) -> bb6;
   }
   bb6 {
+    return;
+  }
+}
+$worker:counted:$function() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %2;
     return;
   }
 }

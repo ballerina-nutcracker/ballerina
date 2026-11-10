@@ -1,0 +1,132 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function failWith (
+    (variable message (type
+      (value-type string)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (return
+        (error-constructor-expr (
+          (simple-var-ref message))))))
+  (function returned () (
+    (union-type
+      (record-type
+        (field a
+          (value-type int))
+        (field b
+          (value-type int)))
+      (error-type)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failWith (
+                (literal a failed)))))
+          (expression-stmt
+            (checked-expr
+              (worker-sync-send-action function
+                (literal 1))))))
+      (named-worker b (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (worker-sync-send-action function
+                (literal 2))))))
+      (return
+        (worker-multiple-receive-action a:a b:b))))
+  (function checked () (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (block-function-body
+      (named-worker a (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (worker-sync-send-action function
+                (literal 1))))))
+      (named-worker b (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (checked-expr
+              (invocation failWith (
+                (literal b failed)))))
+          (expression-stmt
+            (checked-expr
+              (worker-sync-send-action function
+                (literal 2))))))
+      (var-def
+        (variable r (type
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int)))) (expr
+          (checked-expr
+            (worker-multiple-receive-action a:a b:b)))))
+      (return
+        (binary-expr +
+          (field-based-access a
+            (simple-var-ref r))
+          (field-based-access b
+            (simple-var-ref r))))))
+  (function checkPanicked () (
+    (value-type int))
+    (block-function-body
+      (named-worker a (
+        (value-type null))
+        (block-function-body
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 1)))))
+      (named-worker b (
+        (union-type
+          (error-type)
+          (value-type null)))
+        (block-function-body
+          (expression-stmt
+            (worker-async-send-action function
+              (literal 2)))))
+      (var-def
+        (variable r (type
+          (record-type
+            (field a
+              (value-type int))
+            (field b
+              (value-type int)))) (expr
+          (check-panicked-expr
+            (worker-multiple-receive-action a:a b:b)))))
+      (return
+        (binary-expr +
+          (field-based-access a
+            (simple-var-ref r))
+          (field-based-access b
+            (simple-var-ref r))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation returned ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation checked ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation checkPanicked ())))))))

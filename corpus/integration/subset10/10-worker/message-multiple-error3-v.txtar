@@ -1,0 +1,5 @@
+-- stdout --
+error("a failed") error("a failed") error("a failed")
+flush a failed
+error("a failed") error("a failed") error("a failed")
+-- stderr --

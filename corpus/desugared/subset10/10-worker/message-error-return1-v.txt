@@ -1,0 +1,141 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang error (as lang.error))
+  (function run (
+    (variable early (type
+      (value-type boolean)))) (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation lang.__internal createWorkerMessage ()))))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:run:$function$body () (
+              (union-type
+                (error-type)
+                (value-type null)))
+              (block-function-body
+                (if
+                  (simple-var-ref early)
+                  (block-stmt
+                    (return
+                      (error-constructor-expr (
+                        (literal early))))) (
+                  (block-stmt)))
+                (expression-stmt
+                  (invocation lang.__internal setWorkerMessageValue (
+                    (simple-var-ref $desugar$1)
+                    (literal 1))))
+                (expression-stmt
+                  (checked-expr
+                    (invocation lang.__internal flushWorkerMessages (
+                      (list-constructor-expr
+                        (list-constructor-expr
+                          (simple-var-ref $desugar$1)))
+                      (list-constructor-expr
+                        (simple-var-ref $desugar$3))))))
+                (expression-stmt
+                  (checked-expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$3))))))))))
+      (var-def
+        (variable $desugar$6 (expr
+          (lambda
+            (function $worker:run:$function () (
+              (union-type
+                (error-type)
+                (value-type null)))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$5 (expr
+                    (invocation $desugar$4 ()))))
+                (expression-stmt
+                  (invocation lang.__internal awaitWorkerMessageDelivery (
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$1))
+                    (list-constructor-expr
+                      (simple-var-ref $desugar$3)))))
+                (return
+                  (simple-var-ref $desugar$5))))))))
+      (var-def
+        (variable $desugar$7 (expr
+          (lambda
+            (function $worker:run:a () (
+              (union-type
+                (error-type)
+                (value-type null)))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable _ (type
+                    (value-type int)) (expr
+                    (checked-expr
+                      (invocation lang.__internal getWorkerMessageValue (
+                        (simple-var-ref $desugar$1)
+                        (simple-var-ref $desugar$2)))))))))))))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$6 ())))
+      (assignment
+        (simple-var-ref $desugar$3)
+        (start-action
+          (invocation $desugar$7 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable first (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation run (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref first)
+              (error-type))
+            (invocation lang.error message (
+              (simple-var-ref first)))
+            (literal done)))))
+      (var-def
+        (variable second (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (invocation run (
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref second)
+              (error-type))
+            (invocation lang.error message (
+              (simple-var-ref second)))
+            (literal done))))))))

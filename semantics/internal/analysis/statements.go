@@ -262,7 +262,7 @@ func validateReturn(cx scope.Context, ret *ast.BLangReturn) {
 	f := scope.NoFacts
 	if ret.Expr != nil {
 		var ok bool
-		f, ok = validateActionOrExpr(cx, ret.Expr, fn.RetTy)
+		f, ok = validateErrorEndingOperand(cx, ret.Expr, fn.RetTy)
 		if !ok {
 			return
 		}

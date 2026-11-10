@@ -1,0 +1,65 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable count (type
+        (value-type int)) (expr
+        (literal 0))))
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable _ (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (compound-assignment +
+          (simple-var-ref count)
+          (literal 10))
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))
+        (return
+          (simple-var-ref count))))
+    (assignment
+      (simple-var-ref count)
+      (literal 5))
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 0)))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref count))))
+    (compound-assignment +
+      (simple-var-ref count)
+      (literal 100))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r)
+        (literal  )
+        (simple-var-ref count))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (compound-assignment +
+      (simple-var-ref count)
+      (literal 10))
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+    (return
+      (simple-var-ref count))
+  )
+)

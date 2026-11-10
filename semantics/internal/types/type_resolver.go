@@ -27,6 +27,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	balCommon "github.com/ballerina-nutcracker/ballerina/common"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -101,6 +102,7 @@ type typeResolver interface {
 	currentScope() model.Scope
 	setCurrentScope(scope model.Scope)
 	nextXMLStepFnName() string
+	nextXMLStepIndex(scope model.Scope, owner string) int
 	nextMonoFnName(origName string) string
 	packageID() *model.PackageID
 
@@ -202,13 +204,13 @@ type packageTypeResolver struct {
 	// lazyResolutionStatus tracks per-symbol resolution progress (for both
 	// constants and module-level vars) for cycle detection.
 	// Absence means resolution has not started.
-	lazyResolutionStatus map[model.SymbolRef]resolutionStatus
-	functionNodes        map[model.SymbolRef]*ast.BLangFunction
-	typeDefnNodes        map[model.SymbolRef]*ast.BLangTypeDefinition
-	classDefnNodes       map[model.SymbolRef]*ast.BLangClassDefinition
-	monoCounters         map[string]int
-	// xmlStepCounters holds the next index per owner name; a lambda resolver shares its enclosing body's table.
-	xmlStepCounters       map[string]int
+	lazyResolutionStatus  map[model.SymbolRef]resolutionStatus
+	functionNodes         map[model.SymbolRef]*ast.BLangFunction
+	typeDefnNodes         map[model.SymbolRef]*ast.BLangTypeDefinition
+	classDefnNodes        map[model.SymbolRef]*ast.BLangClassDefinition
+	monoCounters          map[string]int
+	xmlStepCounters       map[xmlStepCounterKey]int
+	sharedStateMu         sync.Mutex
 	annotationGlobalCount int
 	scope                 model.Scope
 	context               resolverContext
@@ -217,6 +219,11 @@ type packageTypeResolver struct {
 	ephemeralState ephemeralState
 
 	deferredEmptinessChecks []deferredEmptinessCheck
+
+	// resolvingPublicNodes is set while ResolvePublicNodes runs. The lazily
+	// resolved state above isn't safe for concurrent use, so workers are
+	// resolved one after another then.
+	resolvingPublicNodes bool
 }
 
 func (t *packageTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
@@ -376,30 +383,22 @@ func xmlStepFnName(owner string, idx int) string {
 	return fmt.Sprintf("%s%s$%d", xmlStepFnPrefix, owner, idx)
 }
 
+type xmlStepCounterKey struct {
+	scope model.Scope
+	owner string
+}
+
 func (t *packageTypeResolver) nextXMLStepFnName() string {
-	return xmlStepFnName(moduleXMLStepOwner, nextXMLStepIndex(t.xmlStepCounters, moduleXMLStepOwner))
+	return xmlStepFnName(moduleXMLStepOwner, t.nextXMLStepIndex(t.pkg.Scope, moduleXMLStepOwner))
 }
 
-func nextXMLStepIndex(counters map[string]int, owner string) int {
-	idx := counters[owner]
-	counters[owner] = idx + 1
+func (t *packageTypeResolver) nextXMLStepIndex(scope model.Scope, owner string) int {
+	t.sharedStateMu.Lock()
+	defer t.sharedStateMu.Unlock()
+	key := xmlStepCounterKey{scope: scope, owner: owner}
+	idx := t.xmlStepCounters[key]
+	t.xmlStepCounters[key] = idx + 1
 	return idx
-}
-
-// resolverXMLStepCounters returns the counter table of the body enclosing t, for a lambda resolver to share.
-func resolverXMLStepCounters(t typeResolver) map[string]int {
-	switch resolver := t.(type) {
-	case *packageTypeResolver:
-		return resolver.xmlStepCounters
-	case *functionTypeResolver:
-		return resolver.xmlStepCounters
-	case *loopTypeResolver:
-		return resolverXMLStepCounters(resolver.parentResolver)
-	default:
-		// Unreachable: these are the only resolver kinds. The fresh table keeps the caller from writing a nil map.
-		t.internalError(fmt.Sprintf("no xml step counters for resolver %T", t), diagnostics.Location{})
-		return make(map[string]int)
-	}
 }
 
 func (t *packageTypeResolver) packageID() *model.PackageID { return t.pkg.PackageID }
@@ -416,29 +415,32 @@ func (t *packageTypeResolver) lookupImportedSymbols(name string) (model.Exported
 }
 
 func (t *packageTypeResolver) addImplicitImport(name string, imp ast.BLangImportPackage) {
+	t.sharedStateMu.Lock()
+	defer t.sharedStateMu.Unlock()
 	t.implicitImports[name] = imp
 }
 
 func (t *packageTypeResolver) hasImplicitImport(name string) bool {
+	t.sharedStateMu.Lock()
+	defer t.sharedStateMu.Unlock()
 	_, ok := t.implicitImports[name]
 	return ok
 }
 
 type functionTypeResolver struct {
 	*atomSideTableBase
-	parentResolver  typeResolver
-	tyCtx           semtypes.Context
-	retTy           semtypes.SemType
-	implicitImports map[string]ast.BLangImportPackage
-	monoCounters    map[string]int
-	xmlStepOwner    string
-	// xmlStepCounters holds the next index per owner name; a lambda resolver shares its enclosing body's table.
-	xmlStepCounters map[string]int
-	scope           model.Scope
-	context         resolverContext
+	parentResolver   typeResolver
+	tyCtx            semtypes.Context
+	retTy            semtypes.SemType
+	monoCounters     map[string]int
+	monoCounterOwner typeResolver
+	xmlStepOwner     string
+	xmlStepScope     model.Scope
+	scope            model.Scope
+	context          resolverContext
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
-	ephemeralState *ephemeralState
+	ephemeralState ephemeralState
 }
 
 func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.tyCtx }
@@ -446,8 +448,7 @@ func (f *functionTypeResolver) expectedReturnType() semtypes.SemType { return f.
 func (f *functionTypeResolver) parent() typeResolver                 { return f.parentResolver }
 func (f *functionTypeResolver) typeEnv() semtypes.Env                { return f.parentResolver.typeEnv() }
 func (f *functionTypeResolver) isEphemeral() bool {
-	state := resolverEphemeralState(f)
-	return state != nil && state.depth > 0
+	return f.ephemeralState.depth > 0 || f.parentResolver.isEphemeral()
 }
 func (f *functionTypeResolver) opaqueContext() *opaque.Context {
 	if f.opaqueCtx == nil {
@@ -472,22 +473,19 @@ func (f *functionTypeResolver) unimplemented(msg string, loc diagnostics.Locatio
 	f.parentResolver.unimplemented(msg, loc)
 }
 
-// symbolType returns the trial overlay entry for ref when one exists, else the compiler-context type.
 func (f *functionTypeResolver) symbolType(ref model.SymbolRef) semtypes.SemType {
-	if f.ephemeralState != nil {
-		if ty, ok := f.ephemeralState.lookupSymbolType(ref); ok {
-			return ty
-		}
+	if ty, ok := f.ephemeralState.lookupSymbolType(ref); ok {
+		return ty
 	}
-	return f.compilerContext().SymbolType(ref)
+	return f.parentResolver.symbolType(ref)
 }
 
 func (f *functionTypeResolver) setSymbolType(ref model.SymbolRef, ty semtypes.SemType) {
-	if f.isEphemeral() {
+	if f.ephemeralState.depth > 0 {
 		f.ephemeralState.setSymbolType(ref, ty)
 		return
 	}
-	f.compilerContext().SetSymbolType(ref, ty)
+	f.parentResolver.setSymbolType(ref, ty)
 }
 
 func (f *functionTypeResolver) getSymbol(ref model.SymbolRef) model.Symbol {
@@ -567,12 +565,11 @@ func (f *functionTypeResolver) lookupImportedSymbols(name string) (model.Exporte
 }
 
 func (f *functionTypeResolver) addImplicitImport(name string, imp ast.BLangImportPackage) {
-	f.implicitImports[name] = imp
+	f.parentResolver.addImplicitImport(name, imp)
 }
 
 func (f *functionTypeResolver) hasImplicitImport(name string) bool {
-	_, ok := f.implicitImports[name]
-	return ok
+	return f.parentResolver.hasImplicitImport(name)
 }
 
 func (f *functionTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
@@ -677,12 +674,19 @@ func setResolverContext(t typeResolver, flag resolverContext, enabled bool) func
 }
 
 func (f *functionTypeResolver) nextXMLStepFnName() string {
-	return xmlStepFnName(f.xmlStepOwner, nextXMLStepIndex(f.xmlStepCounters, f.xmlStepOwner))
+	return xmlStepFnName(f.xmlStepOwner, f.nextXMLStepIndex(f.xmlStepScope, f.xmlStepOwner))
+}
+
+func (f *functionTypeResolver) nextXMLStepIndex(scope model.Scope, owner string) int {
+	return f.parentResolver.nextXMLStepIndex(scope, owner)
 }
 
 func (f *functionTypeResolver) packageID() *model.PackageID { return f.parentResolver.packageID() }
 
 func (f *functionTypeResolver) nextMonoFnName(origName string) string {
+	if f.monoCounterOwner != nil {
+		return f.monoCounterOwner.nextMonoFnName(origName)
+	}
 	idx := f.monoCounters[origName]
 	f.monoCounters[origName] = idx + 1
 	return fmt.Sprintf("$mono$%s$%d", origName, idx)
@@ -702,7 +706,7 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		typeDefnNodes:        make(map[model.SymbolRef]*ast.BLangTypeDefinition),
 		classDefnNodes:       make(map[model.SymbolRef]*ast.BLangClassDefinition),
 		monoCounters:         make(map[string]int),
-		xmlStepCounters:      make(map[string]int),
+		xmlStepCounters:      make(map[xmlStepCounterKey]int),
 		scope:                moduleScope,
 	}
 }
@@ -793,7 +797,9 @@ func (t *packageTypeResolver) resolveTypeOnce(ref model.SymbolRef, resolve func(
 // ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
 func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
 	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
+	t.resolvingPublicNodes = true
 	t.resolveTopLevelTypes(pkg)
+	t.resolvingPublicNodes = false
 	mergeImplicitImports(pkg, t.implicitImports)
 }
 
@@ -812,18 +818,15 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
 	fns := common.DeclaredNodes(common.PackageFunctionDecls(pkg))
 
-	allImports := make(map[string]ast.BLangImportPackage)
 	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
 		ft := &functionTypeResolver{
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
 			tyCtx:             semtypes.ContextFrom(p.typeEnv()),
-			implicitImports:   make(map[string]ast.BLangImportPackage),
 			monoCounters:      make(map[string]int),
 			xmlStepOwner:      p.getSymbol(owner).Name(),
-			xmlStepCounters:   make(map[string]int),
+			xmlStepScope:      scope,
 			scope:             scope,
-			ephemeralState:    &ephemeralState{},
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -831,7 +834,6 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 				resolveActionOrExpression(ft, nil, field.Expr.(ast.BLangExpression), field.TypeNode().Type())
 			}
 		}
-		maps.Copy(allImports, ft.implicitImports)
 	}
 	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
 		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields)
@@ -841,29 +843,22 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields)
 	}
 
-	resolvers := make([]*functionTypeResolver, len(fns))
 	var wg sync.WaitGroup
-	for i, fn := range fns {
+	for _, fn := range fns {
 		if isOpaqueFunctionDecl(p, fn) {
 			// The declaration of an opaque function has no body of its own to resolve;
 			// a call to it is monomorphized into a function of the call's own types.
 			continue
 		}
 		wg.Add(1)
-		go func(idx int, f common.FunctionDecl) {
+		go func(f common.FunctionDecl) {
 			defer wg.Done()
-			resolvers[idx] = resolveFunctionBody(p, f)
-		}(i, fn)
+			resolveFunctionBody(p, f)
+		}(fn)
 	}
 	wg.Wait()
 
-	for _, t := range resolvers {
-		if t == nil {
-			continue
-		}
-		maps.Copy(allImports, t.implicitImports)
-	}
-	mergeImplicitImports(pkg, allImports)
+	mergeImplicitImports(pkg, p.implicitImports)
 }
 
 // isOpaqueFunctionDecl reports whether fn is the lang library source declaration of an
@@ -1081,24 +1076,22 @@ func invokableSignatureTypes(t typeResolver, chain *binding, fn common.FunctionD
 	return returnTy, fnType, chain, true
 }
 
-func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
+func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) {
 	fnSymbol := p.getSymbol(fn.Symbol())
 	fnSym, ok := fnSymbol.(model.FunctionSymbol)
 	if !ok {
 		p.internalError("expected function symbol", fn.GetPosition())
-		return nil
+		return
 	}
 	ft := &functionTypeResolver{
 		atomSideTableBase: newAtomSideTableBase(),
 		parentResolver:    p,
 		tyCtx:             semtypes.ContextFrom(p.typeEnv()),
-		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
-		xmlStepCounters:   make(map[string]int),
+		xmlStepScope:      fn.Scope(),
 		scope:             fn.Scope(),
 		context:           resolverContextForFunction(fn.IsIsolated()),
-		ephemeralState:    &ephemeralState{},
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -1106,7 +1099,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 	body := fn.GetBody()
 	if body == nil {
 		p.internalError("function body is nil at body-resolution stage", fn.GetPosition())
-		return ft
+		return
 	}
 	switch body := body.(type) {
 	case *ast.BLangExternFunctionBody:
@@ -1118,7 +1111,6 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 	default:
 		p.internalError("unexpected function body kind", body.GetPosition())
 	}
-	return ft
 }
 
 func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
@@ -2340,10 +2332,17 @@ func buildReturnTypeOp(t typeResolver, chain *binding, params map[string]param, 
 // and the remaining default-worker statements. Every worker is resolved with
 // the narrowing state produced by the initialization region, so a worker sees
 // exactly what the default worker had in scope at the startup point.
+//
+// The trailing statements and every named worker body have separate child
+// resolvers, all built before any of them runs.
 func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) {
 	startupChain := chain
 	if len(body.InitStmts) > 0 {
 		startupChain = resolveBlockStatements(t, chain, body.InitStmts).binding
+	}
+	if len(body.Workers) == 0 {
+		resolveBlockStatements(t, startupChain, body.Stmts)
+		return
 	}
 	returnTypes := make([]semtypes.SemType, len(body.Workers))
 	for i, worker := range body.Workers {
@@ -2358,16 +2357,93 @@ func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlo
 		returnTypes[i] = returnTy
 		startupChain = workerChain
 	}
+	t.setSymbolType(body.DefaultWorker, semtypes.FutureContaining(t.typeEnv(), t.expectedReturnType()))
 	// Workers run concurrently with each other and with the rest of the
 	// default worker, so every worker's captures are in effect in every worker
 	// body and in the trailing statements.
 	for _, worker := range body.Workers {
 		startupChain = addCaptureGroup(startupChain, worker.CaptureGroup())
 	}
+	children := make([]workerResolution, 0, len(body.Workers)+1)
 	for i, worker := range body.Workers {
-		resolveNamedWorker(t, startupChain, worker, returnTypes[i])
+		children = append(children, newNamedWorkerResolution(t, startupChain, worker, returnTypes[i]))
 	}
-	resolveBlockStatements(t, startupChain, body.Stmts)
+	children = append(children, newDefaultWorkerResolution(t, startupChain, body))
+	if isResolvingPublicNodes(t) {
+		// Symbol resolution rejects message actions here, so no worker waits on another.
+		for _, child := range children {
+			child.resolve()
+		}
+	} else {
+		runWorkerResolutions(children)
+	}
+}
+
+// workerResolution is a worker's child resolver together with what it
+// resolves: a named worker's body, or the default worker's trailing
+// statements when worker is nil.
+type workerResolution struct {
+	resolver *functionTypeResolver
+	chain    *binding
+	worker   *ast.BLangNamedWorkerDeclaration
+	stmts    []ast.StatementNode
+	// sendMessages are the messages the worker sends.
+	sendMessages []model.WorkerMessageRef
+}
+
+func (r workerResolution) resolve() {
+	if r.worker == nil {
+		resolveBlockStatements(r.resolver, r.chain, r.stmts)
+		return
+	}
+	resolveBlockFunctionBody(r.resolver, r.chain, r.worker.Body)
+}
+
+// runWorkerResolutions resolves every child in its own goroutine and waits for
+// all of them. A Go panic in a child is re-raised here once every child has
+// finished.
+func runWorkerResolutions(children []workerResolution) {
+	// A receive waits for its send's type. Bidirectional messaging can require
+	// alternating progress between worker bodies; resolving a whole body before
+	// starting its peers could block before they publish the types it needs.
+	panics := make([]any, len(children))
+	var wg sync.WaitGroup
+	for i, child := range children {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					panics[i] = r
+				}
+			}()
+			// Release the receives of siblings waiting on a send this worker
+			// never resolved.
+			defer failUnsetMessages(child.resolver.compilerContext(), child.sendMessages)
+			child.resolve()
+		}()
+	}
+	wg.Wait()
+	for _, r := range panics {
+		if r != nil {
+			panic(r) //nolint:forbidigo // Re-raise a child goroutine's panic on the resolving goroutine.
+		}
+	}
+}
+
+func failUnsetMessages(ctx *context.CompilerContext, messages []model.WorkerMessageRef) {
+	for _, message := range messages {
+		ctx.FailWorkerMessageTypeIfUnset(message)
+	}
+}
+
+func isResolvingPublicNodes(t typeResolver) bool {
+	for current := t; current != nil; current = current.parent() {
+		if resolver, ok := current.(*packageTypeResolver); ok {
+			return resolver.resolvingPublicNodes
+		}
+	}
+	return false
 }
 
 // declareNamedWorkerType resolves a worker's return type and gives its symbol
@@ -2390,28 +2466,61 @@ func declareNamedWorkerType(
 	return returnTy, chain, true
 }
 
-// resolveNamedWorker resolves a worker body in an independent return context.
-func resolveNamedWorker(
+// newNamedWorkerResolution prepares the resolution of a worker body in an
+// independent return context, behind a function boundary.
+func newNamedWorkerResolution(
 	t typeResolver,
 	chain *binding,
 	worker *ast.BLangNamedWorkerDeclaration,
 	returnTy semtypes.SemType,
-) {
-	ft := &functionTypeResolver{
+) workerResolution {
+	return workerResolution{
+		resolver:     newWorkerChildResolver(t, returnTy, worker.Name, worker.Scope()),
+		chain:        &binding{flags: bindingFlagFunctionBoundary, prev: chain},
+		worker:       worker,
+		sendMessages: worker.SendMessages,
+	}
+}
+
+// newDefaultWorkerResolution prepares the resolution of the trailing
+// statements of a body with workers. They belong to the enclosing function, so
+// they keep its return type, scope and narrowing, with no function boundary.
+func newDefaultWorkerResolution(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) workerResolution {
+	ft := newWorkerChildResolver(t, t.expectedReturnType(), constants.DefaultWorkerName, t.currentScope())
+	ft.monoCounterOwner = t
+	return workerResolution{resolver: ft, chain: chain, stmts: body.Stmts, sendMessages: body.DefaultWorkerSendMessages}
+}
+
+func newWorkerChildResolver(t typeResolver, returnTy semtypes.SemType, workerName string, scope model.Scope) *functionTypeResolver {
+	return &functionTypeResolver{
 		atomSideTableBase: newAtomSideTableBase(),
 		parentResolver:    t,
 		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
 		retTy:             returnTy,
-		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
-		scope:             worker.Scope(),
+		xmlStepOwner:      workerXMLStepOwner(t, workerName),
+		xmlStepScope:      scope,
+		scope:             scope,
 		context:           resolverContextForFunction(isolatedContext(t)),
-		ephemeralState:    resolverEphemeralState(t),
 	}
+}
 
-	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
-	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
+// workerXMLStepOwner qualifies the XML step owner of the function declaring a
+// worker with the worker's name, so XML steps of sibling workers get distinct
+// function names.
+func workerXMLStepOwner(t typeResolver, workerName string) string {
+	return resolverXMLStepOwner(t) + "$" + workerName
+}
 
+func resolverXMLStepOwner(t typeResolver) string {
+	switch resolver := t.(type) {
+	case *functionTypeResolver:
+		return resolver.xmlStepOwner
+	case *loopTypeResolver:
+		return resolverXMLStepOwner(resolver.parentResolver)
+	default:
+		return moduleXMLStepOwner
+	}
 }
 
 // waitEventualType returns the type a wait on the given operand yields. A
@@ -2445,13 +2554,11 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		parentResolver:    t,
 		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
 		retTy:             fnSym.TypedSignature().ReturnType,
-		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
-		xmlStepCounters:   resolverXMLStepCounters(t),
+		xmlStepScope:      e.Function.Scope(),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
-		ephemeralState:    resolverEphemeralState(t),
 	}
 
 	// Constructing the lambda captures its free variables. The body is checked
@@ -2542,13 +2649,11 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		parentResolver:    t,
 		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
 		retTy:             expectedReturnTy,
-		implicitImports:   make(map[string]ast.BLangImportPackage),
 		monoCounters:      make(map[string]int),
 		xmlStepOwner:      fnSym.Name(),
-		xmlStepCounters:   resolverXMLStepCounters(t),
+		xmlStepScope:      e.Function.Scope(),
 		scope:             e.Function.Scope(),
 		context:           resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
-		ephemeralState:    resolverEphemeralState(t),
 	}
 	outerChain := addCaptureGroup(chain, e.Function.CaptureGroup())
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: outerChain}
@@ -3975,6 +4080,16 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return returnedFunction(result, ok)
 	case *ast.BLangClientResourceAccessAction:
 		return resolveClientResourceAccessAction(t, chain, e, expectedType)
+	case *ast.BLangWorkerAsyncSendAction:
+		return resolved(resolveWorkerAsyncSendAction(t, chain, e))
+	case *ast.BLangWorkerSyncSendAction:
+		return resolved(resolveWorkerSyncSendAction(t, chain, e))
+	case *ast.BLangWorkerReceiveAction:
+		return resolved(resolveWorkerReceiveAction(t, chain, e))
+	case *ast.BLangWorkerMultipleReceiveAction:
+		return resolved(resolveWorkerMultipleReceiveAction(t, chain, e, expectedType))
+	case *ast.BLangWorkerFlushAction:
+		return resolved(resolveWorkerFlushAction(t, chain, e))
 	case *ast.BLangStartAction:
 		return resolved(resolveStartAction(t, chain, e, expectedType))
 	case *ast.BLangSingleWaitAction:
@@ -4640,7 +4755,7 @@ func resolveMappingConstructorExpr(t typeResolver, chain *binding, e *ast.BLangM
 	if semtypes.IsZero(expectedType) {
 		return resolveMappingConstructorBottomUp(t, chain, e, false)
 	}
-	candidates, ok := mappingConstructorCandidates(t, e, expectedType)
+	candidates, ok := mappingConstructorCandidates(t, e.GetPosition(), expectedType)
 	if !ok {
 		return expressionResult{}, false
 	}
@@ -4672,8 +4787,8 @@ type mappingCandidate struct {
 	atom *semtypes.MappingAtomicType
 }
 
-func mappingConstructorCandidates(t typeResolver, e *ast.BLangMappingConstructorExpr, expectedType semtypes.SemType) ([]mappingCandidate, bool) {
-	return constructorCandidates(t, "mapping", e.GetPosition(), semtypes.Intersect(expectedType, semtypes.Mapping), semtypes.MappingAlternatives,
+func mappingConstructorCandidates(t typeResolver, pos diagnostics.Location, expectedType semtypes.SemType) ([]mappingCandidate, bool) {
+	return constructorCandidates(t, "mapping", pos, semtypes.Intersect(expectedType, semtypes.Mapping), semtypes.MappingAlternatives,
 		func(alt semtypes.MappingAlternative) (mappingCandidate, bool) {
 			atom := semtypes.ToMappingAtomicType(t.typeContext(), alt.Type())
 			return mappingCandidate{alt: alt, atom: atom}, atom != nil

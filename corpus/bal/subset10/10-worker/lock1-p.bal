@@ -20,11 +20,14 @@ isolated int counter = 0;
 
 // A worker declarator can only appear at the top of a function body, never
 // inside a lock statement, so worker startup while a lock is held is only
-// reachable across a call. The existing dynamic start check rejects it.
+// reachable across a call. The check rejects it at the worker declaration, even
+// though the default worker's statements run on the strand that starts first.
 isolated function spawner() returns int {
+    io:println("before"); // @output before
     worker w returns int { // @panic
         return 1;
     }
+    io:println("after");
     return wait w;
 }
 

@@ -1,0 +1,100 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation run (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref e)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref e)))
+          (literal done)))))
+    (var-def
+      (variable f (type
+        (union-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))
+          (value-type null))) (expr
+        (simple-var-ref pending))))
+    (type-test-expr is
+      (simple-var-ref f)
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type string)))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(run
+  (bb0 () (bb1 bb3)
+    (named-worker a (
+      (value-type string))
+      (block-function-body
+        (var-def
+          (variable r (type
+            (union-type
+              (value-type int)
+              (error-type))) (expr
+            (worker-receive-action function))))
+        (return
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref r)
+              (error-type))
+            (invocation lang.error message (
+              (simple-var-ref r)))
+            (literal received)))))
+    (assignment
+      (simple-var-ref pending)
+      (simple-var-ref a))
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal default failed))))
+  )
+  (bb2 (bb3) ()
+    (expression-stmt
+      (worker-async-send-action a
+        (literal 1)))
+  )
+  (bb3 (bb0) (bb2))
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (worker-receive-action function))))
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref r)
+          (error-type))
+        (invocation lang.error message (
+          (simple-var-ref r)))
+        (literal received)))
+  )
+)

@@ -1,0 +1,41 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type string))
+      (block-function-body
+        (var-def
+          (variable s (type
+            (value-type string)) (expr
+            (worker-receive-action function))))
+        (return
+          (binary-expr +
+            (simple-var-ref s)
+            (literal !)))))
+    (expression-stmt
+      (worker-sync-send-action a
+        (literal hi)))
+    (expression-stmt
+      (invocation io println (
+        (literal sent))))
+    (var-def
+      (variable r (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (worker-receive-action function))))
+    (return
+      (binary-expr +
+        (simple-var-ref s)
+        (literal !)))
+  )
+)

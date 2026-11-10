@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: mapping type not found in expected type
+  --> message-multiple-expected1-e.bal:23:13
+   |
+23 |     int _ = <- {a}; // @error no mapping type in the expected type
+   |             ^^^^^^
