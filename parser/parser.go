@@ -307,10 +307,7 @@ type ballerinaParser struct {
 }
 
 func newBallerinaParserFromTokenReader(tokenReader *tokenReader) ballerinaParser {
-	this := ballerinaParser{}
-	// Default field initializations
-
-	this.abstractParser = abstractParser{
+	this := ballerinaParser{
 		tokenReader:          tokenReader,
 		invalidNodeInfoStack: make([]invalidNodeInfo, 0),
 		insertedToken:        nil,
