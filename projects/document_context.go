@@ -129,9 +129,9 @@ func (d *documentContext) getTextDocument() text.TextDocument {
 	return d.textDocument
 }
 
-// getTextDocumentInternal creates a TextDocument from the document content.
+// getTextDocumentInternal creates a TextDocument from normalized document content.
 func (d *documentContext) getTextDocumentInternal() text.TextDocument {
-	return text.TextDocumentFromText(d.content())
+	return text.TextDocumentFromText(text.NormalizeSource(d.content()))
 }
 
 // content returns the document content from the config.

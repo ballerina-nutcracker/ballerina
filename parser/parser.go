@@ -14772,6 +14772,7 @@ func (b *ballerinaParser) isSpecialMethodName(token st.STToken) bool {
 // GetSyntaxTree parses content into a syntax tree, attributing it to fileName
 // (used for diagnostics and the syntax tree's text document).
 func GetSyntaxTree(ctx *context.CompilerContext, fileName string, content string) (*st.SyntaxTree, error) {
+	content = text.NormalizeSource(content)
 	textDocument := text.TextDocumentFromText(content)
 	ctx.DiagnosticEnv().RegisterFile(fileName, textDocument)
 	reader := text.CharReaderFromText(content)

@@ -6,3 +6,5 @@ corpus/bir/** -text
 corpus/cfg/** -text
 corpus/desugared/** -text
 corpus/integration/** -text
+corpus/bal/subset10/10-bug/source-normalization-v.bal -text
+corpus/bal/subset10/10-bug/source-normalization-diagnostic-e.bal -text
