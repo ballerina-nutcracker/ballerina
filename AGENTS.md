@@ -62,7 +62,7 @@ Choose the corpus category that matches the behaviour:
 
 ## Language support documentation
 
-- For every language feature or language bug fix in the compilation pipeline (stages 1–10), update the relevant `doc/lang/subset*.md` support or restriction entry as part of the same change. Interpreter-only changes (stage 11) do not require subset documentation updates.
+- Subset docs (`doc/lang/subset*.md`) record which grammar rules are supported and any restrictions on, or deviations from, the specification. Update them in the same change when a compilation-pipeline change (stages 1–10) adds or removes support for a grammar rule, or adds, changes or removes a restriction or deviation. A bug fix that makes already supported syntax conform to the specification needs no subset update unless it also removes or changes a documented restriction or deviation. Interpreter-only changes (stage 11) never do.
 - Use the [filling-subset-doc skill](.agents/skills/filling-subset-doc/SKILL.md). Unless the user specifies a subset, update the highest numbered subset and preserve historical release subsets.
 
 ## Commits and PR titles
