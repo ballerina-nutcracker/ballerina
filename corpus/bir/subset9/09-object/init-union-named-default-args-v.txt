@@ -131,7 +131,7 @@ main() -> nil{
   bb19 {
     $desugar$2 = %0;
     %2 = ConstantLoad 1
-    %3 = unknown %2;
+    %3 = - %2;
     $desugar$3 = %3;
     %5 = newObject $anon/.:Counter
     %6 = %5.init($desugar$2,$desugar$3) -> bb20;

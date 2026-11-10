@@ -11,14 +11,14 @@ main() -> nil{
   }
   bb1 {
     mClone = %6;
-    %8 = unknown mClone m;
+    %8 = === mClone m;
     %9 = %8;
     %10 = println(%9) -> bb2;
   }
   bb2 {
     %13 = ConstantLoad self
     %12 = mClone[%13];
-    %11 = unknown %12 mClone;
+    %11 = === %12 mClone;
     %14 = %11;
     %15 = println(%14) -> bb3;
   }
@@ -39,14 +39,14 @@ main() -> nil{
   }
   bb6 {
     arrClone = %24;
-    %26 = unknown arrClone arr;
+    %26 = === arrClone arr;
     %27 = %26;
     %28 = println(%27) -> bb7;
   }
   bb7 {
     %31 = ConstantLoad 1
     %30 = arrClone[%31];
-    %29 = unknown %30 arrClone;
+    %29 = === %30 arrClone;
     %32 = %29;
     %33 = println(%32) -> bb8;
   }
@@ -67,14 +67,14 @@ main() -> nil{
     %45 = dagClone[%46];
     %48 = ConstantLoad 1
     %47 = dagClone[%48];
-    %44 = unknown %45 %47;
+    %44 = === %45 %47;
     %49 = %44;
     %50 = println(%49) -> bb10;
   }
   bb10 {
     %53 = ConstantLoad 0
     %52 = dagClone[%53];
-    %51 = unknown %52 shared;
+    %51 = === %52 shared;
     %54 = %51;
     %55 = println(%54) -> bb11;
   }

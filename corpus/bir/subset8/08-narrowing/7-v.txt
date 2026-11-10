@@ -7,7 +7,7 @@ main() -> nil{
   }
   bb1 {
     %4 = ConstantLoad 0
-    %5 = unknown %4;
+    %5 = - %4;
     %6 = %5;
     %7 = foo(%6) -> bb2;
   }
@@ -62,7 +62,7 @@ foo(float) -> nil{
     %19 = ConstantLoad 4
     %20 = %19;
     %21 = ConstantLoad 0
-    %22 = unknown %21;
+    %22 = - %21;
     %23 = %22;
     %18 = / %20 %23;
     %24 = %18;

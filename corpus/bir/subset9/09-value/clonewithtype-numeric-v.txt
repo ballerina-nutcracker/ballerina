@@ -425,7 +425,7 @@ main() -> nil|error{
   }
   bb87 {
     %182 = ConstantLoad 1
-    %183 = unknown %182;
+    %183 = - %182;
     neg = %183;
     %185 = ConstantLoad typedesc
     %186 = cloneWithType(neg,%185) -> bb88;

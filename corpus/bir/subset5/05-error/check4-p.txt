@@ -22,7 +22,7 @@ main() -> nil{
     GOTO bb4;
   }
   bb4 {
-    %11 = unknown %5;
+    %11 = - %5;
     %12 = %11;
     %13 = println(%12) -> bb5;
   }

@@ -13,7 +13,7 @@ main() -> nil{
     %10 = println(iv2) -> bb1;
   }
   bb1 {
-    %11 = unknown iv iv2;
+    %11 = === iv iv2;
     %12 = %11;
     %13 = println(%12) -> bb2;
   }

@@ -22,7 +22,7 @@ main() -> nil{
     %18 = ConstantLoad 2
     %19 = ConstantLoad 2
     %20 = newArray [int, int, never...][%19]{%17, %18}
-    %12 = unknown %16 %20;
+    %12 = === %16 %20;
     %21 = %12;
     %22 = println(%21) -> bb2;
   }
@@ -54,7 +54,7 @@ main() -> nil{
     %46 = ConstantLoad 2
     %47 = ConstantLoad 2
     %48 = newArray [int, int, never...][%47]{%45, %46}
-    %40 = unknown %44 %48;
+    %40 = === %44 %48;
     %49 = %40;
     %50 = println(%49) -> bb4;
   }
@@ -73,7 +73,7 @@ main() -> nil{
     %63 = ConstantLoad 3
     %64 = ConstantLoad 2
     %65 = newArray [[int, int, never...], int, never...][%64]{%62, %63}
-    %51 = unknown %58 %65;
+    %51 = === %58 %65;
     %66 = %51;
     %67 = println(%66) -> bb5;
   }
@@ -99,7 +99,7 @@ main() -> nil{
     %85 = ConstantLoad 2
     %86 = ConstantLoad 2
     %87 = newArray [int, int, never...][%86]{%84, %85}
-    %79 = unknown %83 %87;
+    %79 = === %83 %87;
     %88 = %79;
     %89 = println(%88) -> bb7;
   }
@@ -144,7 +144,7 @@ main() -> nil{
     %124 = ConstantLoad 2
     %125 = ConstantLoad 2
     %126 = newArray [string, int, never...][%125]{%123, %124}
-    %118 = unknown %122 %126;
+    %118 = === %122 %126;
     %127 = %118;
     %128 = println(%127) -> bb10;
   }

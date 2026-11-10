@@ -9,7 +9,7 @@ foo(decimal) -> decimal{
   }
   bb1 {
     PushScopeFrame 1
-    %0 = unknown (1, d);
+    %0 = - (1, d);
     (1, %0) = %0;
     PopScopeFrame
     return;

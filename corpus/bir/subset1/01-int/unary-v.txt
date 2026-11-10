@@ -2,7 +2,7 @@ module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
     %2 = ConstantLoad 2
-    %3 = unknown %2;
+    %3 = - %2;
     %4 = %3;
     %5 = ConstantLoad 5
     %6 = %5;
@@ -14,7 +14,7 @@ main() -> nil{
     %10 = ConstantLoad 5
     %11 = %10;
     %12 = ConstantLoad 2
-    %13 = unknown %12;
+    %13 = - %12;
     %14 = %13;
     %9 = + %11 %14;
     %15 = %9;
@@ -24,7 +24,7 @@ main() -> nil{
     %18 = ConstantLoad 5
     %19 = %18;
     %21 = ConstantLoad 2
-    %22 = unknown %21;
+    %22 = - %21;
     %23 = %22;
     %24 = ConstantLoad 3
     %25 = %24;
@@ -36,7 +36,7 @@ main() -> nil{
   }
   bb3 {
     %30 = ConstantLoad 5
-    %31 = unknown %30;
+    %31 = - %30;
     %32 = %31;
     %33 = ConstantLoad 2
     %34 = %33;
@@ -48,7 +48,7 @@ main() -> nil{
     %38 = ConstantLoad 2
     %39 = %38;
     %40 = ConstantLoad 5
-    %41 = unknown %40;
+    %41 = - %40;
     %42 = %41;
     %37 = >= %39 %42;
     %43 = %37;

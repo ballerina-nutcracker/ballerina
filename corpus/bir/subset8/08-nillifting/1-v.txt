@@ -216,7 +216,7 @@ main() -> nil{
     GOTO bb44;
   }
   bb43 {
-    %83 = unknown a;
+    %83 = - a;
     GOTO bb44;
   }
   bb44 {
@@ -233,7 +233,7 @@ main() -> nil{
     GOTO bb48;
   }
   bb47 {
-    %88 = unknown c;
+    %88 = - c;
     GOTO bb48;
   }
   bb48 {
@@ -400,7 +400,7 @@ main() -> nil{
     GOTO bb83;
   }
   bb82 {
-    %145 = unknown a;
+    %145 = - a;
     GOTO bb83;
   }
   bb83 {

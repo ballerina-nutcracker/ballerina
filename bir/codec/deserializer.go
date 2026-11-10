@@ -951,6 +951,8 @@ func (br *birReader) readCallSite(varMap map[int32]*bir.BIRLocalVariableDcl) bir
 			fpOperand = br.readOperand(varMap)
 		case bir.CallKindMethod:
 			receiver = br.readOperand(varMap)
+		case bir.CallKindFunction,
+			bir.CallKindResource:
 		}
 		return bir.CallSite{
 			Kind:              kind,
