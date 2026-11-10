@@ -1201,10 +1201,23 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 		return xmlFilterExpression(ctx, curBB, expr)
 	case *ast.BLangTemplateExpr:
 		return templateExpression(ctx, curBB, expr)
-	default:
-		ctx.internalError(fmt.Sprintf("unexpected expression type: %T", expr), expr.GetPosition())
+	case *ast.BLangAlternateWorkerReceive,
+		*ast.BLangArrowFunction,
+		*ast.BLangBadExprOrAction,
+		*ast.BLangCommitExpr,
+		*ast.BLangConstRef,
+		*ast.BLangDefaultArg,
+		*ast.BLangInferredTypedescDefault,
+		*ast.BLangNamedArgsExpression,
+		*ast.BLangQueryExpr,
+		*ast.BLangWorkerReceive,
+		*ast.BLangXMLStepExpression,
+		*ast.BLangXMLTemplateExpr,
+		*ast.AbstractExpression:
+		ctx.internalError(fmt.Sprintf("expression type: %T should be desugared", expr), expr.GetPosition())
 		return expressionEffect{}, false
 	}
+	panic("unreachable: unhandled expression in BIR generation") //nolint:forbidigo // Every AST expression variant and both desugar expression variants are handled above.
 }
 
 func generateStartAction(ctx context, curBB *bir.BIRBasicBlock, action *ast.BLangStartAction) (expressionEffect, bool) {
