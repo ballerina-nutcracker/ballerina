@@ -28,8 +28,6 @@ type DiagnosticResult struct {
 	diagnostics []diagnostics.Diagnostic
 	errors      []diagnostics.Diagnostic
 	warnings    []diagnostics.Diagnostic
-	hints       []diagnostics.Diagnostic
-	infos       []diagnostics.Diagnostic
 }
 
 // NewDiagnosticResult creates a new DiagnosticResult from a slice of diagnostics.
@@ -46,10 +44,6 @@ func NewDiagnosticResult(diags []diagnostics.Diagnostic) DiagnosticResult {
 			result.errors = append(result.errors, d)
 		case diagnostics.Warning:
 			result.warnings = append(result.warnings, d)
-		case diagnostics.Hint:
-			result.hints = append(result.hints, d)
-		case diagnostics.Info:
-			result.infos = append(result.infos, d)
 		}
 	}
 
@@ -69,16 +63,6 @@ func (dr DiagnosticResult) Errors() []diagnostics.Diagnostic {
 // Warnings returns a defensive copy of all warning diagnostics.
 func (dr DiagnosticResult) Warnings() []diagnostics.Diagnostic {
 	return slices.Clone(dr.warnings)
-}
-
-// Infos returns a defensive copy of all info diagnostics.
-func (dr DiagnosticResult) Infos() []diagnostics.Diagnostic {
-	return slices.Clone(dr.infos)
-}
-
-// Hints returns a defensive copy of all hint diagnostics.
-func (dr DiagnosticResult) Hints() []diagnostics.Diagnostic {
-	return slices.Clone(dr.hints)
 }
 
 // HasErrors returns true if there are any error diagnostics.
