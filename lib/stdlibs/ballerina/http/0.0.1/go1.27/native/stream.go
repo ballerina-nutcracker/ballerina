@@ -46,6 +46,7 @@ type streamBody struct {
 	source     *values.Stream // a body set with setByteStream
 	fromWire   bool           // received from the network, so getByteStream can read it
 	reader     io.ReadCloser  // the wire body once getByteStream or getSseEventStream has taken it
+	wireTaken  bool           // reader was set, so the body's received Content-Length no longer holds
 	framer     *sseFramer
 	noCache    bool  // set by setSseEventStream; Cache-Control is added when the response is sent
 	pendingErr error // a read failure that arrived with the last block, returned by the next read
@@ -632,6 +633,7 @@ func takeByteStream(body messageBody, kind string) (*values.Stream, *values.Erro
 		r, taken := body.takeWire()
 		if r != nil {
 			st.reader = r
+			st.wireTaken = true
 			return nil, nil
 		}
 		if !taken {

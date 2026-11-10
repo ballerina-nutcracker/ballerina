@@ -365,6 +365,49 @@ service /streams on new http:Listener(19503) {
         return res;
     }
 
+    // Unlike /digits it carries a Content-Length, and it is larger than the client buffers eagerly.
+    resource function get sizedDigits() returns http:Response|error {
+        string digits = check backend->get("/digits");
+        http:Response res = new;
+        res.setTextPayload(digits);
+        res.setHeader("content-length", digits.length().toString());
+        return res;
+    }
+
+    resource function get drainedBytes() returns http:Response|error {
+        http:Response res = check backend->get("/sizedDigits");
+        stream<byte[], io:Error?> body = check res.getByteStream();
+        record {|byte[] value;|}? block = check body.next();
+        while block is record {|byte[] value;|} {
+            block = check body.next();
+        }
+        return res;
+    }
+
+    resource function get closedBytes() returns http:Response|error {
+        http:Response res = check backend->get("/sizedDigits");
+        stream<byte[], io:Error?> body = check res.getByteStream(5);
+        _ = check body.next();
+        check body.close();
+        return res;
+    }
+
+    resource function get fixedEvents() returns http:Response {
+        http:Response res = new;
+        res.setTextPayload("data: one\n\ndata: two\n\n", "text/event-stream");
+        return res;
+    }
+
+    resource function get drainedEvents() returns http:Response|error {
+        http:Response res = check backend->get("/fixedEvents");
+        stream<http:SseEvent, error?> events = check res.getSseEventStream();
+        record {|http:SseEvent value;|}? event = check events.next();
+        while event is record {|http:SseEvent value;|} {
+            event = check events.next();
+        }
+        return res;
+    }
+
     resource function post echo(http:Request req) returns http:Response|error {
         http:Response res = new;
         res.setByteStream(check req.getByteStream());
@@ -532,6 +575,15 @@ public function testMain() returns error? {
     string digits = check c->get("/digits");
     string relayed = check h1->post("/relay", digits);
     io:println(relayed); // @output bytes=19995 blocks=5
+
+    // A body read to its end, or closed, sends an empty body instead of the backend's Content-Length.
+    foreach string path in ["/drainedBytes", "/closedBytes", "/drainedEvents"] {
+        http:Response drained = check h1->get(path);
+        // @output 0 [""]
+        // @output 0 [""]
+        // @output 0 [""]
+        io:println(check drained.getHeader("content-length"), " ", [check drained.getTextPayload()]);
+    }
 
     // A body partly read with getSseEventStream sends on the events not yet handed on.
     string burstRest = check h1->get("/burstRest");

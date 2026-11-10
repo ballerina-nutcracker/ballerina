@@ -29,6 +29,9 @@ true
 replaced by a stream
 19995 5678901234
 bytes=19995 blocks=5
+0 [""]
+0 [""]
+0 [""]
 ["data: two\n\ndata: three\n\n"]
 ["data: two\n\ndata: three\n\n"]
 4

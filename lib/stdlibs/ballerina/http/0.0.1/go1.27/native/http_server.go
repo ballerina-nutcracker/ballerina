@@ -751,9 +751,12 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 		w.Header().Set("Connection", "keep-alive")
 	}
 	streamed := holder.source != nil || holder.reader != nil
-	if streamed {
-		// The streamed length is unknown, so a Content-Length copied from a backend no longer holds.
+	if streamed || holder.wireTaken {
+		// A streamed body, or a taken one that sends only what was not read, no longer has the
+		// length a backend gave it; with nothing left, net/http sends Content-Length: 0.
 		w.Header().Del("Content-Length")
+	}
+	if streamed {
 		// Otherwise an HTTP/1 server consumes the unread request body before the response
 		// starts, which a body streamed from that request still needs.
 		_ = http.NewResponseController(w).EnableFullDuplex()
