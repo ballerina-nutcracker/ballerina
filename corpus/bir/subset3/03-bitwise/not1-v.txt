@@ -9,7 +9,7 @@ main() -> nil{
   }
   bb1 {
     %6 = ConstantLoad 5
-    %7 = unknown %6;
+    %7 = - %6;
     i = %7;
     %8 = ~ i;
     %9 = %8;
@@ -24,7 +24,7 @@ main() -> nil{
   }
   bb3 {
     %15 = ConstantLoad 1
-    %16 = unknown %15;
+    %16 = - %15;
     i = %16;
     %17 = ~ i;
     %18 = %17;
@@ -32,7 +32,7 @@ main() -> nil{
   }
   bb4 {
     %20 = ConstantLoad 1
-    %21 = unknown %20;
+    %21 = - %20;
     j = %21;
     %23 = ~ j;
     %24 = %23;

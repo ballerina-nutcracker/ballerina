@@ -2,7 +2,7 @@ module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 9.999999999999999999999999999999999E+6144
-    %2 = unknown %1;
+    %2 = - %1;
     d1 = %2;
     %4 = ConstantLoad 1E+6111
     d2 = %4;
