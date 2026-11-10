@@ -253,9 +253,12 @@ func (br *birReader) readClassDef(classDef *bir.BIRClassDef) {
 	for i := 0; i < int(fieldCount); i++ {
 		fieldName := br.readStringCPEntry()
 		fieldType := br.readType()
+		var final bool
+		br.read(&final)
 		fields[i] = bir.ObjectField{
-			Name: fieldName.Value(),
-			Ty:   fieldType,
+			Name:  fieldName.Value(),
+			Ty:    fieldType,
+			Final: final,
 		}
 	}
 	classDef.Fields = fields
@@ -589,7 +592,7 @@ func (br *birReader) readInstruction(varMap map[int32]*bir.BIRLocalVariableDcl) 
 		bir.InstructionKindArrayStore, bir.InstructionKindArrayLoad,
 		bir.InstructionKindArrayFillingLoad,
 		bir.InstructionKindMapFillingLoad,
-		bir.InstructionKindObjectStore, bir.InstructionKindObjectLoad,
+		bir.InstructionKindObjectStore, bir.InstructionKindObjectUnsafeStore, bir.InstructionKindObjectLoad,
 		bir.InstructionKindStringLoad:
 		lhsOp := br.readOperand(varMap)
 		keyOp := br.readOperand(varMap)

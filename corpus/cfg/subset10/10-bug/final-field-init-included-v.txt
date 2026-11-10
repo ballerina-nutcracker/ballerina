@@ -1,0 +1,36 @@
+(Base
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access v
+          (simple-var-ref self))
+        (literal 1))
+    )
+  )
+)
+(Foo
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access v
+          (simple-var-ref self))
+        (literal 5))
+      (assignment
+        (field-based-access v
+          (simple-var-ref self))
+        (literal 6))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (user-defined-type Foo)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access v
+          (simple-var-ref f)))))
+  )
+)

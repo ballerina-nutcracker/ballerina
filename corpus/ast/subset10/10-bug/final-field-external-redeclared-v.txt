@@ -1,0 +1,39 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition P
+    (variable a (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 1)))))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access a
+            (simple-var-ref self))
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type P)) (expr
+          (new
+            (user-defined-type C) ()))))
+      (assignment
+        (field-based-access a
+          (simple-var-ref p))
+        (literal 5))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref p))))))))

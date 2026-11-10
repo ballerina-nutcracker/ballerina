@@ -1,0 +1,82 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Counter
+    (object-type service
+      (method-decl bump () (
+        (value-type int)))))
+  (class-definition SimpleListener
+    (function attach (
+      (variable svc (type
+        (user-defined-type Counter)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (invocation bump expr:
+              (simple-var-ref svc) ()))))))
+    (function detach (
+      (variable svc (type
+        (user-defined-type Counter)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body)))
+  (variable listenerValue (type
+    (user-defined-type SimpleListener)) (expr
+    (new ())))
+  (service
+    (on
+    (simple-var-ref listenerValue))
+    (variable b (type
+      (value-type int)))
+    (variable count (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access b
+            (simple-var-ref self))
+          (literal 3))))
+    (function bump () (
+      (value-type int))
+      (block-function-body
+        (assignment
+          (field-based-access count
+            (simple-var-ref self))
+          (binary-expr +
+            (field-based-access b
+              (simple-var-ref self))
+            (literal 1)))
+        (return
+          (field-based-access count
+            (simple-var-ref self))))))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

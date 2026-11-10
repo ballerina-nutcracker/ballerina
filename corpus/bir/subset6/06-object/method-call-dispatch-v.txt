@@ -1,5 +1,6 @@
 module $anon.. v 0.0.0;
 class F1 {
+  x int
 
   foo() -> int{
     bb0 {
@@ -18,12 +19,13 @@ class F1 {
     bb0 {
       %2 = ConstantLoad 1
       %3 = ConstantLoad x
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
 }
 class F2 {
+  x int
 
   foo() -> int{
     bb0 {
@@ -42,7 +44,7 @@ class F2 {
     bb0 {
       %2 = ConstantLoad 2
       %3 = ConstantLoad x
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

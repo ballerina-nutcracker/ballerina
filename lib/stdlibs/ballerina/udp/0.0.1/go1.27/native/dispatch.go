@@ -29,6 +29,9 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
+// callerFinalFields are the final fields of udp:Caller (udp.bal).
+var callerFinalFields = map[string]struct{}{"remoteHost": {}, "remotePort": {}}
+
 // newCallerObject builds the udp:Caller passed to a handler for one received datagram.
 func newCallerObject(pc net.PacketConn, senderAddr net.Addr, remoteHost string, remotePort int64) *values.Object {
 	fields := map[string]values.BalValue{
@@ -39,7 +42,7 @@ func newCallerObject(pc net.PacketConn, senderAddr net.Addr, remoteHost string, 
 		"$remote$sendBytes":    "ballerina/udp:Caller.$remote$sendBytes",
 		"$remote$sendDatagram": "ballerina/udp:Caller.$remote$sendDatagram",
 	}
-	obj := values.NewObject(semtypes.Object, fields, methodKeys, nil, nil)
+	obj := values.NewObject(semtypes.Object, fields, methodKeys, callerFinalFields, nil, nil)
 	obj.Put("$pc", pc)
 	obj.Put("$addr", senderAddr)
 	return obj

@@ -14,7 +14,7 @@ class Config {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad x
-      self[%3] = x;
+      self[%3] = x (unsafe);
       return;
     }
   }

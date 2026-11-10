@@ -15,9 +15,9 @@ class Counter {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad count
-      self[%3] = initial;
+      self[%3] = initial (unsafe);
       %4 = ConstantLoad initial
-      self[%4] = initial;
+      self[%4] = initial (unsafe);
       return;
     }
   }

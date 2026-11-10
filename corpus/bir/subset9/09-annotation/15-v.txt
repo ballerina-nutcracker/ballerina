@@ -9,7 +9,7 @@ module $anon.. v 0.0.0;
       %6 = %5;
       %7 = amount;
       %8 = + %6 %7;
-      self[%4] = %8;
+      self[%4] = %8 (unsafe);
       $desugar$0 = extras;
       %10 = ConstantLoad 0
       $desugar$1 = %10;
@@ -34,7 +34,7 @@ module $anon.. v 0.0.0;
       %4 = %3;
       %5 = extra;
       %6 = + %4 %5;
-      (1, self)[%2] = %6;
+      (1, self)[%2] = %6 (unsafe);
       %8 = (1, $desugar$1);
       %9 = ConstantLoad 1
       %10 = %9;
@@ -55,7 +55,7 @@ module $anon.. v 0.0.0;
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad value
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

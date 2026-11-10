@@ -1,0 +1,111 @@
+module $anon.. v 0.0.0;
+class FinalView {
+  a int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad a
+      self[%3] = %2 (unsafe);
+      return;
+    }
+  }
+}
+class Mutable {
+  a int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad a
+      self[%3] = %2 (unsafe);
+      return;
+    }
+  }
+}
+write(object { int a; public function init() returns nil }) -> nil{
+  bb0 {
+    %2 = ConstantLoad a
+    %3 = value[%2];
+    %4 = %3;
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %7 = + %4 %6;
+    value[%2] = %7;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Mutable
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    value = %3;
+    %6 = write(value) -> bb5;
+  }
+  bb5 {
+    %8 = ConstantLoad a
+    %7 = value[%8];
+    %9 = %7;
+    %10 = println(%9) -> bb6;
+  }
+  bb6 {
+    %11 = newObject $anon/.:FinalView
+    %12 = %11.init() -> bb7;
+  }
+  bb7 {
+    %14 = %12 is nil
+    %14 ? bb8 : bb9;
+  }
+  bb8 {
+    %13 = %11;
+    GOTO bb10;
+  }
+  bb9 {
+    %13 = %12;
+    GOTO bb10;
+  }
+  bb10 {
+    finalValue = %13;
+    GOTO bb11;
+  }
+  bb11 {
+    %17 = write(finalValue) -> bb12;
+  }
+  bb12 {
+    %16 = %17;
+    GOTO bb13;
+  }
+  bb13 {
+    result = %16;
+    %19 = result is error
+    %20 = %19;
+    %21 = println(%20) -> bb14;
+  }
+  bb14 {
+    %23 = ConstantLoad a
+    %22 = finalValue[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb15;
+  }
+  bb15 {
+    return;
+  }
+  
+  error-table {
+    [bb11, bb12] -> bb13, %16
+  }
+}

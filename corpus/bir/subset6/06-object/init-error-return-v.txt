@@ -15,7 +15,7 @@ class Bar {
     bb0 {
       %3 = ConstantLoad 0
       %4 = ConstantLoad val
-      self[%4] = %3;
+      self[%4] = %3 (unsafe);
       %6 = v;
       %7 = ConstantLoad 0
       %8 = %7;
@@ -33,7 +33,7 @@ class Bar {
     bb2 {
       PushScopeFrame 1
       %0 = ConstantLoad val
-      (1, self)[%0] = (1, v);
+      (1, self)[%0] = (1, v) (unsafe);
       PopScopeFrame
       return;
     }

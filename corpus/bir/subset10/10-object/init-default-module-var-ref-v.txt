@@ -12,7 +12,7 @@ class Counter {
       %5 = %4;
       %6 = amount;
       %7 = + %5 %6;
-      self[%3] = %7;
+      self[%3] = %7 (unsafe);
       %9 = ConstantLoad value
       %8 = self[%9];
       %0 = %8;
@@ -23,7 +23,7 @@ class Counter {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = initial;
+      self[%3] = initial (unsafe);
       return;
     }
   }

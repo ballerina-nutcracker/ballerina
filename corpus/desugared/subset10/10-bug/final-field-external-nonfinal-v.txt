@@ -1,0 +1,68 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (variable b (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal b))
+          (literal 0)))))
+  (function write (
+    (variable p (type
+      (user-defined-type C)))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref p)
+          (literal b))
+        (literal 4))
+      (compound-assignment +
+        (index-based-access
+          (simple-var-ref p)
+          (literal b))
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type C)
+            (value-type int))) (expr
+          (new
+            (user-defined-type C) ()))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type C))
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref x)
+              (literal b))
+            (literal 2))
+          (expression-stmt
+            (invocation write (
+              (simple-var-ref x))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref x)
+                (literal b)))))
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref x)
+                (literal a)))))) ())
+      (block-stmt))))

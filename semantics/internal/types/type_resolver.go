@@ -2859,7 +2859,13 @@ func objectTypeMembers(t typeResolver, td *ast.BLangObjectType) []model.Inclusio
 			t.internalError("failed to find included symbol", td.GetPosition())
 			return nil
 		}
-		members = append(members, incSym.Members()...)
+		for _, member := range incSym.Members() {
+			if field, ok := member.(*model.FieldDescriptor); ok {
+				members = append(members, includedObjectField(field))
+			} else {
+				members = append(members, member)
+			}
+		}
 	}
 	// Add direct members, leaving out those that failed to resolve
 	for m := range td.Members() {
@@ -2907,7 +2913,7 @@ func classMembers(t typeResolver, classDef *ast.BLangClassDefinition) []model.In
 			if directFields[field.MemberName()] {
 				continue
 			}
-			members = append(members, field.WithoutDefault())
+			members = append(members, includedObjectField(field))
 		}
 	}
 	// Add direct members
@@ -2920,6 +2926,12 @@ func classMembers(t typeResolver, classDef *ast.BLangClassDefinition) []model.In
 		members = append(members, &md)
 	}
 	return members
+}
+
+func includedObjectField(field *model.FieldDescriptor) *model.FieldDescriptor {
+	fd := model.NewFieldDescriptor(field.MemberName(), 0, field.IsPublic())
+	fd.SetMemberType(field.MemberType())
+	return &fd
 }
 
 func objectFieldDescriptor(field *ast.BObjectField) model.FieldDescriptor {
