@@ -18,7 +18,7 @@
 package st
 
 type ModulePart struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ModulePart) Kind() SyntaxKind {
@@ -96,7 +96,7 @@ func (n FunctionDefinition) FunctionBody() FunctionBodyNode {
 }
 
 type ImportDeclarationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ImportDeclarationNode) Kind() SyntaxKind {
@@ -678,7 +678,7 @@ func (n IfElseStatementNode) ElseBody() Node {
 }
 
 type ElseBlockNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ElseBlockNode) Kind() SyntaxKind {
@@ -1510,7 +1510,7 @@ func (n RestParameterNode) ParamName() Token {
 }
 
 type ImportOrgNameNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ImportOrgNameNode) Kind() SyntaxKind {
@@ -1534,7 +1534,7 @@ func (n ImportOrgNameNode) SlashToken() Token {
 }
 
 type ImportPrefixNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ImportPrefixNode) Kind() SyntaxKind {
@@ -1854,7 +1854,7 @@ func (n RecordTypeDescriptorNode) BodyEndDelimiter() Token {
 }
 
 type ReturnTypeDescriptorNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReturnTypeDescriptorNode) Kind() SyntaxKind {
@@ -1922,7 +1922,7 @@ func (n OptionalTypeDescriptorNode) QuestionMarkToken() Token {
 }
 
 type ObjectFieldNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ObjectFieldNode) Kind() SyntaxKind {
@@ -1986,7 +1986,7 @@ func (n ObjectFieldNode) SemicolonToken() Token {
 }
 
 type RecordFieldNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n RecordFieldNode) Kind() SyntaxKind {
@@ -2038,7 +2038,7 @@ func (n RecordFieldNode) SemicolonToken() Token {
 }
 
 type RecordFieldWithDefaultValueNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n RecordFieldWithDefaultValueNode) Kind() SyntaxKind {
@@ -2098,7 +2098,7 @@ func (n RecordFieldWithDefaultValueNode) SemicolonToken() Token {
 }
 
 type RecordRestDescriptorNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n RecordRestDescriptorNode) Kind() SyntaxKind {
@@ -2154,7 +2154,7 @@ func (n TypeReferenceNode) SemicolonToken() Token {
 }
 
 type AnnotationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n AnnotationNode) Kind() SyntaxKind {
@@ -2182,7 +2182,7 @@ func (n AnnotationNode) AnnotValue() *MappingConstructorExpressionNode {
 }
 
 type MetadataNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n MetadataNode) Kind() SyntaxKind {
@@ -2460,7 +2460,7 @@ func (n AnnotationDeclarationNode) SemicolonToken() Token {
 }
 
 type AnnotationAttachPointNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n AnnotationAttachPointNode) Kind() SyntaxKind {
@@ -2620,7 +2620,7 @@ func (n FunctionBodyBlockNode) SemicolonToken() Token {
 }
 
 type NamedWorkerDeclarationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n NamedWorkerDeclarationNode) Kind() SyntaxKind {
@@ -2676,7 +2676,7 @@ func (n NamedWorkerDeclarationNode) OnFailClause() *OnFailClauseNode {
 }
 
 type NamedWorkerDeclarator struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n NamedWorkerDeclarator) Kind() SyntaxKind {
@@ -2852,7 +2852,7 @@ func (n TypeCastExpressionNode) Expression() ExpressionNode {
 }
 
 type TypeCastParamNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n TypeCastParamNode) Kind() SyntaxKind {
@@ -2944,7 +2944,7 @@ func (n TableConstructorExpressionNode) CloseBracket() Token {
 }
 
 type KeySpecifierNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n KeySpecifierNode) Kind() SyntaxKind {
@@ -3000,7 +3000,7 @@ func (n StreamTypeDescriptorNode) StreamTypeParamsNode() Node {
 }
 
 type StreamTypeParamsNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n StreamTypeParamsNode) Kind() SyntaxKind {
@@ -3076,7 +3076,7 @@ func (n LetExpressionNode) Expression() ExpressionNode {
 }
 
 type LetVariableDeclarationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n LetVariableDeclarationNode) Kind() SyntaxKind {
@@ -3394,7 +3394,7 @@ func (n XMLTextNode) Content() Token {
 }
 
 type XMLAttributeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n XMLAttributeNode) Kind() SyntaxKind {
@@ -3426,7 +3426,7 @@ func (n XMLAttributeNode) Value() *XMLAttributeValue {
 }
 
 type XMLAttributeValue struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n XMLAttributeValue) Kind() SyntaxKind {
@@ -3570,7 +3570,7 @@ func (n TableTypeDescriptorNode) KeyConstraintNode() Node {
 }
 
 type TypeParameterNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n TypeParameterNode) Kind() SyntaxKind {
@@ -3602,7 +3602,7 @@ func (n TypeParameterNode) GtToken() Token {
 }
 
 type KeyTypeConstraintNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n KeyTypeConstraintNode) Kind() SyntaxKind {
@@ -3650,7 +3650,7 @@ func (n FunctionTypeDescriptorNode) FunctionSignature() *FunctionSignatureNode {
 }
 
 type FunctionSignatureNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n FunctionSignatureNode) Kind() SyntaxKind {
@@ -3880,7 +3880,7 @@ func (n ImplicitNewExpressionNode) ParenthesizedArgList() *ParenthesizedArgList 
 }
 
 type ParenthesizedArgList struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ParenthesizedArgList) Kind() SyntaxKind {
@@ -3912,7 +3912,7 @@ type ClauseNode = NonTerminalNode
 type IntermediateClauseNode = ClauseNode
 
 type QueryConstructTypeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n QueryConstructTypeNode) Kind() SyntaxKind {
@@ -4172,7 +4172,7 @@ func (n OnConflictClauseNode) Expression() ExpressionNode {
 }
 
 type QueryPipelineNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n QueryPipelineNode) Kind() SyntaxKind {
@@ -4336,7 +4336,7 @@ func (n IntersectionTypeDescriptorNode) RightTypeDesc() Node {
 }
 
 type ImplicitAnonymousFunctionParameters struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ImplicitAnonymousFunctionParameters) Kind() SyntaxKind {
@@ -4460,7 +4460,7 @@ func (n SingletonTypeDescriptorNode) SimpleContExprNode() ExpressionNode {
 }
 
 type MethodDeclarationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n MethodDeclarationNode) Metadata() *MetadataNode {
@@ -4512,7 +4512,7 @@ func (n MethodDeclarationNode) Semicolon() Token {
 }
 
 type TypedBindingPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n TypedBindingPatternNode) Kind() SyntaxKind {
@@ -4856,7 +4856,7 @@ func (n ReceiveActionNode) ReceiveWorkers() Node {
 }
 
 type ReceiveFieldsNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReceiveFieldsNode) Kind() SyntaxKind {
@@ -4884,7 +4884,7 @@ func (n ReceiveFieldsNode) CloseBrace() Token {
 }
 
 type AlternateReceiveNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n AlternateReceiveNode) Kind() SyntaxKind {
@@ -4896,7 +4896,7 @@ func (n AlternateReceiveNode) Workers() NodeList[*SimpleNameReferenceNode] {
 }
 
 type RestDescriptorNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n RestDescriptorNode) Kind() SyntaxKind {
@@ -4920,7 +4920,7 @@ func (n RestDescriptorNode) EllipsisToken() Token {
 }
 
 type DoubleGTTokenNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n DoubleGTTokenNode) Kind() SyntaxKind {
@@ -4944,7 +4944,7 @@ func (n DoubleGTTokenNode) EndGTToken() Token {
 }
 
 type TrippleGTTokenNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n TrippleGTTokenNode) Kind() SyntaxKind {
@@ -4996,7 +4996,7 @@ func (n WaitActionNode) WaitFutureExpr() Node {
 }
 
 type WaitFieldsListNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n WaitFieldsListNode) Kind() SyntaxKind {
@@ -5024,7 +5024,7 @@ func (n WaitFieldsListNode) CloseBrace() Token {
 }
 
 type WaitFieldNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n WaitFieldNode) Kind() SyntaxKind {
@@ -5236,7 +5236,7 @@ func (n EnumDeclarationNode) SemicolonToken() Token {
 }
 
 type EnumMemberNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n EnumMemberNode) Kind() SyntaxKind {
@@ -5296,7 +5296,7 @@ func (n ArrayTypeDescriptorNode) Dimensions() NodeList[*ArrayDimensionNode] {
 }
 
 type ArrayDimensionNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ArrayDimensionNode) Kind() SyntaxKind {
@@ -5558,7 +5558,7 @@ func (n XMLStepExpressionNode) XmlStepExtend() NodeList[Node] {
 }
 
 type XMLNamePatternChainingNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n XMLNamePatternChainingNode) Kind() SyntaxKind {
@@ -5586,7 +5586,7 @@ func (n XMLNamePatternChainingNode) GtToken() Token {
 }
 
 type XMLStepIndexedExtendNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n XMLStepIndexedExtendNode) Kind() SyntaxKind {
@@ -5618,7 +5618,7 @@ func (n XMLStepIndexedExtendNode) CloseBracket() Token {
 }
 
 type XMLStepMethodCallExtendNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n XMLStepMethodCallExtendNode) Kind() SyntaxKind {
@@ -5650,7 +5650,7 @@ func (n XMLStepMethodCallExtendNode) ParenthesizedArgList() *ParenthesizedArgLis
 }
 
 type XMLAtomicNamePatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n XMLAtomicNamePatternNode) Kind() SyntaxKind {
@@ -5750,7 +5750,7 @@ func (n MatchStatementNode) OnFailClause() *OnFailClauseNode {
 }
 
 type MatchClauseNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n MatchClauseNode) Kind() SyntaxKind {
@@ -5786,7 +5786,7 @@ func (n MatchClauseNode) BlockStatement() *BlockStatementNode {
 }
 
 type MatchGuardNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n MatchGuardNode) Kind() SyntaxKind {
@@ -5834,7 +5834,7 @@ func (n DistinctTypeDescriptorNode) TypeDescriptor() TypeDescriptorNode {
 }
 
 type ListMatchPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ListMatchPatternNode) Kind() SyntaxKind {
@@ -5862,7 +5862,7 @@ func (n ListMatchPatternNode) CloseBracket() Token {
 }
 
 type RestMatchPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n RestMatchPatternNode) Kind() SyntaxKind {
@@ -5894,7 +5894,7 @@ func (n RestMatchPatternNode) VariableName() *SimpleNameReferenceNode {
 }
 
 type MappingMatchPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n MappingMatchPatternNode) Kind() SyntaxKind {
@@ -5922,7 +5922,7 @@ func (n MappingMatchPatternNode) CloseBraceToken() Token {
 }
 
 type FieldMatchPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n FieldMatchPatternNode) Kind() SyntaxKind {
@@ -5950,7 +5950,7 @@ func (n FieldMatchPatternNode) MatchPattern() Node {
 }
 
 type ErrorMatchPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ErrorMatchPatternNode) Kind() SyntaxKind {
@@ -5994,7 +5994,7 @@ func (n ErrorMatchPatternNode) CloseParenthesisToken() Token {
 }
 
 type NamedArgMatchPatternNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n NamedArgMatchPatternNode) Kind() SyntaxKind {
@@ -6264,7 +6264,7 @@ func (n OrderByClauseNode) OrderKey() NodeList[*OrderKeyNode] {
 }
 
 type OrderKeyNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n OrderKeyNode) Kind() SyntaxKind {
@@ -6316,7 +6316,7 @@ func (n GroupByClauseNode) GroupingKey() NodeList[Node] {
 }
 
 type GroupingKeyVarDeclarationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n GroupingKeyVarDeclarationNode) Kind() SyntaxKind {
@@ -6500,7 +6500,7 @@ func (n ClassDefinitionNode) SemicolonToken() Token {
 }
 
 type ResourcePathParameterNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ResourcePathParameterNode) OpenBracketToken() Token {
@@ -6628,7 +6628,7 @@ func (n ParameterizedTypeDescriptorNode) TypeParamNode() *TypeParameterNode {
 }
 
 type SpreadMemberNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n SpreadMemberNode) Kind() SyntaxKind {
@@ -6712,7 +6712,7 @@ func (n ClientResourceAccessActionNode) Arguments() *ParenthesizedArgList {
 }
 
 type ComputedResourceAccessSegmentNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ComputedResourceAccessSegmentNode) Kind() SyntaxKind {
@@ -6744,7 +6744,7 @@ func (n ComputedResourceAccessSegmentNode) CloseBracketToken() Token {
 }
 
 type ResourceAccessRestSegmentNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ResourceAccessRestSegmentNode) Kind() SyntaxKind {
@@ -6784,7 +6784,7 @@ func (n ResourceAccessRestSegmentNode) CloseBracketToken() Token {
 }
 
 type ReSequenceNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReSequenceNode) Kind() SyntaxKind {
@@ -6818,7 +6818,7 @@ func (n ReAtomQuantifierNode) ReQuantifier() *ReQuantifierNode {
 }
 
 type ReAtomCharOrEscapeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReAtomCharOrEscapeNode) Kind() SyntaxKind {
@@ -6830,7 +6830,7 @@ func (n ReAtomCharOrEscapeNode) ReAtomCharOrEscape() Node {
 }
 
 type ReQuoteEscapeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReQuoteEscapeNode) Kind() SyntaxKind {
@@ -6850,7 +6850,7 @@ func (n ReQuoteEscapeNode) ReSyntaxChar() Node {
 }
 
 type ReSimpleCharClassEscapeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReSimpleCharClassEscapeNode) Kind() SyntaxKind {
@@ -6870,7 +6870,7 @@ func (n ReSimpleCharClassEscapeNode) ReSimpleCharClassCode() Node {
 }
 
 type ReUnicodePropertyEscapeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReUnicodePropertyEscapeNode) Kind() SyntaxKind {
@@ -6948,7 +6948,7 @@ func (n ReUnicodeGeneralCategoryNode) ReUnicodeGeneralCategoryName() Node {
 }
 
 type ReCharacterClassNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharacterClassNode) Kind() SyntaxKind {
@@ -6984,7 +6984,7 @@ func (n ReCharacterClassNode) CloseBracket() Token {
 }
 
 type ReCharSetRangeWithReCharSetNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharSetRangeWithReCharSetNode) Kind() SyntaxKind {
@@ -7004,7 +7004,7 @@ func (n ReCharSetRangeWithReCharSetNode) ReCharSet() Node {
 }
 
 type ReCharSetRangeNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharSetRangeNode) Kind() SyntaxKind {
@@ -7028,7 +7028,7 @@ func (n ReCharSetRangeNode) RhsReCharSetAtom() Node {
 }
 
 type ReCharSetAtomWithReCharSetNoDashNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharSetAtomWithReCharSetNoDashNode) Kind() SyntaxKind {
@@ -7044,7 +7044,7 @@ func (n ReCharSetAtomWithReCharSetNoDashNode) ReCharSetNoDash() Node {
 }
 
 type ReCharSetRangeNoDashWithReCharSetNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharSetRangeNoDashWithReCharSetNode) Kind() SyntaxKind {
@@ -7064,7 +7064,7 @@ func (n ReCharSetRangeNoDashWithReCharSetNode) ReCharSet() Node {
 }
 
 type ReCharSetRangeNoDashNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharSetRangeNoDashNode) Kind() SyntaxKind {
@@ -7088,7 +7088,7 @@ func (n ReCharSetRangeNoDashNode) ReCharSetAtom() Node {
 }
 
 type ReCharSetAtomNoDashWithReCharSetNoDashNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCharSetAtomNoDashWithReCharSetNoDashNode) Kind() SyntaxKind {
@@ -7104,7 +7104,7 @@ func (n ReCharSetAtomNoDashWithReCharSetNoDashNode) ReCharSetNoDash() Node {
 }
 
 type ReCapturingGroupsNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReCapturingGroupsNode) Kind() SyntaxKind {
@@ -7140,7 +7140,7 @@ func (n ReCapturingGroupsNode) CloseParenthesis() Token {
 }
 
 type ReFlagExpressionNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReFlagExpressionNode) Kind() SyntaxKind {
@@ -7172,7 +7172,7 @@ func (n ReFlagExpressionNode) Colon() Token {
 }
 
 type ReFlagsOnOffNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReFlagsOnOffNode) Kind() SyntaxKind {
@@ -7204,7 +7204,7 @@ func (n ReFlagsOnOffNode) RhsReFlags() *ReFlagsNode {
 }
 
 type ReFlagsNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReFlagsNode) Kind() SyntaxKind {
@@ -7228,7 +7228,7 @@ func (n ReAssertionNode) ReAssertion() Node {
 }
 
 type ReQuantifierNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReQuantifierNode) Kind() SyntaxKind {
@@ -7248,7 +7248,7 @@ func (n ReQuantifierNode) NonGreedyChar() Token {
 }
 
 type ReBracedQuantifierNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReBracedQuantifierNode) Kind() SyntaxKind {
@@ -7288,7 +7288,7 @@ func (n ReBracedQuantifierNode) CloseBraceToken() Token {
 }
 
 type MemberTypeDescriptorNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n MemberTypeDescriptorNode) Kind() SyntaxKind {
@@ -7308,7 +7308,7 @@ func (n MemberTypeDescriptorNode) TypeDescriptor() TypeDescriptorNode {
 }
 
 type ReceiveFieldNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 func (n ReceiveFieldNode) Kind() SyntaxKind {
