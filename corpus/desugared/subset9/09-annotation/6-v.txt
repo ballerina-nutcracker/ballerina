@@ -78,7 +78,7 @@
             (group-expr
               (binary-expr +
                 (simple-var-ref BASE)
-                (literal 2)))
+                (simple-var-ref TWO)))
             (value-type float)))
         (key-value
           (literal fraction)

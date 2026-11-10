@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.5
+  --> cast-operand-expected-type2-e.bal:22:21
+   |
+22 |     any a = <int[]>[1.5]; // @error
+   |                     ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.5
+  --> cast-operand-expected-type2-e.bal:27:27
+   |
+27 |     any m = <map<int>>{a: 1.5}; // @error
+   |                           ^^^

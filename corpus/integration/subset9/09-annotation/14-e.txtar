@@ -9,8 +9,8 @@ error[SEMANTIC_ERROR]: arithmetic overflow
 error[SEMANTIC_ERROR]: arithmetic overflow
   --> 14-e.bal:75:22
    |
-75 | @decimalInfo {value: <decimal>(1.0 / 0.0)} // @error
-   |                      ^^^^^^^^^^^^^^^^^^^^
+75 | @decimalInfo {value: <decimal>(1.0f / 0.0f)} // @error
+   |                      ^^^^^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: bool cannot be converted to decimal
   --> 14-e.bal:84:22

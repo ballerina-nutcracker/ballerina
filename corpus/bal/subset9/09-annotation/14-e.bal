@@ -72,7 +72,7 @@ type FloatSingletonConversionMismatch int;
 @decimalInfo {value: <1.0d>2.0d} // @error
 type DecimalSingletonConversionMismatch int;
 
-@decimalInfo {value: <decimal>(1.0 / 0.0)} // @error
+@decimalInfo {value: <decimal>(1.0f / 0.0f)} // @error
 type NonFiniteDecimalConversion int;
 
 @intInfo {value: <int>true} // @error

@@ -1,0 +1,236 @@
+module $anon.. v 0.0.0;
+modF  float;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1e+20
+    %2 = <float>(%1)
+    f = %2;
+    %4 = f;
+    %5 = println(%4) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad 5
+    %7 = <float>(%6)
+    %8 = %7;
+    %9 = println(%8) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad 1e+20
+    %11 = unknown %10;
+    %12 = <float>(%11)
+    %13 = %12;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    %15 = println(modF) -> bb4;
+  }
+  bb4 {
+    %16 = ConstantLoad 2.5
+    %17 = <int|decimal>(%16)
+    x = %17;
+    %19 = x;
+    %20 = println(%19) -> bb5;
+  }
+  bb5 {
+    %21 = x is decimal
+    %22 = %21;
+    %23 = println(%22) -> bb6;
+  }
+  bb6 {
+    %24 = ConstantLoad 2.5
+    %25 = <int|decimal>(%24)
+    y = %25;
+    %27 = y is decimal
+    %28 = %27;
+    %29 = println(%28) -> bb7;
+  }
+  bb7 {
+    %30 = ConstantLoad 5
+    %31 = <float|decimal>(%30)
+    b = %31;
+    %33 = b is float
+    %34 = %33;
+    %35 = println(%34) -> bb8;
+  }
+  bb8 {
+    %37 = ConstantLoad 7
+    %38 = %37;
+    %39 = ConstantLoad 2
+    %40 = %39;
+    %36 = / %38 %40;
+    %41 = <int|float>(%36)
+    a = %41;
+    %43 = println(a) -> bb9;
+  }
+  bb9 {
+    %45 = ConstantLoad 7
+    %46 = %45;
+    %47 = ConstantLoad 2
+    %48 = %47;
+    %44 = / %46 %48;
+    %49 = <float>(%44)
+    %50 = %49;
+    %51 = println(%50) -> bb10;
+  }
+  bb10 {
+    %53 = ConstantLoad 1
+    %54 = %53;
+    %55 = ConstantLoad 3
+    %56 = %55;
+    %52 = / %54 %56;
+    %57 = <decimal>(%52)
+    %58 = %57;
+    %59 = println(%58) -> bb11;
+  }
+  bb11 {
+    %61 = ConstantLoad 7
+    %62 = %61;
+    %63 = ConstantLoad 4
+    %64 = %63;
+    %60 = % %62 %64;
+    %65 = <float>(%60)
+    %66 = %65;
+    %67 = println(%66) -> bb12;
+  }
+  bb12 {
+    %69 = ConstantLoad 1e+20
+    %70 = %69;
+    %71 = ConstantLoad 1
+    %72 = %71;
+    %68 = + %70 %72;
+    %73 = <float>(%68)
+    %74 = %73;
+    %75 = println(%74) -> bb13;
+  }
+  bb13 {
+    %77 = ConstantLoad 0.1
+    %78 = %77;
+    %79 = ConstantLoad 0.2
+    %80 = %79;
+    %76 = + %78 %80;
+    %81 = <decimal>(%76)
+    %82 = %81;
+    %83 = println(%82) -> bb14;
+  }
+  bb14 {
+    %84 = ConstantLoad 10
+    i = %84;
+    %87 = ConstantLoad 2
+    %88 = %87;
+    %89 = i;
+    %86 = * %88 %89;
+    %90 = <float>(%86)
+    %91 = %90;
+    %92 = println(%91) -> bb15;
+  }
+  bb15 {
+    %94 = i;
+    %95 = ConstantLoad 2
+    %96 = %95;
+    %93 = * %94 %96;
+    %97 = <float>(%93)
+    %98 = %97;
+    %99 = println(%98) -> bb16;
+  }
+  bb16 {
+    %100 = ConstantLoad 1
+    %101 = ConstantLoad 2
+    %102 = ConstantLoad 2
+    %103 = newArray [float...][%102]{%100, %101}
+    %104 = <[float...]>(%103)
+    fs = %104;
+    %106 = println(fs) -> bb17;
+  }
+  bb17 {
+    %107 = fs is [float...]
+    %108 = %107;
+    %109 = println(%108) -> bb18;
+  }
+  bb18 {
+    %110 = ConstantLoad 1
+    %111 = ConstantLoad 2
+    %112 = ConstantLoad 2
+    %113 = newArray [float, decimal, never...][%112]{%110, %111}
+    %114 = <[float, decimal, never...]>(%113)
+    t = %114;
+    %116 = t is [float, decimal, never...]
+    %117 = %116;
+    %118 = println(%117) -> bb19;
+  }
+  bb19 {
+    %119 = ConstantLoad a
+    %120 = ConstantLoad 1
+    %121 = newMap {| float... |}{%119=%120}
+    %122 = <{| float... |}>(%121)
+    m = %122;
+    %124 = println(m) -> bb20;
+  }
+  bb20 {
+    %125 = m is {| float... |}
+    %126 = %125;
+    %127 = println(%126) -> bb21;
+  }
+  bb21 {
+    %128 = ConstantLoad x
+    %129 = ConstantLoad 1
+    %130 = newMap {| x: float, never... |}{%128=%129}
+    %131 = <{| x: float, never... |}>(%130)
+    r = %131;
+    %133 = r is {| x: float, never... |}
+    %134 = %133;
+    %135 = println(%134) -> bb22;
+  }
+  bb22 {
+    %136 = ConstantLoad a
+    %137 = ConstantLoad 1
+    %138 = newMap {| decimal... |}{%136=%137}
+    %139 = ConstantLoad 1
+    %140 = newArray [{| decimal... |}...][%139]{%138}
+    %141 = <[{| decimal... |}...]>(%140)
+    lm = %141;
+    %143 = lm is [{| decimal... |}...]
+    %144 = %143;
+    %145 = println(%144) -> bb23;
+  }
+  bb23 {
+    %146 = ConstantLoad 1
+    %147 = ConstantLoad 2
+    %148 = ConstantLoad 2
+    %149 = newArray [nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly...][%148]{%146, %147}
+    %150 = <nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly>(%149)
+    ro = %150;
+    %152 = ro is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %153 = %152;
+    %154 = println(%153) -> bb24;
+  }
+  bb24 {
+    %155 = ConstantLoad 1
+    %156 = ConstantLoad 2
+    %157 = ConstantLoad 2
+    %158 = newArray [float...][%157]{%155, %156}
+    %159 = <readonly&[float...]>(%158)
+    ro2 = %159;
+    %161 = ro2 is readonly&[float...]
+    %162 = %161;
+    %163 = println(%162) -> bb25;
+  }
+  bb25 {
+    %164 = ConstantLoad 1e+20
+    %165 = <any>(%164)
+    %166 = <float>(%165)
+    %167 = %166;
+    %168 = println(%167) -> bb26;
+  }
+  bb26 {
+    %169 = ConstantLoad 2.5
+    %170 = <anydata>(%169)
+    %171 = <int|decimal>(%170)
+    n = %171;
+    %173 = n is decimal
+    %174 = %173;
+    %175 = println(%174) -> bb27;
+  }
+  bb27 {
+    return;
+  }
+}

@@ -21,6 +21,9 @@
   (const BASE (
     (value-type int)) (
     (literal 10)))
+  (const TWO (
+    (value-type int)) (
+    (literal 2)))
   (annotation details
     (user-defined-type Details)
     (attach-point type))
@@ -82,7 +85,7 @@
             (group-expr
               (binary-expr +
                 (simple-var-ref BASE)
-                (literal 2)))
+                (simple-var-ref TWO)))
             (value-type float)))
         (key-value
           (literal fraction)

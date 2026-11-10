@@ -27,6 +27,7 @@ type Details record {|
 |};
 
 const int BASE = 10;
+const int TWO = 2;
 
 annotation Details details on type;
 
@@ -36,7 +37,7 @@ annotation Details details on type;
     logic: !(BASE < 5) && BASE == 10,
     label: string `value-${BASE + 2}`,
     numbers: [BASE, ...[BASE + 1, -3]],
-    converted: <float>(BASE + 2),
+    converted: <float>(BASE + TWO),
     fraction: <decimal>BASE / 4
 }
 type Target record {|

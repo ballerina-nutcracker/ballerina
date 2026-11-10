@@ -140,6 +140,7 @@ These are intentional departures from the [language specification](https://balle
 
 - Implicit `new` expressions reject an applicable contextually expected type containing both `stream` and `object` subtypes; jBallerina can select an applicable class from such a type.
 - A [lock statement](https://ballerina.io/spec/lang/master/#lock-stmt) must have exactly one restricted variable (spec allows for none).
+- A [type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr) gives its operand the cast type as contextually expected type, as the spec requires, so numeric literals in arithmetic operands take the cast's numeric type: with `int i`, `<float>(i + 2)`, `<decimal>(i - 1)` and `<float>(i / 4)` are compile-time errors because the literal is not an int; jBallerina accepts them.
 
 # Subset restrictions
 

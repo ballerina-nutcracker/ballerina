@@ -3943,7 +3943,7 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		setNodeType(t, e, ty)
 		return expressionResult{ty: ty, effect: defaultExpressionEffect(chain)}, true
 	case *ast.BLangTypeConversionExpr:
-		result, ok := resolved(resolveTypeConversionExpr(t, chain, e))
+		result, ok := resolved(resolveTypeConversionExpr(t, chain, e, expectedType))
 		return convertedFunction(result, ok, e)
 	case *ast.BLangTypeTestExpr:
 		return resolved(resolveTypeTestExpr(t, chain, e))
@@ -5354,18 +5354,24 @@ func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) 
 	return fields
 }
 
-func resolveTypeConversionExpr(t typeResolver, chain *binding, e *ast.BLangTypeConversionExpr) (semtypes.SemType, expressionEffect, bool) {
-	expectedType, chain, ok := resolveBType(t, chain, e.TypeDescriptor, 0)
+func resolveTypeConversionExpr(t typeResolver, chain *binding, e *ast.BLangTypeConversionExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	targetType, chain, ok := resolveBType(t, chain, e.TypeDescriptor, 0)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	exprResult, ok := resolveActionOrExpression(t, chain, e.Expression, semtypes.SemType{})
+	// The operand's contextually expected type is the intersection of the cast's contextually expected type and the
+	// cast type (spec section 6.20).
+	operandExpectedType := targetType
+	if !semtypes.IsZero(expectedType) {
+		operandExpectedType = semtypes.Intersect(expectedType, targetType)
+	}
+	exprResult, ok := resolveActionOrExpression(t, chain, e.Expression, operandExpectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 
-	setNodeType(t, e, expectedType)
-	return expectedType, defaultExpressionEffect(sequentialChain(t, exprResult.effect)), true
+	setNodeType(t, e, targetType)
+	return targetType, defaultExpressionEffect(sequentialChain(t, exprResult.effect)), true
 }
 
 // Helper functions for expression type checking

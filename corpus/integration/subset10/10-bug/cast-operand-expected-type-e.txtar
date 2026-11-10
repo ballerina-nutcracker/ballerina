@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> cast-operand-expected-type-e.bal:22:24
+   |
+22 |     io:println(<float>(i + 2)); // @error
+   |                        ^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> cast-operand-expected-type-e.bal:26:26
+   |
+26 |     io:println(<decimal>(i - 1)); // @error
+   |                          ^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> cast-operand-expected-type-e.bal:30:24
+   |
+30 |     io:println(<float>(i / 4)); // @error
+   |                        ^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> cast-operand-expected-type-e.bal:34:26
+   |
+34 |     io:println(<decimal>(i % 3)); // @error
+   |                          ^^^^^
+
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> cast-operand-expected-type-e.bal:38:22
+   |
+38 |     io:println(<int>(f + 2)); // @error
+   |                      ^^^^^
