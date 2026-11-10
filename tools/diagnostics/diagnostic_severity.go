@@ -20,22 +20,13 @@ package diagnostics
 type DiagnosticSeverity uint8
 
 const (
-	Internal DiagnosticSeverity = iota
-	Hint
-	Info
-	Warning
+	Warning DiagnosticSeverity = iota
 	Error
 	Fatal
 )
 
 func (ds DiagnosticSeverity) String() string {
 	switch ds {
-	case Internal:
-		return "INTERNAL"
-	case Hint:
-		return "HINT"
-	case Info:
-		return "INFO"
 	case Warning:
 		return "WARNING"
 	case Error:
