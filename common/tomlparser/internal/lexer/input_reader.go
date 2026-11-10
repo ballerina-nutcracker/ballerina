@@ -83,7 +83,7 @@ func (r *InputReader) Advance() {
 
 // AdvanceN consumes n runes.
 func (r *InputReader) AdvanceN(n int) {
-	for i := 0; i < n; i++ {
+	for range n {
 		r.Advance()
 	}
 }

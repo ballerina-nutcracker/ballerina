@@ -192,7 +192,7 @@ func validateUniqueResourceMethod(cx scope.Context, rms []*ast.BLangResourceMeth
 		cx.InternalErr("expected resource method symbol", rms[i].GetPosition())
 		return
 	}
-	for j := 0; j < i; j++ {
+	for j := range i {
 		earlier, ok := ctx.GetSymbol(rms[j].Symbol()).(model.ResourceMethodSymbol)
 		if !ok {
 			cx.InternalErr("expected resource method symbol", rms[j].GetPosition())

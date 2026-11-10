@@ -341,7 +341,7 @@ func (l *Lexer) readStringToken() Token {
 func (l *Lexer) processUnicodeEscape(digits int) (rune, bool) {
 	l.reader.AdvanceN(2) // consume backslash + u/U
 	var codePoint rune
-	for i := 0; i < digits; i++ {
+	for range digits {
 		c := l.reader.Peek()
 		if !isHexDigit(c) {
 			l.addError("invalid unicode escape sequence", l.reader.Line(), l.reader.Col())
