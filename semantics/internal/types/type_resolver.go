@@ -5354,13 +5354,13 @@ func defaultableMappingFields(t typeResolver, atom *semtypes.MappingAtomicType) 
 	return fields
 }
 
+// resolveTypeConversionExpr resolves a type cast to the cast type. The operand is resolved against the intersection
+// of expectedType and the cast type, or the cast type alone when there is no expected type (spec section 6.20).
 func resolveTypeConversionExpr(t typeResolver, chain *binding, e *ast.BLangTypeConversionExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	targetType, chain, ok := resolveBType(t, chain, e.TypeDescriptor, 0)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	// The operand's contextually expected type is the intersection of the cast's contextually expected type and the
-	// cast type (spec section 6.20).
 	operandExpectedType := targetType
 	if !semtypes.IsZero(expectedType) {
 		operandExpectedType = semtypes.Intersect(expectedType, targetType)
