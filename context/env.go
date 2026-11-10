@@ -242,19 +242,15 @@ func (c *CompilerEnvironment) NewModuleScope(pkg model.PackageID, prefixes map[s
 
 func (c *CompilerEnvironment) NewFunctionScope(parent model.Scope, pkg model.PackageID) *model.FunctionScope {
 	return &model.FunctionScope{
-		BlockScopeBase: model.BlockScopeBase{
-			Parent: parent,
-			Main:   c.NewSymbolSpace(pkg),
-		},
+		Parent: parent,
+		Main:   c.NewSymbolSpace(pkg),
 	}
 }
 
 func (c *CompilerEnvironment) NewBlockScope(parent model.Scope, pkg model.PackageID) *model.BlockScope {
 	return &model.BlockScope{
-		BlockScopeBase: model.BlockScopeBase{
-			Parent: parent,
-			Main:   c.NewSymbolSpace(pkg),
-		},
+		Parent: parent,
+		Main:   c.NewSymbolSpace(pkg),
 	}
 }
 
