@@ -56,8 +56,9 @@ var WASMUnsupportedTests = []string{
 // already covered here.
 //
 // Entries are corpus-relative paths (forward slashes, e.g.
-// "subset8/08-foo/bar-v.bal"). They are matched as suffixes against either a
-// relative test name or an absolute path.
+// "subset8/08-foo/bar-v.bal"; recovery fixtures as
+// "recovery/statements/foo.txtar"). They are matched as suffixes against
+// either a relative test name or an absolute path.
 var UnsupportedTests = []string{
 	// --- Needs constant folding ---
 	// https://github.com/ballerina-nutcracker/ballerina/issues/83
