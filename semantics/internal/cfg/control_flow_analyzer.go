@@ -615,8 +615,8 @@ func (cfg *functionCFG) markBackedges() {
 	dfs(0)
 	// Reverse post-order gives a topological ordering of the non-backedge DAG.
 	cfg.topoOrder = make([]int, 0, len(cfg.bbs))
-	for i := len(postOrder) - 1; i >= 0; i-- {
-		cfg.topoOrder = append(cfg.topoOrder, postOrder[i])
+	for _, p := range slices.Backward(postOrder) {
+		cfg.topoOrder = append(cfg.topoOrder, p)
 	}
 	// Append any unreachable blocks (not visited by DFS from root) at the end.
 	for i := range cfg.bbs {

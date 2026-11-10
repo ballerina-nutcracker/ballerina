@@ -169,7 +169,7 @@ func coercePathForEntry(tc semtypes.Context, entry *values.ResourceEntry, segmen
 		return nil, false
 	}
 	result := make([]values.BalValue, len(segments))
-	for i := 0; i < required; i++ {
+	for i := range required {
 		v, ok := coerceSegment(tc, entry.PathSegments[i].Ty, segments[i])
 		if !ok {
 			return nil, false

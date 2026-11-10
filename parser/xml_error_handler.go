@@ -60,8 +60,9 @@ type xmlParserErrorHandler struct {
 }
 
 func newXMLParserErrorHandlerFromTokenReader(tokenReader *tokenReader) xmlParserErrorHandler {
-	p := xmlParserErrorHandler{}
-	p.abstractParserErrorHandlerBase = *newAbstractParserErrorHandlerBase(tokenReader)
+	p := xmlParserErrorHandler{
+		abstractParserErrorHandlerBase: *newAbstractParserErrorHandlerBase(tokenReader),
+	}
 	p.Self = &p
 	return p
 }

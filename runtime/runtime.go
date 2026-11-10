@@ -94,10 +94,8 @@ var moduleInitializers []ModuleInitializer
 func NewRuntime(platform pal.Platform, tyEnv semtypes.Env) *Runtime {
 	exitChanel := make(chan uint8, 1)
 	rt := &Runtime{
-		ExitStatus: exitChanel,
-		lifeCycle: lifeCycle{
-			exitCodeChan: exitChanel,
-		},
+		ExitStatus:   exitChanel,
+		exitCodeChan: exitChanel,
 	}
 	registry := modules.NewRegistry(rt.runtimeBuiltins())
 	env := extern.InitEnv(platform, tyEnv, registry, extern.DispatchHandles{

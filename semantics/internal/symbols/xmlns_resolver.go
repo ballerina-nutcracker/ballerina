@@ -188,8 +188,8 @@ func processXMLNSDecl(resolver symbolResolver, scope model.Scope, decl *ast.BLan
 }
 
 func splitXMLName(name string) (prefix, local string) {
-	if idx := strings.IndexByte(name, ':'); idx >= 0 {
-		return name[:idx], name[idx+1:]
+	if before, after, ok := strings.Cut(name, ":"); ok {
+		return before, after
 	}
 	return "", name
 }

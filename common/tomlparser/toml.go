@@ -303,8 +303,7 @@ func remapForTarget(m map[string]any, targetType reflect.Type) map[string]any {
 	}
 	lookup := make(map[string]fieldDesc, targetType.NumField())
 	excluded := make(map[string]bool)
-	for i := 0; i < targetType.NumField(); i++ {
-		f := targetType.Field(i)
+	for f := range targetType.Fields() {
 		if tag, ok := f.Tag.Lookup("toml"); ok && tag == "-" {
 			excluded[strings.ToLower(f.Name)] = true
 			continue
