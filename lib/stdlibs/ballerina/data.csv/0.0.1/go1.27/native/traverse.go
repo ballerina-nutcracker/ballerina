@@ -281,7 +281,7 @@ func (tr *traversal) insertHeaderRow(row values.BalValue) error {
 			tr.headers = headers
 		}
 	}
-	builder := newRowBuilder(tr.shape)
+	builder := newRowBuilder(tr.shape, 0)
 	for i, header := range tr.headers {
 		memberType, ok, err := tr.elementType(i)
 		if err != nil {
@@ -361,7 +361,7 @@ func (tr *traversal) elementType(index int) (typeInfo, bool, error) {
 }
 
 func (tr *traversal) listRow(row values.BalValue) (values.BalValue, error) {
-	builder := newRowBuilder(tr.shape)
+	builder := newRowBuilder(tr.shape, 0)
 	expectedSize := tr.shape.size
 	if tr.shape.hasRest && tr.shape.kind == kindTuple {
 		expectedSize = -1
@@ -426,10 +426,11 @@ func (tr *traversal) insertToList(builder *rowBuilder, v values.BalValue, ti typ
 }
 
 func (tr *traversal) mappingRow(row values.BalValue) (values.BalValue, error) {
-	builder := newRowBuilder(tr.shape)
+	var builder *rowBuilder
 	tr.fieldHierarchy = tr.shape.remainingFields()
 	switch source := row.(type) {
 	case *values.Map:
+		builder = newRowBuilder(tr.shape, source.Len())
 		for _, key := range source.Keys() {
 			v, _ := source.Get(key)
 			if err := tr.insertMappingMember(builder, key, v); err != nil {
@@ -460,6 +461,7 @@ func (tr *traversal) mappingRow(row values.BalValue) (values.BalValue, error) {
 		if row.Len() != len(tr.headers) {
 			return nil, varyingHeadersError()
 		}
+		builder = newRowBuilder(tr.shape, len(tr.headers))
 		for i, key := range tr.headers {
 			if err := tr.insertMappingMember(builder, key, row.Get(i)); err != nil {
 				return nil, err

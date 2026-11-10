@@ -509,7 +509,7 @@ func (p *parser) rowStart(ch rune) error {
 			p.skipTheRow = true
 			return nil
 		}
-		p.row = newRowBuilder(p.shape)
+		p.row = newRowBuilder(p.shape, len(p.headers))
 		p.rowStarted = true
 		if err := p.addHeadersAsTheFirstElementIfApplicable(); err != nil {
 			return err
@@ -735,7 +735,7 @@ func (p *parser) addHeadersAsTheFirstElementIfApplicable() error {
 			if err := p.finalizeTheRow(); err != nil {
 				return err
 			}
-			p.row = newRowBuilder(p.shape)
+			p.row = newRowBuilder(p.shape, 0)
 		}
 	}
 	p.addHeadersForOutput = true

@@ -398,18 +398,24 @@ type rowBuilder struct {
 	shape    *rowShape
 	declared []values.MapEntry
 	rest     []values.MapEntry
-	// positions maps each key to its index in declared or rest once a row outgrows a linear scan.
+	// positions maps each key to its index in declared or rest when the row is too wide for a linear scan.
 	positions map[string]int
 	// scanned counts the entries compared by linear lookups, so tests can check put stays linear.
 	scanned int
 	items   []values.BalValue
 }
 
-// indexThreshold is the entry count past which keys are looked up through positions.
+// indexThreshold is the row width past which keys are looked up through positions.
 const indexThreshold = 32
 
-func newRowBuilder(shape *rowShape) *rowBuilder {
-	return &rowBuilder{shape: shape}
+// newRowBuilder starts a row of width keys, or of unknown width when width is 0. A row known to be wider
+// than indexThreshold is indexed from its first key; any other row is indexed once it outgrows the threshold.
+func newRowBuilder(shape *rowShape, width int) *rowBuilder {
+	b := &rowBuilder{shape: shape}
+	if width > indexThreshold && shape.isMapping() {
+		b.positions = make(map[string]int, width)
+	}
+	return b
 }
 
 // put sets a key's value. A repeated key overwrites the earlier value and keeps its position.

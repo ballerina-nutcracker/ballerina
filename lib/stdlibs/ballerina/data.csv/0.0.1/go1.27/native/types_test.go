@@ -21,10 +21,10 @@ import (
 	"testing"
 )
 
-// TestRowBuilderWideRowIsLinear guards against a key lookup that scans the earlier entries: once a row outgrows
-// indexThreshold, put must find keys through the index, so only the first entries are ever scanned. Putting every
-// key again must overwrite in place, which also fails if building the index drops declared or rest entries, as
-// values.NewMap would otherwise hide duplicate entries from the corpus tests.
+// TestRowBuilderWideRowIsLinear guards against a key lookup that scans the earlier entries. A row known to be
+// wider than indexThreshold must never scan, and a row of unknown width only until it outgrows the threshold.
+// Putting every key again must overwrite in place, which also fails if building the index drops declared or rest
+// entries, as values.NewMap would otherwise hide duplicate entries from the corpus tests.
 func TestRowBuilderWideRowIsLinear(t *testing.T) {
 	t.Parallel()
 	const n = 10_000
@@ -32,22 +32,28 @@ func TestRowBuilderWideRowIsLinear(t *testing.T) {
 	for i := range keys {
 		keys[i] = "k" + strconv.Itoa(i)
 	}
-	b := newRowBuilder(&rowShape{fields: map[string]*recordField{"k0": {name: "k0"}}})
-	for _, k := range keys {
-		b.put(k, nil)
-	}
-	for i, k := range keys {
-		b.put(k, int64(i))
-	}
-	if b.scanned > indexThreshold*indexThreshold {
-		t.Fatalf("putting %d keys twice compared %d entries", n, b.scanned)
-	}
-	if len(b.declared) != 1 || len(b.rest) != n-1 || !b.has("k0") {
-		t.Fatalf("got %d declared and %d rest entries", len(b.declared), len(b.rest))
-	}
-	for i, e := range b.rest {
-		if e.Key != keys[i+1] || e.Value != int64(i+1) {
-			t.Fatalf("rest entry %d is %s=%v", i, e.Key, e.Value)
+	shape := &rowShape{typeInfo: typeInfo{kind: kindRecord}, fields: map[string]*recordField{"k0": {name: "k0"}}}
+	for _, tc := range []struct {
+		width      int
+		maxScanned int
+	}{{0, indexThreshold * indexThreshold}, {n, 0}} {
+		b := newRowBuilder(shape, tc.width)
+		for _, k := range keys {
+			b.put(k, nil)
+		}
+		for i, k := range keys {
+			b.put(k, int64(i))
+		}
+		if b.scanned > tc.maxScanned {
+			t.Fatalf("width %d: putting %d keys twice compared %d entries", tc.width, n, b.scanned)
+		}
+		if len(b.declared) != 1 || len(b.rest) != n-1 || !b.has("k0") {
+			t.Fatalf("width %d: got %d declared and %d rest entries", tc.width, len(b.declared), len(b.rest))
+		}
+		for i, e := range b.rest {
+			if e.Key != keys[i+1] || e.Value != int64(i+1) {
+				t.Fatalf("width %d: rest entry %d is %s=%v", tc.width, i, e.Key, e.Value)
+			}
 		}
 	}
 }
