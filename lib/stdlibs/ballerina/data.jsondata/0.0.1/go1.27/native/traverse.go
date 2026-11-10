@@ -44,9 +44,36 @@ type traverser struct {
 	projection
 	fieldHierarchy []*fieldSet
 	restTypes      []restEntry
-	// fieldNames is jBallerina's field-name deque, oldest entry first.
-	fieldNames []string
-	depth      int
+	// fieldNames is the newest entry of jBallerina's field-name deque, which holds the newest nameCount entries.
+	fieldNames *fieldName
+	nameCount  int
+	// namesPushed counts the names pushed and not popped; a replayed attempt adds the count it recorded.
+	namesPushed    int
+	depth          int
+	failedAttempts map[attemptKey]failedAttempt
+}
+
+// fieldName is an entry of the field-name deque, linked to the entry pushed before it. Entries are never
+// changed, so a failed attempt can be replayed by pointing the deque at the entries the attempt left.
+type fieldName struct {
+	name string
+	prev *fieldName
+}
+
+// attemptKey identifies converting a mapping or list to a union member. Its outcome depends only on the
+// value and the member, except for the nesting bound, and the names it leaves depend on the deque length.
+type attemptKey struct {
+	value  any
+	member any
+	depth  int
+	names  int
+}
+
+// failedAttempt is what a failed attempt left on the deque: names is its newest entry, and the newest pushed
+// entries are the names it pushed. pushed stops at the deque length, past which the older names are dropped.
+type failedAttempt struct {
+	names  *fieldName
+	pushed int
 }
 
 // maxTraverseDepth bounds the nesting of mappings and lists in a converted value: the traverser recurses per
@@ -59,7 +86,10 @@ func traverse(t *typer, opts projection, json values.BalValue, target semtypes.S
 }
 
 func (tr *traverser) traverseJSON(json values.BalValue, target semtypes.SemType) (values.BalValue, error) {
-	ti := tr.classify(target)
+	return tr.traverseClassified(json, target, tr.classify(target))
+}
+
+func (tr *traverser) traverseClassified(json values.BalValue, target semtypes.SemType, ti typeInfo) (values.BalValue, error) {
 	if json == nil && tr.isNilable(target) {
 		return nil, nil
 	}
@@ -109,27 +139,89 @@ func (tr *traverser) popRestType() {
 	tr.restTypes = tr.restTypes[:len(tr.restTypes)-1]
 }
 
+func (tr *traverser) pushFieldName(name string) {
+	tr.fieldNames = &fieldName{name: name, prev: tr.fieldNames}
+	tr.nameCount++
+	tr.namesPushed++
+}
+
 func (tr *traverser) popFieldName() string {
-	name := tr.fieldNames[len(tr.fieldNames)-1]
-	tr.fieldNames = tr.fieldNames[:len(tr.fieldNames)-1]
+	name := tr.fieldNames.name
+	tr.fieldNames = tr.fieldNames.prev
+	tr.nameCount--
+	tr.namesPushed--
 	return name
 }
 
+// traverseUnion replays a member that already failed for the value rather than trying it again: each ancestor
+// union tries its next member on the same subtree, so a union of two recursive records is otherwise 2^depth.
 func (tr *traverser) traverseUnion(json values.BalValue, ti typeInfo) (values.BalValue, error) {
 	for _, member := range tr.orderedMembers(ti.members, json) {
-		hierarchySize, restSize, namesSize := len(tr.fieldHierarchy), len(tr.restTypes), len(tr.fieldNames)
-		result, err := tr.traverseJSON(json, member)
-		if err == nil || errors.Is(err, errTooDeep) {
-			return result, err
+		namesSize := tr.nameCount
+		memberInfo := tr.classify(member)
+		key, memoizable := tr.attemptKey(json, memberInfo)
+		if failed, ok := tr.failedAttempts[key]; memoizable && ok {
+			tr.replay(failed, namesSize)
+		} else {
+			hierarchySize, restSize, pushed := len(tr.fieldHierarchy), len(tr.restTypes), tr.namesPushed
+			result, err := tr.traverseClassified(json, member, memberInfo)
+			if err == nil || errors.Is(err, errTooDeep) {
+				return result, err
+			}
+			tr.fieldHierarchy = tr.fieldHierarchy[:min(hierarchySize, len(tr.fieldHierarchy))]
+			tr.restTypes = tr.restTypes[:min(restSize, len(tr.restTypes))]
+			if memoizable {
+				if tr.failedAttempts == nil {
+					tr.failedAttempts = make(map[attemptKey]failedAttempt)
+				}
+				tr.failedAttempts[key] = failedAttempt{names: tr.fieldNames, pushed: min(tr.namesPushed-pushed, namesSize)}
+			}
 		}
-		tr.fieldHierarchy = tr.fieldHierarchy[:min(hierarchySize, len(tr.fieldHierarchy))]
-		tr.restTypes = tr.restTypes[:min(restSize, len(tr.restTypes))]
 		// jBallerina restores the deque with pollLast, which drops the oldest names.
-		if extra := len(tr.fieldNames) - namesSize; extra > 0 {
-			tr.fieldNames = tr.fieldNames[extra:]
-		}
+		tr.nameCount = min(tr.nameCount, namesSize)
 	}
 	return nil, tr.incompatibleTypeErrorFor(ti.ty, json)
+}
+
+func (tr *traverser) attemptKey(json values.BalValue, member typeInfo) (attemptKey, bool) {
+	switch json.(type) {
+	case *values.Map, *values.List:
+	default:
+		return attemptKey{}, false
+	}
+	key := attemptKey{value: json, depth: tr.depth, names: tr.nameCount}
+	switch {
+	case member.mapping != nil:
+		key.member = member.mapping
+	case member.list != nil:
+		key.member = member.list
+	default:
+		return attemptKey{}, false
+	}
+	return key, true
+}
+
+// replay leaves the deque as the failed attempt left it: its pushed names after the existing ones, with as
+// many of the oldest names dropped.
+func (tr *traverser) replay(failed failedAttempt, namesSize int) {
+	if failed.pushed == namesSize {
+		tr.fieldNames = failed.names
+		tr.namesPushed += failed.pushed
+		return
+	}
+	for _, name := range newestNames(failed.names, failed.pushed) {
+		tr.pushFieldName(name)
+	}
+}
+
+// newestNames returns the newest n names of the deque whose newest entry is entry, oldest first.
+func newestNames(entry *fieldName, n int) []string {
+	names := make([]string, n)
+	for i := n - 1; i >= 0; i-- {
+		names[i] = entry.name
+		entry = entry.prev
+	}
+	return names
 }
 
 // orderedMembers tries a member the value already belongs to before one that needs a numeric conversion.
@@ -166,10 +258,13 @@ func (tr *traverser) traverseMapOrArray(json values.BalValue, node any, ti typeI
 		tr.popFields()
 		tr.popRestType()
 	}
-	if len(tr.fieldNames) == 0 {
+	if tr.nameCount == 0 {
 		return nil, tr.incompatibleTypeErrorFor(ti.ty, json)
 	}
-	return nil, invalidTypeForFieldError(tr.currentFieldPath())
+	fieldPath := tr.fieldPath()
+	return nil, lazyJSONError(func() string {
+		return invalidTypeForFieldError(fieldPath()).message
+	})
 }
 
 func (tr *traverser) traverseMapValue(json *values.Map, node *mappingBuilder) (values.BalValue, error) {
@@ -195,7 +290,7 @@ func (tr *traverser) traverseMapValue(json *values.Map, node *mappingBuilder) (v
 			return nil, undefinedFieldError(key)
 		}
 
-		tr.fieldNames = append(tr.fieldNames, field.name)
+		tr.pushFieldName(field.name)
 		if tr.nilAsOptionalField && !tr.isNilable(field.ty) && value == nil && field.optional {
 			continue
 		}
@@ -279,14 +374,14 @@ func (tr *traverser) convertToBasicType(json values.BalValue, target semtypes.Se
 	if err == nil {
 		return converted, nil
 	}
-	if len(tr.fieldNames) == 0 {
+	if tr.nameCount == 0 {
 		return nil, lazyJSONError(func() string {
 			return incompatibleTypeError(tr.typeName(target), javaValueOf(json)).message
 		})
 	}
-	fieldPath := tr.currentFieldPath()
+	fieldPath := tr.fieldPath()
 	return nil, lazyJSONError(func() string {
-		return incompatibleValueForFieldError(javaValueOf(json), tr.typeName(target), fieldPath).message
+		return incompatibleValueForFieldError(javaValueOf(json), tr.typeName(target), fieldPath()).message
 	})
 }
 
@@ -296,6 +391,10 @@ func (tr *traverser) incompatibleTypeErrorFor(target semtypes.SemType, json valu
 	})
 }
 
-func (tr *traverser) currentFieldPath() string {
-	return strings.Join(tr.fieldNames, ".")
+// fieldPath returns a function that joins the names on the deque now, which the deque's entries keep.
+func (tr *traverser) fieldPath() func() string {
+	names, count := tr.fieldNames, tr.nameCount
+	return func() string {
+		return strings.Join(newestNames(names, count), ".")
+	}
 }

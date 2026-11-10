@@ -40,6 +40,15 @@ type Node record {|
     Node? next;
 |};
 
+type Left record {|
+    Left|Right? a;
+|};
+
+type Right record {|
+    Left|Right? a;
+    int b;
+|};
+
 class TruncatedBlocks {
     int count = 0;
 
@@ -122,6 +131,16 @@ public function main() {
     Node|error b2 = jsondata:parseAsType({"v": 1, "next": {"v": 2, "next": ()}}, {}, Node);
     show(b2);
     // @output {"val":1,"next":{"val":2,"next":null}}
+
+    string open = "{\"a\":";
+    string close = "}";
+    foreach int _ in 0 ..< 5 {
+        open += open;
+        close += close;
+    }
+    Left|error d1 = jsondata:parseString(open + "{\"z\":1}" + close, {}, Left);
+    io:println(d1 is jsondata:Error);
+    // @output true
 
     stream<byte[], error?> s1 = new (new TruncatedBlocks());
     int|error s = jsondata:parseStream(s1, {}, int);
