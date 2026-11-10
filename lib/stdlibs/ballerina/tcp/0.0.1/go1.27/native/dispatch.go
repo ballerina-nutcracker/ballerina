@@ -277,9 +277,9 @@ func completeHandshake(conn net.Conn, timeout time.Duration) error {
 	return hs.HandshakeContext(ctx)
 }
 
-// isSilentHandshakeFailure reports the failures jBallerina does not log: a peer that closes before sending a ClientHello, and a handshake timeout.
+// isSilentHandshakeFailure reports the failures jBallerina does not log: a peer that closes before sending a complete record, and a handshake timeout.
 func isSilentHandshakeFailure(err error) bool {
-	return errors.Is(err, io.EOF) || errors.Is(err, context.DeadlineExceeded)
+	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, context.DeadlineExceeded)
 }
 
 // connHandler is the per-connection dispatch state fixed once onConnect resolves; connSvcObj is nil when onConnect returned no connection service.

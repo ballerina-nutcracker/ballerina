@@ -288,7 +288,7 @@ public function main() {
 
 // TestTcpServiceTLSHandshakeBeforeOnConnect verifies that only a peer that completes the TLS
 // handshake reaches onConnect, and that a fractional handshakeTimeout drops a peer that never starts one.
-// As in jBallerina, only the plaintext peer's failure is logged; a bare connect-close and a timeout are not.
+// As in jBallerina, only the plaintext peer's failure is logged; a bare connect-close, a close mid-record and a timeout are not.
 func TestTcpServiceTLSHandshakeBeforeOnConnect(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)
@@ -310,6 +310,15 @@ func TestTcpServiceTLSHandshakeBeforeOnConnect(t *testing.T) {
 				_ = plain.SetReadDeadline(time.Now().Add(5 * time.Second))
 				_, _ = io.Copy(io.Discard, plain)
 				_ = plain.Close()
+				partial, err := net.Dial("tcp", addr)
+				if err != nil {
+					return values.NewErrorWithMessage("dial: " + err.Error()), nil
+				}
+				_, _ = partial.Write([]byte("hi"))
+				_ = partial.(*net.TCPConn).CloseWrite()
+				_ = partial.SetReadDeadline(time.Now().Add(5 * time.Second))
+				_, _ = io.Copy(io.Discard, partial)
+				_ = partial.Close()
 				bare, err := net.Dial("tcp", addr)
 				if err != nil {
 					return values.NewErrorWithMessage("dial: " + err.Error()), nil
