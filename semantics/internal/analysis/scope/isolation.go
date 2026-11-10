@@ -34,7 +34,11 @@ func isolationVarRef(cx Context, ref *ast.BLangVarRef) {
 	isolatedTy := semtypes.CreateIsolated(tyCtx)
 	if md, owner, local := LookupLocal(cx, sym); local {
 		if owner != fn.ID && (!md.IsFinal() || !semtypes.IsSubtype(tyCtx, md.Type(), isolatedTy)) {
-			cx.SemanticErr("invalid capture of mutable variable in isolated lambda", ref.GetPosition())
+			boundary := "lambda"
+			if fn.kind == fnWorker {
+				boundary = "worker"
+			}
+			cx.SemanticErr("invalid capture of mutable variable in isolated "+boundary, ref.GetPosition())
 		}
 		return
 	}
