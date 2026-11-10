@@ -2059,12 +2059,13 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 		ok = allocateMethodSymbol(ms, initFn, "init", initFn.IsPublic(), methodTargetScope, methodSymbolPrefix) && ok
 	}
 
-	selfSymbol := model.NewVariableSymbol("self", false, false, false, diagnostics.NewBuiltinLocation())
-	blockRes.AddSymbol("self", &selfSymbol)
-
+	// self is bound only within method bodies, so field initializers are resolved before it is defined.
 	for _, field := range fields {
 		ok = resolveVariableChildren(blockRes, field, field.Symbol()) && ok
 	}
+
+	selfSymbol := model.NewVariableSymbol("self", false, false, false, diagnostics.NewBuiltinLocation())
+	blockRes.AddSymbol("self", &selfSymbol)
 
 	if initFn != nil {
 		initResolver := newFunctionResolver(blockRes, initFn)

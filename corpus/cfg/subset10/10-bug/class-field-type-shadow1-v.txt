@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Person)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access n
+          (simple-var-ref p))
+        (field-based-access Name
+          (simple-var-ref p)))))
+  )
+)
