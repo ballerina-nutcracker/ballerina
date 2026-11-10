@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'f' is not visible here
+  --> main.bal:28:12
+   |
+28 |     return c.f(); // @error module-level method is not visible outside its module
+   |            ^^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> main.bal:24:12
+   |
+24 |     return c.x; // @error module-level field is not visible outside its module
+   |            ^^^
