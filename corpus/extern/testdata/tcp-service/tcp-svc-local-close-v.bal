@@ -17,7 +17,8 @@
 // A connection service that closes its own Caller from onBytes gets onClose
 // but no onError, matching jBallerina. onClose runs before the socket closes,
 // so it prints before the client's read observes the close. A write on the
-// closed Caller fails, and returning that error from onBytes logs it.
+// closed Caller fails, and returning that error from onBytes logs it. The log
+// is written after onBytes returns, so testMain waits for it before stopping.
 import ballerina/io;
 import ballerina/tcp;
 
@@ -55,10 +56,13 @@ function init() returns error? {
     check closingListener.attach(new ClosingServer());
 }
 
+isolated function awaitStderr(string text) returns boolean = external;
+
 public function testMain() returns error? {
     tcp:Client c = check new ("127.0.0.1", 19400, timeout = 2);
     check c->writeBytes("hello".toBytes());
     readonly & byte[]|tcp:Error response = c->readBytes();
+    io:println(awaitStderr("error: Socket connection already closed.")); // @output true
     check c->close();
     check closingListener.gracefulStop();
     io:println("stopped"); // @output stopped

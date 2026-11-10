@@ -19,11 +19,16 @@ package extern_test
 import (
 	"errors"
 	"net"
+	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // TestTcpServiceEcho starts a tcp:Listener + attached service on a real port
@@ -86,7 +91,20 @@ func TestTcpServiceOnCloseOnly(t *testing.T) {
 func TestTcpServiceLocalClose(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)
-	runExtern(t, fileCase("tcp-service/tcp-svc-local-close-v"), newTcpPal(), nil)
+	p := newTcpPal()
+	externs := []testharness.ExternRegistration{
+		{Org: "$anon", Module: "tcp-svc-local-close-v", FuncName: "awaitStderr",
+			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				want := args[0].(string)
+				for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(5 * time.Millisecond) {
+					if strings.Contains(p.Stderr(), want) {
+						return true, nil
+					}
+				}
+				return false, nil
+			}},
+	}
+	runExtern(t, fileCase("tcp-service/tcp-svc-local-close-v"), p, externs)
 }
 
 // TestTcpServiceCloseInOnConnect verifies that a connection closed before
