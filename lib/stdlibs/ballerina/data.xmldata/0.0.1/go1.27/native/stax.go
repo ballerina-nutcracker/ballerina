@@ -27,6 +27,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -35,16 +36,38 @@ const maxElementDepth = 1000
 
 var errElementDepthExceeded = fmt.Errorf("Maximum Element Depth limit (%d) Exceeded", maxElementDepth) //nolint:staticcheck // jBallerina's message verbatim
 
-// exceedsElementDepthInText reports whether reading input hits the element depth limit before any other error,
-// so a caller that builds an XML value first can fail before that build, which is quadratic in the depth.
-func exceedsElementDepthInText(input string) bool {
-	r := newStaxReader(input)
-	for r.hasNext() {
-		if _, err := r.next(); err != nil {
-			return errors.Is(err, errElementDepthExceeded)
+// exceedsElementDepthInText reports whether building input as an XML value reaches an element nested deeper than
+// maxElementDepth before failing with any other error. It builds only the part before that element, closed off,
+// since building the deep part is quadratic in the depth.
+func exceedsElementDepthInText(tc semtypes.Context, input string) bool {
+	decoder := xml.NewDecoder(strings.NewReader(input))
+	decoder.Strict = true
+	var open []xml.Name
+	for {
+		offset := decoder.InputOffset()
+		token, err := decoder.RawToken()
+		if err != nil {
+			return false
+		}
+		switch t := token.(type) {
+		case xml.StartElement:
+			if len(open) == maxElementDepth {
+				var prefix strings.Builder
+				prefix.WriteString(input[:offset])
+				for i := len(open) - 1; i >= 0; i-- {
+					prefix.WriteString("</" + qualified(open[i]) + ">")
+				}
+				_, err := values.ParseAsXMLValue(tc, prefix.String(), values.XMLStrictContentMode)
+				return err == nil
+			}
+			open = append(open, t.Name)
+		case xml.EndElement:
+			if len(open) == 0 {
+				return false
+			}
+			open = open[:len(open)-1]
 		}
 	}
-	return false
 }
 
 type staxEvent int

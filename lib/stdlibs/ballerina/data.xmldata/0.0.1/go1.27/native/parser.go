@@ -42,7 +42,7 @@ type xmlParser struct {
 func parseXML(t *typer, opts sourceOptions, input string, target semtypes.SemType) (result values.BalValue, err error) {
 	defer recoverAsParseError(&err)
 	if t.containsUnionType(target) {
-		if exceedsElementDepthInText(input) {
+		if exceedsElementDepthInText(t.tc, input) {
 			return nil, newXMLError("failed to parse xml: %s", errElementDepthExceeded)
 		}
 		source, err := values.ParseAsXMLValue(t.tc, input, values.XMLStrictContentMode)

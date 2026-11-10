@@ -218,9 +218,21 @@ public function main() {
     show(tooDeepUnion);
     // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
     // The limit applies before building the XML value for a union target, which takes time quadratic in the depth.
-    record {|record {}|string a?;|}|error millionDeepUnion = xmldata:parseString(repeat("<a>", 1000000) + repeat("</a>", 1000000));
+    string millionDeep = repeat("<a>", 1000000) + repeat("</a>", 1000000);
+    record {|record {}|string a?;|}|error millionDeepUnion = xmldata:parseString(millionDeep);
     show(millionDeepUnion);
     // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    // Building the value accepts text and further elements beside the root, so they do not skip the limit.
+    record {|record {}|string a?;|}|error leadingTextUnion = xmldata:parseString("x" + millionDeep);
+    show(leadingTextUnion);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    record {|record {}|string a?;|}|error secondRootUnion = xmldata:parseString("<b/>" + millionDeep);
+    show(secondRootUnion);
+    // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+    // A build error before the element that exceeds the limit is reported instead.
+    record {|record {}|string a?;|}|error prefixFirstUnion = xmldata:parseString("<p:a>" + millionDeep + "</p:a>");
+    show(prefixFirstUnion);
+    // @output E: failed to parse xml: 'undeclared XML namespace prefix "p"'
     record {}|error valueAtLimit = xmldata:parseAsType(nestedValue(1000));
     io:println(valueAtLimit is record {});
     // @output true
