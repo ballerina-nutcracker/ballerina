@@ -1,0 +1,49 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (literal a))))
+    (named-worker w (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (simple-var-ref x)
+          (literal 5))))
+    (named-worker v (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (simple-var-ref s)
+          (literal b))))
+    (assignment
+      (wildcard-binding-pattern)
+      (multiple-wait-action w
+        (simple-var-ref w) v
+        (simple-var-ref v)))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+  )
+)
+(worker v
+  (bb0 () ()
+    (assignment
+      (simple-var-ref s)
+      (literal b))
+  )
+)
+(worker w
+  (bb0 () ()
+    (assignment
+      (simple-var-ref x)
+      (literal 5))
+  )
+)

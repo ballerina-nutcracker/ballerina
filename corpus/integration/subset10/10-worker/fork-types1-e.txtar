@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: Undefined
+  --> fork-types1-e.bal:21:26
+   |
+21 |         worker w returns Undefined { // @error unknown type
+   |                          ^^^^^^^^^

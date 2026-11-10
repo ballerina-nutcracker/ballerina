@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'named' may be evaluated more than once
+  --> fork-ref1-e.bal:64:29
+   |
+64 |                 return wait named; // @error each iteration starts a new f
+   |                             ^^^^^
+
+error[SEMANTIC_ERROR]: worker 'w' is referenced more than once
+  --> fork-ref1-e.bal:26:21
+   |
+26 |     future<int> b = w; // @error second reference
+   |                     ^
+
+error[SEMANTIC_ERROR]: worker 'w' may be evaluated more than once
+  --> fork-ref1-e.bal:39:26
+   |
+39 |             int r = wait w; // @error reference inside a loop nested after the fork
+   |                          ^
+
+error[SEMANTIC_ERROR]: worker 'w' may be evaluated more than once
+  --> fork-ref1-e.bal:52:21
+   |
+52 |         return wait w; // @error reference inside an anonymous function
+   |                     ^

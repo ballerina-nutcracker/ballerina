@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -104,11 +105,11 @@ func rebindLifecycleFunctions(pkg *bir.BIRPackage) {
 	for i := range pkg.Functions {
 		fn := &pkg.Functions[i]
 		switch fn.Name.Value() {
-		case model.ModuleStartFunctionName:
+		case constants.ModuleStartFunctionName:
 			pkg.StartFunction = fn
-		case model.ModuleGracefulStopFunctionName:
+		case constants.ModuleGracefulStopFunctionName:
 			pkg.GracefulStopFunction = fn
-		case model.ModuleImmediateStopFunctionName:
+		case constants.ModuleImmediateStopFunctionName:
 			pkg.ImmediateStopFunction = fn
 		}
 	}

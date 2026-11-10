@@ -306,8 +306,12 @@ func (analyzer *functionControlFlowAnalyzer) analyzeBlockFunctionBody(fnBody *as
 	if len(fnBody.InitStmts) > 0 {
 		curBB = analyzer.analyzeStatements(curBB, fnBody.InitStmts).nextBB
 	}
-	curBB = analyzer.analyzeNamedWorkers(curBB, fnBody.Workers)
-	_ = analyzer.analyzeStatements(curBB, fnBody.Stmts)
+	if fnBody.Region == nil {
+		_ = analyzer.analyzeStatements(curBB, fnBody.Stmts)
+		return
+	}
+	curBB = analyzer.analyzeNamedWorkers(curBB, fnBody.Region.Workers)
+	_ = analyzer.analyzeStatements(curBB, fnBody.Region.DefaultWorker.Stmts)
 }
 
 // analyzeNamedWorkers records the worker startup point in the default worker's
@@ -325,6 +329,8 @@ func (analyzer *functionControlFlowAnalyzer) analyzeNamedWorkers(
 		analyzer.addNode(curBB, worker)
 		workerAnalyzer := functionControlFlowAnalyzer{ctx: analyzer.ctx, tyCtx: analyzer.tyCtx}
 		analyzer.workers = append(analyzer.workers, workerCFG{cfg: workerAnalyzer.analyzeBody(worker.Body), decl: worker})
+		// Forks nested in the worker body get their graphs built there.
+		analyzer.workers = append(analyzer.workers, workerAnalyzer.workers...)
 	}
 	return curBB
 }
@@ -402,6 +408,8 @@ func (analyzer *functionControlFlowAnalyzer) analyzeStatement(curBB bbRef, stmt 
 		return analyzer.analyzeBlockStmt(curBB, s)
 	case *ast.BLangLock:
 		return analyzer.analyzeBlockStmt(curBB, &s.Body)
+	case *ast.BLangFork:
+		return continueEffect(analyzer.analyzeNamedWorkers(curBB, s.Region.Workers))
 	case *ast.BLangWhile:
 		return analyzer.analyzeWhile(curBB, s)
 	case *ast.BLangForeach:

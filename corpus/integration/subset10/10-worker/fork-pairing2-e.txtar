@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: async send to a worker that can fail must be followed by a sync send or flush to it
+  --> fork-pairing2-e.bal:19:13
+   |
+19 |             1 -> b; // @error b can fail, so a must flush or sync send
+   |             ^^^^^^

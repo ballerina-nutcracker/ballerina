@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> fork-narrowing3-e.bal:26:24
+   |
+26 |                 return v; // @error v may have been assigned by the forking worker
+   |                        ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> fork-narrowing3-e.bal:40:24
+   |
+40 |                 return v; // @error v may have been assigned by the forking worker
+   |                        ^

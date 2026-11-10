@@ -137,6 +137,7 @@ type (
 
 	blockSymbolResolver struct {
 		parent     symbolResolver
+		aliases    map[string]string
 		scope      model.BlockLevelScope
 		node       ast.BLangNode
 		varTracker *varTracker
@@ -290,6 +291,7 @@ func newFunctionResolver(parent symbolResolver, node ast.CaptureGroupOwner) *blo
 	}
 	return &blockSymbolResolver{
 		parent:          parent,
+		aliases:         make(map[string]string),
 		scope:           scope,
 		node:            node,
 		varTracker:      new(varTracker{}),
@@ -320,6 +322,7 @@ func newScopedBlockResolver(parent symbolResolver, node ast.BLangNode, kind capt
 	scope := parent.GetCtx().NewBlockScope(parentScope, pkgID)
 	return &blockSymbolResolver{
 		parent:          parent,
+		aliases:         make(map[string]string),
 		scope:           scope,
 		node:            node,
 		varTracker:      nil,
@@ -428,6 +431,9 @@ func (ms *compilationUnitSymbolResolver) GetClassDefns() map[model.SymbolRef]*as
 }
 
 func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
+	if alias, ok := bs.aliases[name]; ok {
+		name = alias
+	}
 	if ref, ok := bs.scope.MainSpace().GetSymbol(name); ok {
 		return symbolLookup{ref: ref, kind: blockScopeKind, captured: false}, true
 	}
@@ -1223,49 +1229,71 @@ func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool
 	}
 }
 
-// resolveBlockFunctionBody resolves the three regions of a block function body
-// in order: the default-worker initialization statements, the named worker
-// declarations, and the remaining default-worker statements. Worker names are
-// unavailable in the initialization region and available everywhere after it.
+// resolveBlockFunctionBody resolves the regions of a block function body in
+// order: the default-worker initialization statements, then the worker region
+// (the named worker declarations, followed by the default worker's statements).
+// Worker names are unavailable in the initialization statements and available
+// everywhere after them.
 func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
 	ok := resolveStmts(r, body.InitStmts)
-	ok = declareNamedWorkers(r, body) && ok
-	for _, worker := range body.Workers {
-		ok = resolveNamedWorker(r, worker) && ok
-	}
 	ok = resolveStmts(r, body.Stmts) && ok
-	if len(body.Workers) > 0 {
-		ok = pairWorkerMessages(r, r.messageGroup) && ok
+	if body.Region == nil {
+		return ok
 	}
-	return ok
+	group, declared := declareRegionWorkers(r, body.Region, "")
+	ok = declared && ok
+	r.messageGroup = group
+	r.messageWorker = body.Region.DefaultWorker.Symbol()
+	for _, worker := range body.Region.Workers {
+		ok = resolveNamedWorker(r, worker, group, nil) && ok
+	}
+	ok = resolveStmts(r, body.Region.DefaultWorker.Stmts) && ok
+	return pairWorkerMessages(r, group) && ok
 }
 
-// declareNamedWorkers declares every worker symbol before any worker body is
-// resolved, so a worker body can refer to peers declared before or after it.
-// A body with named workers also gets a default worker symbol.
-func declareNamedWorkers(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
-	if len(body.Workers) == 0 {
-		return true
-	}
-	// The name can't be written in source, so there is no shadowing check: a
-	// lambda with its own workers nested in a body with workers declares another.
-	r.AddSymbol(constants.DefaultWorkerName, model.NewWorkerSymbol(constants.DefaultWorkerName, body.GetPosition()))
-	lookup, _ := r.GetSymbol(constants.DefaultWorkerName)
-	body.DefaultWorker = lookup.ref
+// declareRegionWorkers declares every worker symbol of region before any
+// worker body is resolved, using bindingPrefix for its lookup keys, and returns
+// the region's message group.
+func declareRegionWorkers(r *blockSymbolResolver, region *ast.WorkerRegion, bindingPrefix string) (*workerMessageGroup, bool) {
 	ok := true
-	for _, worker := range body.Workers {
+	if region.DefaultWorker != nil {
+		// The name can't be written in source, so there is no shadowing check: a
+		// lambda with its own workers nested in a body with workers declares another.
+		symbol := model.NewWorkerSymbol(constants.DefaultWorkerName, region.Workers[0].GetPosition())
+		addSymbolAndSetOnNode(r, constants.DefaultWorkerName, symbol, region.DefaultWorker)
+	}
+	for _, worker := range region.Workers {
 		name := worker.Name
-		if isShadowed(r, name) {
+		bindingName := bindingPrefix + name
+		_, alreadyDeclared := r.scope.MainSpace().GetSymbol(bindingName)
+		if alreadyDeclared || isShadowed(r, name) {
 			r.GetCtx().SemanticError("Variable already defined: "+name, worker.GetPosition())
 			ok = false
 			continue
 		}
 		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
-		addSymbolAndSetOnNode(r, name, symbol, worker)
+		addSymbolAndSetOnNode(r, bindingName, symbol, worker)
 	}
-	r.messageGroup = newWorkerMessageGroup(body, !inModuleLevelFunction(r))
-	r.messageWorker = body.DefaultWorker
-	return ok
+	return newWorkerMessageGroup(region, !inModuleLevelFunction(r)), ok
+}
+
+// resolveFork exposes worker names to siblings while resolving their bodies,
+// then to the enclosing block for statements after the fork.
+func resolveFork(r *blockSymbolResolver, fork *ast.BLangFork) bool {
+	region := fork.Region
+	bindingPrefix := "$" + region.NamePrefix + ":"
+	group, ok := declareRegionWorkers(r, region, bindingPrefix)
+	aliases := make(map[string]string, len(region.Workers))
+	for _, worker := range region.Workers {
+		if ast.SymbolIsSet(worker) {
+			aliases[worker.Name] = bindingPrefix + worker.Name
+		}
+	}
+	for _, worker := range region.Workers {
+		ok = resolveNamedWorker(r, worker, group, aliases) && ok
+	}
+	maps.Copy(r.aliases, aliases)
+	return pairWorkerMessages(r, group) && ok
 }
 
 // inModuleLevelFunction reports whether r is inside the body of a
@@ -1305,9 +1333,12 @@ func isNamedFunction(node ast.BLangNode) bool {
 	}
 }
 
-func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) bool {
+// resolveNamedWorker resolves worker's body with the given sibling bindings.
+func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration, group *workerMessageGroup, aliases map[string]string) bool {
 	workerResolver := newFunctionResolver(r, worker)
-	workerResolver.messageGroup = r.messageGroup
+	maps.Copy(workerResolver.aliases, aliases)
+	delete(workerResolver.aliases, worker.Name)
+	workerResolver.messageGroup = group
 	workerResolver.messageWorker = worker.Symbol()
 	worker.SetScope(workerResolver.scope)
 	ok := true
@@ -1749,6 +1780,9 @@ func isShadowed(resolver *blockSymbolResolver, name string) bool {
 			if _, ok := current.scope.MainSpace().GetSymbol(name); ok {
 				return true
 			}
+		}
+		if _, ok := current.aliases[name]; ok {
+			return true
 		}
 		if next, ok := current.parent.(*blockSymbolResolver); ok {
 			current = next
@@ -2204,7 +2238,7 @@ func (ms *compilationUnitSymbolResolver) allocateResourceMethodSymbol(targetScop
 }
 
 func mangledResourceMethodName(methodName string, idx int) string {
-	return fmt.Sprintf("$resource$%s$%d", methodName, idx)
+	return fmt.Sprintf("%s%s$%d", constants.ResourceMethodFunctionPrefix, methodName, idx)
 }
 
 func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangResourceMethod) bool {
@@ -2395,6 +2429,8 @@ func resolveStmt(r *blockSymbolResolver, stmt ast.StatementNode) bool {
 		return resolveDo(r, n)
 	case *ast.BLangLock:
 		return resolveLock(r, n)
+	case *ast.BLangFork:
+		return resolveFork(r, n)
 	case *ast.BLangMatchStatement:
 		return resolveMatchStatement(r, n)
 	case *ast.BLangVariableDef:

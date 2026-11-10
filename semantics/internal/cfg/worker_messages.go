@@ -25,7 +25,7 @@ import (
 )
 
 // analyzeWorkerMessageTermination reports a return that lets a worker of a
-// body with named workers terminate with success before it runs all its
+// worker region terminate with success before it runs all its
 // message actions: its peers would wait for an action that never happens. A
 // return whose value is an error terminates the worker with failure, which
 // its peers observe.
@@ -34,21 +34,34 @@ func analyzeWorkerMessageTermination(ctx *context.CompilerContext, pkg *ast.BLan
 	ast.Walk(finder, pkg)
 	tyCtx := semtypes.ContextFrom(ctx.GetTypeEnv())
 	for _, body := range finder.bodies {
-		defaultStmts := append(append([]ast.StatementNode{}, body.InitStmts...), body.Stmts...)
+		defaultStmts := append(append([]ast.StatementNode{}, body.InitStmts...), body.Region.DefaultWorker.Stmts...)
 		checkWorkerMessageTermination(ctx, tyCtx, defaultStmts)
-		for _, worker := range body.Workers {
-			checkWorkerMessageTermination(ctx, tyCtx, worker.Body.Stmts)
-		}
+		checkRegionMessageTermination(ctx, tyCtx, body.Region)
+	}
+	for _, fork := range finder.forks {
+		checkRegionMessageTermination(ctx, tyCtx, fork.Region)
+	}
+}
+
+func checkRegionMessageTermination(ctx *context.CompilerContext, tyCtx semtypes.Context, region *ast.WorkerRegion) {
+	for _, worker := range region.Workers {
+		checkWorkerMessageTermination(ctx, tyCtx, worker.Body.Stmts)
 	}
 }
 
 type workerBodyFinder struct {
 	bodies []*ast.BLangBlockFunctionBody
+	forks  []*ast.BLangFork
 }
 
 func (f *workerBodyFinder) Visit(node ast.BLangNode) ast.Visitor {
-	if body, ok := node.(*ast.BLangBlockFunctionBody); ok && len(body.Workers) > 0 {
-		f.bodies = append(f.bodies, body)
+	switch node := node.(type) {
+	case *ast.BLangBlockFunctionBody:
+		if node.Region != nil {
+			f.bodies = append(f.bodies, node)
+		}
+	case *ast.BLangFork:
+		f.forks = append(f.forks, node)
 	}
 	return f
 }
@@ -84,10 +97,10 @@ func returnsError(tyCtx semtypes.Context, ret *ast.BLangReturn) bool {
 }
 
 // workerTerminationCollector collects, in source order, the message actions
-// and returns of a worker's statements. Nested functions belong to their own
-// workers, so it doesn't descend into them. A flush is a message action only
-// when it covers a send to a peer that can fail: only then must it run before
-// the worker terminates with success (spec 7.8.1).
+// and returns of a worker's statements. Nested functions and nested workers
+// belong to their own workers, so it doesn't descend into them. A flush is a
+// message action only when it covers a send to a peer that can fail: only
+// then must it run before the worker terminates with success (spec 7.8.1).
 type workerTerminationCollector struct {
 	ctx            *context.CompilerContext
 	tyCtx          semtypes.Context
@@ -97,7 +110,8 @@ type workerTerminationCollector struct {
 
 func (c *workerTerminationCollector) Visit(node ast.BLangNode) ast.Visitor {
 	switch node := node.(type) {
-	case *ast.BLangLambdaFunction, *ast.BLangFunction, *ast.BLangClassDefinition:
+	case *ast.BLangLambdaFunction, *ast.BLangFunction, *ast.BLangClassDefinition,
+		*ast.BLangFork, *ast.BLangNamedWorkerDeclaration:
 		return nil
 	case *ast.BLangReturn:
 		c.returns = append(c.returns, node)

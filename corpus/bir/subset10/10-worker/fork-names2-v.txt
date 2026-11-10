@@ -1,0 +1,184 @@
+module $anon.. v 0.0.0;
+forksAroundLambda() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    sum = %1;
+    %3 = ConstantLoad true
+    %3 ? bb1 : bb6;
+  }
+  bb1 {
+    PushScopeFrame 11
+    %0 = createLatch() -> bb2;
+  }
+  bb2 {
+    $desugar$0 = %0;
+    %3 = closure_fp $anon/.:$worker:forksAroundLambda:fork0:w
+    $desugar$2 = %3;
+    %5 = start $desugar$2() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %5;
+    %6 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %8 = (1, sum);
+    %9 = wait $desugar$1 -> bb5;
+  }
+  bb5 {
+    %10 = %9;
+    %7 = + %8 %10;
+    (1, sum) = %7;
+    PopScopeFrame
+    GOTO bb6;
+  }
+  bb6 {
+    PushScopeFrame 1
+    %0 = ConstantLoad true
+    %0 ? bb7 : bb12;
+  }
+  bb7 {
+    PushScopeFrame 11
+    %0 = createLatch() -> bb8;
+  }
+  bb8 {
+    $desugar$3 = %0;
+    %3 = closure_fp $anon/.:$worker:forksAroundLambda:fork1:w
+    $desugar$5 = %3;
+    %5 = start $desugar$5() isolated=false -> bb9;
+  }
+  bb9 {
+    $desugar$4 = %5;
+    %6 = openLatch($desugar$3) -> bb10;
+  }
+  bb10 {
+    %8 = (2, sum);
+    %9 = wait $desugar$4 -> bb11;
+  }
+  bb11 {
+    %10 = %9;
+    %7 = + %8 %10;
+    (2, sum) = %7;
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb12 {
+    PushScopeFrame 3
+    %0 = closure_fp $anon/.:$anonFunc$_0
+    g = %0;
+    %2 = ConstantLoad true
+    %2 ? bb13 : bb18;
+  }
+  bb13 {
+    PushScopeFrame 11
+    %0 = createLatch() -> bb14;
+  }
+  bb14 {
+    $desugar$6 = %0;
+    %3 = closure_fp $anon/.:$worker:forksAroundLambda:fork2:w
+    $desugar$8 = %3;
+    %5 = start $desugar$8() isolated=false -> bb15;
+  }
+  bb15 {
+    $desugar$7 = %5;
+    %6 = openLatch($desugar$6) -> bb16;
+  }
+  bb16 {
+    %8 = (3, sum);
+    %9 = wait $desugar$7 -> bb17;
+  }
+  bb17 {
+    %10 = %9;
+    %7 = + %8 %10;
+    (3, sum) = %7;
+    PopScopeFrame
+    GOTO bb18;
+  }
+  bb18 {
+    PushScopeFrame 4
+    %1 = (3, sum);
+    %2 = (1, g)() -> bb19;
+  }
+  bb19 {
+    %3 = %2;
+    %0 = + %1 %3;
+    (3, %0) = %0;
+    PopScopeFrame
+    PopScopeFrame
+    PopScopeFrame
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = forksAroundLambda() -> bb1;
+  }
+  bb1 {
+    %2 = %1;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %4 = closure_fp $anon/.:$worker:forksAroundLambda.$anonFunc$_0:fork0:w
+    $desugar$2 = %4;
+    %6 = start $desugar$2() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %6;
+    %7 = openLatch($desugar$0) -> bb3;
+  }
+  bb3 {
+    %8 = wait $desugar$1 -> bb4;
+  }
+  bb4 {
+    %0 = %8;
+    return;
+  }
+}
+$worker:forksAroundLambda.$anonFunc$_0:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 100
+    %0 = %2;
+    return;
+  }
+}
+$worker:forksAroundLambda:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}
+$worker:forksAroundLambda:fork1:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$3)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 10
+    %0 = %2;
+    return;
+  }
+}
+$worker:forksAroundLambda:fork2:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$6)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1000
+    %0 = %2;
+    return;
+  }
+}

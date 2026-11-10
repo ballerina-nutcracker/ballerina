@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -708,7 +709,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		paramList := ld.Define(pkgCtx.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 		retTy := semtypes.FunctionReturnType(tyCtx, fnTy, paramList)
 
-		fnSymName := "$" + methodName + "Method"
+		fnSymName := constants.ListenerMethodFunctionPrefix + methodName
 		fnSym := &desugaredSymbol{name: fnSymName, ty: fnTy, kind: model.SymbolKindFunction, location: initPos}
 		scope.AddSymbol(fnSymName, fnSym)
 		fnSymRef, _ := scope.GetSymbol(fnSymName)
@@ -779,29 +780,20 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		return fn
 	}
 
-	for _, fnName := range []string{StartFunctionName, GracefulStopFunctionName, ImmediateStopFunctionName} {
+	for _, fnName := range []string{constants.ModuleStartFunctionName, constants.ModuleGracefulStopFunctionName, constants.ModuleImmediateStopFunctionName} {
 		pkg.Functions = append(pkg.Functions, buildLifecycleFn(fnName))
 	}
 }
-
-// Names of the per-module lifecycle dispatch functions emitted by desugar.
-// Each one iterates the module's listener array and invokes the matching
-// listener method (see ListenerMethodFor).
-const (
-	StartFunctionName         = model.ModuleStartFunctionName
-	GracefulStopFunctionName  = model.ModuleGracefulStopFunctionName
-	ImmediateStopFunctionName = model.ModuleImmediateStopFunctionName
-)
 
 // ListenerMethodFor returns the listener method name that the given lifecycle
 // dispatch function calls. Returns "" if name is not a lifecycle function.
 func ListenerMethodFor(name string) string {
 	switch name {
-	case StartFunctionName:
+	case constants.ModuleStartFunctionName:
 		return "start"
-	case GracefulStopFunctionName:
+	case constants.ModuleGracefulStopFunctionName:
 		return "gracefulStop"
-	case ImmediateStopFunctionName:
+	case constants.ModuleImmediateStopFunctionName:
 		return "immediateStop"
 	}
 	return ""
