@@ -1,0 +1,61 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad count
+    %3 = ConstantLoad 1
+    %4 = newMap mapping{%2=%3}
+    %5 = newError error<readonly&{| count: int, anydata... |}>(%1, %4)
+    e1 = %5;
+    %7 = println(e1) -> bb1;
+  }
+  bb1 {
+    %8 = ConstantLoad b
+    %9 = newError error<readonly&{| count: int, anydata... |}>(%8)
+    e2 = %9;
+    %11 = println(e2) -> bb2;
+  }
+  bb2 {
+    %12 = ConstantLoad c
+    %13 = ConstantLoad x
+    %14 = ConstantLoad 1
+    %15 = ConstantLoad y
+    %16 = ConstantLoad 2
+    %17 = newMap mapping{%13=%14, %15=%16}
+    %18 = newError error<readonly&{| int... |}>(%12, %17)
+    e3 = %18;
+    %20 = println(e3) -> bb3;
+  }
+  bb3 {
+    %21 = ConstantLoad d
+    %22 = ConstantLoad anything
+    %23 = ConstantLoad true
+    %24 = newMap mapping{%22=%23}
+    %25 = newError error(%21, %24)
+    e4 = %25;
+    %27 = println(e4) -> bb4;
+  }
+  bb4 {
+    %28 = ConstantLoad e
+    %29 = ConstantLoad p
+    %30 = ConstantLoad x
+    %31 = ConstantLoad q
+    %32 = ConstantLoad y
+    %33 = newMap mapping{%29=%30, %31=%32}
+    %34 = newError error<readonly&{| string... |}>(%28, %33)
+    e5 = %34;
+    %36 = println(e5) -> bb5;
+  }
+  bb5 {
+    %37 = ConstantLoad f
+    %38 = ConstantLoad type
+    %39 = ConstantLoad 1
+    %40 = newMap mapping{%38=%39}
+    %41 = newError error<readonly&{| type: int, anydata... |}>(%37, %40)
+    e6 = %41;
+    %43 = println(e6) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
