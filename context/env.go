@@ -267,7 +267,7 @@ func (c *CompilerEnvironment) symbolSpace(index int) *model.SymbolSpace {
 
 func (c *CompilerEnvironment) SymbolPackage(symbol model.SymbolRef) model.PackageIdentifier {
 	if symbol.IsEmpty() {
-		panic("cannot get package for empty symbol ref")
+		panic("cannot get package for empty symbol ref") //nolint:forbidigo // Empty symbol references violate a compiler invariant.
 	}
 	return c.symbolSpace(symbol.SpaceIndex).Pkg
 }
