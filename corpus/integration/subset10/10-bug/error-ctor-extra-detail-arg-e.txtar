@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'extra' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:39:41
+   |
+39 |     error<OpenDetail> e = error("open", extra = true); // @error
+   |                                         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'extra' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:44:50
+   |
+44 |     OpenErr e = error OpenErr("open", count = 1, extra = 2); // @error
+   |                                                  ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'extra' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:64:41
+   |
+64 |     error<OpenDetail>? e = error("opt", extra = true); // @error
+   |                                         ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'extra' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:69:51
+   |
+69 |     DistinctErr e = error DistinctErr("distinct", extra = 1); // @error
+   |                                                   ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'other' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:49:47
+   |
+49 |     error<RoDetail> e = error("ro", code = 1, other = "x"); // @error
+   |                                               ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'other' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:54:43
+   |
+54 |     RoErr e = error RoErr("ro", code = 1, other = "x"); // @error
+   |                                           ^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error constructor does not accept additional detail arg 'other' when the error detail type contains individual field descriptors
+  --> error-ctor-extra-detail-arg-e.bal:59:51
+   |
+59 |     error<RestDetail> e = error("rest", code = 1, other = "x"); // @error
+   |                                                   ^^^^^^^^^^^

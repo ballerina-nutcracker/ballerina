@@ -192,6 +192,9 @@ func validateErrorConstructor(cx scope.Context, e *ast.BLangErrorConstructorExpr
 		cx.UnimplementedErr("error detail type not supported", e.GetPosition())
 		return scope.NoFacts, false
 	}
+	// Spec §6.17: every arg-name must name an individual field of the detail
+	// type, unless it declares no individual fields.
+	detailFields, _, detailFieldsOk := semtypes.AllPossibleMappingFields(tyCtx, detailTy)
 	seen := make([]string, 0, len(e.NamedArgs))
 	provided := make([]semtypes.Field, 0, len(e.NamedArgs))
 	cloneable := semtypes.CreateCloneable(tyCtx)
@@ -199,6 +202,10 @@ func validateErrorConstructor(cx scope.Context, e *ast.BLangErrorConstructorExpr
 		name := e.NamedArgs[i].Name.GetValue()
 		if slices.Contains(seen, name) {
 			cx.SemanticErr(strings.Join([]string{"duplicate named argument '", name, "' in error constructor"}, ""), e.NamedArgs[i].GetPosition())
+			return scope.NoFacts, false
+		}
+		if detailFieldsOk && len(detailFields) > 0 && !slices.ContainsFunc(detailFields, func(f semtypes.MappingField) bool { return f.Name == name }) {
+			cx.SemanticErr(strings.Join([]string{"error constructor does not accept additional detail arg '", name, "' when the error detail type contains individual field descriptors"}, ""), e.NamedArgs[i].GetPosition())
 			return scope.NoFacts, false
 		}
 		seen = append(seen, name)
