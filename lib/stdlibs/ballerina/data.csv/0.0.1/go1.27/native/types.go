@@ -400,7 +400,9 @@ type rowBuilder struct {
 	rest     []values.MapEntry
 	// positions maps each key to its index in declared or rest once a row outgrows a linear scan.
 	positions map[string]int
-	items     []values.BalValue
+	// scanned counts the entries compared by linear lookups, so tests can check put stays linear.
+	scanned int
+	items   []values.BalValue
 }
 
 // indexThreshold is the entry count past which keys are looked up through positions.
@@ -442,9 +444,11 @@ func (b *rowBuilder) indexOf(entries []values.MapEntry, key string) (int, bool) 
 	}
 	for i := range entries {
 		if entries[i].Key == key {
+			b.scanned += i + 1
 			return i, true
 		}
 	}
+	b.scanned += len(entries)
 	return 0, false
 }
 

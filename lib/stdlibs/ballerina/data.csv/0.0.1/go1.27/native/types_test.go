@@ -19,28 +19,28 @@ package native
 import (
 	"strconv"
 	"testing"
-	"time"
 )
 
-// TestRowBuilderWideRowIsLinear guards against a key lookup that scans the earlier entries: 100k keys
-// take milliseconds when indexed and several seconds when scanned. Putting every key again must overwrite
-// in place, as values.NewMap would otherwise hide duplicate entries from the corpus tests.
+// TestRowBuilderWideRowIsLinear guards against a key lookup that scans the earlier entries: once a row outgrows
+// indexThreshold, put must find keys through the index, so only the first entries are ever scanned. Putting every
+// key again must overwrite in place, which also fails if building the index drops declared or rest entries, as
+// values.NewMap would otherwise hide duplicate entries from the corpus tests.
 func TestRowBuilderWideRowIsLinear(t *testing.T) {
-	const n = 100_000
+	t.Parallel()
+	const n = 10_000
 	keys := make([]string, n)
 	for i := range keys {
 		keys[i] = "k" + strconv.Itoa(i)
 	}
 	b := newRowBuilder(&rowShape{fields: map[string]*recordField{"k0": {name: "k0"}}})
-	start := time.Now()
 	for _, k := range keys {
 		b.put(k, nil)
 	}
 	for i, k := range keys {
 		b.put(k, int64(i))
 	}
-	if elapsed := time.Since(start); elapsed > time.Second {
-		t.Fatalf("putting %d keys took %v", n, elapsed)
+	if b.scanned > indexThreshold*indexThreshold {
+		t.Fatalf("putting %d keys twice compared %d entries", n, b.scanned)
 	}
 	if len(b.declared) != 1 || len(b.rest) != n-1 || !b.has("k0") {
 		t.Fatalf("got %d declared and %d rest entries", len(b.declared), len(b.rest))
