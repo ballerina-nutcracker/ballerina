@@ -3971,9 +3971,51 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		case *ast.BLangFieldBaseAccess:
 			result.lax = e.IsLax()
 			return result, true
-		default:
+		case *ast.BLangAlternateWaitAction,
+			*ast.BLangAlternateWorkerReceive,
+			*ast.BLangAnnotAccessExpr,
+			*ast.BLangArrowFunction,
+			*ast.BLangBadExprOrAction,
+			*ast.BLangBinaryExpr,
+			*ast.BLangCheckPanickedExpr,
+			*ast.BLangCheckedExpr,
+			*ast.BLangClientResourceAccessAction,
+			*ast.BLangCommitExpr,
+			*ast.BLangConstRef,
+			*ast.BLangDefaultArg,
+			*ast.BLangErrorConstructorExpr,
+			*ast.BLangIndexBasedAccess,
+			*ast.BLangInferredTypedescDefault,
+			*ast.BLangListConstructorExpr,
+			*ast.BLangLiteral,
+			*ast.BLangMappingConstructorExpr,
+			*ast.BLangMultipleWaitAction,
+			*ast.BLangNewExpression,
+			*ast.BLangNilConditionalExpr,
+			*ast.BLangNumericLiteral,
+			*ast.BLangQueryExpr,
+			*ast.BLangSingleWaitAction,
+			*ast.BLangStartAction,
+			*ast.BLangTemplateExpr,
+			*ast.BLangTernaryExpr,
+			*ast.BLangTrapExpr,
+			*ast.BLangTypeTestExpr,
+			*ast.BLangTypedescExpr,
+			*ast.BLangUnaryExpr,
+			*ast.BLangWildCardBindingPattern,
+			*ast.BLangWorkerReceive,
+			*ast.BLangXMLCommentLiteral,
+			*ast.BLangXMLElementLiteral,
+			*ast.BLangXMLFilterExpression,
+			*ast.BLangXMLPILiteral,
+			*ast.BLangXMLSequenceLiteral,
+			*ast.BLangXMLStepExpression,
+			*ast.BLangXMLTemplateExpr,
+			*ast.BLangXMLTextLiteral,
+			*ast.AbstractExpression:
 			return result, true
 		}
+		panic("unreachable: unhandled resolved expression") //nolint:forbidigo // Every expression variant is handled above.
 	}
 
 	switch e := expr.(type) {
@@ -4097,10 +4139,16 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolved(resolveXMLFilterExpr(t, chain, e, expectedType))
 	case *ast.BLangXMLStepExpression:
 		return resolved(resolveXMLStepExpr(t, chain, e, expectedType))
-	default:
+	case *ast.BLangAlternateWorkerReceive,
+		*ast.BLangArrowFunction,
+		*ast.BLangBadExprOrAction,
+		*ast.BLangCommitExpr,
+		*ast.BLangWorkerReceive,
+		*ast.AbstractExpression:
 		t.internalError(fmt.Sprintf("unsupported expression type: %T", expr), expr.GetPosition())
 		return expressionResult{}, false
 	}
+	panic("unreachable: unhandled expression in type resolution") //nolint:forbidigo // Every supported and rejected expression variant is handled above.
 }
 
 // resolveInferredTypedescDefault handles the "<>" default value that appears as
