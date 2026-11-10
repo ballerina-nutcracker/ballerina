@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> optional-field-nil3-e.bal:30:12
+   |
+30 |     return {a: ()}; // @error
+   |            ^^^^^^^
+
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> optional-field-nil3-e.bal:34:12
+   |
+34 |     return {a: none}; // @error
+   |            ^^^^^^^^^

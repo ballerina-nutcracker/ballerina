@@ -254,6 +254,12 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 		if !ok {
 			return nil, false
 		}
+		if value == nil {
+			if _, nilOmitted := common.MappingFieldValueType(e.resolver.typeContext(), &expr.SelectedAtomicType, key); nilOmitted {
+				// A nil value for an optional field whose type does not allow nil adds no field.
+				continue
+			}
+		}
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 	}
 

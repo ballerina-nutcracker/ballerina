@@ -79,6 +79,11 @@ func execNewMap(ctx *extern.Context, newMap *bir.NewMap, frame *Frame) {
 			computedEntries = append(computedEntries, values.MapEntry{Key: keyStr, Value: valueVal})
 			continue
 		}
+		if valueVal == nil && !semtypes.ContainsBasicType(atomic.FieldInnerVal(keyStr), semtypes.Nil) {
+			// Type checking admits nil for a field whose type does not allow it only when the field is
+			// optional; such a nil adds no field.
+			continue
+		}
 		seen[keyStr] = struct{}{}
 		entries = append(entries, values.MapEntry{Key: keyStr, Value: valueVal})
 	}

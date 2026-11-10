@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected never, got "bad"
+error[SEMANTIC_ERROR]: incompatible type: expected nil, got "bad"
   --> os-exec1-e.bal:20:37
    |
 20 |     os:EnvProperties ep = {command: "bad"}; // @error exclusion guard on command key

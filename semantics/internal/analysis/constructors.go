@@ -125,7 +125,7 @@ func validateMappingConstructor(cx scope.Context, e *ast.BLangMappingConstructor
 				return scope.NoFacts, false
 			}
 			present[keyName] = struct{}{}
-			valueExpected = mat.FieldInnerVal(keyName)
+			valueExpected, _ = semcommon.MappingFieldValueType(cx.TyCtx(), &mat, keyName)
 			if e.IsReadonly(keyName) {
 				valueExpected = semtypes.Intersect(valueExpected, semtypes.ValReadonly)
 			}

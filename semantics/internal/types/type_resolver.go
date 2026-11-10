@@ -4776,6 +4776,7 @@ func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLan
 		computed := kv.Key.Kind == ast.MappingKeyComputed
 		var keyName string
 		var required semtypes.SemType
+		var nilOmitted bool
 		if computed {
 			keyTy, keyChain, ok := resolveComputedMappingKey(t, chain, kv)
 			if !ok {
@@ -4789,7 +4790,9 @@ func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLan
 				return nil, chain, false
 			}
 			keyName = name
-			readonlyRequired, ok := readonlyFieldRequiredType(t, e, kv, candidate.atom.FieldInnerVal(keyName))
+			var fieldTy semtypes.SemType
+			fieldTy, nilOmitted = common.MappingFieldValueType(t.typeContext(), candidate.atom, keyName)
+			readonlyRequired, ok := readonlyFieldRequiredType(t, e, kv, fieldTy)
 			if !ok {
 				return nil, chain, false
 			}
@@ -4804,7 +4807,12 @@ func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLan
 			continue
 		}
 		resolveMappingKey(t, kv, result.ty)
-		members = append(members, mappingConstructorMember{pos: kv.GetPosition(), name: keyName, ty: result.ty})
+		memberTy := result.ty
+		if nilOmitted {
+			// A nil value adds no field, so the field can only hold the rest of the value's type.
+			memberTy = semtypes.Diff(memberTy, semtypes.Nil)
+		}
+		members = append(members, mappingConstructorMember{pos: kv.GetPosition(), name: keyName, ty: memberTy})
 	}
 	return members, chain, true
 }

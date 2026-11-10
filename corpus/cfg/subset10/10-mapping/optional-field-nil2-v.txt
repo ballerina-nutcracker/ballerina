@@ -1,0 +1,206 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable none (type
+        (union-type
+          (value-type int)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable ro (type
+        (intersection-type
+          (value-type readonly)
+          (user-defined-type R))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (simple-var-ref none))
+          (key-value
+            (literal b)
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref ro)
+        (literal  )
+        (invocation lang.map hasKey (
+          (simple-var-ref ro)
+          (literal a))))))
+    (var-def
+      (variable arr (type
+        (array-type
+          (user-defined-type R) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (simple-var-ref none))
+            (key-value
+              (literal b)
+              (literal 1)))
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (literal 2))
+            (key-value
+              (literal b)
+              (literal 3)))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref arr))))
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (user-defined-type R))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal k)
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (simple-var-ref none))
+              (key-value
+                (literal b)
+                (literal 4))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref m))))
+    (expression-stmt
+      (invocation io println (
+        (invocation take (
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (simple-var-ref none))
+            (key-value
+              (literal b)
+              (literal 9))))))))
+    (var-def
+      (variable n1 (type
+        (user-defined-type Nest)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal inner)
+            (mapping-constructor-expr
+              (key-value
+                (literal a)
+                (simple-var-ref none))
+              (key-value
+                (literal b)
+                (literal 5))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n1))))
+    (var-def
+      (variable noInner (type
+        (union-type
+          (user-defined-type R)
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable n2 (type
+        (user-defined-type Nest)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal inner)
+            (simple-var-ref noInner))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref n2))))
+    (var-def
+      (variable us (type
+        (union-type
+          (value-type int)
+          (union-type
+            (value-type string)
+            (value-type null)))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable u1 (type
+        (user-defined-type U)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (simple-var-ref us))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref u1))))
+    (var-def
+      (variable us2 (type
+        (union-type
+          (value-type int)
+          (union-type
+            (value-type string)
+            (value-type null)))) (expr
+        (literal s))))
+    (var-def
+      (variable u2 (type
+        (user-defined-type U)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (simple-var-ref us2))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref u2))))
+    (var-def
+      (variable fx (type
+        (union-type
+          (finite-type
+            (literal x))
+          (value-type null))) (expr
+        (literal <nil>))))
+    (var-def
+      (variable f (type
+        (user-defined-type Fin)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (simple-var-ref fx))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref f))))
+    (var-def
+      (variable nv (type
+        (user-defined-type Nev)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref nv))))
+    (var-def
+      (variable j (type
+        (user-defined-type J)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref j))))
+    (var-def
+      (variable sel (type
+        (union-type
+          (user-defined-type A1)
+          (user-defined-type A2))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (simple-var-ref none))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref sel)
+        (literal  )
+        (type-test-expr is
+          (simple-var-ref sel)
+          (user-defined-type A1)))))
+  )
+)
+(take
+  (bb0 () ()
+    (return
+      (simple-var-ref r))
+  )
+)

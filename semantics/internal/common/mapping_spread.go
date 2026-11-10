@@ -75,3 +75,15 @@ func mappingConstructorOperandFields(ctx *context.CompilerContext, target *semty
 	}
 	return fields, true
 }
+
+// MappingFieldValueType is the contextually expected type for the value of a specific field name
+// in a constructor whose inherent type is target. A value for a declared optional field whose type
+// does not allow nil may also be nil, in which case the field is not added; nilOmitted reports
+// that case.
+func MappingFieldValueType(cx semtypes.Context, target *semtypes.MappingAtomicType, name string) (ty semtypes.SemType, nilOmitted bool) {
+	ty = target.FieldInnerVal(name)
+	if semtypes.ContainsBasicType(ty, semtypes.Nil) || !slices.Contains(target.FieldNames(), name) || !target.IsOptional(cx, name) {
+		return ty, false
+	}
+	return semtypes.Union(ty, semtypes.Nil), true
+}

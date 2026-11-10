@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
+  --> optional-field-nil-e.bal:27:16
+   |
+27 |     return {a: none}; // @error
+   |                ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
+  --> optional-field-nil-e.bal:31:16
+   |
+31 |     return {a: none}; // @error
+   |                ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
+  --> optional-field-nil-e.bal:35:18
+   |
+35 |     return {"z": none}; // @error
+   |                  ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got nil|int
+  --> optional-field-nil-e.bal:39:20
+   |
+39 |     return {["a"]: none}; // @error
+   |                    ^^^^

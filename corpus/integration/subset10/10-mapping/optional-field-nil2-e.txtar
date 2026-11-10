@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected nil|int, got nil|string
+  --> optional-field-nil2-e.bal:23:16
+   |
+23 |     return {a: s, b: 1}; // @error
+   |                ^
