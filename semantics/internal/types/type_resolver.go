@@ -813,7 +813,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 	fns := common.DeclaredNodes(common.PackageFunctionDecls(pkg))
 
 	allImports := make(map[string]ast.BLangImportPackage)
-	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
+	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable, isReadonly bool) {
 		ft := &functionTypeResolver{
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
@@ -828,17 +828,21 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		for _, fieldNode := range fields {
 			field := fieldNode
 			if field.Expr != nil {
-				resolveActionOrExpression(ft, nil, field.Expr.(ast.BLangExpression), field.TypeNode().Type())
+				expectedTy := field.TypeNode().Type()
+				if isReadonly {
+					expectedTy = semtypes.Intersect(expectedTy, semtypes.ValReadonly)
+				}
+				resolveActionOrExpression(ft, nil, field.Expr.(ast.BLangExpression), expectedTy)
 			}
 		}
 		maps.Copy(allImports, ft.implicitImports)
 	}
 	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
-		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields)
+		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields, c.IsReadonly())
 	}
 	for i := range pkg.Services {
 		s := pkg.Services[i]
-		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields)
+		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields, false)
 	}
 
 	resolvers := make([]*functionTypeResolver, len(fns))
@@ -2907,7 +2911,11 @@ func classMembers(t typeResolver, classDef *ast.BLangClassDefinition) []model.In
 			if directFields[field.MemberName()] {
 				continue
 			}
-			members = append(members, field.WithoutDefault())
+			includedField := field.WithoutDefault()
+			if classDef.IsReadonly() {
+				includedField = includedField.WithFinal()
+			}
+			members = append(members, includedField)
 		}
 	}
 	// Add direct members
@@ -3105,6 +3113,9 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 	// A member that fails to resolve is left out of the object type; the rest are still resolved.
 	for _, field := range fields {
 		if fieldTy, _, ok := resolveBType(t, nil, field.TypeNode(), depth+1); ok {
+			if isReadonly {
+				fieldTy = readonlyClassFieldType(t, field, fieldTy)
+			}
 			updateSymbolType(t, field, fieldTy)
 		}
 	}
@@ -3137,6 +3148,16 @@ func finishResolveObjectDefinitionType(t typeResolver, od *semtypes.ObjectDefini
 	}
 
 	return defineObjectSemType(t, od, isIsolated, isReadonly, isClient, isService, members, distinctSymbol, inclusions), true
+}
+
+func readonlyClassFieldType(t typeResolver, field *ast.BLangVariable, fieldTy semtypes.SemType) semtypes.SemType {
+	readonlyTy := semtypes.Intersect(fieldTy, semtypes.ValReadonly)
+	name := field.Name.GetValue()
+	pos := field.GetPosition()
+	t.ensureNotEmpty(readonlyTy, func() {
+		t.semanticError(fmt.Sprintf("field '%s' of a readonly class must have a type that allows readonly values", name), pos)
+	})
+	return readonlyTy
 }
 
 func collectObjectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, positions []diagnostics.Location, pos diagnostics.Location, depth int) (map[string][]semtypes.Member, bool) {

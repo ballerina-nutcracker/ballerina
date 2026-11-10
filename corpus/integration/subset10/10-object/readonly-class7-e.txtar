@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot update field 'n' of a readonly object
+  --> readonly-class7-e.bal:23:5
+   |
+23 |     c.n = 1; // @error cannot update a field of a readonly object
+   |     ^^^

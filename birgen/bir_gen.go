@@ -2580,6 +2580,7 @@ func transformClassDefinition(ctx *packageContext, class *ast.BLangClassDefiniti
 		return nil
 	}
 	birClassDef.Annotations = ctx.CompilerContext.SymbolAnnotationValues(class.Symbol())
+	birClassDef.IsReadonly = class.IsReadonly()
 	return birClassDef
 }
 

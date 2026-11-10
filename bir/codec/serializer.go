@@ -121,6 +121,7 @@ func (bw *birWriter) writeClassDef(buf *bytes.Buffer, classDef *bir.BIRClassDef)
 		bw.writeStringCPEntry(buf, field.Name)
 		bw.writeType(buf, field.Ty)
 	}
+	write(buf, classDef.IsReadonly)
 	var methodNames []string
 	for name := range classDef.VTable {
 		methodNames = append(methodNames, name)
