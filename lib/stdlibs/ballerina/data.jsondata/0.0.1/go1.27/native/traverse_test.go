@@ -27,6 +27,7 @@ import (
 // level tries each union member and drops their errors, and checks the work grows linearly with the depth.
 // Formatting the value into each dropped error makes the allocations grow with the square of the depth.
 func TestTraverseFormatsOnlyTheReturnedError(t *testing.T) {
+	// Not parallel: testing.AllocsPerRun counts allocations across the whole process.
 	env := semtypes.CreateTypeEnv()
 	cx := semtypes.ContextFrom(env)
 	md := semtypes.NewMappingDefinition()
