@@ -19,7 +19,7 @@ Corpus execution contributes to native Go coverage when the coverage harness ins
 
 ## Fixture naming
 
-Add new language fixtures under the highest numbered `corpus/bal/subset<N>/`, including regressions for features introduced in earlier subsets. Use `<id>-<feature>/` for feature tests and `<id>-bug/` for bug regressions. Keep matching goldens and embedded source paths aligned. Library fixtures use a separate release numbering track under `corpus/lib/subset<N>/`; do not infer their subset from the latest language subset. Choosing a library subset is a release-scoping decision: confirm it with the developer, as described in the [add-stdlib-support skill](../add-stdlib-support/SKILL.md).
+Add new language fixtures under the highest numbered `corpus/bal/subset<N>/`, including regressions for features introduced in earlier subsets. Use `<id>-<feature>/` for feature tests and `<id>-bug/` for bug regressions, where `<id>` is the subset number padded to two digits (for example `subset10/10-bug/`). Existing fixtures may be renamed within their original subset, including promotions from `-fv` to `-v`. `make lint-corpus-names` checks newly added fixtures against the merge base with `origin/main`; set `CORPUS_BASE=<ref>` to compare against another base. Keep matching goldens and embedded source paths aligned. Library fixtures use a separate release numbering track under `corpus/lib/subset<N>/`; do not infer their subset from the latest language subset. Choosing a library subset is a release-scoping decision: confirm it with the developer, as described in the [add-stdlib-support skill](../add-stdlib-support/SKILL.md).
 
 - `*-v.bal`: valid, runs end to end; expected stdout uses `@output` markers.
 - `*-e.bal`: compilation errors at `@error` markers.

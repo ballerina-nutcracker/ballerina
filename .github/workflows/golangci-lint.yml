@@ -14,10 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
           go-version: '1.27.1'
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
       - name: Run linters
+        env:
+          CORPUS_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: make -j4 lint
