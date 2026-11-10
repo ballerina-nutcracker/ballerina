@@ -1,0 +1,119 @@
+-- stdout --
+10 {"evens":[2,4]}
+-- stderr --
+
+==================BEGIN DESUGARED AST==================
+(package
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable arr (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)))))
+      (var-def
+        (variable sum (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref arr))))
+      (var-def
+        (variable $desugar$1 (expr
+          (numeric-literal 0))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation lang.array length (
+            (simple-var-ref $desugar$0))))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$1)
+          (simple-var-ref $desugar$2))
+        (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$0)
+                (simple-var-ref $desugar$1)))))
+          (compound-assignment +
+            (simple-var-ref sum)
+            (simple-var-ref i))
+          (assignment
+            (simple-var-ref $desugar$1)
+            (binary-expr +
+              (simple-var-ref $desugar$1)
+              (numeric-literal 1)))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal evens)
+              (expression-thunk
+              (var-def
+                (variable $desugar$3 (expr
+                  (simple-var-ref arr))))
+              (var-def
+                (variable $desugar$4 (expr
+                  (invocation lang.array length (
+                    (simple-var-ref $desugar$3))))))
+              (var-def
+                (variable $desugar$5 (expr
+                  (list-constructor-expr))))
+              (var-def
+                (variable j))
+              (var-def
+                (variable $desugar$6 (expr
+                  (numeric-literal 0))))
+              (while
+                (binary-expr <
+                  (simple-var-ref $desugar$6)
+                  (simple-var-ref $desugar$4))
+                (block-stmt
+                  (assignment
+                    (simple-var-ref j)
+                    (index-based-access
+                      (simple-var-ref $desugar$3)
+                      (simple-var-ref $desugar$6)))
+                  (if
+                    (unary-expr !
+                      (binary-expr ==
+                        (binary-expr %
+                          (simple-var-ref j)
+                          (literal 2))
+                        (literal 0)))
+                    (block-stmt
+                      (assignment
+                        (simple-var-ref $desugar$6)
+                        (binary-expr +
+                          (simple-var-ref $desugar$6)
+                          (numeric-literal 1)))
+                      (continue)) ())
+                  (expression-stmt
+                    (invocation lang.array push (
+                      (simple-var-ref $desugar$5)
+                      (simple-var-ref j))))
+                  (assignment
+                    (simple-var-ref $desugar$6)
+                    (binary-expr +
+                      (simple-var-ref $desugar$6)
+                      (numeric-literal 1)))))
+              (simple-var-ref $desugar$5)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref sum)
+          (literal  )
+          (simple-var-ref m)))))))
+===================END DESUGARED AST===================
+-- exitcode --
+0
