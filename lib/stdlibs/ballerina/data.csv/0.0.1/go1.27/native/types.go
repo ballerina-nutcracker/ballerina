@@ -406,7 +406,7 @@ type rowBuilder struct {
 }
 
 // indexThreshold is the entry count past which keys are looked up through positions.
-const indexThreshold = 16
+const indexThreshold = 32
 
 func newRowBuilder(shape *rowShape) *rowBuilder {
 	return &rowBuilder{shape: shape}
