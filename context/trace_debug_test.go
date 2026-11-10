@@ -358,14 +358,12 @@ func TestConcurrentSpansAreRecordedLosslessly(t *testing.T) {
 	const perGoroutine = 16
 	var wg sync.WaitGroup
 	for range goroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range perGoroutine {
 				span := cx.StartNamedSpan("Parse", "main.bal")
 				span.End()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -583,13 +581,11 @@ func TestConcurrentChildrenOfOneParentAreRecordedLosslessly(t *testing.T) {
 	const perGoroutine = 8
 	var wg sync.WaitGroup
 	for range goroutines {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range perGoroutine {
 				root.StartChild("Function", "main").End()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 	root.End()
