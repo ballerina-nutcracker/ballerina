@@ -6,7 +6,7 @@ main() -> nil{
     %4 = i;
     %5 = ConstantLoad 2
     %6 = %5;
-    %3 = unknown %4 %6;
+    %3 = << %4 %6;
     %7 = %3;
     %8 = println(%7) -> bb1;
   }
@@ -14,18 +14,18 @@ main() -> nil{
     %10 = i;
     %11 = ConstantLoad 2
     %12 = %11;
-    %9 = unknown %10 %12;
+    %9 = >> %10 %12;
     %13 = %9;
     %14 = println(%13) -> bb2;
   }
   bb2 {
     %15 = ConstantLoad 128
-    %16 = unknown %15;
+    %16 = - %15;
     j = %16;
     %19 = j;
     %20 = ConstantLoad 2
     %21 = %20;
-    %18 = unknown %19 %21;
+    %18 = >> %19 %21;
     %22 = %18;
     %23 = println(%22) -> bb3;
   }
@@ -33,7 +33,7 @@ main() -> nil{
     %25 = j;
     %26 = ConstantLoad 2
     %27 = %26;
-    %24 = unknown %25 %27;
+    %24 = >>> %25 %27;
     %28 = %24;
     %29 = println(%28) -> bb4;
   }
@@ -43,7 +43,7 @@ main() -> nil{
     %33 = k;
     %34 = ConstantLoad 2
     %35 = %34;
-    %32 = unknown %33 %35;
+    %32 = >> %33 %35;
     %36 = %32;
     %37 = println(%36) -> bb5;
   }
@@ -51,7 +51,7 @@ main() -> nil{
     %39 = k;
     %40 = ConstantLoad 2
     %41 = %40;
-    %38 = unknown %39 %41;
+    %38 = >>> %39 %41;
     %42 = %38;
     %43 = println(%42) -> bb6;
   }

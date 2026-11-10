@@ -88,8 +88,31 @@ func (p *Parser) skipToRecovery() {
 			lexer.TokenNewline,
 			lexer.TokenOpenBracket:
 			return
+		case lexer.TokenCloseBracket,
+			lexer.TokenOpenBrace,
+			lexer.TokenCloseBrace,
+			lexer.TokenEqual,
+			lexer.TokenDot,
+			lexer.TokenComma,
+			lexer.TokenPlus,
+			lexer.TokenMinus,
+			lexer.TokenDoubleQuote,
+			lexer.TokenTripleDoubleQuote,
+			lexer.TokenSingleQuote,
+			lexer.TokenTripleSingleQuote,
+			lexer.TokenIdentifier,
+			lexer.TokenDecimalInt,
+			lexer.TokenDecimalFloat,
+			lexer.TokenHexInt,
+			lexer.TokenOctInt,
+			lexer.TokenBinaryInt,
+			lexer.TokenTrue,
+			lexer.TokenFalse,
+			lexer.TokenInf,
+			lexer.TokenNan,
+			lexer.TokenInvalid:
+			p.reader.read()
 		}
-		p.reader.read()
 	}
 }
 

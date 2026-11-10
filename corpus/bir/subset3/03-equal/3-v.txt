@@ -47,12 +47,12 @@ main() -> nil{
 }
 printEq(any,any) -> nil{
   bb0 {
-    %3 = unknown x y;
+    %3 = === x y;
     %4 = %3;
     %5 = println(%4) -> bb1;
   }
   bb1 {
-    %6 = unknown x y;
+    %6 = !== x y;
     %7 = %6;
     %8 = println(%7) -> bb2;
   }

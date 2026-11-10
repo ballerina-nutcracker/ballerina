@@ -13,7 +13,7 @@ main() -> nil{
   }
   bb1 {
     %10 = ConstantLoad 1E+40
-    %11 = unknown %10;
+    %11 = - %10;
     d1 = %11;
     %12 = ConstantLoad 3
     d2 = %12;
@@ -27,7 +27,7 @@ main() -> nil{
     %18 = ConstantLoad 1E+40
     d1 = %18;
     %19 = ConstantLoad 3
-    %20 = unknown %19;
+    %20 = - %19;
     d2 = %20;
     %22 = d1;
     %23 = d2;
@@ -37,10 +37,10 @@ main() -> nil{
   }
   bb3 {
     %26 = ConstantLoad 1E+40
-    %27 = unknown %26;
+    %27 = - %26;
     d1 = %27;
     %28 = ConstantLoad 3
-    %29 = unknown %28;
+    %29 = - %28;
     d2 = %29;
     %31 = d1;
     %32 = d2;
@@ -50,7 +50,7 @@ main() -> nil{
   }
   bb4 {
     %35 = ConstantLoad 1E+40
-    %36 = unknown %35;
+    %36 = - %35;
     d1 = %36;
     %37 = ConstantLoad 2
     d2 = %37;

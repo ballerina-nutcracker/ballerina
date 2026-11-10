@@ -62,7 +62,7 @@ main() -> nil{
     %47 = %46;
     %48 = ConstantLoad 5
     %49 = %48;
-    %50 = unknown %47 %49;
+    %50 = & %47 %49;
     x[%45] = %50;
     %52 = ConstantLoad 0
     %51 = x[%52];
@@ -75,7 +75,7 @@ main() -> nil{
     %57 = %56;
     %58 = ConstantLoad 9
     %59 = %58;
-    %60 = unknown %57 %59;
+    %60 = | %57 %59;
     x[%55] = %60;
     %62 = ConstantLoad 0
     %61 = x[%62];
@@ -88,7 +88,7 @@ main() -> nil{
     %67 = %66;
     %68 = ConstantLoad 2
     %69 = %68;
-    %70 = unknown %67 %69;
+    %70 = ^ %67 %69;
     x[%65] = %70;
     %72 = ConstantLoad 0
     %71 = x[%72];
@@ -101,7 +101,7 @@ main() -> nil{
     %77 = %76;
     %78 = ConstantLoad 7
     %79 = %78;
-    %80 = unknown %77 %79;
+    %80 = << %77 %79;
     x[%75] = %80;
     %82 = ConstantLoad 0
     %81 = x[%82];
@@ -114,7 +114,7 @@ main() -> nil{
     %87 = %86;
     %88 = ConstantLoad 6
     %89 = %88;
-    %90 = unknown %87 %89;
+    %90 = >> %87 %89;
     x[%85] = %90;
     %92 = ConstantLoad 0
     %91 = x[%92];
@@ -127,7 +127,7 @@ main() -> nil{
     %97 = %96;
     %98 = ConstantLoad 2
     %99 = %98;
-    %100 = unknown %97 %99;
+    %100 = >>> %97 %99;
     x[%95] = %100;
     %102 = ConstantLoad 0
     %101 = x[%102];
