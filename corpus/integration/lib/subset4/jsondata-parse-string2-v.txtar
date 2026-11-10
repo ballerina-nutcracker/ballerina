@@ -16,6 +16,7 @@ error: duplicate field 'title'
 {"title":"z","other":1}
 {"val":1,"next":{"val":2,"next":null}}
 {"val":1,"next":{"val":2,"next":null}}
+true
 error: network reset
 true
 -- stderr --
