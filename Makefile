@@ -26,7 +26,7 @@ VET_MODULE_TARGETS := $(addprefix vet-module/,$(WORKSPACE_MODULES))
 LINT_MODULE_TARGETS := $(addprefix lint-module/,$(LINT_MODULES))
 TEST_RUNNER = .github/scripts/run_native_tests.py
 
-.PHONY: build vet lint lint-walks force test test-coverage test-race check update-testdata release install-hooks \
+.PHONY: build vet lint lint-walks lint-corpus-names force test test-coverage test-race check update-testdata release install-hooks \
 	test-wasm test-wasm-corpus-light test-wasm-corpus-integration benchmark-corpus
 
 force:
@@ -59,7 +59,13 @@ vet-module/%: force
 	@echo "Vetting $*"
 	@(cd "$*" && go vet ./...)
 
-lint: $(LINT_MODULE_TARGETS) lint-walks
+lint: $(LINT_MODULE_TARGETS) lint-walks lint-corpus-names
+
+CORPUS_BASE ?= origin/main
+
+lint-corpus-names:
+	@$(PYTHON) .github/scripts/test_check_corpus_names.py
+	@$(PYTHON) .github/scripts/check_corpus_names.py --base "$(CORPUS_BASE)"
 
 lint-walks:
 	@echo "Checking AST walk purity"
