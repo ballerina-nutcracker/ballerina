@@ -168,10 +168,17 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 		}
 		return walkExpressionInner(cx, expr.LoweredExpression)
-	default:
+	case *ast.BLangAlternateWorkerReceive,
+		*ast.BLangBadExprOrAction,
+		*ast.BLangCommitExpr,
+		*ast.BLangDefaultArg,
+		*ast.BLangInferredTypedescDefault,
+		*ast.BLangWorkerReceive,
+		*ast.AbstractExpression:
 		cx.internalError(fmt.Sprintf("unexpected expression type: %T", node), node.GetPosition())
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: node}
 	}
+	panic("unreachable: unhandled expression in desugar") //nolint:forbidigo // Every supported and rejected expression variant is handled above.
 }
 
 func createExpressionThunk(lowered desugaredNode[ast.BLangActionOrExpression]) *BLangExpressionThunk {
