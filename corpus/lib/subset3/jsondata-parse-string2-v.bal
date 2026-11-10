@@ -40,6 +40,15 @@ type Node record {|
     Node? next;
 |};
 
+type Left record {|
+    Left|Right? a;
+|};
+
+type Right record {|
+    Left|Right? a;
+    int b;
+|};
+
 class TruncatedBlocks {
     int count = 0;
 
@@ -126,6 +135,17 @@ public function main() {
     Node|error b2 = jsondata:parseAsType({"v": 1, "next": {"v": 2, "next": ()}}, {}, Node);
     show(b2);
     // @output {"val":1,"next":{"val":2,"next":null}}
+
+    // jBallerina takes time exponential in the nesting depth to reject this input (ballerina-platform/ballerina-library#9824).
+    string open = "{\"a\":";
+    string close = "}";
+    foreach int _ in 0 ..< 5 {
+        open += open;
+        close += close;
+    }
+    Left|error d1 = jsondata:parseString(open + "{\"z\":1}" + close, {}, Left);
+    io:println(d1 is jsondata:Error);
+    // @output true
 
     // jBallerina parses the bytes read before the stream error (ballerina-platform/ballerina-library#9800).
     stream<byte[], error?> s1 = new (new TruncatedBlocks());
