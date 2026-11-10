@@ -190,20 +190,20 @@ func NewBLangAssignmentLExpr(expr BLangExpression, compound bool) LExpr {
 	return result
 }
 
-func (b *BLangValueExpressionBase) IsCompoundAssignmentLValue() bool {
+func (b *bLangValueExpressionBase) IsCompoundAssignmentLValue() bool {
 	return b.flags.Has(valueExpressionFlagCompoundAssignmentLValue)
 }
 
-func (b *BLangValueExpressionBase) IsLexpr() bool {
+func (b *bLangValueExpressionBase) IsLexpr() bool {
 	return b.flags.Has(valueExpressionFlagLexpr)
 }
 
-func (b *BLangValueExpressionBase) IsOptionalAccess() bool {
+func (b *bLangValueExpressionBase) IsOptionalAccess() bool {
 	return b.flags.Has(valueExpressionFlagOptionalAccess)
 }
 
 // IsLax reports whether this field access requires lax runtime semantics.
-func (b *BLangValueExpressionBase) IsLax() bool {
+func (b *bLangValueExpressionBase) IsLax() bool {
 	return b.flags.Has(valueExpressionFlagLax)
 }
 
@@ -270,13 +270,13 @@ type (
 
 	BLangValueExpressionFlags byte
 
-	BLangValueExpressionBase struct {
+	bLangValueExpressionBase struct {
 		bLangExpressionBase
 		flags BLangValueExpressionFlags
 	}
 
 	bLangAccessExpressionBase struct {
-		BLangValueExpressionBase
+		bLangValueExpressionBase
 		Expr         BLangExpression
 		OriginalType BType
 	}
@@ -359,13 +359,13 @@ type (
 	BLangCommitExpr struct {
 		bLangExpressionBase
 	}
-	BLangVariableReferenceBase struct {
-		BLangValueExpressionBase
+	bLangVariableReferenceBase struct {
+		bLangValueExpressionBase
 		symbol model.SymbolRef
 	}
 
 	BLangVarRef struct {
-		BLangVariableReferenceBase
+		bLangVariableReferenceBase
 		PkgAlias     IdentifierNode
 		VariableName IdentifierNode
 	}
@@ -392,7 +392,7 @@ type (
 		RhsExpr BLangExpression
 	}
 
-	BLangWorkerSendReceiveExprBase struct {
+	bLangWorkerSendReceiveExprBase struct {
 		bLangExpressionBase
 		WorkerType       BType
 		WorkerIdentifier *BLangIdentifier
@@ -400,13 +400,13 @@ type (
 	}
 
 	BLangWorkerReceive struct {
-		BLangWorkerSendReceiveExprBase
-		Send               *BLangWorkerSendExprBase
+		bLangWorkerSendReceiveExprBase
+		Send               *bLangWorkerSendExprBase
 		MatchingSendsError BType
 	}
 
-	BLangWorkerSendExprBase struct {
-		BLangWorkerSendReceiveExprBase
+	bLangWorkerSendExprBase struct {
+		bLangWorkerSendReceiveExprBase
 		Expr                     BLangExpression
 		Receive                  *BLangWorkerReceive
 		SendType                 BType
@@ -778,7 +778,7 @@ var (
 
 // Symbol methods for BNodeWithSymbol interface
 
-func (*BLangVariableReferenceBase) isVariableReference() {}
+func (*bLangVariableReferenceBase) isVariableReference() {}
 
 func (*BLangVarRef) isLExpr()               {}
 func (*bLangAccessExpressionBase) isLExpr() {}
@@ -786,11 +786,11 @@ func (*bLangAccessExpressionBase) isLExpr() {}
 func (*BLangCommitExpr) isAction()    {}
 func (*BLangWorkerReceive) isAction() {}
 
-func (n *BLangVariableReferenceBase) Symbol() model.SymbolRef {
+func (n *bLangVariableReferenceBase) Symbol() model.SymbolRef {
 	return n.symbol
 }
 
-func (n *BLangVariableReferenceBase) SetSymbol(symbolRef model.SymbolRef) {
+func (n *bLangVariableReferenceBase) SetSymbol(symbolRef model.SymbolRef) {
 	n.symbol = symbolRef
 }
 
@@ -1069,11 +1069,11 @@ func (b *BLangMarkDownDeprecatedParametersDocumentation) GetParameters() []BLang
 	return b.Parameters
 }
 
-func (b *BLangWorkerSendExprBase) GetExpr() BLangExpression {
+func (b *bLangWorkerSendExprBase) GetExpr() BLangExpression {
 	return b.Expr
 }
 
-func (b *BLangWorkerSendExprBase) GetWorkerName() *BLangIdentifier {
+func (b *bLangWorkerSendExprBase) GetWorkerName() *BLangIdentifier {
 	return b.WorkerIdentifier
 }
 

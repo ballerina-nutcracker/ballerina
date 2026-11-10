@@ -50,7 +50,7 @@ func replaceInnerFallback(current STNode, target STNode, replacement STNode) (bo
 			children = append(children, membersNode...)
 			children = append(children, collectionEndTokenNode)
 			return true, createNodeAndAddChildren(&STAmbiguousCollectionNode{
-				STNodeBase: n.STNodeBase,
+				stNodeBase: n.stNodeBase,
 
 				CollectionStartToken: collectionStartTokenNode,
 
