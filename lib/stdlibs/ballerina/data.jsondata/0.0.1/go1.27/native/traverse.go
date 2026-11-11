@@ -44,7 +44,7 @@ type traverser struct {
 	projection
 	fieldHierarchy []*fieldSet
 	restTypes      []restEntry
-	// fieldNames is the newest entry of jBallerina's field-name deque, which holds the newest nameCount entries.
+	// fieldNames is the newest entry of jBallerina's field-name deque, which holds the newest nameCount names.
 	fieldNames *fieldName
 	nameCount  int
 	// namesPushed counts the names pushed and not popped; a replayed attempt adds the count it recorded.
@@ -53,24 +53,25 @@ type traverser struct {
 	failedAttempts map[attemptKey]failedAttempt
 }
 
-// fieldName is an entry of the field-name deque, linked to the entry pushed before it. Entries are never
-// changed, so a failed attempt can be replayed by pointing the deque at the entries the attempt left.
+// fieldName is an entry of the field-name deque, linked to the entry pushed before it: one name, or a replayed
+// run of the newest count names of the deque whose newest entry is run. Entries are never changed.
 type fieldName struct {
-	name string
-	prev *fieldName
+	name  string
+	run   *fieldName
+	count int
+	prev  *fieldName
 }
 
-// attemptKey identifies converting a mapping or list to a union member. Its outcome depends only on the
-// value and the member, except for the nesting bound, and the names it leaves depend on the deque length.
+// attemptKey identifies converting a mapping or list to a union member. The outcome depends only on the value
+// and the member, except for the nesting bound, and so do the names it pushes onto the deque.
 type attemptKey struct {
 	value  any
 	member any
 	depth  int
-	names  int
 }
 
-// failedAttempt is what a failed attempt left on the deque: names is its newest entry, and the newest pushed
-// entries are the names it pushed. pushed stops at the deque length, past which the older names are dropped.
+// failedAttempt is what a failed attempt left on the deque: names is its newest entry, of which the newest
+// pushed are the names it pushed and did not pop.
 type failedAttempt struct {
 	names  *fieldName
 	pushed int
@@ -161,7 +162,7 @@ func (tr *traverser) traverseUnion(json values.BalValue, ti typeInfo) (values.Ba
 		memberInfo := tr.classify(member)
 		key, memoizable := tr.attemptKey(json, memberInfo)
 		if failed, ok := tr.failedAttempts[key]; memoizable && ok {
-			tr.replay(failed, namesSize)
+			tr.replay(failed)
 		} else {
 			hierarchySize, restSize, pushed := len(tr.fieldHierarchy), len(tr.restTypes), tr.namesPushed
 			result, err := tr.traverseClassified(json, member, memberInfo)
@@ -174,7 +175,7 @@ func (tr *traverser) traverseUnion(json values.BalValue, ti typeInfo) (values.Ba
 				if tr.failedAttempts == nil {
 					tr.failedAttempts = make(map[attemptKey]failedAttempt)
 				}
-				tr.failedAttempts[key] = failedAttempt{names: tr.fieldNames, pushed: min(tr.namesPushed-pushed, namesSize)}
+				tr.failedAttempts[key] = failedAttempt{names: tr.fieldNames, pushed: tr.namesPushed - pushed}
 			}
 		}
 		// jBallerina restores the deque with pollLast, which drops the oldest names.
@@ -189,7 +190,7 @@ func (tr *traverser) attemptKey(json values.BalValue, member typeInfo) (attemptK
 	default:
 		return attemptKey{}, false
 	}
-	key := attemptKey{value: json, depth: tr.depth, names: tr.nameCount}
+	key := attemptKey{value: json, depth: tr.depth}
 	switch {
 	case member.mapping != nil:
 		key.member = member.mapping
@@ -201,25 +202,41 @@ func (tr *traverser) attemptKey(json values.BalValue, member typeInfo) (attemptK
 	return key, true
 }
 
-// replay leaves the deque as the failed attempt left it: its pushed names after the existing ones, with as
-// many of the oldest names dropped.
-func (tr *traverser) replay(failed failedAttempt, namesSize int) {
-	if failed.pushed == namesSize {
-		tr.fieldNames = failed.names
+// replay leaves the deque as the failed attempt left it: its names pushed after the existing ones. The caller
+// then drops as many of the oldest names.
+func (tr *traverser) replay(failed failedAttempt) {
+	if failed.pushed > 0 {
+		tr.fieldNames = &fieldName{run: failed.names, count: failed.pushed, prev: tr.fieldNames}
 		tr.namesPushed += failed.pushed
-		return
-	}
-	for _, name := range newestNames(failed.names, failed.pushed) {
-		tr.pushFieldName(name)
 	}
 }
 
 // newestNames returns the newest n names of the deque whose newest entry is entry, oldest first.
 func newestNames(entry *fieldName, n int) []string {
+	type resume struct {
+		entry *fieldName
+		left  int
+	}
 	names := make([]string, n)
-	for i := n - 1; i >= 0; i-- {
-		names[i] = entry.name
-		entry = entry.prev
+	var outer []resume
+	left := n
+	for i := n - 1; i >= 0; {
+		switch {
+		case left <= 0 || entry == nil:
+			if len(outer) == 0 {
+				return names[i+1:]
+			}
+			entry, left = outer[len(outer)-1].entry, outer[len(outer)-1].left
+			outer = outer[:len(outer)-1]
+		case entry.run != nil:
+			outer = append(outer, resume{entry: entry.prev, left: left - entry.count})
+			entry, left = entry.run, min(left, entry.count)
+		default:
+			names[i] = entry.name
+			i--
+			left--
+			entry = entry.prev
+		}
 	}
 	return names
 }

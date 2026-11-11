@@ -52,3 +52,37 @@ func TestTraverseFormatsOnlyTheReturnedError(t *testing.T) {
 		t.Fatalf("doubling the depth took %.0f allocations instead of %.0f", large, small)
 	}
 }
+
+// TestTraverseReusesAMemberReachedThroughAMap converts invalid input into R|map<U>|U[], where R is
+// record {| U? a; |}. R names the field it converts and map<U> does not, so a node is reached with every
+// deque length up to its depth, and an attempt keyed by that length is converted again for each.
+func TestTraverseReusesAMemberReachedThroughAMap(t *testing.T) {
+	// Not parallel: testing.AllocsPerRun counts allocations across the whole process.
+	env := semtypes.CreateTypeEnv()
+	cx := semtypes.ContextFrom(env)
+	mdR, mdMap, ldList := semtypes.NewMappingDefinition(), semtypes.NewMappingDefinition(), semtypes.NewListDefinition()
+	u := semtypes.Union(semtypes.Union(mdR.GetSemType(env), mdMap.GetSemType(env)), ldList.GetSemType(env))
+	mdR.Define(env, []semtypes.Field{semtypes.FieldFrom("a", semtypes.Union(u, semtypes.Nil), false, false)}, semtypes.Never)
+	mdMap.Define(env, nil, u)
+	ldList.Define(env, nil, semtypes.ListRest(u))
+	typer := newTyper(newTypeCache(), cx, u, nil)
+	allocs := func(depth int) float64 {
+		leaf := typer.newJSONMappingBuilder()
+		leaf.put("z", int64(1))
+		json := values.BalValue(leaf.build(typer))
+		for range depth {
+			b := typer.newJSONMappingBuilder()
+			b.put("a", json)
+			json = b.build(typer)
+		}
+		return testing.AllocsPerRun(1, func() {
+			if _, err := traverse(typer, projection{}, json, u); err == nil {
+				t.Fatal("converted a value with an undefined field")
+			}
+		})
+	}
+	small, large := allocs(250), allocs(500)
+	if large > 3*small {
+		t.Fatalf("doubling the depth took %.0f allocations instead of %.0f", large, small)
+	}
+}
