@@ -18,9 +18,14 @@
 set -euo pipefail
 
 module_prefix="github.com/ballerina-nutcracker/ballerina"
+usage="usage: $0 [--check-tags] vMAJOR.MINOR.PATCH[-PRERELEASE] [remote|commit]
+       $0 --tag-commit vMAJOR.MINOR.PATCH[-PRERELEASE] <commit>"
 mode="release"
 if [[ "${1:-}" == "--check-tags" ]]; then
     mode="check-tags"
+    shift
+elif [[ "${1:-}" == "--tag-commit" ]]; then
+    mode="tag-commit"
     shift
 fi
 
@@ -32,6 +37,13 @@ cd "$repo_root"
 
 branch=""
 remote="${remote_or_commit:-origin}"
+if [[ "$mode" == "tag-commit" ]]; then
+    if [[ -z "$remote_or_commit" ]]; then
+        echo "$usage" >&2
+        exit 1
+    fi
+    remote="origin"
+fi
 if [[ "$mode" == "release" ]]; then
     if [[ -n "$(git status --porcelain)" ]]; then
         echo "refusing to release from a dirty worktree" >&2
@@ -49,7 +61,7 @@ if [[ "$mode" == "release" ]]; then
 fi
 
 if [[ ! "$version" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
-    echo "usage: $0 [--check-tags] vMAJOR.MINOR.PATCH[-PRERELEASE] [remote|commit]" >&2
+    echo "$usage" >&2
     exit 1
 fi
 
@@ -86,9 +98,48 @@ check_tags() {
     done < <(expected_tags)
 }
 
+# Tags target_commit with every expected tag and pushes them to $remote: the
+# module tags in one atomic push together with any extra refs given, then the
+# root tag alone. Fails before creating any tag if one already points elsewhere.
+push_tags() {
+    local target_commit="$1" tag existing
+    shift
+    local atomic_refs=("$@") tags=() new_tags=()
+    while IFS= read -r tag; do
+        [[ -n "$tag" ]] && tags+=("$tag")
+    done < <(expected_tags)
+    for tag in "${tags[@]}"; do
+        existing="$(git rev-parse -q --verify "refs/tags/$tag^{commit}" || true)"
+        if [[ -n "$existing" && "$existing" != "$target_commit" ]]; then
+            echo "tag $tag already points to $existing" >&2
+            return 1
+        fi
+        [[ -z "$existing" ]] && new_tags+=("$tag")
+    done
+    for tag in ${new_tags[@]+"${new_tags[@]}"}; do
+        git tag "$tag" "$target_commit"
+    done
+    for tag in "${tags[@]}"; do
+        [[ "$tag" != "$version" ]] && atomic_refs+=("refs/tags/$tag")
+    done
+    if [[ "${#atomic_refs[@]}" -gt 0 ]]; then
+        git push --atomic "$remote" "${atomic_refs[@]}"
+    fi
+    # Pushed alone: an atomic multi-tag push never fires GitHub's tag webhook,
+    # which would silently break release.yml's trigger.
+    git push "$remote" "refs/tags/$version"
+    check_tags "$target_commit"
+}
+
 if [[ "$mode" == "check-tags" ]]; then
     target_commit="$(git rev-parse --verify "${remote_or_commit:-HEAD}^{commit}")"
     check_tags "$target_commit"
+    exit 0
+fi
+
+if [[ "$mode" == "tag-commit" ]]; then
+    target_commit="$(git rev-parse --verify "$remote_or_commit^{commit}")"
+    push_tags "$target_commit"
     exit 0
 fi
 
@@ -202,34 +253,8 @@ if [[ "$is_final_release" == true ]]; then
     fi
 fi
 
-tags=()
-while IFS= read -r tag; do
-    [[ -n "$tag" ]] && tags+=("$tag")
-done < <(expected_tags)
-for tag in "${tags[@]}"; do
-    existing="$(git rev-parse -q --verify "refs/tags/$tag^{commit}" || true)"
-    if [[ -n "$existing" && "$existing" != "$target_commit" ]]; then
-        echo "tag $tag already points to $existing" >&2
-        exit 1
-    fi
-    if [[ -z "$existing" ]]; then
-        git tag "$tag" "$target_commit"
-    fi
-done
-module_tags=()
-for tag in "${tags[@]}"; do
-    [[ "$tag" != "$version" ]] && module_tags+=("$tag")
-done
 if [[ "$is_final_release" == true ]]; then
-    if [[ "${#module_tags[@]}" -gt 0 ]]; then
-        git push --atomic "$remote" "refs/heads/$release_branch" "${module_tags[@]/#/refs/tags/}"
-    else
-        git push "$remote" "refs/heads/$release_branch"
-    fi
-elif [[ "${#module_tags[@]}" -gt 0 ]]; then
-    git push --atomic "$remote" "${module_tags[@]/#/refs/tags/}"
+    push_tags "$target_commit" "refs/heads/$release_branch"
+else
+    push_tags "$target_commit"
 fi
-# Pushed alone: an atomic multi-tag push never fires GitHub's tag webhook,
-# which would silently break release.yml's trigger.
-git push "$remote" "refs/tags/$version"
-check_tags "$target_commit"

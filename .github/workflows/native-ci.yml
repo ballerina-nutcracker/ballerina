@@ -30,7 +30,10 @@ jobs:
           go-version: '1.27.1'
 
       - name: Test release scripts
-        run: python3 .github/scripts/test_nightly_release.py
+        run: |
+          python3 .github/scripts/test_nightly_release.py
+          python3 .github/scripts/test_release_dist.py
+          python3 .github/scripts/test_release_dist_tags.py
 
       - name: Install Hyperfine
         run: |
