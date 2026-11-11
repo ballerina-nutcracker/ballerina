@@ -13,15 +13,33 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/io;
 
-const NAME = "x";
+isolated function next() returns int {
+    return 42;
+}
 
-type Doc record {|
-    xml value = xml `<a>${NAME}</a>`; // @error constant xml template not implemented
+type Runtime record {|
+    int x;
+    int y = next();
 |};
 
+type MaybeY record {|
+    int x;
+    int y?;
+|};
+
+const map<int> X = {x: 1};
+
+annotation Runtime info on type;
+
+// The spread's type may supply y, but X does not, so the value needs y's
+// nonconstant default: a non-const annotation evaluates it at runtime.
+@info {...<MaybeY>X}
+type T record {||};
+
 public function main() {
-    Doc d = {};
-    io:println(d.value);
+    T t = {};
+    io:println(t); // @output {}
 }

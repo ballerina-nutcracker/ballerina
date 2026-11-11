@@ -1663,14 +1663,14 @@ func annotationAttachmentValue(t typeResolver, isConst bool, expr ast.BLangExpre
 		}
 		return nil, true, true
 	}
-	value, unsupported, folded := tryFoldConstant(t, nil, expr)
+	value, unfoldable, folded := tryFoldConstant(t, nil, expr)
 	switch {
 	case folded:
 		return value, false, true
-	case unsupported != nil && !isConst:
+	case unfoldable != nil && !isConst:
 		return nil, true, true
-	case unsupported != nil:
-		unsupported.report(t)
+	case unfoldable != nil:
+		unfoldable.report(t)
 	}
 	return nil, false, false
 }

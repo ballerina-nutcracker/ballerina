@@ -1,0 +1,55 @@
+(package
+  (import-package ballerina io (as io))
+  (variable $annotation$0)
+  (annotation info
+    (user-defined-type Runtime)
+    (attach-point type))
+  (type-definition Runtime
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition MaybeY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (type-definition T
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (mapping-spread-field
+          (type-conversion-expr
+            (literal {"x":1})
+            (user-defined-type MaybeY)))))
+    (record-type))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref $annotation$0)
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (type-conversion-expr
+              (literal {"x":1})
+              (user-defined-type MaybeY)))))))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (user-defined-type T)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation next ())))))

@@ -1,0 +1,33 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (type-definition Doc
+    (record-type
+      (field value
+        (value-type xml)
+        (xml-template-literal
+          (template-string "<a>")
+          (xml-template-content-insertion
+            (invocation lang.__internal escapeXMLContent (
+              (literal x))))
+          (template-string "</a>")))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (user-defined-type Doc)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref d)
+            (literal value)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (xml-template-literal
+          (template-string "<a>")
+          (invocation lang.__internal escapeXMLContent (
+            (literal x)))
+          (template-string "</a>"))))))

@@ -15,18 +15,14 @@
 // under the License.
 import ballerina/io;
 
-const string K = "x";
+const NAME = "x";
 
-type Inner record {|
-    int x = 1;
-    int y = 2;
-|};
-
-type Outer record {|
-    Inner inner = {[K]: 9}; // @error constant computed mapping key not implemented
+type Doc record {|
+    // The xml template cannot be folded yet, so value is evaluated at runtime.
+    xml value = xml `<a>${NAME}</a>`;
 |};
 
 public function main() {
-    Outer o = {};
-    io:println(o); // @output {"inner":{"x":9,"y":2}}
+    Doc d = {};
+    io:println(d.value); // @output <a>x</a>
 }
