@@ -50,6 +50,8 @@ func arraySizeError() *conversionError {
 type scope struct {
 	path  []string
 	field *recordField
+	// inList reports whether the value is a list member rather than the value of the last key in path.
+	inList bool
 }
 
 func (sc scope) child(key string, field *recordField) scope {
@@ -145,10 +147,10 @@ func (c *converter) convertMapping(n *node, ti typeInfo, sc scope) (values.BalVa
 		return c.convertToMapping(n, c.t.rowShapeOf(typeInfo{kind: kindMap, ty: c.t.anydataMapTy, mapping: c.t.anydataMap}), sc)
 	case kindUnion:
 		return c.convertToUnion(n, ti, sc)
-	case kindArray, kindTuple, kindUnsupported:
+	case kindUnsupported:
 		return nil, newConversionError("invalid type '%s' expected 'map type'", c.t.typeName(ti.ty))
 	}
-	if sc.field != nil || len(sc.path) > 0 {
+	if len(sc.path) > 0 && !sc.inList {
 		return nil, newConversionError("invalid type for field '%s'", sc.pathString())
 	}
 	return nil, newConversionError("invalid type '%s' expected 'map type'", c.t.typeName(ti.ty))
@@ -235,6 +237,7 @@ func (c *converter) convertToMapping(n *node, shape rowShape, sc scope) (values.
 
 func (c *converter) convertToList(items []*node, shape rowShape, sc scope) (values.BalValue, error) {
 	builder := newRowBuilder(&shape)
+	sc.inList = true
 	for i, item := range items {
 		memberType, ok := shape.memberType(i)
 		if !ok {

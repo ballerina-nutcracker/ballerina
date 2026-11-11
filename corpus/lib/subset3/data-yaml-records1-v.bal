@@ -53,6 +53,8 @@ type Named record {|
     int age;
 |};
 
+type IntLists map<int[]>;
+
 type ReadonlyRecord readonly & record {|
     string a;
     int[] b;
@@ -81,6 +83,10 @@ public function main() {
     show(yaml:parseString("name: [a]\ninner:\n  age: 1", {}, Nested));
     show(yaml:parseString("name: {a: 1}\ninner:\n  age: 1", {}, Nested));
     show(yaml:parseString("name: a\ninner: 5", {}, Nested));
+    // A mapping for a list names the field only when it is the field's own value.
+    show(yaml:parseString("name: a\ninner:\n  age: 1\nnums: {a: 1}", {}, Nested));
+    show(yaml:parseString("name: a\ninner:\n  age: 1\nnums: [{a: 1}]", {}, Nested));
+    show(yaml:parseString("a: {b: 1}", {}, IntLists));
     // Optional and nilable fields.
     show(yaml:parseString("name: a\nnick: null", {}, Optional));
     show(yaml:parseString("name: a\nnick:", {}, Optional));
@@ -125,6 +131,9 @@ public function main() {
 // @output invalid type 'string' expected 'list type'
 // @output invalid type for field 'name'
 // @output incompatible value '5' for type '{| age: int, never... |}' in field 'inner'
+// @output invalid type for field 'nums'
+// @output invalid type 'int' expected 'map type'
+// @output invalid type for field 'a'
 // @output {"name":"a","nick":null}
 // @output {"name":"a","nick":null}
 // @output required field 'nick' not present in YAML

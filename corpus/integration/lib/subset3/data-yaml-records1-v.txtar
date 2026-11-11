@@ -11,6 +11,9 @@ incompatible value 'x' for type 'int' in field 'nums'
 invalid type 'string' expected 'list type'
 invalid type for field 'name'
 incompatible value '5' for type '{| age: int, never... |}' in field 'inner'
+invalid type for field 'nums'
+invalid type 'int' expected 'map type'
+invalid type for field 'a'
 {"name":"a","nick":null}
 {"name":"a","nick":null}
 required field 'nick' not present in YAML
