@@ -372,6 +372,14 @@ func NewIsolatedVarInit(parent Context, v *ast.BLangVariable) Context {
 	return newFactsContext(parent)
 }
 
+// NewIsolatedFieldValue pushes the scope of the value assigned by access to a
+// field of an isolated object, which must be an isolated expression, so its
+// facts are demanded.
+func NewIsolatedFieldValue(parent Context, access *ast.BLangFieldBaseAccess) Context {
+	common.Assert(func() bool { return IsolatedObjectFieldTarget(parent, access) })
+	return newFactsContext(parent)
+}
+
 func newFactsContext(parent Context) *factsContext {
 	return &factsContext{contextBase{outer: parent}, ruleBase{active: parent.rules()}, factsBase{need: true}}
 }
