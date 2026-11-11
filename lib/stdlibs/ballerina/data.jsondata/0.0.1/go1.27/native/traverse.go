@@ -48,9 +48,16 @@ type traverser struct {
 	fieldNames *fieldName
 	nameCount  int
 	// namesPushed counts the names pushed and not popped; a replayed attempt adds the count it recorded.
-	namesPushed    int
-	depth          int
-	failedAttempts map[attemptKey]failedAttempt
+	namesPushed int
+	depth       int
+	// openAttempts counts the union members being tried; a value is converted again only inside one of them.
+	openAttempts int
+	// attempts and ambiguous hold what was recorded under outerUnion, the value of the outermost union.
+	outerUnion values.BalValue
+	attempts   map[attemptKey]attempt
+	ambiguous  map[values.BalValue]struct{}
+	// mayShare is set for a caller's json value, which can reach a container through several paths.
+	mayShare bool
 }
 
 // fieldName is an entry of the field-name deque, linked to the entry pushed before it: one name, or a replayed
@@ -70,19 +77,29 @@ type attemptKey struct {
 	depth  int
 }
 
-// failedAttempt is what a failed attempt left on the deque: names is its newest entry, of which the newest
-// pushed are the names it pushed and did not pop.
-type failedAttempt struct {
+// attempt is the outcome of an attempt and what it left on the deque: names is its newest entry, of which the
+// newest pushed are the names it pushed and did not pop, and the deque length grew by grown.
+type attempt struct {
+	result values.BalValue
+	ok     bool
 	names  *fieldName
 	pushed int
+	grown  int
 }
 
 // maxTraverseDepth bounds the nesting of mappings and lists in a converted value: the traverser recurses per
 // level, and Go aborts the process when a goroutine overflows its stack. encoding/json uses the same bound.
 const maxTraverseDepth = 10000
 
+// traverse converts a value the parser built, in which every container is reached through one path.
 func traverse(t *typer, opts projection, json values.BalValue, target semtypes.SemType) (values.BalValue, error) {
 	tr := &traverser{typer: t, projection: opts}
+	return tr.traverseJSON(json, target)
+}
+
+// traverseInput converts a caller's json value, which can share a container between several places.
+func traverseInput(t *typer, opts projection, json values.BalValue, target semtypes.SemType) (values.BalValue, error) {
+	tr := &traverser{typer: t, projection: opts, mayShare: true}
 	return tr.traverseJSON(json, target)
 }
 
@@ -154,37 +171,68 @@ func (tr *traverser) popFieldName() string {
 	return name
 }
 
-// traverseUnion replays a member that already failed for the value rather than trying it again: each ancestor
-// union tries its next member on the same subtree, so a union of two recursive records is otherwise 2^depth.
+// traverseUnion replays a member already tried for the value rather than trying it again: each ancestor union
+// tries its next member on the same subtree, so a union of two recursive records is otherwise 2^depth.
 func (tr *traverser) traverseUnion(json values.BalValue, ti typeInfo) (values.BalValue, error) {
+	if tr.openAttempts == 0 {
+		tr.outerUnion = json
+		defer tr.forgetAttempts()
+	}
 	for _, member := range tr.orderedMembers(ti.members, json) {
-		namesSize := tr.nameCount
 		memberInfo := tr.classify(member)
 		key, memoizable := tr.attemptKey(json, memberInfo)
-		if failed, ok := tr.failedAttempts[key]; memoizable && ok {
-			tr.replay(failed)
+		tried, ok := tr.attempts[key]
+		if memoizable && ok {
+			tr.replay(tried)
 		} else {
-			hierarchySize, restSize, pushed := len(tr.fieldHierarchy), len(tr.restTypes), tr.namesPushed
-			result, err := tr.traverseClassified(json, member, memberInfo)
-			if err == nil || errors.Is(err, errTooDeep) {
-				return result, err
+			var err error
+			tried, err = tr.try(json, member, memberInfo)
+			if err != nil {
+				return nil, err
 			}
-			tr.fieldHierarchy = tr.fieldHierarchy[:min(hierarchySize, len(tr.fieldHierarchy))]
-			tr.restTypes = tr.restTypes[:min(restSize, len(tr.restTypes))]
-			if memoizable {
-				if tr.failedAttempts == nil {
-					tr.failedAttempts = make(map[attemptKey]failedAttempt)
+			if memoizable && (!tried.ok || tr.reusable(json)) {
+				if tr.attempts == nil {
+					tr.attempts = make(map[attemptKey]attempt)
 				}
-				tr.failedAttempts[key] = failedAttempt{names: tr.fieldNames, pushed: tr.namesPushed - pushed}
+				tr.attempts[key] = tried
 			}
 		}
-		// jBallerina restores the deque with pollLast, which drops the oldest names.
-		tr.nameCount = min(tr.nameCount, namesSize)
+		if tried.ok {
+			return tried.result, nil
+		}
 	}
 	return nil, tr.incompatibleTypeErrorFor(ti.ty, json)
 }
 
+// try converts json to a union member. A failure is returned as the attempt, with the stacks restored except
+// for the names the member left: jBallerina restores the deque with pollLast, which drops the oldest names.
+func (tr *traverser) try(json values.BalValue, member semtypes.SemType, memberInfo typeInfo) (attempt, error) {
+	hierarchySize, restSize, namesSize, pushed := len(tr.fieldHierarchy), len(tr.restTypes), tr.nameCount, tr.namesPushed
+	tr.openAttempts++
+	result, err := tr.traverseClassified(json, member, memberInfo)
+	tr.openAttempts--
+	if errors.Is(err, errTooDeep) {
+		return attempt{}, err
+	}
+	if err != nil {
+		tr.fieldHierarchy = tr.fieldHierarchy[:min(hierarchySize, len(tr.fieldHierarchy))]
+		tr.restTypes = tr.restTypes[:min(restSize, len(tr.restTypes))]
+		tr.nameCount = min(tr.nameCount, namesSize)
+	}
+	return attempt{
+		result: result,
+		ok:     err == nil,
+		names:  tr.fieldNames,
+		pushed: tr.namesPushed - pushed,
+		grown:  tr.nameCount - namesSize,
+	}, nil
+}
+
+// attemptKey keys the attempts that can be tried again: those inside another union member's attempt.
 func (tr *traverser) attemptKey(json values.BalValue, member typeInfo) (attemptKey, bool) {
+	if tr.openAttempts == 0 {
+		return attemptKey{}, false
+	}
 	switch json.(type) {
 	case *values.Map, *values.List:
 	default:
@@ -202,13 +250,93 @@ func (tr *traverser) attemptKey(json values.BalValue, member typeInfo) (attemptK
 	return key, true
 }
 
-// replay leaves the deque as the failed attempt left it: its names pushed after the existing ones. The caller
-// then drops as many of the oldest names.
-func (tr *traverser) replay(failed failedAttempt) {
-	if failed.pushed > 0 {
-		tr.fieldNames = &fieldName{run: failed.names, count: failed.pushed, prev: tr.fieldNames}
-		tr.namesPushed += failed.pushed
+// forgetAttempts drops what the outermost union recorded: no member is tried again once it is converted.
+func (tr *traverser) forgetAttempts() {
+	tr.outerUnion, tr.attempts, tr.ambiguous = nil, nil, nil
+}
+
+// replay leaves the deque as the attempt left it: its names pushed after the existing ones, and as long.
+func (tr *traverser) replay(tried attempt) {
+	if tried.pushed > 0 {
+		tr.fieldNames = &fieldName{run: tried.names, count: tried.pushed, prev: tr.fieldNames}
+		tr.namesPushed += tried.pushed
 	}
+	tr.nameCount += tried.grown
+}
+
+// reusable reports whether a member's result for json can be recorded for reuse. It can't when the outermost
+// union's value reaches json through several paths, as each place needs its own value.
+func (tr *traverser) reusable(json values.BalValue) bool {
+	if !tr.mayShare {
+		return true
+	}
+	if tr.ambiguous == nil {
+		tr.ambiguous = ambiguousContainers(tr.outerUnion)
+	}
+	_, ambiguous := tr.ambiguous[json]
+	return !ambiguous
+}
+
+// ambiguousContainers returns the containers in json reached through more than one path: those reached more
+// than once, and the containers inside them.
+func ambiguousContainers(json values.BalValue) map[values.BalValue]struct{} {
+	reached := make(map[values.BalValue]int)
+	pending := []values.BalValue{json}
+	for len(pending) > 0 {
+		value := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		if !isContainer(value) {
+			continue
+		}
+		reached[value]++
+		if reached[value] == 1 {
+			pending = appendMembers(pending, value)
+		}
+	}
+	ambiguous := make(map[values.BalValue]struct{})
+	type visit struct {
+		value     values.BalValue
+		ambiguous bool
+	}
+	visits := []visit{{value: json}}
+	for len(visits) > 0 {
+		v := visits[len(visits)-1]
+		visits = visits[:len(visits)-1]
+		if _, done := ambiguous[v.value]; done || !isContainer(v.value) {
+			continue
+		}
+		v.ambiguous = v.ambiguous || reached[v.value] > 1
+		if v.ambiguous {
+			ambiguous[v.value] = struct{}{}
+		}
+		for _, member := range appendMembers(nil, v.value) {
+			visits = append(visits, visit{value: member, ambiguous: v.ambiguous})
+		}
+	}
+	return ambiguous
+}
+
+func isContainer(value values.BalValue) bool {
+	switch value.(type) {
+	case *values.Map, *values.List:
+		return true
+	}
+	return false
+}
+
+func appendMembers(members []values.BalValue, container values.BalValue) []values.BalValue {
+	switch container := container.(type) {
+	case *values.Map:
+		for _, key := range container.Keys() {
+			member, _ := container.Get(key)
+			members = append(members, member)
+		}
+	case *values.List:
+		for i := 0; i < container.Len(); i++ {
+			members = append(members, container.Get(i))
+		}
+	}
+	return members
 }
 
 // newestNames returns the newest n names of the deque whose newest entry is entry, oldest first.

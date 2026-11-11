@@ -1,4 +1,9 @@
 -- stdout --
 true
 true
+true
+true
+incompatible value 'bad' for type 'int' in field 't.u.t.k'
+[{"a":{"a":null,"b":1},"b":2},{"a":{"a":null,"b":1},"b":2},{"a":{"a":{"a":null,"b":1},"b":2},"b":3}] false false false
+{"l":{"a":{"a":null,"b":1},"b":2},"r":{"a":{"a":null,"b":1},"b":2}} false false
 -- stderr --
