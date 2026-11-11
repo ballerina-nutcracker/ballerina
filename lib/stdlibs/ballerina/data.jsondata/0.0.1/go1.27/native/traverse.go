@@ -61,12 +61,17 @@ type traverser struct {
 }
 
 // fieldName is an entry of the field-name deque, linked to the entry pushed before it: one name, or a replayed
-// run of the newest count names of the deque whose newest entry is run. Entries are never changed.
+// run. Entries are never changed. The run sits behind a pointer to keep a plain name entry small.
 type fieldName struct {
-	name  string
-	run   *fieldName
-	count int
-	prev  *fieldName
+	name string
+	prev *fieldName
+	run  *nameRun
+}
+
+// nameRun stands for the newest count names of the deque whose newest entry is newest.
+type nameRun struct {
+	newest *fieldName
+	count  int
 }
 
 // attemptKey identifies converting a mapping or list to a union member. The outcome depends only on the value
@@ -258,7 +263,7 @@ func (tr *traverser) forgetAttempts() {
 // replay leaves the deque as the attempt left it: its names pushed after the existing ones, and as long.
 func (tr *traverser) replay(tried attempt) {
 	if tried.pushed > 0 {
-		tr.fieldNames = &fieldName{run: tried.names, count: tried.pushed, prev: tr.fieldNames}
+		tr.fieldNames = &fieldName{prev: tr.fieldNames, run: &nameRun{newest: tried.names, count: tried.pushed}}
 		tr.namesPushed += tried.pushed
 	}
 	tr.nameCount += tried.grown
@@ -357,8 +362,8 @@ func newestNames(entry *fieldName, n int) []string {
 			entry, left = outer[len(outer)-1].entry, outer[len(outer)-1].left
 			outer = outer[:len(outer)-1]
 		case entry.run != nil:
-			outer = append(outer, resume{entry: entry.prev, left: left - entry.count})
-			entry, left = entry.run, min(left, entry.count)
+			outer = append(outer, resume{entry: entry.prev, left: left - entry.run.count})
+			entry, left = entry.run.newest, min(left, entry.run.count)
 		default:
 			names[i] = entry.name
 			i--

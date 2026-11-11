@@ -17,6 +17,7 @@
 package native
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -123,5 +124,22 @@ func TestTraverseReusesAMemberReachedThroughAMap(t *testing.T) {
 	small, large := allocs(250), allocs(500)
 	if large > 3*small {
 		t.Fatalf("doubling the depth took %.0f allocations instead of %.0f", large, small)
+	}
+}
+
+// TestPushFieldNameAllocatesOneSmallEntry bounds what a pushed name costs: names left on the deque stay
+// reachable until the conversion returns, so a list of union-typed values holds one entry per name left.
+func TestPushFieldNameAllocatesOneSmallEntry(t *testing.T) {
+	// Not parallel: runtime.ReadMemStats counts allocations across the whole process.
+	const names = 100000
+	tr := &traverser{}
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	for range names {
+		tr.pushFieldName("a")
+	}
+	runtime.ReadMemStats(&after)
+	if perName := (after.TotalAlloc - before.TotalAlloc) / names; perName > 32 {
+		t.Fatalf("a pushed name allocated %d bytes, want at most 32", perName)
 	}
 }
