@@ -1048,23 +1048,24 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 
 // buildServiceListenerInit returns the expression a service attaches to for
 // one expression in its `on` clause, with the statements that must run first.
-// A variable reference is used as is and is not registered here, which is
-// correct only for `listener` variables (registered by their own
-// initializer). Any other expression is evaluated into a synthetic local in
-// the init function and the resulting listener is registered in
-// `$moduleListeners`.
+// An error value fails module initialization (spec 8.3.2). Listener variable
+// references rely on their declarations to register the listener.
 func buildServiceListenerInit(pkgCtx *packageContext, pkg *ast.BLangPackage, listenerExpr ast.BLangExpression, moduleListenersRef *ast.BLangVarRef) (ast.BLangExpression, []ast.StatementNode) {
-	if _, ok := listenerExpr.(*ast.BLangVarRef); ok {
-		return listenerExpr, nil
-	}
 	pos := listenerExpr.GetPosition()
 	exprTy := listenerExpr.Type()
 	if semtypes.IsZero(exprTy) {
 		pkgCtx.internalError("listener expression has no type at desugar", pos)
 		return nil, nil
 	}
+	_, isVarRef := listenerExpr.(*ast.BLangVarRef)
+	if isVarRef && !semtypes.ContainsBasicType(exprTy, semtypes.Error) {
+		return listenerExpr, nil
+	}
 	listenerTy := semtypes.Diff(exprTy, semtypes.Error)
 	varDef, listenerRef := createDesugaredLocal(pkgCtx, pkg.InitFunction.Scope(), listenerTy, wrapInCheck(listenerExpr), pos)
+	if isVarRef {
+		return listenerRef, []ast.StatementNode{varDef}
+	}
 
 	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerRef, pos)
 	if registerStmt == nil {
