@@ -16,7 +16,8 @@
 # limitations under the License.
 
 # Checks generated docs whose inputs can change without a textual conflict
-# (e.g. a rebase onto a main that added another lang library function).
+# (e.g. a rebase onto a main that added another lang library function or
+# standard library package).
 
 set -euo pipefail
 
@@ -25,50 +26,72 @@ if [[ -n "${SKIP_COMMIT_HOOKS:-}" ]]; then
 fi
 
 zero_sha=0000000000000000000000000000000000000000
-langlib_coverage_paths=(
+langlib_script=.github/scripts/langlib_coverage.py
+langlib_paths=(
     lib/langlibs/ballerina
     model/opaque.go
     doc/langlib
     README.md
-    .github/scripts/langlib_coverage.py
+    "$langlib_script"
+)
+stdlib_script=.agents/skills/stdlib-readme-format/scripts/check_readmes.py
+stdlib_paths=(
+    ':(glob)lib/stdlibs/ballerina/*/0.0.1/go1.27/README.md'
+    doc/library
+    README.md
+    "$stdlib_script"
 )
 
-check_langlib_coverage() {
-    local commit=$1 tmp path status=0
-    local -a present_paths=()
-    if ! git cat-file -e "$commit:.github/scripts/langlib_coverage.py" 2>/dev/null; then
+# Runs `<script> --check` on <commit>'s tree, extracted with only the files matching <paths>.
+check_generated_docs() {
+    local commit=$1 fix=$2 script=$3 tmp file empty_tree status=0
+    shift 3
+    local -a files=()
+    if ! git cat-file -e "$commit:$script" 2>/dev/null; then
         return 0
     fi
-    while IFS= read -r path; do
-        present_paths+=("$path")
-    done < <(git ls-tree --full-tree --name-only "$commit" -- "${langlib_coverage_paths[@]}")
+    # Diffing against the empty tree lists matching files and, unlike ls-tree, accepts glob pathspecs.
+    empty_tree=$(git hash-object -t tree /dev/null)
+    while IFS= read -r -d '' file; do
+        files+=("$file")
+    done < <(git diff-tree -r -z --name-only --no-commit-id "$empty_tree" "$commit" -- "$@")
     tmp=$(mktemp -d)
-    if git archive "$commit" -- "${present_paths[@]}" | tar -x -C "$tmp"; then
+    if git archive "$commit" -- "${files[@]}" | tar -x -C "$tmp"; then
         (
             while read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
-            cd "$tmp" && python3 .github/scripts/langlib_coverage.py --check
+            cd "$tmp" && python3 "$script" --check </dev/null
         ) || status=$?
     else
         status=$?
     fi
     rm -rf "$tmp"
     if (( status != 0 )); then
-        printf 'Lang library coverage check failed at %s; see the error above. If the docs are stale, run python3 .github/scripts/langlib_coverage.py and amend.\n' \
-            "$(git rev-parse --short "$commit")" >&2
+        printf '%s --check failed at %s; see the error above. If the docs are stale, run %s and amend.\n' \
+            "$script" "$(git rev-parse --short "$commit")" "$fix" >&2
     fi
     return "$status"
 }
 
-while read -r _local_ref local_sha _remote_ref _remote_sha; do
-    [[ "$local_sha" == "$zero_sha" ]] && continue
+# Checks <commit> if a commit reachable from it but not yet on any remote touches <paths>.
+check_if_changed() {
+    local commit=$1 fix=$2 script=$3 changed
+    shift 3
     # Only commits not yet on any remote can introduce stale docs; a rebase
     # rewrites every commit it replays, so rebased commits are included.
-    if ! changed=$(git log -m --format= --name-only "$local_sha" --not --remotes -- "${langlib_coverage_paths[@]}"); then
-        printf 'Could not list commits of %s; checking lang library coverage unconditionally.\n' \
-            "$(git rev-parse --short "$local_sha")" >&2
+    if ! changed=$(git log -m --format= --name-only "$commit" --not --remotes -- "$@"); then
+        printf 'Could not list commits of %s; running %s unconditionally.\n' \
+            "$(git rev-parse --short "$commit")" "$script" >&2
         changed=unknown
     fi
     if [[ -n "$changed" ]]; then
-        check_langlib_coverage "$local_sha"
+        check_generated_docs "$commit" "$fix" "$script" "$@"
     fi
+}
+
+status=0
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+    [[ "$local_sha" == "$zero_sha" ]] && continue
+    check_if_changed "$local_sha" "python3 $langlib_script" "$langlib_script" "${langlib_paths[@]}" || status=1
+    check_if_changed "$local_sha" "python3 $stdlib_script --write" "$stdlib_script" "${stdlib_paths[@]}" || status=1
 done
+exit "$status"
