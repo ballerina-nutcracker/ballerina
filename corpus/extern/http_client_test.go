@@ -313,6 +313,17 @@ func TestHttpClientHeadersLocal(t *testing.T) {
 	runExtern(t, fileCase("http-client-headers-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
 
+// TestHttpClientRequestMessageHeadersLocal checks that the headers of an http:Request message are
+// sent, merged with the headers and mediaType arguments the way jBallerina's populateOptions does.
+func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = fmt.Fprintf(w, "%s %v %v", r.Header.Get("Content-Type"), r.Header.Values("X-Test"), r.Header.Values("X-Multi"))
+	}))
+	defer server.Close()
+	runExtern(t, fileCase("http-client-request-headers-local-v"), newHTTPPal(rewriteClient(server.URL)), nil)
+}
+
 // TestHttpClientTLSInsecure: A client without InsecureSkipVerify would fail
 // the handshake against a self-signed httptest TLS server. This verifies
 // secureSocket: {enable: false} propagates InsecureSkipVerify through PAL.

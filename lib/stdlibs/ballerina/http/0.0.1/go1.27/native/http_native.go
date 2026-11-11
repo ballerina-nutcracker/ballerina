@@ -25,7 +25,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -413,25 +415,21 @@ func initHttpModule(rt *runtime.Runtime) {
 	}
 
 	// msgToBody converts a Ballerina RequestMessage value to (io.Reader, contentLength, contentType).
-	// contentType, when non-empty, is the Content-Type a header or mediaType argument fixed; it
-	// replaces the inferred one, and multipart parts are encoded with its boundary.
+	// contentType is the Content-Type outboundHeaders fixed from the headers or mediaType argument,
+	// or from an http:Request message's own headers; when non-empty it replaces the inferred one,
+	// and multipart parts are encoded with its boundary.
 	msgToBody := func(ctx *extern.Context, msg values.BalValue, contentType string) (io.Reader, int64, string, error) {
-		// An http:Request carries its own body and content-type; every other
-		// RequestMessage is serialised the same way a resource return value is. jBallerina
-		// uses the Request object as-is (http_commons.bal:97-99), so an absent Content-Type
-		// stays absent rather than being defaulted.
+		// An http:Request carries its own body; every other RequestMessage is serialised the same
+		// way a resource return value is. jBallerina uses the Request object as-is
+		// (http_commons.bal:97-99), so an absent Content-Type stays absent rather than being defaulted.
 		if req, ok := msg.(*values.Object); ok {
-			ct := contentType
-			if cts := rawRequestHeaders(req)["content-type"]; ct == "" && len(cts) > 0 {
-				ct = cts[0]
-			}
 			bodyVal, _ := req.Get("$body")
 			holder, ok := bodyVal.(*requestBodyHolder)
 			if !ok {
-				return bytes.NewReader([]byte{}), 0, ct, nil
+				return bytes.NewReader([]byte{}), 0, contentType, nil
 			}
 			if holder.parts != nil {
-				data, wireCT, err := encodeMultipartBody(ctx, holder.parts, ct)
+				data, wireCT, err := encodeMultipartBody(ctx, holder.parts, contentType)
 				if err != nil {
 					return nil, 0, "", err
 				}
@@ -442,7 +440,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if holder.readErr != nil {
 				return nil, 0, "", fmt.Errorf("failed to read request body: %w", holder.readErr)
 			}
-			return bytes.NewReader(buf), int64(len(buf)), ct, nil
+			return bytes.NewReader(buf), int64(len(buf)), contentType, nil
 		}
 		b, ct, err := outboundPayload(ctx, &types, msg, contentType)
 		if err != nil {
@@ -455,8 +453,10 @@ func initHttpModule(rt *runtime.Runtime) {
 	// be nil. Exactly one of the two results is non-nil.
 	send := func(ctx *extern.Context, verb, path string, self *values.Object,
 		msg, headersArg, mediaTypeArg values.BalValue) (*values.Object, values.BalValue) {
-		reqHeaders := extractHeaders(headersArg)
-		contentType := overridingContentType(reqHeaders, mediaTypeArg)
+		reqHeaders, contentType := outboundHeaders(msg, headersArg)
+		if mt, ok := mediaTypeArg.(string); ok && mt != "" {
+			contentType = mt
+		}
 		var bodyReader io.Reader
 		var contentLength int64
 		if msg != nil {
@@ -1785,32 +1785,43 @@ func (d *deflateReadCloser) Close() error {
 	return d.underlying.Close()
 }
 
-// extractHeaders converts a Ballerina map<string|string[]>? value to Go request headers.
-func extractHeaders(arg values.BalValue) map[string][]string {
-	if arg == nil {
-		return nil
+// outboundHeaders builds the headers of a call that sends msg, following jBallerina's
+// populateOptions: an http:Request message keeps its own headers, and then a string value in
+// headersArg replaces a header while a string[] value is appended to it. Content-Type is returned
+// separately, as the transport takes it; "" means the payload's inferred content type applies.
+func outboundHeaders(msg values.BalValue, headersArg values.BalValue) (map[string][]string, string) {
+	headers := make(map[string][]string)
+	if req, ok := msg.(*values.Object); ok {
+		maps.Copy(headers, rawRequestHeaders(req))
 	}
-	hdrMap, ok := arg.(*values.Map)
-	if !ok {
-		return nil
+	if hdrMap, ok := headersArg.(*values.Map); ok {
+		mergeHeaderArgs(headers, hdrMap)
 	}
-	result := make(map[string][]string, hdrMap.Len())
+	contentType := ""
+	if cts := headers["content-type"]; len(cts) > 0 {
+		contentType = cts[0]
+	}
+	delete(headers, "content-type")
+	return headers, contentType
+}
+
+func mergeHeaderArgs(headers map[string][]string, hdrMap *values.Map) {
 	for _, key := range hdrMap.Keys() {
+		name := strings.ToLower(key)
 		val, _ := hdrMap.Get(key)
 		switch v := val.(type) {
 		case string:
-			result[key] = []string{v}
+			headers[name] = []string{v}
 		case *values.List:
-			strs := make([]string, v.Len())
+			// Cloned because rawRequestHeaders may share the inbound request's slices.
+			vals := slices.Clone(headers[name])
 			for i := range v.Len() {
-				if s, ok := v.Get(i).(string); ok {
-					strs[i] = s
-				}
+				s, _ := v.Get(i).(string)
+				vals = append(vals, s)
 			}
-			result[key] = strs
+			headers[name] = vals
 		}
 	}
-	return result
 }
 
 // responseMethodKeys lists every public Response instance method (excluding initNative,
@@ -2031,20 +2042,6 @@ func bodyPartsError(kind string, cause error) *values.Error {
 		msg += ": " + cause.Error()
 	}
 	return values.NewError(semtypes.Error, msg, values.NewErrorWithMessage(cause.Error()), "", nil)
-}
-
-// overridingContentType returns the Content-Type a client call fixes through its headers or,
-// taking precedence, its mediaType argument; "" when neither sets one.
-func overridingContentType(headers map[string][]string, mediaType values.BalValue) string {
-	if mt, ok := mediaType.(string); ok && mt != "" {
-		return mt
-	}
-	for name, vals := range headers {
-		if strings.EqualFold(name, "content-type") && len(vals) > 0 {
-			return vals[0]
-		}
-	}
-	return ""
 }
 
 // getMultipartBodyParts decodes a raw request/response body into mime:Entity[] body parts.

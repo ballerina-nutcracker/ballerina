@@ -1,0 +1,9 @@
+-- stdout --
+text/plain [post] []
+text/plain [] [a b c d]
+text/plain [arg] [kept]
+application/custom [delete] []
+application/json [execute] [arg]
+x/y [] []
+a/b [text] []
+-- stderr --
