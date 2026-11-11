@@ -52,8 +52,7 @@ type parser struct {
 	conv  *converter
 	shape *rowShape
 	// rootSize is the length of a closed result array, or -1.
-	rootSize  int
-	streaming bool
+	rootSize int
 
 	state     parseState
 	prevState parseState
