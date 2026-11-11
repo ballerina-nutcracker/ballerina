@@ -1,0 +1,9 @@
+-- stdout --
+attach ll
+attach ll
+attach ll
+attach ll
+main
+start ll
+gracefulStop ll
+-- stderr --

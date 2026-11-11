@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unsafe"
 )
 
@@ -111,6 +112,34 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "createLatch", createLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitOnLatch", waitOnLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "openLatch", openLatch)
+	registry := &listenerRegistry{registered: make(map[values.BalValue]struct{})}
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "registerListener", registry.register)
+}
+
+// listenerRegistry records every listener object registered with any module
+// of the program. A module listener is a listener object, so its lifecycle
+// methods are called once however many modules register it (spec 8.3).
+type listenerRegistry struct {
+	mu         sync.Mutex
+	registered map[values.BalValue]struct{}
+}
+
+// register appends a listener object to the module listener list unless the
+// object is already registered with this or another module. It then stays in
+// the list of the first module that registered it, which starts it in module
+// initialization order. Listener values are objects, so identity is pointer
+// equality.
+func (r *listenerRegistry) register(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	listeners := args[0].(*values.List)
+	value := args[1]
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.registered[value]; ok {
+		return nil, nil
+	}
+	r.registered[value] = struct{}{}
+	listeners.Append(ctx.TypeCtx(), value)
+	return nil, nil
 }
 
 // latch is a one-shot barrier: strands that wait on it are held until it is

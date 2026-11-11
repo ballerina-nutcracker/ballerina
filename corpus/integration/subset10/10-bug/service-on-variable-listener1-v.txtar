@@ -1,0 +1,11 @@
+-- stdout --
+attach fx
+attach fx
+attach fx
+attach vx
+main
+start fx
+start vx
+gracefulStop fx
+gracefulStop vx
+-- stderr --

@@ -1957,16 +1957,17 @@ func createQueryCollectInvocation(
 }
 
 func createLangInternalInvocation(
-	cx *functionContext,
+	cx desugarContext,
 	name string,
 	returnTy semtypes.SemType,
 	args []ast.BLangExpression,
 	pos diagnostics.Location,
 ) *ast.BLangInvocation {
+	pkgCtx := cx.packageContext()
 	pkgName := langInternalPackageName
-	space, _ := cx.getImportedSymbolSpace(pkgName)
+	space, _ := pkgCtx.getImportedSymbolSpace(pkgName)
 	symbolRef, _ := space.GetSymbol(name)
-	cx.addImplicitImport(pkgName, ast.BLangImportPackage{
+	pkgCtx.addImplicitImport(pkgName, ast.BLangImportPackage{
 		OrgName:      newIdentifier("ballerina"),
 		PkgNameComps: []ast.BLangIdentifier{{Value: "lang"}, {Value: "__internal"}},
 		Alias:        newIdentifier(pkgName),

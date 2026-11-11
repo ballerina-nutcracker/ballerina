@@ -1,0 +1,10 @@
+-- stdout --
+attach y
+attach x
+attach y
+main
+start y
+start x
+gracefulStop y
+gracefulStop x
+-- stderr --

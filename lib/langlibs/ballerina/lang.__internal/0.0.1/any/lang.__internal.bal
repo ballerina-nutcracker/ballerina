@@ -33,3 +33,8 @@ public isolated function waitOnLatch(handle latch) = external;
 
 # Opens the latch, releasing every waiting strand. A latch may be opened once.
 public isolated function openLatch(handle latch) = external;
+
+# Appends `value` to `listeners` unless `value` is already registered with any
+# module of the program, so a listener object registered more than once, by
+# one module or by several, is started and stopped only once.
+public isolated function registerListener(any[] listeners, any value) = external;
