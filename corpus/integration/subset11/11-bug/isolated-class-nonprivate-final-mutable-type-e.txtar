@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-final-mutable-type-e.bal:26:5
+   |
+26 |     final anydata data = 1; // @error anydata is not a subtype of readonly
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-final-mutable-type-e.bal:27:5
+   |
+27 |     final map<int> counts; // @error mutable map type, even though final and assigned in init
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-final-mutable-type-e.bal:28:5
+   |
+28 |     final Rec rec = {a: 1}; // @error mutable record type
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-final-mutable-type-e.bal:29:5
+   |
+29 |     public final int[] nums = []; // @error public final field with mutable list type
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-final-mutable-type-e.bal:30:5
+   |
+30 |     final Plain plain = new; // @error non-isolated object type is not readonly
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^

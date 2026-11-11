@@ -21,6 +21,7 @@
 - [Enum declarations](https://ballerina.io/spec/lang/master/#module-enum-decl)
 - [Class definition](https://ballerina.io/spec/lang/master/#section_8.6)
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
+  - `readonly` support is partial: a non-private field of a `readonly isolated` class must have a type that is a subtype of `readonly|isolated object {}`, because field types of a `readonly` class are not yet intersected with `readonly` ([#1043](https://github.com/ballerina-nutcracker/ballerina/issues/1043))
   - Supports `object-field`, `method-defn` and `object-type-inclusion` members
   - Supports [`remote-method-defn`](https://ballerina.io/spec/lang/master/#remote-method-defn) for client classes and `resource-method-defn` for service classes
 

@@ -1,0 +1,149 @@
+module $anon.. v 0.0.0;
+class SimpleCounter {
+  n int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 0
+      %3 = ConstantLoad n
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  next() -> int{
+    bb0 {
+      lock-start "$anon/.:SimpleCounter.n" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 8
+      %0 = ConstantLoad n
+      %1 = (1, self)[%0];
+      %2 = %1;
+      %3 = ConstantLoad 1
+      %4 = %3;
+      %5 = + %2 %4;
+      (1, self)[%0] = %5;
+      %7 = ConstantLoad n
+      %6 = (1, self)[%7];
+      (1, %0) = %6;
+      PopScopeFrame
+      lock-end "$anon/.:SimpleCounter.n" GOTO bb2;
+    }
+    bb2 {
+      return;
+    }
+    bb3 {
+      return;
+    }
+  }
+}
+class Worker {
+  counter isolated object { isolated function next() returns int }
+  other isolated object { public function init() returns nil; private int n; isolated function next() returns int }
+  mixed readonly&[int...]|isolated object { isolated function next() returns int }
+
+  init() -> nil{
+    bb0 {
+      %2 = newObject $anon/.:SimpleCounter
+      %3 = %2.init() -> bb1;
+    }
+    bb1 {
+      %5 = %3 is nil
+      %5 ? bb2 : bb3;
+    }
+    bb2 {
+      %4 = %2;
+      GOTO bb4;
+    }
+    bb3 {
+      %4 = %3;
+      GOTO bb4;
+    }
+    bb4 {
+      %6 = ConstantLoad counter
+      self[%6] = %4;
+      %7 = newObject $anon/.:SimpleCounter
+      %8 = %7.init() -> bb5;
+    }
+    bb5 {
+      %10 = %8 is nil
+      %10 ? bb6 : bb7;
+    }
+    bb6 {
+      %9 = %7;
+      GOTO bb8;
+    }
+    bb7 {
+      %9 = %8;
+      GOTO bb8;
+    }
+    bb8 {
+      %11 = ConstantLoad other
+      self[%11] = %9;
+      %12 = ConstantLoad 1
+      %13 = ConstantLoad 2
+      %14 = ConstantLoad 2
+      %15 = newArray [int...][%14]{%12, %13}
+      %16 = ConstantLoad mixed
+      self[%16] = %15;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Worker
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    w = %3;
+    %7 = ConstantLoad counter
+    %6 = w[%7];
+    %8 = %6.next() -> bb5;
+  }
+  bb5 {
+    %9 = %8;
+    %10 = println(%9) -> bb6;
+  }
+  bb6 {
+    %12 = ConstantLoad counter
+    %11 = w[%12];
+    %13 = %11.next() -> bb7;
+  }
+  bb7 {
+    %14 = %13;
+    %15 = println(%14) -> bb8;
+  }
+  bb8 {
+    %17 = ConstantLoad other
+    %16 = w[%17];
+    %18 = %16.next() -> bb9;
+  }
+  bb9 {
+    %19 = %18;
+    %20 = println(%19) -> bb10;
+  }
+  bb10 {
+    %22 = ConstantLoad mixed
+    %21 = w[%22];
+    %23 = %21 is [int...]
+    %24 = %23;
+    %25 = println(%24) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
