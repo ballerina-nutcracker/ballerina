@@ -3490,12 +3490,20 @@ func transformBraced[T any](n *nodeBuilder, braced *st.BracedExpressionNode, tra
 	return inner, true
 }
 
-// transformAccessContainer transforms the container of a field access, dropping any enclosing parentheses.
+// transformAccessContainer transforms the container of a field access, dropping all enclosing parentheses.
 func (n *nodeBuilder) transformAccessContainer(containerExpr st.Node) (ast.BLangExpression, bool) {
-	if bracedExpr, ok := containerExpr.(*st.BracedExpressionNode); ok {
-		return n.transformBracedInnerExpression(bracedExpr)
+	bracedExpr, ok := containerExpr.(*st.BracedExpressionNode)
+	if !ok {
+		return n.transformExpr(containerExpr), true
 	}
-	return n.transformExpr(containerExpr), true
+	if !n.expectNode(bracedExpr) || !n.expectToken(bracedExpr.OpenParen()) {
+		return nil, false
+	}
+	inner, ok := n.transformAccessContainer(bracedExpr.Expression())
+	if !ok || !n.expectToken(bracedExpr.CloseParen()) {
+		return nil, false
+	}
+	return inner, true
 }
 
 func (n *nodeBuilder) transformBinaryExpression(binaryExpression *st.BinaryExpressionNode) (ast.BLangExpression, bool) {

@@ -506,6 +506,8 @@ func validateAnnotAccess(cx scope.Context, e *ast.BLangAnnotAccessExpr, expected
 	return f, true
 }
 
+// validateNewExpr validates a new expression; it is isolated only by its type,
+// not yet by an isolated init with isolated arguments (#1591).
 func validateNewExpr(cx scope.Context, e *ast.BLangNewExpression, expected semtypes.SemType) (scope.Facts, bool) {
 	if e.TypeDescriptor != nil {
 		if !dispatchTypeDesc(cx, e.TypeDescriptor) {

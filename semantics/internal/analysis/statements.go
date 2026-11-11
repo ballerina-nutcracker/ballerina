@@ -293,21 +293,33 @@ func validateLock(cx scope.Context, lock *ast.BLangLock) {
 // target, the value, and the final-variable and target-kind rules. A final
 // variable is assigned only by its deferred initialization: a module variable
 // in the module init function, or a local of the current function; a final
-// field only by a plain `=` in its class init when it has no initializer.
+// field only by a plain `=` in its class init when it has no initializer. A
+// value assigned to a field of an isolated object must be an isolated
+// expression.
 func validateAssignment(cx scope.Context, a ast.AssignmentNode) {
 	_, compound := a.(*ast.BLangCompoundAssignment)
+	rhsCx := cx
+	isolatedField := false
 	if access, isField := a.GetVariable().(*ast.BLangFieldBaseAccess); isField {
 		if name, reassigned := scope.FinalFieldReassigned(cx, access, compound); reassigned {
 			cx.SemanticErr(strings.Join([]string{"cannot assign a value to final field '", name, "'"}, ""), access.GetPosition())
 			return
+		}
+		if scope.IsolatedObjectFieldTarget(cx, access) {
+			rhsCx = scope.NewIsolatedFieldValue(cx, access)
+			isolatedField = true
 		}
 	}
 	lhs, ok := dispatchTarget(cx, a.GetVariable())
 	if !ok {
 		return
 	}
-	rhs, ok := validateActionOrExpr(cx, a.GetExpression(), assignmentExpectedType(compound, a.GetVariable().Type()))
+	rhs, ok := validateActionOrExpr(rhsCx, a.GetExpression(), assignmentExpectedType(compound, a.GetVariable().Type()))
 	if !ok {
+		return
+	}
+	if isolatedField && !rhs.Isolated() {
+		cx.SemanticErr("value assigned to a field of an isolated object must be an isolated expression", a.GetExpression().GetPosition())
 		return
 	}
 	if ref, isVar := a.GetVariable().(*ast.BLangVarRef); isVar {
