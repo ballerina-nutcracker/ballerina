@@ -291,17 +291,22 @@ func validateBinaryOperands(cx scope.Context, e *ast.BLangBinaryExpr, operandTy 
 	return ok
 }
 
+// validateTernaryExpr validates a conditional expression; it is isolated when
+// its type is, or when its condition and both branches are.
 func validateTernaryExpr(cx scope.Context, e *ast.BLangTernaryExpr, expected semtypes.SemType) (scope.Facts, bool) {
-	if _, ok := validateActionOrExpr(cx, e.Condition, semtypes.Boolean); !ok {
+	condFacts, ok := validateActionOrExpr(cx, e.Condition, semtypes.Boolean)
+	if !ok {
 		return scope.NoFacts, false
 	}
-	if _, ok := validateActionOrExpr(cx, e.ThenExpr, semtypes.SemType{}); !ok {
+	thenFacts, ok := validateActionOrExpr(cx, e.ThenExpr, semtypes.SemType{})
+	if !ok {
 		return scope.NoFacts, false
 	}
-	if _, ok := validateActionOrExpr(cx, e.ElseExpr, semtypes.SemType{}); !ok {
+	elseFacts, ok := validateActionOrExpr(cx, e.ElseExpr, semtypes.SemType{})
+	if !ok {
 		return scope.NoFacts, false
 	}
-	f := scope.FactsOfType(cx, e)
+	f := scope.Either(scope.FactsOfType(cx, e), scope.Meet(condFacts, scope.Meet(thenFacts, elseFacts)))
 	if !validateResolvedType(cx, e, expected) {
 		return f, false
 	}
