@@ -57,6 +57,8 @@ func validateXMLSequence(cx scope.Context, e *ast.BLangXMLSequenceLiteral, expec
 	return f, true
 }
 
+// validateTemplate validates a string or raw template; it is isolated only by
+// its type, not yet by isolated insertions (#1628).
 func validateTemplate(cx scope.Context, e *ast.BLangTemplateExpr, expected semtypes.SemType) (scope.Facts, bool) {
 	for _, insertion := range e.Insertions {
 		if _, ok := validateActionOrExpr(cx, insertion, semcommon.TemplateInsertionAllowedTypes); !ok {
@@ -70,6 +72,8 @@ func validateTemplate(cx scope.Context, e *ast.BLangTemplateExpr, expected semty
 	return f, true
 }
 
+// validateXMLTemplate validates an xml template; it is isolated only by its
+// type, not yet by isolated insertions (#1628).
 func validateXMLTemplate(cx scope.Context, e *ast.BLangXMLTemplateExpr, expected semtypes.SemType) (scope.Facts, bool) {
 	if len(e.InsertionKinds) != len(e.Insertions) {
 		cx.InternalErr("xml template insertion kind count mismatch", e.GetPosition())

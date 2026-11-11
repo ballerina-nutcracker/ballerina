@@ -232,6 +232,20 @@ func FinalFieldReassigned(cx Context, access *ast.BLangFieldBaseAccess, compound
 	return "", false
 }
 
+// IsolatedObjectFieldTarget reports whether access is `self.f` for a field f
+// of the enclosing isolated class or service, assigned in its init method.
+// Only init needs the isolated-value rule (spec §6.8.1.5); other methods
+// access self in a lock, whose rules already govern the assigned value.
+func IsolatedObjectFieldTarget(cx Context, access *ast.BLangFieldBaseAccess) bool {
+	fn, ok := EnclosingFunction(cx)
+	receiver, isRef := access.Expr.(*ast.BLangVarRef)
+	if !ok || !isRef || !fn.isSelf(receiver.Symbol()) || !fn.class.IsIsolated() || !fn.isClassInit() {
+		return false
+	}
+	_, found := fn.class.field(access.Field.GetValue())
+	return found
+}
+
 // TargetIndex is a member of inner.
 func TargetIndex(inner LValue, _ *ast.BLangIndexBasedAccess) LValue {
 	return LValue{root: inner.root}
