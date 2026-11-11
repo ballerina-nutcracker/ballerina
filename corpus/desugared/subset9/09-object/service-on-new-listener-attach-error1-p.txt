@@ -1,4 +1,5 @@
 (package
+  (import-package ballerina lang __internal (as lang.__internal))
   (import-package ballerina lang array (as lang.array))
   (variable $moduleListeners)
   (class-definition FailingListener
@@ -67,7 +68,7 @@
           (new
             (user-defined-type FailingListener) ()))))
       (expression-stmt
-        (invocation lang.array push (
+        (invocation lang.__internal registerListener (
           (simple-var-ref $moduleListeners)
           (simple-var-ref $desugar$1))))
       (expression-stmt

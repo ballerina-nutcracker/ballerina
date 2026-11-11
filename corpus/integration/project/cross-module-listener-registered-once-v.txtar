@@ -1,0 +1,11 @@
+-- stdout --
+attach gx
+attach fl
+attach gx
+bar
+main
+start fl
+start gx
+gracefulStop gx
+gracefulStop fl
+-- stderr --

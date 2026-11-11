@@ -1,0 +1,95 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition L
+    (variable n (type
+      (value-type string)))
+    (function init (
+      (variable n (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access n
+            (simple-var-ref self))
+          (simple-var-ref n))))
+    (function attach (
+      (variable svc (type
+        (object-type service)))
+      (variable attachPoint (type
+        (value-type null)) (expr
+        (literal <nil>)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))
+        (var-def
+          (variable _ (expr
+            (simple-var-ref attachPoint))))
+        (expression-stmt
+          (invocation io println (
+            (literal attach )
+            (field-based-access n
+              (simple-var-ref self)))))))
+    (function detach (
+      (variable svc (type
+        (object-type service)))) (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (var-def
+          (variable _ (expr
+            (simple-var-ref svc))))))
+    (function gracefulStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal gracefulStop )
+            (field-based-access n
+              (simple-var-ref self)))))))
+    (function immediateStop () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body))
+    (function start () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (literal start )
+            (field-based-access n
+              (simple-var-ref self))))))))
+  (variable ll (type
+    (user-defined-type L)) (expr
+    (new (
+      (literal ll)))))
+  (function get () (
+    (user-defined-type L))
+    (block-function-body
+      (return
+        (simple-var-ref ll))))
+  (service
+    (on
+    (invocation get ())
+    (group-expr
+      (simple-var-ref ll))))
+  (service
+    (on
+    (simple-var-ref ll)
+    (invocation get ())))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal main)))))))
