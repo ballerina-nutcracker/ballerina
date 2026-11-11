@@ -75,8 +75,9 @@
   - When selecting among multiple candidate inherent types, resolving the field values has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
   - [spread-field](https://ballerina.io/spec/lang/master/#spread-field) is supported
   - Currently a spread-field operand whose static type is not a single mapping type (e.g. a union of mapping types such as `A|B`, or a type narrowed by a negative type test such as `!is`) is not supported
-  - Computed keys are not supported in a mapping constructor that is a constant expression, including one used as a record field default
+  - Computed keys are not supported in a mapping constructor that is a constant expression, and neither are XML templates in a constant expression; a record field default that uses either is evaluated at runtime
   - A record field default that is a constant expression but fails to evaluate, such as `int x = 1 / 0`, is a compile error even if every use supplies the field
+    - The compile-time evaluation stops at the first part that is not constant, such as an omitted field whose default is evaluated at runtime, or a spread operand that turns out not to supply a field; a failure or a default cycle after that part is not reported at compile time
   - A record field default that is a constant expression and constructs a record whose defaults lead back to it without supplying the field, such as `R? next = {}` in `R`, is a compile error even if every construction supplies the field
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes

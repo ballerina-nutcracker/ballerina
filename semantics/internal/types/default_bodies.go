@@ -203,16 +203,15 @@ func evaluateConstantDefault(t typeResolver, chain *binding, ref model.SymbolRef
 	if !checkRecordDefaultBody(t, chain, declaration) {
 		return constantOutcome{kind: constantFailed}
 	}
-	_, eligible, ok := isConstantExpression(t, chain, expr)
-	if !ok {
-		return constantOutcome{kind: constantFailed}
-	}
-	if !eligible {
+	// Folding a default is an optimisation: a default that cannot be folded is
+	// evaluated at runtime, but one whose evaluation fails is an error.
+	value, unfoldable, ok := tryFoldConstant(t, chain, expr)
+	switch {
+	case ok:
+		return constantOutcome{kind: constantValue, value: value}
+	case unfoldable != nil:
 		return constantOutcome{kind: constantRuntime}
-	}
-	value, ok := foldConstant(t, chain, expr)
-	if !ok {
+	default:
 		return constantOutcome{kind: constantFailed}
 	}
-	return constantOutcome{kind: constantValue, value: value}
 }

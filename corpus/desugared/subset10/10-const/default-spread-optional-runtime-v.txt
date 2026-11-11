@@ -1,0 +1,51 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Runtime
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition MaybeY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (type-definition R
+    (record-type
+      (field r
+        (user-defined-type Runtime)
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (type-conversion-expr
+              (literal {"x":1})
+              (user-defined-type MaybeY)))))))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable v (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation next ()))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (type-conversion-expr
+              (literal {"x":1})
+              (user-defined-type MaybeY))))))))

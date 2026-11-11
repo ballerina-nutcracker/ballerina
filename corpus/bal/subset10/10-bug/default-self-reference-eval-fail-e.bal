@@ -15,11 +15,13 @@
 // under the License.
 import ballerina/io;
 isolated function runtimeValue() returns int { return 7; }
+// runtime's nonconstant default would keep next from being folded, but next's
+// evaluation fails before it reaches the omitted fields, as it would at runtime.
 type R record {|
-    R? next = (1 / 0 == 0) ? () : {};
+    R? next = (1 / 0 == 0) ? () : {}; // @error division by zero in a default that is never used
     int runtime = runtimeValue();
 |};
 public function main() {
     R r = {next: ()};
-    io:println(r); // @output {"next":null,"runtime":7}
+    io:println(r);
 }

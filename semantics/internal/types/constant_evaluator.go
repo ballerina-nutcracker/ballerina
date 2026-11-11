@@ -237,59 +237,79 @@ func classifyFieldDefault(t typeResolver, chain *binding, name string, field *as
 }
 
 type constantExpressionEvaluator struct {
-	resolver    typeResolver
-	unsupported *unsupportedConstantForm
+	resolver   typeResolver
+	unfoldable *unfoldableConstant
 }
 
-// unsupportedConstantForm is a constant expression form we cannot fold yet. It
-// is not a fault in the program, so whether it is an error depends on the
-// caller: a non-const annotation evaluates such a value at runtime instead.
-type unsupportedConstantForm struct {
-	message string
-	loc     ast.Location
+// unfoldableConstant is why a constant-form expression cannot be folded: it
+// needs a value that is not constant, such as an omitted field whose default is
+// evaluated at runtime, or it uses a form we cannot fold yet. Evaluating it may
+// still succeed at runtime, so whether it is an error depends on the caller: a
+// record default or a non-const annotation is evaluated at runtime instead.
+type unfoldableConstant struct {
+	message       string
+	loc           ast.Location
+	unimplemented bool
 }
 
-func (u *unsupportedConstantForm) report(t typeResolver) {
-	t.unimplemented(u.message, u.loc)
+func (u *unfoldableConstant) report(t typeResolver) {
+	if u.unimplemented {
+		t.unimplemented(u.message, u.loc)
+		return
+	}
+	t.semanticError(u.message, u.loc)
 }
 
 // foldConstant evaluates a constant expression at compile time (spec §6.4). It
-// is called only on an expression isConstantExpression has accepted, so a
-// failure is never structural: it reports its own diagnostic at the failing
-// subexpression and returns false. A nil value with ok is a successful fold of
-// (), which is why failure is signalled by the bool alone.
+// reports its own diagnostic at the failing subexpression and returns false,
+// both when the expression cannot be folded and when evaluating it fails. A nil
+// value with ok is a successful fold of (), which is why failure is signalled
+// by the bool alone.
 func foldConstant(t typeResolver, chain *binding, expr ast.BLangExpression) (values.BalValue, bool) {
-	value, unsupported, ok := tryFoldConstant(t, chain, expr)
-	if unsupported != nil {
-		unsupported.report(t)
+	value, unfoldable, ok := tryFoldConstant(t, chain, expr)
+	if unfoldable != nil {
+		unfoldable.report(t)
 	}
 	return value, ok
 }
 
-// tryFoldConstant is foldConstant for a caller that has a fallback when expr
-// uses a form we cannot fold yet: that failure is returned as unsupported
-// rather than reported. Every other failure is reported as in foldConstant.
+// tryFoldConstant is foldConstant for a caller that evaluates expr at runtime
+// when it cannot be folded: that failure is returned as unfoldable rather than
+// reported. A failure of the evaluation itself, which would also fail at
+// runtime, is reported as in foldConstant. Evaluation stops at the first
+// failure, so an evaluation failure after an unfoldable subexpression is left
+// to runtime.
 func tryFoldConstant(t typeResolver, chain *binding, expr ast.BLangExpression) (value values.BalValue,
-	unsupported *unsupportedConstantForm, ok bool,
+	unfoldable *unfoldableConstant, ok bool,
 ) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			t.internalError(fmt.Sprintf("constant expression evaluation panicked: %v", recovered), expr.GetPosition())
-			value, unsupported, ok = nil, nil, false
+			value, unfoldable, ok = nil, nil, false
 		}
 	}()
 	evaluator := constantExpressionEvaluator{resolver: t}
 	value, ok = evaluator.evaluate(chain, expr)
-	return value, evaluator.unsupported, ok
+	return value, evaluator.unfoldable, ok
 }
 
+// semanticFailure reports a failure of the evaluation itself, which would also
+// fail at runtime.
 func (e *constantExpressionEvaluator) semanticFailure(message string, loc ast.Location) (values.BalValue, bool) {
 	e.resolver.semanticError(message, loc)
 	return nil, false
 }
 
+// nonConstantFailure records that the expression needs a value that is not
+// constant.
+func (e *constantExpressionEvaluator) nonConstantFailure(loc ast.Location) (values.BalValue, bool) {
+	e.unfoldable = &unfoldableConstant{message: notConstantExpressionMessage, loc: loc}
+	return nil, false
+}
+
+// unsupportedFailure records that the expression uses a form we cannot fold yet.
 func (e *constantExpressionEvaluator) unsupportedFailure(message string, loc ast.Location) (values.BalValue, bool) {
-	e.unsupported = &unsupportedConstantForm{message: message, loc: loc}
+	e.unfoldable = &unfoldableConstant{message: message, loc: loc, unimplemented: true}
 	return nil, false
 }
 
@@ -339,7 +359,7 @@ func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.Symbol
 	ref = e.resolver.unnarrowedSymbol(ref)
 	sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol)
 	if !ok {
-		return e.semanticFailure(notConstantExpressionMessage, loc)
+		return e.nonConstantFailure(loc)
 	}
 	return sym.ConstantValue(), true
 }
@@ -388,12 +408,12 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(chain *binding,
 			case constantValue:
 				value = outcome.value
 			case constantRuntime:
-				return e.semanticFailure(notConstantExpressionMessage, expr.GetPosition())
+				return e.nonConstantFailure(expr.GetPosition())
 			case constantFailed:
 				return nil, false
 			}
 		} else if !fieldDefault.IsConst {
-			return e.semanticFailure(notConstantExpressionMessage, expr.GetPosition())
+			return e.nonConstantFailure(expr.GetPosition())
 		}
 		entries = append(entries, values.MapEntry{Key: fieldDefault.FieldName, Value: value})
 	}
