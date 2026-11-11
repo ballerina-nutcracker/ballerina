@@ -1,0 +1,67 @@
+(L
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access n
+          (simple-var-ref self))
+        (simple-var-ref n))
+    )
+  )
+  (attach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+      (var-def
+        (variable _ (expr
+          (simple-var-ref attachPoint))))
+      (expression-stmt
+        (invocation io println (
+          (literal attach )
+          (field-based-access n
+            (simple-var-ref self)))))
+    )
+  )
+  (detach
+    (bb0 () ()
+      (var-def
+        (variable _ (expr
+          (simple-var-ref svc))))
+    )
+  )
+  (gracefulStop
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal gracefulStop )
+          (field-based-access n
+            (simple-var-ref self)))))
+    )
+  )
+  (immediateStop
+    (bb0 () ())
+  )
+  (start
+    (bb0 () ()
+      (expression-stmt
+        (invocation io println (
+          (literal start )
+          (field-based-access n
+            (simple-var-ref self)))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal main))))
+  )
+)
+(mk
+  (bb0 () ()
+    (return
+      (error-constructor-expr (
+        (literal bad listener))))
+  )
+)
