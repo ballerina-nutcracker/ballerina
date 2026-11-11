@@ -16,26 +16,33 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Mechanical validator for the stdlib-readme-format skill.
+"""Validator and generator for the stdlib-readme-format skill.
 
 Checks every lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md against the
-format contract, and the aggregator doc/library/README.md and the coverage
-summary in the repo-root README against the recounted per-package tables.
-Judgment-only rules (prose quality, caveat usefulness, content accuracy) are
-NOT checked here — see the skill's checklist.
+format contract, and that the generated regions of the aggregator
+doc/library/README.md and of the repo-root README match what the per-package
+READMEs produce. Each generated region sits between
+"<!-- BEGIN <name> ... -->" and "<!-- END <name> -->" lines; text outside the
+markers is hand-written and never touched. Judgment-only rules (prose quality,
+caveat usefulness, content accuracy) are NOT checked here — see the skill's
+checklist.
 
-Usage: python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py
-Run from the repo root. Exits 1 if any violation is found.
+Usage, from the repo root:
+  python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py           # check (also --check)
+  python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py --write   # regenerate, then check
+Exits 1 if any violation is found. --write does not touch any file while a
+package README has a violation, since its counts would be wrong.
 """
 
 import glob
-import os
 import re
 import sys
+from pathlib import Path
 
 ROOT = "lib/stdlibs/ballerina"
 AGGREGATOR = "doc/library/README.md"
 REPO_README = "README.md"
+SCRIPT = ".agents/skills/stdlib-readme-format/scripts/check_readmes.py"
 STATUSES = ("Supported", "Partially Supported", "Not Yet Supported", "Cannot Support")
 REQUIRED_SECTIONS = [
     "## Overview",
@@ -44,10 +51,6 @@ REQUIRED_SECTIONS = [
     "## Go Native Interpreter Support Status",
     "### Notable Behavioural Changes",
 ]
-REPO_SUMMARY_RE = re.compile(
-    r"\*\*(\d+)%\*\* of tracked standard library features are supported across (\d+) packages: "
-    r"(\d+) supported, (\d+) partially supported, (\d+) not yet supported"
-)
 NO_CHANGES_RE = re.compile(r"\*\*no\*\* notable behavioural changes", re.IGNORECASE)
 
 violations = []
@@ -65,7 +68,7 @@ def cells_of(line):
 
 
 def parse_package_readme(path):
-    text = open(path, encoding="utf-8").read()
+    text = Path(path).read_text(encoding="utf-8")
     lines = text.splitlines()
 
     positions = []
@@ -84,6 +87,8 @@ def parse_package_readme(path):
     behavioural_bullets = []
     behavioural_text = []
     in_behavioural = False
+    bullet_lines = None
+    blank_lines = 0
     for i, line in enumerate(lines, 1):
         if line.startswith("## Go Native Interpreter Support Status"):
             in_support, in_behavioural = True, False
@@ -128,12 +133,22 @@ def parse_package_readme(path):
 
         if in_behavioural:
             stripped = line.strip()
-            if stripped.startswith("- "):
+            if line.startswith("- "):
                 if not re.match(r"- \*\*.+?\.\*\* .+", stripped):
                     fail(path, f"line {i}: behavioural-change bullet must match '- **Title.** Explanation.'")
-                behavioural_bullets.append(" ".join(stripped.split()))
-            elif re.match(r"\d+\.", stripped) or stripped.startswith("|"):
-                fail(path, f"line {i}: Notable Behavioural Changes must be a bullet list")
+                bullet_lines = [line.rstrip()]
+                behavioural_bullets.append(bullet_lines)
+                blank_lines = 0
+            elif bullet_lines is not None and stripped and (blank_lines == 0 or line[0].isspace()):
+                # Wrapped text, or an indented paragraph or sub-bullet, belongs to the current bullet.
+                bullet_lines.extend([""] * blank_lines + [line.rstrip()])
+                blank_lines = 0
+            elif not stripped:
+                blank_lines += 1
+            else:
+                bullet_lines = None
+                if re.match(r"\d+\.", stripped) or stripped.startswith("|"):
+                    fail(path, f"line {i}: Notable Behavioural Changes must be a bullet list")
 
     if sum(counts.values()) == 0:
         fail(path, "no support-table rows found")
@@ -143,7 +158,7 @@ def parse_package_readme(path):
     if behavioural_bullets and NO_CHANGES_RE.search(section):
         fail(path, "Notable Behavioural Changes has bullets AND the 'no changes' sentence")
 
-    return counts, behavioural_bullets
+    return counts, ["\n".join(b) for b in behavioural_bullets]
 
 
 def coverage_totals(per_pkg):
@@ -157,121 +172,120 @@ def coverage_totals(per_pkg):
     return sums, pct
 
 
-def check_coverage_table(path, text, per_pkg):
-    rows = {}
-    total_row = None
-    for line in text.splitlines():
-        c = cells_of(line)
-        if c is None or len(c) != 5 or all(re.fullmatch(r"-+", x) for x in c):
-            continue
-        m = re.match(r"\[(.+?)\]\(", c[0])
-        if m:
-            if m.group(1) in rows:
-                fail(path, f"coverage table has a duplicate row for '{m.group(1)}'")
-            rows[m.group(1)] = c
-        elif c[0] in ("**Total**", "Total"):
-            if total_row is not None:
-                fail(path, "coverage table has more than one **Total** footer row")
-            total_row = c
-
-    listed = list(rows.keys())
-    if listed != sorted(listed):
-        fail(path, "package rows are not in alphabetical order")
-
-    for pkg, (counts, _) in sorted(per_pkg.items()):
-        s, p, n, c = (counts[st] for st in STATUSES)
-        total = s + p + n + c
-        pct = round(s / total * 100) if total else 0
-        if pkg not in rows:
-            fail(path, f"package '{pkg}' has no row in the coverage table")
-            continue
-        cells = rows.pop(pkg)
-        expect = [str(s), str(p), str(n), f"{pct}%"]
-        if cells[1:] != expect:
-            fail(path, f"row '{pkg}' is stale: has {cells[1:]}, recount gives {expect} "
-                       f"(Cannot Support rows: {c}, in the % denominator only)")
-
-    for stale in rows:
-        fail(path, f"coverage table row '{stale}' has no matching package README")
-
-    if total_row is None:
-        fail(path, "coverage table has no **Total** footer row")
-    else:
-        sums, total_pct = coverage_totals(per_pkg)
-        expect = [f"**{sums[0]}**", f"**{sums[1]}**", f"**{sums[2]}**", f"**{total_pct}%**"]
-        if total_row[1:] != expect:
-            fail(path, f"Total footer is stale: has {total_row[1:]}, recount gives {expect}")
+def package_row(counts):
+    """Returns the aggregator cells (supported, partial, not yet, percent) for one package."""
+    s, p, n, c = (counts[st] for st in STATUSES)
+    total = s + p + n + c
+    return [str(s), str(p), str(n), f"{round(s / total * 100) if total else 0}%"]
 
 
-def check_aggregator(per_pkg):
-    path = AGGREGATOR
-    if not os.path.exists(path):
-        fail(path, "aggregator README missing")
-        return
-    text = open(path, encoding="utf-8").read()
-    check_coverage_table(path, text, per_pkg)
-
-    for pkg, (_, bullets) in sorted(per_pkg.items()):
-        section = re.search(rf"### {re.escape(pkg)}\n(.*?)(?=\n### |\nThe remaining packages|\Z)", text, re.DOTALL)
-        agg_bullets = []
-        if section:
-            agg_bullets = [" ".join(l.split()) for l in section.group(1).splitlines() if l.strip().startswith("- ")]
-        if bullets:
-            if section is None:
-                fail(path, f"'{pkg}' has behavioural changes but no '### {pkg}' subsection in the aggregator")
-            else:
-                for b in bullets:
-                    if b not in agg_bullets:
-                        fail(path, f"'{pkg}' bullet not mirrored verbatim in aggregator: {b[:80]}...")
-                for b in agg_bullets:
-                    if b not in bullets:
-                        fail(path, f"aggregator '### {pkg}' bullet absent from the package README: {b[:80]}...")
-        else:
-            if section is not None:
-                fail(path, f"'{pkg}' has a '### {pkg}' subsection but no behavioural changes in its README")
-            if not re.search(rf"remaining packages.*`{re.escape(pkg)}`", text, re.DOTALL):
-                fail(path, f"'{pkg}' (no behavioural changes) missing from the closing 'no changes' sentence")
-
-
-def check_repo_readme(per_pkg):
-    text = open(REPO_README, encoding="utf-8").read()
-    matches = REPO_SUMMARY_RE.findall(text)
-    if len(matches) != 1:
-        fail(REPO_README, f"expected exactly one coverage summary sentence, found {len(matches)}")
-        return
+def render_coverage_table(per_pkg):
+    rows = [[f"[{pkg}](../../{ROOT}/{pkg}/0.0.1/go1.27/README.md)", *package_row(counts)]
+            for pkg, (counts, _) in sorted(per_pkg.items())]
     sums, pct = coverage_totals(per_pkg)
-    expect = (str(pct), str(len(per_pkg)), *map(str, sums))
-    if matches[0] != expect:
-        fail(REPO_README, f"coverage summary is stale: has {list(matches[0])}, recount gives {list(expect)} "
-                          "(percent, packages, supported, partially supported, not yet supported)")
-
-    listed = re.search(r"^\*\*Supported packages:\*\* (.+)$", text, re.MULTILINE)
-    if listed is None:
-        fail(REPO_README, "missing the '**Supported packages:**' list")
-        return
-    expect = ", ".join(f"[{pkg}]({ROOT}/{pkg}/0.0.1/go1.27/README.md)" for pkg in sorted(per_pkg))
-    if listed.group(1).strip() != expect:
-        fail(REPO_README, f"'Supported packages' list does not match the package READMEs; expected: {expect}")
+    total = ["**Total**", *(f"**{v}**" for v in sums), f"**{pct}%**"]
+    width = max(len(r[0]) for r in rows + [total])
+    lines = [f"| {'Package'.ljust(width)} | Supported | Partially Supported | Not Yet Supported | Support % |",
+             f"|{'-' * (width + 2)}|---|---|---|---|"]
+    lines += [f"| {r[0].ljust(width)} | " + " | ".join(r[1:]) + " |" for r in rows + [total]]
+    return "\n".join(lines) + "\n"
 
 
-def main():
+def render_behavioural_changes(per_pkg):
+    parts = []
+    unchanged = []
+    for pkg, (_, bullets) in sorted(per_pkg.items()):
+        if bullets:
+            parts.append(f"### {pkg}\n\n" + "\n".join(bullets) + "\n")
+        else:
+            unchanged.append(f"`{pkg}`")
+    if unchanged:
+        subject, verb, owner = ("packages", "have", "their") if len(unchanged) > 1 else ("package", "has", "its")
+        parts.append(f"The remaining {subject} ({', '.join(unchanged)}) {verb} **no** notable behavioural changes "
+                     f"compared to the original jBallerina implementation for {owner} currently supported features.\n")
+    return "\n".join(parts)
+
+
+def render_repo_summary(per_pkg):
+    sums, pct = coverage_totals(per_pkg)
+    packages = f"{len(per_pkg)} package{'' if len(per_pkg) == 1 else 's'}"
+    listed = ", ".join(f"[{pkg}]({ROOT}/{pkg}/0.0.1/go1.27/README.md)" for pkg in sorted(per_pkg))
+    return (f"**{pct}%** of tracked standard library features are supported across {packages}: "
+            f"{sums[0]} supported, {sums[1]} partially supported, {sums[2]} not yet supported. "
+            "See [Standard library support](doc/library/README.md) for per-package coverage and behavioural "
+            "changes from jBallerina.\n\n"
+            f"**Supported packages:** {listed}\n")
+
+
+GENERATED_REGIONS = {
+    AGGREGATOR: (("stdlib-coverage-table", render_coverage_table),
+                 ("stdlib-behavioural-changes", render_behavioural_changes)),
+    REPO_README: (("stdlib-coverage-summary", render_repo_summary),),
+}
+
+
+def replace_region(path, text, name, content):
+    """Returns text with the body between the region's markers replaced, or None if the markers are unusable."""
+    begins = list(re.finditer(rf"^<!-- BEGIN {re.escape(name)}(?=[:\s])[^\n]*-->\n", text, re.MULTILINE))
+    ends = list(re.finditer(rf"^<!-- END {re.escape(name)} -->$", text, re.MULTILINE))
+    if len(begins) != 1 or len(ends) != 1 or ends[0].start() < begins[0].end():
+        fail(path, f"needs exactly one '<!-- BEGIN {name} -->' line followed by one '<!-- END {name} -->' line")
+        return None
+    return text[:begins[0].end()] + "\n" + content + "\n" + text[ends[0].start():]
+
+
+def regenerate(per_pkg):
+    """Returns {path: (current text, regenerated text, names of stale regions)}."""
+    outputs = {}
+    for path, regions in GENERATED_REGIONS.items():
+        try:
+            current = Path(path).read_text(encoding="utf-8")
+        except FileNotFoundError:
+            fail(path, "file missing")
+            continue
+        updated, stale = current, []
+        for name, render in regions:
+            replaced = replace_region(path, updated, name, render(per_pkg))
+            if replaced is not None and replaced != updated:
+                updated = replaced
+                stale.append(name)
+        outputs[path] = (current, updated, stale)
+    return outputs
+
+
+def parse_package_readmes():
     readmes = sorted(glob.glob(f"{ROOT}/*/0.0.1/go1.27/README.md"))
     if not readmes:
         print("error: no per-package READMEs found — run from the repo root", file=sys.stderr)
         sys.exit(2)
-    per_pkg = {}
-    for path in readmes:
-        pkg = path.split("/")[3]
-        per_pkg[pkg] = parse_package_readme(path)
-    check_aggregator(per_pkg)
-    check_repo_readme(per_pkg)
+    return {Path(path).parts[-4]: parse_package_readme(path) for path in readmes}
+
+
+def main():
+    args = sys.argv[1:]
+    if args not in ([], ["--check"], ["--write"]):
+        print(f"usage: {sys.argv[0]} [--check | --write]", file=sys.stderr)
+        sys.exit(2)
+    per_pkg = parse_package_readmes()
+    write = args == ["--write"] and not violations
+    if args == ["--write"] and not write:
+        print("not regenerating: fix the package README violations below first", file=sys.stderr)
+    for path, (current, updated, stale) in regenerate(per_pkg).items():
+        if updated == current:
+            continue
+        if write:
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(updated)
+            print(f"wrote {path}")
+        else:
+            fail(path, f"generated region(s) {', '.join(stale)} are stale — run python3 {SCRIPT} --write")
 
     if violations:
         for v in violations:
             print(f"FAIL {v}")
-        print(f"\n{len(violations)} violation(s) across {len(readmes)} package README(s) + aggregator + repo README")
+        print(f"\n{len(violations)} violation(s) across {len(per_pkg)} package README(s) + aggregator + repo README")
         sys.exit(1)
-    print(f"OK — {len(readmes)} package README(s) + aggregator + repo README conform to the mechanical rules")
+    print(f"OK — {len(per_pkg)} package README(s) + aggregator + repo README conform to the mechanical rules")
 
 
 if __name__ == "__main__":

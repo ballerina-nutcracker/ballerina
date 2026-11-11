@@ -241,7 +241,7 @@ If the total is below 80%, find the gaps with `go tool cover -func=/tmp/<name>-c
 
 Author `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` using the **`stdlib-readme-format`** skill. Load that skill now and run its validation checklist before saving the file. Copy every unavoidable divergence and every jBallerina bug fix from the Step 5 behaviour table into **Notable Behavioural Changes** — these must be present before merge.
 
-Then update the aggregator `doc/library/README.md` (same `stdlib-readme-format` skill): add the new package row (alphabetical), recompute the **Total** footer, and mirror this package's behavioural changes into a `### <name>` subsection (only if it has any). Then update the repo-root `README.md` **Standard library coverage** summary sentence (overall %, package count, Supported / Partially Supported / Not Yet Supported totals) to match the new Total footer, and add the package to its `**Supported packages:**` list (alphabetical, linked to the package README).
+Then regenerate the aggregator `doc/library/README.md` and the repo-root `README.md` coverage summary with `python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py --write` (same `stdlib-readme-format` skill). It adds the package's row, recomputes the **Total** footer, copies its behavioural changes into a `### <name>` subsection (or lists it in the closing "no changes" sentence) and adds it to `**Supported packages:**`, so don't edit those parts by hand.
 
 Separately, confirm Step 8's `doc/library/subset<N>.md` update is done — it documents released library-feature milestones and is independent of the per-package `README.md` (which tracks jBallerina-parity status, not release scoping).
 
@@ -270,7 +270,7 @@ Before declaring done, check every box:
 
 ### Documentation
 - [ ] `lib/stdlibs/ballerina/<name>/0.0.1/go1.27/README.md` support table reflects current implementation (no stale `Not Yet Supported` rows for things just implemented).
-- [ ] `doc/library/README.md` aggregator updated (new row, recomputed Total footer, behavioural changes mirrored), and the repo-root `README.md` coverage summary matches its Total footer and lists the package under `**Supported packages:**`.
+- [ ] `python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py --write` was run after the last README change and exits 0, and its changes to `doc/library/README.md` and `README.md` (new row, Total footer, behavioural changes, `**Supported packages:**` entry) are committed.
 - [ ] `stdlib-readme-format` validation checklist passes.
 - [ ] `doc/library/subset<N>.md` (the subset agreed with the developer in Step 8) documents this module's newly-supported surface — created fresh if it's a new subset, extended if existing.
 
