@@ -151,6 +151,8 @@ func hasSingleApplicableAttachPointListType(tyCtx semtypes.Context, segments []s
 // member that reports is abandoned and the next one runs.
 func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
 	methods []common.NamedClassMethod, resourceMethods []*ast.BLangResourceMethod) {
+	// A field initializer of an isolated class is not yet required to be an
+	// isolated expression (#1629).
 	for _, field := range fields {
 		validateVariable(cx, field, cx.CompilerCtx().SymbolType(field.Symbol()))
 	}
