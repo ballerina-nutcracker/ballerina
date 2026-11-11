@@ -1,0 +1,113 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition IsoObj
+    (object-type isolated
+      (method-decl id () (
+        (value-type int)))))
+  (class-definition Iso
+    (function init () ()
+      (block-function-body))
+    (function id () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 7)))))
+  (class-definition Holder
+    (variable f (type
+      (function-type (
+        (value-type int)) (
+        (value-type int)))))
+    (variable td (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type int))))
+    (variable maybe (type
+      (union-type
+        (user-defined-type IsoObj)
+        (value-type null))))
+    (variable none (type
+      (union-type
+        (user-defined-type IsoObj)
+        (value-type null))))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal f))
+          (simple-var-ref double))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal td))
+          (typedesc-expr
+            (value-type int)))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal maybe))
+          (new
+            (user-defined-type Iso) ()))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal none))
+          (literal <nil>)))))
+  (function double (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref a)
+        (literal 2))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (var-def
+        (variable f (expr
+          (index-based-access
+            (simple-var-ref h)
+            (literal f)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f (
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref h)
+              (literal td))
+            (constrained-type
+              (value-type typedesc)
+              (value-type int))))))
+      (var-def
+        (variable maybe (type
+          (union-type
+            (user-defined-type IsoObj)
+            (value-type null))) (expr
+          (index-based-access
+            (simple-var-ref h)
+            (literal maybe)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref maybe)
+          (user-defined-type IsoObj))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation id expr:
+                (simple-var-ref maybe) ()))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (index-based-access
+                (simple-var-ref h)
+                (literal none))
+              (value-type null)))))))))
