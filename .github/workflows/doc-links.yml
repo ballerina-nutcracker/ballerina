@@ -9,6 +9,7 @@ on:
       - '.github/scripts/test_check_doc_links.py'
       - '.github/workflows/doc-links.yml'
       - '.agents/skills/stdlib-readme-format/scripts/check_readmes.py'
+      - '.agents/skills/stdlib-readme-format/scripts/test_check_readmes.py'
   schedule:
     - cron: '0 3 * * 1'
   workflow_dispatch:
@@ -29,5 +30,7 @@ jobs:
         run: python3 .github/scripts/test_check_doc_links.py
       - name: Validate links in Markdown files
         run: python3 .github/scripts/check_doc_links.py
+      - name: Test stdlib README checker
+        run: python3 .agents/skills/stdlib-readme-format/scripts/test_check_readmes.py
       - name: Validate stdlib README coverage
         run: python3 .agents/skills/stdlib-readme-format/scripts/check_readmes.py
