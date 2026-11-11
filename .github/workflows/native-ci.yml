@@ -29,6 +29,9 @@ jobs:
         with:
           go-version: '1.27.1'
 
+      - name: Test release scripts
+        run: python3 .github/scripts/test_nightly_release.py
+
       - name: Install Hyperfine
         run: |
           sudo apt-get update
