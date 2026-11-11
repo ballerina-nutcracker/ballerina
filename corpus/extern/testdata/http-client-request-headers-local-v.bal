@@ -36,6 +36,14 @@ public function main() returns error? {
     string hop = check c->post("/echo", hopReq, {"Keep-Alive": "timeout=5"});
     io:println(hop); // @output text/plain [hop] []
 
+    // An explicit Connection: close is honoured; the server rejects the request without it.
+    string close = check c->post("/echo", "hi", {"Connection": "Close", "X-Test": "conn-close"});
+    io:println(close); // @output text/plain [conn-close] []
+
+    // get/head/options drop the same transport-owned headers.
+    string get = check c->get("/echo", {"Upgrade": "h2c", "Keep-Alive": "timeout=5", "content-type": "a/b", "X-Test": "get"});
+    io:println(get); // @output a/b [get] []
+
     // HTTP/2 permits only TE: trailers, so any other TE is dropped.
     http:Request teReq = new;
     teReq.setTextPayload("hi");

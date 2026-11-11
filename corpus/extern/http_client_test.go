@@ -319,9 +319,12 @@ func TestHttpClientHeadersLocal(t *testing.T) {
 func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
 	t.Parallel()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		keptTE := slices.Equal(r.Header.Values("Te"), []string{"trailers"})
+		var wantTE []string
+		if r.Header.Get("X-Test") == "te-kept" {
+			wantTE = []string{"trailers"}
+		}
 		if r.Header.Get("Upgrade") != "" || r.Header.Get("Keep-Alive") != "" || strings.Contains(r.Header.Get("Connection"), "X-Test") ||
-			keptTE != (r.Header.Get("X-Test") == "te-kept") || !keptTE && r.Header.Get("Te") != "" {
+			!slices.Equal(r.Header.Values("Te"), wantTE) || r.Close != (r.Header.Get("X-Test") == "conn-close") {
 			w.WriteHeader(400)
 			return
 		}

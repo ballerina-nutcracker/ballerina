@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"maps"
 	"net/url"
 	"slices"
 	"strconv"
@@ -101,8 +100,8 @@ func init() {
 	runtime.RegisterModuleInitializer(initHttpModule)
 }
 
-// httpTypes holds the semtypes used by the http runtime. They are built once
-// in initHttpModule (single-threaded) and captured by the handler closures.
+// httpTypes holds the semtypes used by the http runtime. They are built once in initHttpModule and
+// captured by the handler closures; responseTy is filled lazily on the first client call.
 type httpTypes struct {
 	byteArrTy   semtypes.SemType
 	strArrTy    semtypes.SemType
@@ -122,6 +121,9 @@ func (t *httpTypes) responseType(tc semtypes.Context, client *values.Object) sem
 		headTy := semtypes.ObjectMemberType(tc, semtypes.StringConst(model.RemoteMethodName("head")), client.Type)
 		retTy := semtypes.FunctionReturnType(tc, headTy, semtypes.FunctionParamListType(tc, headTy))
 		t.responseTy = semtypes.Intersect(retTy, semtypes.Object)
+		if semtypes.IsEmpty(tc, t.responseTy) {
+			t.responseTy = semtypes.Object
+		}
 	})
 	return t.responseTy
 }
@@ -1802,9 +1804,12 @@ func (d *deflateReadCloser) Close() error {
 // mediaTypeArg wins over any Content-Type. Content-Type is returned separately, as the transport
 // takes it; "" means the payload's inferred content type applies.
 func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalValue) (map[string][]string, string) {
-	headers := make(map[string][]string)
+	var headers map[string][]string
 	if req, ok := msg.(*values.Object); ok {
-		maps.Copy(headers, rawRequestHeaders(req))
+		headers = rawRequestHeaders(req)
+	}
+	if headers == nil {
+		headers = make(map[string][]string)
 	}
 	if hdrMap, ok := headersArg.(*values.Map); ok {
 		mergeHeaderArgs(headers, hdrMap)
@@ -1825,10 +1830,15 @@ func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalVal
 // transportOwnedHeaders are set by Go's transport, and its HTTP/2 transport rejects a request carrying any of them.
 var transportOwnedHeaders = []string{"connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade"}
 
+// removeTransportOwnedHeaders keeps a single `Connection: close`: Go's HTTP/1.1 transport honours it by closing the
+// connection after the response, and its HTTP/2 transport accepts it.
 func removeTransportOwnedHeaders(headers map[string][]string) {
 	for name, vals := range headers {
 		lower := strings.ToLower(name)
-		if slices.Contains(transportOwnedHeaders, lower) || lower == "te" && !onlyTrailers(vals) {
+		switch {
+		case lower == "connection" && len(vals) == 1 && strings.EqualFold(strings.TrimSpace(vals[0]), "close"):
+			headers[name] = []string{"close"}
+		case slices.Contains(transportOwnedHeaders, lower) || lower == "te" && !onlyTrailers(vals):
 			delete(headers, name)
 		}
 	}
@@ -1883,7 +1893,11 @@ func responseMethodKeys() map[string]string { return responseMethodKeyCache }
 func buildResponse(tc semtypes.Context, responseTy semtypes.SemType, statusCode int, respHeaders map[string][]string, bodyStream io.ReadCloser) *values.Object {
 	bodyStream = decompressResponseBody(respHeaders, bodyStream)
 	headersMap := newMappingValue()
+	server := ""
 	for k, vals := range respHeaders {
+		if server == "" && len(vals) > 0 && strings.EqualFold(k, "server") {
+			server = vals[0]
+		}
 		items := make([]values.BalValue, len(vals))
 		for i, v := range vals {
 			items[i] = v
@@ -1891,13 +1905,6 @@ func buildResponse(tc semtypes.Context, responseTy semtypes.SemType, statusCode 
 		headersMap.Put(tc, strings.ToLower(k), newListValue(items))
 	}
 	holder := eagerBufferResponse(respHeaders, bodyStream)
-	server := ""
-	for k, vals := range respHeaders {
-		if strings.EqualFold(k, "server") && len(vals) > 0 {
-			server = vals[0]
-			break
-		}
-	}
 	return values.NewObject(
 		responseTy,
 		map[string]values.BalValue{

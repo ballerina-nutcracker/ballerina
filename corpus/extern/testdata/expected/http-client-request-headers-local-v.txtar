@@ -1,6 +1,8 @@
 -- stdout --
 text/plain [post] []
 text/plain [hop] []
+text/plain [conn-close] []
+a/b [get] []
 text/plain [te] []
 text/plain [te-kept] []
 text/plain [te-mixed] []
