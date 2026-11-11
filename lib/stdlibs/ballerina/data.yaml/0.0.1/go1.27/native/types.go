@@ -258,15 +258,20 @@ func (t *typer) typeName(ty semtypes.SemType) string {
 		return name + "?"
 	}
 	if ti := t.classify(ty); ti.kind == kindArray {
-		elemTy := t.rowShapeOf(ti).rest
-		elem := t.typeName(elemTy)
-		if t.classify(elemTy).kind == kindUnion && !strings.HasSuffix(elem, "?") {
+		shape := t.rowShapeOf(ti)
+		elem := t.typeName(shape.rest)
+		if t.classify(shape.rest).kind == kindUnion && !strings.HasSuffix(elem, "?") {
 			elem = "(" + elem + ")"
 		}
-		if size := ti.list.FixedLength(); size > 0 && semtypes.IsNever(ti.list.Rest()) {
-			return elem + "[" + strconv.Itoa(size) + "]"
+		switch shape.size {
+		case -1:
+			return elem + "[]"
+		case 0:
+			// A zero-length array keeps no element type, so it is named by its structure.
+			return "[]"
+		default:
+			return elem + "[" + strconv.Itoa(shape.size) + "]"
 		}
-		return elem + "[]"
 	}
 	name := semtypes.ToString(t.tc, ty)
 	switch {
@@ -318,11 +323,15 @@ func (t *typer) rowShapeOf(ti typeInfo) rowShape {
 			shape.fieldOrder = append(shape.fieldOrder, name)
 		}
 	case kindArray:
-		if n := ti.list.FixedLength(); n > 0 && semtypes.IsNever(ti.list.Rest()) {
+		switch n := ti.list.FixedLength(); {
+		case !semtypes.IsNever(ti.list.Rest()):
+			shape.rest = ti.list.Rest()
+		case n == 0:
+			shape.size = 0
+			shape.rest = semtypes.Never
+		default:
 			shape.size = n
 			shape.rest = ti.list.MemberAtInnerVal(0)
-		} else {
-			shape.rest = ti.list.Rest()
 		}
 		shape.hasRest = true
 	case kindTuple:
