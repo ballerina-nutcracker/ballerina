@@ -467,10 +467,7 @@ func initHttpModule(rt *runtime.Runtime) {
 	// be nil. Exactly one of the two results is non-nil.
 	send := func(ctx *extern.Context, verb, path string, self *values.Object,
 		msg, headersArg, mediaTypeArg values.BalValue) (*values.Object, values.BalValue) {
-		reqHeaders, contentType := outboundHeaders(msg, headersArg)
-		if mt, ok := mediaTypeArg.(string); ok && mt != "" {
-			contentType = mt
-		}
+		reqHeaders, contentType := outboundHeaders(msg, headersArg, mediaTypeArg)
 		var bodyReader io.Reader
 		var contentLength int64
 		if msg != nil {
@@ -1800,10 +1797,11 @@ func (d *deflateReadCloser) Close() error {
 }
 
 // outboundHeaders builds the headers of a call that sends msg, following jBallerina's
-// populateOptions: an http:Request message keeps its own headers, and then a string value in
-// headersArg replaces a header while a string[] value is appended to it. Content-Type is returned
-// separately, as the transport takes it; "" means the payload's inferred content type applies.
-func outboundHeaders(msg values.BalValue, headersArg values.BalValue) (map[string][]string, string) {
+// populateOptions: an http:Request message keeps its own headers, then a string value in
+// headersArg replaces a header while a string[] value is appended to it, and a non-empty
+// mediaTypeArg wins over any Content-Type. Content-Type is returned separately, as the transport
+// takes it; "" means the payload's inferred content type applies.
+func outboundHeaders(msg values.BalValue, headersArg, mediaTypeArg values.BalValue) (map[string][]string, string) {
 	headers := make(map[string][]string)
 	if req, ok := msg.(*values.Object); ok {
 		maps.Copy(headers, rawRequestHeaders(req))
@@ -1815,6 +1813,9 @@ func outboundHeaders(msg values.BalValue, headersArg values.BalValue) (map[strin
 	contentType := ""
 	if cts := headers["content-type"]; len(cts) > 0 {
 		contentType = cts[len(cts)-1]
+	}
+	if mt, ok := mediaTypeArg.(string); ok && mt != "" {
+		contentType = mt
 	}
 	delete(headers, "content-type")
 	return headers, contentType
