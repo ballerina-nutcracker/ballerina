@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-nonfinal-readonly-type-e.bal:18:5
+   |
+18 |     string name; // @error readonly type but not final, assigned in init
+   |     ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
+  --> isolated-class-nonprivate-nonfinal-readonly-type-e.bal:19:5
+   |
+19 |     int|() tag; // @error readonly union type but not final
+   |     ^^^^^^^^^^^

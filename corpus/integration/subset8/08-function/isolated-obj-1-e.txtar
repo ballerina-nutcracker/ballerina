@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: public field of an isolated object must be "final" and have a type that is a subtype of "readonly"
+error[SEMANTIC_ERROR]: non-private field of an isolated object must be "final" and have a type that is a subtype of "readonly|isolated object {}"
   --> isolated-obj-1-e.bal:19:5
    |
 19 |     public int x; // @error
