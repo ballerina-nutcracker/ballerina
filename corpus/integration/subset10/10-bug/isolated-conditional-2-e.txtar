@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: initializer of an isolated variable must be an isolated expression
+  --> isolated-conditional-2-e.bal:19:25
+   |
+19 | isolated int[] values = true ? shared : []; // @error
+   |                         ^^^^^^^^^^^^^^^^^^
