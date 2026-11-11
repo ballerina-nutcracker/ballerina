@@ -1,0 +1,125 @@
+name: Nightly Flake Sniffer
+
+on:
+  schedule:
+    # 03:00 UTC every day, one hour after the nightly race detector
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/scripts/cpu_load.py'
+      - '.github/scripts/test_cpu_load.py'
+      - '.github/scripts/collect_failures.py'
+      - '.github/scripts/test_collect_failures.py'
+      - '.github/workflows/nightly-flake-sniffer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  script-tests:
+    name: Test sniffer scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test CPU load wrapper
+        run: python3 .github/scripts/test_cpu_load.py
+      - name: Test failure collector
+        run: python3 .github/scripts/test_collect_failures.py
+
+  sniff:
+    name: Sniff (${{ matrix.os }}, copy ${{ matrix.copy }})
+    needs: script-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        copy: [ 1, 2, 3 ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.1'
+      - name: Install test dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine wrk
+      - name: Install test dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install hyperfine make -y
+      - name: Run CI tests under load with shuffle
+        shell: bash
+        env:
+          GOFLAGS: -shuffle=on
+        run: |
+          code=0
+          python3 .github/scripts/cpu_load.py --factor 2 --log test-output.log -- make test || code=$?
+          echo "$code" > exit-code
+          exit "$code"
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sniff-${{ runner.os }}-${{ matrix.copy }}
+          path: |
+            test-output.log
+            exit-code
+          if-no-files-found: warn
+
+  report:
+    name: Report failures
+    needs: sniff
+    if: always() && github.event_name != 'pull_request' && needs.sniff.result == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download test output
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sniff-*
+          path: artifacts
+      - name: Collect failures
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p artifacts
+          python3 .github/scripts/collect_failures.py artifacts \
+            --run-url "$RUN_URL" --sha "$GITHUB_SHA" --output body.md
+      - name: Comment on or open the tracking issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const body = require('fs').readFileSync('body.md', 'utf8');
+            const label = 'nightly-flake-sniffer-failure';
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+              per_page: 1,
+            });
+            if (existing.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Nightly flake sniffer found failing tests',
+                body,
+                labels: [label],
+              });
+            }
