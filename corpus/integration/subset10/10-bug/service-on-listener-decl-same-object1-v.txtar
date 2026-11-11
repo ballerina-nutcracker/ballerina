@@ -1,0 +1,6 @@
+-- stdout --
+attach la
+main
+start la
+gracefulStop la
+-- stderr --

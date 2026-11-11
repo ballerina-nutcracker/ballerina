@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
   (import-package ballerina lang array (as lang.array))
   (import-package ballerina lang value (as lang.value))
   (variable trace (type
@@ -126,7 +127,7 @@
             (user-defined-type L) (
             (literal a))))))
       (expression-stmt
-        (invocation lang.array push (
+        (invocation lang.__internal registerListener (
           (simple-var-ref $moduleListeners)
           (simple-var-ref $desugar$1))))
       (expression-stmt
@@ -144,7 +145,7 @@
             (user-defined-type L) (
             (literal b))))))
       (expression-stmt
-        (invocation lang.array push (
+        (invocation lang.__internal registerListener (
           (simple-var-ref $moduleListeners)
           (simple-var-ref $desugar$3))))
       (expression-stmt
