@@ -136,3 +136,5 @@ It rewrites only the text between each `<!-- BEGIN <region> … -->` line and it
 - `stdlib-coverage-summary` — the repo-root summary sentence (`**X%** of tracked standard library features are supported across N packages: …`) and the `**Supported packages:**` list.
 
 Everything outside the markers (the introductions above the table and above the subsections, and any later sections) is hand-written and never touched. Keep the marker lines; the script reports a region whose markers are missing or duplicated. A brand-new package needs no aggregator edit: once its README exists, `--write` adds its row, its subsection or closing-sentence entry, and its link.
+
+Stale totals are the usual failure after a rebase onto a `main` that changed another package: the merge has no textual conflict, but the totals no longer add up. The repository's pre-push hook (`make install-hooks`) runs the check on pushed commits that touch these files; when it fails, run `--write` and amend.
