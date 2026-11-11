@@ -21,10 +21,10 @@ import (
 	"testing"
 )
 
-// TestRowBuilderWideRowIsLinear guards against a key lookup that scans the earlier entries. A row known to be
-// wider than indexThreshold must never scan, and a row of unknown width only until it outgrows the threshold.
-// Putting every key again must overwrite in place, which also fails if building the index drops declared or rest
-// entries, as values.NewMap would otherwise hide duplicate entries from the corpus tests.
+// TestRowBuilderWideRowIsLinear guards against a key lookup that scans the earlier entries. A row expected to be
+// wider than indexThreshold must be indexed from its first key, and a row of unknown width once it outgrows the
+// threshold. Putting every key again must overwrite in place, which also fails if building the index drops declared
+// or rest entries, as values.NewMap would otherwise hide duplicate entries from the corpus tests.
 func TestRowBuilderWideRowIsLinear(t *testing.T) {
 	t.Parallel()
 	const n = 10_000
@@ -34,18 +34,22 @@ func TestRowBuilderWideRowIsLinear(t *testing.T) {
 	}
 	shape := &rowShape{typeInfo: typeInfo{kind: kindRecord}, fields: map[string]*recordField{"k0": {name: "k0"}}}
 	for _, tc := range []struct {
-		width      int
-		maxScanned int
-	}{{0, indexThreshold * indexThreshold}, {n, 0}} {
+		width     int
+		indexedAt int
+	}{{0, indexThreshold + 1}, {n, 1}} {
 		b := newRowBuilder(shape, tc.width)
-		for _, k := range keys {
+		for i, k := range keys {
 			b.put(k, nil)
+			if indexed := b.positions != nil; indexed != (i+1 >= tc.indexedAt) {
+				t.Fatalf("width %d: indexed=%t after %d keys, want the index from key %d", tc.width, indexed, i+1,
+					tc.indexedAt)
+			}
+		}
+		if len(b.positions) != n {
+			t.Fatalf("width %d: the index holds %d of %d keys", tc.width, len(b.positions), n)
 		}
 		for i, k := range keys {
 			b.put(k, int64(i))
-		}
-		if b.scanned > tc.maxScanned {
-			t.Fatalf("width %d: putting %d keys twice compared %d entries", tc.width, n, b.scanned)
 		}
 		if len(b.declared) != 1 || len(b.rest) != n-1 || !b.has("k0") {
 			t.Fatalf("width %d: got %d declared and %d rest entries", tc.width, len(b.declared), len(b.rest))
