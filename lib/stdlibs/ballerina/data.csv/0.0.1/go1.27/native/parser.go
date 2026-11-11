@@ -86,6 +86,8 @@ type parser struct {
 	fieldNames     map[string]*recordField
 
 	row *rowBuilder
+	// lastRowWidth is the key count of the last built row, the expected width of the next one.
+	lastRowWidth int
 	// rowStarted is set once the current row passed the skipLines check and has its builder.
 	rowStarted             bool
 	isCurrentCsvNodeEmpty  bool
@@ -509,7 +511,7 @@ func (p *parser) rowStart(ch rune) error {
 			p.skipTheRow = true
 			return nil
 		}
-		p.row = newRowBuilder(p.shape, len(p.headers))
+		p.row = newRowBuilder(p.shape, p.expectedRowWidth())
 		p.rowStarted = true
 		if err := p.addHeadersAsTheFirstElementIfApplicable(); err != nil {
 			return err
@@ -549,6 +551,15 @@ func (p *parser) rowStart(ch rune) error {
 		}
 	}
 	return nil
+}
+
+// expectedRowWidth is the header count for the first row and the previous row's width after it: rows may be
+// shorter than the header, so sizing every row to it would cost each short row the full header width.
+func (p *parser) expectedRowWidth() int {
+	if p.arraySize == 0 {
+		return len(p.headers)
+	}
+	return p.lastRowWidth
 }
 
 func (p *parser) isEndOfTheRowAndValueIsNotEmpty(ch rune) bool {
@@ -763,6 +774,7 @@ func (p *parser) finalizeTheRow() error {
 	if p.row == nil {
 		return nilRowError(p.t.typeName(p.shape.ty))
 	}
+	p.lastRowWidth = p.row.width()
 	row, err := p.row.build(p.t)
 	if err != nil {
 		return err

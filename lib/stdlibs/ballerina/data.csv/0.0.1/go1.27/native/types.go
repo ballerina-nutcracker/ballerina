@@ -408,8 +408,9 @@ type rowBuilder struct {
 // indexThreshold is the row width past which keys are looked up through positions.
 const indexThreshold = 32
 
-// newRowBuilder starts a row of width keys, or of unknown width when width is 0. A row known to be wider
-// than indexThreshold is indexed from its first key; any other row is indexed once it outgrows the threshold.
+// newRowBuilder starts a row expected to hold width keys, or of unknown width when width is 0. A row expected
+// to be wider than indexThreshold is indexed from its first key; any other row is indexed once it outgrows the
+// threshold.
 func newRowBuilder(shape *rowShape, width int) *rowBuilder {
 	b := &rowBuilder{shape: shape}
 	if width > indexThreshold && shape.isMapping() {
@@ -432,7 +433,7 @@ func (b *rowBuilder) put(key string, v values.BalValue) {
 	switch {
 	case b.positions != nil:
 		b.positions[key] = len(*entries) - 1
-	case len(b.declared)+len(b.rest) > indexThreshold:
+	case b.width() > indexThreshold:
 		b.positions = make(map[string]int, 2*indexThreshold)
 		for i, e := range b.declared {
 			b.positions[e.Key] = i
@@ -441,6 +442,11 @@ func (b *rowBuilder) put(key string, v values.BalValue) {
 			b.positions[e.Key] = i
 		}
 	}
+}
+
+// width is the number of keys put so far.
+func (b *rowBuilder) width() int {
+	return len(b.declared) + len(b.rest)
 }
 
 func (b *rowBuilder) indexOf(entries []values.MapEntry, key string) (int, bool) {
