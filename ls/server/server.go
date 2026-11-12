@@ -152,7 +152,8 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
-// WithAvailablePackages replaces the completion service with one using packages.
+// WithAvailablePackages replaces the completion service with one using packages
+// instead of the bundled lang and standard library packages.
 func WithAvailablePackages(packages []completion.AvailablePackage) Option {
 	return func(s *Server) {
 		s.completion = completion.New(s.compiler, completion.WithAvailablePackages(packages))
@@ -166,7 +167,7 @@ func New(transport protocol.Transport, projects *workspace.ProjectService, compi
 		transport:     transport,
 		projects:      projects,
 		compiler:      compiler,
-		completion:    completion.New(compiler),
+		completion:    completion.New(compiler, completion.WithAvailablePackages(bundledPackages())),
 		bus:           bus,
 		lastPublished: make(map[string]uint64),
 		registry:      newRequestRegistry(),

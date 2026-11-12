@@ -1,0 +1,295 @@
+{
+  "source": "bundled-package-type.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/bundled-package-type.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/bundled-package-type.bal"
+        },
+        "position": {
+          "line": 2,
+          "character": 12
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/bundled-package-type.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 11
+              },
+              "end": {
+                "line": 3,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "intervening whitespaces are not allowed"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 3,
+                "character": 0
+              },
+              "end": {
+                "line": 3,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing semicolon token"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "Civil",
+          "kind": 7,
+          "detail": "Record",
+          "sortText": "065",
+          "insertText": "Civil"
+        },
+        {
+          "label": "Date",
+          "kind": 7,
+          "detail": "Record",
+          "sortText": "065",
+          "insertText": "Date"
+        },
+        {
+          "label": "DayOfWeek",
+          "kind": 7,
+          "detail": "enum",
+          "sortText": "098",
+          "insertText": "DayOfWeek"
+        },
+        {
+          "label": "Duration",
+          "kind": 7,
+          "detail": "Record",
+          "sortText": "065",
+          "insertText": "Duration"
+        },
+        {
+          "label": "Error",
+          "kind": 7,
+          "detail": "Error",
+          "sortText": "064",
+          "insertText": "Error"
+        },
+        {
+          "label": "FRIDAY",
+          "kind": 21,
+          "detail": "5",
+          "sortText": "098",
+          "insertText": "FRIDAY"
+        },
+        {
+          "label": "FormatError",
+          "kind": 7,
+          "detail": "Error",
+          "sortText": "064",
+          "insertText": "FormatError"
+        },
+        {
+          "label": "HeaderZoneHandling",
+          "kind": 7,
+          "detail": "enum",
+          "sortText": "098",
+          "insertText": "HeaderZoneHandling"
+        },
+        {
+          "label": "MONDAY",
+          "kind": 21,
+          "detail": "1",
+          "sortText": "098",
+          "insertText": "MONDAY"
+        },
+        {
+          "label": "PREFER_TIME_ABBREV",
+          "kind": 21,
+          "detail": "\"PREFER_TIME_ABBREV\"",
+          "sortText": "098",
+          "insertText": "PREFER_TIME_ABBREV"
+        },
+        {
+          "label": "PREFER_ZONE_OFFSET",
+          "kind": 21,
+          "detail": "\"PREFER_ZONE_OFFSET\"",
+          "sortText": "098",
+          "insertText": "PREFER_ZONE_OFFSET"
+        },
+        {
+          "label": "SATURDAY",
+          "kind": 21,
+          "detail": "6",
+          "sortText": "098",
+          "insertText": "SATURDAY"
+        },
+        {
+          "label": "SUNDAY",
+          "kind": 21,
+          "detail": "0",
+          "sortText": "098",
+          "insertText": "SUNDAY"
+        },
+        {
+          "label": "Seconds",
+          "kind": 7,
+          "detail": "Decimal",
+          "sortText": "066",
+          "insertText": "Seconds"
+        },
+        {
+          "label": "THURSDAY",
+          "kind": 21,
+          "detail": "4",
+          "sortText": "098",
+          "insertText": "THURSDAY"
+        },
+        {
+          "label": "TUESDAY",
+          "kind": 21,
+          "detail": "2",
+          "sortText": "098",
+          "insertText": "TUESDAY"
+        },
+        {
+          "label": "TimeOfDay",
+          "kind": 7,
+          "detail": "Record",
+          "sortText": "065",
+          "insertText": "TimeOfDay"
+        },
+        {
+          "label": "TimeZone",
+          "kind": 7,
+          "detail": "Class",
+          "sortText": "063",
+          "insertText": "TimeZone"
+        },
+        {
+          "label": "Utc",
+          "kind": 7,
+          "sortText": "066",
+          "insertText": "Utc"
+        },
+        {
+          "label": "UtcZoneHandling",
+          "kind": 7,
+          "detail": "Union",
+          "sortText": "066",
+          "insertText": "UtcZoneHandling"
+        },
+        {
+          "label": "WEDNESDAY",
+          "kind": 21,
+          "detail": "3",
+          "sortText": "098",
+          "insertText": "WEDNESDAY"
+        },
+        {
+          "label": "ZERO_OR_ONE",
+          "kind": 7,
+          "detail": "Union",
+          "sortText": "066",
+          "insertText": "ZERO_OR_ONE"
+        },
+        {
+          "label": "ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT",
+          "kind": 21,
+          "detail": "\"ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT\"",
+          "sortText": "098",
+          "insertText": "ZONE_OFFSET_WITH_TIME_ABBREV_COMMENT"
+        },
+        {
+          "label": "Zone",
+          "kind": 7,
+          "detail": "Object",
+          "sortText": "063",
+          "insertText": "Zone"
+        },
+        {
+          "label": "ZoneOffset",
+          "kind": 7,
+          "detail": "Record",
+          "sortText": "065",
+          "insertText": "ZoneOffset"
+        }
+      ]
+    }
+  ]
+}
