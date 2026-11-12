@@ -16,7 +16,6 @@
 package completion
 
 import (
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -59,6 +58,14 @@ func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
 			if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" && locationContains(node.GetPosition(), c.req.Offset) {
 				return c.chain[i], true
 			}
+		case *ast.BLangTypeDefinition:
+			if node.IsEnum() {
+				continue
+			}
+			namePosition := node.Name.GetPosition()
+			if _, inModule := c.chain[i-1].(*ast.BLangPackage); inModule && c.req.Offset < namePosition.StartOffset() {
+				return c.chain[i-1], true
+			}
 		case *ast.BLangBlockStmt, *ast.BLangBlockFunctionBody:
 			if i+1 == len(c.chain) {
 				return c.chain[i], true
@@ -100,10 +107,6 @@ func accessOperatorBeforeWord(text string, offset int) bool {
 		i -= size
 	}
 	return i > 0 && (text[i-1] == '.' || text[i-1] == ':')
-}
-
-func isTypeDefinitionWordRune(r rune) bool {
-	return r == '_' || r == '\'' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 func containsBadNode(node ast.BLangNode) bool {

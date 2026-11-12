@@ -1,0 +1,43 @@
+{
+  "packages": [
+    {
+      "org": "ballerina",
+      "name": "module1",
+      "version": "0.1.0",
+      "transitive": false,
+      "dependencies": [],
+      "modules": []
+    }
+  ],
+  "modules": [
+    {
+      "org": "ballerina",
+      "package_name": "module1",
+      "version": "0.1.0",
+      "module_name": "module1",
+      "dependencies": [
+        {
+          "org": "ballerina",
+          "package_name": "module1",
+          "version": "0.1.0",
+          "module_name": "module1.mod2",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "org": "ballerina",
+      "package_name": "module1",
+      "version": "0.1.0",
+      "module_name": "module1.mod2",
+      "dependencies": []
+    },
+    {
+      "org": "ballerina",
+      "package_name": "module1",
+      "version": "0.1.0",
+      "module_name": "module1.module1",
+      "dependencies": []
+    }
+  ]
+}

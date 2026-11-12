@@ -29,6 +29,8 @@ type handler struct {
 
 // The first match wins, even when it yields no candidates.
 var handlers = []handler{
+	typeDefinitionHandler,
+	enumDeclarationHandler,
 	moduleHandler,
 	blockHandler,
 	lexicalHandler,

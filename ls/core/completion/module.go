@@ -17,13 +17,15 @@ package completion
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
 
 var moduleHandler = handler{
-	name:  "module",
-	match: matchModule,
-	build: buildModule,
+	syntaxOnly: true,
+	name:       "module",
+	match:      matchModule,
+	build:      buildModule,
 }
 
 func matchModule(c *cursor) (any, bool) {
@@ -39,6 +41,9 @@ func buildModule(c *cursor, _ any) []protocol.CompletionItem {
 	items := make([]protocol.CompletionItem, 0, len(moduleKeywords))
 	for _, keyword := range moduleKeywords {
 		items = append(items, keywordItem(keyword))
+	}
+	if c.sm.Stage() < compile.StageLocalTypeResolved {
+		return items
 	}
 	return lexicalItems(c, items)
 }

@@ -83,6 +83,35 @@ func TestSingleRequestCompletionConfigs(t *testing.T) {
 	runCompletionConfigs(t, env, configs)
 }
 
+func TestEnumDeclarationCompletionConfigs(t *testing.T) {
+	t.Parallel()
+	env := completionConfigEnv{
+		ConfigDir:      "completion/testdata/enum_decl_ctx/config",
+		PackageOrg:     "completion",
+		PackageName:    "enum_decl_ctx",
+		Repository:     "repository",
+		ProjectRoot:    "enum_decl_ctx/source/projectls",
+		Packages:       enumMemberAvailablePackages,
+		SnippetSupport: true,
+	}
+	configs := discoverCompletionConfigs(t, env.ConfigDir)
+	runCompletionConfigs(t, env, configs)
+}
+
+func TestTypeDefinitionCompletionConfigs(t *testing.T) {
+	t.Parallel()
+	env := completionConfigEnv{
+		ConfigDir:      "completion/testdata/type_def/config",
+		PackageOrg:     "completion",
+		PackageName:    "type_def",
+		Repository:     "repository",
+		Packages:       typeDefinitionAvailablePackages,
+		SnippetSupport: true,
+	}
+	configs := discoverCompletionConfigs(t, env.ConfigDir)
+	runCompletionConfigs(t, env, configs)
+}
+
 func discoverCompletionConfigs(t *testing.T, configDir string) []string {
 	t.Helper()
 	entries, err := fs.ReadDir(os.DirFS("."), configDir)
@@ -349,6 +378,24 @@ func (c *completionConfigClient) complete(t *testing.T, env completionConfigEnv,
 		t.Fatal("completion fixture document is still open")
 	}
 	return items
+}
+
+var enumMemberAvailablePackages = append(append([]completion.AvailablePackage(nil), typeDefinitionAvailablePackages...),
+	completion.AvailablePackage{Organization: "ballerina", Name: "jballerina.java"},
+	completion.AvailablePackage{Organization: "projectls", Name: "constants"},
+)
+
+var typeDefinitionAvailablePackages = []completion.AvailablePackage{
+	{Organization: "ballerina", Name: "lang.array"},
+	{Organization: "ballerina", Name: "lang.runtime"},
+	{Organization: "ballerina", Name: "test"},
+	{Organization: "ballerina", Name: "lang.value"},
+	{Organization: "ballerina", Name: "module1"},
+	{Organization: "ballerina", Name: "lang.regexp"},
+	{Organization: "test", Name: "project1"},
+	{Organization: "test", Name: "project2"},
+	{Organization: "test", Name: "local_project1"},
+	{Organization: "test", Name: "local_project2"},
 }
 
 func completionConfigMessage(id any, method string, params any) protocol.Message {
