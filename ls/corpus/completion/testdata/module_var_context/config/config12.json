@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 2,
+    "character": 24
+  },
+  "source": "module_var_context/source/source12.bal",
+  "items": [{"label":"function","kind":14,"detail":"Keyword","sortText":"128","filterText":"function","insertText":"function "},{"label":"function","kind":15,"detail":"Snippet","sortText":"127","filterText":"function","insertText":"function ${1:name}(${2})${3} {\n\t${4}\n}","insertTextFormat":2},{"label":"function \u003cname\u003e(..) =\u003e \u003cexpression\u003e","kind":15,"detail":"Snippet","sortText":"127","filterText":"function","insertText":"function ${1:name}(${2})${3} =\u003e (${4});","insertTextFormat":2}]
+}

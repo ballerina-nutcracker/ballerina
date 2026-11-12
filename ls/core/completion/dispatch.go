@@ -32,6 +32,7 @@ type handler struct {
 var handlers = []handler{
 	typeDefinitionHandler,
 	enumDeclarationHandler,
+	functionDefinitionHandler,
 	moduleHandler,
 	blockHandler,
 	lexicalHandler,

@@ -16,5 +16,10 @@
 
 package completion
 
-var moduleKeywords = []string{"function", "type", "const", "import"}
+var moduleSnippets = []snippetID{
+	kwType, kwConst, kwImport,
+	defFunction, defExpressionBodiedFunction,
+	defRecord, defClosedRecord, defObjectSnippet, defErrorType,
+	defEnum, defClass, defAnnotation, defServiceCommon, stmtNamespaceDeclaration,
+}
 var blockKeywords = []string{"if", "while", "return", "check", "panic"}
