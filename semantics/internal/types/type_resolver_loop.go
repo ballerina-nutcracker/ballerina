@@ -180,6 +180,10 @@ func (l *loopTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) b
 	return l.parentResolver.ensureNotEmpty(ty, onEmpty)
 }
 
+func (l *loopTypeResolver) ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool {
+	return l.parentResolver.ensureSubtype(sub, sup, onNotSubtype)
+}
+
 // validateLoopAssignments emits diagnostics for every assignment, inside the loop
 // body, to a variable narrowed outside the loop, when the assignment's effect
 // reaches the top of the loop — i.e. it is on the body's natural-completion

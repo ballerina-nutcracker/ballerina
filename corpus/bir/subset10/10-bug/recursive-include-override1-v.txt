@@ -1,0 +1,31 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad tokenUrl
+    %2 = ConstantLoad u
+    %3 = newMap {| clientConfig: {| auth: {| clientConfig: ..., tokenUrl: string, never... |}, never... |}, tokenUrl: string, never... |}{%1=%2} defaults{clientConfig=$anon/.:$default$0}
+    c = %3;
+    %6 = ConstantLoad tokenUrl
+    %5 = c[%6];
+    %7 = println(%5) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad auth
+    %11 = ConstantLoad clientConfig
+    %10 = c[%11];
+    %8 = %10[%9];
+    %12 = %8 is nil
+    %13 = %12;
+    %14 = println(%13) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$default$0() -> {| auth: {| clientConfig: ..., tokenUrl: string, never... |}, never... |}{
+  bb0 {
+    %1 = newMap {| auth: {| clientConfig: ..., tokenUrl: string, never... |}, never... |}{}
+    %0 = %1;
+    return;
+  }
+}
