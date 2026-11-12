@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"regexp"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/completion"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
@@ -58,5 +59,28 @@ func (s *Server) handleCompletion(ctx context.Context, req completion.Request) t
 		}
 		return trackedResult{err: &protocol.RPCError{Code: rpcInternalError, Message: "completion failed"}, handled: true}
 	}
+	if !s.snippetSupport {
+		downgradeSnippetItems(items)
+	}
 	return trackedResult{result: items, handled: true}
+}
+
+var (
+	snippetPlaceholderWithText = regexp.MustCompile(`\$\{\d+:([^{}]*)\}`)
+	snippetTabStop             = regexp.MustCompile(`\$\{\d+\}`)
+)
+
+// Only ${n:text} placeholders without braces in text and ${n} tab stops are handled.
+func downgradeSnippetItems(items []protocol.CompletionItem) {
+	for i := range items {
+		item := &items[i]
+		if format, ok := item.InsertTextFormat.Value(); !ok || format != protocol.InsertTextFormatSnippet {
+			continue
+		}
+		if text, ok := item.InsertText.Value(); ok {
+			text = snippetPlaceholderWithText.ReplaceAllString(text, "$1")
+			item.InsertText = protocol.NewOptional(snippetTabStop.ReplaceAllString(text, ""))
+		}
+		item.InsertTextFormat = protocol.Optional[protocol.InsertTextFormat]{}
+	}
 }

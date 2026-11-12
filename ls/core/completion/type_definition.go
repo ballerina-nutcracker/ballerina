@@ -718,17 +718,18 @@ func typePositionLanguageItems(unionContinuation bool) []protocol.CompletionItem
 		items = append(items, typePositionKeyword(label, insertText))
 	}
 	for _, snippet := range []struct{ label, filter, insertText string }{
-		{"record {}", "record", "record {}"},
-		{"record {||}", "record", "record {||}"},
-		{"object {}", "object", "object {}"},
+		{"record {}", "record", "record {${1}}"},
+		{"record {||}", "record", "record {|${1}|}"},
+		{"object {}", "object", "object {${1}}"},
 	} {
 		items = append(items, protocol.CompletionItem{
-			Label:      snippet.label,
-			Kind:       protocol.NewOptional(protocol.CompletionItemKindSnippet),
-			Detail:     protocol.NewOptional("Snippet"),
-			SortText:   protocol.NewOptional(typeDefinitionSortText(typeDefinitionSnippetOffset, 0)),
-			FilterText: protocol.NewOptional(snippet.filter),
-			InsertText: protocol.NewOptional(snippet.insertText),
+			Label:            snippet.label,
+			Kind:             protocol.NewOptional(protocol.CompletionItemKindSnippet),
+			Detail:           protocol.NewOptional("Snippet"),
+			SortText:         protocol.NewOptional(typeDefinitionSortText(typeDefinitionSnippetOffset, 0)),
+			FilterText:       protocol.NewOptional(snippet.filter),
+			InsertText:       protocol.NewOptional(snippet.insertText),
+			InsertTextFormat: protocol.NewOptional(protocol.InsertTextFormatSnippet),
 		})
 	}
 	for _, label := range []string{"readonly", "handle", "never", "json", "anydata", "any", "byte", "decimal", "xml", "boolean", "future", "int", "float", "function", "string", "typedesc"} {

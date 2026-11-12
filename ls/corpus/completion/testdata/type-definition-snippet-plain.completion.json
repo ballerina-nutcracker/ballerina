@@ -1,0 +1,392 @@
+{
+  "source": "type-definition-snippet-plain.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/type-definition-snippet-plain.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/type-definition-snippet-plain.bal"
+        },
+        "position": {
+          "line": 0,
+          "character": 9
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/type-definition-snippet-plain.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing type desc"
+          },
+          {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 0
+              }
+            },
+            "severity": 1,
+            "code": "SYNTAX_ERROR",
+            "source": "ballerina",
+            "message": "missing semicolon token"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "Foo",
+          "kind": 7,
+          "sortText": "066",
+          "insertText": "Foo"
+        },
+        {
+          "label": "any",
+          "kind": 25,
+          "detail": "Any",
+          "sortText": "066",
+          "insertText": "any"
+        },
+        {
+          "label": "anydata",
+          "kind": 25,
+          "detail": "Anydata",
+          "sortText": "066",
+          "insertText": "anydata"
+        },
+        {
+          "label": "boolean",
+          "kind": 25,
+          "detail": "Boolean",
+          "sortText": "066",
+          "insertText": "boolean"
+        },
+        {
+          "label": "byte",
+          "kind": 25,
+          "detail": "Byte",
+          "sortText": "066",
+          "insertText": "byte"
+        },
+        {
+          "label": "client",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "client",
+          "insertText": "client "
+        },
+        {
+          "label": "decimal",
+          "kind": 25,
+          "detail": "Decimal",
+          "sortText": "066",
+          "insertText": "decimal"
+        },
+        {
+          "label": "distinct",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "distinct",
+          "insertText": "distinct"
+        },
+        {
+          "label": "error",
+          "kind": 25,
+          "detail": "Error",
+          "sortText": "064",
+          "insertText": "error"
+        },
+        {
+          "label": "false",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "false",
+          "insertText": "false"
+        },
+        {
+          "label": "float",
+          "kind": 25,
+          "detail": "Float",
+          "sortText": "066",
+          "insertText": "float"
+        },
+        {
+          "label": "function",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "function",
+          "insertText": "function "
+        },
+        {
+          "label": "future",
+          "kind": 25,
+          "detail": "Future",
+          "sortText": "066",
+          "insertText": "future"
+        },
+        {
+          "label": "handle",
+          "kind": 25,
+          "detail": "Handle",
+          "sortText": "066",
+          "insertText": "handle"
+        },
+        {
+          "label": "int",
+          "kind": 25,
+          "detail": "Int",
+          "sortText": "066",
+          "insertText": "int"
+        },
+        {
+          "label": "isolated",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "isolated",
+          "insertText": "isolated "
+        },
+        {
+          "label": "json",
+          "kind": 25,
+          "detail": "Json",
+          "sortText": "066",
+          "insertText": "json"
+        },
+        {
+          "label": "map",
+          "kind": 25,
+          "detail": "type",
+          "sortText": "108",
+          "insertText": "map"
+        },
+        {
+          "label": "natural",
+          "kind": 25,
+          "detail": "type",
+          "sortText": "108",
+          "insertText": "natural"
+        },
+        {
+          "label": "never",
+          "kind": 25,
+          "detail": "Never",
+          "sortText": "066",
+          "insertText": "never"
+        },
+        {
+          "label": "null",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "null",
+          "insertText": "null"
+        },
+        {
+          "label": "object",
+          "kind": 25,
+          "detail": "type",
+          "sortText": "108",
+          "insertText": "object"
+        },
+        {
+          "label": "object {}",
+          "kind": 15,
+          "detail": "Snippet",
+          "sortText": "118",
+          "filterText": "object",
+          "insertText": "object {}"
+        },
+        {
+          "label": "readonly",
+          "kind": 25,
+          "detail": "Readonly",
+          "sortText": "066",
+          "insertText": "readonly"
+        },
+        {
+          "label": "record",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "record",
+          "insertText": "record "
+        },
+        {
+          "label": "record {||}",
+          "kind": 15,
+          "detail": "Snippet",
+          "sortText": "118",
+          "filterText": "record",
+          "insertText": "record {||}"
+        },
+        {
+          "label": "record {}",
+          "kind": 15,
+          "detail": "Snippet",
+          "sortText": "118",
+          "filterText": "record",
+          "insertText": "record {}"
+        },
+        {
+          "label": "service",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "service",
+          "insertText": "service"
+        },
+        {
+          "label": "stream",
+          "kind": 25,
+          "detail": "type",
+          "sortText": "108",
+          "insertText": "stream"
+        },
+        {
+          "label": "string",
+          "kind": 25,
+          "detail": "String",
+          "sortText": "066",
+          "insertText": "string"
+        },
+        {
+          "label": "table",
+          "kind": 25,
+          "detail": "type",
+          "sortText": "108",
+          "insertText": "table"
+        },
+        {
+          "label": "transaction",
+          "kind": 25,
+          "detail": "type",
+          "sortText": "108",
+          "insertText": "transaction"
+        },
+        {
+          "label": "transactional",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "transactional",
+          "insertText": "transactional"
+        },
+        {
+          "label": "true",
+          "kind": 14,
+          "detail": "Keyword",
+          "sortText": "128",
+          "filterText": "true",
+          "insertText": "true"
+        },
+        {
+          "label": "typedesc",
+          "kind": 25,
+          "detail": "Typedesc",
+          "sortText": "066",
+          "insertText": "typedesc"
+        },
+        {
+          "label": "xml",
+          "kind": 25,
+          "detail": "Xml",
+          "sortText": "066",
+          "insertText": "xml"
+        },
+        {
+          "label": "function",
+          "kind": 25,
+          "detail": "Function",
+          "sortText": "066",
+          "insertText": "function"
+        }
+      ]
+    }
+  ]
+}
