@@ -1,0 +1,6 @@
+{
+  "position": {"line": 4, "character": 23},
+  "source": "source/scope-nested-aggregate-ranking.bal",
+  "description": "A list element slot does not rank symbols against the whole initializer list type",
+  "items": [{"label":"aNumber","kind":6,"detail":"int","insertText":"aNumber"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"zList","kind":6,"detail":"[int...]","insertText":"zList"},{"label":"zMap","kind":6,"detail":"{| int... |}","insertText":"zMap"}]
+}

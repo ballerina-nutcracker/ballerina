@@ -32,13 +32,15 @@ func newItemSet() *itemSet {
 	return &itemSet{byLabel: make(map[string]protocol.CompletionItem)}
 }
 
-func (s *itemSet) add(item protocol.CompletionItem) {
+func (s *itemSet) add(item protocol.CompletionItem) bool {
 	if item.Label == "" {
-		return
+		return false
 	}
-	if _, found := s.byLabel[item.Label]; !found {
-		s.byLabel[item.Label] = item
+	if _, found := s.byLabel[item.Label]; found {
+		return false
 	}
+	s.byLabel[item.Label] = item
+	return true
 }
 
 func (s *itemSet) items() []protocol.CompletionItem {
