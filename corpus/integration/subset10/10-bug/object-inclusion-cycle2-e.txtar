@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error resolving type inclusion
+  --> object-inclusion-cycle2-e.bal:16:8
+   |
+16 | type A object { *A; }; // @error
+   |        ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error resolving type inclusion
+  --> object-inclusion-cycle2-e.bal:17:8
+   |
+17 | type F object { *A; }; // @error
+   |        ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid cycle detected for type definition A
+  --> object-inclusion-cycle2-e.bal:16:1
+   |
+16 | type A object { *A; }; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^

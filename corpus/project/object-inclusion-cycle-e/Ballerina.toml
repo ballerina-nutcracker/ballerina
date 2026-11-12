@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "object_inclusion_cycle"
+version = "0.1.0"
