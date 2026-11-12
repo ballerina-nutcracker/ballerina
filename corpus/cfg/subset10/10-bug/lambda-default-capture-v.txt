@@ -1,0 +1,187 @@
+(main
+  (bb0 () (bb1)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref base))))
+    (var-def
+      (variable base (type
+        (value-type int)) (expr
+        (literal 100))))
+    (var-def
+      (variable add (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable x (type
+              (value-type int)))
+            (variable y (type
+              (value-type int)) (expr
+              (simple-var-ref base)))) (
+            (value-type int))
+            (expr-function-body
+              (binary-expr +
+                (simple-var-ref x)
+                (simple-var-ref y))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal 1) <default>)))))
+    (assignment
+      (simple-var-ref base)
+      (literal 200))
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal 1) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation add (
+          (literal 1)
+          (literal 2))))))
+    (var-def
+      (variable greeting (type
+        (value-type string)) (expr
+        (literal hi))))
+    (var-def
+      (variable greet (expr
+        (lambda
+          (function $anonFunc$_1 (
+            (variable name (type
+              (value-type string)))
+            (variable g (type
+              (value-type string)) (expr
+              (binary-expr +
+                (binary-expr +
+                  (simple-var-ref greeting)
+                  (literal  ))
+                (simple-var-ref name))))) (
+            (value-type string))
+            (expr-function-body
+              (simple-var-ref g)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation greet (
+          (literal a) <default>)))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 2))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (binary-expr +
+          (literal v)
+          (invocation lang.value toString (
+            (simple-var-ref i)))))))
+    (var-def
+      (variable f (expr
+        (lambda
+          (function $anonFunc$_2 (
+            (variable x (type
+              (value-type int)))
+            (variable y (type
+              (value-type string)) (expr
+              (binary-expr +
+                (simple-var-ref s)
+                (invocation lang.value toString (
+                  (simple-var-ref x))))))) (
+            (value-type string))
+            (expr-function-body
+              (simple-var-ref y)))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal 7) <default>)))))
+  )
+  (bb3 (bb1) ()
+    (var-def
+      (variable apply (expr
+        (lambda
+          (function $anonFunc$_3 (
+            (variable h (type
+              (function-type (
+                (value-type int)
+                (value-type int)) (
+                (value-type int)))))) (
+            (value-type int))
+            (expr-function-body
+              (invocation h (
+                (literal 1) <default>))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation apply (
+          (lambda
+            (function $anonFunc$_4 (
+              (variable x (type
+                (value-type int)))
+              (variable y (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref y))))))))))
+    (var-def
+      (variable fieldBase (type
+        (value-type int)) (expr
+        (literal 300))))
+    (var-def
+      (variable readField (expr
+        (lambda
+          (function $anonFunc$_5 (
+            (variable r (type
+              (record-type
+                (field a
+                  (value-type int)
+                  (simple-var-ref fieldBase)))))) (
+            (value-type int))
+            (expr-function-body
+              (field-based-access a
+                (simple-var-ref r))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation readField (
+          (mapping-constructor-expr))))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref x)
+      (simple-var-ref y))
+  )
+)
+($anonFunc$_1
+  (bb0 () ()
+    (simple-var-ref g)
+  )
+)
+($anonFunc$_2
+  (bb0 () ()
+    (simple-var-ref y)
+  )
+)
+($anonFunc$_3
+  (bb0 () ()
+    (invocation h (
+      (literal 1) <default>))
+  )
+)
+($anonFunc$_4
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref x)
+      (simple-var-ref y))
+  )
+)
+($anonFunc$_5
+  (bb0 () ()
+    (field-based-access a
+      (simple-var-ref r))
+  )
+)
