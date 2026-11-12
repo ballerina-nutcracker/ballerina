@@ -83,6 +83,12 @@
             "change": 2,
             "save": true
           },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
+          },
           "signatureHelpProvider": {
             "triggerCharacters": [
               "(",

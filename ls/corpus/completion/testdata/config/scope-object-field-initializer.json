@@ -1,0 +1,6 @@
+{
+  "position": {"line": 5, "character": 21},
+  "source": "source/scope-object-members.bal",
+  "description": "Bare field-initializer completion omits object members without hiding a same-named global",
+  "items": [{"label":"ScopeBox","kind":7,"detail":"object { function examine(int) returns nil; public function init() returns nil; function memberMethod() returns nil; int memberOnly; int sharedName }","insertText":"ScopeBox"},{"label":"globalValue","kind":6,"detail":"int","insertText":"globalValue"},{"label":"helper","kind":3,"detail":"function() returns nil","insertText":"helper"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"self","kind":6,"detail":"object { function examine(int) returns nil; public function init() returns nil; function memberMethod() returns nil; int memberOnly; int sharedName }","insertText":"self"},{"label":"sharedName","kind":6,"detail":"int","insertText":"sharedName"}]
+}

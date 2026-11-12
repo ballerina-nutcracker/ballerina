@@ -63,7 +63,7 @@ func (s *Server) handleSignature(ctx context.Context, request *signatureRequest)
 	if !ok || current != request.text {
 		return empty
 	}
-	offset, valid := utf16Offset(text, request.params.Position)
+	offset, valid := utf16Offset(text, request.params.Position, false)
 	if !valid {
 		return trackedResult{handled: true, err: &protocol.RPCError{Code: rpcInvalidParams, Message: "invalid signature help position"}}
 	}

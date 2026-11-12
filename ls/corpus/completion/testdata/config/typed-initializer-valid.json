@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 3,
+    "character": 17
+  },
+  "source": "source/typed-initializer-valid.bal",
+  "items": [{"label":"aString","kind":6,"detail":"string","insertText":"aString"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"zInt","kind":6,"detail":"int","insertText":"zInt"}]
+}

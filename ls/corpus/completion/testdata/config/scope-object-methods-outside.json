@@ -1,0 +1,6 @@
+{
+  "position": {"line": 16, "character": 0},
+  "source": "source/scope-object-members.bal",
+  "description": "Methods stored in module symbol spaces are not bare lexical completions outside the object",
+  "items": [{"label":"ScopeBox","kind":7,"detail":"object { function examine(int) returns nil; public function init() returns nil; function memberMethod() returns nil; int memberOnly; int sharedName }","insertText":"ScopeBox"},{"label":"check","kind":14,"insertText":"check"},{"label":"globalValue","kind":6,"detail":"int","insertText":"globalValue"},{"label":"helper","kind":3,"detail":"function() returns nil","insertText":"helper"},{"label":"if","kind":14,"insertText":"if"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"panic","kind":14,"insertText":"panic"},{"label":"return","kind":14,"insertText":"return"},{"label":"sharedName","kind":6,"detail":"int","insertText":"sharedName"},{"label":"while","kind":14,"insertText":"while"}]
+}

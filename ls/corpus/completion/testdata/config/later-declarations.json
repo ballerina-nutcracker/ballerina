@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 2,
+    "character": 4
+  },
+  "source": "source/later-declarations.bal",
+  "items": [{"label":"check","kind":14,"insertText":"check"},{"label":"earlier","kind":6,"detail":"int","insertText":"earlier"},{"label":"if","kind":14,"insertText":"if"},{"label":"laterFn","kind":3,"detail":"function() returns nil","insertText":"laterFn"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"panic","kind":14,"insertText":"panic"},{"label":"return","kind":14,"insertText":"return"},{"label":"while","kind":14,"insertText":"while"}]
+}

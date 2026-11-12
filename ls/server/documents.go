@@ -36,11 +36,11 @@ func applyChanges(text string, changes []protocol.TextDocumentContentChangeEvent
 		if !ok {
 			return "", false
 		}
-		start, ok := utf16Offset(text, partial.Range.Start)
+		start, ok := utf16Offset(text, partial.Range.Start, false)
 		if !ok {
 			return "", false
 		}
-		end, ok := utf16Offset(text, partial.Range.End)
+		end, ok := utf16Offset(text, partial.Range.End, false)
 		if !ok || end < start {
 			return "", false
 		}
@@ -52,13 +52,15 @@ func applyChanges(text string, changes []protocol.TextDocumentContentChangeEvent
 	return text, true
 }
 
-func utf16Offset(text string, position protocol.Position) (int, bool) {
+// With clamp, a line past the end resolves to the document end and a position
+// within a surrogate pair resolves to the rune's starting byte.
+func utf16Offset(text string, position protocol.Position, clamp bool) (int, bool) {
 	lineStart := 0
 	line := uint32(0)
 	for line < position.Line {
 		nextLineStart, ok := nextLineStart(text, lineStart)
 		if !ok {
-			return 0, false
+			return len(text), clamp
 		}
 		lineStart = nextLineStart
 		line++
@@ -79,7 +81,7 @@ func utf16Offset(text string, position protocol.Position) (int, bool) {
 			width = 2
 		}
 		if character+width > position.Character {
-			return 0, false
+			return offset, clamp
 		}
 		character += width
 		offset += size
