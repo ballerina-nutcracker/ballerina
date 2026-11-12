@@ -141,7 +141,7 @@ main() -> nil{
   bb15 {
     PushScopeFrame 9
     %0 = newObject $anon/.:IntOrString
-    %1 = fp $anon/.:$anonFunc$_3
+    %1 = closure_fp $anon/.:$anonFunc$_3
     %2 = %0.init(%1,(1, y)) -> bb16;
   }
   bb16 {
@@ -219,16 +219,18 @@ $anonFunc$_2() -> int{
 }
 $anonFunc$_3() -> int{
   bb0 {
-    %1 = fp $anon/.:$anonFunc$_4
-    g = %1;
-    %3 = $default$0() -> bb1;
+    %2 = closure_fp $anon/.:$default$0
+    $desugar$0 = %2;
+    %3 = fp $anon/.:$anonFunc$_4
+    g = %3;
+    %5 = $desugar$0() -> bb1;
   }
   bb1 {
-    $desugar$0 = %3;
-    %5 = g($desugar$0) -> bb2;
+    $desugar$1 = %5;
+    %7 = g($desugar$1) -> bb2;
   }
   bb2 {
-    %0 = %5;
+    %0 = %7;
     return;
   }
 }
@@ -253,7 +255,7 @@ $anonFunc$_4(int|string) -> int{
 }
 $default$0() -> int|string{
   bb0 {
-    %0 = y;
+    %0 = (3, y);
     return;
   }
 }
