@@ -70,14 +70,16 @@ func (s *initState) copyFrom(o *initState) {
 // initStateStore holds the exit state of each block until all of its forward readers have consumed it. The last
 // reader takes ownership of the state and released states are reused.
 type initStateStore struct {
+	entry    *initState   // names in scope when the function starts, merged into the entry block's state
 	exits    []*initState // by block id; nil = unprocessed or released
 	readers  []int        // remaining forward (non-backedge) reads of exits[i]
 	free     []*initState
 	newState func() *initState
 }
 
-func newInitStateStore(fcfg *functionCFG, newState func() *initState) *initStateStore {
+func newInitStateStore(fcfg *functionCFG, entry *initState, newState func() *initState) *initStateStore {
 	st := &initStateStore{
+		entry:    entry,
 		exits:    make([]*initState, len(fcfg.bbs)),
 		readers:  make([]int, len(fcfg.bbs)),
 		free:     nil,
@@ -95,7 +97,7 @@ func newInitStateStore(fcfg *functionCFG, newState func() *initState) *initState
 }
 
 // entryState merges the exit states of the non-backedge predecessors of bb. A predecessor whose exit is
-// unprocessed or empty is ignored.
+// unprocessed or empty is ignored. The entry block also starts with the names in scope when the function starts.
 func (st *initStateStore) entryState(bb *basicBlock) *initState {
 	var result *initState
 	for _, p := range bb.parents {
@@ -117,6 +119,9 @@ func (st *initStateStore) entryState(bb *basicBlock) *initState {
 	}
 	if result == nil {
 		result = st.alloc()
+	}
+	if bb.id == 0 {
+		result.markAllInitialized(st.entry)
 	}
 	return result
 }
