@@ -124,12 +124,12 @@ func walkScope(c *cursor, visit func(model.SymbolRef)) {
 	addScope := func(scope model.Scope) model.Scope {
 		switch scope := scope.(type) {
 		case *model.BlockScope:
-			if objectScopes[scope] {
-				if self, ok := scope.Main.GetSymbol("self"); ok {
+			if !objectScopes[scope] {
+				visitSpace(scope.Main, true)
+				// Method bodies alias self from the object scope; Symbols only iterates owned symbols.
+				if self, ok := scope.Main.GetSymbol("self"); ok && self.SpaceIndex != scope.Main.SpaceIndex() {
 					visit(self)
 				}
-			} else {
-				visitSpace(scope.Main, true)
 			}
 			return scope.Parent
 		case *model.ModuleScope:

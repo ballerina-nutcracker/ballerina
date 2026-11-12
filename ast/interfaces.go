@@ -62,6 +62,7 @@ type TopLevelNode interface {
 
 type FunctionBodyNode interface {
 	Node
+	NodeWithScope
 	isFunctionBody()
 }
 

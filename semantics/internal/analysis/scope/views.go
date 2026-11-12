@@ -72,16 +72,19 @@ type ClassInfo struct {
 	// it and included with `*T`.
 	fieldDescriptors []*model.FieldDescriptor
 	initFn           model.SymbolRef
-	isolated         bool
+	// self is the `self` symbol bound in the bodies of the methods.
+	self     model.SymbolRef
+	isolated bool
 }
 
 // NewClassInfo reads the fields and init function of a class (name non-empty)
 // or service (name empty); fieldDescriptors describe its declared and
 // included fields.
-func NewClassInfo(cx Context, name string, isolated bool, fields []*ast.BLangVariable, fieldDescriptors []*model.FieldDescriptor,
-	initFn *ast.BLangFunction) ClassInfo {
+func NewClassInfo(cx Context, name string, isolated bool, classScope model.Scope, fields []*ast.BLangVariable,
+	fieldDescriptors []*model.FieldDescriptor, initFn *ast.BLangFunction) ClassInfo {
 	ctx := cx.CompilerCtx()
-	info := ClassInfo{isolated: isolated, fields: make([]fieldInfo, 0, len(fields)), fieldDescriptors: fieldDescriptors}
+	self, _ := classScope.GetSymbol("self")
+	info := ClassInfo{isolated: isolated, self: self, fields: make([]fieldInfo, 0, len(fields)), fieldDescriptors: fieldDescriptors}
 	for _, field := range fields {
 		fieldName := field.Name.GetValue()
 		sym := field.Symbol()
