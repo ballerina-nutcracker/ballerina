@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 0,
+    "character": 0
+  },
+  "source": "source/unusable-generation.bal",
+  "items": [{"label":"broken","kind":3,"detail":"never","insertText":"broken"},{"label":"const","kind":14,"insertText":"const"},{"label":"function","kind":14,"insertText":"function"},{"label":"import","kind":14,"insertText":"import"},{"label":"type","kind":14,"insertText":"type"}]
+}

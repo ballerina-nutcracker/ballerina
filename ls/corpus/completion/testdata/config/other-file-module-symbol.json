@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 1,
+    "character": 4
+  },
+  "source": "source/two-file-module/a.bal",
+  "items": [{"label":"FIRST","kind":21,"detail":"\"first\"","insertText":"FIRST"},{"label":"SECOND","kind":21,"detail":"\"second\"","insertText":"SECOND"},{"label":"THIRD","kind":21,"detail":"\"third\"","insertText":"THIRD"},{"label":"check","kind":14,"insertText":"check"},{"label":"farHelper","kind":3,"detail":"function() returns nil","insertText":"farHelper"},{"label":"if","kind":14,"insertText":"if"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"panic","kind":14,"insertText":"panic"},{"label":"return","kind":14,"insertText":"return"},{"label":"while","kind":14,"insertText":"while"}]
+}

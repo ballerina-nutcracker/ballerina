@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 4,
+    "character": 7
+  },
+  "source": "source/unresolvable-dependency.bal",
+  "items": [{"label":"check","kind":14,"insertText":"check"},{"label":"if","kind":14,"insertText":"if"},{"label":"local","kind":6,"detail":"int","insertText":"local"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"panic","kind":14,"insertText":"panic"},{"label":"return","kind":14,"insertText":"return"},{"label":"while","kind":14,"insertText":"while"}]
+}

@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 3,
+    "character": 17
+  },
+  "source": "source/foreach-variable-in-body.bal",
+  "items": [{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"tango","kind":6,"detail":"[int...]","insertText":"tango"},{"label":"target","kind":6,"detail":"int","insertText":"target"}]
+}

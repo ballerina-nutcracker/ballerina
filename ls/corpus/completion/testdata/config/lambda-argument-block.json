@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 4,
+    "character": 8
+  },
+  "source": "source/lambda-argument-block.bal",
+  "items": [{"label":"check","kind":14,"insertText":"check"},{"label":"consume","kind":3,"detail":"function(function() returns nil) returns nil","insertText":"consume"},{"label":"if","kind":14,"insertText":"if"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"panic","kind":14,"insertText":"panic"},{"label":"return","kind":14,"insertText":"return"},{"label":"value","kind":6,"detail":"int","insertText":"value"},{"label":"while","kind":14,"insertText":"while"}]
+}

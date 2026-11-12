@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 3,
+    "character": 17
+  },
+  "source": "source/typed-initializer-empty.bal",
+  "items": [{"label":"intValue","kind":6,"detail":"int","insertText":"intValue"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"stringValue","kind":6,"detail":"string","insertText":"stringValue"}]
+}
