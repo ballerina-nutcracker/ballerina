@@ -1,0 +1,248 @@
+module $anon.. v 0.0.0;
+base  int;
+main() -> nil{
+  bb0 {
+    %1 = println(base) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 100
+    base = %2;
+    %5 = closure_fp $anon/.:$default$0
+    $desugar$0 = %5;
+    %6 = fp $anon/.:$anonFunc$_0
+    add = %6;
+    %8 = ConstantLoad 1
+    $desugar$1 = %8;
+    %10 = $desugar$1;
+    %11 = $desugar$0(%10) -> bb2;
+  }
+  bb2 {
+    $desugar$2 = %11;
+    %13 = $desugar$1;
+    %14 = $desugar$2;
+    %15 = add(%13,%14) -> bb3;
+  }
+  bb3 {
+    %16 = %15;
+    %17 = println(%16) -> bb4;
+  }
+  bb4 {
+    %18 = ConstantLoad 200
+    base = %18;
+    %19 = ConstantLoad 1
+    $desugar$3 = %19;
+    %21 = $desugar$3;
+    %22 = $desugar$0(%21) -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %22;
+    %24 = $desugar$3;
+    %25 = $desugar$4;
+    %26 = add(%24,%25) -> bb6;
+  }
+  bb6 {
+    %27 = %26;
+    %28 = println(%27) -> bb7;
+  }
+  bb7 {
+    %29 = ConstantLoad 1
+    %30 = %29;
+    %31 = ConstantLoad 2
+    %32 = %31;
+    %33 = add(%30,%32) -> bb8;
+  }
+  bb8 {
+    %34 = %33;
+    %35 = println(%34) -> bb9;
+  }
+  bb9 {
+    %36 = ConstantLoad hi
+    greeting = %36;
+    %39 = closure_fp $anon/.:$default$1
+    $desugar$5 = %39;
+    %40 = fp $anon/.:$anonFunc$_1
+    greet = %40;
+    %42 = ConstantLoad a
+    $desugar$6 = %42;
+    %44 = $desugar$5($desugar$6) -> bb10;
+  }
+  bb10 {
+    $desugar$7 = %44;
+    %46 = greet($desugar$6,$desugar$7) -> bb11;
+  }
+  bb11 {
+    %47 = println(%46) -> bb12;
+  }
+  bb12 {
+    %48 = ConstantLoad 0
+    $desugar$8 = %48;
+    %50 = ConstantLoad 2
+    $desugar$9 = %50;
+    GOTO bb13;
+  }
+  bb13 {
+    %53 = $desugar$8;
+    %54 = $desugar$9;
+    %52 = < %53 %54;
+    %52 ? bb14 : bb15;
+  }
+  bb14 {
+    PushScopeFrame 22
+    i = (1, $desugar$8);
+    %2 = ConstantLoad v
+    %3 = i;
+    %4 = toString(%3) -> bb16;
+  }
+  bb15 {
+    %56 = closure_fp $anon/.:$default$3
+    $desugar$13 = %56;
+    %57 = closure_fp $anon/.:$anonFunc$_3
+    apply = %57;
+    %59 = fp $anon/.:$anonFunc$_4
+    %60 = apply(%59) -> bb20;
+  }
+  bb16 {
+    %1 = + %2 %4;
+    s = %1;
+    %7 = closure_fp $anon/.:$default$2
+    $desugar$10 = %7;
+    %8 = fp $anon/.:$anonFunc$_2
+    f = %8;
+    %10 = ConstantLoad 7
+    $desugar$11 = %10;
+    %12 = $desugar$11;
+    %13 = $desugar$10(%12) -> bb17;
+  }
+  bb17 {
+    $desugar$12 = %13;
+    %15 = $desugar$11;
+    %16 = f(%15,$desugar$12) -> bb18;
+  }
+  bb18 {
+    %17 = println(%16) -> bb19;
+  }
+  bb19 {
+    %19 = (1, $desugar$8);
+    %20 = ConstantLoad 1
+    %21 = %20;
+    %18 = + %19 %21;
+    (1, $desugar$8) = %18;
+    PopScopeFrame
+    GOTO bb13;
+  }
+  bb20 {
+    %61 = %60;
+    %62 = println(%61) -> bb21;
+  }
+  bb21 {
+    %63 = ConstantLoad 300
+    fieldBase = %63;
+    %65 = closure_fp $anon/.:$default$4
+    $desugar$14 = %65;
+    %67 = fp $anon/.:$anonFunc$_5
+    readField = %67;
+    %69 = newMap {| a: int, never... |}{} defaults{a=$anon/.:$default$4}
+    %70 = readField(%69) -> bb22;
+  }
+  bb22 {
+    %71 = %70;
+    %72 = println(%71) -> bb23;
+  }
+  bb23 {
+    return;
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1(string,string) -> string{
+  bb0 {
+    %0 = g;
+    return;
+  }
+}
+$anonFunc$_2(int,string) -> string{
+  bb0 {
+    %0 = y;
+    return;
+  }
+}
+$anonFunc$_3(function(int, int) returns int) -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    $desugar$0 = %2;
+    %4 = $desugar$0;
+    %5 = (1, $desugar$13)(%4) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %5;
+    %7 = $desugar$0;
+    %8 = $desugar$1;
+    %9 = h(%7,%8) -> bb2;
+  }
+  bb2 {
+    %0 = %9;
+    return;
+  }
+}
+$anonFunc$_4(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_5({| a: int, never... |}) -> int{
+  bb0 {
+    %3 = ConstantLoad a
+    %2 = r[%3];
+    %0 = %2;
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %0 = (1, base);
+    return;
+  }
+}
+$default$1(string) -> string{
+  bb0 {
+    %4 = ConstantLoad  
+    %3 = + (1, greeting) %4;
+    %2 = + %3 name;
+    %0 = %2;
+    return;
+  }
+}
+$default$2(int) -> string{
+  bb0 {
+    %3 = x;
+    %4 = toString(%3) -> bb1;
+  }
+  bb1 {
+    %2 = + (1, s) %4;
+    %0 = %2;
+    return;
+  }
+}
+$default$3(int) -> int{
+  bb0 {
+    %0 = (1, base);
+    return;
+  }
+}
+$default$4() -> int{
+  bb0 {
+    %0 = (1, fieldBase);
+    return;
+  }
+}
