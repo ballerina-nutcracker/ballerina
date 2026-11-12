@@ -112,6 +112,20 @@ func TestTypeDefinitionCompletionConfigs(t *testing.T) {
 	runCompletionConfigs(t, env, configs)
 }
 
+func TestModuleVarContextCompletionConfigs(t *testing.T) {
+	t.Parallel()
+	env := completionConfigEnv{
+		ConfigDir:      "completion/testdata/module_var_context/config",
+		PackageOrg:     "completion",
+		PackageName:    "module_var_context",
+		Repository:     "repository",
+		Packages:       typeDefinitionAvailablePackages,
+		SnippetSupport: true,
+	}
+	configs := discoverCompletionConfigs(t, env.ConfigDir)
+	runCompletionConfigs(t, env, configs)
+}
+
 func discoverCompletionConfigs(t *testing.T, configDir string) []string {
 	t.Helper()
 	entries, err := fs.ReadDir(os.DirFS("."), configDir)

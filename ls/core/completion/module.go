@@ -38,10 +38,11 @@ func matchModule(c *cursor) (any, bool) {
 }
 
 func buildModule(c *cursor, _ any) []protocol.CompletionItem {
-	items := make([]protocol.CompletionItem, 0, len(moduleKeywords))
-	for _, keyword := range moduleKeywords {
-		items = append(items, keywordItem(keyword))
+	set := newItemSet()
+	for _, id := range moduleSnippets {
+		set.add(snippetItem(id, ""))
 	}
+	items := set.items()
 	if c.sm.Stage() < compile.StageLocalTypeResolved {
 		return items
 	}
