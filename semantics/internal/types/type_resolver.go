@@ -3635,6 +3635,7 @@ func lookupSymbol(t typeResolver, chain *binding, ref model.SymbolRef) model.Sym
 
 func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariableDef) (statementEffect, bool) {
 	variable := s.GetVariable()
+	resolveAnnotationAttachments(t, variable, ast.PointVar, nil)
 	typeNode := variable.TypeNode()
 	if typeNode != nil {
 		semType, typeChain, ok := resolveBType(t, chain, typeNode, 0)
