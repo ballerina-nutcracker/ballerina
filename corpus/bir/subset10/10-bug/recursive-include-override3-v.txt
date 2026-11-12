@@ -1,0 +1,42 @@
+module $anon.. v 0.0.0;
+class C {
+  next nil|object { nil|... next }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad <nil>
+      %3 = ConstantLoad next
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:C
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    n = %3;
+    %7 = ConstantLoad next
+    %6 = n[%7];
+    %8 = %6 is nil
+    %9 = %8;
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
