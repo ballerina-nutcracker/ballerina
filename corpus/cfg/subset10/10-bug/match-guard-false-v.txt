@@ -8,6 +8,8 @@
         (literal check after))))
   )
   (bb2 (bb0) (bb1)
+    (checked-expr
+      (invocation failingGuard ()))
     (expression-stmt
       (invocation io println (
         (literal check body))))
@@ -25,6 +27,7 @@
     (simple-var-ref v)
   )
   (bb1 (bb0) ()
+    (simple-var-ref b)
     (return
       (literal 10))
   )
@@ -43,6 +46,7 @@
         (literal after))))
   )
   (bb2 (bb0) (bb1)
+    (simple-var-ref b)
     (expression-stmt
       (invocation io println (
         (literal guarded))))
@@ -53,6 +57,7 @@
     (simple-var-ref v)
   )
   (bb1 (bb0) ()
+    (simple-var-ref b)
     (return
       (literal 1))
   )
@@ -74,6 +79,7 @@
       (literal none))
   )
   (bb2 (bb0) ()
+    (simple-var-ref b)
     (return
       (literal guarded one))
   )
@@ -158,6 +164,10 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (binary-expr &&
+      (simple-var-ref b)
+      (invocation side (
+        (literal short))))
     (expression-stmt
       (invocation io println (
         (literal short body))))

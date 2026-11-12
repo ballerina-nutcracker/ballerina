@@ -11,10 +11,12 @@
       (literal other))
   )
   (bb2 (bb0) ()
+    (simple-var-ref f)
     (return
       (literal flag))
   )
   (bb3 (bb0) ()
+    (simple-var-ref y)
     (return
       (literal yes))
   )

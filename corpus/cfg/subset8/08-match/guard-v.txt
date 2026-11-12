@@ -4,6 +4,7 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (simple-var-ref allowed)
     (expression-stmt
       (invocation io println (
         (literal small-allowed))))

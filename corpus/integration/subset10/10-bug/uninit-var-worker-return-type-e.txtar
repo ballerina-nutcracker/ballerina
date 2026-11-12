@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> uninit-var-worker-return-type-e.bal:22:20
+   |
+22 |             return z; // @error variable may not be initialized
+   |                    ^

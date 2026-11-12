@@ -4,6 +4,11 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (binary-expr ==
+      (binary-expr /
+        (literal 10)
+        (simple-var-ref v))
+      (literal 1))
     (expression-stmt
       (invocation io println (
         (literal x))))

@@ -571,6 +571,9 @@ func (analyzer *functionControlFlowAnalyzer) analyzeMatch(curBB bbRef, stmt *ast
 		clause := &stmt.MatchClauses[i]
 		clauseBB := analyzer.createNewBB()
 		analyzer.addEdge(curBB, clauseBB)
+		if clause.Guard != nil {
+			analyzer.addNode(clauseBB, clause.Guard)
+		}
 		clauseEffect := analyzer.analyzeBlockStmt(clauseBB, &clause.Body)
 		if !clauseEffect.isTerminal() {
 			analyzer.addEdge(clauseEffect.nextBB, finally)

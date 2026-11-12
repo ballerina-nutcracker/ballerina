@@ -24,6 +24,8 @@
   )
   (bb1 (bb2 bb0) ())
   (bb2 (bb0) (bb1)
+    (invocation side (
+      (literal const)))
     (expression-stmt
       (invocation io println (
         (literal const body))))
@@ -35,6 +37,8 @@
   )
   (bb1 (bb2 bb0) ())
   (bb2 (bb0) (bb1)
+    (invocation side (
+      (literal wildcard)))
     (expression-stmt
       (invocation io println (
         (literal guarded body))))

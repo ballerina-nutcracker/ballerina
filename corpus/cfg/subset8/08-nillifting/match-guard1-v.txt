@@ -28,6 +28,11 @@
         (literal first))))
   )
   (bb3 (bb0) (bb1)
+    (binary-expr ==
+      (binary-expr +
+        (invocation guardValue ())
+        (simple-var-ref n))
+      (literal 1))
     (expression-stmt
       (invocation io println (
         (literal guarded))))
