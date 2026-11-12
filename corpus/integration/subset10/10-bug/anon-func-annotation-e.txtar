@@ -1,0 +1,43 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on parameter
+  --> anon-func-annotation-e.bal:32:31
+   |
+32 |     var paramPoint = function(@OnType int x) returns int => x; // @error
+   |                               ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on parameter
+  --> anon-func-annotation-e.bal:35:30
+   |
+35 |     var restPoint = function(@OnType int... xs) returns int => xs.length(); // @error
+   |                              ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on return
+  --> anon-func-annotation-e.bal:38:42
+   |
+38 |     var returnPoint = function() returns @OnType int => 1; // @error
+   |                                          ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'ParamMarker' does not allow a value
+  --> anon-func-annotation-e.bal:47:36
+   |
+47 |     var markerWithValue = function(@ParamMarker {} int x) returns int => x; // @error
+   |                                    ^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'ReturnMarker' is not allowed on parameter
+  --> anon-func-annotation-e.bal:41:28
+   |
+41 |     var swapped = function(@ReturnMarker int x) returns int => x; // @error
+   |                            ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: const annotation value must be a constant expression
+  --> anon-func-annotation-e.bal:51:49
+   |
+51 |     var notConstant = function(@SourceParamInfo {name: local} int x) returns int => x; // @error
+   |                                                 ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: duplicate annotation 'ParamMarker' on parameter
+  --> anon-func-annotation-e.bal:44:43
+   |
+44 |     var duplicate = function(@ParamMarker @ParamMarker int x) returns int => x; // @error
+   |                                           ^^^^^^^^^^^^

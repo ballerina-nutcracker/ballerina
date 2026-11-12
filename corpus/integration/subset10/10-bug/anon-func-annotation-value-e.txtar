@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-func-annotation-value-e.bal:28:53
+   |
+28 |     var wrongValueType = function(@ParamInfo {name: 1} int x) returns int => x; // @error
+   |                                                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> anon-func-annotation-value-e.bal:34:70
+   |
+34 |     var wrongReturnValueType = function() returns @ReturnInfo {name: 1} int => 1; // @error
+   |                                                                      ^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'name'
+  --> anon-func-annotation-value-e.bal:31:33
+   |
+31 |     var missingValue = function(@ParamInfo int x) returns int => x; // @error
+   |                                 ^^^^^^^^^^

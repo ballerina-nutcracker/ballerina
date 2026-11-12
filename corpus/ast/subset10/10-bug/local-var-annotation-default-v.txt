@@ -1,0 +1,41 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field f
+        (function-type () (
+          (value-type int)))
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable v (type
+                  (value-type int)) (expr
+                  (literal 1))))
+              (return
+                (simple-var-ref v))))))))
+  (type-definition Meta
+    (record-type
+      (field name
+        (value-type string))))
+  (annotation Info const
+    (user-defined-type Meta)
+    (attach-point source var))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type int)))) (expr
+          (field-based-access f
+            (simple-var-ref r)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f ())))))))

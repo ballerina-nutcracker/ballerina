@@ -224,8 +224,8 @@ type packageTypeResolver struct {
 	annotationGlobalCount int
 	// annotationSitesDeferred is set while the top-level types are resolved.
 	// Annotation declarations and constants are resolved after them, so the
-	// annotations found inside type descriptors until then wait in
-	// deferredAnnotationSites for the top-level annotation pass.
+	// annotations found inside type descriptors and anonymous functions until
+	// then wait in deferredAnnotationSites for the top-level annotation pass.
 	annotationSitesDeferred bool
 	deferredAnnotationSites []ast.BLangNode
 	scope                   model.Scope
@@ -1462,8 +1462,9 @@ func (t *packageTypeResolver) resolveDeferredAnnotationSites(pkg *ast.BLangPacka
 }
 
 // resolveAnnotationSite resolves the annotations attached inside site: the
-// fields of a record or object type descriptor. Their values are checked but
-// not kept: nothing reads them at runtime.
+// fields of a record or object type descriptor, the parameters and return
+// type of an anonymous function, or a local variable declaration. Their values
+// are checked but not kept: nothing reads them at runtime.
 func resolveAnnotationSite(t typeResolver, site ast.BLangNode) {
 	if t.isEphemeral() || t.deferAnnotationSite(site) {
 		return
@@ -1483,6 +1484,10 @@ func resolveAnnotationSiteAttachments(t typeResolver, site ast.BLangNode) {
 				resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
 			}
 		}
+	case *ast.BLangFunction:
+		resolveSignatureAnnotationAttachments(t, site, func(model.SymbolRef) annotationSink { return nil })
+	case *ast.BLangVariable:
+		resolveAnnotationAttachments(t, site, ast.PointVar, nil)
 	}
 }
 
@@ -1513,12 +1518,21 @@ func resolveInvokableAnnotationAttachments(
 	point ast.Point,
 ) {
 	resolveAnnotationAttachments(t, fn, point, nil)
+	resolveSignatureAnnotationAttachments(t, fn, func(param model.SymbolRef) annotationSink {
+		return symbolAnnotationSink(t, param)
+	})
+}
+
+// resolveSignatureAnnotationAttachments resolves the annotations on fn's
+// parameters and return type. paramSink gives the sink for a parameter's
+// annotation values.
+func resolveSignatureAnnotationAttachments(t typeResolver, fn ast.InvokableNode, paramSink func(model.SymbolRef) annotationSink) {
 	parameters := fn.GetParameters()
 	for i := range parameters {
-		resolveAnnotationAttachments(t, &parameters[i], ast.PointParameter, symbolAnnotationSink(t, parameters[i].Symbol()))
+		resolveAnnotationAttachments(t, &parameters[i], ast.PointParameter, paramSink(parameters[i].Symbol()))
 	}
 	if restParam := fn.GetRestParam(); restParam != nil {
-		resolveAnnotationAttachments(t, restParam, ast.PointParameter, symbolAnnotationSink(t, restParam.Symbol()))
+		resolveAnnotationAttachments(t, restParam, ast.PointParameter, paramSink(restParam.Symbol()))
 	}
 	if ret := fn.GetReturnTypeDescriptor(); ret != nil {
 		resolveAnnotationAttachments(t, ret, ast.PointReturn, nil)
@@ -2630,6 +2644,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
+	resolveAnnotationSite(t, e.Function)
 
 	// Create a function type resolver for the lambda so expectedReturnType() is correct
 	fnSym := t.getSymbol(e.Function.Symbol()).(model.FunctionSymbol)
@@ -3705,7 +3720,7 @@ func lookupSymbol(t typeResolver, chain *binding, ref model.SymbolRef) model.Sym
 
 func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariableDef) (statementEffect, bool) {
 	variable := s.GetVariable()
-	resolveAnnotationAttachments(t, variable, ast.PointVar, nil)
+	resolveAnnotationSite(t, variable)
 	typeNode := variable.TypeNode()
 	if typeNode != nil {
 		semType, typeChain, ok := resolveBType(t, chain, typeNode, 0)

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> local-var-annotation-default-e.bal:19:22
+   |
+19 |         @Info {name: 1} // @error
+   |                      ^
