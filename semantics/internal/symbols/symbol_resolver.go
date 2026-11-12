@@ -144,6 +144,11 @@ type (
 		// inFunction is true for function and default-expression resolvers and for
 		// every resolver nested inside one.
 		inFunction bool
+		// methodOf is the class or service scope of a method's function resolver. The method's
+		// signature is resolved outside that scope; only its body binds `self`.
+		methodOf model.BlockLevelScope
+		// classScope is the class or service scope whose `self` a method body resolver binds.
+		classScope model.BlockLevelScope
 	}
 )
 
@@ -273,6 +278,15 @@ func newCompilationUnitSymbolResolver(moduleResolver *moduleSymbolResolver, scop
 		scope:          scope,
 		usedPrefixes:   make(map[string]bool),
 	}
+}
+
+// newMethodResolver creates the function resolver for a method of the class or service resolved by classResolver.
+// The method's scope is nested in the scope enclosing the class, so its signature sees neither `self` nor the
+// fields (spec 6.8.1.2); its body binds `self` (see newBodyResolver).
+func newMethodResolver(classResolver *blockSymbolResolver, node ast.CaptureGroupOwner) *blockSymbolResolver {
+	resolver := newFunctionResolver(classResolver.parent, node)
+	resolver.methodOf = classResolver.scope
+	return resolver
 }
 
 func newFunctionResolver(parent symbolResolver, node ast.CaptureGroupOwner) *blockSymbolResolver {
@@ -1147,7 +1161,6 @@ func resolveFunction(functionResolver *blockSymbolResolver, function *ast.BLangF
 
 func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams []ast.BLangVariable, restParam *ast.BLangVariable, fn ast.InvokableNode, body ast.FunctionBodyNode) bool {
 	trackParams := !isExternalFunctionBody(body)
-	scope := functionResolver.scope.MainSpace()
 	ok := true
 	for i := range requiredParams {
 		param := &requiredParams[i]
@@ -1156,7 +1169,7 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 			ok = false
 			continue
 		}
-		if _, exists := scope.GetSymbol(name); exists {
+		if isRedeclaredParam(functionResolver, name) {
 			functionResolver.GetCtx().SemanticError("redeclared symbol '"+name+"'", param.GetPosition())
 			ok = false
 			continue
@@ -1172,7 +1185,7 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 		name, declared := declaredName(rest.Name)
 		if !declared {
 			ok = false
-		} else if _, exists := scope.GetSymbol(name); exists {
+		} else if isRedeclaredParam(functionResolver, name) {
 			functionResolver.GetCtx().SemanticError("redeclared symbol '"+name+"'", rest.GetPosition())
 			ok = false
 		} else {
@@ -1186,6 +1199,16 @@ func resolveFunctionInner(functionResolver *blockSymbolResolver, requiredParams 
 	ok = resolveInvokableChildren(functionResolver, fn) && ok
 	ok = reportUnusedVariables(functionResolver.GetCtx(), functionResolver.getUnused()) && ok
 	return ok
+}
+
+// isRedeclaredParam reports whether a parameter named name redeclares a symbol of the function resolved by
+// functionResolver: an earlier parameter, or, in a method, the `self` its body binds.
+func isRedeclaredParam(functionResolver *blockSymbolResolver, name string) bool {
+	if functionResolver.methodOf != nil && name == "self" {
+		return true
+	}
+	_, exists := functionResolver.scope.MainSpace().GetSymbol(name)
+	return exists
 }
 
 func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.InvokableNode) bool {
@@ -1216,9 +1239,23 @@ func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.Invo
 		ok = resolveTypeDesc(functionResolver, returnType) && ok
 	}
 	if body := fn.GetBody(); body != nil {
-		ok = resolveFunctionBody(functionResolver, body) && ok
+		ok = resolveFunctionBody(newBodyResolver(functionResolver), body) && ok
 	}
 	return ok
+}
+
+// newBodyResolver returns the resolver for the body of the function resolved by functionResolver. A method body
+// gets its own scope binding `self` (spec 6.8.1.2: `self` is bound within a method-defn-body); any other body is
+// resolved in the function scope.
+func newBodyResolver(functionResolver *blockSymbolResolver) *blockSymbolResolver {
+	if functionResolver.methodOf == nil {
+		return functionResolver
+	}
+	bodyResolver := newBlockSymbolResolverWithBlockScope(functionResolver, functionResolver.node)
+	selfRef, _ := functionResolver.methodOf.GetSymbol("self")
+	bodyResolver.scope.MainSpace().AddAlias("self", selfRef)
+	bodyResolver.classScope = functionResolver.methodOf
+	return bodyResolver
 }
 
 func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool {
@@ -2087,21 +2124,21 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 	}
 
 	if initFn != nil {
-		initResolver := newFunctionResolver(blockRes, initFn)
+		initResolver := newMethodResolver(blockRes, initFn)
 		initFn.SetScope(initResolver.scope)
 		ok = resolveFunction(initResolver, initFn) && ok
 		ok = allocateSymbols(ms, ms.scope, initResolver.scope, initFn, initFn.GetPosition()) && ok
 	}
 
 	for _, m := range orderedMethods {
-		methodResolver := newFunctionResolver(blockRes, m.Method)
+		methodResolver := newMethodResolver(blockRes, m.Method)
 		m.Method.SetScope(methodResolver.scope)
 		ok = resolveFunction(methodResolver, m.Method) && ok
 		ok = allocateSymbols(ms, ms.scope, methodResolver.scope, m.Method, m.Method.GetPosition()) && ok
 	}
 
 	for _, rm := range resourceMethods {
-		methodResolver := newFunctionResolver(blockRes, rm)
+		methodResolver := newMethodResolver(blockRes, rm)
 		rm.SetScope(methodResolver.scope)
 		ok = resolveResourceMethod(methodResolver, rm) && ok
 		ok = allocateSymbols(ms, ms.scope, methodResolver.scope, rm, rm.GetPosition()) && ok
@@ -2184,10 +2221,7 @@ func mangledResourceMethodName(methodName string, idx int) string {
 
 func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangResourceMethod) bool {
 	// Limit collision detection to the current function scope, matching
-	// resolveFunctionInner. functionResolver.GetSymbol would otherwise delegate
-	// into the enclosing class scope (also a blockSymbolResolver) and wrongly
-	// reject path params that shadow a class field.
-	scope := functionResolver.scope.MainSpace()
+	// resolveFunctionInner.
 	ok := true
 	for i := range rm.ResourcePath {
 		seg := &rm.ResourcePath[i]
@@ -2195,7 +2229,7 @@ func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangR
 			continue
 		}
 		name := seg.Name
-		if _, exists := scope.GetSymbol(name); exists {
+		if isRedeclaredParam(functionResolver, name) {
 			functionResolver.GetCtx().SemanticError("redeclared symbol '"+name+"'", seg.GetPosition())
 			ok = false
 			continue
@@ -2211,6 +2245,9 @@ func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope,
 		bs, ok := resolver.(*blockSymbolResolver)
 		if !ok {
 			return nil, false
+		}
+		if bs.classScope != nil {
+			return bs.classScope, true
 		}
 		switch bs.node.(type) {
 		case *ast.BLangClassDefinition, *ast.BLangService:

@@ -252,11 +252,7 @@ func NewMethod(parent Context, node invokableSignatureNode, class ClassInfo) Con
 	fc.kind = fnMethod
 	fc.isolated = node.IsIsolated() && !node.IsNative()
 	fc.class = class
-	self, ok := node.Scope().GetSymbol("self")
-	if !ok {
-		parent.InternalErr("method missing 'self' symbol", node.GetPosition())
-	}
-	fc.self = self
+	fc.self = class.self
 	return finishFunctionContext(fc, node)
 }
 

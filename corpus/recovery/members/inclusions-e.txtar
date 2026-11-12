@@ -27,7 +27,7 @@ class MixedClass {
     *MissingClassBase; // @error
     *NotStructured; // @error
     *ObjectBase;
-    function read() returns int => inheritedValue + missingClassReadValue; // @error
+    function read() returns int => self.inheritedValue + self.missingClassReadValue; // @error
 }
 type MixedObject object {
     *MissingObjectBase; // @error
@@ -37,7 +37,7 @@ type MixedObject object {
 };
 class ObjectConsumer {
     *MixedObject;
-    function read() returns int => inheritedValue + localValue;
+    function read() returns int => self.inheritedValue + self.localValue;
 }
 type MixedRecord record {
     *MissingRecordBase; // @error
@@ -74,15 +74,19 @@ function readConsumer(ObjectConsumer value) returns int => value.read();
       (value-type int))
       (expr-function-body
         (binary-expr +
-          (simple-var-ref inheritedValue)
-          (simple-var-ref missingClassReadValue)))))
+          (field-based-access inheritedValue
+            (simple-var-ref self))
+          (field-based-access missingClassReadValue
+            (simple-var-ref self))))))
   (class-definition ObjectConsumer
     (function read () (
       (value-type int))
       (expr-function-body
         (binary-expr +
-          (simple-var-ref inheritedValue)
-          (simple-var-ref localValue)))))
+          (field-based-access inheritedValue
+            (simple-var-ref self))
+          (field-based-access localValue
+            (simple-var-ref self))))))
   (function readClass (
     (variable value (type
       (user-defined-type MixedClass)))) (
@@ -112,12 +116,6 @@ function readConsumer(ObjectConsumer value) returns int => value.read();
       (invocation read expr:
         (simple-var-ref value) ()))))
 -- stderr --
-error[SEMANTIC_ERROR]: Unknown symbol: missingClassReadValue
-  --> inclusions-e.bal:29:53
-   |
-29 |     function read() returns int => inheritedValue + missingClassReadValue; // @error
-   |                                                     ^^^^^^^^^^^^^^^^^^^^^
-
 error[SEMANTIC_ERROR]: Unknown type: MissingClassBase
   --> inclusions-e.bal:26:6
    |
@@ -153,3 +151,9 @@ error[SEMANTIC_ERROR]: type inclusion must be an object type or class
    |
 33 |     *NotStructured; // @error
    |      ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: undefined member 'missingClassReadValue'
+  --> inclusions-e.bal:29:63
+   |
+29 |     function read() returns int => self.inheritedValue + self.missingClassReadValue; // @error
+   |                                                               ^^^^^^^^^^^^^^^^^^^^^

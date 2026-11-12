@@ -1,0 +1,41 @@
+(P
+  (get
+    (bb0 () ()
+      (simple-var-ref base)
+    )
+  )
+  (getField
+    (bb0 () ()
+      (field-based-access base
+        (simple-var-ref self))
+    )
+  )
+  (sum
+    (bb0 () ()
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type P)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum expr:
+          (simple-var-ref p) (
+          (literal 1) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref p) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation getField expr:
+          (simple-var-ref p) ()))))
+  )
+)

@@ -28,8 +28,8 @@ import (
 )
 
 // uninitVarAnalyzer performs definite-assignment analysis on one function body. It tracks every variable the body can
-// reference: the body's own locals, and the variables in scope when the body starts (module variables, `self` and,
-// for an anonymous function or a named worker, the variables of the body that defines it).
+// reference that may be uninitialized: the body's own locals, and the variables in scope when the body starts (module
+// variables and, for an anonymous function or a named worker, the variables of the body that defines it).
 type uninitVarAnalyzer struct {
 	ctx      *context.CompilerContext
 	body     *body
@@ -233,7 +233,8 @@ func (a *uninitVarAnalyzer) checkExpression(expr ast.BLangActionOrExpression, st
 // checkVariableReference reports a reference to a variable that may not be initialized. A narrowed symbol is checked
 // as the variable it narrows. Parameters are initialized when the body starts, a reference with a module prefix is
 // to a variable its module initialized before this one, and other symbols are not variables, so none of these is
-// checked. Every other reference must be to a tracked variable.
+// checked. Every other reference must be to a tracked variable, except `self`: a method body binds it to the
+// receiver, so it is always initialized. A local variable named `self` is declared in a body, so it is tracked.
 func (a *uninitVarAnalyzer) checkVariableReference(symRef model.SymbolRef, node ast.Node, state *initState) {
 	if varRef, ok := node.(*ast.BLangVarRef); ok && varRef.PkgAlias != nil && varRef.PkgAlias.GetValue() != "" {
 		return
@@ -244,7 +245,9 @@ func (a *uninitVarAnalyzer) checkVariableReference(symRef model.SymbolRef, node 
 	}
 	p, ok := a.vars.Lookup(ref)
 	if !ok || !state.isTracked(p) {
-		a.ctx.InternalError("reference to untracked variable '"+a.ctx.SymbolName(ref)+"'", node.GetPosition())
+		if name := a.ctx.SymbolName(ref); name != "self" {
+			a.ctx.InternalError("reference to untracked variable '"+name+"'", node.GetPosition())
+		}
 		return
 	}
 	if !state.isInitialized(p) {
@@ -376,9 +379,6 @@ func analyzeFunctionUninitializedVars(
 		entry = moduleInitState(pkg, vars)
 	} else {
 		entry = moduleScopeState(pkg, vars)
-	}
-	if self, ok := fn.Scope().GetSymbol("self"); ok {
-		entry.markInitialized(vars.Intern(self))
 	}
 	newUninitVarAnalyzer(ctx, newBody(&fnCfg, graphs), vars, entry, loopVars).analyze()
 }
