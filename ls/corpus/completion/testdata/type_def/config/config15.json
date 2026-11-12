@@ -1,0 +1,9 @@
+{
+  "position": {
+    "line": 1,
+    "character": 0
+  },
+  "source": "type_def/source/source15.bal",
+  "description": "A new line after a complete type definition gives module-level items",
+  "items": [{"label":"A","kind":7,"detail":"int","insertText":"A"},{"label":"const","kind":14,"insertText":"const"},{"label":"function","kind":14,"insertText":"function"},{"label":"import","kind":14,"insertText":"import"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"type","kind":14,"insertText":"type"}]
+}

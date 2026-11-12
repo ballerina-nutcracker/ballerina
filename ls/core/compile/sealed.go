@@ -52,7 +52,9 @@ type ExternalModuleProjection struct {
 // Callers must not mutate the returned compiler context, AST, or symbols.
 type SealedModule struct {
 	pkgNode             *ast.BLangPackage
+	units               []*ast.BLangCompilationUnit
 	externalProjections map[semantics.PackageIdentifier]ExternalModuleProjection
+	modules             map[projects.ModuleID]moduleGenSnapshot
 	ctx                 *context.CompilerContext
 	moduleID            projects.ModuleID
 	stage               Stage
@@ -63,6 +65,19 @@ type SealedModule struct {
 
 // PackageNode returns the package node, non-nil for a successful SealedModuleFor read.
 func (m SealedModule) PackageNode() *ast.BLangPackage { return m.pkgNode }
+
+// Imports returns the module's read-only source import nodes.
+func (m SealedModule) Imports() []*ast.BLangImportPackage {
+	imports := make([]*ast.BLangImportPackage, 0)
+	for _, unit := range m.units {
+		for _, node := range unit.TopLevelNodes {
+			if imported, ok := node.(*ast.BLangImportPackage); ok {
+				imports = append(imports, imported)
+			}
+		}
+	}
+	return imports
+}
 
 // Context returns the module driver's compiler context.
 func (m SealedModule) Context() *context.CompilerContext { return m.ctx }
@@ -94,6 +109,24 @@ func (m SealedModule) NameOf(uri workspace.DocumentURI) (string, bool) { return 
 func (m SealedModule) ExternalModuleProjection(org, name string) (ExternalModuleProjection, bool) {
 	projection, ok := m.externalProjections[semantics.PackageIdentifier{OrgName: org, ModuleName: name}]
 	return projection, ok
+}
+
+// ImportedModuleProjection returns an imported module's read-only AST and exports,
+// including modules belonging to the current package.
+func (m SealedModule) ImportedModuleProjection(org, name string) (ExternalModuleProjection, bool) {
+	if projection, ok := m.ExternalModuleProjection(org, name); ok {
+		return projection, true
+	}
+	for _, module := range m.modules {
+		if module.driver == nil || module.driver.currentStage() < stageSymbolResolved {
+			continue
+		}
+		packageID := module.driver.pkgNode.PackageID
+		if packageID.OrgName.Value() == org && packageID.PkgName.Value() == name {
+			return ExternalModuleProjection{PackageNode: module.driver.pkgNode, Symbols: module.exported}, true
+		}
+	}
+	return ExternalModuleProjection{}, false
 }
 
 // SealedModuleFor waits for a stable current generation, then reads committed
@@ -139,7 +172,9 @@ func (s *CompilationService) SealedModuleFor(ctx stdcontext.Context, u workspace
 	}
 	return SealedModule{
 		pkgNode:             d.pkgNode,
+		units:               d.units,
 		externalProjections: modSnap.externalProjections,
+		modules:             state.modules,
 		ctx:                 d.ctx,
 		moduleID:            docID.ModuleID(),
 		stage:               d.stage,

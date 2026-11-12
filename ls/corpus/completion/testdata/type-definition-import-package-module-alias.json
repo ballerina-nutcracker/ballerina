@@ -1,0 +1,126 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"test\"\nname = \"alias_project\"\nversion = \"0.1.0\"\n",
+    "main.bal": "import alias_project.types as t;\n\ntype T t:Item;\n",
+    "modules/types/types.bal": "public type Item record {|\n    string name;\n|};\npublic const MODE = \"on\";\npublic enum Kind { FIRST }\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "import alias_project.types as t;\n\ntype T t:Item;\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 2,
+          "character": 9
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
+          },
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/main.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": [
+        {
+          "label": "FIRST",
+          "kind": 21,
+          "detail": "\"FIRST\"",
+          "sortText": "098",
+          "insertText": "FIRST"
+        },
+        {
+          "label": "Item",
+          "kind": 7,
+          "detail": "Record",
+          "sortText": "065",
+          "insertText": "Item"
+        },
+        {
+          "label": "Kind",
+          "kind": 7,
+          "detail": "enum",
+          "sortText": "098",
+          "insertText": "Kind"
+        },
+        {
+          "label": "MODE",
+          "kind": 21,
+          "detail": "\"on\"",
+          "sortText": "088",
+          "insertText": "MODE"
+        }
+      ]
+    }
+  ]
+}

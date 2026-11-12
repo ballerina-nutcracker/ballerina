@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 18,
+    "character": 23
+  },
+  "source": "source/if-body-typed-initializer.bal",
+  "items": [{"label":"name","kind":6,"detail":"string","sortText":"127","insertText":"name"},{"label":"count","kind":6,"detail":"int","sortText":"128","insertText":"count"},{"label":"f","kind":3,"detail":"function(int, string) returns nil","sortText":"128","insertText":"f"}]
+}

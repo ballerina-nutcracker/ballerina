@@ -17,7 +17,6 @@
 package completion
 
 import (
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -60,6 +59,16 @@ func nearestChainMatch(c *cursor) (ast.BLangNode, bool) {
 			if node.PkgAlias != nil && node.PkgAlias.GetValue() != "" && locationContains(node.GetPosition(), c.req.Offset) {
 				return c.chain[i], true
 			}
+		case *ast.BLangTypeDefinition:
+			if node.IsEnum() {
+				continue
+			}
+			namePosition := node.Name.GetPosition()
+			if _, inModule := c.chain[i-1].(*ast.BLangPackage); inModule && c.req.Offset < namePosition.StartOffset() {
+				return c.chain[i-1], true
+			}
+			// A type descriptor's recovered descendants are not module-level positions.
+			return nil, false
 		case *ast.BLangBlockStmt, *ast.BLangBlockFunctionBody:
 			if i+1 == len(c.chain) {
 				return c.chain[i], true
@@ -103,10 +112,6 @@ func accessOperatorBeforeWord(text string, offset int) bool {
 	return i > 0 && (text[i-1] == '.' || text[i-1] == ':')
 }
 
-func isTypeDefinitionWordRune(r rune) bool {
-	return r == '_' || r == '\'' || unicode.IsLetter(r) || unicode.IsDigit(r)
-}
-
 func containsBadNode(node ast.BLangNode) bool {
 	d := &badNodeDetector{}
 	ast.Walk(d, node)
@@ -141,28 +146,36 @@ type chainFinder struct {
 	offset    int
 	fileIndex int
 	stack     []ast.BLangNode
+	frames    []bool // TypeData emits an exit callback but does not add a node to the path.
 	chain     []ast.BLangNode
 }
 
 func (f *chainFinder) Visit(node ast.BLangNode) ast.Visitor {
 	if node == nil {
-		if len(f.stack) > 0 {
+		last := len(f.frames) - 1
+		if f.frames[last] {
 			f.stack = f.stack[:len(f.stack)-1]
 		}
+		f.frames = f.frames[:last]
 		return f
 	}
 	loc := node.GetPosition()
-	if locationHasUsableOffsets(loc) && (!tokensContain(loc, f.text, f.offset) || loc.FileIndex() != f.fileIndex) {
+	positioned := locationHasUsableOffsets(loc)
+	if positioned && (!tokensContain(loc, f.text, f.offset) || loc.FileIndex() != f.fileIndex) {
 		return nil
 	}
+	f.frames = append(f.frames, true)
 	f.stack = append(f.stack, node)
-	if len(f.chain) == 0 || locationHasUsableOffsets(loc) {
+	if len(f.chain) == 0 || (positioned && len(f.stack) >= len(f.chain)) {
 		f.chain = append(f.chain[:0], f.stack...)
 	}
 	return f
 }
 
-func (f *chainFinder) VisitTypeData(*ast.TypeData) ast.Visitor { return f }
+func (f *chainFinder) VisitTypeData(*ast.TypeData) ast.Visitor {
+	f.frames = append(f.frames, false)
+	return f
+}
 
 func locationHasUsableOffsets(loc ast.Location) bool {
 	return loc.StartOffset() >= 0 && loc.EndOffset() >= 0 && (loc.StartOffset() != 0 || loc.EndOffset() != 0)
