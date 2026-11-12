@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: type definition X is empty
+  --> recursive-xml-constraint-e.bal:17:1
+   |
+17 | type X xml<R>; // @error
+   | ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got {| x: nil, never... |}
+  --> recursive-xml-constraint-e.bal:17:8
+   |
+17 | type X xml<R>; // @error
+   |        ^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml, got {| x: nil, never... |}
+  --> recursive-xml-constraint-e.bal:17:8
+   |
+17 | type X xml<R>; // @error
+   |        ^^^^^^

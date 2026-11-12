@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type ClientCredentialsGrantConfig)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal tokenUrl)
+            (literal u))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access tokenUrl
+          (simple-var-ref c)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access auth
+            (field-based-access clientConfig
+              (simple-var-ref c)))
+          (value-type null)))))
+  )
+)

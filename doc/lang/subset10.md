@@ -19,6 +19,7 @@
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
 - [Type definition](https://ballerina.io/spec/lang/master/#module-type-defn)
+  - Supports recursive type definitions in which a field or member overriding a record or object type inclusion refers back to the definition
 - [Enum declarations](https://ballerina.io/spec/lang/master/#module-enum-decl)
 - [Class definition](https://ballerina.io/spec/lang/master/#section_8.6)
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
