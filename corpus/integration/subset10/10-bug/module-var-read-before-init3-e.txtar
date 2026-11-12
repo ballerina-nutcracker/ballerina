@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init3-e.bal:26:5
+   |
+26 |     compound += 1; // @error
+   |     ^^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init3-e.bal:29:15
+   |
+29 |     selfRef = selfRef + 1; // @error
+   |               ^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init3-e.bal:31:17
+   |
+31 |     int[] xs = [listMember]; // @error
+   |                 ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init3-e.bal:36:15
+   |
+36 |     while i < loopCond { // @error
+   |               ^^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init3-e.bal:44:16
+   |
+44 |     io:println(onePath); // @error
+   |                ^^^^^^^
