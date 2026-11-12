@@ -1,0 +1,225 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Meta
+    (record-type
+      (field name
+        (value-type string))))
+  (const NAME () (
+    (literal fromConst)))
+  (annotation ParamMarker
+    (attach-point parameter))
+  (annotation ReturnMarker
+    (attach-point return))
+  (annotation ParamInfo
+    (user-defined-type Meta)
+    (attach-point parameter))
+  (annotation ParamInfos
+    (array-type
+      (user-defined-type Meta) dimensions: 1 ([]))
+    (attach-point parameter))
+  (annotation SourceParamInfo const
+    (user-defined-type Meta)
+    (attach-point source parameter))
+  (type-definition Holder
+    (record-type
+      (field fn
+        (function-type (
+          (value-type int)) (
+          (value-type int)))
+        (lambda
+          (function $anonFunc$_0 (
+            (variable x (type
+              (value-type int)))) (
+            (annotation-attachment ReturnMarker
+              (literal true))
+            (value-type int))
+            (expr-function-body
+              (binary-expr +
+                (simple-var-ref x)
+                (literal 1))))))))
+  (variable moduleFn (type
+    (function-type (
+      (value-type int)) (
+      (value-type int)))) (expr
+    (lambda
+      (function $anonFunc$_1 (
+        (variable x (type
+          (value-type int)))) (
+        (annotation-attachment ReturnMarker
+          (literal true))
+        (value-type int))
+        (expr-function-body
+          (binary-expr +
+            (simple-var-ref x)
+            (literal 2)))))))
+  (function apply (
+    (variable fn (type
+      (function-type (
+        (value-type int)) (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_2 (
+          (variable x (type
+            (value-type int)))) (
+          (value-type int))
+          (expr-function-body
+            (binary-expr +
+              (simple-var-ref x)
+              (literal 3)))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation fn (
+          (literal 1))))))
+  (const LATE () (
+    (literal declaredLater)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable required (expr
+          (lambda
+            (function $anonFunc$_3 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref x))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation required (
+            (literal 1))))))
+      (var-def
+        (variable defaultable (expr
+          (lambda
+            (function $anonFunc$_4 (
+              (variable x (type
+                (value-type int)) (expr
+                (literal 2)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (simple-var-ref x))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation defaultable ()))))
+      (var-def
+        (variable rest (expr
+          (lambda
+            (function $anonFunc$_5 () (
+              (value-type int))
+              (block-function-body
+                (return
+                  (invocation length expr:
+                    (simple-var-ref xs) ()))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation rest (
+            (literal 1)
+            (literal 2)
+            (literal 3))))))
+      (var-def
+        (variable returnAnnotated (expr
+          (lambda
+            (function $anonFunc$_6 () (
+              (annotation-attachment ReturnMarker
+                (literal true))
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 4))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation returnAnnotated ()))))
+      (var-def
+        (variable exprBody (expr
+          (lambda
+            (function $anonFunc$_7 (
+              (variable x (type
+                (value-type int)))) (
+              (annotation-attachment ReturnMarker
+                (literal true))
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation exprBody (
+            (literal 5))))))
+      (var-def
+        (variable literalValue (expr
+          (lambda
+            (function $anonFunc$_8 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation literalValue (
+            (literal 6))))))
+      (var-def
+        (variable constValue (expr
+          (lambda
+            (function $anonFunc$_9 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation constValue (
+            (literal 7))))))
+      (var-def
+        (variable local (type
+          (value-type string)) (expr
+          (literal local))))
+      (var-def
+        (variable runtimeValue (expr
+          (lambda
+            (function $anonFunc$_10 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation runtimeValue (
+            (literal 8))))))
+      (var-def
+        (variable repeated (expr
+          (lambda
+            (function $anonFunc$_11 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation repeated (
+            (literal 9))))))
+      (var-def
+        (variable holder (type
+          (user-defined-type Holder)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable held (expr
+          (field-based-access fn
+            (simple-var-ref holder)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation held (
+            (literal 9))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation moduleFn (
+            (literal 9))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation apply ())))))))
