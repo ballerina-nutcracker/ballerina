@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init5-e.bal:27:16
+   |
+27 |     io:println(value); // @error
+   |                ^^^^^
