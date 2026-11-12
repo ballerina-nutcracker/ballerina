@@ -123,6 +123,7 @@ type Server struct {
 	completion        *completion.Service
 	bus               *event.Bus
 	versionSupport    bool
+	snippetSupport    bool
 	signatureOffsets  bool
 	signatureMarkdown bool
 	signatureNoActive bool
@@ -376,6 +377,13 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 	}
 	s.initialized = true
 	if caps, ok := initializeParams.Capabilities.TextDocument.Value(); ok {
+		if completionCaps, ok := caps.Completion.Value(); ok {
+			if item, ok := completionCaps.CompletionItem.Value(); ok {
+				if snippetSupport, ok := item.SnippetSupport.Value(); ok {
+					s.snippetSupport = snippetSupport
+				}
+			}
+		}
 		if signatureCaps, ok := caps.SignatureHelp.Value(); ok {
 			if information, ok := signatureCaps.SignatureInformation.Value(); ok {
 				s.configureSignatureInformation(information)
