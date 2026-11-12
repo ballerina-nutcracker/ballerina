@@ -777,6 +777,18 @@ func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) boo
 	if ref.IsEmpty() {
 		return false
 	}
+	if depSym, ok := t.getSymbol(ref).(model.DependentlyTypedFunctionSymbol); ok {
+		// A dependently-typed function has no type of its own: each call is typed when it is
+		// monomorphized. It is resolved once its signature has parameter types.
+		if depSym.ParamTypes() != nil {
+			return true
+		}
+		if fn, ok := t.functionNodes[ref]; ok {
+			_, _, ok := resolveFunctionSignature(t, nil, fn, depth)
+			return ok
+		}
+		return true
+	}
 	if !semtypes.IsZero(t.symbolType(ref)) {
 		return true
 	}
