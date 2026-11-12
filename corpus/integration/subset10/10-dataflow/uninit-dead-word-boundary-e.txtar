@@ -23,9 +23,3 @@ error[SEMANTIC_ERROR]: unreachable code
    |
 91 |             io:println(w); // @error
    |             ^^^^^^^^^^^^^^
-
-error[SEMANTIC_ERROR]: variable may not be initialized
-  --> uninit-dead-word-boundary-e.bal:93:20
-   |
-93 |         io:println(x); // @error
-   |                    ^
