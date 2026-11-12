@@ -1,0 +1,114 @@
+{
+  "source": "",
+  "sources": {
+    "Ballerina.toml": "[package]\norg = \"test\"\nname = \"alias_project\"\nversion = \"0.1.0\"\n",
+    "main.bal": "import ballerina/time as clock;\n\ntype T clock:Utc;\ntype U sibling:Utc;\n",
+    "sibling.bal": "import ballerina/time as sibling;\n\npublic function now() returns sibling:Utc {\n    return sibling:utcNow();\n}\n"
+  },
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "import ballerina/time as clock;\n\ntype T clock:Utc;\ntype U sibling:Utc;\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/main.bal"
+        },
+        "position": {
+          "line": 3,
+          "character": 15
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
+          },
+          "signatureHelpProvider": {
+            "triggerCharacters": [
+              "(",
+              ","
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/main.bal",
+        "diagnostics": [
+          {
+            "range": {
+              "start": {
+                "line": 3,
+                "character": 7
+              },
+              "end": {
+                "line": 3,
+                "character": 18
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "Unknown symbol: Utc"
+          }
+        ]
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": []
+    }
+  ]
+}

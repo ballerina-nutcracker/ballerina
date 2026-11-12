@@ -1,0 +1,24 @@
+{
+  "organization": "ballerina",
+  "name": "module1",
+  "version": "0.1.0",
+  "export": [
+    "module1"
+  ],
+  "ballerina_version": "2201.13.0",
+  "implementation_vendor": "WSO2",
+  "language_spec_version": "2024R1",
+  "platform": "go1.27",
+  "template": false,
+  "readme": "docs/README.md",
+  "modules": [
+    {
+      "name": "module1.mod2",
+      "export": false
+    },
+    {
+      "name": "module1.module1",
+      "export": false
+    }
+  ]
+}

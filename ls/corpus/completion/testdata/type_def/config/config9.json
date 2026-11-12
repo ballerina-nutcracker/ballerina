@@ -1,0 +1,9 @@
+{
+  "position": {
+    "line": 2,
+    "character": 0
+  },
+  "source": "type_def/source/source9.bal",
+  "description": "A type keyword only in a comment or a string gives no type definition context",
+  "items": [{"label":"const","kind":14,"insertText":"const"},{"label":"function","kind":14,"insertText":"function"},{"label":"import","kind":14,"insertText":"import"},{"label":"note","kind":6,"detail":"string","insertText":"note"},{"label":"type","kind":14,"insertText":"type"}]
+}

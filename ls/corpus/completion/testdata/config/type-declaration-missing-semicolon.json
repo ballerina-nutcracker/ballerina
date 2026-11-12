@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 19,
+    "character": 0
+  },
+  "source": "source/type-declaration-missing-semicolon.bal",
+  "items": [{"label":"T","kind":7,"detail":"int","insertText":"T"},{"label":"check","kind":14,"insertText":"check"},{"label":"count","kind":6,"detail":"int","insertText":"count"},{"label":"f","kind":3,"detail":"function(int) returns nil","insertText":"f"},{"label":"if","kind":14,"insertText":"if"},{"label":"panic","kind":14,"insertText":"panic"},{"label":"return","kind":14,"insertText":"return"},{"label":"while","kind":14,"insertText":"while"}]
+}
