@@ -33,8 +33,7 @@ type uninitAnalyzer struct {
 	fcfg            *functionCFG
 	names           []string
 	nameIdx         *bitset.Context[string]
-	declared        bitset.BitSet
-	terminalInit    bitset.BitSet // intersection of declared and init over reachable, non-panicking terminal exits
+	terminalInit    bitset.BitSet // intersection of names and init over reachable, non-panicking terminal exits
 	states          *initStateStore
 	extractAssigned extractAssignedName
 }
@@ -51,9 +50,8 @@ func newUninitAnalyzer(fcfg *functionCFG, names []string, extract extractAssigne
 		fcfg:         fcfg,
 		names:        names,
 		nameIdx:      nameIdx,
-		declared:     declared,
 		terminalInit: terminalInit,
-		states: newInitStateStore(fcfg, func() *initState {
+		states: newInitStateStore(fcfg, &initState{tracked: declared, init: nameIdx.New()}, func() *initState {
 			return &initState{tracked: nameIdx.New(), init: nameIdx.New()}
 		}),
 		extractAssigned: extract,
@@ -67,9 +65,6 @@ func (a *uninitAnalyzer) analyze() {
 	for _, i := range a.fcfg.topoOrder {
 		bb := &a.fcfg.bbs[i]
 		state := a.states.entryState(bb)
-		if i == 0 {
-			state.tracked.Or(&a.declared)
-		}
 		for _, node := range bb.nodes {
 			if name := a.extractAssigned(node); name != "" {
 				state.markInitialized(a.nameIdx.Intern(name))
