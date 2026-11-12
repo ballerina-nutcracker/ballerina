@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml
+  --> recursive-xml-constraint2-e.bal:19:9
+   |
+19 |         xml<R>? s = (); // @error
+   |         ^^^^^^
+
+error[SEMANTIC_ERROR]: xml type constraint must be a subtype of xml
+  --> recursive-xml-constraint2-e.bal:21:13
+   |
+21 |             xml<R>? t = (); // @error
+   |             ^^^^^^

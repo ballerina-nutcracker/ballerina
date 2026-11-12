@@ -1,0 +1,34 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Inc
+    (record-type
+      (field next
+        (union-type
+          (record-type)
+          (value-type null)))))
+  (type-definition Node
+    (record-type
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (user-defined-type Node)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal next)
+              (mapping-constructor-expr
+                (key-value
+                  (literal next)
+                  (literal <nil>))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (simple-var-ref n)
+              (literal next))
+            (user-defined-type Node))))))))
