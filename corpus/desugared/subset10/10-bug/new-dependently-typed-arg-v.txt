@@ -1,0 +1,174 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang error (as lang.error))
+  (import-package ballerina lang value (as value))
+  (variable flag (type
+    (value-type boolean)))
+  (variable ro (type
+    (intersection-type
+      (builtin-ref-type json)
+      (value-type readonly))))
+  (type-definition Person
+    (record-type
+      (field name
+        (value-type string))))
+  (type-definition A
+    (record-type
+      (field p
+        (union-type
+          (user-defined-type Person)
+          (error-type)))))
+  (type-definition B
+    (record-type
+      (field p
+        (union-type
+          (user-defined-type Person)
+          (error-type)))
+      (field n
+        (value-type int))))
+  (type-definition Holder
+    (record-type
+      (field t
+        (user-defined-type Taker)
+        (new (
+          (ternary-expr
+            (simple-var-ref flag)
+            (invocation convert (
+              (simple-var-ref ro)
+              (typedesc-expr)))
+            (invocation value cloneWithType (
+              (simple-var-ref ro)
+              (typedesc-expr)))))))))
+  (class-definition Taker
+    (variable got (type
+      (value-type string)))
+    (function init (
+      (variable person (type
+        (union-type
+          (user-defined-type Person)
+          (error-type))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal got))
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref person)
+              (error-type))
+            (invocation lang.error message (
+              (simple-var-ref person)))
+            (index-based-access
+              (simple-var-ref person)
+              (literal name)))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref flag)
+        (literal false))
+      (assignment
+        (simple-var-ref ro)
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal ann))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable j (type
+          (builtin-ref-type json)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal name)
+              (literal ann))))))
+      (var-def
+        (variable a (type
+          (user-defined-type Taker)) (expr
+          (new (
+            (invocation value cloneWithType (
+              (simple-var-ref j)
+              (typedesc-expr))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref a)
+            (literal got)))))
+      (var-def
+        (variable b (type
+          (user-defined-type Taker)) (expr
+          (new (
+            (invocation lang.value cloneWithType (
+              (simple-var-ref j)
+              (typedesc-expr))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref b)
+            (literal got)))))
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref h)
+              (literal t))
+            (literal got)))))
+      (var-def
+        (variable m (type
+          (union-type
+            (user-defined-type A)
+            (user-defined-type B))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal p)
+              (invocation value cloneWithType (
+                (simple-var-ref j)
+                (typedesc-expr))))))))
+      (var-def
+        (variable p (type
+          (union-type
+            (user-defined-type Person)
+            (error-type))) (expr
+          (index-based-access
+            (simple-var-ref m)
+            (literal p)))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref p)
+              (error-type))
+            (invocation lang.error message (
+              (simple-var-ref p)))
+            (index-based-access
+              (simple-var-ref p)
+              (literal name))))))))
+  (function convert (
+    (variable v (type
+      (builtin-ref-type json)))
+    (variable td (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type anydata))) (expr
+      (inferred-typedesc-default)))) (
+    (union-type
+      (user-defined-type td)
+      (error-type)))
+    (extern-function-body))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (new (
+          (ternary-expr
+            (simple-var-ref flag)
+            (invocation convert (
+              (simple-var-ref ro)
+              (typedesc-expr)))
+            (invocation value cloneWithType (
+              (simple-var-ref ro)
+              (typedesc-expr))))))))))
