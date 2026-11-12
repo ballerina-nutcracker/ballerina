@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> local-var-annotation-value-e.bal:26:18
+   |
+26 |     @Info {name: 1} // @error
+   |                  ^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'name'
+  --> local-var-annotation-value-e.bal:30:5
+   |
+30 |     @Info // @error
+   |     ^^^^^
