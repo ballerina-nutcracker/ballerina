@@ -1,0 +1,90 @@
+(chainedValue
+  (bb0 () ()
+    (field-based-access w
+      (simple-var-ref opts))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (user-defined-type TaggedNode)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 1))
+          (key-value
+            (literal next)
+            (mapping-constructor-expr
+              (key-value
+                (literal value)
+                (literal 2))
+              (key-value
+                (literal next)
+                (literal <nil>))))
+          (key-value
+            (literal tag)
+            (literal t))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access next
+          (simple-var-ref n)))))
+    (var-def
+      (variable t (type
+        (user-defined-type NamedTree)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal children)
+            (list-constructor-expr
+              (mapping-constructor-expr
+                (key-value
+                  (literal children)
+                  (list-constructor-expr)))))
+          (key-value
+            (literal name)
+            (literal root))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation lang.array length (
+          (field-based-access children
+            (simple-var-ref t)))))))
+    (var-def
+      (variable e (type
+        (user-defined-type Ext)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal s)
+            (literal a))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref e))))
+    (expression-stmt
+      (invocation io println (
+        (invocation optsValue (
+          (mapping-constructor-expr
+            (key-value
+              (literal v)
+              (literal 3))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation optsValue (
+          (mapping-constructor-expr))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chainedValue (
+          (mapping-constructor-expr
+            (key-value
+              (literal w)
+              (literal 4))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation chainedValue (
+          (mapping-constructor-expr))))))
+  )
+)
+(optsValue
+  (bb0 () ()
+    (field-based-access v
+      (simple-var-ref opts))
+  )
+)

@@ -212,7 +212,10 @@ type packageTypeResolver struct {
 	functionNodes        map[model.SymbolRef]*ast.BLangFunction
 	typeDefnNodes        map[model.SymbolRef]*ast.BLangTypeDefinition
 	classDefnNodes       map[model.SymbolRef]*ast.BLangClassDefinition
-	monoCounters         map[string]int
+	// membersAwaited holds each type definition being resolved whose members are not yet added, with the aliases
+	// waiting to copy them. A recursive reference can resolve an alias of the definition before its members exist.
+	membersAwaited map[model.SymbolRef][]model.SymbolRef
+	monoCounters   map[string]int
 	// xmlStepCounters holds the next index per owner name; a lambda resolver shares its enclosing body's table.
 	xmlStepCounters       map[string]int
 	annotationGlobalCount int
@@ -730,6 +733,7 @@ func newPackageTypeResolver(
 		functionNodes:        make(map[model.SymbolRef]*ast.BLangFunction),
 		typeDefnNodes:        make(map[model.SymbolRef]*ast.BLangTypeDefinition),
 		classDefnNodes:       make(map[model.SymbolRef]*ast.BLangClassDefinition),
+		membersAwaited:       make(map[model.SymbolRef][]model.SymbolRef),
 		monoCounters:         make(map[string]int),
 		xmlStepCounters:      make(map[string]int),
 		scope:                moduleScope,
@@ -2666,7 +2670,7 @@ func resolveTypeData(t typeResolver, chain *binding, typeData *ast.TypeData) (se
 	return ty, chain, true
 }
 
-func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth int) bool {
+func resolveTypeDefinition(t *packageTypeResolver, defn *ast.BLangTypeDefinition, depth int) bool {
 	if ty := t.symbolType(defn.Symbol()); !semtypes.IsZero(ty) {
 		return true
 	}
@@ -2674,6 +2678,11 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 	if depth == defn.GetCycleDepth() {
 		t.semanticError(fmt.Sprintf("invalid cycle detected for type definition %s", defn.GetName().GetValue()), defn.GetPosition())
 		return false
+	}
+	// A recursive reference re-enters while the definition's field types are still unresolved.
+	reentered := defn.GetCycleDepth() != -1
+	if !reentered {
+		t.membersAwaited[defn.Symbol()] = nil
 	}
 	defn.SetCycleDepth(depth)
 	typeDescriptor := defn.GetTypeData().TypeDescriptor.(ast.BType)
@@ -2691,6 +2700,9 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		semType, ok = resolveDistinctTypeDefinition(t, defn, semType)
 	}
 	if !ok {
+		if !reentered {
+			delete(t.membersAwaited, defn.Symbol())
+		}
 		return false
 	}
 	if semtypes.IsZero(t.symbolType(defn.Symbol())) {
@@ -2699,13 +2711,14 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 		typeData := defn.GetTypeData()
 		typeData.Type = semType
 		setTypeData(t, defn, typeData)
-		addInclusionsToTypeSymbol(t, defn)
 		name := defn.GetName().GetValue()
 		pos := defn.GetPosition()
 		t.ensureNotEmpty(semType, func() {
 			t.semanticError(fmt.Sprintf("type definition %s is empty", name), pos)
 		})
-		return true
+	}
+	if !reentered {
+		addInclusionsToTypeSymbol(t, defn)
 	}
 	return true
 }
@@ -2811,7 +2824,7 @@ func appendDistinctErrorAtoms(t typeResolver, semType semtypes.SemType, typeDef 
 
 // addInclusionsToTypeSymbol addes all the inclusions (both transitive and direct) to the type symbol
 // This should be called only after resolving the underlying type
-func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
+func addInclusionsToTypeSymbol(t *packageTypeResolver, defn *ast.BLangTypeDefinition) {
 	var members []model.InclusionMember
 	typeDesc := defn.GetTypeData().TypeDescriptor
 	switch td := typeDesc.(type) {
@@ -2823,29 +2836,50 @@ func addInclusionsToTypeSymbol(t typeResolver, defn *ast.BLangTypeDefinition) {
 		copyAliasMembersToTypeSymbol(t, defn.Symbol(), td.Symbol())
 		return
 	default:
+		membersAdded(t, defn.Symbol())
 		return
 	}
-	carrier := getMemberCarrierFromDefn(t, defn.Symbol(), defn.GetPosition())
-	if carrier == nil {
-		return
+	if carrier := getMemberCarrierFromDefn(t, defn.Symbol(), defn.GetPosition()); carrier != nil {
+		for _, m := range members {
+			carrier.AddMember(m)
+		}
 	}
-	for _, m := range members {
-		carrier.AddMember(m)
-	}
+	membersAdded(t, defn.Symbol())
 }
 
-func copyAliasMembersToTypeSymbol(t typeResolver, aliasRef, targetRef model.SymbolRef) {
-	aliasCarrier, ok := t.getSymbol(aliasRef).(model.MemberCarrier)
-	if !ok {
+func copyAliasMembersToTypeSymbol(t *packageTypeResolver, aliasRef, targetRef model.SymbolRef) {
+	if _, ok := t.getSymbol(aliasRef).(model.MemberCarrier); !ok {
+		membersAdded(t, aliasRef)
 		return
 	}
 	if !t.ensureResolved(targetRef, 0) {
+		membersAdded(t, aliasRef)
 		return
 	}
-	targetCarrier := t.getSymbol(targetRef).(model.MemberCarrier)
-	for _, m := range targetCarrier.Members() {
-		aliasCarrier.AddMember(m)
+	if waiting, ok := t.membersAwaited[targetRef]; ok {
+		t.membersAwaited[targetRef] = append(waiting, aliasRef)
+		return
 	}
+	copyMembers(t, aliasRef, targetRef)
+}
+
+// membersAdded copies ref's members to the aliases that waited for them, then to the aliases waiting for those.
+func membersAdded(t *packageTypeResolver, ref model.SymbolRef) {
+	aliases := t.membersAwaited[ref]
+	delete(t.membersAwaited, ref)
+	for _, alias := range aliases {
+		copyMembers(t, alias, ref)
+	}
+}
+
+func copyMembers(t *packageTypeResolver, aliasRef, targetRef model.SymbolRef) {
+	aliasCarrier := t.getSymbol(aliasRef).(model.MemberCarrier)
+	if targetCarrier, ok := t.getSymbol(targetRef).(model.MemberCarrier); ok {
+		for _, m := range targetCarrier.Members() {
+			aliasCarrier.AddMember(m)
+		}
+	}
+	membersAdded(t, aliasRef)
 }
 
 func addInclusionsToClassSymbol(t typeResolver, classDef *ast.BLangClassDefinition) {

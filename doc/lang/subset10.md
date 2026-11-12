@@ -18,6 +18,7 @@
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
 - [Type definition](https://ballerina.io/spec/lang/master/#module-type-defn)
+  - Currently a [`record-type-inclusion`](https://ballerina.io/spec/lang/master/#record-type-inclusion) `*R` is reported as an invalid cycle when `R` is declared before the including record and one of `R`'s fields refers back to it (e.g. `type R record {| T? t; |};` followed by `type T record {| *R; |};`). Declaring the including record first works.
 - [Enum declarations](https://ballerina.io/spec/lang/master/#module-enum-decl)
 - [Class definition](https://ballerina.io/spec/lang/master/#section_8.6)
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
