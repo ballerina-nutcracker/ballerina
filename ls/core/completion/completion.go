@@ -21,8 +21,6 @@ import (
 	stdcontext "context"
 	"errors"
 
-	"github.com/ballerina-nutcracker/ballerina/ast"
-
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
@@ -107,30 +105,7 @@ func completeAt(req Request, sm compile.SealedModule, packages []AvailablePackag
 	if sm.PackageNode() == nil || sm.Context() == nil || sm.Stage() < compile.StageSymbolResolved {
 		return emptyItems
 	}
-	if sm.Stage() < compile.StageLocalTypeResolved {
-		return emptyItems
-	}
-	c := newCursor(req, sm, packages)
-	if node, matched := c.winner(); matched {
-		var keywords []string
-		switch node.(type) {
-		case *ast.BLangPackage:
-			keywords = moduleKeywords
-		case *ast.BLangBlockStmt, *ast.BLangBlockFunctionBody:
-			keywords = blockKeywords
-		default:
-			return emptyItems
-		}
-		items := make([]protocol.CompletionItem, 0, len(keywords))
-		for _, keyword := range keywords {
-			items = append(items, keywordItem(keyword))
-		}
-		return lexicalItems(c, items)
-	}
-	if nearestScope(c.chain) != nil {
-		return lexicalItems(c, nil)
-	}
-	return emptyItems
+	return dispatch(newCursor(req, sm, packages))
 }
 
 var emptyItems = []protocol.CompletionItem{}
