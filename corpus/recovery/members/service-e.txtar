@@ -23,10 +23,10 @@ service / on endpoint { // @error unresolved endpoint
     function init(int _) {} // @error
     function valid() { int x = ; int later = 2; } // @error
     function useMembers() returns int {
-        valid();
+        self.valid();
         return self.goodField;
     }
-    resource function get good() returns int => useMembers();
+    resource function get good() returns int => self.useMembers();
 }
 function independent() {}
 class Surviving {
@@ -60,7 +60,8 @@ class Surviving {
       (value-type int))
       (block-function-body
         (expression-stmt
-          (invocation valid ()))
+          (invocation valid expr:
+            (simple-var-ref self) ()))
         (return
           (field-based-access goodField
             (simple-var-ref self)))))
@@ -78,7 +79,8 @@ class Surviving {
     (resource-function get name:good
       (value-type int)
       (expr-function-body
-        (invocation useMembers ())))
+        (invocation useMembers expr:
+          (simple-var-ref self) ())))
     (bad-top-level function (tokens ("resource" 21:5 21:13) ("function" 21:14 21:22) ("(" 21:31 21:32) ("int" 21:32 21:35) (")" 21:37 21:38) ("{" 21:39 21:40) ("}" 21:40 21:41))))
   (function independent () (
     (value-type null))
