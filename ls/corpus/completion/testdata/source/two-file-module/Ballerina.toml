@@ -1,0 +1,4 @@
+[package]
+org = "completion"
+name = "two_file_module"
+version = "0.1.0"

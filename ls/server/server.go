@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
+	"github.com/ballerina-nutcracker/ballerina/ls/core/completion"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/observability"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
@@ -119,6 +120,7 @@ type Server struct {
 	transport         protocol.Transport
 	projects          *workspace.ProjectService
 	compiler          *compile.CompilationService
+	completion        *completion.Service
 	bus               *event.Bus
 	versionSupport    bool
 	signatureOffsets  bool
@@ -153,6 +155,13 @@ func WithLogger(logger *observability.Logger) Option {
 	}
 }
 
+// WithAvailablePackages replaces the completion service with one using packages.
+func WithAvailablePackages(packages []completion.AvailablePackage) Option {
+	return func(s *Server) {
+		s.completion = completion.New(s.compiler, completion.WithAvailablePackages(packages))
+	}
+}
+
 // New creates a Server using the supplied transport and services, then applies
 // opts in order. A non-nil bus enables event-driven diagnostic publication.
 func New(transport protocol.Transport, projects *workspace.ProjectService, compiler *compile.CompilationService, bus *event.Bus, opts ...Option) *Server {
@@ -160,6 +169,7 @@ func New(transport protocol.Transport, projects *workspace.ProjectService, compi
 		transport:     transport,
 		projects:      projects,
 		compiler:      compiler,
+		completion:    completion.New(compiler),
 		bus:           bus,
 		lastPublished: make(map[string]uint64),
 		registry:      newRequestRegistry(),
@@ -284,11 +294,12 @@ func (s *Server) handleTrackedRequest(ctx context.Context, message protocol.Mess
 	if message.Method == "textDocument/signatureHelp" {
 		entry.signature = s.captureSignature(message.Params)
 	}
+	run := s.prepareTracked(message)
 	s.requestWG.Add(1)
 	go func() {
 		defer s.requestWG.Done()
 		defer s.registry.unregister(idKey)
-		res := s.dispatchTracked(reqCtx, message)
+		res := run(reqCtx)
 		if !res.handled {
 			return
 		}
@@ -317,15 +328,24 @@ type trackedResult struct {
 	handled bool
 }
 
-func (s *Server) dispatchTracked(ctx context.Context, message protocol.Message) trackedResult {
+// prepareTracked runs on the Serve goroutine and returns the work for the request goroutine.
+func (s *Server) prepareTracked(message protocol.Message) func(context.Context) trackedResult {
 	switch message.Method {
 	case testBlockMethod:
-		return s.handleTestBlockRequest(ctx, message)
+		return func(ctx context.Context) trackedResult { return s.handleTestBlockRequest(ctx, message) }
 	case "textDocument/signatureHelp":
-		id, _ := requestIDKey(message.ID)
-		return s.handleSignature(ctx, s.registry.lookup(id).signature)
+		return func(ctx context.Context) trackedResult {
+			id, _ := requestIDKey(message.ID)
+			return s.handleSignature(ctx, s.registry.lookup(id).signature)
+		}
+	case "textDocument/completion":
+		return s.prepareCompletion(message)
 	}
-	return trackedResult{err: &protocol.RPCError{Code: rpcMethodNotFound, Message: "method not found"}, handled: true}
+	return replyWith(trackedResult{err: &protocol.RPCError{Code: rpcMethodNotFound, Message: "method not found"}, handled: true})
+}
+
+func replyWith(result trackedResult) func(context.Context) trackedResult {
+	return func(context.Context) trackedResult { return result }
 }
 
 func (s *Server) handleShutdown() {
@@ -374,6 +394,7 @@ func (s *Server) handleInitialize(_ context.Context, params json.RawMessage) (an
 	}
 	return protocol.InitializeResult{Capabilities: protocol.ServerCapabilities{
 		TextDocumentSync:      protocol.NewOptional(protocol.NewOrServerCapabilitiesTextDocumentSyncTextDocumentSyncOptions(opts)),
+		CompletionProvider:    protocol.NewOptional(protocol.CompletionOptions{TriggerCharacters: protocol.NewOptional([]string{":", "."})}),
 		SignatureHelpProvider: protocol.NewOptional(protocol.SignatureHelpOptions{TriggerCharacters: protocol.NewOptional([]string{"(", ","})}),
 	}}, true
 }

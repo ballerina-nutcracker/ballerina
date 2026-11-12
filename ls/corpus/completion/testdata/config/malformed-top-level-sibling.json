@@ -1,0 +1,8 @@
+{
+  "position": {
+    "line": 4,
+    "character": 0
+  },
+  "source": "source/malformed-top-level-sibling.bal",
+  "items": [{"label":"broken","kind":6,"detail":"int","insertText":"broken"},{"label":"const","kind":14,"insertText":"const"},{"label":"function","kind":14,"insertText":"function"},{"label":"import","kind":14,"insertText":"import"},{"label":"sibling","kind":3,"detail":"function() returns nil","insertText":"sibling"},{"label":"type","kind":14,"insertText":"type"}]
+}
