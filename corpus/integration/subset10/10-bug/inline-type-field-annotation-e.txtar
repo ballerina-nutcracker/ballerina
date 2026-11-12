@@ -1,0 +1,67 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'ObjectFieldMarker' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:39:28
+   |
+39 | type RecordOrInt record {| @ObjectFieldMarker int x; |}|int; // @error
+   |                            ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:31:11
+   |
+31 | record {| @OnType int x; |} moduleVar = {x: 1}; // @error
+   |           ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:34:15
+   |
+34 |     record {| @OnType int y; |} inner; // @error
+   |               ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:37:28
+   |
+37 | type RecordArray record {| @OnType int x; |}[]; // @error
+   |                            ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:46:15
+   |
+46 |     record {| @OnType int x; |} held = {x: 2}; // @error
+   |               ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:49:24
+   |
+49 | function sum(record {| @OnType int x; |} a) returns int { // @error
+   |                        ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on recordfield
+  --> inline-type-field-annotation-e.bal:53:35
+   |
+53 | function make() returns record {| @OnType int x; |} { // @error
+   |                                   ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'RecordFieldMarker' does not allow a value
+  --> inline-type-field-annotation-e.bal:66:15
+   |
+66 |     record {| @RecordFieldMarker {} int y; |} inner; // @error
+   |               ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'RecordFieldMarker' is not allowed on objectfield
+  --> inline-type-field-annotation-e.bal:42:14
+   |
+42 |     object { @RecordFieldMarker int x; } obj; // @error
+   |              ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: const annotation value must be a constant expression
+  --> inline-type-field-annotation-e.bal:72:32
+   |
+72 |     record {| @SourceFieldInfo {name: notConstant} int y; |} inner; // @error
+   |                                ^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: duplicate annotation 'RecordFieldMarker' on recordfield
+  --> inline-type-field-annotation-e.bal:60:9
+   |
+60 |         @RecordFieldMarker // @error
+   |         ^^^^^^^^^^^^^^^^^^
