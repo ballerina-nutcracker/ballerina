@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: f
+  --> non-type-ref2-e.bal:17:22
+   |
+17 | function f() returns f { // @error function name used as its own return type
+   |                      ^
