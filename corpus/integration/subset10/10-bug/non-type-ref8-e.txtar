@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: println
+  --> non-type-ref8-e.bal:20:5
+   |
+20 |     io:println x = io:println; // @error imported function name used as a type
+   |     ^^^^^^^^^^
