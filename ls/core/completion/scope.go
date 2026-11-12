@@ -22,8 +22,14 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
+func expectedTypeCompatible(c *cursor, ty, expected semtypes.SemType) bool {
+	return semtypes.IsSubtype(semtypes.ContextFrom(c.sm.Context().GetTypeEnv()), ty, expected)
+}
+
 func lexicalItems(c *cursor, extras []protocol.CompletionItem) []protocol.CompletionItem {
 	set := newItemSet()
+	expectedType, hasExpectedType := expectedTypeAt(c)
+	compatible := make(map[string]bool)
 	for _, item := range extras {
 		set.add(item)
 	}
@@ -42,8 +48,41 @@ func lexicalItems(c *cursor, extras []protocol.CompletionItem) []protocol.Comple
 			item.Detail = protocol.NewOptional(detail)
 		}
 		set.add(item)
+		if hasExpectedType && expectedTypeCompatible(c, symbolType(c, ref), expectedType) {
+			compatible[name] = true
+		}
 	})
-	return set.items()
+	if !hasExpectedType {
+		return set.items()
+	}
+	items := set.itemsRanked(func(item protocol.CompletionItem) bool {
+		return compatible[item.Label]
+	})
+	for index, item := range items {
+		relevance := neutralRelevance
+		if compatible[item.Label] {
+			relevance = relevance.add(1)
+		}
+		item.SortText = protocol.NewOptional(relevance.sortText())
+		items[index] = item
+	}
+	return items
+}
+
+func symbolType(c *cursor, ref model.SymbolRef) semtypes.SemType {
+	ty := c.sm.Context().SymbolType(ref)
+	if !semtypes.IsZero(ty) {
+		return ty
+	}
+	location := c.sm.Context().SymbolLocation(ref)
+	for _, node := range c.chain {
+		variable, ok := node.(*ast.BLangVariable)
+		if !ok || variable.Name == nil || !sameLocation(variable.Name.GetPosition(), location) {
+			continue
+		}
+		return variable.GetAssociatedType()
+	}
+	return semtypes.SemType{}
 }
 
 func sameLocation(left, right ast.Location) bool {
