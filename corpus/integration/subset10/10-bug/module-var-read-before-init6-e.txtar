@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init6-e.bal:31:16
+   |
+31 |     io:println(afterWhile); // @error
+   |                ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init6-e.bal:37:16
+   |
+37 |     io:println(afterForeach); // @error
+   |                ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init6-e.bal:42:20
+   |
+42 |         io:println(firstWhile); // @error
+   |                    ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> module-var-read-before-init6-e.bal:49:20
+   |
+49 |         io:println(firstForeach); // @error
+   |                    ^^^^^^^^^^^^
