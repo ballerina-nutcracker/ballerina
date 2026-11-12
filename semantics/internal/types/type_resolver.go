@@ -106,6 +106,10 @@ type typeResolver interface {
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
 	ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool
+	// deferAnnotationSite queues site for the top-level annotation pass and
+	// reports true while that pass is still to run. Once it has run, nothing is
+	// queued and the caller resolves the site's annotations itself.
+	deferAnnotationSite(site ast.BLangNode) bool
 	opaqueContext() *opaque.Context
 
 	// traceSpan is the span definition-level children attach to, and
@@ -218,8 +222,14 @@ type packageTypeResolver struct {
 	// xmlStepCounters holds the next index per owner name; a lambda resolver shares its enclosing body's table.
 	xmlStepCounters       map[string]int
 	annotationGlobalCount int
-	scope                 model.Scope
-	context               resolverContext
+	// annotationSitesDeferred is set while the top-level types are resolved.
+	// Annotation declarations and constants are resolved after them, so the
+	// annotations found inside type descriptors until then wait in
+	// deferredAnnotationSites for the top-level annotation pass.
+	annotationSitesDeferred bool
+	deferredAnnotationSites []ast.BLangNode
+	scope                   model.Scope
+	context                 resolverContext
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState ephemeralState
@@ -229,6 +239,14 @@ type packageTypeResolver struct {
 	span context.TraceSpan
 
 	deferredTypeChecks []deferredTypeCheck
+}
+
+func (t *packageTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
+	if !t.annotationSitesDeferred {
+		return false
+	}
+	t.deferredAnnotationSites = append(t.deferredAnnotationSites, site)
+	return true
 }
 
 func (t *packageTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
@@ -584,6 +602,10 @@ func (f *functionTypeResolver) functionSignatureByRef(ref model.FunctionSignatur
 
 func (f *functionTypeResolver) compilerContext() *context.CompilerContext {
 	return f.parentResolver.compilerContext()
+}
+
+func (f *functionTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
+	return f.parentResolver.deferAnnotationSite(site)
 }
 
 // ensureNotEmpty runs the emptiness check on this resolver's own type
@@ -1243,6 +1265,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span co
 }
 
 func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
+	t.annotationSitesDeferred = true
 	for _, defn := range common.DeclaredNodes(pkg.TypeDefinitions) {
 		t.typeDefnNodes[defn.Symbol()] = defn
 	}
@@ -1293,6 +1316,7 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	// have been folded even though the annotated type/function nodes were
 	// resolved earlier in the top-level pass.
 	resolveTopLevelAnnotationAttachments(t, pkg)
+	t.resolveDeferredAnnotationSites(pkg)
 	for _, gv := range common.DeclaredNodes(pkg.GlobalVars) {
 		resolveGlobalVarInit(t, gv)
 	}
@@ -1413,6 +1437,52 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 		globals = append(globals, pkg.GlobalVars[initialGlobalCount:]...)
 		globals = append(globals, pkg.GlobalVars[:initialGlobalCount]...)
 		pkg.GlobalVars = globals
+	}
+}
+
+// resolveDeferredAnnotationSites resolves the annotation sites queued while the
+// top-level types were resolved. From here on a site is resolved where it is
+// found.
+func (t *packageTypeResolver) resolveDeferredAnnotationSites(pkg *ast.BLangPackage) {
+	// The fields of a type definition's own descriptor were resolved with the
+	// definition, which keeps their values for the runtime.
+	definitionDescriptors := make(map[ast.TypeDescriptor]bool, len(pkg.TypeDefinitions))
+	for _, defn := range pkg.TypeDefinitions {
+		definitionDescriptors[defn.GetTypeData().TypeDescriptor] = true
+	}
+	sites := t.deferredAnnotationSites
+	t.deferredAnnotationSites = nil
+	t.annotationSitesDeferred = false
+	for _, site := range sites {
+		if descriptor, ok := site.(ast.TypeDescriptor); ok && definitionDescriptors[descriptor] {
+			continue
+		}
+		resolveAnnotationSiteAttachments(t, site)
+	}
+}
+
+// resolveAnnotationSite resolves the annotations attached inside site: the
+// fields of a record or object type descriptor. Their values are checked but
+// not kept: nothing reads them at runtime.
+func resolveAnnotationSite(t typeResolver, site ast.BLangNode) {
+	if t.isEphemeral() || t.deferAnnotationSite(site) {
+		return
+	}
+	resolveAnnotationSiteAttachments(t, site)
+}
+
+func resolveAnnotationSiteAttachments(t typeResolver, site ast.BLangNode) {
+	switch site := site.(type) {
+	case *ast.BLangRecordType:
+		for _, field := range site.FieldPtrs() {
+			resolveAnnotationAttachments(t, field, ast.PointRecordField, nil)
+		}
+	case *ast.BLangObjectType:
+		for member := range site.Members() {
+			if field, ok := member.(*ast.BObjectField); ok {
+				resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
+			}
+		}
 	}
 }
 
@@ -8615,6 +8685,7 @@ func resolveBType(t typeResolver, chain *binding, btype ast.BType, depth int) (s
 		return semtypes.SemType{}, chain, false
 	}
 	setResolvedTypeData(t, btype, res)
+	resolveAnnotationSite(t, btype)
 	return res, chain, true
 }
 

@@ -1,0 +1,274 @@
+module $anon.. v 0.0.0;
+moduleVar  {| x: int, never... |};
+class Point {
+  x int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 9
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class Holder {
+  held {| x: int, never... |}
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad x
+      %3 = ConstantLoad 10
+      %4 = newMap {| x: int, never... |}{%2=%3}
+      %5 = ConstantLoad held
+      self[%5] = %4;
+      return;
+    }
+  }
+}
+sum({| x: int, never... |},{| x: int, never... |}) -> int{
+  bb0 {
+    %5 = ConstantLoad x
+    %4 = a[%5];
+    %6 = %4;
+    %8 = ConstantLoad x
+    %7 = b[%8];
+    %9 = %7;
+    %3 = + %6 %9;
+    %0 = %3;
+    return;
+  }
+}
+make() -> {| x: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 12
+    %3 = newMap {| x: int, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad x
+    %1 = moduleVar[%2];
+    %3 = %1;
+    %4 = println(%3) -> bb1;
+  }
+  bb1 {
+    %5 = ConstantLoad inner
+    %6 = ConstantLoad y
+    %7 = ConstantLoad 2
+    %8 = newMap {| y: int, never... |}{%6=%7}
+    %9 = newMap {| inner: {| y: int, never... |}, never... |}{%5=%8}
+    nested = %9;
+    %12 = ConstantLoad y
+    %14 = ConstantLoad inner
+    %13 = nested[%14];
+    %11 = %13[%12];
+    %15 = %11;
+    %16 = println(%15) -> bb2;
+  }
+  bb2 {
+    %17 = ConstantLoad x
+    %18 = ConstantLoad 3
+    %19 = newMap {| x: int, never... |}{%17=%18}
+    %20 = ConstantLoad 1
+    %21 = newArray [{| x: int, never... |}...][%20]{%19}
+    array = %21;
+    %24 = ConstantLoad x
+    %26 = ConstantLoad 0
+    %25 = array[%26];
+    %23 = %25[%24];
+    %27 = %23;
+    %28 = println(%27) -> bb3;
+  }
+  bb3 {
+    %29 = ConstantLoad 4
+    recordOrInt = %29;
+    %31 = println(recordOrInt) -> bb4;
+  }
+  bb4 {
+    %32 = ConstantLoad x
+    %33 = ConstantLoad 5
+    %34 = newMap {| x: int, never... |}{%32=%33}
+    readonlyRecord = %34;
+    %37 = ConstantLoad x
+    %36 = readonlyRecord[%37];
+    %38 = %36;
+    %39 = println(%38) -> bb5;
+  }
+  bb5 {
+    %40 = ConstantLoad x
+    %41 = ConstantLoad 6
+    %42 = newMap {| x: int, never... |}{%40=%41}
+    local = %42;
+    %45 = ConstantLoad x
+    %44 = local[%45];
+    %46 = %44;
+    %47 = println(%46) -> bb6;
+  }
+  bb6 {
+    %48 = ConstantLoad x
+    %49 = ConstantLoad 7
+    %50 = newMap {| x: int, never... |}{%48=%49}
+    generic = %50;
+    %53 = ConstantLoad x
+    %52 = generic[%53];
+    %54 = %52;
+    %55 = println(%54) -> bb7;
+  }
+  bb7 {
+    %56 = ConstantLoad x
+    %57 = ConstantLoad 8
+    %58 = newMap {| x: int, never... |}{%56=%57}
+    valued = %58;
+    %61 = ConstantLoad x
+    %60 = valued[%61];
+    %62 = %60;
+    %63 = println(%62) -> bb8;
+  }
+  bb8 {
+    %64 = newObject $anon/.:Point
+    %65 = %64.init() -> bb9;
+  }
+  bb9 {
+    %67 = %65 is nil
+    %67 ? bb10 : bb11;
+  }
+  bb10 {
+    %66 = %64;
+    GOTO bb12;
+  }
+  bb11 {
+    %66 = %65;
+    GOTO bb12;
+  }
+  bb12 {
+    obj = %66;
+    %70 = ConstantLoad x
+    %69 = obj[%70];
+    %71 = %69;
+    %72 = println(%71) -> bb13;
+  }
+  bb13 {
+    %74 = ConstantLoad x
+    %76 = ConstantLoad held
+    %77 = newObject $anon/.:Holder
+    %78 = %77.init() -> bb14;
+  }
+  bb14 {
+    %80 = %78 is nil
+    %80 ? bb15 : bb16;
+  }
+  bb15 {
+    %79 = %77;
+    GOTO bb17;
+  }
+  bb16 {
+    %79 = %78;
+    GOTO bb17;
+  }
+  bb17 {
+    %75 = %79[%76];
+    %73 = %75[%74];
+    %81 = %73;
+    %82 = println(%81) -> bb18;
+  }
+  bb18 {
+    %83 = ConstantLoad x
+    %84 = ConstantLoad 5
+    %85 = newMap {| x: int, never... |}{%83=%84}
+    %86 = ConstantLoad x
+    %87 = ConstantLoad 6
+    %88 = newMap {| x: int, never... |}{%86=%87}
+    %89 = sum(%85,%88) -> bb19;
+  }
+  bb19 {
+    %90 = %89;
+    %91 = println(%90) -> bb20;
+  }
+  bb20 {
+    %93 = ConstantLoad x
+    %94 = make() -> bb21;
+  }
+  bb21 {
+    %92 = %94[%93];
+    %95 = %92;
+    %96 = println(%95) -> bb22;
+  }
+  bb22 {
+    %97 = ConstantLoad obj
+    %98 = newObject $anon/.:Point
+    %99 = %98.init() -> bb23;
+  }
+  bb23 {
+    %101 = %99 is nil
+    %101 ? bb24 : bb25;
+  }
+  bb24 {
+    %100 = %98;
+    GOTO bb26;
+  }
+  bb25 {
+    %100 = %99;
+    GOTO bb26;
+  }
+  bb26 {
+    %102 = newMap {| obj: object { int x }, never... |}{%97=%100}
+    withObject = %102;
+    %106 = ConstantLoad x
+    %108 = ConstantLoad obj
+    %107 = withObject[%108];
+    %105 = %107[%106];
+    %109 = %105;
+    %110 = ConstantLoad 4
+    %111 = %110;
+    %104 = + %109 %111;
+    %112 = %104;
+    %113 = println(%112) -> bb27;
+  }
+  bb27 {
+    %114 = ConstantLoad inner
+    %115 = ConstantLoad y
+    %116 = ConstantLoad 14
+    %117 = newMap {| y: int, never... |}{%115=%116}
+    %118 = newMap {| inner: {| y: int, never... |}, never... |}{%114=%117}
+    lateConst = %118;
+    %121 = ConstantLoad y
+    %123 = ConstantLoad inner
+    %122 = lateConst[%123];
+    %120 = %122[%121];
+    %124 = %120;
+    %125 = println(%124) -> bb28;
+  }
+  bb28 {
+    %126 = ConstantLoad a
+    %127 = ConstantLoad x
+    %128 = ConstantLoad 15
+    %129 = newMap {| x: int, never... |}{%127=%128}
+    %130 = newMap {| {| x: int, never... |}... |}{%126=%129}
+    mapped = %130;
+    %133 = ConstantLoad a
+    %132 = mapped[%133];
+    %134 = ConstantLoad x
+    %135 = %132[%134];
+    %136 = %135;
+    %137 = println(%136) -> bb29;
+  }
+  bb29 {
+    %138 = ConstantLoad local
+    name = %138;
+    %140 = ConstantLoad x
+    %141 = ConstantLoad 16
+    %142 = newMap {| x: int, never... |}{%140=%141}
+    runtimeValue = %142;
+    %145 = ConstantLoad x
+    %144 = runtimeValue[%145];
+    %146 = %144;
+    %147 = println(%146) -> bb30;
+  }
+  bb30 {
+    return;
+  }
+}

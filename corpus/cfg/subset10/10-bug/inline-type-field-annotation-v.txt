@@ -1,0 +1,234 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref moduleVar)))))
+    (var-def
+      (variable nested (type
+        (user-defined-type Nested)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal inner)
+            (mapping-constructor-expr
+              (key-value
+                (literal y)
+                (literal 2))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access y
+          (field-based-access inner
+            (simple-var-ref nested))))))
+    (var-def
+      (variable array (type
+        (user-defined-type RecordArray)) (expr
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 3)))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (index-based-access
+            (simple-var-ref array)
+            (literal 0))))))
+    (var-def
+      (variable recordOrInt (type
+        (user-defined-type RecordOrInt)) (expr
+        (literal 4))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref recordOrInt))))
+    (var-def
+      (variable readonlyRecord (type
+        (user-defined-type ReadonlyRecord)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref readonlyRecord)))))
+    (var-def
+      (variable local (type
+        (record-type
+          (field x
+            (annotation-attachment RecordFieldMarker
+              (literal true))
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 6))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref local)))))
+    (var-def
+      (variable generic (type
+        (record-type
+          (field x
+            (annotation-attachment FieldMarker
+              (literal true))
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 7))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref generic)))))
+    (var-def
+      (variable valued (type
+        (record-type
+          (field x
+            (annotation-attachment FieldInfo
+              (mapping-constructor-expr
+                (key-value
+                  (literal name)
+                  (literal literal))))
+            (annotation-attachment RecordFieldMarker
+              (literal true))
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 8))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref valued)))))
+    (var-def
+      (variable obj (type
+        (object-type
+          (field x
+            (annotation-attachment ObjectFieldMarker
+              (literal true))
+            (annotation-attachment FieldMarker
+              (literal true))
+            (value-type int)))) (expr
+        (new
+          (user-defined-type Point) ()))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref obj)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (field-based-access held
+            (new
+              (user-defined-type Holder) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 5)))
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 6))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (invocation make ())))))
+    (var-def
+      (variable withObject (type
+        (user-defined-type WithObject)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal obj)
+            (new
+              (user-defined-type Point) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (field-based-access x
+            (field-based-access obj
+              (simple-var-ref withObject)))
+          (literal 4)))))
+    (var-def
+      (variable lateConst (type
+        (user-defined-type LateConst)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal inner)
+            (mapping-constructor-expr
+              (key-value
+                (literal y)
+                (literal 14))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access y
+          (field-based-access inner
+            (simple-var-ref lateConst))))))
+    (var-def
+      (variable mapped (type
+        (constrained-type
+          (builtin-ref-type map)
+          (record-type
+            (field x
+              (annotation-attachment RecordFieldMarker
+                (literal true))
+              (value-type int))))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 15))))))))
+    (expression-stmt
+      (invocation io println (
+        (optional-field-based-access x
+          (index-based-access
+            (simple-var-ref mapped)
+            (literal a))))))
+    (var-def
+      (variable name (type
+        (value-type string)) (expr
+        (literal local))))
+    (var-def
+      (variable runtimeValue (type
+        (record-type
+          (field x
+            (annotation-attachment FieldInfo
+              (mapping-constructor-expr
+                (key-value
+                  (literal name)
+                  (simple-var-ref name))))
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 16))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref runtimeValue)))))
+  )
+)
+(make
+  (bb0 () ()
+    (return
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (literal 12))))
+  )
+)
+(sum
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (field-based-access x
+          (simple-var-ref a))
+        (field-based-access x
+          (simple-var-ref b))))
+  )
+)

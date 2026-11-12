@@ -14,7 +14,7 @@
   - Supports source-only, runtime, marker and repeated annotations
   - Supports annotation values evaluated from constant and runtime expressions
   - Supports `service remote function` annotations on remote methods of service classes and service declarations, including `object function` annotation compatibility
-  - Supports attachments on local variable declarations
+  - Supports attachments on local variable declarations, and on the fields of record and object type descriptors wherever they appear
   - Currently annotations on a let variable declaration, a type-cast expression, a start action and the parameters of a function type descriptor are not supported, and annotations on an anonymous function expression itself and on tuple member type descriptors are not checked
 - [Module variable declarations](https://ballerina.io/spec/lang/master/#module-var-decl)
   - Currently references to a variable declared without an initializer are not checked for definite assignment in functions that `init` calls ([#1637](https://github.com/ballerina-nutcracker/ballerina/issues/1637)) or in other module variables' initializers ([#1636](https://github.com/ballerina-nutcracker/ballerina/issues/1636))
