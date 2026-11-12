@@ -1,0 +1,90 @@
+(init
+  (bb0 () (bb1 bb3)
+    (binary-expr >
+      (simple-var-ref n)
+      (literal 0))
+  )
+  (bb1 (bb0) (bb2)
+    (assignment
+      (simple-var-ref inBranch)
+      (literal 1))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inBranch))))
+  )
+  (bb2 (bb1 bb3) (bb4))
+  (bb3 (bb0) (bb2)
+    (assignment
+      (simple-var-ref inBranch)
+      (literal 2))
+  )
+  (bb4 (bb2) (bb5)
+    (literal true)
+  )
+  (bb5 (bb4) (bb6)
+    (assignment
+      (simple-var-ref whileTrue)
+      (literal 3))
+    (break)
+  )
+  (bb6 (bb5) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref whileTrue))))
+    (assignment
+      (simple-var-ref whileCond)
+      (simple-var-ref n))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb7 (bb6 bb8) (bb8 bb9)
+    (binary-expr <
+      (simple-var-ref i)
+      (simple-var-ref whileCond))
+  )
+  (bb8 (bb7) (bb7)
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb9 (bb7) (bb10))
+  (bb10 (bb9 bb11) (bb11 bb12)
+    (binary-expr ..<
+      (literal 0)
+      (simple-var-ref n))
+    (var-def
+      (variable j (type
+        (value-type int))))
+  )
+  (bb11 (bb10) (bb10)
+    (assignment
+      (simple-var-ref foreachBody)
+      (simple-var-ref j))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref foreachBody))))
+  )
+  (bb12 (bb10) ()
+    (assignment
+      (simple-var-ref foreachBody)
+      (literal 5))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref inBranch))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref whileTrue))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref whileCond))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref foreachBody))))
+  )
+)

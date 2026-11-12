@@ -346,6 +346,20 @@ func moduleScopeState(pkg *ast.BLangPackage, vars *bitset.Context[model.SymbolRe
 	return state
 }
 
+// moduleInitState returns the state in which the module's init function starts: a module variable with an
+// initializer is initialized, and one without is declared but not yet initialized.
+func moduleInitState(pkg *ast.BLangPackage, vars *bitset.Context[model.SymbolRef]) *initState {
+	state := &initState{tracked: vars.New(), init: vars.New()}
+	for _, v := range pkg.GlobalVars {
+		if v.Expr == nil {
+			state.markTracked(vars.Intern(v.Symbol()))
+		} else {
+			state.markInitialized(vars.Intern(v.Symbol()))
+		}
+	}
+	return state
+}
+
 // analyzeFunctionUninitializedVars analyzes a single function for uninitialized variables
 func analyzeFunctionUninitializedVars(
 	ctx *context.CompilerContext, pkg *ast.BLangPackage, fn common.FunctionDecl, cfg *PackageCFG,
@@ -357,7 +371,12 @@ func analyzeFunctionUninitializedVars(
 		return
 	}
 	vars := bitset.NewContext[model.SymbolRef]()
-	entry := moduleScopeState(pkg, vars)
+	var entry *initState
+	if pkg.InitFunction != nil && fn.Symbol() == pkg.InitFunction.Symbol() {
+		entry = moduleInitState(pkg, vars)
+	} else {
+		entry = moduleScopeState(pkg, vars)
+	}
 	if self, ok := fn.Scope().GetSymbol("self"); ok {
 		entry.markInitialized(vars.Intern(self))
 	}
