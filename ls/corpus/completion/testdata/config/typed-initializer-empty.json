@@ -4,5 +4,5 @@
     "character": 17
   },
   "source": "source/typed-initializer-empty.bal",
-  "items": [{"label":"intValue","kind":6,"detail":"int","insertText":"intValue"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"stringValue","kind":6,"detail":"string","insertText":"stringValue"}]
+  "items": [{"label":"intValue","kind":6,"detail":"int","sortText":"127","insertText":"intValue"},{"label":"main","kind":3,"detail":"function() returns nil","sortText":"128","insertText":"main"},{"label":"stringValue","kind":6,"detail":"string","sortText":"128","insertText":"stringValue"}]
 }

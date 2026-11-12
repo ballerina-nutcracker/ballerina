@@ -1,0 +1,6 @@
+{
+  "position": {"line": 5, "character": 33},
+  "source": "source/scope-nested-aggregate-ranking.bal",
+  "description": "A map value slot does not rank symbols against the whole initializer mapping type",
+  "items": [{"label":"aNumber","kind":6,"detail":"int","insertText":"aNumber"},{"label":"listTarget","kind":6,"detail":"[int...]","insertText":"listTarget"},{"label":"main","kind":3,"detail":"function() returns nil","insertText":"main"},{"label":"zList","kind":6,"detail":"[int...]","insertText":"zList"},{"label":"zMap","kind":6,"detail":"{| int... |}","insertText":"zMap"}]
+}
