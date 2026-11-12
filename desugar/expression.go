@@ -833,20 +833,30 @@ func walkTrapExpr(cx *functionContext, expr *ast.BLangTrapExpr) desugaredNode[as
 }
 
 func walkLambdaFunction(cx *functionContext, expr *ast.BLangLambdaFunction) desugaredNode[ast.BLangActionOrExpression] {
+	var initStmts []ast.StatementNode
 	if expr.Function != nil {
 		if cx.pkgCtx.needsDefaultClosures(expr.Function.Symbol()) {
-			defaults := desugarFunctionParamDefaults(cx, expr.Function, expr.Function.Symbol(), expr.Function.Scope())
-			for i := range defaults {
-				defaults[i] = desugarNestedFunction(cx, defaults[i])
-			}
-			cx.generatedFunctions = append(cx.generatedFunctions, defaults...)
+			initStmts = desugarLambdaDefaults(cx, expr.Function)
 		}
 		expr.Function = desugarNestedFunction(cx, expr.Function)
 	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{
+		initStmts:       initStmts,
 		replacementNode: expr,
 	}
+}
+
+// desugarLambdaDefaults creates the default closures of an anonymous function's signature as local closures,
+// evaluated with the anonymous function, so that they capture the variables of the enclosing function.
+func desugarLambdaDefaults(cx *functionContext, fn *ast.BLangFunction) []ast.StatementNode {
+	closures := desugarParamDefaultClosures(cx, fn, fn.Symbol())
+	types := desugarSignatureTypeDescs(cx, fn, fn.Scope())
+	initStmts := desugarLocalTypeDescDefaults(cx, append(closures, types.functions...))
+	for _, field := range types.recordFields {
+		initStmts = append(initStmts, desugarRecordFieldDefault(cx, field))
+	}
+	return initStmts
 }
 
 func walkTypeConversionExpr(cx *functionContext, expr *ast.BLangTypeConversionExpr) desugaredNode[ast.BLangActionOrExpression] {

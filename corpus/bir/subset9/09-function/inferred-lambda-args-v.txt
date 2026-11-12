@@ -45,123 +45,127 @@ main() -> nil{
     %22 = println(%21) -> bb10;
   }
   bb10 {
-    %23 = fp $anon/.:$anonFunc$_1
-    lambda = %23;
-    %25 = $default$1() -> bb11;
+    %24 = fp $anon/.:$default$1
+    $desugar$2 = %24;
+    %25 = fp $anon/.:$anonFunc$_1
+    lambda = %25;
+    %27 = $desugar$2() -> bb11;
   }
   bb11 {
-    $desugar$2 = %25;
-    %27 = $desugar$2;
-    %28 = lambda(%27) -> bb12;
+    $desugar$3 = %27;
+    %29 = $desugar$3;
+    %30 = lambda(%29) -> bb12;
   }
   bb12 {
-    %29 = %28;
-    %30 = println(%29) -> bb13;
+    %31 = %30;
+    %32 = println(%31) -> bb13;
   }
   bb13 {
-    %31 = ConstantLoad 8
-    %32 = %31;
-    %33 = lambda(%32) -> bb14;
+    %33 = ConstantLoad 8
+    %34 = %33;
+    %35 = lambda(%34) -> bb14;
   }
   bb14 {
-    %34 = %33;
-    %35 = println(%34) -> bb15;
+    %36 = %35;
+    %37 = println(%36) -> bb15;
   }
   bb15 {
     lambdaAlias = lambda;
-    %37 = $default$1() -> bb16;
+    %39 = $desugar$2() -> bb16;
   }
   bb16 {
-    $desugar$3 = %37;
-    %39 = $desugar$3;
-    %40 = lambdaAlias(%39) -> bb17;
+    $desugar$4 = %39;
+    %41 = $desugar$4;
+    %42 = lambdaAlias(%41) -> bb17;
   }
   bb17 {
-    %41 = %40;
-    %42 = println(%41) -> bb18;
+    %43 = %42;
+    %44 = println(%43) -> bb18;
   }
   bb18 {
-    %43 = ConstantLoad 9
-    %44 = %43;
-    %45 = lambdaAlias(%44) -> bb19;
+    %45 = ConstantLoad 9
+    %46 = %45;
+    %47 = lambdaAlias(%46) -> bb19;
   }
   bb19 {
-    %46 = %45;
-    %47 = println(%46) -> bb20;
+    %48 = %47;
+    %49 = println(%48) -> bb20;
   }
   bb20 {
-    %49 = fp $anon/.:$default$2
-    $desugar$4 = %49;
+    %51 = fp $anon/.:$default$2
+    $desugar$5 = %51;
     typedLambda = lambda;
-    %51 = $desugar$4() -> bb21;
+    %53 = $desugar$5() -> bb21;
   }
   bb21 {
-    $desugar$5 = %51;
-    %53 = $desugar$5;
-    %54 = typedLambda(%53) -> bb22;
+    $desugar$6 = %53;
+    %55 = $desugar$6;
+    %56 = typedLambda(%55) -> bb22;
   }
   bb22 {
-    %55 = %54;
-    %56 = println(%55) -> bb23;
+    %57 = %56;
+    %58 = println(%57) -> bb23;
   }
   bb23 {
-    %57 = ConstantLoad 11
-    %58 = %57;
-    %59 = typedLambda(%58) -> bb24;
+    %59 = ConstantLoad 11
+    %60 = %59;
+    %61 = typedLambda(%60) -> bb24;
   }
   bb24 {
-    %60 = %59;
-    %61 = println(%60) -> bb25;
+    %62 = %61;
+    %63 = println(%62) -> bb25;
   }
   bb25 {
-    %62 = fp $anon/.:$anonFunc$_2
-    includedRecordLambda = %62;
-    %64 = ConstantLoad left
-    %65 = ConstantLoad 1
-    %66 = ConstantLoad right
-    %67 = ConstantLoad 2
-    %68 = newMap {| left: int, right: int, never... |}{%64=%65, %66=%67}
-    %69 = includedRecordLambda(%68) -> bb26;
+    %64 = fp $anon/.:$anonFunc$_2
+    includedRecordLambda = %64;
+    %66 = ConstantLoad left
+    %67 = ConstantLoad 1
+    %68 = ConstantLoad right
+    %69 = ConstantLoad 2
+    %70 = newMap {| left: int, right: int, never... |}{%66=%67, %68=%69}
+    %71 = includedRecordLambda(%70) -> bb26;
   }
   bb26 {
-    %70 = %69;
-    %71 = println(%70) -> bb27;
+    %72 = %71;
+    %73 = println(%72) -> bb27;
   }
   bb27 {
     includedRecordLambdaAlias = includedRecordLambda;
-    %73 = ConstantLoad left
-    %74 = ConstantLoad 3
-    %75 = ConstantLoad right
-    %76 = ConstantLoad 4
-    %77 = newMap {| left: int, right: int, never... |}{%73=%74, %75=%76}
-    %78 = includedRecordLambdaAlias(%77) -> bb28;
+    %75 = ConstantLoad left
+    %76 = ConstantLoad 3
+    %77 = ConstantLoad right
+    %78 = ConstantLoad 4
+    %79 = newMap {| left: int, right: int, never... |}{%75=%76, %77=%78}
+    %80 = includedRecordLambdaAlias(%79) -> bb28;
   }
   bb28 {
-    %79 = %78;
-    %80 = println(%79) -> bb29;
+    %81 = %80;
+    %82 = println(%81) -> bb29;
   }
   bb29 {
-    %81 = fp $anon/.:$anonFunc$_3
-    groupedLambda = %81;
-    %83 = $default$3() -> bb30;
+    %84 = fp $anon/.:$default$3
+    $desugar$7 = %84;
+    %85 = fp $anon/.:$anonFunc$_3
+    groupedLambda = %85;
+    %87 = $desugar$7() -> bb30;
   }
   bb30 {
-    $desugar$6 = %83;
-    %85 = $desugar$6;
-    %86 = groupedLambda(%85) -> bb31;
+    $desugar$8 = %87;
+    %89 = $desugar$8;
+    %90 = groupedLambda(%89) -> bb31;
   }
   bb31 {
-    %87 = %86;
-    %88 = println(%87) -> bb32;
+    %91 = %90;
+    %92 = println(%91) -> bb32;
   }
   bb32 {
-    %89 = ConstantLoad 10
-    %90 = %89;
-    %91 = groupedLambda(%90) -> bb33;
+    %93 = ConstantLoad 10
+    %94 = %93;
+    %95 = groupedLambda(%94) -> bb33;
   }
   bb33 {
-    %92 = %91;
-    %93 = println(%92) -> bb34;
+    %96 = %95;
+    %97 = println(%96) -> bb34;
   }
   bb34 {
     return;

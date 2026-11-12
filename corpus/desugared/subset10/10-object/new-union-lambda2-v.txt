@@ -178,6 +178,15 @@
                         (value-type int))
                         (block-function-body
                           (var-def
+                            (variable $desugar$0))
+                          (assignment
+                            (simple-var-ref $desugar$0)
+                            (lambda
+                              (function $default$0 () ()
+                                (block-function-body
+                                  (return
+                                    (simple-var-ref y))))))
+                          (var-def
                             (variable g (expr
                               (lambda
                                 (function $anonFunc$_4 (
@@ -196,19 +205,15 @@
                                         (simple-var-ref a)
                                         (literal 0)))))))))
                           (var-def
-                            (variable $desugar$0 (expr
-                              (invocation $default$0 ()))))
+                            (variable $desugar$1 (expr
+                              (invocation $desugar$0 ()))))
                           (return
                             (invocation g (
-                              (simple-var-ref $desugar$0)))))))
+                              (simple-var-ref $desugar$1)))))))
                     (simple-var-ref y))))))
               (expression-stmt
                 (invocation io println (
                   (type-test-expr is
                     (simple-var-ref n)
                     (user-defined-type IntOrString)))))) ())
-          (block-stmt)))))
-  (function $default$0 () ()
-    (block-function-body
-      (return
-        (simple-var-ref y)))))
+          (block-stmt))))))
