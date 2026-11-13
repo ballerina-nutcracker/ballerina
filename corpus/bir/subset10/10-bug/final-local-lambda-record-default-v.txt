@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| readValue: function() returns int, anydata... |}{} defaults{readValue=$anon/.:$default$0}
+    reader = %1;
+    %4 = ConstantLoad readValue
+    %3 = reader[%4];
+    readValue = %3;
+    %6 = readValue() -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %2 = ConstantLoad 9
+    x = %2;
+    %0 = x;
+    return;
+  }
+}
+$default$0() -> function() returns int{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    %0 = %1;
+    return;
+  }
+}

@@ -1,0 +1,119 @@
+(package
+  (import-package ballerina io (as io))
+  (variable choose (type
+    (function-type (
+      (value-type boolean)) (
+      (value-type int)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref choose)
+        (lambda
+          (function $anonFunc$_0 (
+            (variable flag (type
+              (value-type boolean)))) (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable x (type
+                  (value-type int))))
+              (if
+                (simple-var-ref flag)
+                (block-stmt
+                  (assignment
+                    (simple-var-ref x)
+                    (literal 10))) (
+                (block-stmt
+                  (assignment
+                    (simple-var-ref x)
+                    (literal 20)))))
+              (return
+                (simple-var-ref x))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation choose (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation choose (
+            (literal false))))))
+      (var-def
+        (variable enclosing (expr
+          (lambda
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (value-type int))))
+                (assignment
+                  (simple-var-ref x)
+                  (literal 3))
+                (var-def
+                  (variable inner (expr
+                    (lambda
+                      (function $anonFunc$_2 () (
+                        (value-type int))
+                        (block-function-body
+                          (var-def
+                            (variable y (type
+                              (value-type int))))
+                          (assignment
+                            (simple-var-ref y)
+                            (literal 4))
+                          (return
+                            (simple-var-ref y))))))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (invocation inner ())))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation enclosing ()))))
+      (var-def
+        (variable loop (expr
+          (lambda
+            (function $anonFunc$_3 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable total (type
+                    (value-type int)) (expr
+                    (literal 0))))
+                (var-def
+                  (variable $desugar$0 (expr
+                    (literal 1))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (literal 3))))
+                (while
+                  (binary-expr <=
+                    (simple-var-ref $desugar$0)
+                    (simple-var-ref $desugar$1))
+                  (block-stmt
+                    (var-def
+                      (variable i (type
+                        (value-type int)) (expr
+                        (simple-var-ref $desugar$0))))
+                    (var-def
+                      (variable x (type
+                        (value-type int))))
+                    (assignment
+                      (simple-var-ref x)
+                      (simple-var-ref i))
+                    (compound-assignment +
+                      (simple-var-ref total)
+                      (simple-var-ref x))
+                    (assignment
+                      (simple-var-ref $desugar$0)
+                      (binary-expr +
+                        (simple-var-ref $desugar$0)
+                        (numeric-literal 1)))))
+                (return
+                  (simple-var-ref total))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation loop ())))))))

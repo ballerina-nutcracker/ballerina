@@ -1,0 +1,29 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function evaluate (
+    (variable f (type
+      (function-type () (
+        (value-type int)))) (expr
+      (lambda
+        (function $anonFunc$_0 () (
+          (value-type int))
+          (block-function-body
+            (var-def
+              (variable x (type
+                (value-type int))))
+            (assignment
+              (simple-var-ref x)
+              (literal 9))
+            (return
+              (simple-var-ref x)))))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation f ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation evaluate ())))))))

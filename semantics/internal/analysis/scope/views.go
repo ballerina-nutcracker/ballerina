@@ -40,7 +40,6 @@ type FunctionInfo struct {
 
 func (f FunctionInfo) IsIsolated() bool          { return f.isolated }
 func (f FunctionInfo) IsModuleInit() bool        { return f.kind == fnModuleInit }
-func (f FunctionInfo) IsLambda() bool            { return f.kind == fnLambda }
 func (f FunctionInfo) IsExpressionClosure() bool { return f.kind == fnExpressionClosure }
 
 // isSelf reports whether sym is the closure's self.

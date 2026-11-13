@@ -1,0 +1,127 @@
+module $anon.. v 0.0.0;
+choose  function(boolean) returns int;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad true
+    %2 = %1;
+    %3 = choose(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad false
+    %7 = %6;
+    %8 = choose(%7) -> bb3;
+  }
+  bb3 {
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    %11 = fp $anon/.:$anonFunc$_1
+    enclosing = %11;
+    %13 = enclosing() -> bb5;
+  }
+  bb5 {
+    %14 = %13;
+    %15 = println(%14) -> bb6;
+  }
+  bb6 {
+    %16 = fp $anon/.:$anonFunc$_3
+    loop = %16;
+    %18 = loop() -> bb7;
+  }
+  bb7 {
+    %19 = %18;
+    %20 = println(%19) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$anonFunc$_0(boolean) -> int{
+  bb0 {
+    flag ? bb1 : bb2;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 10
+    (1, x) = %0;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb2 {
+    PushScopeFrame 1
+    %0 = ConstantLoad 20
+    (1, x) = %0;
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = x;
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %2 = ConstantLoad 3
+    x = %2;
+    %3 = fp $anon/.:$anonFunc$_2
+    inner = %3;
+    %6 = x;
+    %7 = inner() -> bb1;
+  }
+  bb1 {
+    %8 = %7;
+    %5 = + %6 %8;
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_2() -> int{
+  bb0 {
+    %2 = ConstantLoad 4
+    y = %2;
+    %0 = y;
+    return;
+  }
+}
+$anonFunc$_3() -> int{
+  bb0 {
+    %1 = ConstantLoad 0
+    total = %1;
+    %3 = ConstantLoad 1
+    $desugar$0 = %3;
+    %5 = ConstantLoad 3
+    $desugar$1 = %5;
+    GOTO bb1;
+  }
+  bb1 {
+    %8 = $desugar$0;
+    %9 = $desugar$1;
+    %7 = <= %8 %9;
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 9
+    i = (1, $desugar$0);
+    x = i;
+    %3 = (1, total);
+    %4 = x;
+    %2 = + %3 %4;
+    (1, total) = %2;
+    %6 = (1, $desugar$0);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$0) = %5;
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb3 {
+    %0 = total;
+    return;
+  }
+}
