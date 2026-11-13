@@ -377,11 +377,13 @@ func analyzeAndCreateCFG(moduleCtx *moduleContext) {
 
 	// Run CFG analyses (reachability and explicit return) after semantic analysis.
 	semantics.AnalyzeCFG(moduleCtx.compilerCtx, pkgNode, cfg)
-	compilerCtx.EndStage()
-	if compilerCtx.HasDiagnostics() {
+}
+
+func desugarModule(moduleCtx *moduleContext) {
+	if moduleCtx.bLangPkg == nil || moduleCtx.compilerCtx == nil {
 		return
 	}
-
+	compilerCtx := moduleCtx.compilerCtx
 	// Desugar package "lowering" AST to an AST that BIR gen can handle.
 	moduleCtx.bLangPkg = desugar.DesugarPackage(moduleCtx.compilerCtx, moduleCtx.bLangPkg, moduleCtx.importedSymbols)
 	if compilerCtx.HasErrors() {
