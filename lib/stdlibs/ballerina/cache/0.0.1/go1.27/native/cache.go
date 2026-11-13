@@ -38,7 +38,7 @@ func initCacheModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externInit", initExtern)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externPut", putExtern)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externGet", getExtern)
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "externRemove", removeExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "externInvalidate", invalidateExtern)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externRemoveAll", removeAllExtern)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externHasKey", hasKeyExtern)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externKeys", keysExtern(rt))
@@ -78,9 +78,8 @@ func getExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, erro
 	return entry, nil
 }
 
-func removeExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	cacheOf(args[0]).remove(args[1].(string))
-	return nil, nil
+func invalidateExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return cacheOf(args[0]).invalidate(args[1].(string), unixNanos(args[2].(*decimal.Decimal))), nil
 }
 
 func removeAllExtern(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {

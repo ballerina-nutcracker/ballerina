@@ -103,12 +103,16 @@ func (c *lruCache) get(key string, now int64) *values.Map {
 	return item.entry
 }
 
-func (c *lruCache) remove(key string) {
+// invalidate removes the entry for key and reports whether it was live, so concurrent calls remove it once.
+func (c *lruCache) invalidate(key string, now int64) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if elem, ok := c.entries[key]; ok {
-		c.removeElement(elem)
+	elem, ok := c.entries[key]
+	if !ok {
+		return false
 	}
+	c.removeElement(elem)
+	return !elem.Value.(*cacheItem).isExpired(now)
 }
 
 func (c *lruCache) removeAll() {

@@ -20,6 +20,7 @@ import ballerina/io;
 
 const WORKERS = 8;
 const PER_WORKER = 50;
+const ROUNDS = 5000;
 
 isolated function work(cache:Cache c, int id) returns int|error {
     int hits = 0;
@@ -40,6 +41,10 @@ public function main() returns error? {
     // Run every call site once on this strand first: the interpreter's per-call-site callee cache is not yet thread-safe (#1123).
     _ = check work(new (capacity = PER_WORKER), -1);
     _ = check fillSmall(new (capacity = 10, evictionFactor = 0.5), -1);
+    cache:Cache warm = new;
+    check warm.put("k", 0);
+    _ = drop(warm);
+    _ = drop(warm);
 
     cache:Cache big = new (capacity = WORKERS * PER_WORKER);
     future<int|error>[] futures = [];
@@ -63,6 +68,25 @@ public function main() returns error? {
         _ = check wait f;
     }
     io:println(small.size() <= small.capacity(), " ", small.keys().length() == small.size()); // @output true true
+
+    // Two strands invalidating the same key never both succeed (ballerina-platform/ballerina-library#9693).
+    cache:Cache shared = new;
+    int both = 0;
+    foreach int i in 0 ..< ROUNDS {
+        check shared.put("k", i);
+        future<boolean> a = start drop(shared);
+        future<boolean> b = start drop(shared);
+        boolean droppedA = check wait a;
+        boolean droppedB = check wait b;
+        if droppedA && droppedB {
+            both += 1;
+        }
+    }
+    io:println(both); // @output 0
+}
+
+isolated function drop(cache:Cache c) returns boolean {
+    return c.invalidate("k") is ();
 }
 
 isolated function fillSmall(cache:Cache c, int id) returns int|error {

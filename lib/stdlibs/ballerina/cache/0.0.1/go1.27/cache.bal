@@ -155,10 +155,10 @@ public isolated class Cache {
     # + return - `()` if successfully discarded the value or a `cache:Error` if the provided cache key is not present
     #            in the cache
     public isolated function invalidate(string key) returns Error? {
-        if !self.hasKey(key) {
+        time:Utc currentUtc = time:utcNow();
+        if !externInvalidate(self, key, <decimal>currentUtc[0] + currentUtc[1]) {
             return prepareError("Cache entry from the given key: " + key + ", is not available.");
         }
-        externRemove(self, key);
     }
 
     # Discards all the cached values from the cache.
@@ -271,6 +271,6 @@ isolated function externPut(Cache cache, string key, any value) = external;
 
 isolated function externGet(Cache cache, string key, decimal currentTime) returns CacheEntry? = external;
 
-isolated function externRemove(Cache cache, string key) = external;
+isolated function externInvalidate(Cache cache, string key, decimal currentTime) returns boolean = external;
 
 isolated function externCleanUp(Cache cache, decimal currentTime) = external;
