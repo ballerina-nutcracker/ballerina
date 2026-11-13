@@ -67,4 +67,7 @@ E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
 E: failed to parse xml: 'undeclared XML namespace prefix "p"'
 true
 E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: XML syntax error on line 1: Duplicate attribute 'id'.
+E: failed to parse xml: XML syntax error on line 1: Duplicate attribute '{urn:n}id'.
+true
 -- stderr --

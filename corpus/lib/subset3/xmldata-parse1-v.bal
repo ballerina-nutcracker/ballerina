@@ -239,6 +239,17 @@ public function main() {
     record {}|error tooDeepValue = xmldata:parseAsType(nestedValue(1001));
     show(tooDeepValue);
     // @output E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+
+    // An attribute may appear only once per expanded name, whatever prefix names it.
+    record {}|error duplicate = xmldata:parseString("<r id='one' id='two'/>");
+    show(duplicate);
+    // @output E: failed to parse xml: XML syntax error on line 1: Duplicate attribute 'id'.
+    record {}|error duplicateNs = xmldata:parseString("<r xmlns:p='urn:n' xmlns:q='urn:n' p:id='one' q:id='two'/>");
+    show(duplicateNs);
+    // @output E: failed to parse xml: XML syntax error on line 1: Duplicate attribute '{urn:n}id'.
+    record {}|error distinctNs = xmldata:parseString("<r xmlns:p='urn:p' xmlns:q='urn:q' p:id='one' q:id='two'/>");
+    io:println(distinctNs is record {});
+    // @output true
 }
 
 function nestedValue(int depth) returns xml {

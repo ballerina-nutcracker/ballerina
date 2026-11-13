@@ -248,9 +248,21 @@ func (r *staxReader) startElement(t xml.StartElement) error {
 		if err != nil {
 			return err
 		}
+		for _, seen := range r.attributes {
+			if seen.name.ns == attrName.ns && seen.name.local == attrName.local {
+				return r.syntaxError(fmt.Sprintf("Duplicate attribute '%s'.", expandedName(attrName)))
+			}
+		}
 		r.attributes = append(r.attributes, staxAttribute{name: attrName, value: attr.Value})
 	}
 	return nil
+}
+
+func expandedName(name staxName) string {
+	if name.ns == "" {
+		return name.local
+	}
+	return "{" + name.ns + "}" + name.local
 }
 
 func (r *staxReader) resolve(name xml.Name, element bool) (staxName, error) {
