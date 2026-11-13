@@ -81,3 +81,66 @@ func TestTypeCacheMissComparesOnlyEnclosingTypes(t *testing.T) {
 		t.Fatalf("compared %d types to classify %d records", comparisons, records)
 	}
 }
+
+// TestTypeCacheReusesUnionWithValueSubtype classifies a record unioned with a proper subtype of a value type,
+// once per value as parsing does, and checks each call reuses the first classification instead of minting new
+// member types (which made parsing a list into (R|"none")[] quadratic).
+func TestTypeCacheReusesUnionWithValueSubtype(t *testing.T) {
+	t.Parallel()
+	values := map[string]semtypes.SemType{
+		"singleton": semtypes.StringConst("none"),
+		"enum":      semtypes.Union(semtypes.StringConst("RED"), semtypes.StringConst("GREEN")),
+		"byte":      semtypes.Byte,
+		"int const": semtypes.IntConst(7),
+	}
+	for name, value := range values {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			env := semtypes.CreateTypeEnv()
+			cx := semtypes.ContextFrom(env)
+			record := closedRecord(env, semtypes.FieldFrom("a", semtypes.Int, false, false))
+			cache := newTypeCache()
+			union := semtypes.Union(record, value)
+			field := closedRecord(env, semtypes.FieldFrom("f", union, false, false))
+			interner := semtypes.NewSemtypeInterner()
+			var first [2]semtypes.InternHandle
+			for i := range 100 {
+				typer := newTyper(cache, cx, union, nil)
+				for pos, ty := range []semtypes.SemType{union, typer.classify(field).mapping.FieldInnerVal("f")} {
+					ti := typer.classify(ty)
+					if ti.kind != kindUnion || len(ti.members) != 2 {
+						t.Fatalf("got kind %d with %d members, want a union of 2", ti.kind, len(ti.members))
+					}
+					handle := interner.Intern(ti.members[0])
+					if i == 0 {
+						first[pos] = handle
+					} else if handle != first[pos] {
+						t.Fatalf("classification %d minted a new record member", i)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestTypeCacheKeepsValuePartsApart checks two unions that differ only in their value subtype are not given
+// each other's classification.
+func TestTypeCacheKeepsValuePartsApart(t *testing.T) {
+	t.Parallel()
+	env := semtypes.CreateTypeEnv()
+	cx := semtypes.ContextFrom(env)
+	record := closedRecord(env, semtypes.FieldFrom("a", semtypes.Int, false, false))
+	typer := newTyper(newTypeCache(), cx, record, nil)
+	for _, value := range []string{"a", "b", "a"} {
+		ti := typer.classify(semtypes.Union(record, semtypes.StringConst(value)))
+		member := ti.members[len(ti.members)-1]
+		if !semtypes.IsSameType(cx, member, semtypes.StringConst(value)) {
+			t.Fatalf("R|%q classified with value member %s", value, semtypes.ToString(cx, member))
+		}
+	}
+}
+
+func closedRecord(env semtypes.Env, fields ...semtypes.Field) semtypes.SemType {
+	md := semtypes.NewMappingDefinition()
+	return md.Define(env, fields, semtypes.Never)
+}

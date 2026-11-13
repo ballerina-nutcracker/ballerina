@@ -170,7 +170,8 @@ func newTyper(cache *typeCache, tc semtypes.Context, root semtypes.SemType, root
 type typeCache struct {
 	mu       sync.Mutex
 	interner *semtypes.SemTypeInterner
-	infos    map[semtypes.InternHandle]typeInfo
+	// infos is keyed by the type without its value part (see cacheKey) and holds one entry per value part.
+	infos map[semtypes.InternHandle][]typeInfo
 	// enclosing holds, for each member type of a classified type not classified yet, the types enclosing it.
 	enclosing map[semtypes.InternHandle]*enclosingType
 	sameType  func(semtypes.Context, semtypes.SemType, semtypes.SemType) bool
@@ -185,7 +186,7 @@ type enclosingType struct {
 func newTypeCache() *typeCache {
 	return &typeCache{
 		interner:  semtypes.NewSemtypeInterner(),
-		infos:     make(map[semtypes.InternHandle]typeInfo),
+		infos:     make(map[semtypes.InternHandle][]typeInfo),
 		enclosing: make(map[semtypes.InternHandle]*enclosingType),
 		sameType:  semtypes.IsSameType,
 	}
@@ -194,8 +195,8 @@ func newTypeCache() *typeCache {
 func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, classify func(semtypes.SemType) typeInfo) typeInfo {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	handle := c.interner.Intern(ty)
-	if ti, ok := c.infos[handle]; ok {
+	handle := c.cacheKey(ty)
+	if ti, ok := c.lookup(tc, handle, ty); ok {
 		return ti
 	}
 	outer := c.enclosing[handle]
@@ -204,18 +205,18 @@ func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, clas
 	// nested values of the type from minting a new copy at every level.
 	for e := outer; e != nil; e = e.outer {
 		if c.sameType(tc, ty, e.ti.ty) {
-			c.infos[handle] = e.ti
+			c.infos[handle] = append(c.infos[handle], e.ti)
 			return e.ti
 		}
 	}
 	ti := classify(ty)
-	c.infos[handle] = ti
+	c.infos[handle] = append(c.infos[handle], ti)
 	enclosing := &enclosingType{ti: ti, outer: outer}
 	for _, member := range memberTypes(ti) {
 		if !cacheable(member) {
 			continue
 		}
-		memberHandle := c.interner.Intern(member)
+		memberHandle := c.cacheKey(member)
 		if _, ok := c.infos[memberHandle]; ok {
 			continue
 		}
@@ -224,6 +225,22 @@ func (c *typeCache) getOrClassify(tc semtypes.Context, ty semtypes.SemType, clas
 		}
 	}
 	return ti
+}
+
+// cacheKey interns ty without its value part, which keeps the subtype data of its other basic types, so a
+// copy of ty gets the same key even though the interner never matches a proper subtype of a value type.
+func (c *typeCache) cacheKey(ty semtypes.SemType) semtypes.InternHandle {
+	return c.interner.Intern(semtypes.Diff(ty, valueTypes))
+}
+
+func (c *typeCache) lookup(tc semtypes.Context, handle semtypes.InternHandle, ty semtypes.SemType) (typeInfo, bool) {
+	value := semtypes.Intersect(ty, valueTypes)
+	for _, ti := range c.infos[handle] {
+		if semtypes.IsSameType(tc, value, semtypes.Intersect(ti.ty, valueTypes)) {
+			return ti, true
+		}
+	}
+	return typeInfo{}, false
 }
 
 // memberTypes lists the types the members of a value of the classified type are converted to.
@@ -247,21 +264,12 @@ func memberTypes(ti typeInfo) []semtypes.SemType {
 	}
 }
 
-var valueBasicTypes = []semtypes.SemType{semtypes.Int, semtypes.Float, semtypes.Decimal, semtypes.String}
+var valueTypes = semtypes.Union(semtypes.Union(semtypes.Int, semtypes.Float), semtypes.Union(semtypes.Decimal, semtypes.String))
 
-// cacheable reports whether ty is worth caching and the interner can recognise a copy of it: only mapping
-// and list types are costly to classify, and the interner never matches a proper subtype of a value type.
+// cacheable reports whether ty is worth caching: only mapping and list types are costly to classify.
 func cacheable(ty semtypes.SemType) bool {
 	basic := semtypes.WidenToBasicTypes(ty)
-	if !semtypes.ContainsBasicType(basic, semtypes.Mapping) && !semtypes.ContainsBasicType(basic, semtypes.List) {
-		return false
-	}
-	for _, valueTy := range valueBasicTypes {
-		if semtypes.ContainsBasicType(basic, valueTy) && !semtypes.IsSubtypeSimple(valueTy, ty) {
-			return false
-		}
-	}
-	return true
+	return semtypes.ContainsBasicType(basic, semtypes.Mapping) || semtypes.ContainsBasicType(basic, semtypes.List)
 }
 
 func (t *typer) classify(ty semtypes.SemType) typeInfo {
