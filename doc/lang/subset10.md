@@ -145,6 +145,8 @@ These are intentional departures from the [language specification](https://balle
     - Calls with named arguments when the callee's parameter signature is unavailable
     - Anonymous functions containing client resource access actions with non-atomic receivers or ambiguous dispatch
 
+- A [range expression](https://ballerina.io/spec/lang/master/#section_6.26) is not a [constant expression](https://ballerina.io/spec/lang/master/#section_6.4), although the `const-expr` grammar lists `range-expr`. A range expression evaluates to an object, and object values are not created at compile time.
+
 ## Deviations from jBallerina
 
 - Implicit `new` expressions reject an applicable contextually expected type containing both `stream` and `object` subtypes; jBallerina can select an applicable class from such a type.

@@ -14,20 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// This module currently exposes no symbols; it exists so that the lang.object
-// langlib resolves as a real bundle.
+import ballerina/lang.__internal as internal;
 
-// Distinct Iterable type.
-// An object can make itself iterable by using `*object:Iterable;`,
-// and then defining an `iterator` method.
-public type Iterable distinct object {
-    // Create a new iterator.
-    //
-    // + return - a new iterator object
-    public function iterator() returns object {
-        public function next() returns record {| any|error value; |}|error?;
-    };
-};
+# Distinct Iterable type.
+# An object can make itself iterable by using `*object:Iterable;`,
+# and then defining an `iterator` method.
+public type Iterable internal:Iterable;
 
 // Distinct RawTemplate type.
 // A raw template expression constructs an object belonging to this type.

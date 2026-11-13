@@ -65,8 +65,10 @@ func AssignmentTargetError(kind model.SymbolKind) (string, bool) {
 	}
 }
 
+// IterableType returns object:Iterable. lang.object exports it as an alias of
+// the distinct type that lang.__internal defines.
 func IterableType(ctx *context.CompilerContext) (semtypes.SemType, bool) {
-	ref, ok := ctx.LangLibDistinctTypeSymbol("lang.object", "Iterable")
+	ref, ok := ctx.LangLibDistinctTypeSymbol("lang.__internal", "Iterable")
 	if !ok {
 		return semtypes.SemType{}, false
 	}

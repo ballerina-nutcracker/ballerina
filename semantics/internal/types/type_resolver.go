@@ -2840,9 +2840,10 @@ func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinit
 	case *ast.BLangErrorTypeNode:
 		return appendDistinctErrorAtoms(t, semType, typeDef), true
 	case *ast.BLangUserDefinedType:
-		if !typeDef.IsDistinct() {
-			return semType, true
-		}
+		// A type defined as another object or error type carries that type's
+		// distinct type IDs even when it is not distinct itself, so that an
+		// object type including it (e.g. *object:Iterable, an alias of
+		// lang.__internal:Iterable) also includes them.
 		parent := t.getSymbol(typeDesc.Symbol())
 		switch parent.(type) {
 		case *model.ErrorTypeSymbol:
@@ -2850,6 +2851,9 @@ func resolveDistinctTypeDefinition(t typeResolver, typeDef *ast.BLangTypeDefinit
 		case model.ObjectType:
 			return appendDistinctAliasAtoms(t, semType, typeDef.Symbol(), typeDesc.Symbol(), semtypes.ObjectDefinitionDistinct), true
 		default:
+			if !typeDef.IsDistinct() {
+				return semType, true
+			}
 			t.semanticError("only object and error types can be distinct", typeDef.GetPosition())
 			return semtypes.SemType{}, false
 		}
@@ -6817,7 +6821,12 @@ func resolveRangeExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	resultTy := createIteratorType(t.typeEnv(), semtypes.Int, semtypes.Nil)
+	iterableTy, ok := common.IterableType(t.compilerContext())
+	if !ok {
+		t.internalError("object:Iterable not found", expr.GetPosition())
+		return semtypes.SemType{}, expressionEffect{}, false
+	}
+	resultTy := createRangeType(t.typeEnv(), iterableTy)
 	setNodeType(t, expr, resultTy)
 	effect := defaultExpressionEffect(sequentialChain(t, rhsResult.effect))
 	return resultTy, effect, true
@@ -7297,6 +7306,27 @@ var additiveSupportedTypes = semtypes.Union(semtypes.Union(semtypes.Number, semt
 
 var bitWiseOpLookOrder = []semtypes.SemType{semtypes.UnsignedInt8, semtypes.UnsignedInt16, semtypes.UnsignedInt32}
 
+// createRangeType returns the type of a range expression's value,
+// Iterable<int,()>: object:Iterable whose iterator() returns an int iterator
+// that completes with nil. Both methods are isolated, so a range value can be
+// iterated explicitly inside an isolated function.
+func createRangeType(env semtypes.Env, iterableTy semtypes.SemType) semtypes.SemType {
+	ld := semtypes.NewListDefinition()
+	emptyParams := ld.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
+	fd := semtypes.NewFunctionDefinition()
+	iteratorFnTy := fd.Define(env, emptyParams, createIteratorType(env, semtypes.Int, semtypes.Nil),
+		semtypes.FunctionQualifiersFrom(env, true, false))
+	od := semtypes.NewObjectDefinition()
+	rangeTy := od.Define(env, semtypes.ObjectQualifiersDefault, []semtypes.Member{{
+		Name:       "iterator",
+		ValueType:  iteratorFnTy,
+		Kind:       semtypes.MemberKindMethod,
+		Visibility: semtypes.VisibilityPublic,
+		Immutable:  true,
+	}})
+	return semtypes.Intersect(iterableTy, rangeTy)
+}
+
 func createIteratorType(env semtypes.Env, valueTy, completionTy semtypes.SemType) semtypes.SemType {
 	od := semtypes.NewObjectDefinition()
 
@@ -7311,7 +7341,7 @@ func createIteratorType(env semtypes.Env, valueTy, completionTy semtypes.SemType
 	ld := semtypes.NewListDefinition()
 	listTy := ld.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
 	fd := semtypes.NewFunctionDefinition()
-	fnTy := fd.Define(env, listTy, resultTy, semtypes.FunctionQualifiersFrom(env, false, false))
+	fnTy := fd.Define(env, listTy, resultTy, semtypes.FunctionQualifiersFrom(env, true, false))
 
 	members := []semtypes.Member{
 		{
