@@ -251,6 +251,32 @@ public function main() {
     io:println(distinctNs is record {});
     // @output true
 
+    // Namespace declarations follow the Namespaces in XML rules: one per prefix, no empty URI for a prefix, and the xml and xmlns bindings are fixed.
+    string[] namespaces = [
+        "<r xmlns:p='a' xmlns:p='b' id='x'/>",
+        "<r xmlns='a' xmlns='b' id='x'/>",
+        "<r xmlns:p='' p:id='1'/>",
+        "<r xmlns:xml='urn:other' id='1'/>",
+        "<r xmlns:xmlns='urn:x' id='1'/>",
+        "<r xmlns:p='http://www.w3.org/XML/1998/namespace' id='1'/>",
+        "<r xmlns='http://www.w3.org/2000/xmlns/' id='1'/>",
+        "<r xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns='' xml:lang='en' id='1'/>",
+        "<r xmlns:p='a'><c xmlns:p='b' id='1'/></r>"
+    ];
+    foreach string namespace in namespaces {
+        record {|string id?;|}|error parsed = xmldata:parseString(namespace);
+        show(parsed);
+    }
+    // @output E: failed to parse xml: XML syntax error on line 1: Duplicate declaration for namespace prefix 'p'.
+    // @output E: failed to parse xml: XML syntax error on line 1: Duplicate default namespace declaration.
+    // @output E: failed to parse xml: XML syntax error on line 1: prefixed namespace declaration cannot have an empty URI
+    // @output E: failed to parse xml: XML syntax error on line 1: invalid xml namespace binding
+    // @output E: failed to parse xml: XML syntax error on line 1: reserved xmlns namespace binding
+    // @output E: failed to parse xml: XML syntax error on line 1: invalid xml namespace binding
+    // @output E: failed to parse xml: XML syntax error on line 1: reserved xmlns namespace binding
+    // @output {"id":"1"}
+    // @output {}
+
     // The XML declaration is allowed only at the very start; xml in any case is otherwise a reserved target.
     string[] declarations = [
         "<?xml version='1.0'?><r id='ok'/>",

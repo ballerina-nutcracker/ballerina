@@ -229,13 +229,27 @@ func (r *staxReader) startElement(t xml.StartElement) error {
 	for k, v := range r.scopes[len(r.scopes)-1] {
 		scope[k] = v
 	}
+	declared := map[string]bool{}
 	for _, attr := range t.Attr {
+		prefix := ""
 		switch {
 		case attr.Name.Space == "xmlns":
-			scope[attr.Name.Local] = attr.Value
+			prefix = attr.Name.Local
 		case attr.Name.Space == "" && attr.Name.Local == "xmlns":
-			scope[""] = attr.Value
+		default:
+			continue
 		}
+		if declared[prefix] {
+			if prefix == "" {
+				return r.syntaxError("Duplicate default namespace declaration.")
+			}
+			return r.syntaxError(fmt.Sprintf("Duplicate declaration for namespace prefix '%s'.", prefix))
+		}
+		declared[prefix] = true
+		if err := values.ValidateNamespaceBinding(prefix, attr.Value); err != nil {
+			return r.syntaxError(err.Error())
+		}
+		scope[prefix] = attr.Value
 	}
 	r.scopes = append(r.scopes, scope)
 	name, err := r.resolve(t.Name, true)

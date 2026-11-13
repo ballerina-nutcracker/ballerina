@@ -70,6 +70,15 @@ E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
 E: failed to parse xml: XML syntax error on line 1: Duplicate attribute 'id'.
 E: failed to parse xml: XML syntax error on line 1: Duplicate attribute '{urn:n}id'.
 true
+E: failed to parse xml: XML syntax error on line 1: Duplicate declaration for namespace prefix 'p'.
+E: failed to parse xml: XML syntax error on line 1: Duplicate default namespace declaration.
+E: failed to parse xml: XML syntax error on line 1: prefixed namespace declaration cannot have an empty URI
+E: failed to parse xml: XML syntax error on line 1: invalid xml namespace binding
+E: failed to parse xml: XML syntax error on line 1: reserved xmlns namespace binding
+E: failed to parse xml: XML syntax error on line 1: invalid xml namespace binding
+E: failed to parse xml: XML syntax error on line 1: reserved xmlns namespace binding
+{"id":"1"}
+{}
 {"id":"ok"}
 E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
 E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("XML"); xml (case insensitive) is reserved by the specs.
