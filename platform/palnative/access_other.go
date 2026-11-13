@@ -24,3 +24,5 @@ func isDirWritable(path string) bool {
 	fi, err := os.Stat(path)
 	return err == nil && fi.Mode().Perm()&0o222 != 0
 }
+
+const hasPosixPermissions = false

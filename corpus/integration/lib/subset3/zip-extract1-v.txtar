@@ -1,0 +1,39 @@
+-- stdout --
+b
+true
+FileSystemError: cannot extract entry 'a.txt': file '<dir>/out/a.txt' already exists
+old
+new
+FileSystemError: cannot extract entry 'a.txt': a directory already exists at '<dir>/folder/a.txt'
+FileSystemError: cannot extract entry 'sub/b.txt': a file already exists at '<dir>/file/sub', where a directory is required
+FileSystemError: cannot extract entry 'a.txt': file '<dir>/single.txt' already exists
+kept
+new
+FileSystemError: cannot extract entry 'a.txt': a directory already exists at '<dir>'
+FileSystemError: cannot extract entry 'a.txt': the content could not be written to '<dir>/missing/a.txt'
+true
+Error: invalid 'maxEntries': the value must be positive; omit it to place no limit on the number of entries
+Error: invalid 'maxTotalSize': the value must be positive; omit it to place no limit on the total size
+Error: invalid 'maxCompressionRatio': the value must be positive; omit it to place no limit on how far an entry may expand
+LimitExceededError: cannot extract the archive: it contains more than the 2 entries allowed
+LimitExceededError: cannot extract entry 'big.bin': the extracted size would exceed the 10000 bytes allowed
+8192
+LimitExceededError: cannot extract entry 'big.bin': the extracted size would exceed the 6 bytes allowed
+false
+LimitExceededError: cannot extract entry 'zeros.bin': it expands to more than 2 times its compressed size
+LimitExceededError: cannot extract entry 'zeros.bin': it expands to more than 2 times its compressed size
+40000
+UnsafePathError: invalid entry name '../evil.txt': a name cannot contain a '..' segment
+UnsafePathError: invalid entry name '/abs.txt': a name cannot be absolute
+UnsafePathError: invalid entry name 'a\b.txt': a name cannot contain '\'
+UnsafePathError: invalid entry name 'c:drive.txt': a name cannot start with a drive letter
+UnsafePathError: invalid entry name 'notes.txt:evil': a name cannot contain ':'
+UnsafePathError: invalid entry name 'a/./b.txt': a name cannot contain a '.' segment
+UnsafePathError: invalid entry name 'nul<NUL>zero.txt': a name cannot contain a zero byte
+UnsupportedEntryError: cannot extract entry 'ok/link': symbolic links are not supported
+UnsafePathError: invalid entry name '../evil.txt': a name cannot contain a '..' segment
+1500000000
+1600000000
+1700000000
+1700000000
+-- stderr --
