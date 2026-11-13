@@ -69,7 +69,7 @@ public function main() returns error? {
     RecursiveField|xmldata:Error recursive = xmldata:parseString("<r><n>a</n></r>");
     show(recursive);
     // @output {"n":"a"}
-    // The traversal tries the array member first (#1380), which also holds the text.
+    // Union members are tried in a fixed order, not declaration order, so the traversal tries the array member first, which also holds the text.
     RecursiveField|xmldata:Error recursiveTraversed = xmldata:parseAsType(xml `<r><n>a</n></r>`);
     show(recursiveTraversed);
     // @output {"n":["a"]}

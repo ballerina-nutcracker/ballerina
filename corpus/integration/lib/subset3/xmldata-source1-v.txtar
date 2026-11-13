@@ -6,6 +6,7 @@
 E: required field 'age' not present in XML
 true
 E: stream failure
+{"name":"E","age":5}
 {"name":"D","age":4}
 true
 true

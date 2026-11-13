@@ -100,6 +100,11 @@ public function main() {
     Person|xmldata:Error r5 = xmldata:parseStream(s5);
     show(r5);
     // @output E: stream failure
+    // The target type is inferred under trap as well.
+    stream<byte[], error?> s6 = ["<p><name>E</name><age>5</age></p>".toBytes()].toStream();
+    Person|error r6 = trap xmldata:parseStream(s6);
+    show(r6);
+    // @output {"name":"E","age":5}
 
     Person|xmldata:Error latin1 = xmldata:parseString("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><p><name>D</name><age>4</age></p>");
     show(latin1);
