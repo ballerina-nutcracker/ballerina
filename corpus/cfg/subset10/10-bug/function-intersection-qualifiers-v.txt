@@ -1,0 +1,55 @@
+(C
+  (next
+    (bb0 () ()
+      (literal 2)
+    )
+  )
+)
+(callFn
+  (bb0 () ()
+    (return
+      (invocation f ()))
+  )
+)
+(callNext
+  (bb0 () ()
+    (return
+      (invocation next expr:
+        (simple-var-ref o) ()))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (type
+        (intersection-type
+          (user-defined-type F1)
+          (user-defined-type F2))) (expr
+        (simple-var-ref one))))
+    (expression-stmt
+      (invocation io println (
+        (invocation callFn (
+          (simple-var-ref f))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref f)
+          (function-type () ())))))
+    (var-def
+      (variable o (type
+        (intersection-type
+          (user-defined-type O1)
+          (user-defined-type O2))) (expr
+        (new
+          (user-defined-type C) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation callNext (
+          (simple-var-ref o))))))
+  )
+)
+(one
+  (bb0 () ()
+    (literal 1)
+  )
+)
