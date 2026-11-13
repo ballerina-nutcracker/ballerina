@@ -949,13 +949,9 @@ func (p *PrettyPrinter) printResourcePathParamSegment(kind string, seg *BLangRes
 	p.EndNode()
 }
 
-func (p *PrettyPrinter) printResourceMethod(node *BLangResourceMethod) {
-	p.StartNode()
-	p.PrintString("resource-function")
-	p.PrintString(printableIdentifierValue(node.Name))
-	p.indentLevel++
-	for i := range node.ResourcePath {
-		seg := &node.ResourcePath[i]
+func (p *PrettyPrinter) printResourcePath(path []BLangResourcePathSegment) {
+	for i := range path {
+		seg := &path[i]
 		switch seg.Kind {
 		case ResourcePathSegmentName:
 			p.PrintString("name:" + seg.Name)
@@ -965,6 +961,14 @@ func (p *PrettyPrinter) printResourceMethod(node *BLangResourceMethod) {
 			p.printResourcePathParamSegment("rest", seg)
 		}
 	}
+}
+
+func (p *PrettyPrinter) printResourceMethod(node *BLangResourceMethod) {
+	p.StartNode()
+	p.PrintString("resource-function")
+	p.PrintString(printableIdentifierValue(node.Name))
+	p.indentLevel++
+	p.printResourcePath(node.ResourcePath)
 	params := node.GetParameters()
 	for i := range params {
 		p.PrintInner(&params[i])
@@ -2276,7 +2280,15 @@ func (p *PrettyPrinter) printObjectField(node *BObjectField) {
 func (p *PrettyPrinter) printMethodDecl(node *BMethodDecl) {
 	p.StartNode()
 	p.PrintString("method-decl")
-	p.PrintString(node.Name())
+	if node.MemberKind() == ObjectMemberKindResourceMethod {
+		p.PrintString("resource")
+		p.PrintString(node.Accessor)
+		p.indentLevel++
+		p.printResourcePath(node.ResourcePath)
+		p.indentLevel--
+	} else {
+		p.PrintString(node.Name())
+	}
 	if node.IsPublic() {
 		p.PrintString("public")
 	}

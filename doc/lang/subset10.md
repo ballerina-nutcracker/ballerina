@@ -348,4 +348,5 @@ These are intentional departures from the [language specification](https://balle
 
 - Only `client`, `service` and `isolated` `object-type-quals` / `class-type-quals` are supported
 - Supports `object-field-descriptor`, `method-decl`, `remote-method-decl`, `resource-method-decl` and `object-type-inclusion` members
+  - Resource declarations are not registered for client resource access through object type descriptors. Implementing included resource declarations in classes and structural matching of resource paths are not yet supported
 - Supports `included-record-param`, `rest-param` and `defaultable-param` in methods
