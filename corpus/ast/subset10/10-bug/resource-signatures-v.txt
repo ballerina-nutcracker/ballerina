@@ -1,0 +1,41 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (type-definition PathId
+    (value-type int))
+  (type-definition ServiceObject
+    (object-type service
+      (method-decl resource get name:name () (
+        (value-type string)))))
+  (type-definition ClientObject
+    (object-type client
+      (method-decl resource get name:name () (
+        (value-type string)))))
+  (type-definition ClientPaths
+    (object-type client
+      (method-decl resource get () (
+        (value-type string)))
+      (method-decl resource get name:items
+        (param id
+          (user-defined-type PathId)) (
+        (param count
+          (value-type int))) (
+        (value-type string)))
+      (method-decl resource get name:files
+        (rest tail
+          (value-type string)) () (
+        (value-type string)))
+      (method-decl resource get name:users () (
+        (value-type string)))
+      (method-decl resource post name:items
+        (param 
+          (value-type int)) (
+        (param value
+          (value-type string))) (
+        (value-type int)))
+      (method-decl get () (
+        (value-type int)))))
+  (type-definition IncludedClient
+    (object-type client))
+  (function main () (
+    (value-type null))
+    (block-function-body)))

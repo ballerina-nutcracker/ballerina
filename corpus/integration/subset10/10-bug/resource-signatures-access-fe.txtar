@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: client resource access through an object type descriptor
+  --> resource-signatures-access-fe.bal:22:12
+   |
+22 |     return c->/name; // @error client resource access through an object type descriptor is not implemented
+   |            ^^^^^^^^
