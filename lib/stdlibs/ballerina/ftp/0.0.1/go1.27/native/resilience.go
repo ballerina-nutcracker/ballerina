@@ -142,10 +142,11 @@ func millis(f float64) int64 {
 
 func newCircuitBreaker(config *values.Map, elapsed func() time.Duration) (*circuitBreaker, error) {
 	window := getMap(config, "rollingWindow")
+	threshold := getFloat(config, "failureThreshold")
 	cb := &circuitBreaker{
 		elapsed:    elapsed,
 		volume:     getInt(window, "requestVolumeThreshold"),
-		threshold:  float32(getFloat(config, "failureThreshold")),
+		threshold:  float32(threshold),
 		resetMs:    millis(getFloat(config, "resetTime")),
 		windowMs:   millis(getFloat(window, "timeWindow")),
 		bucketMs:   millis(getFloat(window, "bucketSize")),
@@ -157,7 +158,7 @@ func newCircuitBreaker(config *values.Map, elapsed func() time.Duration) (*circu
 	switch {
 	case len(cb.categories) == 0:
 		return nil, newError(kindInvalidConfig, "Circuit breaker failureCategories must not be empty")
-	case cb.threshold < 0 || cb.threshold > 1:
+	case !(threshold >= 0 && threshold <= 1):
 		return nil, newError(kindInvalidConfig, "Circuit breaker failureThreshold must be between 0.0 and 1.0")
 	case cb.volume <= 0:
 		return nil, newError(kindInvalidConfig, "Circuit breaker requestVolumeThreshold must be greater than 0")

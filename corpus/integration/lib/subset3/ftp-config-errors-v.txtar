@@ -9,6 +9,8 @@ InvalidConfigError: Port must be between 1 and 65535 (got: 65536)
 InvalidConfigError: Port must be between 1 and 65535 (got: -21)
 InvalidConfigError: Circuit breaker failureCategories must not be empty
 InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
+InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
+InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
 InvalidConfigError: Circuit breaker requestVolumeThreshold must be greater than 0
 InvalidConfigError: Circuit breaker resetTime must be greater than 0
 InvalidConfigError: Circuit breaker bucketSize must be greater than 0

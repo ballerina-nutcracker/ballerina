@@ -112,6 +112,9 @@ public function main() {
     ftp:CircuitBreakerConfig[] breakers = [
         {failureCategories: []},
         {failureThreshold: 1.5},
+        // NaN and values just above 1.0 are rejected too (ballerina-platform/ballerina-library#9694).
+        {failureThreshold: float:NaN},
+        {failureThreshold: 1.00000001},
         {rollingWindow: {requestVolumeThreshold: 0}},
         {resetTime: 0},
         {rollingWindow: {bucketSize: 0}},
@@ -122,6 +125,8 @@ public function main() {
         report(new ftp:Client({port: 1, circuitBreaker}));
     }
     // @output InvalidConfigError: Circuit breaker failureCategories must not be empty
+    // @output InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
+    // @output InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
     // @output InvalidConfigError: Circuit breaker failureThreshold must be between 0.0 and 1.0
     // @output InvalidConfigError: Circuit breaker requestVolumeThreshold must be greater than 0
     // @output InvalidConfigError: Circuit breaker resetTime must be greater than 0
