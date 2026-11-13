@@ -206,6 +206,14 @@ func walkBinaryExpr(cx *functionContext, expr *ast.BLangBinaryExpr) desugaredNod
 		result := walkExpression(cx, expr.RhsExpr)
 		expr.RhsExpr = result.(ast.BLangExpression)
 	}
+	if isRangeExpr(expr) {
+		// A range used as the collection of a foreach is lowered to a counting
+		// loop before it reaches here; any other range is a value.
+		closed := expr.GetOperatorKind() == model.OperatorKind_CLOSED_RANGE
+		inv := createLangInternalInvocation(cx, "createIntRange", expr.Ty,
+			[]ast.BLangExpression{expr.LhsExpr, expr.RhsExpr, createBoolLiteral(closed, expr.GetPosition())}, expr.GetPosition())
+		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: inv}
+	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 }

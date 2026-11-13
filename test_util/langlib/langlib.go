@@ -190,7 +190,7 @@ func Build(cx *context.CompilerContext, publicSymbols map[semantics.PackageIdent
 		space, ok := publicSymbols[pkgID]
 		if !ok {
 			var err error
-			space, err = compileBundledLib(cx, cache, lib)
+			space, err = compileBundledLib(cx, cache, lib, publicSymbols)
 			if err != nil {
 				return nil, err
 			}
@@ -203,7 +203,7 @@ func Build(cx *context.CompilerContext, publicSymbols map[semantics.PackageIdent
 	for _, lib := range bundledStdlibs {
 		pkgID := semantics.PackageIdentifier{OrgName: lib.org, ModuleName: strings.Join(lib.nameComps, ".")}
 		if _, ok := publicSymbols[pkgID]; !ok {
-			space, err := compileBundledLib(cx, cache, lib)
+			space, err := compileBundledLib(cx, cache, lib, publicSymbols)
 			if err != nil {
 				return nil, err
 			}
@@ -216,8 +216,9 @@ func Build(cx *context.CompilerContext, publicSymbols map[semantics.PackageIdent
 
 // compileBundledLib compiles a single bundled library's source into cx and
 // returns its exported symbol space, reusing a previous compilation in the same
-// build if present.
-func compileBundledLib(cx *context.CompilerContext, cache map[string]model.ExportedSymbolSpace, lib bundledLib) (model.ExportedSymbolSpace, error) {
+// build if present. publicSymbols holds the libraries compiled before lib,
+// which lib may import.
+func compileBundledLib(cx *context.CompilerContext, cache map[string]model.ExportedSymbolSpace, lib bundledLib, publicSymbols map[semantics.PackageIdentifier]model.ExportedSymbolSpace) (model.ExportedSymbolSpace, error) {
 	if cached, ok := cache[lib.balPath]; ok {
 		return cached, nil
 	}
@@ -248,13 +249,13 @@ func compileBundledLib(cx *context.CompilerContext, cache map[string]model.Expor
 	cu.SetPackageID(pkgID)
 	compilationUnits := []*ast.BLangCompilationUnit{cu}
 
-	// Bundled libraries do not import other modules.
+	// A bundled library may import only the libraries compiled before it.
 	pkgScope, exported, imported := semantics.ResolveSymbols(
 		cx,
 		*pkgID,
 		compilationUnits,
 		make(map[string]model.ExportedSymbolSpace),
-		make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace),
+		publicSymbols,
 		nil,
 		lib.org,
 		"",

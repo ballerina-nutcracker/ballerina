@@ -1,0 +1,109 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (expr
+          (binary-expr ...
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable it (expr
+          (invocation iterator expr:
+            (simple-var-ref r) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (simple-var-ref it) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (simple-var-ref it) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref it) ())
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref it) ())
+            (value-type null)))))
+      (var-def
+        (variable empty (expr
+          (binary-expr ..<
+            (literal 3)
+            (literal 3)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (invocation iterator expr:
+                (simple-var-ref empty) ()) ())
+            (value-type null)))))
+      (var-def
+        (variable reversed (expr
+          (binary-expr ...
+            (literal 3)
+            (literal 2)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (invocation iterator expr:
+                (simple-var-ref reversed) ()) ())
+            (value-type null)))))
+      (var-def
+        (variable bottom (expr
+          (binary-expr ..<
+            (binary-expr -
+              (unary-expr -
+                (literal 9223372036854775807))
+              (literal 1))
+            (unary-expr -
+              (literal 9223372036854775807))))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (simple-var-ref bottom)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (var-def
+        (variable bottomEmpty (expr
+          (binary-expr ..<
+            (binary-expr -
+              (unary-expr -
+                (literal 9223372036854775807))
+              (literal 1))
+            (binary-expr -
+              (unary-expr -
+                (literal 9223372036854775807))
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (invocation iterator expr:
+                (simple-var-ref bottomEmpty) ()) ())
+            (value-type null)))))
+      (var-def
+        (variable top (expr
+          (binary-expr ...
+            (literal 9223372036854775806)
+            (literal 9223372036854775807)))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (simple-var-ref top)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i)))))))))

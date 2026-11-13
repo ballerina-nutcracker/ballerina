@@ -1,0 +1,33 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (expr
+        (binary-expr ..<
+          (literal 1)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref r)
+          (user-defined-type object Iterable)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (group-expr
+            (binary-expr ...
+              (literal 1)
+              (literal 3)))
+          (user-defined-type object Iterable)))))
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (binary-expr ..<
+          (literal 1)
+          (literal 2)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type object Iterable)))))
+  )
+)
