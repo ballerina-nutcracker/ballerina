@@ -7962,6 +7962,10 @@ func resolveFunctionCallArgs(t typeResolver, chain *binding, inv invocable, args
 	baseSymbol := t.getSymbol(fnSymbol)
 	switch sym := baseSymbol.(type) {
 	case model.DependentlyTypedFunctionSymbol:
+		// A default or initializer resolved before the module's function signatures can call it.
+		if sym.ParamTypes() == nil && !t.ensureResolved(fnSymbol, 0) {
+			return callArgsResult{}, false
+		}
 		lowered, fail := lowerInvocationArgs(t, args, fnSymbol, expectedType, namedTypes, inv.GetPosition())
 		if fail != nil {
 			fail(t)
