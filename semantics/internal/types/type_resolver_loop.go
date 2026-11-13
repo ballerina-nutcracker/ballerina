@@ -184,6 +184,10 @@ func (l *loopTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) b
 	return l.parentResolver.ensureNotEmpty(ty, onEmpty)
 }
 
+func (l *loopTypeResolver) ensureTypeCheck(check func(cx semtypes.Context) bool, onFail func()) bool {
+	return l.parentResolver.ensureTypeCheck(check, onFail)
+}
+
 func (l *loopTypeResolver) ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool {
 	return l.parentResolver.ensureSubtype(sub, sup, onNotSubtype)
 }

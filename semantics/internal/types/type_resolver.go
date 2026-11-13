@@ -106,6 +106,9 @@ type typeResolver interface {
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
 	ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool
+	// ensureTypeCheck runs check once the type env is ready and calls onFail if it fails. It reports false
+	// only when check ran immediately and failed.
+	ensureTypeCheck(check func(cx semtypes.Context) bool, onFail func()) bool
 	// deferAnnotationSite queues site for the top-level annotation pass and
 	// reports true while that pass is still to run. Once it has run, nothing is
 	// queued and the caller resolves the site's annotations itself.
@@ -246,6 +249,18 @@ func (t *packageTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
 		return false
 	}
 	t.deferredAnnotationSites = append(t.deferredAnnotationSites, site)
+	return true
+}
+
+func (t *packageTypeResolver) ensureTypeCheck(check func(cx semtypes.Context) bool, onFail func()) bool {
+	if t.typeEnv().IsReady() {
+		if !check(t.typeContext()) {
+			onFail()
+			return false
+		}
+		return true
+	}
+	t.deferCheck(check, onFail)
 	return true
 }
 
@@ -623,6 +638,21 @@ func (f *functionTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func(
 	}
 	if semtypes.IsEmpty(f.typeContext(), ty) {
 		onEmpty()
+		return false
+	}
+	return true
+}
+
+// ensureTypeCheck follows the same context rules as ensureNotEmpty.
+func (f *functionTypeResolver) ensureTypeCheck(check func(cx semtypes.Context) bool, onFail func()) bool {
+	if !f.typeEnv().IsReady() {
+		if f.isEphemeral() {
+			return true
+		}
+		return f.parentResolver.ensureTypeCheck(check, onFail)
+	}
+	if !check(f.typeContext()) {
+		onFail()
 		return false
 	}
 	return true
@@ -7806,12 +7836,35 @@ func resolveResourceMethodSignature(t typeResolver, isClient bool, isService boo
 }
 
 func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, depth int) (semtypes.SemType, []model.SymbolRef, bool) {
-	anydata := semtypes.CreateAnydata(t.typeContext())
-	var members []semtypes.SemType
-	restMember := semtypes.Never
+	pathTy, paramTypes, ok := resolveResourcePathTuple(t, method.ResourcePath, depth)
+	if !ok {
+		return semtypes.SemType{}, nil, false
+	}
 	var paramRefs []model.SymbolRef
 	for i := range method.ResourcePath {
 		seg := &method.ResourcePath[i]
+		if seg.Kind == ast.ResourcePathSegmentName || seg.Name == "" {
+			continue
+		}
+		ref, ok := method.Scope().GetSymbol(seg.Name)
+		if !ok {
+			t.internalError("resource path parameter symbol not found in scope", seg.GetPosition())
+			return semtypes.SemType{}, nil, false
+		}
+		t.setSymbolType(ref, paramTypes[i])
+		paramRefs = append(paramRefs, ref)
+	}
+	return pathTy, paramRefs, true
+}
+
+// resolveResourcePathTuple returns the path tuple and parameter variable types indexed by path segment.
+func resolveResourcePathTuple(t typeResolver, path []ast.BLangResourcePathSegment, depth int) (semtypes.SemType, []semtypes.SemType, bool) {
+	anydata := semtypes.CreateAnydata(t.typeContext())
+	var members []semtypes.SemType
+	restMember := semtypes.Never
+	paramTypes := make([]semtypes.SemType, len(path))
+	for i := range path {
+		seg := &path[i]
 		switch seg.Kind {
 		case ast.ResourcePathSegmentName:
 			literalTy := semtypes.StringConst(seg.Name)
@@ -7825,9 +7878,10 @@ func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, de
 			if !ok {
 				return semtypes.SemType{}, nil, false
 			}
-			if !semtypes.IsSubtype(t.typeContext(), paramTy, anydata) {
-				// Not sure if we should allow anydata here? spec says it can be anydata but jBallerina only allow simple basic types
+			// Not sure if we should allow anydata here? spec says it can be anydata but jBallerina only allow simple basic types
+			if !t.ensureSubtype(paramTy, anydata, func() {
 				t.semanticError("resource path parameter type must be a subtype of anydata", seg.GetPosition())
+			}) {
 				return semtypes.SemType{}, nil, false
 			}
 			symbolTy := paramTy
@@ -7836,15 +7890,7 @@ func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, de
 				symbolTy = restListDefn.Define(t.typeEnv(), nil, semtypes.ListRest(paramTy),
 					semtypes.ListMutability(semtypes.CellMutabilityNone))
 			}
-			if seg.Name != "" {
-				ref, ok := method.Scope().GetSymbol(seg.Name)
-				if !ok {
-					t.internalError("resource path parameter symbol not found in scope", seg.GetPosition())
-					return semtypes.SemType{}, nil, false
-				}
-				t.setSymbolType(ref, symbolTy)
-				paramRefs = append(paramRefs, ref)
-			}
+			paramTypes[i] = symbolTy
 			if seg.Kind == ast.ResourcePathSegmentParamRest {
 				restMember = paramTy
 			} else {
@@ -7855,7 +7901,7 @@ func resolveResourcePathType(t typeResolver, method *ast.BLangResourceMethod, de
 	listDefn := semtypes.NewListDefinition()
 	pathTy := listDefn.Define(t.typeEnv(), members, semtypes.ListRest(restMember),
 		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	return pathTy, paramRefs, true
+	return pathTy, paramTypes, true
 }
 
 func resolveClientResourceAccessAction(t typeResolver, chain *binding, expr *ast.BLangClientResourceAccessAction, expectedType semtypes.SemType) (expressionResult, bool) {
@@ -9227,12 +9273,21 @@ func resolveObjectType(t typeResolver, chain *binding, ty *ast.BLangObjectType, 
 
 	// Step 2: Build direct members and validate overrides
 	var directMembers []directMember
+	var resourceMethods []model.ResourceMethodSymbol
 	for m := range ty.Members() {
-		if m.MemberKind() == ast.ObjectMemberKindRemoteMethod {
+		switch m.MemberKind() {
+		case ast.ObjectMemberKindRemoteMethod:
 			if ty.NetworkQuals != ast.ObjectNetworkQualsClient && ty.NetworkQuals != ast.ObjectNetworkQualsService {
 				t.semanticError("remote methods are only allowed in client or service object types", ty.GetPosition())
 				return semtypes.SemType{}, chain, false
 			}
+		case ast.ObjectMemberKindResourceMethod:
+			if ty.NetworkQuals != ast.ObjectNetworkQualsClient && ty.NetworkQuals != ast.ObjectNetworkQualsService {
+				t.semanticError("resource methods are only allowed in client or service object types", ty.GetPosition())
+				return semtypes.SemType{}, chain, false
+			}
+		case ast.ObjectMemberKindField, ast.ObjectMemberKindMethod:
+			// Fields and ordinary methods do not require network qualifiers.
 		}
 		var valueTy semtypes.SemType
 		var ok bool
@@ -9240,6 +9295,26 @@ func resolveObjectType(t typeResolver, chain *binding, ty *ast.BLangObjectType, 
 		if !ok {
 			// A member that fails to resolve is left out of the object type.
 			continue
+		}
+		if m.MemberKind() == ast.ObjectMemberKindResourceMethod {
+			method := m.(*ast.BMethodDecl)
+			symbol := t.getSymbol(method.Symbol()).(model.ResourceMethodSymbol)
+			for _, previous := range resourceMethods {
+				if previous.MethodName() != symbol.MethodName() {
+					continue
+				}
+				// Path types may refer to definitions still being resolved, so the
+				// identity check is deferred until the type env is ready.
+				previousPath, path := previous.PathListType(), symbol.PathListType()
+				if !t.ensureTypeCheck(func(cx semtypes.Context) bool {
+					return !semtypes.IsSameType(cx, previousPath, path)
+				}, func() {
+					t.semanticError("redeclared resource method '"+method.Accessor+"'", ty.GetPosition())
+				}) {
+					return semtypes.SemType{}, chain, false
+				}
+			}
+			resourceMethods = append(resourceMethods, symbol)
 		}
 		kind, ok := semtypeMemberKind(t, m.MemberKind(), ty.GetPosition())
 		if !ok {
@@ -9346,7 +9421,7 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 			for _, incMember := range incMembers {
 				if incMember.Kind != dm.kind {
 					t.semanticError(
-						fmt.Sprintf("member '%s' conflicts with included member of different kind", dm.name),
+						fmt.Sprintf("member '%s' conflicts with included member of different kind", model.DisplayMemberName(dm.name)),
 						dm.pos,
 					)
 					return nil, false
@@ -9357,14 +9432,14 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 						memberKind = "field"
 					}
 					t.semanticError(
-						fmt.Sprintf("mismatched visibility qualifiers for %s '%s' with object type inclusion", memberKind, dm.name),
+						fmt.Sprintf("mismatched visibility qualifiers for %s '%s' with object type inclusion", memberKind, model.DisplayMemberName(dm.name)),
 						dm.pos,
 					)
 					return nil, false
 				}
 				if !t.ensureSubtype(dm.valueTy, incMember.ValueType, func() {
 					t.semanticError(
-						fmt.Sprintf("member '%s' that overrides included member is not a subtype of the included member type", dm.name),
+						fmt.Sprintf("member '%s' that overrides included member is not a subtype of the included member type", model.DisplayMemberName(dm.name)),
 						dm.pos,
 					)
 				}) {
@@ -9389,13 +9464,13 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 				continue
 			}
 			t.semanticError(
-				fmt.Sprintf("included method '%s' must be overridden in class definition", name),
+				fmt.Sprintf("included method '%s' must be overridden in class definition", model.DisplayMemberName(name)),
 				pos,
 			)
 			return nil, false
 		}
 		t.semanticError(
-			fmt.Sprintf("included member '%s' declared in multiple type inclusions must be overridden", name),
+			fmt.Sprintf("included member '%s' declared in multiple type inclusions must be overridden", model.DisplayMemberName(name)),
 			pos,
 		)
 		return nil, false
@@ -9660,6 +9735,13 @@ func resolveObjectMemberType(t typeResolver, chain *binding, m ast.ObjectMember,
 				return semtypes.SemType{}, chain, false
 			}
 			t.getSymbol(m.Symbol()).(model.FunctionSymbol).SetTypedSignature(sig)
+			if m.MemberKind() == ast.ObjectMemberKindResourceMethod {
+				pathTy, _, pathOk := resolveResourcePathTuple(t, m.ResourcePath, depth)
+				if !pathOk {
+					return semtypes.SemType{}, chain, false
+				}
+				t.getSymbol(m.Symbol()).(model.ResourceMethodSymbol).SetPathListType(pathTy)
+			}
 		}
 		return valueTy, chain, ok
 	default:
