@@ -429,7 +429,7 @@ func createQueryBindingDeclaration(binding queryRowBinding, pos diagnostics.Loca
 
 func createQueryBindingAssignment(
 	binding queryRowBinding,
-	expr ast.BLangExpression,
+	expr ast.BLangActionOrExpression,
 	pos diagnostics.Location,
 ) *ast.BLangAssignment {
 	assign := &ast.BLangAssignment{
@@ -531,10 +531,10 @@ func applyQueryLetClauseToRows(
 			return nil, false
 		}
 		*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, pos))
-		letResult := walkExpression(cx, varDef.Var.Expr.(ast.BLangExpression))
+		letResult := walkExpression(cx, varDef.Var.Expr)
 		bodyStmts = append(bodyStmts, createQueryBindingAssignment(
 			binding,
-			letResult.(ast.BLangExpression),
+			letResult,
 			pos,
 		))
 
@@ -1756,10 +1756,10 @@ func appendQueryIntermediateClauseStmts(
 					*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, clause.GetPosition()))
 					declaredBindings[binding.symbol] = true
 				}
-				letResult := walkExpression(cx, varDef.Var.Expr.(ast.BLangExpression))
+				letResult := walkExpression(cx, varDef.Var.Expr)
 				bodyStmts = append(bodyStmts, createQueryBindingAssignment(
 					binding,
-					letResult.(ast.BLangExpression),
+					letResult,
 					clause.GetPosition(),
 				))
 			}

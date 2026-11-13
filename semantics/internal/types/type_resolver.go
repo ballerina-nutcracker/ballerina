@@ -6151,7 +6151,7 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, q *queryRes
 						varDef.GetPosition())
 					return nil, false
 				}
-				initResult, ok := resolveActionOrExpression(t, currentChain, varDef.Var.Expr.(ast.BLangExpression), semtypes.SemType{})
+				initResult, ok := resolveActionOrExpression(t, currentChain, varDef.Var.Expr, semtypes.SemType{})
 				if !ok {
 					return nil, false
 				}
