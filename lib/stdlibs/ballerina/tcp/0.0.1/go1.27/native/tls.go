@@ -18,6 +18,8 @@
 package native
 
 import (
+	"crypto/tls"
+	"slices"
 	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
@@ -30,34 +32,36 @@ func decimalToDuration(d *decimal.Decimal) time.Duration {
 	return time.Duration(d.Float64() * float64(time.Second))
 }
 
-var tlsVersionByName = map[string]uint16{
-	"TLSv1.0": 0x0301,
-	"TLSv1.1": 0x0302,
-	"TLSv1.2": 0x0303,
-	"TLSv1.3": 0x0304,
-}
+// tlsVersionNames lists the protocol names Java accepts, in version order; TLS 1.0 is TLSv1.
+var tlsVersionNames = []string{"TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"}
 
-func versionRange(list *values.List) (min, max uint16) {
+// versionRange returns the range spanning the listed versions. crypto/tls enables a min–max range only,
+// so a list that skips a version is an error rather than enabling the version it skips.
+func versionRange(list *values.List) (minVersion, maxVersion uint16, err *values.Error) {
 	if list == nil {
-		return 0, 0
+		return 0, 0, nil
 	}
+	listed := make([]bool, len(tlsVersionNames))
+	lo, hi := len(tlsVersionNames), -1
 	for i := 0; i < list.Len(); i++ {
-		name, ok := list.Get(i).(string)
-		if !ok {
-			continue
+		name, _ := list.Get(i).(string)
+		idx := slices.Index(tlsVersionNames, name)
+		if idx < 0 {
+			return 0, 0, tcpError("Unsupported protocol: " + name)
 		}
-		ver, found := tlsVersionByName[name]
-		if !found {
-			continue
-		}
-		if min == 0 || ver < min {
-			min = ver
-		}
-		if ver > max {
-			max = ver
+		listed[idx] = true
+		lo, hi = min(lo, idx), max(hi, idx)
+	}
+	if hi < 0 {
+		return 0, 0, nil
+	}
+	for idx := lo + 1; idx < hi; idx++ {
+		if !listed[idx] {
+			return 0, 0, tcpError("Unsupported protocol versions: " + tlsVersionNames[lo] + " and " + tlsVersionNames[hi] +
+				" cannot be enabled without " + tlsVersionNames[idx])
 		}
 	}
-	return min, max
+	return tls.VersionTLS10 + uint16(lo), tls.VersionTLS10 + uint16(hi), nil
 }
 
 func cipherNames(v values.BalValue) []string {
@@ -125,7 +129,10 @@ func buildClientTLSConfig(rt *runtime.Runtime, secureSocket *values.Map) (*pal.T
 	if d, ok := decimalArg(secureSocket, "handshakeTimeout"); ok {
 		tlsCfg.HandshakeTimeout = decimalToDuration(d)
 	}
-	tlsCfg.MinVersion, tlsCfg.MaxVersion = versionRange(protocolVersionsFrom(secureSocket))
+	var verErr *values.Error
+	if tlsCfg.MinVersion, tlsCfg.MaxVersion, verErr = versionRange(protocolVersionsFrom(secureSocket)); verErr != nil {
+		return nil, verErr
+	}
 	return &tlsCfg, nil
 }
 
@@ -162,7 +169,10 @@ func buildListenerTLSConfig(rt *runtime.Runtime, secureSocket *values.Map) (*pal
 	if v, ok := secureSocket.Get("ciphers"); ok {
 		tlsCfg.CipherSuiteNames = cipherNames(v)
 	}
-	tlsCfg.MinVersion, tlsCfg.MaxVersion = versionRange(protocolVersionsFrom(secureSocket))
+	var verErr *values.Error
+	if tlsCfg.MinVersion, tlsCfg.MaxVersion, verErr = versionRange(protocolVersionsFrom(secureSocket)); verErr != nil {
+		return nil, verErr
+	}
 	return tlsCfg, nil
 }
 

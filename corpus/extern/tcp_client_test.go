@@ -176,7 +176,7 @@ service class EchoServer {
 listener tcp:Listener tlsListener = new (19393,
     secureSocket = {
         key: <tcp:CertKey>{certFile: %q, keyFile: %q},
-        protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
+        protocol: {name: tcp:TLS, versions: ["TLSv1.2", "TLSv1.3"]},
         ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
     }
 );
@@ -189,7 +189,7 @@ public function testMain() returns error? {
     tcp:Client c = check new ("127.0.0.1", 19393,
         secureSocket = {
             cert: %q,
-            protocol: {name: tcp:TLS, versions: ["TLSv1.2", "bogus", "TLSv1.3"]},
+            protocol: {name: tcp:TLS, versions: ["TLSv1.2", "TLSv1.3"]},
             ciphers: ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
         }
     );
@@ -209,6 +209,97 @@ public function testMain() returns error? {
 		Name:         "tcp-client-tls-v",
 		InputPath:    tmpBalFile,
 		ExpectedPath: filepath.Join(expectedDir, "tcp-client-tls-v.txtar"),
+	}
+	runExtern(t, tc, newTcpPal(), nil)
+}
+
+// TestTcpTLSProtocolVersions covers protocol.versions: Java's names (TLSv1 for TLS 1.0) are accepted, an
+// unknown name is an error, and so is a list that skips a version, which crypto/tls can't enable.
+func TestTcpTLSProtocolVersions(t *testing.T) {
+	t.Parallel()
+	skipIfNoLoopback(t)
+	caCertPEM, serverCertPEM, serverKeyPEM, _, _ := generateTestCerts(t)
+
+	tmpDir := t.TempDir()
+	caCertFile := filepath.Join(tmpDir, "ca.pem")
+	serverCertFile := filepath.Join(tmpDir, "server.pem")
+	serverKeyFile := filepath.Join(tmpDir, "server-key.pem")
+	for path, data := range map[string][]byte{caCertFile: caCertPEM, serverCertFile: serverCertPEM, serverKeyFile: serverKeyPEM} {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
+			t.Fatalf("writing %s: %v", path, err)
+		}
+	}
+
+	balContent := fmt.Sprintf(`
+import ballerina/io;
+import ballerina/tcp;
+
+const CA_CERT = %q;
+const SERVER_CERT = %q;
+const SERVER_KEY = %q;
+
+service class EchoService {
+    *tcp:ConnectionService;
+    remote function onBytes(tcp:Caller caller, readonly & byte[] data) returns tcp:Error? {
+        check caller->writeBytes(data);
+    }
+}
+
+service class EchoServer {
+    *tcp:Service;
+    remote function onConnect(tcp:Caller caller) returns tcp:ConnectionService {
+        _ = caller.id;
+        return new EchoService();
+    }
+}
+
+listener tcp:Listener tlsListener = new (19395,
+    secureSocket = {key: <tcp:CertKey>{certFile: SERVER_CERT, keyFile: SERVER_KEY}, protocol: {name: tcp:TLS, versions: ["TLSv1.2", "TLSv1.3"]}}
+);
+
+function init() returns error? {
+    check tlsListener.attach(new EchoServer());
+}
+
+function clientResult(string[] versions) returns string {
+    tcp:Client|tcp:Error c = new ("127.0.0.1", 1, secureSocket = {cert: CA_CERT, protocol: {name: tcp:TLS, versions}});
+    return c is tcp:Error ? c.message() : "connected";
+}
+
+function listenerResult(string[] versions) returns string {
+    tcp:Listener|tcp:Error l = new (19396,
+        secureSocket = {key: <tcp:CertKey>{certFile: SERVER_CERT, keyFile: SERVER_KEY}, protocol: {name: tcp:TLS, versions}}
+    );
+    return l is tcp:Error ? l.message() : "created";
+}
+
+public function testMain() returns error? {
+    io:println(clientResult(["TLSv1.2", "TLSv1.4"])); // @output Unsupported protocol: TLSv1.4
+    io:println(clientResult(["TLSv1.0"])); // @output Unsupported protocol: TLSv1.0
+    io:println(clientResult(["TLSv1.1", "TLSv1.3"])); // @output Unsupported protocol versions: TLSv1.1 and TLSv1.3 cannot be enabled without TLSv1.2
+    io:println(listenerResult(["bogus"])); // @output Unsupported protocol: bogus
+    io:println(listenerResult(["TLSv1", "TLSv1.2"])); // @output Unsupported protocol versions: TLSv1 and TLSv1.2 cannot be enabled without TLSv1.1
+    io:println(listenerResult(["TLSv1", "TLSv1.1"])); // @output created
+
+    tcp:Client c = check new ("127.0.0.1", 19395,
+        secureSocket = {cert: CA_CERT, protocol: {name: tcp:TLS, versions: ["TLSv1", "TLSv1.1", "TLSv1.2"]}}
+    );
+    check c->writeBytes("hello".toBytes());
+    readonly & byte[] echoed = check c->readBytes();
+    io:println('string:fromBytes(echoed)); // @output hello
+    check c->close();
+}
+`, caCertFile, serverCertFile, serverKeyFile)
+
+	tmpBalFile := filepath.Join(tmpDir, "tcp-tls-protocol-versions-v.bal")
+	if err := os.WriteFile(tmpBalFile, []byte(balContent), 0o644); err != nil {
+		t.Fatalf("writing bal file: %v", err)
+	}
+
+	tc := test_util.TestCase{
+		Name:         "tcp-tls-protocol-versions-v",
+		InputPath:    tmpBalFile,
+		ExpectedPath: filepath.Join(expectedDir, "tcp-tls-protocol-versions-v.txtar"),
 	}
 	runExtern(t, tc, newTcpPal(), nil)
 }

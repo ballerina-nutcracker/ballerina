@@ -66,7 +66,7 @@ Support Levels:
 | Listener secure connection using a certificate and private key file pair | Partially Supported | `CertKey.keyPassword` is ignored, so `Listener.start()` returns an `Error` for an encrypted private key file. `ListenerSecureSocket.sessionTimeout` is ignored. |
 | Client secure connection using a trust store | Cannot Support | Extracting every certificate from a PKCS12 trust store isn't implemented for this module; supplying a trust store value for `ClientSecureSocket.cert` returns an `Error` at runtime. Use a PEM certificate file path instead. |
 | Listener secure connection using a key store | Cannot Support | Supplying a key store value for `ListenerSecureSocket.key` returns an `Error` at runtime. Use a certificate and private key file pair instead. |
-| TLS version selection and cipher suite restriction | Supported | |
+| TLS version selection and cipher suite restriction | Partially Supported | `protocol.versions` takes Java's names (`TLSv1`, `TLSv1.1`, `TLSv1.2`, `TLSv1.3`). A list that skips a version, such as `["TLSv1.1", "TLSv1.3"]`, returns an `Error` from client and listener initialization, because Go's TLS library enables only a contiguous range of versions; jBallerina enables exactly the listed versions. An unknown name returns `Unsupported protocol: <name>` from listener initialization as it does from client initialization, where jBallerina's listener starts and then fails every handshake. `TLSv1` and `TLSv1.1` are enabled when listed, where jBallerina's JDK disables them by default. |
 | Sending and receiving raw bytes on the client | Supported | |
 | Closing the client connection | Supported | |
 | Attaching and detaching a service on a listener | Supported | Only one service may be attached to a listener at a time. |
