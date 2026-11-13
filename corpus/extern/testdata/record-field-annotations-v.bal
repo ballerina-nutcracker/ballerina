@@ -145,6 +145,10 @@ function inferredThroughCheck() returns error? {
     _ = person;
 }
 
+function defaultFieldsOf(Person|error value = annotatedFieldsInferred()) returns string {
+    return fieldsOf(value);
+}
+
 function fieldsOf(Person|error value) returns string {
     return value is error ? value.message() : "";
 }
@@ -183,9 +187,3 @@ function fieldMetaName(typedesc<anydata> td, string fieldName) returns string = 
 function extraMetaName(typedesc<anydata> td, string fieldName) returns string = external;
 
 function hasMarker(typedesc<anydata> td, string fieldName) returns boolean = external;
-
-// Declared after annotatedFieldsInferred: a default calling a dependently-typed function declared
-// later fails to compile.
-function defaultFieldsOf(Person|error value = annotatedFieldsInferred()) returns string {
-    return fieldsOf(value);
-}

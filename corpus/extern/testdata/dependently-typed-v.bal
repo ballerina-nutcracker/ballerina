@@ -114,7 +114,11 @@ public function main() {
 
     string[][] explicitNestedArray = inferredNestedArray(string);
     io:println(explicitNestedArray[0][0]); // @output nested
+
+    io:println(defaultFromLaterDeclaration()); // @output 1
 }
+
+function defaultFromLaterDeclaration(int val = inferred(0)) returns int => val;
 
 function inferred(int val, typedesc retTy = <>) returns retTy = external;
 
