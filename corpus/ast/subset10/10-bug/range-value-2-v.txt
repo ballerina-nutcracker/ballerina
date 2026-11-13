@@ -1,0 +1,77 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable R (type
+    (user-defined-type object Iterable)) (expr
+    (binary-expr ...
+      (literal 1)
+      (literal 2))))
+  (function upTo (
+    (variable n (type
+      (value-type int)))) (
+    (user-defined-type object Iterable))
+    (block-function-body
+      (return
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref n)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (expr
+          (binary-expr ...
+            (literal 7)
+            (literal 8)))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (simple-var-ref r)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (simple-var-ref r)
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (foreach
+        (var-def
+          (variable i (type
+            (value-type int))))
+        (group-expr
+          (binary-expr ..<
+            (literal 5)
+            (literal 6)))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (var-def
+        (variable it (type
+          (user-defined-type object Iterable)) (expr
+          (binary-expr ..<
+            (literal 1)
+            (literal 3)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref it)
+            (user-defined-type object Iterable)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref R)
+            (user-defined-type object Iterable)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation upTo (
+              (literal 2)))
+            (user-defined-type object Iterable))))))))

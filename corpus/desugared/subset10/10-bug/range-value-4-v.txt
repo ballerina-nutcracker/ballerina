@@ -1,0 +1,138 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable range (type
+    (user-defined-type object Iterable)))
+  (class-definition Holder
+    (variable r (type
+      (user-defined-type object Iterable)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal r))
+          (invocation lang.__internal createIntRange (
+            (literal 1)
+            (literal 2)
+            (literal true))))))
+    (function reset () (
+      (value-type null))
+      (block-function-body
+        (lock
+          (block-stmt
+            (assignment
+              (index-based-access
+                (simple-var-ref self)
+                (literal r))
+              (invocation lang.__internal createIntRange (
+                (literal 4)
+                (literal 5)
+                (literal true)))))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref range)
+        (invocation lang.__internal createIntRange (
+          (literal 1)
+          (literal 3)
+          (literal false))))))
+  (function sum (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable r (expr
+          (invocation lang.__internal createIntRange (
+            (literal 1)
+            (simple-var-ref n)
+            (literal true))))))
+      (var-def
+        (variable it (expr
+          (invocation iterator expr:
+            (simple-var-ref r) ()))))
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable next (expr
+          (invocation next expr:
+            (simple-var-ref it) ()))))
+      (while
+        (type-test-expr !is
+          (simple-var-ref next)
+          (value-type null))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref total)
+            (index-based-access
+              (simple-var-ref next)
+              (literal value)))
+          (assignment
+            (simple-var-ref next)
+            (invocation next expr:
+              (simple-var-ref it) ()))))
+      (return
+        (simple-var-ref total))))
+  (function count (
+    (variable n (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$1 (expr
+          (simple-var-ref n))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))
+        (block-stmt
+          (var-def
+            (variable _ (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$0))))
+          (compound-assignment +
+            (simple-var-ref c)
+            (literal 1))
+          (assignment
+            (simple-var-ref $desugar$0)
+            (binary-expr +
+              (simple-var-ref $desugar$0)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref c))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation count (
+            (literal 3))))))
+      (lock
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (type-test-expr is
+                (simple-var-ref range)
+                (user-defined-type object Iterable)))))))
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation reset expr:
+          (simple-var-ref h) ())))))
