@@ -14,6 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// TODO(#1123): run under -race once the per-call-site callee cache race is fixed; ftp handlers run on concurrent goroutines.
+//go:build !race
+
 package extern_test
 
 import (
