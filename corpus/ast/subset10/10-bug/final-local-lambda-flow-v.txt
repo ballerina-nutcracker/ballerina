@@ -1,0 +1,104 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable choose (type
+    (function-type (
+      (value-type boolean)) (
+      (value-type int)))) (expr
+    (lambda
+      (function $anonFunc$_0 (
+        (variable flag (type
+          (value-type boolean)))) (
+        (value-type int))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int))))
+          (if
+            (simple-var-ref flag)
+            (block-stmt
+              (assignment
+                (simple-var-ref x)
+                (literal 10))) (
+            (block-stmt
+              (assignment
+                (simple-var-ref x)
+                (literal 20)))))
+          (return
+            (simple-var-ref x)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation choose (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation choose (
+            (literal false))))))
+      (var-def
+        (variable enclosing (expr
+          (lambda
+            (function $anonFunc$_1 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (value-type int))))
+                (assignment
+                  (simple-var-ref x)
+                  (literal 3))
+                (var-def
+                  (variable inner (expr
+                    (lambda
+                      (function $anonFunc$_2 () (
+                        (value-type int))
+                        (block-function-body
+                          (var-def
+                            (variable y (type
+                              (value-type int))))
+                          (assignment
+                            (simple-var-ref y)
+                            (literal 4))
+                          (return
+                            (simple-var-ref y))))))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (invocation inner ())))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation enclosing ()))))
+      (var-def
+        (variable loop (expr
+          (lambda
+            (function $anonFunc$_3 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable total (type
+                    (value-type int)) (expr
+                    (literal 0))))
+                (foreach
+                  (var-def
+                    (variable i (type
+                      (value-type int))))
+                  (binary-expr ...
+                    (literal 1)
+                    (literal 3))
+                  (block-stmt
+                    (var-def
+                      (variable x (type
+                        (value-type int))))
+                    (assignment
+                      (simple-var-ref x)
+                      (simple-var-ref i))
+                    (compound-assignment +
+                      (simple-var-ref total)
+                      (simple-var-ref x))))
+                (return
+                  (simple-var-ref total))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation loop ())))))))

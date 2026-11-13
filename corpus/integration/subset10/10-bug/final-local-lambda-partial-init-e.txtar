@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> final-local-lambda-partial-init-e.bal:22:16
+   |
+22 |         return x; // @error variable 'x' may not have been initialized
+   |                ^
