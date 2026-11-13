@@ -34,6 +34,7 @@ function sizeAfterOverflow(int capacity, float evictionFactor) returns int|error
 public function main() returns error? {
     // Evicts ceil(capacity * evictionFactor) entries, computed exactly from the decimal factor and clamped to [1, capacity].
     io:println(check sizeAfterOverflow(10, 0.3)); // @output 8
+    // 15 entries are evicted, not the 16 that 32-bit float arithmetic gives (ballerina-platform/ballerina-library#9406).
     io:println(check sizeAfterOverflow(50, 0.3)); // @output 36
     io:println(check sizeAfterOverflow(100, 0.6)); // @output 41
     io:println(check sizeAfterOverflow(100, 0.15)); // @output 86
@@ -52,6 +53,7 @@ public function main() returns error? {
     check defaults.put("new", 1);
     io:println(defaults.size(), " ", defaults.keys()); // @output 7 ["k2","k3","k4","k5","k6","k7","new"]
 
+    // Overwriting a key in a full cache evicts nothing (ballerina-platform/ballerina-library#9401).
     cache:Cache c = new (capacity = 3, evictionFactor = 0.34);
     check fill(c, 3);
     _ = c.hasKey("k0");
@@ -75,6 +77,7 @@ public function main() returns error? {
     check e.put("z", 1);
     io:println(e.size(), " ", e.keys()); // @output 1 ["z"]
 
+    // A factor too small to evict anything still evicts one entry (ballerina-platform/ballerina-library#9400).
     cache:Cache tiny = new (capacity = 2, evictionFactor = 1.0E-300);
     check fill(tiny, 10);
     io:println(tiny.size(), " ", tiny.keys()); // @output 2 ["k8","k9"]

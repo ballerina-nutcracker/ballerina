@@ -27,19 +27,21 @@ function sleepToFraction(decimal fraction) {
 
 public function main() returns error? {
     cache:Cache c = new (capacity = 10, defaultMaxAge = 1.5);
-    // Putting at x.1 makes a 0.5 second entry due at x.6; comparing whole seconds would expire it within second x.
+    // Putting at x.1 makes a 0.5 second entry due at x.6; comparing whole seconds would expire it within second x (ballerina-platform/ballerina-library#9399).
     sleepToFraction(0.1);
     check c.put("half", "v", 0.5);
     check c.put("long", "v", 100);
     runtime:sleep(0.2);
     io:println(c.hasKey("half"), " ", c.get("half") is cache:Error); // @output true false
     runtime:sleep(0.5);
+    // hasKey and invalidate treat an expired entry as absent (ballerina-platform/ballerina-library#9402).
     io:println(c.size(), " ", c.hasKey("half"), " ", c.size()); // @output 2 false 1
     check c.put("short", "v", 0.1);
     runtime:sleep(0.3);
     io:println(c.invalidate("short") is cache:Error); // @output true
     io:println(c.get("long") is cache:Error); // @output false
 
+    // A maxAge that is neither -1 nor positive is rejected (ballerina-platform/ballerina-library#9404).
     cache:Error? zero = c.put("zero", "v", 0);
     io:println(zero is cache:Error ? zero.message() : "ok"); // @output Unsupported max-age '0' for the key: zero. It must be -1 or positive.
     io:println(c.put("negative", "v", -5) is cache:Error, " ", c.put("fraction", "v", -0.5) is cache:Error); // @output true true
