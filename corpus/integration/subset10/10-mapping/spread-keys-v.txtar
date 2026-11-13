@@ -1,0 +1,4 @@
+-- stdout --
+{"default":"d","other":1}
+{"":1}
+-- stderr --

@@ -334,6 +334,13 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 				},
 			},
 		},
+		{org: "ballerina", pkg: "lang.value"}: {
+			model.OpaqueFnValueClone: {
+				name:         "clone",
+				params:       []model.Param{{Name: "v"}},
+				monomorphize: cloneMonomorphizer,
+			},
+		},
 		{org: "ballerina", pkg: "lang.map"}: {
 			model.OpaqueFnMapRemove: {name: "remove", params: mapParams(), monomorphize: mapMember},
 			model.OpaqueFnMapGet:    {name: "get", params: mapParams(), monomorphize: mapMember},
@@ -423,8 +430,9 @@ func buildFunctionDefinitions() map[packageKey][]*FunctionDefinition {
 				},
 			},
 			model.OpaqueFnXMLSlice: {
-				name:   "slice",
-				params: []model.Param{{Name: "x"}, {Name: "startIndex"}, {Name: "endIndex"}},
+				name: "slice",
+				// Declared in lang.xml's source, with `endIndex`'s default.
+				sourceDeclared: true,
 				monomorphize: func(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
 					semanticError SemanticError, _ bool, args []ast.BLangExpression,
 					_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
@@ -588,6 +596,37 @@ func xmlCallbackMonomorphizer(returnConstraint semtypes.SemType,
 		ctx.storeMono(owner, ref, containerTy, callbackReturnTy, callbackParamTy)
 		return ref, true
 	}
+}
+
+// cloneMonomorphizer monomorphizes value:clone. The clone of a value has the
+// value's own type, so the signature is `isolated function (T) returns T` for
+// the argument's static type T.
+func cloneMonomorphizer(ctx *Context, owner cacheOwner, resolve Resolve, materialize Materialize,
+	semanticError SemanticError, _ bool, args []ast.BLangExpression,
+	_ semtypes.SemType, pos diagnostics.Location) (model.SymbolRef, bool) {
+	valueTy, ok := resolve(args[0], semtypes.SemType{})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	if ref, found := ctx.lookupMono(owner, valueTy); found {
+		return ref, true
+	}
+	cx := ctx.typeContext()
+	if !semtypes.IsSubtype(cx, valueTy, semtypes.CreateCloneable(cx)) {
+		semanticError("expect first argument to be a subtype of Cloneable", pos)
+		return model.SymbolRef{}, false
+	}
+	ref, ok := materialize(model.TypedFunctionSignature{
+		ParamTypes:    []semtypes.SemType{valueTy},
+		RestParamType: semtypes.Never,
+		ReturnType:    valueTy,
+		Flags:         model.FuncSymbolFlagIsolated,
+	})
+	if !ok {
+		return model.SymbolRef{}, false
+	}
+	ctx.storeMono(owner, ref, valueTy)
+	return ref, true
 }
 
 // resolveMutableList resolves the container argument of an array function that

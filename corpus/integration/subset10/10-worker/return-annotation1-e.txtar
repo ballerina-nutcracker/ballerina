@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'onWorker' is not allowed on return
+  --> return-annotation1-e.bal:28:22
+   |
+28 |     worker w returns @onWorker {name: "r"} int { // @error onWorker is not allowed on return
+   |                      ^^^^^^^^^^^^^^^^^^^^^

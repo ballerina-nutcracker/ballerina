@@ -1,0 +1,172 @@
+module $anon.. v 0.0.0;
+data  [int...];
+viaCast() -> [int...]{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = clone(data) -> bb2;
+  }
+  bb2 {
+    %1 = <[int...]>(%0)
+    (1, %0) = %1;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb3;
+  }
+  bb3 {
+    return;
+  }
+  bb4 {
+    return;
+  }
+}
+viaTrap() -> error|[int...]{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 2
+    GOTO bb2;
+  }
+  bb2 {
+    %1 = clone(data) -> bb3;
+  }
+  bb3 {
+    %0 = %1;
+    GOTO bb4;
+  }
+  bb4 {
+    (1, %0) = %0;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb5;
+  }
+  bb5 {
+    return;
+  }
+  bb6 {
+    return;
+  }
+  
+  error-table {
+    [bb2, bb3] -> bb4, %0
+  }
+}
+viaCheck() -> error|[int...]{
+  bb0 {
+    lock-start "$anon/.:data" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 4
+    GOTO bb2;
+  }
+  bb2 {
+    %2 = clone(data) -> bb3;
+  }
+  bb3 {
+    %1 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    %3 = %1 is error
+    %3 ? bb5 : bb6;
+  }
+  bb5 {
+    (1, %0) = %1;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb8;
+  }
+  bb6 {
+    %0 = %1;
+    GOTO bb7;
+  }
+  bb7 {
+    (1, %0) = %0;
+    PopScopeFrame
+    lock-end "$anon/.:data" GOTO bb9;
+  }
+  bb8 {
+    return;
+  }
+  bb9 {
+    return;
+  }
+  bb10 {
+    return;
+  }
+  
+  error-table {
+    [bb2, bb3] -> bb4, %1
+  }
+}
+main() -> nil|error{
+  bb0 {
+    %1 = viaCast() -> bb1;
+  }
+  bb1 {
+    a = %1;
+    %3 = ConstantLoad 3
+    %4 = %3;
+    %5 = push(a,%4) -> bb2;
+  }
+  bb2 {
+    %7 = viaTrap() -> bb3;
+  }
+  bb3 {
+    %8 = %7 is error
+    %8 ? bb4 : bb5;
+  }
+  bb4 {
+    %0 = %7;
+    return;
+  }
+  bb5 {
+    %6 = %7;
+    GOTO bb6;
+  }
+  bb6 {
+    b = %6;
+    %10 = ConstantLoad 4
+    %11 = %10;
+    %12 = push(b,%11) -> bb7;
+  }
+  bb7 {
+    %14 = viaCheck() -> bb8;
+  }
+  bb8 {
+    %15 = %14 is error
+    %15 ? bb9 : bb10;
+  }
+  bb9 {
+    %0 = %14;
+    return;
+  }
+  bb10 {
+    %13 = %14;
+    GOTO bb11;
+  }
+  bb11 {
+    c = %13;
+    %17 = ConstantLoad 5
+    %18 = %17;
+    %19 = push(c,%18) -> bb12;
+  }
+  bb12 {
+    %20 = println(a) -> bb13;
+  }
+  bb13 {
+    %21 = println(b) -> bb14;
+  }
+  bb14 {
+    %22 = println(c) -> bb15;
+  }
+  bb15 {
+    %23 = viaCast() -> bb16;
+  }
+  bb16 {
+    %24 = println(%23) -> bb17;
+  }
+  bb17 {
+    return;
+  }
+}

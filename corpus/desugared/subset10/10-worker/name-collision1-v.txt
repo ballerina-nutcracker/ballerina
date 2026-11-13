@@ -1,0 +1,126 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (class-definition A
+    (variable value (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable $desugar$0 (expr
+            (invocation lang.__internal createLatch ()))))
+        (var-def
+          (variable $desugar$1))
+        (var-def
+          (variable $desugar$2 (expr
+            (lambda
+              (function $worker:A.init:w () (
+                (value-type int))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (return
+                    (literal 1))))))))
+        (assignment
+          (simple-var-ref $desugar$1)
+          (start-action
+            (invocation $desugar$2 ())))
+        (expression-stmt
+          (invocation lang.__internal openLatch (
+            (simple-var-ref $desugar$0))))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (single-wait-action
+            (simple-var-ref $desugar$1))))))
+  (class-definition B
+    (variable value (type
+      (value-type int)))
+    (function init () (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable $desugar$0 (expr
+            (invocation lang.__internal createLatch ()))))
+        (var-def
+          (variable $desugar$1))
+        (var-def
+          (variable $desugar$2 (expr
+            (lambda
+              (function $worker:B.init:w () (
+                (value-type int))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$0))))
+                  (return
+                    (literal 2))))))))
+        (assignment
+          (simple-var-ref $desugar$1)
+          (start-action
+            (invocation $desugar$2 ())))
+        (expression-stmt
+          (invocation lang.__internal openLatch (
+            (simple-var-ref $desugar$0))))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal value))
+          (single-wait-action
+            (simple-var-ref $desugar$1))))))
+  (function shadowed () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:shadowed:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 3))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (user-defined-type A)) (expr
+          (new ()))))
+      (var-def
+        (variable b (type
+          (user-defined-type B)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref a)
+            (literal value)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref b)
+            (literal value)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation shadowed ())))))))

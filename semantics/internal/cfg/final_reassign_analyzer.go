@@ -84,12 +84,17 @@ func reachableFromEntry(fcfg *functionCFG) []bool {
 // without an initializer when the variable is possibly assigned already.
 // Locals are checked in every function; final module variables are checked in
 // the module init function and final fields in their class or service init.
-func analyzeFinalReassignments(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeFinalReassignments(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Final Reassignment Analysis", "")
+	defer span.End()
 	moduleFinals := deferredFinalModuleVars(pkg)
 	initFields := deferredFinalFieldsByInit(ctx, pkg)
 	var wg sync.WaitGroup
 	for _, fn := range common.PackageFunctionDecls(pkg) {
 		wg.Go(func() {
+			fnSpan := span.StartChild("Final Reassignment", fn.GetName().GetValue())
+			defer fnSpan.End()
 			fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 			if !ok {
 				return
@@ -106,6 +111,15 @@ func analyzeFinalReassignments(ctx *context.CompilerContext, pkg *ast.BLangPacka
 				return
 			}
 			newPossiblyAssignedAnalyzer(ctx, &fnCfg, tracked, selfFields).analyze()
+		})
+	}
+	for _, worker := range cfg.workers {
+		wg.Go(func() {
+			tracked := deferredFinalLocals(ctx, worker.decl.Body)
+			if len(tracked) == 0 {
+				return
+			}
+			newPossiblyAssignedAnalyzer(ctx, &worker.cfg, tracked, nil).analyze()
 		})
 	}
 	wg.Wait()
@@ -180,7 +194,7 @@ type deferredFinalCollector struct {
 
 func (c *deferredFinalCollector) Visit(node ast.BLangNode) ast.Visitor {
 	switch n := node.(type) {
-	case nil, *ast.BLangLambdaFunction:
+	case nil, *ast.BLangLambdaFunction, *ast.BLangNamedWorkerDeclaration:
 		return nil
 	case *ast.BLangVariableDef:
 		if n.Var.Expr != nil {

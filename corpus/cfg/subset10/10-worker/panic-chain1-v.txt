@@ -1,0 +1,55 @@
+(main
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (panic
+          (error-constructor-expr (
+            (literal inner))))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (single-wait-action
+              (simple-var-ref a)))))
+        (expression-stmt
+          (invocation io println (
+            (literal not reached))))
+        (return
+          (simple-var-ref v))))
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (trap-expr
+          (single-wait-action
+            (simple-var-ref b))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (panic
+      (error-constructor-expr (
+        (literal inner))))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (literal not reached))))
+    (return
+      (simple-var-ref v))
+  )
+)

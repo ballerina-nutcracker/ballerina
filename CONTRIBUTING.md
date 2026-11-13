@@ -12,7 +12,7 @@ We appreciate your help!
 ## Get started
 
 - Read the [Code of Conduct](CODE_OF_CONDUCT.md).
-- Install the repository's commit checks with `make install-hooks` after cloning.
+- Install the repository's commit and push checks with `make install-hooks` after cloning.
 - Join the [Ballerina community](https://ballerina.io/community/).
 - Submitting a bug is just as important as contributing code. [Report an issue](https://github.com/ballerina-nutcracker/ballerina/issues) in this repo.
 - Start with GitHub issues labeled `good first issue`. Use comments on the issue to indicate that you will be working on it and get guidance.
@@ -28,7 +28,7 @@ See [doc/guides/DEVELOPING.md](doc/guides/DEVELOPING.md) for more details on deb
 ## Submit your contribution
 
 1. Make your changes in the source code.
-2. Add or update tests as needed. Prefer [corpus tests](AGENTS.md#corpus-tests) for interpreter stages; use `-update` to refresh expected output when appropriate.
+2. Add or update tests as needed. Prefer [corpus tests](.agents/skills/manage-corpus-tests/SKILL.md) for interpreter stages; use `-update` to refresh expected output when appropriate.
 3. Commit and push to your fork, then open a Pull Request (PR).
 
    **Commit message guidelines:**

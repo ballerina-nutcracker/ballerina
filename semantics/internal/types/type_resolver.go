@@ -106,6 +106,12 @@ type typeResolver interface {
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
 	opaqueContext() *opaque.Context
+
+	// traceSpan is the span definition-level children attach to, and
+	// setTraceSpan makes a definition's own span the current one so the
+	// dependencies it pulls in nest beneath it.
+	traceSpan() context.TraceSpan
+	setTraceSpan(span context.TraceSpan)
 }
 
 type resolverContext uint8
@@ -215,6 +221,10 @@ type packageTypeResolver struct {
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState ephemeralState
+	// span is the phase span definition children attach to. Top-level
+	// resolution is sequential, so a definition resolver can swap it for its
+	// own span while it runs; the concurrent body phase never writes it.
+	span context.TraceSpan
 
 	deferredEmptinessChecks []deferredEmptinessCheck
 }
@@ -254,6 +264,8 @@ func (t *packageTypeResolver) drainDeferredEmptinessChecks() {
 func (t *packageTypeResolver) typeContext() semtypes.Context        { return t.tyCtx }
 func (t *packageTypeResolver) expectedReturnType() semtypes.SemType { return semtypes.SemType{} }
 func (t *packageTypeResolver) parent() typeResolver                 { return nil }
+func (t *packageTypeResolver) traceSpan() context.TraceSpan         { return t.span }
+func (t *packageTypeResolver) setTraceSpan(span context.TraceSpan)  { t.span = span }
 func (t *packageTypeResolver) typeEnv() semtypes.Env                { return t.ctx.GetTypeEnv() }
 func (t *packageTypeResolver) isEphemeral() bool                    { return t.ephemeralState.depth > 0 }
 func (t *packageTypeResolver) opaqueContext() *opaque.Context {
@@ -439,12 +451,23 @@ type functionTypeResolver struct {
 	// opaqueCtx is created on first use: most resolvers never monomorphize an opaque call.
 	opaqueCtx      *opaque.Context
 	ephemeralState *ephemeralState
+	// span is the body's own span when one was started for it; the zero handle
+	// defers to the enclosing resolver.
+	span context.TraceSpan
 }
 
 func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.tyCtx }
 func (f *functionTypeResolver) expectedReturnType() semtypes.SemType { return f.retTy }
 func (f *functionTypeResolver) parent() typeResolver                 { return f.parentResolver }
-func (f *functionTypeResolver) typeEnv() semtypes.Env                { return f.parentResolver.typeEnv() }
+func (f *functionTypeResolver) setTraceSpan(span context.TraceSpan)  { f.span = span }
+
+func (f *functionTypeResolver) traceSpan() context.TraceSpan {
+	if f.span == (context.TraceSpan{}) {
+		return f.parentResolver.traceSpan()
+	}
+	return f.span
+}
+func (f *functionTypeResolver) typeEnv() semtypes.Env { return f.parentResolver.typeEnv() }
 func (f *functionTypeResolver) isEphemeral() bool {
 	state := resolverEphemeralState(f)
 	return state != nil && state.depth > 0
@@ -688,7 +711,13 @@ func (f *functionTypeResolver) nextMonoFnName(origName string) string {
 	return fmt.Sprintf("$mono$%s$%d", origName, idx)
 }
 
-func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace, moduleScope model.Scope) *packageTypeResolver {
+func newPackageTypeResolver(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	moduleScope model.Scope,
+	span context.TraceSpan,
+) *packageTypeResolver {
 	return &packageTypeResolver{
 		ctx:                  ctx,
 		tyCtx:                semtypes.ContextFrom(ctx.GetTypeEnv()),
@@ -704,7 +733,40 @@ func newPackageTypeResolver(ctx *context.CompilerContext, pkg *ast.BLangPackage,
 		monoCounters:         make(map[string]int),
 		xmlStepCounters:      make(map[string]int),
 		scope:                moduleScope,
+		span:                 span,
 	}
+}
+
+// definitionSpan is the span of one definition being resolved, together with
+// the span it replaced as the resolver's current one. It is a value rather than
+// a closure so that bracketing a definition does not allocate.
+type definitionSpan struct {
+	resolver typeResolver
+	previous context.TraceSpan
+	span     context.TraceSpan
+}
+
+// end restores the previous span as the current one and ends the definition's
+// span.
+func (d definitionSpan) end() {
+	d.resolver.setTraceSpan(d.previous)
+	d.span.End()
+}
+
+// startDefinitionSpan brackets one definition's resolution and makes its span
+// the current one, so dependencies resolved recursively inside it are charged
+// to it. Calling end on the result restores the previous span and ends the new
+// one.
+func startDefinitionSpan(t typeResolver, operation, identity string) definitionSpan {
+	return enterDefinitionSpan(t, t.traceSpan().StartChild(operation, identity))
+}
+
+// enterDefinitionSpan makes span, a child of the current span, the current one.
+// Calling end on the result restores the previous span and ends span.
+func enterDefinitionSpan(t typeResolver, span context.TraceSpan) definitionSpan {
+	previous := t.traceSpan()
+	t.setTraceSpan(span)
+	return definitionSpan{resolver: t, previous: previous, span: span}
 }
 
 func (t *packageTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
@@ -791,8 +853,13 @@ func (t *packageTypeResolver) resolveTypeOnce(ref model.SymbolRef, resolve func(
 }
 
 // ResolvePublicNodeTypes resolves types of public symbols. After this dependencies can use the ExportedSymbolSpace for this package.
-func ResolvePublicNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
+func ResolvePublicNodes(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	t := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope, parent)
 	t.resolveTopLevelTypes(pkg)
 	mergeImplicitImports(pkg, t.implicitImports)
 }
@@ -808,12 +875,17 @@ func mergeImplicitImports(pkg *ast.BLangPackage, imports map[string]ast.BLangImp
 }
 
 // ResolvePrivateNodesTypes resolves the types private nodes within the package. Then can be executed concurrently
-func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
-	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope)
+func ResolvePrivateNodes(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	p := newPackageTypeResolver(ctx, pkg, importedSymbols, pkg.Scope, parent)
 	fns := common.DeclaredNodes(common.PackageFunctionDecls(pkg))
 
 	allImports := make(map[string]ast.BLangImportPackage)
-	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable) {
+	resolveFieldInitsInScope := func(owner model.SymbolRef, scope model.Scope, fields []*ast.BLangVariable, span context.TraceSpan) {
 		ft := &functionTypeResolver{
 			atomSideTableBase: newAtomSideTableBase(),
 			parentResolver:    p,
@@ -824,6 +896,7 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 			xmlStepCounters:   make(map[string]int),
 			scope:             scope,
 			ephemeralState:    &ephemeralState{},
+			span:              span,
 		}
 		for _, fieldNode := range fields {
 			field := fieldNode
@@ -834,11 +907,15 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		maps.Copy(allImports, ft.implicitImports)
 	}
 	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
-		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields)
+		span := parent.StartChild("Class Field Inits", c.Name.GetValue())
+		resolveFieldInitsInScope(c.Symbol(), c.Scope(), c.Fields, span)
+		span.End()
 	}
 	for i := range pkg.Services {
 		s := pkg.Services[i]
-		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields)
+		span := parent.StartChildFunc("Service Field Inits", func() string { return p.symbolName(s.Symbol()) })
+		resolveFieldInitsInScope(s.Symbol(), s.Scope(), s.Fields, span)
+		span.End()
 	}
 
 	resolvers := make([]*functionTypeResolver, len(fns))
@@ -852,7 +929,9 @@ func ResolvePrivateNodes(ctx *context.CompilerContext, pkg *ast.BLangPackage, im
 		wg.Add(1)
 		go func(idx int, f common.FunctionDecl) {
 			defer wg.Done()
-			resolvers[idx] = resolveFunctionBody(p, f)
+			span := parent.StartChild("Function Body", f.GetName().GetValue())
+			defer span.End()
+			resolvers[idx] = resolveFunctionBody(p, f, span)
 		}(i, fn)
 	}
 	wg.Wait()
@@ -883,6 +962,7 @@ func isPolymorphicFnSymbol(sym model.FunctionSymbol) bool {
 }
 
 func resolvePackageConstants(t *packageTypeResolver, constants []*ast.BLangVariable) {
+	defer startDefinitionSpan(t, "Package Constants", "").end()
 	order, ok := topologicallySortConstants(t, constants)
 	if !ok {
 		return
@@ -1081,7 +1161,7 @@ func invokableSignatureTypes(t typeResolver, chain *binding, fn common.FunctionD
 	return returnTy, fnType, chain, true
 }
 
-func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functionTypeResolver {
+func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span context.TraceSpan) *functionTypeResolver {
 	fnSymbol := p.getSymbol(fn.Symbol())
 	fnSym, ok := fnSymbol.(model.FunctionSymbol)
 	if !ok {
@@ -1099,6 +1179,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 		scope:             fn.Scope(),
 		context:           resolverContextForFunction(fn.IsIsolated()),
 		ephemeralState:    &ephemeralState{},
+		span:              span,
 	}
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
@@ -1112,7 +1193,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl) *functi
 	case *ast.BLangExternFunctionBody:
 		_ = body
 	case *ast.BLangBlockFunctionBody:
-		resolveBlockStatements(ft, nil, body.Stmts)
+		resolveBlockFunctionBody(ft, nil, body)
 	case *ast.BLangExprFunctionBody:
 		resolveActionOrExpression(ft, nil, body.Expr, ft.retTy)
 	default:
@@ -1214,6 +1295,7 @@ func annotationMapListType(t typeResolver) semtypes.SemType {
 }
 
 func resolveAnnotationDeclaration(t typeResolver, annotation *ast.BLangAnnotation) bool {
+	defer startDefinitionSpan(t, "Annotation", annotation.Name.GetValue()).end()
 	var ty semtypes.SemType
 	var ok bool
 	if typeDesc := annotation.GetTypeDescriptor(); typeDesc != nil {
@@ -1261,23 +1343,24 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 	propagateRecordFieldAnnotations(t, pkg)
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
+		isService := classDef.IsService()
 		classPoint := ast.PointClass
-		if classDef.IsService() {
+		if isService {
 			classPoint = ast.PointService
 		}
 		resolveAnnotationAttachments(t, classDef, classPoint, symbolAnnotationSink(t, classDef.Symbol()))
-		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods)
+		resolveClassBodyAnnotationAttachments(t, classDef.Fields, classDef.InitFunction, classDef.Methods, classDef.ResourceMethods, isService)
 	}
 	for i := range pkg.Services {
 		svc := pkg.Services[i]
 		resolveAnnotationAttachments(t, svc, ast.PointService, symbolAnnotationSink(t, svc.Symbol()))
-		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods)
+		resolveClassBodyAnnotationAttachments(t, svc.Fields, svc.InitFunction, svc.Methods, svc.ResourceMethods, true)
 	}
 	for i := range pkg.Functions {
-		resolveFunctionAnnotationAttachments(t, pkg.Functions[i], false)
+		resolveInvokableAnnotationAttachments(t, pkg.Functions[i], ast.PointFunction)
 	}
 	if pkg.InitFunction != nil {
-		resolveFunctionAnnotationAttachments(t, pkg.InitFunction, false)
+		resolveInvokableAnnotationAttachments(t, pkg.InitFunction, ast.PointFunction)
 	}
 	for i := range pkg.Constants {
 		resolveAnnotationAttachments(t, pkg.Constants[i], ast.PointConst, nil)
@@ -1294,32 +1377,24 @@ func resolveTopLevelAnnotationAttachments(t typeResolver, pkg *ast.BLangPackage)
 }
 
 func resolveClassBodyAnnotationAttachments(t typeResolver, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
-	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod,
+	methods map[string]*ast.BLangFunction, resourceMethods []*ast.BLangResourceMethod, isService bool,
 ) {
 	for _, field := range fields {
 		resolveAnnotationAttachments(t, field, ast.PointObjectField, nil)
 	}
 	if initFn != nil {
-		resolveFunctionAnnotationAttachments(t, initFn, true)
+		resolveInvokableAnnotationAttachments(t, initFn, ast.PointObjectMethod)
 	}
 	for _, method := range common.MethodsInResolutionOrder(methods) {
-		resolveFunctionAnnotationAttachments(t, method.Method, true)
+		point := ast.PointObjectMethod
+		if isService && method.Method.IsRemote() {
+			point = ast.PointServiceRemote
+		}
+		resolveInvokableAnnotationAttachments(t, method.Method, point)
 	}
 	for _, method := range resourceMethods {
 		resolveInvokableAnnotationAttachments(t, method, ast.PointObjectMethod)
 	}
-}
-
-func resolveFunctionAnnotationAttachments(
-	t typeResolver,
-	fn *ast.BLangFunction,
-	attached bool,
-) {
-	point := ast.PointFunction
-	if attached {
-		point = ast.PointObjectMethod
-	}
-	resolveInvokableAnnotationAttachments(t, fn, point)
 }
 
 func resolveInvokableAnnotationAttachments(
@@ -2036,6 +2111,7 @@ func resolveFunctionSignature(t typeResolver, chain *binding, fn *ast.BLangFunct
 	if ty := t.symbolType(fn.Symbol()); !semtypes.IsZero(ty) {
 		return ty, chain, !semtypes.IsNever(ty)
 	}
+	defer startDefinitionSpan(t, "Function Signature", fn.Name.GetValue()).end()
 	fnSymbol := fnSym.(model.FunctionSymbol)
 	fnType, chain, ok := resolveInvokableSignature(t, chain, fn, fnSymbol, fn.GetParameters(), depth)
 	if !ok {
@@ -2342,6 +2418,97 @@ func buildReturnTypeOp(t typeResolver, chain *binding, params map[string]param, 
 	}
 }
 
+// resolveBlockFunctionBody resolves the three regions of a block function body:
+// the default-worker initialization statements, the named worker declarations,
+// and the remaining default-worker statements. Every worker is resolved with
+// the narrowing state produced by the initialization region, so a worker sees
+// exactly what the default worker had in scope at the startup point.
+func resolveBlockFunctionBody(t typeResolver, chain *binding, body *ast.BLangBlockFunctionBody) {
+	startupChain := chain
+	if len(body.InitStmts) > 0 {
+		startupChain = resolveBlockStatements(t, chain, body.InitStmts).binding
+	}
+	returnTypes := make([]semtypes.SemType, len(body.Workers))
+	for i, worker := range body.Workers {
+		returnTy, workerChain, ok := declareNamedWorkerType(t, startupChain, worker)
+		if !ok {
+			// The worker's declared return type did not resolve, so its body
+			// cannot be checked against anything meaningful and neither can
+			// the trailing statements that wait on it. The failure is already
+			// reported; stop before producing cascading diagnostics.
+			return
+		}
+		returnTypes[i] = returnTy
+		startupChain = workerChain
+	}
+	// Workers run concurrently with each other and with the rest of the
+	// default worker, so every worker's captures are in effect in every worker
+	// body and in the trailing statements.
+	for _, worker := range body.Workers {
+		startupChain = addCaptureGroup(startupChain, worker.CaptureGroup())
+	}
+	for i, worker := range body.Workers {
+		resolveNamedWorker(t, startupChain, worker, returnTypes[i])
+	}
+	resolveBlockStatements(t, startupChain, body.Stmts)
+}
+
+// declareNamedWorkerType resolves a worker's return type and gives its symbol
+// the type future<T>. Every worker's type is declared before any worker body is
+// resolved, so a body can refer to peers declared before or after it. The node
+// builder always supplies a return descriptor, synthesising a nil one when the
+// source omits `returns`, so the only failure is an unresolvable type.
+func declareNamedWorkerType(
+	t typeResolver,
+	chain *binding,
+	worker *ast.BLangNamedWorkerDeclaration,
+) (semtypes.SemType, *binding, bool) {
+	returnTy, chain, ok := resolveBType(t, chain, worker.ReturnType, 0)
+	if !ok {
+		return semtypes.SemType{}, chain, false
+	}
+	updateSymbolType(t, worker, semtypes.FutureContaining(t.typeEnv(), returnTy))
+	resolveAnnotationAttachments(t, worker, ast.PointWorker, nil)
+	resolveAnnotationAttachments(t, worker.ReturnType, ast.PointReturn, nil)
+	return returnTy, chain, true
+}
+
+// resolveNamedWorker resolves a worker body in an independent return context.
+func resolveNamedWorker(
+	t typeResolver,
+	chain *binding,
+	worker *ast.BLangNamedWorkerDeclaration,
+	returnTy semtypes.SemType,
+) {
+	ft := &functionTypeResolver{
+		atomSideTableBase: newAtomSideTableBase(),
+		parentResolver:    t,
+		tyCtx:             semtypes.ContextFrom(t.typeEnv()),
+		retTy:             returnTy,
+		implicitImports:   make(map[string]ast.BLangImportPackage),
+		monoCounters:      make(map[string]int),
+		scope:             worker.Scope(),
+		context:           resolverContextForFunction(isolatedContext(t)),
+		ephemeralState:    resolverEphemeralState(t),
+	}
+
+	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
+	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
+
+}
+
+// waitEventualType returns the type a wait on the given operand yields. A
+// direct reference to a named worker has eventual type T; every other
+// future<T> expression, including an alias of a worker future, has eventual
+// type T|error.
+func waitEventualType(t typeResolver, expression ast.BLangExpression, expressionType semtypes.SemType) semtypes.SemType {
+	eventualTy := semtypes.FutureEventualType(t.typeContext(), expressionType)
+	if ref, ok := expression.(*ast.BLangVarRef); ok && t.getSymbol(ref.Symbol()).Kind() == model.SymbolKindWorker {
+		return eventualTy
+	}
+	return semtypes.Union(eventualTy, semtypes.Error)
+}
+
 func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambdaFunction, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
 	if e.HasInferredParams() {
 		return resolveInferredLambdaFunctionExpr(t, chain, e, expectedType)
@@ -2377,7 +2544,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 
 	switch body := e.Function.Body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		resolveBlockStatements(ft, boundaryChain, body.Stmts)
+		resolveBlockFunctionBody(ft, boundaryChain, body)
 	case *ast.BLangExprFunctionBody:
 		if _, ok := resolveActionOrExpression(ft, boundaryChain, body.Expr, ft.retTy); !ok {
 			return semtypes.SemType{}, expressionEffect{}, false
@@ -2503,6 +2670,7 @@ func resolveTypeDefinition(t typeResolver, defn *ast.BLangTypeDefinition, depth 
 	if ty := t.symbolType(defn.Symbol()); !semtypes.IsZero(ty) {
 		return true
 	}
+	defer startDefinitionSpan(t, "Type Definition", defn.Name.GetValue()).end()
 	if depth == defn.GetCycleDepth() {
 		t.semanticError(fmt.Sprintf("invalid cycle detected for type definition %s", defn.GetName().GetValue()), defn.GetPosition())
 		return false
@@ -2546,6 +2714,7 @@ func resolveClassTypeDefinition(t typeResolver, classDef *ast.BLangClassDefiniti
 	if ty := t.symbolType(classDef.Symbol()); !semtypes.IsZero(ty) {
 		return true
 	}
+	defer startDefinitionSpan(t, "Class Type", classDef.Name.GetValue()).end()
 	if depth == classDef.GetCycleDepth() {
 		t.semanticError(fmt.Sprintf("invalid cycle detected for type definition %s", classDef.GetName().GetValue()), classDef.GetPosition())
 		return false
@@ -2935,6 +3104,9 @@ func resolveClassDefinitionType(t typeResolver, classDef *ast.BLangClassDefiniti
 }
 
 func resolveServiceType(t typeResolver, svc *ast.BLangService, depth int, attachPointBound semtypes.SemType) {
+	defer enterDefinitionSpan(t, t.traceSpan().StartChildFunc("Service", func() string {
+		return t.symbolName(svc.Symbol())
+	})).end()
 	typeData := svc.GetTypeData()
 	var serviceTy semtypes.SemType
 	if typeData.TypeDescriptor != nil {
@@ -3556,6 +3728,7 @@ func resolveGlobalVarInit(t typeResolver, node *ast.BLangVariable) bool {
 	if node.Expr == nil {
 		return true
 	}
+	defer startDefinitionSpan(t, "Global Variable", node.Name.GetValue()).end()
 	if node.TypeNode() == nil {
 		if pt, ok := t.(*packageTypeResolver); ok {
 			return pt.ensureResolved(node.Symbol(), 0)
@@ -3872,7 +4045,7 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 	case *ast.BLangCheckPanickedExpr:
 		return resolved(resolveCheckedExpr(t, chain, &e.BLangCheckedExpr, expectedType))
 	case *ast.BLangTrapExpr:
-		return resolved(resolveTrapExpr(t, chain, e))
+		return resolved(resolveTrapExpr(t, chain, e, expectedType))
 	case *ast.BLangNamedArgsExpression:
 		result, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
 		if !ok {
@@ -4457,13 +4630,15 @@ func resolveSingleWaitAction(t typeResolver, chain *binding, e *ast.BLangSingleW
 		t.semanticError("wait action requires a future expression", e.FutureExpr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	resultTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+	resultTy := waitEventualType(t, e.FutureExpr, futureTy)
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(sequentialChain(t, futureResult.effect)), true
 }
 
 func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlternateWaitAction) (semtypes.SemType, expressionEffect, bool) {
-	resultTy := semtypes.Error
+	// Each operand contributes its own eventual type. An ordinary future
+	// contributes T|error; a direct named-worker reference contributes T.
+	resultTy := semtypes.Never
 	for _, futureExpr := range e.FutureExprs {
 		futureResult, ok := resolveActionOrExpression(t, chain, futureExpr, semtypes.Future)
 		if !ok {
@@ -4475,7 +4650,7 @@ func resolveAlternateWaitAction(t typeResolver, chain *binding, e *ast.BLangAlte
 			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		resultTy = semtypes.Union(resultTy, semtypes.FutureEventualType(t.typeContext(), futureTy))
+		resultTy = semtypes.Union(resultTy, waitEventualType(t, futureExpr, futureTy))
 	}
 	setNodeType(t, e, resultTy)
 	return resultTy, defaultExpressionEffect(chain), true
@@ -4505,7 +4680,7 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 			t.semanticError("wait action requires a future expression", futureExpr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
-		fieldTy := semtypes.Union(semtypes.FutureEventualType(t.typeContext(), futureTy), semtypes.Error)
+		fieldTy := waitEventualType(t, futureExpr, futureTy)
 		fields[i] = semtypes.FieldFrom(fieldName, fieldTy, false, false)
 	}
 
@@ -4524,8 +4699,8 @@ func resolveMultipleWaitAction(t typeResolver, chain *binding, e *ast.BLangMulti
 	return resultTy, defaultExpressionEffect(chain), true
 }
 
-func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr) (semtypes.SemType, expressionEffect, bool) {
-	exprResult, ok := resolveActionOrExpression(t, chain, e.Expr, semtypes.SemType{})
+func resolveTrapExpr(t typeResolver, chain *binding, e *ast.BLangTrapExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
+	exprResult, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -4634,13 +4809,19 @@ func constructorCandidates[A constructorAlternative, C any](t typeResolver, kind
 }
 
 func finishMappingConstructor(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) (expressionResult, bool) {
-	fields, chain, ok := resolveMappingConstructorFields(t, chain, e, candidate)
+	members, chain, ok := resolveMappingConstructorFields(t, chain, e, candidate)
 	if !ok {
 		return expressionResult{}, false
 	}
-	// Inside a trial the constructor must fit the candidate, so that an outer trial can tell candidates apart by an
-	// inner constructor. Outside a trial a misfit is reported by semantic analysis at the field.
-	if t.isEphemeral() && !semtypes.MappingAlternativeAllowsFields(t.typeContext(), candidate.alt, fields, func(atom *semtypes.MappingAtomicType) []string {
+	if hasMappingSpreadMember(members) {
+		// What a spread can supply is known only here, so the constructor is checked against the candidate both
+		// inside and outside a trial.
+		if !checkMappingConstructorSpreads(t, e, members, candidate.atom) {
+			return expressionResult{}, false
+		}
+	} else if t.isEphemeral() && !semtypes.MappingAlternativeAllowsFields(t.typeContext(), candidate.alt, mappingMemberFieldInfos(members), func(atom *semtypes.MappingAtomicType) []string {
+		// Inside a trial the constructor must fit the candidate, so that an outer trial can tell candidates apart by an
+		// inner constructor. Outside a trial a misfit is reported by semantic analysis at the field.
 		return defaultableMappingFields(t, atom)
 	}) {
 		return expressionResult{}, false
@@ -4660,12 +4841,27 @@ func finishMappingConstructor(t typeResolver, chain *binding, e *ast.BLangMappin
 	return expressionResult{ty: inherentTy, effect: defaultExpressionEffect(chain)}, true
 }
 
-// resolveMappingConstructorFields resolves each field value against the candidate's field type for its key. A
-// computed key takes the member type for the key's type and is not part of the returned fields.
-func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) ([]semtypes.MappingFieldInfo, *binding, bool) {
-	fields := make([]semtypes.MappingFieldInfo, 0, len(e.Fields))
+// resolveMappingConstructorFields resolves each field value against the candidate's field type for its key and
+// each spread operand against the mapping type the candidate gives it. A computed key takes the member type for
+// the key's type and is not part of the returned members.
+func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, candidate mappingCandidate) ([]mappingConstructorMember, *binding, bool) {
+	members := make([]mappingConstructorMember, 0, len(e.Fields))
 	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
+		if spread, ok := f.(*ast.BLangMappingSpreadField); ok {
+			contextualType := common.MappingSpreadContextualType(t.compilerContext(), t.typeEnv(), candidate.atom, spread.Expr)
+			member, spreadChain, ok := resolveMappingSpreadMember(t, chain, spread, contextualType)
+			if !ok {
+				return nil, chain, false
+			}
+			chain = spreadChain
+			members = append(members, member)
+			continue
+		}
+		kv, ok := f.(*ast.BLangMappingKeyValueField)
+		if !ok {
+			t.internalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
+			return nil, chain, false
+		}
 		computed := kv.Key.Kind == ast.MappingKeyComputed
 		var keyName string
 		var required semtypes.SemType
@@ -4697,9 +4893,9 @@ func resolveMappingConstructorFields(t typeResolver, chain *binding, e *ast.BLan
 			continue
 		}
 		resolveMappingKey(t, kv, result.ty)
-		fields = append(fields, semtypes.MappingFieldInfo{Name: keyName, Type: result.ty})
+		members = append(members, mappingConstructorMember{pos: kv.GetPosition(), name: keyName, ty: result.ty})
 	}
-	return fields, chain, true
+	return members, chain, true
 }
 
 // resolveMemberValue resolves a constructor member that has no contextually expected type.
@@ -4743,12 +4939,24 @@ func inferredMemberType(ty semtypes.SemType, readonly bool) semtypes.SemType {
 }
 
 func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BLangMappingConstructorExpr, readonlyValue bool) (expressionResult, bool) {
-	var fields []semtypes.Field
-	restTy := semtypes.Never
+	members := make([]mappingConstructorMember, 0, len(e.Fields))
+	computedRestTy := semtypes.Never
 	for _, f := range e.Fields {
-		kv := f.(*ast.BLangMappingKeyValueField)
+		if spread, ok := f.(*ast.BLangMappingSpreadField); ok {
+			member, spreadChain, ok := resolveMappingSpreadMember(t, chain, spread, semtypes.SemType{})
+			if !ok {
+				return expressionResult{}, false
+			}
+			chain = spreadChain
+			members = append(members, member)
+			continue
+		}
+		kv, ok := f.(*ast.BLangMappingKeyValueField)
+		if !ok {
+			t.internalError(fmt.Sprintf("unexpected mapping field kind %T", f), f.GetPosition())
+			return expressionResult{}, false
+		}
 		if kv.Key.Kind == ast.MappingKeyComputed {
-			var ok bool
 			_, chain, ok = resolveComputedMappingKey(t, chain, kv)
 			if !ok {
 				return expressionResult{}, false
@@ -4758,36 +4966,433 @@ func resolveMappingConstructorBottomUp(t typeResolver, chain *binding, e *ast.BL
 				return expressionResult{}, false
 			}
 			chain = sequentialChain(t, valueResult.effect)
-			restTy = semtypes.Union(restTy, inferredMemberType(valueResult.ty, readonlyValue))
+			computedRestTy = semtypes.Union(computedRestTy, inferredMemberType(valueResult.ty, readonlyValue))
 			continue
 		}
 		keyName, ok := common.MappingKeyName(t.compilerContext(), kv.Key)
 		if !ok {
 			return expressionResult{}, false
 		}
-		readonly := readonlyValue || e.IsReadonly(keyName)
-		valueResult, ok := resolveMemberValue(t, chain, kv.ValueExpr, readonly)
+		valueResult, ok := resolveMemberValue(t, chain, kv.ValueExpr, readonlyValue || e.IsReadonly(keyName))
 		if !ok {
 			return expressionResult{}, false
 		}
 		chain = sequentialChain(t, valueResult.effect)
-		fieldTy := valueResult.ty
-		if !e.IsReadonly(keyName) {
-			fieldTy = inferredMemberType(valueResult.ty, readonly)
-		}
 		resolveMappingKey(t, kv, valueResult.ty)
-		fields = append(fields, semtypes.FieldFrom(keyName, fieldTy, readonly, false))
+		members = append(members, mappingConstructorMember{pos: kv.GetPosition(), name: keyName, ty: valueResult.ty})
+	}
+	if !checkMappingConstructorCollisions(t, members) {
+		return expressionResult{}, false
+	}
+	shape := combineMappingConstructorShape(t, e, members)
+	mapTy, ok := inferMappingConstructorType(t, e, shape, computedRestTy, readonlyValue)
+	if !ok {
+		return expressionResult{}, false
+	}
+	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
+	if mat == nil {
+		t.internalError("inferred mapping constructor type is not a single mapping atom", e.GetPosition())
+		return expressionResult{}, false
+	}
+	setNodeType(t, e, mapTy)
+	setMappingConstructorInherentType(t, e, *mat, nil)
+	return expressionResult{ty: mapTy, effect: defaultExpressionEffect(chain)}, true
+}
+
+// possibleMappingConstructorShape is every key a mapping constructor can supply together with the
+// values possible at each of them. A name in fieldTypes is described independently of restType,
+// which covers every other key. A distinguished name whose type is empty is an exclusion: it
+// supplies nothing, and the rest type does not apply to it either.
+type possibleMappingConstructorShape struct {
+	fieldTypes     map[string]semtypes.SemType
+	optionalFields []string
+	readonlyFields []string
+	restType       semtypes.SemType
+}
+
+func newPossibleMappingConstructorShape() possibleMappingConstructorShape {
+	return possibleMappingConstructorShape{fieldTypes: map[string]semtypes.SemType{}, restType: semtypes.Never}
+}
+
+// names are the distinguished names in a deterministic order, so constructed types and
+// diagnostics do not depend on map iteration order.
+func (s possibleMappingConstructorShape) names() []string {
+	names := slices.Collect(maps.Keys(s.fieldTypes))
+	sort.Strings(names)
+	return names
+}
+
+func (s possibleMappingConstructorShape) isOptional(name string) bool {
+	return slices.Contains(s.optionalFields, name)
+}
+
+func (s possibleMappingConstructorShape) isReadonly(name string) bool {
+	return slices.Contains(s.readonlyFields, name)
+}
+
+func (s possibleMappingConstructorShape) distinguishes(name string) bool {
+	_, ok := s.fieldTypes[name]
+	return ok
+}
+
+// mappingConstructorMember is one resolved field of a mapping constructor with a statically known key. A specific
+// field contributes at its own key alone; a spread contributes the names its operand distinguishes and a rest type
+// covering every other key.
+type mappingConstructorMember struct {
+	spread bool
+	pos    diagnostics.Location
+	name   string
+	ty     semtypes.SemType
+	fields []semtypes.MappingField
+	rest   semtypes.SemType
+}
+
+// contribution is the value this member can supply at name and whether it guarantees one.
+func (m mappingConstructorMember) contribution(name string) (semtypes.SemType, bool) {
+	if !m.spread {
+		if m.name == name {
+			return m.ty, true
+		}
+		return semtypes.Never, false
+	}
+	for _, field := range m.fields {
+		if field.Name == name {
+			return field.Type, !field.IsOptional
+		}
+	}
+	return m.rest, false
+}
+
+func hasMappingSpreadMember(members []mappingConstructorMember) bool {
+	return slices.ContainsFunc(members, func(m mappingConstructorMember) bool { return m.spread })
+}
+
+// mappingMemberFieldInfos describes members that are all specific fields.
+func mappingMemberFieldInfos(members []mappingConstructorMember) []semtypes.MappingFieldInfo {
+	fields := make([]semtypes.MappingFieldInfo, len(members))
+	for i, member := range members {
+		fields[i] = semtypes.MappingFieldInfo{Name: member.name, Type: member.ty}
+	}
+	return fields
+}
+
+// mappingConstructorSpecificField is where a diagnostic about a name written as a specific field
+// belongs.
+type mappingConstructorSpecificField struct {
+	valuePos diagnostics.Location
+}
+
+// mappingConstructorSources locates the field a diagnostic about a name should point at. A name
+// written as a specific field has its own position; any other name can only have come from a
+// spread.
+type mappingConstructorSources struct {
+	specificFields map[string]mappingConstructorSpecificField
+	firstSpreadPos diagnostics.Location
+	hasSpread      bool
+}
+
+func mappingConstructorSourcesOf(t typeResolver, expr *ast.BLangMappingConstructorExpr) (mappingConstructorSources, bool) {
+	sources := mappingConstructorSources{specificFields: map[string]mappingConstructorSpecificField{}}
+	for _, f := range expr.Fields {
+		switch field := f.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if field.Key.Kind == ast.MappingKeyComputed {
+				continue
+			}
+			name, ok := common.MappingKeyName(t.compilerContext(), field.Key)
+			if !ok {
+				return mappingConstructorSources{}, false
+			}
+			if _, seen := sources.specificFields[name]; seen {
+				continue
+			}
+			sources.specificFields[name] = mappingConstructorSpecificField{valuePos: field.ValueExpr.GetPosition()}
+		case *ast.BLangMappingSpreadField:
+			if sources.hasSpread {
+				continue
+			}
+			sources.hasSpread = true
+			sources.firstSpreadPos = field.GetPosition()
+		}
+	}
+	return sources, true
+}
+
+func (s mappingConstructorSources) isSpecific(name string) bool {
+	_, ok := s.specificFields[name]
+	return ok
+}
+
+// reportFieldMismatch reports a value the target does not admit against the field that supplied it. A
+// specific field is reported against its own value expression, the way an ordinary incompatible
+// expression is; a value that came through a spread has no expression of its own.
+func (s mappingConstructorSources) reportFieldMismatch(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	name string, expected, actual semtypes.SemType) {
+	if field, ok := s.specificFields[name]; ok {
+		t.semanticError(common.FormatIncompatibleTypeMessage(t.typeContext(), expected, actual), field.valuePos)
+		return
+	}
+	pos := expr.GetPosition()
+	if s.hasSpread {
+		pos = s.firstSpreadPos
+	}
+	t.semanticError(fmt.Sprintf("spread field member '%s' is not allowed by the inherent type of the mapping constructor", name), pos)
+}
+
+// inferMappingConstructorType is the inherent type of a constructor resolved without a
+// contextually expected type. Only a value written as a specific field that is not explicitly
+// readonly is widened; an explicitly readonly field keeps the precise type of its value, and a
+// value that came through a spread keeps the type its source mapping holds. A computed key adds
+// its value's type to the rest. A readonly value makes every field, and the rest, readonly.
+func inferMappingConstructorType(t typeResolver, e *ast.BLangMappingConstructorExpr,
+	shape possibleMappingConstructorShape, computedRestTy semtypes.SemType, readonlyValue bool) (semtypes.SemType, bool) {
+	sources, ok := mappingConstructorSourcesOf(t, e)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	restTy := semtypes.Union(shape.restType, computedRestTy)
+	fields := make([]semtypes.Field, 0, len(shape.fieldTypes))
+	for _, name := range shape.names() {
+		ty := shape.fieldTypes[name]
+		readonly := readonlyValue || shape.isReadonly(name)
+		if sources.isSpecific(name) && !shape.isReadonly(name) {
+			ty = inferredMemberType(ty, readonly)
+		}
+		optional := shape.isOptional(name)
+		if optional && semtypes.IsNever(ty) && semtypes.IsNever(restTy) {
+			// The name is impossible and no rest could reintroduce it, so recording the
+			// exclusion would not constrain the inferred type.
+			continue
+		}
+		fields = append(fields, semtypes.FieldFrom(name, ty, readonly, optional))
 	}
 	mutability := semtypes.CellMutabilityLimited
 	if readonlyValue {
 		mutability = semtypes.CellMutabilityNone
 	}
 	md := semtypes.NewMappingDefinition()
-	mapTy := md.Define(t.typeEnv(), fields, restTy, semtypes.MappingMutability(mutability))
-	setNodeType(t, e, mapTy)
-	mat := semtypes.ToMappingAtomicType(t.typeContext(), mapTy)
-	setMappingConstructorInherentType(t, e, *mat, nil)
-	return expressionResult{ty: mapTy, effect: defaultExpressionEffect(chain)}, true
+	return md.Define(t.typeEnv(), fields, restTy, semtypes.MappingMutability(mutability)), true
+}
+
+// combineMappingConstructorShape folds the members into one shape. At each distinguished name a
+// member contributes its own field type if it distinguishes the name and its rest type otherwise,
+// and the name is guaranteed when some contribution guarantees it. A contribution that can never
+// hold a value is an exclusion: it is left out of the combined type, so the name stays excluded
+// only while no member supplies it.
+func combineMappingConstructorShape(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	members []mappingConstructorMember) possibleMappingConstructorShape {
+	shape := newPossibleMappingConstructorShape()
+	for _, name := range mappingMemberNames(members...) {
+		ty := semtypes.Never
+		guaranteed := false
+		for _, member := range members {
+			contribution, supplies := member.contribution(name)
+			guaranteed = guaranteed || supplies
+			if !mappingTypeInhabited(t, contribution) {
+				continue
+			}
+			ty = semtypes.Union(ty, contribution)
+		}
+		shape.fieldTypes[name] = ty
+		if !guaranteed {
+			shape.optionalFields = append(shape.optionalFields, name)
+		}
+	}
+	for _, member := range members {
+		if member.spread {
+			shape.restType = semtypes.Union(shape.restType, member.rest)
+		}
+	}
+	for _, name := range expr.ReadonlyFields {
+		if shape.distinguishes(name) && !shape.isReadonly(name) {
+			shape.readonlyFields = append(shape.readonlyFields, name)
+		}
+	}
+	return shape
+}
+
+func mappingMemberNames(members ...mappingConstructorMember) []string {
+	seen := map[string]bool{}
+	var names []string
+	add := func(name string) {
+		if seen[name] {
+			return
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+	for _, member := range members {
+		if !member.spread {
+			add(member.name)
+			continue
+		}
+		for _, field := range member.fields {
+			add(field.Name)
+		}
+	}
+	sort.Strings(names)
+	return names
+}
+
+// checkMappingConstructorCollisions rejects members that can supply the same key. Two
+// contributions collide only when both are inhabited, so an excluded or uninhabited member
+// conflicts with nothing. Textual order does not matter: a key a spread can supply conflicts with
+// a specific field written either before or after it. A computed key is not a member: its
+// duplicates are detected at runtime.
+func checkMappingConstructorCollisions(t typeResolver, members []mappingConstructorMember) bool {
+	for i, member := range members {
+		if !member.spread {
+			continue
+		}
+		for j, other := range members {
+			if i == j {
+				continue
+			}
+			if !other.spread {
+				if !mappingMembersCollideAt(t, member, other, other.name) {
+					continue
+				}
+				t.semanticError(fmt.Sprintf("spread field may duplicate key '%s'", other.name), member.pos)
+				return false
+			}
+			if j < i {
+				continue
+			}
+			if !checkMappingSpreadPairCollision(t, member, other) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func checkMappingSpreadPairCollision(t typeResolver, left, right mappingConstructorMember) bool {
+	for _, name := range mappingMemberNames(left, right) {
+		if !mappingMembersCollideAt(t, left, right, name) {
+			continue
+		}
+		t.semanticError(fmt.Sprintf("spread fields may duplicate key '%s'", name), right.pos)
+		return false
+	}
+	// Outside the names either operand distinguishes both are governed only by their rest
+	// descriptors, so permitting any such key at all means permitting the same ones.
+	if mappingTypeInhabited(t, left.rest) && mappingTypeInhabited(t, right.rest) {
+		t.semanticError("spread fields may supply overlapping keys", right.pos)
+		return false
+	}
+	return true
+}
+
+func mappingMembersCollideAt(t typeResolver, left, right mappingConstructorMember, name string) bool {
+	leftTy, _ := left.contribution(name)
+	rightTy, _ := right.contribution(name)
+	return mappingTypeInhabited(t, leftTy) && mappingTypeInhabited(t, rightTy)
+}
+
+func mappingTypeInhabited(t typeResolver, ty semtypes.SemType) bool {
+	return !semtypes.IsEmpty(t.typeContext(), ty)
+}
+
+// resolveMappingSpreadMember resolves a spread operand, enforces that it is a mapping and
+// describes it once for every consumer as the names it distinguishes and the type of every other
+// key.
+func resolveMappingSpreadMember(t typeResolver, chain *binding, field *ast.BLangMappingSpreadField,
+	expectedType semtypes.SemType) (mappingConstructorMember, *binding, bool) {
+	result, ok := resolveActionOrExpression(t, chain, field.Expr, expectedType)
+	if !ok {
+		return mappingConstructorMember{}, chain, false
+	}
+	chain = sequentialChain(t, result.effect)
+	if !semtypes.IsSubtype(t.typeContext(), result.ty, semtypes.Mapping) {
+		t.semanticError("spread field operand must be a subtype of map<any|error>", field.Expr.GetPosition())
+		return mappingConstructorMember{}, chain, false
+	}
+	fields, rest, ok := semtypes.AllPossibleMappingFields(t.typeContext(), result.ty)
+	if !ok {
+		t.unimplemented("spread field operand of a non-atomic mapping type is not supported", field.Expr.GetPosition())
+		return mappingConstructorMember{}, chain, false
+	}
+	return mappingConstructorMember{spread: true, pos: field.GetPosition(), fields: fields, rest: rest}, chain, true
+}
+
+// checkMappingConstructorSpreads validates a constructor with spread fields against one inherent
+// type: no two members may supply the same key, every possible member must be admitted by the
+// corresponding declared field or by the target rest, and every required target field must be
+// guaranteed a value.
+func checkMappingConstructorSpreads(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	members []mappingConstructorMember, target *semtypes.MappingAtomicType) bool {
+	if !checkMappingConstructorCollisions(t, members) {
+		return false
+	}
+	sources, ok := mappingConstructorSourcesOf(t, expr)
+	if !ok {
+		return false
+	}
+	shape := combineMappingConstructorShape(t, expr, members)
+	return checkMappingConstructorFields(t, sources, expr, shape, target) &&
+		checkMappingConstructorRest(t, sources, shape, target) &&
+		checkMappingConstructorRequiredFields(t, expr, shape, target, defaultableMappingFields(t, target))
+}
+
+func checkMappingConstructorFields(t typeResolver, sources mappingConstructorSources,
+	expr *ast.BLangMappingConstructorExpr, shape possibleMappingConstructorShape,
+	target *semtypes.MappingAtomicType) bool {
+	tc := t.typeContext()
+	for _, name := range shape.names() {
+		ty := shape.fieldTypes[name]
+		if !mappingTypeInhabited(t, ty) {
+			// An excluded name never holds a value, so the target need not admit one.
+			continue
+		}
+		expected := target.FieldInnerVal(name)
+		if shape.isReadonly(name) {
+			expected = semtypes.Intersect(expected, semtypes.ValReadonly)
+		}
+		if mappingTypeInhabited(t, expected) && semtypes.IsSubtype(tc, ty, expected) {
+			continue
+		}
+		sources.reportFieldMismatch(t, expr, name, expected, ty)
+		return false
+	}
+	return true
+}
+
+func checkMappingConstructorRequiredFields(t typeResolver, expr *ast.BLangMappingConstructorExpr,
+	shape possibleMappingConstructorShape, target *semtypes.MappingAtomicType, defaults []string) bool {
+	tc := t.typeContext()
+	for _, name := range target.FieldNames() {
+		if target.IsOptional(tc, name) || slices.Contains(defaults, name) {
+			continue
+		}
+		if shape.distinguishes(name) && !shape.isOptional(name) {
+			continue
+		}
+		t.semanticError(fmt.Sprintf("missing non-defaultable required record field '%s'", name), expr.GetPosition())
+		return false
+	}
+	return true
+}
+
+func checkMappingConstructorRest(t typeResolver, sources mappingConstructorSources,
+	shape possibleMappingConstructorShape, target *semtypes.MappingAtomicType) bool {
+	if !mappingTypeInhabited(t, shape.restType) {
+		return true
+	}
+	tc := t.typeContext()
+	if !semtypes.IsSubtype(tc, shape.restType, target.Rest()) {
+		t.semanticError("spread field may supply keys the inherent type of the mapping constructor does not allow", sources.firstSpreadPos)
+		return false
+	}
+	// The rest can also land on a target field the shape does not distinguish, so that
+	// contribution has to satisfy the declared field type as well.
+	for _, name := range target.FieldNames() {
+		if shape.distinguishes(name) || semtypes.IsSubtype(tc, shape.restType, target.FieldInnerVal(name)) {
+			continue
+		}
+		t.semanticError(fmt.Sprintf("spread field may supply a value for '%s' that the inherent type does not allow", name), sources.firstSpreadPos)
+		return false
+	}
+	return true
 }
 
 // resolveComputedMappingKey resolves a computed key as an ordinary expression,
@@ -5445,6 +6050,10 @@ func resolveQueryIntermediateClauses(t typeResolver, chain *binding, q *queryRes
 
 func resolveSimpleVarRef(t typeResolver, chain *binding, expr *ast.BLangVarRef) (expressionResult, bool) {
 	baseSymbol := expr.Symbol()
+	if _, ok := t.getSymbol(baseSymbol).(*model.OpaqueFunctionSymbol); ok {
+		t.unimplemented("'"+expr.VariableName.GetValue()+"' cannot be used as a function value", expr.GetPosition())
+		return expressionResult{}, false
+	}
 	sym, isNarrowed := lookupBinding(t, chain, baseSymbol)
 	if isNarrowed {
 		setNodeSymbol(t, expr, sym)
@@ -6608,6 +7217,9 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	}
 	containerExprTy := containerExprResult.ty
 	chain = sequentialChain(t, containerExprResult.effect)
+	if expr.PkgAlias != nil {
+		return resolveXMLAttributeAccess(t, expr, containerExprTy)
+	}
 	key := expr.Field.GetValue()
 	if expr.IsOptionalAccess() {
 		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprResult, key)
@@ -6649,6 +7261,10 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 		var ok bool
 		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, expr.IsLexpr())
 		if !ok {
+			if !expr.IsLexpr() && optionalFieldIncludesNil(tyCtx, mappingTy, key) {
+				t.semanticError(fmt.Sprintf("field access cannot be used to access optional field '%s' whose type includes nil", key), expr.GetPosition())
+				return expressionResult{}, false
+			}
 			t.semanticError("field base access is only possible for declared fields", expr.GetPosition())
 			return expressionResult{}, false
 		}
@@ -6674,6 +7290,20 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 
 	setNodeType(t, expr, memberTy)
 	return expressionResult{ty: memberTy, effect: defaultExpressionEffect(chain)}, true
+}
+
+func resolveXMLAttributeAccess(t typeResolver, expr *ast.BLangFieldBaseAccess, containerTy semtypes.SemType) (expressionResult, bool) {
+	if expr.IsLexpr() {
+		t.semanticError("xml attribute access cannot be used as an lvalue", expr.GetPosition())
+		return expressionResult{}, false
+	}
+	if !semtypes.IsSubtype(t.typeContext(), containerTy, semtypes.XML) {
+		t.semanticError("xml attribute access requires an expression of type xml", expr.GetPosition())
+		return expressionResult{}, false
+	}
+	// expr.PkgAlias is not resolved to an xmlns prefix or string constant yet
+	t.unimplemented("XML attribute access not supported", expr.GetPosition()) // https://github.com/ballerina-nutcracker/ballerina/issues/560
+	return expressionResult{}, false
 }
 
 func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, container expressionResult, fieldname string) (expressionResult, bool) {
@@ -6766,15 +7396,23 @@ func reportReadonlyMutation(t typeResolver, tyCtx semtypes.Context, containerTy 
 	t.semanticError(fmt.Sprintf("cannot mutate readonly field '%s'", key), loc)
 }
 
+func optionalFieldIncludesNil(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string) bool {
+	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, semtypes.StringConst(key))
+	return semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) && semtypes.ContainsUndef(memberTy) && semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef))
+}
+
 func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, isLexpr bool) (semtypes.SemType, bool) {
 	keyTy := semtypes.StringConst(key)
 	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, keyTy)
 	if !semtypes.ContainsUndef(memberTy) {
 		return memberTy, true
 	}
-	// I think the correct thing to check is if any has an "optional" field by the name but spec if very specific in
-	// same any declared feild (without optional qualifier)
+	// A read of an optional field is rewritten to an optional access only if some declared field has that name and
+	// the member type does not include nil, otherwise an absent field and a field holding () look the same.
 	if !isLexpr && semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
+		if semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef)) {
+			return semtypes.SemType{}, false
+		}
 		return semtypes.Union(semtypes.Diff(memberTy, semtypes.Undef), semtypes.Nil), true
 	}
 	if isLexpr && semtypes.AllMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
@@ -8674,6 +9312,7 @@ func resolveConstant(t typeResolver, constant *ast.BLangVariable) bool {
 	if !semtypes.IsZero(t.symbolType(constant.Symbol())) {
 		return true
 	}
+	defer startDefinitionSpan(t, "Constant", constant.Name.GetValue()).end()
 	if constant.Expr == nil {
 		t.internalError("constant expression is nil", constant.GetPosition())
 		return false

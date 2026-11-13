@@ -78,6 +78,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printReturnTypeDescriptor(t)
 	case *BLangBlockFunctionBody:
 		p.printBlockFunctionBody(t)
+	case *BLangNamedWorkerDeclaration:
+		p.printNamedWorkerDeclaration(t)
 	case *BLangExprFunctionBody:
 		p.printExprFunctionBody(t)
 	case *BLangExternFunctionBody:
@@ -180,6 +182,8 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.printMappingConstructor(t)
 	case *BLangMappingKeyValueField:
 		p.printMappingKeyValueField(t)
+	case *BLangMappingSpreadField:
+		p.printMappingSpreadField(t)
 	case *BLangAnnotation:
 		p.printAnnotation(t)
 	case *BLangAnnotationAttachment:
@@ -1180,10 +1184,35 @@ func (p *PrettyPrinter) printBlockFunctionBody(node *BLangBlockFunctionBody) {
 	p.StartNode()
 	p.PrintString("block-function-body")
 	p.indentLevel++
+	for _, stmt := range node.InitStmts {
+		p.PrintInner(stmt.(BLangNode))
+	}
+	for _, worker := range node.Workers {
+		p.PrintInner(worker)
+	}
 	for _, stmt := range node.Stmts {
 		p.PrintInner(stmt.(BLangNode))
 	}
 	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printNamedWorkerDeclaration(node *BLangNamedWorkerDeclaration) {
+	p.StartNode()
+	p.PrintString("named-worker")
+	p.PrintString(node.Name)
+
+	p.PrintString("(")
+	p.indentLevel++
+	p.PrintInner(node.ReturnType)
+	p.indentLevel--
+	p.printSticky(")")
+
+	p.indentLevel++
+	p.PrintInner(node.Body)
+	p.printAnnotationAttachments(node)
+	p.indentLevel--
+
 	p.EndNode()
 }
 
@@ -1627,9 +1656,18 @@ func (p *PrettyPrinter) printMappingConstructor(node *BLangMappingConstructorExp
 	p.indentLevel++
 	p.printReadonlyFields(node.ReadonlyFields)
 	for _, f := range node.Fields {
-		if kv, ok := f.(*BLangMappingKeyValueField); ok {
-			p.PrintInner(kv)
-		}
+		p.PrintInner(f.(BLangNode))
+	}
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printMappingSpreadField(node *BLangMappingSpreadField) {
+	p.StartNode()
+	p.PrintString("mapping-spread-field")
+	p.indentLevel++
+	if node.Expr != nil {
+		p.PrintInner(node.Expr.(BLangNode))
 	}
 	p.indentLevel--
 	p.EndNode()
@@ -2277,7 +2315,11 @@ func (p *PrettyPrinter) printFieldBaseAccess(node *BLangFieldBaseAccess) {
 	} else {
 		p.PrintString("field-based-access")
 	}
-	p.PrintString(printableIdentifierValue(node.Field))
+	if node.PkgAlias != nil {
+		p.PrintString(printableIdentifierValue(node.PkgAlias) + ":" + printableIdentifierValue(node.Field))
+	} else {
+		p.PrintString(printableIdentifierValue(node.Field))
+	}
 	p.indentLevel++
 	p.PrintInner(node.Expr.(BLangNode))
 	p.indentLevel--

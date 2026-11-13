@@ -1,0 +1,34 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function defaultValue () (
+    (value-type int))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal default))))
+      (return
+        (literal 10))))
+  (type-definition Defaulted
+    (record-type
+      (field count
+        (value-type int)
+        (invocation defaultValue ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable key (type
+          (value-type string)) (expr
+          (literal count))))
+      (var-def
+        (variable value (type
+          (user-defined-type Defaulted)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (simple-var-ref key)
+              (literal 20))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access count
+            (simple-var-ref value))))))))

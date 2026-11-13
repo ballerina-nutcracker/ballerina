@@ -26,7 +26,7 @@ import (
 
 func main() {
 	root := flag.String("root", ".", "repository root")
-	output := flag.String("output", "compilerpluginregistry/plugins.go", "generated Go output")
+	output := flag.String("output", filepath.Join(registryDirectory, "plugins.go"), "generated Go output")
 	check := flag.Bool("check", false, "fail if the generated file is stale")
 	flag.Parse()
 

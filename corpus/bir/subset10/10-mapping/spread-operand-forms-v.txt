@@ -1,0 +1,258 @@
+module $anon.. v 0.0.0;
+class Box {
+  p {| x: int, y: int, never... |}
+
+  get() -> {| x: int, y: int, never... |}{
+    bb0 {
+      %3 = ConstantLoad p
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init({| x: int, y: int, never... |}) -> nil{
+    bb0 {
+      %3 = ConstantLoad p
+      self[%3] = p;
+      return;
+    }
+  }
+}
+makePoint() -> {| x: int, y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    %0 = %5;
+    return;
+  }
+}
+mayFail(boolean) -> error|{| x: int, y: int, never... |}{
+  bb0 {
+    bad ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = ConstantLoad bad operand
+    %4 = newError error(%3)
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb2 {
+    %5 = ConstantLoad x
+    %6 = ConstantLoad 3
+    %7 = ConstantLoad y
+    %8 = ConstantLoad 4
+    %9 = newMap {| x: int, y: int, never... |}{%5=%6, %7=%8}
+    %2 = %9;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+optional(boolean) -> nil|{| x: int, y: int, never... |}{
+  bb0 {
+    present ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = ConstantLoad x
+    %4 = ConstantLoad 5
+    %5 = ConstantLoad y
+    %6 = ConstantLoad 6
+    %7 = newMap {| x: int, y: int, never... |}{%3=%4, %5=%6}
+    %2 = %7;
+    GOTO bb3;
+  }
+  bb2 {
+    %8 = ConstantLoad <nil>
+    %2 = %8;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = makePoint() -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad z
+    %3 = ConstantLoad 1
+    %4 = newMap {| x: int, y: int, z: int, never... |}{...%1, %2=%3}
+    fromCall = %4;
+    %6 = println(fromCall) -> bb2;
+  }
+  bb2 {
+    %7 = newObject $anon/.:Box
+    %8 = ConstantLoad x
+    %9 = ConstantLoad 7
+    %10 = ConstantLoad y
+    %11 = ConstantLoad 8
+    %12 = newMap {| x: int, y: int, never... |}{%8=%9, %10=%11}
+    %13 = %7.init(%12) -> bb3;
+  }
+  bb3 {
+    %15 = %13 is nil
+    %15 ? bb4 : bb5;
+  }
+  bb4 {
+    %14 = %7;
+    GOTO bb6;
+  }
+  bb5 {
+    %14 = %13;
+    GOTO bb6;
+  }
+  bb6 {
+    box = %14;
+    %17 = box.get() -> bb7;
+  }
+  bb7 {
+    %18 = ConstantLoad z
+    %19 = ConstantLoad 2
+    %20 = newMap {| x: int, y: int, z: int, never... |}{...%17, %18=%19}
+    fromMethod = %20;
+    %22 = println(fromMethod) -> bb8;
+  }
+  bb8 {
+    %24 = ConstantLoad p
+    %23 = box[%24];
+    %25 = ConstantLoad z
+    %26 = ConstantLoad 3
+    %27 = newMap {| x: int, y: int, z: int, never... |}{...%23, %25=%26}
+    fromField = %27;
+    %29 = println(fromField) -> bb9;
+  }
+  bb9 {
+    %30 = ConstantLoad a
+    %31 = ConstantLoad x
+    %32 = ConstantLoad 9
+    %33 = ConstantLoad y
+    %34 = ConstantLoad 10
+    %35 = newMap {| x: int, y: int, never... |}{%31=%32, %33=%34}
+    %36 = newMap {| {| x: int, y: int, never... |}... |}{%30=%35}
+    holder = %36;
+    %38 = ConstantLoad a
+    %39 = get(holder,%38) -> bb10;
+  }
+  bb10 {
+    %40 = ConstantLoad z
+    %41 = ConstantLoad 4
+    %42 = newMap {| x: int, y: int, z: int, never... |}{...%39, %40=%41}
+    fromMember = %42;
+    %44 = println(fromMember) -> bb11;
+  }
+  bb11 {
+    %45 = ConstantLoad true
+    %46 = %45;
+    %47 = optional(%46) -> bb12;
+  }
+  bb12 {
+    %48 = <{| x: int, y: int, never... |}>(%47)
+    %49 = ConstantLoad z
+    %50 = ConstantLoad 6
+    %51 = newMap {| x: int, y: int, z: int, never... |}{...%48, %49=%50}
+    fromCast = %51;
+    %53 = println(fromCast) -> bb13;
+  }
+  bb13 {
+    %55 = ConstantLoad true
+    %55 ? bb14 : bb15;
+  }
+  bb14 {
+    %56 = ConstantLoad x
+    %57 = ConstantLoad 11
+    %58 = ConstantLoad y
+    %59 = ConstantLoad 12
+    %60 = newMap {| x: int, y: int, never... |}{%56=%57, %58=%59}
+    %54 = %60;
+    GOTO bb16;
+  }
+  bb15 {
+    %61 = ConstantLoad x
+    %62 = ConstantLoad 13
+    %63 = ConstantLoad y
+    %64 = ConstantLoad 14
+    %65 = newMap {| x: int, y: int, never... |}{%61=%62, %63=%64}
+    %54 = %65;
+    GOTO bb16;
+  }
+  bb16 {
+    %66 = ConstantLoad z
+    %67 = ConstantLoad 7
+    %68 = newMap {| x: int, y: int, z: int, never... |}{...%54, %66=%67}
+    fromConditional = %68;
+    %70 = println(fromConditional) -> bb17;
+  }
+  bb17 {
+    %71 = ConstantLoad true
+    %72 = %71;
+    %73 = optional(%72) -> bb18;
+  }
+  bb18 {
+    narrowed = %73;
+    %75 = narrowed is {| x: int, y: int, never... |}
+    %75 ? bb19 : bb21;
+  }
+  bb19 {
+    PushScopeFrame 5
+    %0 = ConstantLoad z
+    %1 = ConstantLoad 8
+    %2 = newMap {| x: int, y: int, z: int, never... |}{...(1, narrowed), %0=%1}
+    fromNarrowed = %2;
+    %4 = println(fromNarrowed) -> bb20;
+  }
+  bb20 {
+    PopScopeFrame
+    GOTO bb21;
+  }
+  bb21 {
+    PushScopeFrame 19
+    %1 = ConstantLoad false
+    %2 = %1;
+    %3 = mayFail(%2) -> bb22;
+  }
+  bb22 {
+    %4 = %3 is error
+    %4 ? bb23 : bb24;
+  }
+  bb23 {
+    (1, %76) = %3;
+    PopScopeFrame
+    panic %76;
+  }
+  bb24 {
+    %0 = %3;
+    GOTO bb25;
+  }
+  bb25 {
+    %5 = ConstantLoad z
+    %6 = ConstantLoad 9
+    %7 = newMap {| x: int, y: int, z: int, never... |}{...%0, %5=%6}
+    fromCheckpanic = %7;
+    %9 = println(fromCheckpanic) -> bb26;
+  }
+  bb26 {
+    %10 = makePoint() -> bb27;
+  }
+  bb27 {
+    %11 = ConstantLoad z
+    %12 = ConstantLoad 10
+    %13 = newMap {| x: int, y: int, z: int, never... |}{...%10, %11=%12}
+    %14 = ConstantLoad w
+    %15 = ConstantLoad 11
+    %16 = newMap {| w: int, x: int, y: int, z: int, never... |}{...%13, %14=%15}
+    fromNested = %16;
+    %18 = println(fromNested) -> bb28;
+  }
+  bb28 {
+    PopScopeFrame
+    return;
+  }
+}

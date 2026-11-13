@@ -3103,7 +3103,7 @@ func (n *nodeBuilder) transformForkStatement(forkStatementNode *st.ForkStatement
 	if !n.expectNode(forkStatementNode) {
 		return nil, false
 	}
-	n.unimplemented("transformForkStatement unimplemented", forkStatementNode)
+	n.unimplemented("fork statements are not supported", forkStatementNode)
 	return nil, false
 }
 
@@ -3289,15 +3289,26 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	if !n.expectNode(functionBodyBlockNode) || !n.expectToken(functionBodyBlockNode.OpenBraceToken()) {
 		return nil, false
 	}
+	bLFuncBody := &ast.BLangBlockFunctionBody{}
 	if namedWorkerDeclarator := functionBodyBlockNode.NamedWorkerDeclarator(); namedWorkerDeclarator != nil {
 		if !n.expectNode(namedWorkerDeclarator) {
 			return nil, false
 		}
-		n.unimplemented("named worker declarators are not implemented", namedWorkerDeclarator)
-		return nil, false
+		workers, ok := n.generateNamedWorkerDeclarations(namedWorkerDeclarator)
+		if !ok {
+			return nil, false
+		}
+		// The init statements are not nested after an `if` without `else`: their
+		// variables stay in scope in the workers and the default worker.
+		initStmts := namedWorkerDeclarator.WorkerInitStatements()
+		bLFuncBody.InitStmts = make([]ast.StatementNode, 0, initStmts.Size())
+		for i := range initStmts.Size() {
+			if stmt := initStmts.Get(i); stmt != nil {
+				bLFuncBody.InitStmts = append(bLFuncBody.InitStmts, n.transformStatement(stmt))
+			}
+		}
+		bLFuncBody.Workers = workers
 	}
-
-	bLFuncBody := &ast.BLangBlockFunctionBody{}
 	statements := []ast.StatementNode{}
 	n.generateAndAddBLangStatements(functionBodyBlockNode.Statements(), &statements, 0, functionBodyBlockNode)
 	if !n.expectToken(functionBodyBlockNode.CloseBraceToken()) || !n.expectOptionalToken(functionBodyBlockNode.SemicolonToken()) {
@@ -3306,6 +3317,105 @@ func (n *nodeBuilder) transformFunctionBodyBlock(functionBodyBlockNode *st.Funct
 	bLFuncBody.Stmts = statements
 	bLFuncBody.SetPosition(n.getPosition(functionBodyBlockNode))
 	return bLFuncBody, true
+}
+
+func (n *nodeBuilder) generateNamedWorkerDeclarations(
+	namedWorkerDeclarator *st.NamedWorkerDeclarator,
+) ([]*ast.BLangNamedWorkerDeclaration, bool) {
+	declarations := namedWorkerDeclarator.NamedWorkerDeclarations()
+	workers := make([]*ast.BLangNamedWorkerDeclaration, 0, declarations.Size())
+	for declaration := range declarations.Iterator() {
+		worker, ok := n.transformNamedWorkerDeclaration(declaration)
+		if !ok {
+			return nil, false
+		}
+		workers = append(workers, worker)
+	}
+	return workers, true
+}
+
+func (n *nodeBuilder) transformNamedWorkerDeclaration(
+	namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode,
+) (*ast.BLangNamedWorkerDeclaration, bool) {
+	if !n.expectNode(namedWorkerDeclarationNode) || !n.expectNode(namedWorkerDeclarationNode.WorkerBody()) {
+		return nil, false
+	}
+	if transactional := namedWorkerDeclarationNode.TransactionalKeyword(); transactional != nil && !transactional.IsMissing() {
+		n.unimplemented("transactional workers are not supported", namedWorkerDeclarationNode)
+		return nil, false
+	}
+	if onFail := namedWorkerDeclarationNode.OnFailClause(); onFail != nil {
+		n.unimplemented("worker on fail clauses are not supported", onFail)
+		return nil, false
+	}
+	annotations, ok := n.transformAnnotations(namedWorkerDeclarationNode.Annotations())
+	if !ok {
+		return nil, false
+	}
+	returnType, ok := n.createWorkerReturnTypeDescriptor(namedWorkerDeclarationNode)
+	if !ok {
+		return nil, false
+	}
+	nameToken := namedWorkerDeclarationNode.WorkerName()
+	body, ok := n.createWorkerBody(namedWorkerDeclarationNode.WorkerBody())
+	if !ok {
+		return nil, false
+	}
+	worker := &ast.BLangNamedWorkerDeclaration{
+		Name:       n.transformIdentifier(nameToken).GetValue(),
+		ReturnType: returnType,
+		Body:       body,
+	}
+	addAnnotationAttachments(annotations, worker)
+	worker.SetPosition(n.getPositionWithoutMetadata(namedWorkerDeclarationNode))
+	return worker, true
+}
+
+// createWorkerReturnTypeDescriptor builds the worker's return descriptor,
+// synthesising a nil descriptor when the source omits `returns`.
+func (n *nodeBuilder) createWorkerReturnTypeDescriptor(
+	namedWorkerDeclarationNode *st.NamedWorkerDeclarationNode,
+) (*ast.BLangReturnTypeDescriptor, bool) {
+	retTypeDescNode, _ := namedWorkerDeclarationNode.ReturnTypeDesc().(*st.ReturnTypeDescriptorNode)
+	if retTypeDescNode == nil {
+		nilReturnType := &ast.BLangValueType{TypeKind: ast.TypeKindNil}
+		nilReturnType.SetPosition(diagnostics.NewBuiltinLocation())
+		descriptor := &ast.BLangReturnTypeDescriptor{TypeDescriptor: nilReturnType}
+		descriptor.SetPosition(diagnostics.NewBuiltinLocation())
+		return descriptor, true
+	}
+	if !n.expectNode(retTypeDescNode) || !n.expectToken(retTypeDescNode.ReturnsKeyword()) {
+		return nil, false
+	}
+	annotations, ok := n.transformAnnotations(retTypeDescNode.Annotations())
+	if !ok {
+		return nil, false
+	}
+	n.anonTypeNameSuffixes = append(n.anonTypeNameSuffixes, "return")
+	typeDescriptor := n.transformType(retTypeDescNode.Type())
+	n.anonTypeNameSuffixes = n.anonTypeNameSuffixes[:len(n.anonTypeNameSuffixes)-1]
+
+	descriptor := &ast.BLangReturnTypeDescriptor{TypeDescriptor: typeDescriptor}
+	addAnnotationAttachments(annotations, descriptor)
+	descriptor.SetPosition(typeDescriptor.GetPosition())
+	return descriptor, true
+}
+
+// createWorkerBody wraps a worker's block statement in a block function body.
+// The grammar makes the body mandatory, and a worker body cannot itself declare
+// workers, so only Stmts is populated.
+func (n *nodeBuilder) createWorkerBody(workerBody *st.BlockStatementNode) (*ast.BLangBlockFunctionBody, bool) {
+	if !n.expectToken(workerBody.OpenBraceToken()) {
+		return nil, false
+	}
+	body := &ast.BLangBlockFunctionBody{
+		Stmts: n.generateBLangStatements(workerBody.Statements(), workerBody),
+	}
+	if !n.expectToken(workerBody.CloseBraceToken()) {
+		return nil, false
+	}
+	body.SetPosition(n.getPosition(workerBody))
+	return body, true
 }
 
 // createSpecificFieldNameLiteral builds a string-literal expression for a
@@ -3455,17 +3565,12 @@ func (n *nodeBuilder) transformFieldName(fieldName st.Node) (ast.IdentifierNode,
 	return n.transformIdentifier(simpleNameRef.Name()), true
 }
 
-func (n *nodeBuilder) unsupportedQualifiedFieldName(message string, node *st.QualifiedNameReferenceNode) {
-	if !n.expectNode(node) {
-		return
+func (n *nodeBuilder) createFieldAccessName(fieldName st.Node) (ast.IdentifierNode, ast.IdentifierNode, bool) {
+	if _, qualified := fieldName.(*st.QualifiedNameReferenceNode); qualified {
+		return n.createBLangNameReference(fieldName)
 	}
-	if _, ok := n.createBLangModulePrefixIdentifier(node.ModulePrefix()); !ok || !n.expectColon(node.Colon()) {
-		return
-	}
-	if _, ok := n.createBLangIdentifier(asToken(node.Identifier())); !ok {
-		return
-	}
-	n.unimplemented(message, node)
+	field, ok := n.transformFieldName(fieldName)
+	return nil, field, ok
 }
 
 func (n *nodeBuilder) transformFieldAccessExpression(fieldAccessExpression *st.FieldAccessExpressionNode) (*ast.BLangFieldBaseAccess, bool) {
@@ -3476,20 +3581,11 @@ func (n *nodeBuilder) transformFieldAccessExpression(fieldAccessExpression *st.F
 	if !ok || !n.expectToken(fieldAccessExpression.DotToken()) {
 		return nil, false
 	}
-	fieldName := fieldAccessExpression.FieldName()
-	if qualified, ok := fieldName.(*st.QualifiedNameReferenceNode); ok {
-		n.unsupportedQualifiedFieldName("transformFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", qualified)
-		return nil, false
-	}
-	field, ok := n.transformFieldName(fieldName)
+	pkgAlias, field, ok := n.createFieldAccessName(fieldAccessExpression.FieldName())
 	if !ok {
 		return nil, false
 	}
-	bLFieldBasedAccess := &ast.BLangFieldBaseAccess{}
-	bLFieldBasedAccess.Field = field
-	bLFieldBasedAccess.Expr = expr
-	bLFieldBasedAccess.SetPosition(n.getPosition(fieldAccessExpression))
-	return bLFieldBasedAccess, true
+	return ast.NewBLangFieldBaseAccess(n.getPosition(fieldAccessExpression), expr, pkgAlias, field, false), true
 }
 
 func (n *nodeBuilder) transformFunctionCallExpression(functionCallExpression *st.FunctionCallExpressionNode) (*ast.BLangInvocation, bool) {
@@ -3548,11 +3644,13 @@ func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorEx
 func (n *nodeBuilder) addMappingField(mappingConstructor *ast.BLangMappingConstructorExpr, field st.Node) bool {
 	switch field := field.(type) {
 	case *st.SpreadFieldNode:
-		if !n.expectNode(field) {
+		if !n.expectNode(field) || !n.expectToken(field.Ellipsis()) {
 			return false
 		}
-		n.unimplemented("mapping constructor spread field not implemented", field)
-		return false
+		spreadField := &ast.BLangMappingSpreadField{Expr: n.transformExpr(field.ValueExpr())}
+		spreadField.SetPosition(n.getPosition(field))
+		mappingConstructor.Fields = append(mappingConstructor.Fields, spreadField)
+		return true
 	case *st.ComputedNameFieldNode:
 		keyValueField, ok := n.transformComputedNameField(field)
 		if !ok {
@@ -5550,7 +5648,7 @@ func (n *nodeBuilder) transformFlushAction(flushActionNode *st.FlushActionNode) 
 	if !n.expectNode(flushActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformFlushAction unimplemented", flushActionNode)
+	n.unimplemented("worker flush is not supported", flushActionNode)
 	return nil, false
 }
 
@@ -5558,7 +5656,7 @@ func (n *nodeBuilder) transformAsyncSendAction(asyncSendActionNode *st.AsyncSend
 	if !n.expectNode(asyncSendActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformAsyncSendAction unimplemented", asyncSendActionNode)
+	n.unimplemented("worker message passing is not supported", asyncSendActionNode)
 	return nil, false
 }
 
@@ -5566,7 +5664,7 @@ func (n *nodeBuilder) transformSyncSendAction(syncSendActionNode *st.SyncSendAct
 	if !n.expectNode(syncSendActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformSyncSendAction unimplemented", syncSendActionNode)
+	n.unimplemented("worker message passing is not supported", syncSendActionNode)
 	return nil, false
 }
 
@@ -5574,7 +5672,7 @@ func (n *nodeBuilder) transformReceiveAction(receiveActionNode *st.ReceiveAction
 	if !n.expectNode(receiveActionNode) {
 		return nil, false
 	}
-	n.unimplemented("transformReceiveAction unimplemented", receiveActionNode)
+	n.unimplemented("worker message passing is not supported", receiveActionNode)
 	return nil, false
 }
 
@@ -5684,16 +5782,11 @@ func (n *nodeBuilder) transformOptionalFieldAccessExpression(optionalFieldAccess
 	if !ok || !n.expectToken(optionalFieldAccessExpression.OptionalChainingToken()) {
 		return nil, false
 	}
-	fieldName := optionalFieldAccessExpression.FieldName()
-	if qualified, ok := fieldName.(*st.QualifiedNameReferenceNode); ok {
-		n.unsupportedQualifiedFieldName("transformOptionalFieldAccessExpression: QUALIFIED_NAME_REFERENCE unsupported", qualified)
-		return nil, false
-	}
-	field, ok := n.transformFieldName(fieldName)
+	pkgAlias, field, ok := n.createFieldAccessName(optionalFieldAccessExpression.FieldName())
 	if !ok {
 		return nil, false
 	}
-	return ast.NewBLangFieldBaseAccess(n.getPosition(optionalFieldAccessExpression), expr, field, true), true
+	return ast.NewBLangFieldBaseAccess(n.getPosition(optionalFieldAccessExpression), expr, pkgAlias, field, true), true
 }
 
 func (n *nodeBuilder) transformConditionalExpression(conditionalExpression *st.ConditionalExpressionNode) (*ast.BLangTernaryExpr, bool) {

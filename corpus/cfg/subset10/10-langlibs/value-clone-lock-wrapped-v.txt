@@ -1,0 +1,72 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (invocation viaCast ()))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref a)
+        (literal 3))))
+    (var-def
+      (variable b (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation viaTrap ())))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref b)
+        (literal 4))))
+    (var-def
+      (variable c (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (checked-expr
+          (invocation viaCheck ())))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref c)
+        (literal 5))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref a))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref b))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref c))))
+    (expression-stmt
+      (invocation io println (
+        (invocation viaCast ()))))
+  )
+)
+(viaCast
+  (bb0 () ()
+    (return
+      (type-conversion-expr
+        (invocation lang.value clone (
+          (simple-var-ref data)))
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+  )
+)
+(viaCheck
+  (bb0 () ()
+    (return
+      (checked-expr
+        (trap-expr
+          (invocation lang.value clone (
+            (simple-var-ref data))))))
+  )
+)
+(viaTrap
+  (bb0 () ()
+    (return
+      (trap-expr
+        (invocation lang.value clone (
+          (simple-var-ref data)))))
+  )
+)

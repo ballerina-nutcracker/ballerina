@@ -1,0 +1,92 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable data (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))) (expr
+    (list-constructor-expr
+      (literal 1)
+      (literal 2))))
+  (function viaCast () (
+    (array-type
+      (value-type int) dimensions: 1 ([])))
+    (block-function-body
+      (lock
+        (block-stmt
+          (return
+            (type-conversion-expr
+              (invocation clone expr:
+                (simple-var-ref data) ())
+              (array-type
+                (value-type int) dimensions: 1 ([]))))))))
+  (function viaTrap () (
+    (union-type
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (error-type)))
+    (block-function-body
+      (lock
+        (block-stmt
+          (return
+            (trap-expr
+              (invocation clone expr:
+                (simple-var-ref data) ())))))))
+  (function viaCheck () (
+    (union-type
+      (array-type
+        (value-type int) dimensions: 1 ([]))
+      (error-type)))
+    (block-function-body
+      (lock
+        (block-stmt
+          (return
+            (checked-expr
+              (trap-expr
+                (invocation clone expr:
+                  (simple-var-ref data) ()))))))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (invocation viaCast ()))))
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref a) (
+          (literal 3))))
+      (var-def
+        (variable b (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation viaTrap ())))))
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref b) (
+          (literal 4))))
+      (var-def
+        (variable c (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (checked-expr
+            (invocation viaCheck ())))))
+      (expression-stmt
+        (invocation push expr:
+          (simple-var-ref c) (
+          (literal 5))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref b))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (expression-stmt
+        (invocation io println (
+          (invocation viaCast ())))))))

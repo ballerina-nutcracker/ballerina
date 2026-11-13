@@ -1,0 +1,11 @@
+-- stdout --
+{"x":1,"y":2}
+true
+false
+5
+1
+false
+{"x":3,"y":4}
+{"inner":{"v":1}}
+true
+-- stderr --

@@ -18,60 +18,11 @@ package cfg
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/bitset"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
 )
-
-type initState struct {
-	initialized map[string]bool
-}
-
-func newInitState() *initState {
-	return &initState{initialized: make(map[string]bool)}
-}
-
-func (s *initState) clone() *initState {
-	c := newInitState()
-	for k, v := range s.initialized {
-		c.initialized[k] = v
-	}
-	return c
-}
-
-func (s *initState) markInitialized(name string) {
-	s.initialized[name] = true
-}
-
-func (s *initState) isInitialized(name string) bool {
-	return s.initialized[name]
-}
-
-func mergeInitStates(s1, s2 *initState) *initState {
-	if len(s1.initialized) == 0 {
-		return s2.clone()
-	}
-	if len(s2.initialized) == 0 {
-		return s1.clone()
-	}
-	result := newInitState()
-	allNames := make(map[string]bool)
-	for name := range s1.initialized {
-		allNames[name] = true
-	}
-	for name := range s2.initialized {
-		allNames[name] = true
-	}
-	for name := range allNames {
-		result.initialized[name] = s1.initialized[name] && s2.initialized[name]
-	}
-	return result
-}
-
-type namedBlockState struct {
-	entry *initState
-	exit  *initState
-}
 
 // extractAssignedName returns the name being assigned by a CFG node, or "" if not relevant.
 type extractAssignedName func(node ast.Node) string
@@ -80,25 +31,33 @@ type extractAssignedName func(node ast.Node) string
 // a set of named variables are initialized on all code paths.
 type uninitAnalyzer struct {
 	fcfg            *functionCFG
-	states          map[int]*namedBlockState
 	names           []string
+	nameIdx         *bitset.Context[string]
+	declared        bitset.BitSet
+	terminalInit    bitset.BitSet // intersection of declared and init over reachable, non-panicking terminal exits
+	states          *initStateStore
 	extractAssigned extractAssignedName
 }
 
 func newUninitAnalyzer(fcfg *functionCFG, names []string, extract extractAssignedName) *uninitAnalyzer {
-	a := &uninitAnalyzer{
-		fcfg:            fcfg,
-		states:          make(map[int]*namedBlockState),
-		names:           names,
+	nameIdx := bitset.NewContext[string]()
+	declared := nameIdx.New()
+	for _, name := range names {
+		declared.Set(nameIdx.Intern(name))
+	}
+	terminalInit := nameIdx.New()
+	terminalInit.CopyFrom(&declared)
+	return &uninitAnalyzer{
+		fcfg:         fcfg,
+		names:        names,
+		nameIdx:      nameIdx,
+		declared:     declared,
+		terminalInit: terminalInit,
+		states: newInitStateStore(fcfg, func() *initState {
+			return &initState{tracked: nameIdx.New(), init: nameIdx.New()}
+		}),
 		extractAssigned: extract,
 	}
-	for i := range fcfg.bbs {
-		a.states[i] = &namedBlockState{
-			entry: newInitState(),
-			exit:  newInitState(),
-		}
-	}
-	return a
 }
 
 func (a *uninitAnalyzer) analyze() {
@@ -107,72 +66,31 @@ func (a *uninitAnalyzer) analyze() {
 	}
 	for _, i := range a.fcfg.topoOrder {
 		bb := &a.fcfg.bbs[i]
-		entry := a.mergePredecessors(bb)
+		state := a.states.entryState(bb)
 		if i == 0 {
-			for _, name := range a.names {
-				if !entry.isInitialized(name) {
-					entry.initialized[name] = false
-				}
+			state.tracked.Or(&a.declared)
+		}
+		for _, node := range bb.nodes {
+			if name := a.extractAssigned(node); name != "" {
+				state.markInitialized(a.nameIdx.Intern(name))
 			}
 		}
-		a.states[i].entry = entry
-		exit := a.analyzeBlock(bb, entry.clone())
-		a.states[i].exit = exit
-	}
-}
-
-func (a *uninitAnalyzer) mergePredecessors(bb *basicBlock) *initState {
-	backedgeSet := make(map[int]bool, len(bb.backedgeParents))
-	for _, p := range bb.backedgeParents {
-		backedgeSet[p] = true
-	}
-	var result *initState
-	for _, parentID := range bb.parents {
-		if backedgeSet[parentID] {
-			continue
+		if bb.isTerminal() && bb.isReachable() && !bb.panics {
+			a.terminalInit.And(&state.init)
 		}
-		if result == nil {
-			result = a.states[parentID].exit.clone()
-		} else {
-			result = mergeInitStates(result, a.states[parentID].exit)
-		}
+		a.states.setExit(bb, state)
 	}
-	if result == nil {
-		result = newInitState()
-	}
-	return result
-}
-
-func (a *uninitAnalyzer) analyzeBlock(bb *basicBlock, state *initState) *initState {
-	for _, node := range bb.nodes {
-		if name := a.extractAssigned(node); name != "" {
-			state.markInitialized(name)
-		}
-	}
-	return state
 }
 
 // uninitializedNames returns the names that are not initialized on all terminal paths that do not panic.
 func (a *uninitAnalyzer) uninitializedNames() []string {
 	var result []string
 	for _, name := range a.names {
-		if !a.isInitializedAtAllTerminals(name) {
+		if p, _ := a.nameIdx.Lookup(name); !a.terminalInit.Has(p) {
 			result = append(result, name)
 		}
 	}
 	return result
-}
-
-func (a *uninitAnalyzer) isInitializedAtAllTerminals(name string) bool {
-	for _, bb := range a.fcfg.bbs {
-		if !bb.isTerminal() || !bb.isReachable() || bb.panics {
-			continue
-		}
-		if !a.states[bb.id].exit.isInitialized(name) {
-			return false
-		}
-	}
-	return true
 }
 
 // extractFieldAssignment returns the field name for self.<field> assignments.
@@ -187,7 +105,10 @@ func extractFieldAssignment(node ast.Node) string {
 	return ""
 }
 
-func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeUninitializedGlobalVars(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Uninitialized Global Variable Analysis", "")
+	defer span.End()
 	globalSymbols := make(map[model.SymbolRef]bool)
 	var varsNeedingInit []string
 	for i := range pkg.GlobalVars {
@@ -239,42 +160,50 @@ func analyzeUninitializedGlobalVars(ctx *context.CompilerContext, pkg *ast.BLang
 	}
 }
 
-func analyzeUninitializedFields(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeUninitializedFields(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Uninitialized Field Analysis", "")
+	defer span.End()
 	for i := range pkg.ClassDefinitions {
 		classDef := pkg.ClassDefinitions[i]
-		var fieldsNeedingInit []string
+		classSpan := span.StartChild("Uninitialized Fields", classDef.Name.GetValue())
+		analyzeClassUninitializedFields(ctx, classDef, cfg)
+		classSpan.End()
+	}
+}
+
+func analyzeClassUninitializedFields(
+	ctx *context.CompilerContext, classDef *ast.BLangClassDefinition, cfg *PackageCFG) {
+	var fieldsNeedingInit []string
+	for _, field := range classDef.Fields {
+		if field.GetInitialExpression() == nil {
+			fieldsNeedingInit = append(fieldsNeedingInit, field.GetName().GetValue())
+		}
+	}
+	if len(fieldsNeedingInit) == 0 {
+		return
+	}
+	if classDef.InitFunction == nil {
+		reportUninitializedFields(ctx, classDef, fieldsNeedingInit)
+		return
+	}
+	fnCfg, ok := cfg.lookupFunctionCfg(classDef.InitFunction.Symbol())
+	if !ok {
+		ctx.InternalError("init function CFG not found", classDef.InitFunction.GetPosition())
+		return
+	}
+	analyzer := newUninitAnalyzer(&fnCfg, fieldsNeedingInit, extractFieldAssignment)
+	analyzer.analyze()
+	reportUninitializedFields(ctx, classDef, analyzer.uninitializedNames())
+}
+
+func reportUninitializedFields(
+	ctx *context.CompilerContext, classDef *ast.BLangClassDefinition, names []string) {
+	for _, name := range names {
 		for _, field := range classDef.Fields {
-			if field.GetInitialExpression() == nil {
-				fieldsNeedingInit = append(fieldsNeedingInit, field.GetName().GetValue())
-			}
-		}
-		if len(fieldsNeedingInit) == 0 {
-			continue
-		}
-		if classDef.InitFunction == nil {
-			for _, name := range fieldsNeedingInit {
-				for _, field := range classDef.Fields {
-					if field.GetName().GetValue() == name {
-						ctx.SemanticError("field '"+name+"' is not initialized", field.GetPosition())
-						break
-					}
-				}
-			}
-			continue
-		}
-		fnCfg, ok := cfg.lookupFunctionCfg(classDef.InitFunction.Symbol())
-		if !ok {
-			ctx.InternalError("init function CFG not found", classDef.InitFunction.GetPosition())
-			continue
-		}
-		analyzer := newUninitAnalyzer(&fnCfg, fieldsNeedingInit, extractFieldAssignment)
-		analyzer.analyze()
-		for _, name := range analyzer.uninitializedNames() {
-			for _, field := range classDef.Fields {
-				if field.GetName().GetValue() == name {
-					ctx.SemanticError("field '"+name+"' is not initialized", field.GetPosition())
-					break
-				}
+			if field.GetName().GetValue() == name {
+				ctx.SemanticError("field '"+name+"' is not initialized", field.GetPosition())
+				break
 			}
 		}
 	}

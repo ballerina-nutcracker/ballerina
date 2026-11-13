@@ -51,6 +51,8 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 		return isConstantExpression(t, e.Expression)
 	case *ast.BLangGroupExpr:
 		return isConstantExpression(t, e.Expression)
+	case *ast.BLangTypeTestExpr:
+		return isConstantExpression(t, e.Expr)
 	case *ast.BLangBinaryExpr:
 		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
 			return offender, false
@@ -78,9 +80,15 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 		return nil, true
 	case *ast.BLangMappingConstructorExpr:
 		for _, field := range e.Fields {
+			if spread, isSpread := field.(*ast.BLangMappingSpreadField); isSpread {
+				if offender, ok := isConstantExpression(t, spread.Expr); !ok {
+					return offender, false
+				}
+				continue
+			}
 			kv, isKeyValue := field.(*ast.BLangMappingKeyValueField)
 			if !isKeyValue {
-				continue
+				return expr, false
 			}
 			if kv.Key != nil && kv.Key.Kind == ast.MappingKeyComputed {
 				if offender, ok := isConstantExpression(t, kv.Key.Expr); !ok {
@@ -199,6 +207,8 @@ func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values
 		return e.evaluateBinaryExpression(expr)
 	case *ast.BLangTypeConversionExpr:
 		return e.evaluateTypeConversion(expr)
+	case *ast.BLangTypeTestExpr:
+		return e.evaluateTypeTest(expr)
 	case *ast.BLangTemplateExpr:
 		return e.evaluateStringTemplate(expr)
 	case *ast.BLangXMLTemplateExpr:
@@ -220,9 +230,21 @@ func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.Symbol
 func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLangMappingConstructorExpr) (values.BalValue, bool) {
 	entries := make([]values.MapEntry, 0, len(expr.Fields))
 	for _, field := range expr.Fields {
+		if spread, ok := field.(*ast.BLangMappingSpreadField); ok {
+			value, ok := e.evaluate(spread.Expr)
+			if !ok {
+				return nil, false
+			}
+			mapping := value.(*values.Map)
+			for _, key := range mapping.Keys() {
+				member, _ := mapping.Get(key)
+				entries = append(entries, values.MapEntry{Key: key, Value: member})
+			}
+			continue
+		}
 		kv, ok := field.(*ast.BLangMappingKeyValueField)
 		if !ok {
-			return e.unsupportedFailure("constant mapping spread field not implemented", field.GetPosition())
+			return e.internalFailure(fmt.Sprintf("unexpected constant mapping field %T", field), field.GetPosition())
 		}
 		key, ok := e.constantMappingKey(kv)
 		if !ok {
@@ -762,6 +784,15 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 		return e.semanticFailure(constantCastDiagnostic(value, targetType, err).Error(), expr.GetPosition())
 	}
 	return converted, true
+}
+
+func (e *constantExpressionEvaluator) evaluateTypeTest(expr *ast.BLangTypeTestExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(expr.Expr)
+	if !ok {
+		return nil, false
+	}
+	matches := semtypes.IsSubtype(e.resolver.typeContext(), values.SemTypeForValue(value), expr.TestedType.Type)
+	return matches != expr.IsNegation(), true
 }
 
 func constantCastDiagnostic(value values.BalValue, targetType semtypes.SemType, err error) error {

@@ -1,0 +1,11 @@
+-- stdout --
+{}
+true
+{}
+true
+true
+true
+{"tag":"t","x":1,"y":2}
+true
+{"id":8,"name":"a"}
+-- stderr --

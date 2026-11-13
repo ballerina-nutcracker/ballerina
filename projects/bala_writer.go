@@ -90,6 +90,9 @@ func populateBalaArchive(zw *zip.Writer, pkg *Package, resolution *PackageResolu
 	if err := copyBallerinaToml(zw, pkg, written); err != nil {
 		return err
 	}
+	if err := copyCompilerPluginToml(zw, pkg, written); err != nil {
+		return err
+	}
 	if err := writeDependenciesToml(zw, pkg, resolution, written); err != nil {
 		return err
 	}

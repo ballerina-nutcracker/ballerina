@@ -14,6 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/mime;
+import ballerina/url;
+
 // Supported subset of ballerina/http for the Go runtime.
 // See lib/http/client-support.md for the full feature support matrix.
 
@@ -382,6 +385,37 @@ public class Response {
     #              but all lookups operate on transport headers
     # + return - An array of all header names present in the response
     public isolated function getHeaderNames(HeaderPosition position = LEADING) returns string[] = external;
+
+    # Sets the response body as a set of multipart body parts.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; if absent, the response's existing `Content-Type` is kept
+    #                 if already set, otherwise `multipart/form-data` is used
+    public isolated function setBodyParts(mime:Entity[] bodyParts, string? contentType = ()) = external;
+
+    # Extracts the response body as multipart body parts.
+    #
+    # + return - The body parts, or an `error` if the response body is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+
+    # Sets the response body, dispatching to the specific setter based on the runtime type of `payload`.
+    #
+    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the response body
+    # + contentType - Optional MIME type overriding the type-inferred default
+    public isolated function setPayload(json|xml|byte[]|mime:Entity[] payload, string? contentType = ()) {
+        if payload is string {
+            self.setTextPayload(payload, contentType);
+        } else if payload is xml {
+            self.setXmlPayload(payload, contentType);
+        } else if payload is byte[] {
+            self.setBinaryPayload(payload, contentType);
+        } else if payload is mime:Entity[] {
+            self.setBodyParts(payload, contentType);
+        } else {
+            self.setJsonPayload(payload, contentType);
+        }
+    }
 }
 
 // ── Request ───────────────────────────────────────────────────────────────────
@@ -530,17 +564,141 @@ public class Request {
     # + key - The query parameter name
     # + return - A `string[]` of all values, or `()` if the parameter is not present
     public isolated function getQueryParamValues(string key) returns string[]? = external;
+
+    # Sets the request body as a set of multipart body parts.
+    #
+    # + bodyParts - The body parts to be set
+    # + contentType - Optional MIME type; if absent, the request's existing `Content-Type` is kept
+    #                 if already set, otherwise `multipart/form-data` is used
+    public isolated function setBodyParts(mime:Entity[] bodyParts, string? contentType = ()) = external;
+
+    # Extracts the request body as multipart body parts.
+    #
+    # + return - The body parts, or an `error` if the request body is not a composite
+    #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
+    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+
+    # Sets the request body, dispatching to the specific setter based on the runtime type of `payload`.
+    #
+    # + payload - A `string`, `xml`, `byte[]`, `mime:Entity[]`, or other JSON-compatible value to set as the request body
+    # + contentType - Optional MIME type overriding the type-inferred default
+    public isolated function setPayload(json|xml|byte[]|mime:Entity[] payload, string? contentType = ()) {
+        if payload is string {
+            self.setTextPayload(payload, contentType);
+        } else if payload is xml {
+            self.setXmlPayload(payload, contentType);
+        } else if payload is byte[] {
+            self.setBinaryPayload(payload, contentType);
+        } else if payload is mime:Entity[] {
+            self.setBodyParts(payload, contentType);
+        } else {
+            self.setJsonPayload(payload, contentType);
+        }
+    }
+
+    # Extracts and decodes the form parameters from a request body of
+    # `Content-Type: application/x-www-form-urlencoded`.
+    #
+    # + return - A `map<string>` of decoded form parameter names to values, or an `error` if the
+    #            `Content-Type` header is missing, invalid, not `application/x-www-form-urlencoded`,
+    #            or the body cannot be decoded
+    public isolated function getFormParams() returns map<string>|error {
+        string message = "Error occurred while retrieving form parameters from the request";
+        string|error contentTypeValue = self.getHeader(mime:CONTENT_TYPE);
+        if contentTypeValue is error {
+            return error(message, error("Content-Type header is not available"));
+        }
+        mime:MediaType|mime:InvalidContentTypeError mediaType = mime:getMediaType(contentTypeValue);
+        if mediaType is mime:InvalidContentTypeError {
+            return error(message, mediaType);
+        }
+        string baseType = mediaType.primaryType + "/" + mediaType.subType;
+        if !baseType.equalsIgnoreCaseAscii(mime:APPLICATION_FORM_URLENCODED) {
+            return error(message, error("Invalid content type : expected 'application/x-www-form-urlencoded'"));
+        }
+        string|error formData = self.getTextPayload();
+        if formData is error {
+            return error(message, formData);
+        }
+        return parseFormData(formData);
+    }
 }
 
-// Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`)
-// or an existing `Request` object. The `mime:Entity[]` and `stream` subtypes of jBallerina's
-// `RequestMessage` are not supported in this implementation.
-public type RequestMessage anydata|Request;
+// Decodes `formData` and then splits it on `&` into name/value pairs delimited by the first `=`
+// in each pair. Decoding before splitting mirrors jBallerina's `getFormParams`, so an encoded
+// `%26` or `%3D` acts as a delimiter there too. A single pass over the UTF-8 bytes tracks the
+// codepoint offset `substring` expects; `&` (38) and `=` (61) never occur inside a multi-byte
+// codepoint.
+isolated function parseFormData(string formData) returns map<string>|error {
+    map<string> parameters = {};
+    if formData.length() == 0 {
+        return parameters;
+    }
+    string|error decodedValue = url:decode(formData, "UTF-8");
+    if decodedValue is error {
+        return error("form data decode failure", decodedValue);
+    }
+    int entryStart = 0;
+    int equalsIndex = -1;
+    int charIndex = 0;
+    boolean hasEquals = false;
+    foreach byte b in decodedValue.toBytes() {
+        if b == 38 {
+            addFormParam(parameters, decodedValue, entryStart, equalsIndex, charIndex);
+            entryStart = charIndex + 1;
+            equalsIndex = -1;
+        } else if b == 61 && equalsIndex == -1 {
+            equalsIndex = charIndex;
+            hasEquals = true;
+        }
+        if b < 128 || b >= 192 {
+            charIndex += 1;
+        }
+    }
+    if !hasEquals {
+        return error("Datasource does not contain form data");
+    }
+    addFormParam(parameters, decodedValue, entryStart, equalsIndex, charIndex);
+    return parameters;
+}
+
+isolated function addFormParam(map<string> parameters, string data, int entryStart, int equalsIndex, int entryEnd) {
+    if equalsIndex != -1 {
+        parameters[data.substring(entryStart, equalsIndex).trim()] = data.substring(equalsIndex + 1, entryEnd).trim();
+    }
+}
+
+// Represents an HTTP outbound request entity. Accepts any `anydata` value (including `xml`),
+// an existing `Request` object, or a multipart body (`mime:Entity[]`). The `stream` subtype
+// of jBallerina's `RequestMessage` is not supported in this implementation.
+public type RequestMessage anydata|Request|mime:Entity[];
 
 # Represents the types of the `targetType` parameter of the client remote methods.
 # The `stream<SseEvent, error?>` member of jBallerina's `TargetType` is not supported
 # in this implementation, since Server-Sent Events are not available.
 public type TargetType typedesc<Response|anydata>;
+
+# Defines the path parameter types.
+public type PathParamType boolean|int|float|decimal|string;
+
+# Defines the possible simple query parameter types.
+public type SimpleQueryParamType boolean|int|float|decimal|string;
+
+# Defines the query parameter type supported with client resource methods.
+public type QueryParamType SimpleQueryParamType[]|SimpleQueryParamType;
+
+# Defines the record type of query parameters supported with client resource methods.
+# + headers - headers which cannot be used as a query field
+# + targetType - targetType which cannot be used as a query field
+# + message - message which cannot be used as a query field
+# + mediaType - mediaType which cannot be used as a query field
+public type QueryParams record {|
+    never headers?;
+    never targetType?;
+    never message?;
+    never mediaType?;
+    QueryParamType...;
+|};
 
 // Represents HTTP methods.
 public enum Method {
@@ -637,17 +795,20 @@ public isolated class Listener {
 # EXECUTE, and FORWARD.
 #
 # **Supported methods:** `get`, `post`, `put`, `patch`, `delete`, `head`, `options`,
-# `execute`, `forward`.
+# `execute`, `forward`, and the same seven accessors as resource methods
+# (`client->/path.get(...)`).
 #
 # **Not supported:** `submit`/`getResponse`, HTTP/2 server push methods
-# (`hasPromise`, `getNextPromise`, etc.), and resource function syntax (`client->/path.get(...)`).
+# (`hasPromise`, `getNextPromise`, etc.), and the `@http:Query` annotation on resource
+# method query parameters.
 #
-# **Message body:** The `message` parameter accepts `RequestMessage` (`anydata|Request`).
+# **Message body:** The `message` parameter accepts `RequestMessage` (`anydata|Request|mime:Entity[]`).
 # The `Content-Type` is inferred when not explicitly overridden via `mediaType`:
 # - `string` → `text/plain`
 # - `xml` → `application/xml`
 # - `byte[]` → `application/octet-stream`
 # - `http:Request` → content type and body taken from the request
+# - `mime:Entity[]` → `multipart/form-data`
 # - everything else → serialised as `application/json`
 #
 # The `mediaType` parameter overrides the inferred `Content-Type` in all cases.
@@ -696,7 +857,7 @@ public isolated client class Client {
     # Creates a new resource or submits data to a resource for processing.
     #
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, `http:Request`, or `mime:Entity[]`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -709,7 +870,7 @@ public isolated client class Client {
     # Creates a new resource or replaces a representation of the specified resource.
     #
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, `http:Request`, or `mime:Entity[]`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -722,7 +883,7 @@ public isolated client class Client {
     # Applies a partial modification to the specified resource.
     #
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, `http:Request`, or `mime:Entity[]`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -735,7 +896,7 @@ public isolated client class Client {
     # Deletes the specified resource.
     #
     # + path - The request path (appended to the base URL)
-    # + message - Optional request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - Optional request body (`string`, `xml`, `byte[]`, JSON-compatible value, `http:Request`, or `mime:Entity[]`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -770,7 +931,7 @@ public isolated client class Client {
     #
     # + httpVerb - The HTTP method to use (e.g., `"GET"`, `"POST"`, `"PUT"`)
     # + path - The request path (appended to the base URL)
-    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + message - The request body (`string`, `xml`, `byte[]`, JSON-compatible value, `http:Request`, or `mime:Entity[]`)
     # + headers - Optional request headers as a `map<string|string[]>`
     # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
     # + targetType - The expected return type, used for automatic data binding. Inferred from
@@ -793,4 +954,107 @@ public isolated client class Client {
     #             if the request or the data binding fails
     remote isolated function forward(string path, Request request,
             TargetType targetType = <>) returns targetType|error = external;
+
+    // Keep the resource methods below in the order of clientResourceAccessors in native/http_native.go.
+
+    # Retrieves a representation of the specified resource, addressed with the client resource
+    # access path syntax (`client->/albums/[id]`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
+    # + params - Query parameters, supplied as named arguments
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
+    isolated resource function get [PathParamType... path](map<string|string[]>? headers = (),
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
+
+    # Creates a new resource or submits data to a resource for processing, addressed with the
+    # client resource access path syntax (`client->/albums.post(payload)`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
+    # + params - Query parameters, supplied as named arguments
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
+    isolated resource function post [PathParamType... path](RequestMessage message,
+            map<string|string[]>? headers = (), string? mediaType = (),
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
+
+    # Creates a new resource or replaces a representation of the specified resource, addressed
+    # with the client resource access path syntax (`client->/albums/[id].put(payload)`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
+    # + params - Query parameters, supplied as named arguments
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
+    isolated resource function put [PathParamType... path](RequestMessage message,
+            map<string|string[]>? headers = (), string? mediaType = (),
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
+
+    # Applies a partial modification to the specified resource, addressed with the client
+    # resource access path syntax (`client->/albums/[id].patch(payload)`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - The request body (`string`, `byte[]`, JSON-compatible value, or `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
+    # + params - Query parameters, supplied as named arguments
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
+    isolated resource function patch [PathParamType... path](RequestMessage message,
+            map<string|string[]>? headers = (), string? mediaType = (),
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
+
+    # Deletes the specified resource, addressed with the client resource access path syntax
+    # (`client->/albums/[id].delete()`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + message - An optional request body (`string`, `byte[]`, JSON-compatible value, or
+    #             `http:Request`)
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + mediaType - Optional `Content-Type` override; inferred from `message` if omitted
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
+    # + params - Query parameters, supplied as named arguments
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
+    isolated resource function delete [PathParamType... path](RequestMessage message = (),
+            map<string|string[]>? headers = (), string? mediaType = (),
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
+
+    # Retrieves the headers of the specified resource without a body, addressed with the client
+    # resource access path syntax (`client->/albums/[id].head()`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + params - Query parameters, supplied as named arguments
+    # + return - The `http:Response`, or an `error` if the request fails
+    isolated resource function head [PathParamType... path](map<string|string[]>? headers = (),
+            *QueryParams params) returns Response|error = external;
+
+    # Retrieves the communication options available for the specified resource, addressed with
+    # the client resource access path syntax (`client->/albums.options()`).
+    #
+    # + path - The resource path segments, appended to the base URL
+    # + headers - Optional request headers as a `map<string|string[]>`
+    # + targetType - The expected return type, used for automatic data binding. Inferred from
+    #                the contextually expected type when not passed explicitly
+    # + params - Query parameters, supplied as named arguments
+    # + return - The bound payload, the `http:Response`, or an `error` if the request or the
+    #            data binding fails
+    isolated resource function options [PathParamType... path](map<string|string[]>? headers = (),
+            TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
 }

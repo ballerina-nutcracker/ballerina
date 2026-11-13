@@ -192,7 +192,7 @@ func resolveCompilerPluginProvider(
 
 func runsCompilerPlugins(module *moduleContext) bool {
 	return module.getCompilationState() == moduleCompilationStateLoadedFromSources &&
-		module.cfg != nil && module.bLangPkg != nil
+		module.bLangPkg != nil
 }
 
 func modulePackageKey(module *moduleContext) string {

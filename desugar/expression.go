@@ -94,12 +94,12 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 	case *ast.BLangNumericLiteral:
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangVarRef:
-		if replacement := materializeConstantRef(cx, expr); replacement != nil {
+		if replacement := rewriteReference(cx, expr); replacement != nil {
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	case *ast.BLangConstRef:
-		if replacement := materializeConstantRef(cx, &expr.BLangVarRef); replacement != nil {
+		if replacement := rewriteReference(cx, &expr.BLangVarRef); replacement != nil {
 			return desugaredNode[ast.BLangActionOrExpression]{replacementNode: replacement}
 		}
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
@@ -969,25 +969,18 @@ func initFunctionSymbol(cx *functionContext, expr *ast.BLangNewExpression) (mode
 
 func walkMappingConstructorExpr(cx *functionContext, expr *ast.BLangMappingConstructorExpr) desugaredNode[ast.BLangActionOrExpression] {
 	for _, field := range expr.Fields {
-		kv := field.(*ast.BLangMappingKeyValueField)
-
-		if kv.Key.Kind == ast.MappingKeyComputed {
-			kv.Key.Expr = walkExpression(cx, kv.Key.Expr).(ast.BLangExpression)
-		} else {
-			if varRef, ok := kv.Key.Expr.(*ast.BLangVarRef); ok {
-				name := varRef.VariableName.GetValue()
-				lit := &ast.BLangLiteral{
-					Value:         name,
-					OriginalValue: name,
-				}
-				lit.SetPosition(varRef.GetPosition())
-				lit.Ty = semtypes.String
-				kv.Key.Expr = lit
+		switch f := field.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if f.Key.Kind == ast.MappingKeyComputed {
+				f.Key.Expr = walkExpression(cx, f.Key.Expr).(ast.BLangExpression)
 			}
-		}
 
-		result := walkExpression(cx, kv.ValueExpr)
-		kv.ValueExpr = result.(ast.BLangExpression)
+			result := walkExpression(cx, f.ValueExpr)
+			f.ValueExpr = result.(ast.BLangExpression)
+		case *ast.BLangMappingSpreadField:
+			result := walkExpression(cx, f.Expr)
+			f.Expr = result.(ast.BLangExpression)
+		}
 	}
 
 	return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}

@@ -21,6 +21,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
+	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -28,17 +29,23 @@ import (
 // GetCompilationUnit builds the AST of a syntax tree, reporting its syntax errors and substituting bad nodes for
 // the constructs that contain them.
 func GetCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	span := cx.StartNamedSpan("AST Build", syntaxTree.FilePath())
+	defer span.End()
 	builder := newNodeBuilder(cx, st.Node.TextRange)
 	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 }
 
 // GetRecoveredCompilationUnit is GetCompilationUnit with node positions that include surrounding minutiae.
 func GetRecoveredCompilationUnit(cx *context.CompilerContext, syntaxTree *st.SyntaxTree) *ast.BLangCompilationUnit {
+	span := cx.StartNamedSpan("AST Build (recovered)", syntaxTree.FilePath())
+	defer span.End()
 	builder := newNodeBuilder(cx, st.Node.TextRangeWithMinutiae)
 	return builder.transformModulePart(syntaxTree.RootNode.(*st.ModulePart))
 }
 
 func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits []*ast.BLangCompilationUnit) *ast.BLangPackage {
+	span := cx.StartPackageSpan("Package Assembly", packageAssemblyID(compilationUnits))
+	defer span.End()
 	pkg := ast.NewBLangPackage()
 	for _, compilationUnit := range compilationUnits {
 		packageID := compilationUnit.GetPackageID()
@@ -51,6 +58,15 @@ func ToPackageFromCompilationUnits(cx *context.CompilerContext, compilationUnits
 		addCompilationUnitNodesToPackage(cx, pkg, compilationUnit)
 	}
 	return pkg
+}
+
+// packageAssemblyID returns the package identity of the compilation units, or
+// nil when there are none.
+func packageAssemblyID(compilationUnits []*ast.BLangCompilationUnit) *model.PackageID {
+	if len(compilationUnits) == 0 {
+		return nil
+	}
+	return compilationUnits[0].GetPackageID()
 }
 
 func addCompilationUnitNodesToPackage(cx *context.CompilerContext, pkg *ast.BLangPackage, compilationUnit *ast.BLangCompilationUnit) {

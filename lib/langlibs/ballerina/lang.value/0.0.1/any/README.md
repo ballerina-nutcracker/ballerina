@@ -6,7 +6,7 @@ Support status of the `lang.value` lang library functions against the public fun
 
 | Feature/API | Support Status | Comments |
 |---|---|---|
-| clone | Not Yet Supported | Not declared |
+| clone | Supported | Handled by the compiler |
 | cloneReadOnly | Not Yet Supported | Not declared |
 | cloneWithType | Supported | |
 | count | Not Yet Supported | Not declared |

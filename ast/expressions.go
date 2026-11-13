@@ -284,6 +284,8 @@ type (
 	BLangFieldBaseAccess struct {
 		bLangAccessExpressionBase
 		Field IdentifierNode
+		// PkgAlias is the prefix of a qualified field name (an xml attribute name), nil otherwise
+		PkgAlias IdentifierNode
 		// I think this need a symbol to got to the field definition in type but Expr could be non atomic and
 		// this should still work
 	}
@@ -543,6 +545,13 @@ type (
 		ValueExpr BLangExpression
 	}
 
+	// BLangMappingSpreadField is a `...expr` field of a mapping constructor. The field itself
+	// produces no value, so its own type is never; Expr keeps its resolved mapping type.
+	BLangMappingSpreadField struct {
+		bLangNodeBase
+		Expr BLangExpression
+	}
+
 	BLangMappingConstructorExpr struct {
 		bLangExpressionBase
 		Fields             []MappingField
@@ -754,6 +763,7 @@ var (
 	_ BLangNode       = &BLangTypeConversionExpr{}
 	_ BLangNode       = &BLangMappingConstructorExpr{}
 	_ BLangNode       = &BLangMappingKeyValueField{}
+	_ BLangNode       = &BLangMappingSpreadField{}
 	_ BLangNode       = &BLangTrapExpr{}
 	_ BLangNode       = &BLangNewExpression{}
 )
@@ -1206,7 +1216,7 @@ func NewBLangTypeTestExpr(pos Location, expr BLangExpression, ty TypeData, isNeg
 	}
 }
 
-func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, field IdentifierNode, optional bool) *BLangFieldBaseAccess {
+func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, pkgAlias IdentifierNode, field IdentifierNode, optional bool) *BLangFieldBaseAccess {
 	access := &BLangFieldBaseAccess{
 		bLangAccessExpressionBase: bLangAccessExpressionBase{
 			BLangValueExpressionBase: BLangValueExpressionBase{
@@ -1214,7 +1224,8 @@ func NewBLangFieldBaseAccess(pos diagnostics.Location, expr BLangExpression, fie
 			},
 			Expr: expr,
 		},
-		Field: field,
+		Field:    field,
+		PkgAlias: pkgAlias,
 	}
 	if optional {
 		access.flags |= valueExpressionFlagOptionalAccess
@@ -1247,6 +1258,10 @@ func (b *BLangMappingKeyValueField) GetValue() BLangExpression {
 
 func (b *BLangMappingKeyValueField) IsKeyValueField() bool {
 	return true
+}
+
+func (b *BLangMappingSpreadField) IsKeyValueField() bool {
+	return false
 }
 
 // IsReadonly reports whether the named field carried an explicit readonly prefix.

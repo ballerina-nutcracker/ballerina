@@ -1,0 +1,100 @@
+module $anon.. v 0.0.0;
+same(any,any) -> boolean{
+  bb0 {
+    %3 = unknown a b;
+    %0 = %3;
+    return;
+  }
+}
+firstItem(xml) -> xml{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = newArray [xml...][%2]{}
+    items = %3;
+    $desugar$0 = sequence;
+    %6 = iterator($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    GOTO bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad true
+    %8 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 7
+    %0 = (1, $desugar$1).next() -> bb5;
+  }
+  bb4 {
+    %10 = ConstantLoad 0
+    %9 = items[%10];
+    %0 = %9;
+    return;
+  }
+  bb5 {
+    $desugar$3 = %0;
+    %2 = $desugar$3 is nil
+    %2 ? bb6 : bb7;
+  }
+  bb6 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb4;
+  }
+  bb7 {
+    %4 = ConstantLoad value
+    %3 = $desugar$3[%4];
+    item = %3;
+    %6 = push((1, items),item) -> bb8;
+  }
+  bb8 {
+    PopScopeFrame
+    GOTO bb2;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newXMLElement("a", ())
+    frozen = %1;
+    %4 = newXMLElement("b", ())
+    %3 = + frozen %4;
+    sequence = %3;
+    %6 = firstItem(sequence) -> bb1;
+  }
+  bb1 {
+    %7 = same(%6,frozen) -> bb2;
+  }
+  bb2 {
+    %8 = %7;
+    %9 = println(%8) -> bb3;
+  }
+  bb3 {
+    %10 = clone(sequence) -> bb4;
+  }
+  bb4 {
+    sequenceClone = %10;
+    %12 = same(sequenceClone,sequence) -> bb5;
+  }
+  bb5 {
+    %13 = %12;
+    %14 = println(%13) -> bb6;
+  }
+  bb6 {
+    %15 = firstItem(sequenceClone) -> bb7;
+  }
+  bb7 {
+    %16 = same(%15,frozen) -> bb8;
+  }
+  bb8 {
+    %17 = %16;
+    %18 = println(%17) -> bb9;
+  }
+  bb9 {
+    %19 = println(sequenceClone) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

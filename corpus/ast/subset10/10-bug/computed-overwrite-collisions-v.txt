@@ -1,0 +1,118 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable key (type
+          (value-type string)) (expr
+          (literal id))))
+      (var-def
+        (variable afterSpecific (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 1))
+            (key-value
+              (simple-var-ref key)
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref afterSpecific)
+            (literal id)))))
+      (var-def
+        (variable beforeSpecific (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (simple-var-ref key)
+              (literal 3))
+            (key-value
+              (literal id)
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref beforeSpecific)
+            (literal id)))))
+      (var-def
+        (variable seed (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 1))))))
+      (var-def
+        (variable afterSpread (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (mapping-spread-field
+              (simple-var-ref seed))
+            (key-value
+              (simple-var-ref key)
+              (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref afterSpread)
+            (literal id)))))
+      (var-def
+        (variable beforeSpread (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (simple-var-ref key)
+              (literal 5))
+            (mapping-spread-field
+              (simple-var-ref seed))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref beforeSpread)
+            (literal id)))))
+      (var-def
+        (variable inferred (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal id)
+              (literal 1))
+            (key-value
+              (simple-var-ref key)
+              (literal 9))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access id
+            (simple-var-ref inferred)))))
+      (var-def
+        (variable repeated (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (simple-var-ref key)
+              (literal 6))
+            (key-value
+              (simple-var-ref key)
+              (literal 7))
+            (key-value
+              (simple-var-ref key)
+              (literal 8))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref repeated)
+            (literal id))))))))

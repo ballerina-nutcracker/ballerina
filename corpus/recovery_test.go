@@ -62,6 +62,9 @@ func TestRecovery(t *testing.T) {
 		}
 		count++
 		t.Run(strings.TrimSuffix(strings.TrimPrefix(inputPath, "recovery/"), ".txtar"), func(t *testing.T) {
+			if test_util.IsUnsupported(inputPath) {
+				t.Skipf("Skipping unsupported recovery test %s", inputPath)
+			}
 			t.Parallel()
 			defer func() {
 				if r := recover(); r != nil {
@@ -78,7 +81,7 @@ func TestRecovery(t *testing.T) {
 			}
 			content := string(archive.Files[0].Data)
 			sourcePath := sourceName
-			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+			env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 			cx := context.NewCompilerContext(env)
 			astOnly := strings.HasPrefix(filepath.ToSlash(inputPath), "recovery/ast/")
 			finalPhase := testphases.PhaseSemanticAnalysis

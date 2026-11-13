@@ -1,0 +1,59 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    x = %1;
+    %4 = x;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %3 = > %4 %6;
+    %3 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 2
+    %0 = ConstantLoad positive
+    %1 = println(%0) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    %7 = ConstantLoad 2
+    y = %7;
+    %9 = createLatch() -> bb4;
+  }
+  bb4 {
+    $desugar$0 = %9;
+    %12 = closure_fp $anon/.:$worker:main:w
+    $desugar$2 = %12;
+    %14 = start $desugar$2() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %14;
+    %15 = openLatch($desugar$0) -> bb6;
+  }
+  bb6 {
+    %16 = wait $desugar$1 -> bb7;
+  }
+  bb7 {
+    r = %16;
+    %19 = r;
+    %20 = y;
+    %18 = + %19 %20;
+    %21 = %18;
+    %22 = println(%21) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$worker:main:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %0 = (1, y);
+    return;
+  }
+}

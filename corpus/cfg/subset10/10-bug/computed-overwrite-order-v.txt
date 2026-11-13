@@ -1,0 +1,65 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable first (type
+        (value-type string)) (expr
+        (literal first))))
+    (var-def
+      (variable second (type
+        (value-type string)) (expr
+        (literal second))))
+    (var-def
+      (variable third (type
+        (value-type string)) (expr
+        (literal third))))
+    (var-def
+      (variable seed (type
+        (record-type
+          (field spread
+            (value-type int)))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal spread)
+            (literal 2))))))
+    (var-def
+      (variable ordered (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (simple-var-ref first)
+            (literal 3))
+          (key-value
+            (literal specific)
+            (literal 1))
+          (key-value
+            (simple-var-ref second)
+            (literal 4))
+          (mapping-spread-field
+            (simple-var-ref seed))
+          (key-value
+            (simple-var-ref first)
+            (literal 5))
+          (key-value
+            (simple-var-ref third)
+            (literal 6))))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (invocation lang.map keys (
+      (simple-var-ref ordered)))
+    (var-def
+      (variable key (type
+        (value-type string))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref key)
+        (literal :)
+        (index-based-access
+          (simple-var-ref ordered)
+          (simple-var-ref key)))))
+  )
+  (bb3 (bb1) ())
+)

@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+#
+# WSO2 LLC. licenses this file to you under the Apache License,
+# Version 2.0 (the "License"); you may not use this file except
+# in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Checks generated docs whose inputs can change without a textual conflict
+# (e.g. a rebase onto a main that added another lang library function).
+
+set -euo pipefail
+
+if [[ -n "${SKIP_COMMIT_HOOKS:-}" ]]; then
+    exit 0
+fi
+
+zero_sha=0000000000000000000000000000000000000000
+langlib_coverage_paths=(
+    lib/langlibs/ballerina
+    model/opaque.go
+    doc/langlib
+    README.md
+    .github/scripts/langlib_coverage.py
+)
+
+check_langlib_coverage() {
+    local commit=$1 tmp path status=0
+    local -a present_paths=()
+    if ! git cat-file -e "$commit:.github/scripts/langlib_coverage.py" 2>/dev/null; then
+        return 0
+    fi
+    while IFS= read -r path; do
+        present_paths+=("$path")
+    done < <(git ls-tree --full-tree --name-only "$commit" -- "${langlib_coverage_paths[@]}")
+    tmp=$(mktemp -d)
+    if git archive "$commit" -- "${present_paths[@]}" | tar -x -C "$tmp"; then
+        (
+            while read -r var; do unset "$var"; done < <(git rev-parse --local-env-vars)
+            cd "$tmp" && python3 .github/scripts/langlib_coverage.py --check
+        ) || status=$?
+    else
+        status=$?
+    fi
+    rm -rf "$tmp"
+    if (( status != 0 )); then
+        printf 'Lang library coverage check failed at %s; see the error above. If the docs are stale, run python3 .github/scripts/langlib_coverage.py and amend.\n' \
+            "$(git rev-parse --short "$commit")" >&2
+    fi
+    return "$status"
+}
+
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+    [[ "$local_sha" == "$zero_sha" ]] && continue
+    # Only commits not yet on any remote can introduce stale docs; a rebase
+    # rewrites every commit it replays, so rebased commits are included.
+    if ! changed=$(git log -m --format= --name-only "$local_sha" --not --remotes -- "${langlib_coverage_paths[@]}"); then
+        printf 'Could not list commits of %s; checking lang library coverage unconditionally.\n' \
+            "$(git rev-parse --short "$local_sha")" >&2
+        changed=unknown
+    fi
+    if [[ -n "$changed" ]]; then
+        check_langlib_coverage "$local_sha"
+    fi
+done

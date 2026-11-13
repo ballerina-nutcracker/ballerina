@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/capturegroups"
 	"github.com/ballerina-nutcracker/ballerina/context/internal/functionsignatures"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -118,7 +119,7 @@ type CompilerEnvironment struct {
 	// record fields, keyed by the enclosing type definition's symbol ref. Record
 	// types are structural, so a field has no symbol of its own to key on.
 	recordFieldAnnotations sync.Map // model.SymbolRef -> values.FieldAnnotationValues
-	statsEnabled           bool
+	traceState             traceState
 	diagnosticContext      *diagnostics.DiagnosticEnv
 }
 
@@ -489,7 +490,20 @@ func (c *CompilerEnvironment) NewPackageID(orgName model.Name, nameComps []model
 	return model.NewPackageID(c.packageInterner, orgName, nameComps, version)
 }
 
-func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEnvironment {
+// TraceMode selects what the frontend trace recorder records.
+type TraceMode uint8
+
+const (
+	// TraceOff records nothing.
+	TraceOff TraceMode = iota
+	// TracePhases records a span for every frontend invocation.
+	TracePhases
+	// TraceNested records the TracePhases spans and the children each phase
+	// starts, giving a span tree instead of one span per phase.
+	TraceNested
+)
+
+func NewCompilerEnvironment(typeEnv semtypes.Env, traceMode TraceMode) *CompilerEnvironment {
 	return &CompilerEnvironment{
 		anonTypeCount:              make(map[*model.PackageID]int),
 		anonFuncCount:              make(map[*model.PackageID]int),
@@ -499,7 +513,7 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, statsEnabled bool) *CompilerEn
 		distinctTypes:              newDistinctTypeTracker(),
 		langLibDistinctTypeSymbols: newLangLibDistinctTypeRegistry(),
 		typeEnv:                    typeEnv,
-		statsEnabled:               statsEnabled,
+		traceState:                 newTraceState(traceMode),
 		diagnosticContext:          diagnostics.NewDiagnosticEnv(),
 	}
 }
@@ -518,7 +532,7 @@ const (
 func (c *CompilerEnvironment) GetNextAnonymousFunctionKey(packageID *model.PackageID) string {
 	nextValue := c.anonFuncCount[packageID]
 	c.anonFuncCount[packageID] = nextValue + 1
-	return anonPrefix + "Func$_" + strconv.Itoa(nextValue)
+	return constants.AnonFunctionPrefix + "_" + strconv.Itoa(nextValue)
 }
 
 func (c *CompilerEnvironment) GetNextAnonymousTypeKey(packageID *model.PackageID) string {

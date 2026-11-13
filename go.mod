@@ -33,7 +33,6 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.1.0 // indirect
-	github.com/ballerina-nutcracker/ballerina/common v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/decimal v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect

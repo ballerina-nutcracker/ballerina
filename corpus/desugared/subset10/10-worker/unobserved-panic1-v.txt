@@ -1,0 +1,78 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function label (
+    (variable f (type
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type int))))) (
+    (value-type string))
+    (block-function-body
+      (return
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref f)
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))
+          (literal future)
+          (literal other)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:main:failing () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (panic
+                  (error-constructor-expr (
+                    (literal unobserved))))))))))
+      (var-def
+        (variable $desugar$4 (expr
+          (lambda
+            (function $worker:main:other () (
+              (value-type string))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal other done))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (expression-stmt
+        (invocation io println (
+          (invocation label (
+            (simple-var-ref $desugar$1))))))
+      (var-def
+        (variable result (type
+          (value-type string)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$2)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result))))
+      (expression-stmt
+        (invocation io println (
+          (literal main done)))))))

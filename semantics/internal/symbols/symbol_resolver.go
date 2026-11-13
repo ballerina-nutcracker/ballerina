@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/common/constants"
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/common"
@@ -59,6 +60,7 @@ type symbolResolver interface {
 	GetSymbol(name string) (symbolLookup, bool)
 	GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool)
 	GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool)
+	markPrefixUsed(prefix string)
 	AddSymbol(name string, symbol model.Symbol)
 	GetPkgID() model.PackageID
 	GetScope() model.BlockLevelScope
@@ -349,16 +351,20 @@ func (ms *compilationUnitSymbolResolver) GetScope() model.BlockLevelScope {
 
 func (ms *compilationUnitSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool) {
 	if prefix != "" {
-		ms.usedPrefixes[prefix] = true
+		ms.markPrefixUsed(prefix)
 	}
 	return ms.scope.GetPrefixedSymbol(prefix, name)
 }
 
 func (ms *compilationUnitSymbolResolver) GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool) {
 	if prefix != "" {
-		ms.usedPrefixes[prefix] = true
+		ms.markPrefixUsed(prefix)
 	}
 	return ms.scope.GetAnnotationSymbol(prefix, name)
+}
+
+func (ms *compilationUnitSymbolResolver) markPrefixUsed(prefix string) {
+	ms.usedPrefixes[prefix] = true
 }
 
 func (ms *compilationUnitSymbolResolver) AddSymbol(name string, symbol model.Symbol) {
@@ -383,7 +389,7 @@ func (ms *compilationUnitSymbolResolver) TypeContext() semtypes.Context {
 }
 
 func (ms *moduleSymbolResolver) nextDefaultSymbolName() string {
-	name := fmt.Sprintf("$default$%d", ms.defaultCounter)
+	name := fmt.Sprintf("%s%d", constants.DefaultParamFunctionPrefix, ms.defaultCounter)
 	ms.defaultCounter++
 	return name
 }
@@ -433,6 +439,10 @@ func (bs *blockSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.Sym
 
 func (bs *blockSymbolResolver) GetAnnotationSymbol(prefix, name string) (model.SymbolRef, bool) {
 	return bs.parent.GetAnnotationSymbol(prefix, name)
+}
+
+func (bs *blockSymbolResolver) markPrefixUsed(prefix string) {
+	bs.parent.markPrefixUsed(prefix)
 }
 
 func (bs *blockSymbolResolver) AddSymbol(name string, symbol model.Symbol) {
@@ -672,8 +682,11 @@ func Resolve(
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
 	moduleVisibility map[PackageIdentifier]ModuleVisibility,
 	defaultOrg, currentPackageName string,
+	parent context.TraceSpan,
 ) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
+	importSpan := parent.StartChild("Import Binding", "")
 	cuImportsList := bindImports(cx, compilationUnits, implicitImports, publicSymbols, moduleVisibility, defaultOrg, currentPackageName)
+	importSpan.End()
 	moduleResolver := newModuleSymbolResolver(cx, pkgID)
 	// Opaque symbols go into the module scope before source top-level symbols are
 	// allocated, so a declaration marked @opaque finds its symbol already there and
@@ -687,16 +700,21 @@ func Resolve(
 		moduleResolver.moduleNodes.add(cuImports.compilationUnit, cuResolvers[i])
 	}
 	for i, resolver := range cuResolvers {
-		resolver.allocateTopLevelSymbols(cuImportsList[i].compilationUnit)
+		cu := cuImportsList[i].compilationUnit
+		span := parent.StartChildFunc("Top-Level Symbols", func() string { return compilationUnitFile(cx, cu) })
+		resolver.allocateTopLevelSymbols(cu)
+		span.End()
 	}
 
 	importedSymbols := make(map[string]model.ExportedSymbolSpace)
 	for i, cuImports := range cuImportsList {
 		cu := cuImports.compilationUnit
 		resolver := cuResolvers[i]
+		span := parent.StartChildFunc("Symbol Resolution", func() string { return compilationUnitFile(cx, cu) })
 		processCompilationUnitXMLNS(resolver, cu)
 		resolveCompilationUnit(resolver, cu)
 		reportUnusedImports(resolver, compilationUnitImports(cu))
+		span.End()
 		maps.Copy(importedSymbols, cuImports.imports)
 	}
 	reportUnusedVariables(cx, moduleResolver.varTracker.getUnused())
@@ -711,6 +729,12 @@ func Resolve(
 	annotationSpaces = append(annotationSpaces, moduleResolver.packageScope.Annotation)
 	pkgScope := &model.PackageScope{Virtual: moduleResolver.packageScope, MainSpaces: mainSpaces}
 	return pkgScope, model.NewExportedSymbolSpaces(mainSpaces, annotationSpaces), importedSymbols
+}
+
+// compilationUnitFile names a compilation unit by its source file, the same
+// identity the parse and AST build spans carry.
+func compilationUnitFile(cx *context.CompilerContext, cu *ast.BLangCompilationUnit) string {
+	return cx.DiagnosticEnv().FileName(cu.GetPosition())
 }
 
 func (ms *compilationUnitSymbolResolver) allocateTopLevelSymbols(cu *ast.BLangCompilationUnit) {
@@ -1195,7 +1219,7 @@ func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.Invo
 func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool {
 	switch b := body.(type) {
 	case *ast.BLangBlockFunctionBody:
-		return resolveStmts(r, b.Stmts)
+		return resolveBlockFunctionBody(r, b)
 	case *ast.BLangExprFunctionBody:
 		if b.Expr == nil {
 			return true
@@ -1206,6 +1230,48 @@ func resolveFunctionBody(r *blockSymbolResolver, body ast.FunctionBodyNode) bool
 	default:
 		return reportUnexpectedNode(r, body)
 	}
+}
+
+// resolveBlockFunctionBody resolves the three regions of a block function body
+// in order: the default-worker initialization statements, the named worker
+// declarations, and the remaining default-worker statements. Worker names are
+// unavailable in the initialization region and available everywhere after it.
+func resolveBlockFunctionBody(r *blockSymbolResolver, body *ast.BLangBlockFunctionBody) bool {
+	ok := resolveStmts(r, body.InitStmts)
+	ok = declareNamedWorkers(r, body.Workers) && ok
+	for _, worker := range body.Workers {
+		ok = resolveNamedWorker(r, worker) && ok
+	}
+	return resolveStmts(r, body.Stmts) && ok
+}
+
+// declareNamedWorkers declares every worker symbol before any worker body is
+// resolved, so a worker body can refer to peers declared before or after it.
+func declareNamedWorkers(r *blockSymbolResolver, workers []*ast.BLangNamedWorkerDeclaration) bool {
+	ok := true
+	for _, worker := range workers {
+		name := worker.Name
+		if isShadowed(r, name) {
+			r.GetCtx().SemanticError("Variable already defined: "+name, worker.GetPosition())
+			ok = false
+			continue
+		}
+		symbol := model.NewWorkerSymbol(name, worker.GetPosition())
+		addSymbolAndSetOnNode(r, name, symbol, worker)
+	}
+	return ok
+}
+
+func resolveNamedWorker(r *blockSymbolResolver, worker *ast.BLangNamedWorkerDeclaration) bool {
+	workerResolver := newFunctionResolver(r, worker)
+	worker.SetScope(workerResolver.scope)
+	ok := true
+	for i := range worker.AnnAttachments {
+		ok = resolveAnnotationAttachment(workerResolver, &worker.AnnAttachments[i]) && ok
+	}
+	ok = resolveTypeDesc(workerResolver, worker.ReturnType) && ok
+	ok = resolveBlockFunctionBody(workerResolver, worker.Body) && ok
+	return reportUnusedVariables(workerResolver.GetCtx(), workerResolver.getUnused()) && ok
 }
 
 func isExternalFunctionBody(body ast.FunctionBodyNode) bool {
@@ -2757,14 +2823,15 @@ func resolveMappingConstructorExpr(r symbolResolver, n *ast.BLangMappingConstruc
 	resolver := newBlockSymbolResolverWithBlockScope(r, n)
 	ok := true
 	for _, field := range n.Fields {
-		kv, isKeyValue := field.(*ast.BLangMappingKeyValueField)
-		if !isKeyValue {
-			continue
+		switch f := field.(type) {
+		case *ast.BLangMappingKeyValueField:
+			if f.Key != nil && f.Key.Expr != nil {
+				ok = resolveExpr(resolver, f.Key.Expr) && ok
+			}
+			ok = resolveOptionalExpr(resolver, f.ValueExpr) && ok
+		case *ast.BLangMappingSpreadField:
+			ok = resolveExpr(resolver, f.Expr) && ok
 		}
-		if kv.Key != nil && kv.Key.Expr != nil {
-			ok = resolveExpr(resolver, kv.Key.Expr) && ok
-		}
-		ok = resolveOptionalExpr(resolver, kv.ValueExpr) && ok
 	}
 	return ok
 }
@@ -2782,6 +2849,9 @@ func resolveErrorConstructorExpr(r symbolResolver, n *ast.BLangErrorConstructorE
 }
 
 func resolveFieldBaseAccess(r symbolResolver, n *ast.BLangFieldBaseAccess) bool {
+	if n.PkgAlias != nil {
+		r.markPrefixUsed(n.PkgAlias.GetValue())
+	}
 	if common.IsSelfFieldAccess(n) {
 		if classScope, ok := getEnclosingClassBodyScope(r); ok {
 			return resolveSelfFieldAccess(r, n, classScope)

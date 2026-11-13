@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: field access cannot be used to access optional field 'c' whose type includes nil
+  --> optional-field-nilable-e.bal:38:14
+   |
+38 |     int? x = r.c; // @error
+   |              ^^^
+
+error[SEMANTIC_ERROR]: field access cannot be used to access optional field 'c' whose type includes nil
+  --> optional-field-nilable-e.bal:43:14
+   |
+43 |     int? v = nr.c; // @error
+   |              ^^^^
+
+error[SEMANTIC_ERROR]: field access cannot be used to access optional field 'foo' whose type includes nil
+  --> optional-field-nilable-e.bal:45:14
+   |
+45 |     int? t = u.foo; // @error
+   |              ^^^^^

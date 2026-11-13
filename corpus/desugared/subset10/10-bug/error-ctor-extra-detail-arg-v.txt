@@ -1,0 +1,92 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition OpenDetail
+    (record-type
+      (field count optional
+        (value-type int))))
+  (type-definition OpenErr
+    (error-type
+      (user-defined-type OpenDetail)))
+  (type-definition MapErr
+    (error-type
+      (constrained-type
+        (builtin-ref-type map)
+        (value-type int))))
+  (type-definition RestOnlyDetail
+    (record-type
+      (rest
+        (value-type string))))
+  (type-definition QuotedDetail
+    (record-type
+      (field type optional
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e1 (type
+          (error-type
+            (user-defined-type OpenDetail))) (expr
+          (error-constructor-expr (
+            (literal a)) (
+            (named-arg count
+              (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e1))))
+      (var-def
+        (variable e2 (type
+          (user-defined-type OpenErr)) (expr
+          (error-constructor-expr
+            (user-defined-type OpenErr) (
+            (literal b))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e2))))
+      (var-def
+        (variable e3 (type
+          (user-defined-type MapErr)) (expr
+          (error-constructor-expr
+            (user-defined-type MapErr) (
+            (literal c)) (
+            (named-arg x
+              (literal 1))
+            (named-arg y
+              (literal 2)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e3))))
+      (var-def
+        (variable e4 (type
+          (error-type)) (expr
+          (error-constructor-expr (
+            (literal d)) (
+            (named-arg anything
+              (literal true)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e4))))
+      (var-def
+        (variable e5 (type
+          (error-type
+            (user-defined-type RestOnlyDetail))) (expr
+          (error-constructor-expr (
+            (literal e)) (
+            (named-arg p
+              (literal x))
+            (named-arg q
+              (literal y)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e5))))
+      (var-def
+        (variable e6 (type
+          (error-type
+            (user-defined-type QuotedDetail))) (expr
+          (error-constructor-expr (
+            (literal f)) (
+            (named-arg type
+              (literal 1)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e6)))))))

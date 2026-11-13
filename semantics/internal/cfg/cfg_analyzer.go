@@ -33,24 +33,28 @@ import (
 // - Unitialized field analysis: validate object fields are initialized in all code paths in init method (if they don't have inline initializers)
 // - Unitialized global var analysis: validate all module global variables are initialized in module init funciton (if they don't have inline initializers)
 // - Final reassignment analysis: validate final variables and class/service fields without inline initializers are not assigned when possibly assigned already
-func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
 	var wg sync.WaitGroup
-	wg.Go(func() { analyzeReachability(ctx, cfg) })
-	wg.Go(func() { analyzeExplicitReturn(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeUninitializedVars(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeUninitializedFields(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeUninitializedGlobalVars(ctx, pkg, cfg) })
-	wg.Go(func() { analyzeFinalReassignments(ctx, pkg, cfg) })
+	wg.Go(func() { analyzeReachability(ctx, cfg, parent) })
+	wg.Go(func() { analyzeExplicitReturn(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeUninitializedVars(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeUninitializedFields(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeUninitializedGlobalVars(ctx, pkg, cfg, parent) })
+	wg.Go(func() { analyzeFinalReassignments(ctx, pkg, cfg, parent) })
 	wg.Wait()
 }
 
 // analyzeReachability checks for unreachable code in all functions.
-func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
+func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Reachability Analysis", "")
+	defer span.End()
 	var wg sync.WaitGroup
-	for _, fcfg := range cfg.allFunctionCfgs {
+	for ref, fcfg := range cfg.allFunctionCfgs {
 		wg.Add(1)
-		go func(fcfg *functionCFG) {
+		go func(ref model.SymbolRef, fcfg *functionCFG) {
 			defer wg.Done()
+			fnSpan := span.StartChildFunc("Reachability", func() string { return ctx.SymbolName(ref) })
+			defer fnSpan.End()
 			for _, bb := range fcfg.bbs {
 				if !bb.isReachable() {
 					for _, node := range bb.nodes {
@@ -58,17 +62,20 @@ func analyzeReachability(ctx *context.CompilerContext, cfg *PackageCFG) {
 					}
 				}
 			}
-		}(fcfg)
+		}(ref, fcfg)
 	}
 	wg.Wait()
 }
 
 // analyzeExplicitReturn validates that functions with non-nil return types
 // have explicit return statements.
-func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG) {
+func analyzeExplicitReturn(
+	ctx *context.CompilerContext, pkg *ast.BLangPackage, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChild("Explicit Return Analysis", "")
+	defer span.End()
 	var wg sync.WaitGroup
 	spawn := func(n invokableNode) {
-		wg.Go(func() { analyzeInvokableExplicitReturn(ctx, n, cfg) })
+		wg.Go(func() { analyzeInvokableExplicitReturn(ctx, n, cfg, span) })
 	}
 	for i := range pkg.Functions {
 		spawn(pkg.Functions[i])
@@ -93,6 +100,15 @@ func analyzeExplicitReturn(ctx *context.CompilerContext, pkg *ast.BLangPackage, 
 		lambda := &cfg.lambdaCfgs[i]
 		wg.Go(func() { analyzeExplicitReturnWithCfg(ctx, lambda.fn, lambda.cfg) })
 	}
+	for _, worker := range cfg.workers {
+		wg.Go(func() {
+			// A worker has no function symbol, so its return type comes from the
+			// future<T> its own symbol carries.
+			retType := semtypes.FutureEventualType(
+				semtypes.ContextFrom(ctx.GetTypeEnv()), ctx.SymbolType(worker.decl.Symbol()))
+			checkExplicitReturn(ctx, worker.decl, retType, worker.cfg)
+		})
+	}
 	wg.Wait()
 }
 
@@ -103,7 +119,10 @@ type invokableNode interface {
 	GetBody() ast.FunctionBodyNode
 }
 
-func analyzeInvokableExplicitReturn(ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG) {
+func analyzeInvokableExplicitReturn(
+	ctx *context.CompilerContext, fn invokableNode, cfg *PackageCFG, parent context.TraceSpan) {
+	span := parent.StartChildFunc("Explicit Return", func() string { return ctx.SymbolName(fn.Symbol()) })
+	defer span.End()
 	fnCfg, ok := cfg.lookupFunctionCfg(fn.Symbol())
 	if !ok {
 		return
@@ -119,36 +138,37 @@ func analyzeExplicitReturnWithCfg(ctx *context.CompilerContext, fn invokableNode
 		return
 	}
 	sym := ctx.GetSymbol(fn.Symbol()).(model.FunctionSymbol)
-	retType := sym.TypedSignature().ReturnType
+	checkExplicitReturn(ctx, fn, sym.TypedSignature().ReturnType, fnCfg)
+}
+
+// checkExplicitReturn validates that every reachable terminal block of a
+// function-like body satisfies the body's declared return type: a type that
+// cannot be nil needs an explicit return or a panic on every path, and `never`
+// needs a panic. Falling off the end is a nil return, so a type containing nil
+// needs no check at all.
+func checkExplicitReturn(
+	ctx *context.CompilerContext,
+	node ast.BLangNode,
+	retType semtypes.SemType,
+	bodyCfg functionCFG,
+) {
 	if semtypes.ContainsBasicType(retType, semtypes.Nil) {
 		return
 	}
+	message := "missing return statement"
+	satisfied := terminalBlockHasReturnOrPanic
 	if semtypes.IsNever(retType) {
-		analyzeFunctionNeverReturn(ctx, fn, fnCfg)
-		return
+		message = "expected panic"
+		satisfied = terminalBlockHasPanic
 	}
-
-	for _, bb := range fnCfg.bbs {
+	for _, bb := range bodyCfg.bbs {
 		if !bb.isTerminal() || !bb.isReachable() {
 			continue
 		}
-		if terminalBlockHasReturnOrPanic(bb) {
+		if satisfied(bb) {
 			continue
 		}
-		pos := positionForMissingReturn(bb, fn)
-		ctx.SemanticError("missing return statement", pos)
-	}
-}
-
-func analyzeFunctionNeverReturn(ctx *context.CompilerContext, fn invokableNode, fnCfg functionCFG) {
-	for _, bb := range fnCfg.bbs {
-		if !bb.isTerminal() || !bb.isReachable() {
-			continue
-		}
-		if bb.panics {
-			continue
-		}
-		ctx.SemanticError("expected panic", positionForMissingReturn(bb, fn))
+		ctx.SemanticError(message, positionForMissingReturn(bb, node))
 	}
 }
 
@@ -169,6 +189,10 @@ func terminalBlockHasReturnOrPanic(bb basicBlock) bool {
 	default:
 		return false
 	}
+}
+
+func terminalBlockHasPanic(bb basicBlock) bool {
+	return bb.panics
 }
 
 func positionForMissingReturn(bb basicBlock, fn ast.BLangNode) diagnostics.Location {

@@ -13,6 +13,7 @@
 - [Annotation declarations and attachments](https://ballerina.io/spec/lang/master/#section_9.1)
   - Supports source-only, runtime, marker and repeated annotations
   - Supports annotation values evaluated from constant and runtime expressions
+  - Supports `service remote function` annotations on remote methods of service classes and service declarations, including `object function` annotation compatibility
 - [Module variable declarations](https://ballerina.io/spec/lang/master/#module-var-decl)
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
@@ -44,6 +45,10 @@
   - Currently only supports range, list, map, string and XML subtypes, and [iterable objects](https://ballerina.io/spec/lang/master/#section_5.8.2)
 - [Match statement](https://ballerina.io/spec/lang/master/#match-stmt)
   - Currently only supports [const-pattern](https://ballerina.io/spec/lang/master/#const-pattern) and [wildcard-match-pattern](https://ballerina.io/spec/lang/master/#wildcard-match-pattern)
+- [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
+  - Only in a `block-function-body`, with optional annotations and return type
+  - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
+  - Message passing (send, receive, flush), `fork`, `transactional` workers and `on fail` are not supported
 
 ## Expressions
 
@@ -57,7 +62,7 @@
 - [Start action](https://ballerina.io/spec/lang/master/#start-action)
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Error constructor](https://ballerina.io/spec/lang/master/#error-constructor-expr)
-- [Check expression](https://ballerina.io/spec/lang/master/#checking-expr)
+- [Checking expression](https://ballerina.io/spec/lang/master/#checking-expr) (`check` and `checkpanic`)
   - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
 - [Type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr)
@@ -68,7 +73,8 @@
   - When selecting among multiple candidate inherent types, resolving the members has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
 - [Mapping constructor](https://ballerina.io/spec/lang/master/#mapping-constructor-expr)
   - When selecting among multiple candidate inherent types, resolving the field values has the same restrictions as resolving the arguments of a new expression that selects among candidate object types (see New expression above).
-  - Currently [spread-field](https://ballerina.io/spec/lang/master/#spread-field) not supported
+  - [spread-field](https://ballerina.io/spec/lang/master/#spread-field) is supported
+  - Currently a spread-field operand whose static type is not a single mapping type (e.g. a union of mapping types such as `A|B`, or a type narrowed by a negative type test such as `!is`) is not supported
 - [XML template expression](https://ballerina.io/spec/lang/master/#xml-template-expr)
   - Supports interpolation in XML content and attributes
   - XML sequence interpolation from a query result is not supported
@@ -112,6 +118,28 @@
   - numeric ops `+`, `-`
   - bitwise complement `~`
 
+
+# Spec deviations
+
+These are intentional departures from the [language specification](https://ballerina.io/spec/lang/2024R1/) that we intend to retain, unlike temporary subset restrictions. Comparisons below were validated with jBallerina 2201.13.4.
+
+## Matching jBallerina
+
+- [Implicit `new` expressions](https://ballerina.io/spec/lang/master/#section_6.8.2) accept an applicable contextually expected type that is a union of object types.
+  - For each member of the union, we check whether that member's `init` method accepts the passed-in arguments.
+  - If exactly one member does, that member is selected as the contextually expected type.
+  - The following argument expressions are currently unsupported when the applicable contextually expected type is a union of class types:
+    - Calls to dependently-typed functions, including nested calls
+    - Query expressions with multiple `from` clauses
+    - Query expressions over collections other than lists or mappings
+    - Optional XML attribute access
+    - Calls with named arguments when the callee's parameter signature is unavailable
+    - Anonymous functions containing client resource access actions with non-atomic receivers or ambiguous dispatch
+
+## Deviations from jBallerina
+
+- Implicit `new` expressions reject an applicable contextually expected type containing both `stream` and `object` subtypes; jBallerina can select an applicable class from such a type.
+- A [lock statement](https://ballerina.io/spec/lang/master/#lock-stmt) must have exactly one restricted variable (spec allows for none).
 
 # Subset restrictions
 
@@ -211,7 +239,9 @@
     - `fromBytes`
   - `ballerina/lang.error`
     - `message`
+    - `cause`
   - `ballerina/lang.value`
+    - `clone`
     - `cloneWithType`
     - `fromJsonWithType`
     - `toString`
@@ -270,10 +300,10 @@
   - Other expressions that merely evaluate to a compatible function value do not retain the parameter names and defaults required for named and default arguments.
 - Named arguments and omitted defaultable arguments are supported for method calls and client remote method call actions only when the receiver type has one positive object atom. The receiver may also be `readonly & T`, where `T` has one positive object atom.
   - Type narrowing does not necessarily produce such a receiver type; for example, a receiver that still has multiple object alternatives is unsupported for named and default arguments.
-- Object constructor calls support named and default arguments while selecting a unique class from an object union; they do not have the atomic-target restriction above.
 
 ### Other invocation restrictions
 
+- Langlib functions whose type depends on their arguments (for example `value:clone` and `map:remove`) can only be called; they cannot be used as function values.
 - Client resource access actions require an atomic client receiver. Dispatch is not supported when more than one resource method matches the access path.
 - Method call syntax can be used for calling the following langlib functions:
   - `array:length`
@@ -297,10 +327,12 @@
   - `map:get`
   - `map:remove`
   - `error:message`
+  - `error:cause`
   - `string:length`
   - `string:indexOf`, `string:includes`, `string:substring` and `string:equalsIgnoreCaseAscii`
   - `string:toLowerAscii`, `string:toUpperAscii` and `string:trim`
   - `string:toBytes`
+  - `value:clone`
   - `value:cloneWithType`
   - `value:fromJsonWithType`
   - `value:toString` and `value:toBalString`

@@ -31,44 +31,69 @@ import (
 )
 
 // Analyze validates a type-resolved package.
-func Analyze(ctx *context.CompilerContext, pkg *ast.BLangPackage, importedSymbols map[string]model.ExportedSymbolSpace) {
+func Analyze(
+	ctx *context.CompilerContext,
+	pkg *ast.BLangPackage,
+	importedSymbols map[string]model.ExportedSymbolSpace,
+	parent context.TraceSpan,
+) {
+	metadataSpan := parent.StartChild("Module Variable Metadata", "")
 	cx := scope.NewPackage(ctx, semtypes.ContextFrom(ctx.GetTypeEnv()), pkg, importedSymbols)
-	validatePackage(cx, pkg)
+	metadataSpan.End()
+	validatePackage(cx, pkg, parent)
 }
 
-// validatePackage validates every top-level declaration; a declaration that
-// reports is abandoned and the next one runs.
-func validatePackage(cx scope.Context, pkg *ast.BLangPackage) {
+// validatePackage validates every top-level declaration, each under its own
+// span; a declaration that reports is abandoned and the next one runs.
+func validatePackage(cx scope.Context, pkg *ast.BLangPackage, parent context.TraceSpan) {
 	aliases := make([]string, 0, len(pkg.Imports))
 	for _, imp := range pkg.Imports {
+		span := parent.StartChild("Import", imp.Alias.GetValue())
 		validateImport(cx, imp, aliases)
+		span.End()
 		if imp.Alias.OriginalValue != string(model.IGNORE) {
 			aliases = append(aliases, imp.Alias.GetValue())
 		}
 	}
 	for _, c := range common.DeclaredNodes(pkg.Constants) {
+		span := parent.StartChild("Constant", c.Name.GetValue())
 		validateVariable(cx, c, c.GetAssociatedType())
+		span.End()
 	}
 	for _, v := range common.DeclaredNodes(pkg.GlobalVars) {
+		span := parent.StartChild("Global Variable", v.Name.GetValue())
 		validateVariable(cx, v, moduleVarExpectedType(v.IsListener(), cx.CompilerCtx().SymbolType(v.Symbol())))
+		span.End()
 	}
 	for _, svc := range pkg.Services {
+		span := parent.StartChildFunc("Service", func() string { return cx.CompilerCtx().SymbolName(svc.Symbol()) })
 		validateService(cx, svc)
+		span.End()
 	}
 	for _, fn := range common.DeclaredNodes(pkg.Functions) {
+		span := parent.StartChild("Function", fn.Name.GetValue())
 		validateFunction(cx, fn)
+		span.End()
 	}
 	for _, td := range pkg.TypeDefinitions {
+		span := parent.StartChild("Type Definition", td.Name.GetValue())
 		validateTypeDefinition(cx, td)
+		span.End()
 	}
 	for _, a := range pkg.Annotations {
+		span := parent.StartChild("Annotation", a.Name.GetValue())
 		validateAnnotation(cx, a)
+		span.End()
 	}
 	if pkg.InitFunction != nil {
+		span := parent.StartChild("Init Function", pkg.InitFunction.Name.GetValue())
 		validateFunction(cx, pkg.InitFunction)
+		span.End()
 	}
 	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
+		span := parent.StartChild("Class Definition", c.Name.GetValue())
 		validateClass(cx, c)
+		span.End()
 	}
 }
 

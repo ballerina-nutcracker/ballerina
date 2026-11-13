@@ -104,6 +104,8 @@ The `LineStream` and `BlockStream` public helper classes are not declared; `line
 
 The client remote methods now bind the response payload directly to the contextually expected type instead of only returning an `http:Response`.
 
+The client can also address a resource with the client resource access syntax (`client->/albums/[id]`) rather than only through a remote method with a string path.
+
 ### Client — response data binding
 
 Every remote method except `head` takes a trailing `targetType` parameter with an inferred typedesc default:
@@ -165,16 +167,83 @@ An `xml` target is the one builder that rejects an empty body outright: there is
 
 Not covered in this subset: `stream<http:SseEvent, error?>` targets, status code response records (`http:StatusCodeClient`, `getStatusCodeRecord()`), and the `validation` / `laxDataBinding` client configuration flags.
 
+### Client — resource methods
+
+All seven accessors are declared as resource methods on `http:Client`, so a request can be written as a path rather than as a string argument:
+
+```ballerina
+isolated resource function get [PathParamType... path](map<string|string[]>? headers = (),
+        TargetType targetType = <>, *QueryParams params) returns targetType|error = external;
+```
+
+`PathParamType` is `boolean|int|float|decimal|string`. Each segment of the call site's path becomes one element of `path`, whether it was written as a name or as a computed segment, and `get` is the accessor used when the call site names none:
+
+```ballerina
+http:Client c = check new ("https://example.com");
+
+http:Response a = check c->/albums/[42]/tracks;      // GET /albums/42/tracks
+http:Response b = check c->/albums.post(payload);    // POST /albums
+http:Response d = check c->/albums/[42].delete();    // DELETE /albums/42
+http:Response e = check c->/;                        // GET /
+```
+
+`post`, `put`, `patch` and `delete` take a leading `message`, plus `headers` and `mediaType`, exactly as their remote counterparts do; `delete`'s `message` is defaultable. `get` and `options` take `headers`, and `head` takes only `headers`.
+
+Every accessor except `head` binds the response payload exactly as its remote counterpart does (see [Client — response data binding](#client--response-data-binding)), through a `TargetType targetType = <>` parameter placed before `*QueryParams`. The target is inferred from the contextually expected type, or named explicitly:
+
+```ballerina
+Album album = check c->/albums/[42];                       // bound from the JSON body
+string text = check c->/albums/[42](targetType = string);  // explicit target
+http:Response raw = check c->/albums/[42];                 // the raw response
+```
+
+Query parameters are named arguments, collected by the `*QueryParams` included record parameter:
+
+```ballerina
+public type QueryParamType SimpleQueryParamType[]|SimpleQueryParamType;
+
+public type QueryParams record {|
+    never headers?;
+    never targetType?;
+    never message?;
+    never mediaType?;
+    QueryParamType...;
+|};
+```
+
+The four `never` fields reserve the names the method's own parameters use, so `headers`, `targetType`, `message` and `mediaType` cannot be smuggled in as query parameters; a named `targetType` argument always binds to the method's own parameter.
+
+| Call | Request target |
+|---|---|
+| `c->/albums(tag = "rock", count = 3)` | `/albums?tag=rock&count=3` |
+| `c->/albums(tags = ["rock", "jazz"])` | `/albums?tags=rock,jazz` |
+| `c->/albums(q = "a b")` | `/albums?q=a+b` |
+| `c->/albums(q = "a&b=c")` | `/albums?q=a%26b%3Dc` |
+| `c->/p/[1.0]/[1.0e10]` | `/p/1.0/1e10` |
+| `c->/p/[d]` where `decimal d = 2.500` | `/p/2.500` |
+
+An array-valued query parameter is rendered as a single comma-joined pair rather than as a repeated key, and parameters keep the order the named arguments were written in.
+
+Two renderings deliberately differ from jBallerina's wire format, in both cases by preferring the Go-native or language-consistent behaviour over byte-level parity. Each is recorded in the [`http` README](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md) under **Notable Behavioural Changes** and is open to revisiting:
+
+- **Values use Ballerina's `toString`.** jBallerina formats a segment with Java's `String.valueOf`, so a `float` goes out as `Double.toString` gives it — `1.0E10`. Here every segment and query value goes through Ballerina's own `toString`, giving `1e10`. `int`, `boolean`, `decimal` and `string` are identical either way; a whole float still keeps its `.0` and a decimal still keeps its trailing zeros.
+- **Path segments and query components are escaped.** jBallerina concatenates the target and lets the transport encode only the space, so a segment containing `/` splits into two and a query value containing `&` or `=` silently splits into extra parameters. Here every segment byte outside RFC 3986's `pchar` set is percent-encoded (sub-delims such as `,` and `;` stay raw) and query keys and values with `url.QueryEscape`, so such a value stays one segment or parameter — at the cost of a query space rendering as `+` rather than `%20`.
+
+Not covered in this subset: the `@http:Query` annotation for renaming a query parameter on the wire, and rest-spread path segments (`client->/p/[...segs]`).
+
 ### Response
 
 | Feature | Notes |
 |---|---|
 | `getTextPayload` | Now returns `string\|error`, matching jBallerina's signature; extraction failures (for example exceeding `responseLimits.maxEntityBodySize`) surface as an `error` instead of being returned through a `string` signature |
 | `setXmlPayload` / `getXmlPayload` | Available on both `http:Request` and `http:Response`. `setXmlPayload` defaults the Content-Type to `application/xml`, keeping an already-set Content-Type when no override is passed |
+| `setPayload` | Available on both `http:Request` and `http:Response`. Accepts `json\|xml\|byte[]\|mime:Entity[]` and dispatches by the value's runtime type to `setTextPayload`, `setXmlPayload`, `setBinaryPayload`, `setJsonPayload` or `setBodyParts`. The `stream` payload kinds are not supported |
+| `setBodyParts` / `getBodyParts` | Available on both `http:Request` and `http:Response`, built on `ballerina/mime`. `setBodyParts` defaults the Content-Type to `multipart/form-data`, keeping an already-set Content-Type when no override is passed; the boundary is generated when the message is sent. `getBodyParts` returns the parts set by `setBodyParts`, or decodes an inbound multipart body (single level only). A part whose own body is `mime:Entity[]` is sent as a nested multipart body |
+| `getFormParams` | Available on `http:Request`. Decodes an `application/x-www-form-urlencoded` body into a `map<string>`, returning an `error` when the Content-Type is missing, invalid or not form-urlencoded, or when the body cannot be decoded |
 
 ### Outbound XML
 
-`RequestMessage` is now `anydata|http:Request`, so an `xml` value can be sent directly and is inferred as `application/xml`:
+`RequestMessage` is now `anydata|http:Request|mime:Entity[]`, so an `xml` value can be sent directly and is inferred as `application/xml`, and a `mime:Entity[]` is sent as a `multipart/form-data` body:
 
 ```ballerina
 xml echoed = check c->post("/echo", xml `<p>hi</p>`);

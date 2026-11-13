@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected future<int>, got future<nil>
+  --> future-type1-e.bal:32:21
+   |
+32 |     future<int> f = w; // @error future<()> is not a future<int>
+   |                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected future<string>, got future<int>
+  --> future-type1-e.bal:25:24
+   |
+25 |     future<string> f = w; // @error future<int> is not a future<string>
+   |                        ^

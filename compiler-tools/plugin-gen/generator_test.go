@@ -24,6 +24,7 @@ import (
 	"testing"
 )
 
+// Ballerina corpus tests cannot inspect the freshness of the generated Go build input.
 func TestGeneratedRegistryIsCurrent(t *testing.T) {
 	t.Parallel()
 	root, err := filepath.Abs("../..")
@@ -43,6 +44,7 @@ func TestGeneratedRegistryIsCurrent(t *testing.T) {
 	}
 }
 
+// Ballerina corpus tests cannot inspect emitted Go imports or registration order.
 func TestGenerateDerivesImportAndPreservesOrder(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -65,6 +67,7 @@ func TestGenerateDerivesImportAndPreservesOrder(t *testing.T) {
 	}
 }
 
+// Missing Go implementations are rejected during generation, before Ballerina corpus tests can run.
 func TestGenerateRejectsMissingFunction(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -91,6 +94,7 @@ func TestGenerateAllowsModuleDirectiveTrailingComment(t *testing.T) {
 	}
 }
 
+// Ballerina corpus tests cannot inspect deterministic Go output, provider ordering, or import aliases.
 func TestGenerateOrdersProvidersAndAvoidsAliasCollisions(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -129,6 +133,7 @@ func TestGenerateOrdersProvidersAndAvoidsAliasCollisions(t *testing.T) {
 	}
 }
 
+// Go import alias derivation is internal to the generator and cannot be called from Ballerina corpus tests.
 func TestPluginImportAliasIsInjective(t *testing.T) {
 	t.Parallel()
 	providers := [][2]string{

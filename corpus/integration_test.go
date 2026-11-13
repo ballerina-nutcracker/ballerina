@@ -579,7 +579,7 @@ func runProjectSerializationRoundtrip(projectDir string) (stdout, stderr string)
 	}
 
 	// Step 2: Create fresh compiler and deserialize dep symbols + BIR
-	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	freshEnv := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	publicSymbols := make(map[semantics.PackageIdentifier]model.ExportedSymbolSpace)
 	deserialized := make([]*bir.BIRPackage, 0, len(birPkgs))
 

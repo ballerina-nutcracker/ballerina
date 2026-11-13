@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invocation of a non-isolated function inside lock statement
+  --> value-clone-lock-non-isolated-call-e.bal:22:16
+   |
+22 |         return first(data).clone(); // @error non-isolated function called in a lock with a restricted variable
+   |                ^^^^^^^^^^^

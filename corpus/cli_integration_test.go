@@ -76,6 +76,8 @@ func TestBalCLI(t *testing.T) {
 		{"BalRunDumpFlags", testBalRunDumpFlags},
 		{"BalRunCorpus", testBalRunCorpus},
 		{"BalRunWorkspaceCorpus", testBalRunWorkspaceCorpus},
+		{"BalRunCompilerPluginManifestCorpus", testBalRunCompilerPluginManifestCorpus},
+		{"BalRunCompilerPluginFromBala", testBalRunCompilerPluginFromBala},
 		{"BalRunTargetDir", testBalRunTargetDir},
 		{"BalTestCorpus", testBalTestCorpus},
 		{"BalTestFlagsCorpus", testBalTestFlagsCorpus},
@@ -129,7 +131,20 @@ func TestBalCLI(t *testing.T) {
 		{"BalBuildOutputPathBlocked", testBalBuildOutputPathBlocked},
 		{"BalBuildOutputDirNotWritable", testBalBuildOutputDirNotWritable},
 		{"BalBuildNoHomeNoBalEnv", testBalBuildNoHomeNoBalEnv},
-		{"BalBuildStatsFlags", testBalBuildStatsFlags},
+		{"BalStatsFlagsRemoved", testBalStatsFlagsRemoved},
+		{"BalTraceFlagIsDebugRunOnly", testBalTraceFlagIsDebugRunOnly},
+		{"BalRunWithoutTraceFlagWritesNoTrace", testBalRunWithoutTraceFlagWritesNoTrace},
+		{"BalRunTraceOutputPaths", testBalRunTraceOutputPaths},
+		{"BalRunTraceWriteFailureFailsTheRun", testBalRunTraceWriteFailureFailsTheRun},
+		{"BalRunTraceLabels", testBalRunTraceLabels},
+		{"BalRunTraceOnCompilationFailure", testBalRunTraceOnCompilationFailure},
+		{"BalRunTraceIsCompleteBeforeRuntime", testBalRunTraceIsCompleteBeforeRuntime},
+		{"BalRunTraceRejectsNativeDependencyHandoff", testBalRunTraceRejectsNativeDependencyHandoff},
+		{"BalRunTraceChildSpans", testBalRunTraceChildSpans},
+		{"BalRunTraceChildSpansOnCompilationFailure", testBalRunTraceChildSpansOnCompilationFailure},
+		{"BalRunTraceChildSpansOnBirGenerationFailure", testBalRunTraceChildSpansOnBirGenerationFailure},
+		{"BalRunTraceIsFlatWithoutNested", testBalRunTraceIsFlatWithoutNested},
+		{"BalNestedFlagIsDebugRunOnly", testBalNestedFlagIsDebugRunOnly},
 		{"BalBuildRuntimeStubPathOverride", testBalBuildRuntimeStubPathOverride},
 		{"BalBuildAtomicWriteOnPackFailure", testBalBuildAtomicWriteOnPackFailure},
 		{"BalBuildRebuildPreservesExecutableBit", testBalBuildRebuildPreservesExecutableBit},
@@ -265,17 +280,13 @@ func testBalRunWorkspaceCorpus(t *testing.T, cli *balCLI) {
 	})
 }
 
-// TestBalRunCompilerPluginManifestCorpus runs member pkga of the
+// testBalRunCompilerPluginManifestCorpus runs member pkga of the
 // compiler-plugin workspace once per manifest in
 // testdata/run/compiler-plugin-manifests, installed as the CompilerPlugin.toml
 // of the imported member pkgb, and compares the result with the golden of the
 // same name in output/run/compiler-plugin-manifests. Both modules of pkga
 // import pkgb, so each golden also shows a provider error is reported once.
-func TestBalRunCompilerPluginManifestCorpus(t *testing.T) {
-	if runtime.GOOS == "js" || runtime.GOARCH == "wasm" {
-		t.Skip("skipping CLI integration test on WASM (js/wasm)")
-	}
-	cli := newBalCLI(t)
+func testBalRunCompilerPluginManifestCorpus(t *testing.T, cli *balCLI) {
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	testDataRoot := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run")
 	outputsRoot := filepath.Join(repoRoot, "corpus", "cli", "output", "run", "compiler-plugin-manifests")
@@ -307,7 +318,46 @@ func TestBalRunCompilerPluginManifestCorpus(t *testing.T) {
 	}
 }
 
-// TestBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
+// testBalRunCompilerPluginFromBala packs a provider whose CompilerPlugin.toml
+// names an unlinked plugin, pushes it to a local repository and runs a
+// consumer that imports it, so the plugin must survive packing and be
+// activated from the bala dependency.
+func testBalRunCompilerPluginFromBala(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+	fixture := filepath.Join(repoRoot, "corpus", "cli", "testdata", "run", "compiler-plugin-bala")
+	sandbox := t.TempDir()
+	copyDir(t, fixture, sandbox)
+	balEnv := []string{"BAL_ENV=" + t.TempDir()}
+
+	provider := filepath.Join(sandbox, "provider")
+	stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir, balEnv, "pack", provider)
+	if exitCode != 0 {
+		t.Fatalf("bal pack failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+	balas, err := filepath.Glob(filepath.Join(provider, "target", "bala", "*.bala"))
+	if err != nil || len(balas) != 1 {
+		t.Fatalf("expected one packed bala, got %v (err %v)", balas, err)
+	}
+	stdout, stderr, exitCode = runCLICommandWithEnv(t, balBin, repoRoot, coverDir, balEnv, "push", "--repository", "local", balas[0])
+	if exitCode != 0 {
+		t.Fatalf("bal push failed: exit=%d\nstdout:\n%s\nstderr:\n%s", exitCode, stdout, stderr)
+	}
+
+	stdout, stderr, exitCode = runCLICommandWithEnv(t, balBin, repoRoot, coverDir, balEnv, "run", filepath.Join(sandbox, "consumer"))
+	expectedOutput, expectedError, expectedExitCode, err := test_util.LoadTxtarStdoutStderrExitcode(
+		filepath.Join(repoRoot, "corpus", "cli", "output", "run", "compiler-plugin-bala.txtar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualOutput := test_util.NormalizeNewlines(stdout)
+	actualError := test_util.NormalizeNewlines(stderr)
+	if actualOutput != expectedOutput || actualError != expectedError || strconv.Itoa(exitCode) != expectedExitCode {
+		t.Fatalf("unexpected bal run output\nexpected stdout:\n%s\nactual stdout:\n%s\nexpected stderr:\n%s\nactual stderr:\n%s\nexpected exitcode: %s\nactual exitcode: %d",
+			expectedOutput, actualOutput, expectedError, actualError, expectedExitCode, exitCode)
+	}
+}
+
+// testBalRunTargetDir verifies `bal run --target-dir <dir>` is accepted and
 // doesn't break execution. Unlike build/pack, run's --target-dir only
 // produces a visible artifact (<dir>/bin/bal) when the package has a
 // genuine third-party native-Go .bala dependency — embedded stdlibs like
@@ -3765,31 +3815,6 @@ func testBalBuildNoHomeNoBalEnv(t *testing.T, cli *balCLI) {
 	}
 	if !strings.Contains(stderr, "resolve ballerina env path") {
 		t.Errorf("expected a 'resolve ballerina env path' error, got stderr:\n%s", stderr)
-	}
-}
-
-// testBalBuildStatsFlags covers --stats and --stats-oneline: both must
-// print a per-stage compilation timing report to stderr without affecting
-// the build's own success or output path.
-func testBalBuildStatsFlags(t *testing.T, cli *balCLI) {
-	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
-	projectDir := filepath.Join("corpus", "cli", "testdata", "build", "pure-ballerina", "project")
-
-	for _, flag := range []string{"--stats", "--stats-oneline"} {
-		t.Run(flag, func(t *testing.T) {
-			t.Parallel()
-			stdout, stderr, exitCode := runCLICommandWithEnv(t, balBin, repoRoot, coverDir,
-				[]string{"BAL_ENV=" + cli.balEnv}, "build", projectDir, flag)
-			if exitCode != 0 {
-				t.Fatalf("bal build %s failed: exit=%d\nstdout:\n%s\nstderr:\n%s", flag, exitCode, stdout, stderr)
-			}
-			if !strings.Contains(stderr, "Compilation Stats:") {
-				t.Errorf("expected a compilation stats report in stderr for %s, got:\n%s", flag, stderr)
-			}
-			if !strings.Contains(stdout, "Created ") {
-				t.Errorf("expected %s to still report a successful build, got stdout:\n%s", flag, stdout)
-			}
-		})
 	}
 }
 

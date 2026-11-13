@@ -1,0 +1,12 @@
+-- stdout --
+true
+true
+{"y":1}
+{"x":"hello","y":1}
+true
+{"y":1,"x":"hello"}
+true
+false
+true
+{"x":"a"}
+-- stderr --

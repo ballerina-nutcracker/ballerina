@@ -1,0 +1,103 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad inner
+    %2 = newXMLText(%1)
+    %3 = newXMLElement("q", %2)
+    %4 = ConstantLoad id
+    %5 = ConstantLoad 1
+    %6 = newMap {| string... |}{%4=%5}
+    %7 = newXMLElement("p", %3, %6)
+    element = %7;
+    %9 = clone(element) -> bb1;
+  }
+  bb1 {
+    elementClone = %9;
+    %11 = ConstantLoad r
+    %12 = setName(elementClone,%11) -> bb2;
+  }
+  bb2 {
+    %13 = getName(element) -> bb3;
+  }
+  bb3 {
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = getName(elementClone) -> bb5;
+  }
+  bb5 {
+    %16 = println(%15) -> bb6;
+  }
+  bb6 {
+    %17 = getAttributes(elementClone) -> bb7;
+  }
+  bb7 {
+    attrs = %17;
+    %19 = ConstantLoad 2
+    %20 = ConstantLoad id
+    attrs[%20] = %19;
+    %21 = println(element) -> bb8;
+  }
+  bb8 {
+    $desugar$0 = elementClone;
+    %23 = $default$4($desugar$0) -> bb9;
+  }
+  bb9 {
+    $desugar$1 = %23;
+    %25 = elementChildren($desugar$0,$desugar$1) -> bb10;
+  }
+  bb10 {
+    $desugar$2 = %25;
+    %27 = iterator($desugar$2) -> bb11;
+  }
+  bb11 {
+    $desugar$3 = %27;
+    GOTO bb12;
+  }
+  bb12 {
+    %29 = ConstantLoad true
+    %29 ? bb13 : bb14;
+  }
+  bb13 {
+    PushScopeFrame 8
+    %0 = (1, $desugar$3).next() -> bb15;
+  }
+  bb14 {
+    %30 = println(element) -> bb19;
+  }
+  bb15 {
+    $desugar$5 = %0;
+    %2 = $desugar$5 is nil
+    %2 ? bb16 : bb17;
+  }
+  bb16 {
+    PushScopeFrame 0
+    PopScopeFrame
+    PopScopeFrame
+    GOTO bb14;
+  }
+  bb17 {
+    %4 = ConstantLoad value
+    %3 = $desugar$5[%4];
+    child = %3;
+    %6 = ConstantLoad s
+    %7 = setName(child,%6) -> bb18;
+  }
+  bb18 {
+    PopScopeFrame
+    GOTO bb12;
+  }
+  bb19 {
+    %31 = println(elementClone) -> bb20;
+  }
+  bb20 {
+    %32 = newXMLElement("t", ())
+    %33 = setChildren(elementClone,%32) -> bb21;
+  }
+  bb21 {
+    %34 = println(element) -> bb22;
+  }
+  bb22 {
+    return;
+  }
+}

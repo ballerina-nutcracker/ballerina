@@ -1,0 +1,31 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable e (type
+        (user-defined-type Entry)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal id)
+            (literal 1))
+          (key-value
+            (literal count)
+            (literal 0))))))
+    (var-def
+      (variable widened (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type anydata))) (expr
+        (invocation lang.value clone (
+          (simple-var-ref e))))))
+    (assignment
+      (index-based-access
+        (simple-var-ref widened)
+        (literal count))
+      (literal 1))
+    (assignment
+      (index-based-access
+        (simple-var-ref widened)
+        (literal id))
+      (literal 2))
+  )
+)

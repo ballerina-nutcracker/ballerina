@@ -74,6 +74,13 @@ func TestHttpServiceResourceSignatureErrors(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-signature-e"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServicePluginRequiresExplicitImport checks that the http compiler
+// plugin validates only modules that import ballerina/http themselves.
+func TestHttpServicePluginRequiresExplicitImport(t *testing.T) {
+	t.Parallel()
+	runExtern(t, projectCase("http-service/plugin-transitive-import-e"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceResourceSignatureUnsupported covers valid http resource
 // parameter shapes the runtime cannot bind yet (query params, extra non-Request
 // params, rest params), which must bail out as unimplemented.
@@ -125,6 +132,15 @@ func TestHttpServiceRequestAccessors(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-request-accessors-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceMultipartRequest exercises Request.getBodyParts() on the
+// inbound Request injected into a service resource, decoding a multipart
+// body sent by the client.
+func TestHttpServiceMultipartRequest(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-multipart-request-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // TestHttpServiceRequestMutators exercises every Request mutator method
 // (setHeader/addHeader/removeHeader/removeAllHeaders/setContentType/
 // setTextPayload/setJsonPayload/setBinaryPayload) on the inbound Request
@@ -133,6 +149,15 @@ func TestHttpServiceRequestMutators(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-request-mutators-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceMultipartResponse exercises Response.getBodyParts() on an
+// inbound Response received from an http:Client call, decoding a multipart
+// body sent by the server.
+func TestHttpServiceMultipartResponse(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-multipart-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
 // TestHttpServiceHTTP10Fallback verifies that a listener configured with
@@ -202,6 +227,25 @@ func TestHttpServiceClientMethods(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-client-methods-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceClientResource exercises all seven client resource methods
+// (`client->/path.get()` and friends) against a service that echoes back the
+// method it dispatched on, so an accessor wired to the wrong native
+// implementation shows up as a mismatched verb.
+func TestHttpServiceClientResource(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-client-resource-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceClientResourcePath asserts the request target a client
+// resource method builds: path segment rendering for every PathParamType
+// member, and query parameter assembly from the *QueryParams included record.
+func TestHttpServiceClientResourcePath(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-client-resource-path-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
 // TestHttpServiceClientRedirect verifies the client follows a 302 redirect

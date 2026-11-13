@@ -153,7 +153,7 @@ func parseFile(t *testing.T, testCase test_util.TestCase) {
 
 	source := string(content)
 	reader := text.CharReaderFromText(source)
-	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), false)
+	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	ctx := context.NewCompilerContext(env)
 	ctx.DiagnosticEnv().RegisterFile(testCase.InputPath, text.TextDocumentFromText(source))
 

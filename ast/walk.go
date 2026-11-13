@@ -217,9 +217,23 @@ func Walk(v Visitor, node BLangNode) {
 		walkTypeDescriptor(v, node.TypeDescriptor)
 
 	case *BLangBlockFunctionBody:
+		for _, stmt := range node.InitStmts {
+			Walk(v, stmt.(BLangNode))
+		}
+		for _, worker := range node.Workers {
+			Walk(v, worker)
+		}
 		for _, stmt := range node.Stmts {
 			Walk(v, stmt.(BLangNode))
 		}
+
+	case *BLangNamedWorkerDeclaration:
+		attachments := node.GetAnnotationAttachments()
+		for i := range attachments {
+			Walk(v, &attachments[i])
+		}
+		Walk(v, node.ReturnType)
+		Walk(v, node.Body)
 
 	case *BLangExprFunctionBody:
 		if node.Expr != nil {
@@ -406,12 +420,17 @@ func Walk(v Visitor, node BLangNode) {
 		}
 	case *BLangMappingConstructorExpr:
 		for _, f := range node.Fields {
-			if kv, ok := f.(*BLangMappingKeyValueField); ok {
-				if kv.Key != nil && kv.Key.Expr != nil {
-					Walk(v, kv.Key.Expr.(BLangNode))
+			switch field := f.(type) {
+			case *BLangMappingKeyValueField:
+				if field.Key != nil && field.Key.Expr != nil {
+					Walk(v, field.Key.Expr.(BLangNode))
 				}
-				if kv.ValueExpr != nil {
-					Walk(v, kv.ValueExpr.(BLangNode))
+				if field.ValueExpr != nil {
+					Walk(v, field.ValueExpr.(BLangNode))
+				}
+			case *BLangMappingSpreadField:
+				if field.Expr != nil {
+					Walk(v, field.Expr.(BLangNode))
 				}
 			}
 		}

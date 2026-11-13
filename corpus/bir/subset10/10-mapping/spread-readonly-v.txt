@@ -1,0 +1,75 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 1
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 2
+    %5 = newMap {| x: int, y: int, never... |}{%1=%2, %3=%4}
+    mutable = %5;
+    %7 = newMap {| x: int, y: int, never... |}{...mutable}
+    frozen = %7;
+    %9 = println(frozen) -> bb1;
+  }
+  bb1 {
+    %10 = frozen is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = mutable is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %14 = %13;
+    %15 = println(%14) -> bb3;
+  }
+  bb3 {
+    %16 = ConstantLoad 5
+    %17 = ConstantLoad x
+    mutable[%17] = %16;
+    %19 = ConstantLoad x
+    %18 = mutable[%19];
+    %20 = %18;
+    %21 = println(%20) -> bb4;
+  }
+  bb4 {
+    %23 = ConstantLoad x
+    %22 = frozen[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb5;
+  }
+  bb5 {
+    %26 = ConstantLoad x
+    %27 = ConstantLoad 3
+    %28 = ConstantLoad y
+    %29 = ConstantLoad 4
+    %30 = newMap {| x: int, y: int, never... |}{%26=%27, %28=%29}
+    src = %30;
+    %32 = newMap {| x: int, y: int, never... |}{...src}
+    copied = %32;
+    %34 = copied is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %35 = %34;
+    %36 = println(%35) -> bb6;
+  }
+  bb6 {
+    %37 = println(copied) -> bb7;
+  }
+  bb7 {
+    %38 = ConstantLoad v
+    %39 = ConstantLoad 1
+    %40 = newMap {| v: int, never... |}{%38=%39}
+    roInner = %40;
+    %42 = ConstantLoad inner
+    %43 = newMap {| inner: readonly&{| v: int, never... |}, never... |}{%42=roInner}
+    roWrapper = %43;
+    %45 = newMap {| inner: readonly&{| v: int, never... |}, never... |}{...roWrapper}
+    rebuilt = %45;
+    %47 = println(rebuilt) -> bb8;
+  }
+  bb8 {
+    %48 = rebuilt is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %49 = %48;
+    %50 = println(%49) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

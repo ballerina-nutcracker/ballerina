@@ -91,6 +91,13 @@ func validateMappingConstructor(cx scope.Context, e *ast.BLangMappingConstructor
 		switch field := field.(type) {
 		case *ast.BLangMappingKeyValueField:
 			kv = field
+		case *ast.BLangMappingSpreadField:
+			operandFacts, ok := validateMappingSpreadField(cx, field, present)
+			if !ok {
+				return scope.NoFacts, false
+			}
+			values = scope.Meet(values, operandFacts)
+			continue
 		default:
 			cx.InternalErr("unexpected mapping field", field.GetPosition())
 			return scope.NoFacts, false
@@ -142,6 +149,27 @@ func validateMappingConstructor(cx scope.Context, e *ast.BLangMappingConstructor
 	return f, true
 }
 
+// validateMappingSpreadField validates a spread operand and records the keys it is guaranteed to
+// supply in present. Type resolution has already checked what the operand can supply against the
+// inherent type.
+func validateMappingSpreadField(cx scope.Context, field *ast.BLangMappingSpreadField, present map[string]struct{}) (scope.Facts, bool) {
+	operandFacts, ok := validateActionOrExpr(cx, field.Expr, field.Expr.Type())
+	if !ok {
+		return scope.NoFacts, false
+	}
+	fields, _, ok := semtypes.AllPossibleMappingFields(cx.TyCtx(), field.Expr.Type())
+	if !ok {
+		cx.InternalErr("spread field operand is not a single mapping atom", field.Expr.GetPosition())
+		return scope.NoFacts, false
+	}
+	for _, f := range fields {
+		if !f.IsOptional {
+			present[f.Name] = struct{}{}
+		}
+	}
+	return operandFacts, true
+}
+
 // validateErrorConstructor validates the positional and named arguments of
 // an error constructor against the error's detail type.
 func validateErrorConstructor(cx scope.Context, e *ast.BLangErrorConstructorExpr, expected semtypes.SemType) (scope.Facts, bool) {
@@ -164,6 +192,9 @@ func validateErrorConstructor(cx scope.Context, e *ast.BLangErrorConstructorExpr
 		cx.UnimplementedErr("error detail type not supported", e.GetPosition())
 		return scope.NoFacts, false
 	}
+	// Spec §6.17: every arg-name must name an individual field of the detail
+	// type, unless it declares no individual fields.
+	detailFields, _, detailFieldsOk := semtypes.AllPossibleMappingFields(tyCtx, detailTy)
 	seen := make([]string, 0, len(e.NamedArgs))
 	provided := make([]semtypes.Field, 0, len(e.NamedArgs))
 	cloneable := semtypes.CreateCloneable(tyCtx)
@@ -171,6 +202,10 @@ func validateErrorConstructor(cx scope.Context, e *ast.BLangErrorConstructorExpr
 		name := e.NamedArgs[i].Name.GetValue()
 		if slices.Contains(seen, name) {
 			cx.SemanticErr(strings.Join([]string{"duplicate named argument '", name, "' in error constructor"}, ""), e.NamedArgs[i].GetPosition())
+			return scope.NoFacts, false
+		}
+		if detailFieldsOk && len(detailFields) > 0 && !slices.ContainsFunc(detailFields, func(f semtypes.MappingField) bool { return f.Name == name }) {
+			cx.SemanticErr(strings.Join([]string{"error constructor does not accept additional detail arg '", name, "' when the error detail type contains individual field descriptors"}, ""), e.NamedArgs[i].GetPosition())
 			return scope.NoFacts, false
 		}
 		seen = append(seen, name)

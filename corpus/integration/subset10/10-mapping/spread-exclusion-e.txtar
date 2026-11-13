@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: spread field may duplicate key 'y'
+  --> spread-exclusion-e.bal:32:14
+   |
+32 |     var b = {...src, y: 2}; // @error the source rest may already supply 'y'
+   |              ^^^^^^
+
+error[SEMANTIC_ERROR]: spread field may supply keys the inherent type of the mapping constructor does not allow
+  --> spread-exclusion-e.bal:28:17
+   |
+28 |     NeedsX a = {...src}; // @error the source rest is not allowed by the closed target
+   |                 ^^^^^^

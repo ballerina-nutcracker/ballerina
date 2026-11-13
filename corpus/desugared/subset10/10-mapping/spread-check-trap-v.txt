@@ -1,0 +1,227 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))))
+  (type-definition P3
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int))
+      (field z
+        (value-type int))))
+  (function produce (
+    (variable tag (type
+      (value-type string)))
+    (variable bad (type
+      (value-type boolean)))) (
+    (union-type
+      (user-defined-type Point)
+      (error-type)))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (literal eval )
+            (simple-var-ref tag)))))
+      (return
+        (ternary-expr
+          (simple-var-ref bad)
+          (error-constructor-expr (
+            (binary-expr +
+              (literal bad )
+              (simple-var-ref tag))))
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 1))
+            (key-value
+              (literal y)
+              (literal 2)))))))
+  (function panicking () (
+    (user-defined-type Point))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal panicking operand))))))
+  (function checkedSpread (
+    (variable bad (type
+      (value-type boolean)))) (
+    (union-type
+      (user-defined-type P3)
+      (error-type)))
+    (expr-function-body
+      (mapping-constructor-expr
+        (mapping-spread-field
+          (checked-expr
+            (invocation produce (
+              (literal check)
+              (simple-var-ref bad)))))
+        (key-value
+          (literal z)
+          (literal 1)))))
+  (function sink (
+    (variable first (type
+      (user-defined-type P3)))
+    (variable second (type
+      (user-defined-type P3)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (index-based-access
+          (simple-var-ref first)
+          (literal z))
+        (index-based-access
+          (simple-var-ref second)
+          (literal z)))))
+  (function checkedArgs (
+    (variable bad (type
+      (value-type boolean)))) (
+    (union-type
+      (value-type int)
+      (error-type)))
+    (expr-function-body
+      (invocation sink (
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (checked-expr
+              (invocation produce (
+                (literal A)
+                (simple-var-ref bad)))))
+          (key-value
+            (literal z)
+            (literal 2)))
+        (mapping-constructor-expr
+          (mapping-spread-field
+            (checked-expr
+              (invocation produce (
+                (literal B)
+                (literal false)))))
+          (key-value
+            (literal z)
+            (literal 3)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation checkedSpread (
+            (literal false))))))
+      (var-def
+        (variable failed (type
+          (union-type
+            (user-defined-type P3)
+            (error-type))) (expr
+          (invocation checkedSpread (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref failed)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation checkedArgs (
+            (literal false))))))
+      (var-def
+        (variable failedArgs (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (invocation checkedArgs (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref failedArgs)
+            (error-type)))))
+      (var-def
+        (variable trapped (type
+          (union-type
+            (user-defined-type P3)
+            (error-type))) (expr
+          (trap-expr
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (check-panicked-expr
+                  (invocation produce (
+                    (literal trap)
+                    (literal true)))))
+              (key-value
+                (literal z)
+                (literal 4)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trapped)
+            (error-type)))))
+      (var-def
+        (variable trappedPanic (type
+          (union-type
+            (user-defined-type P3)
+            (error-type))) (expr
+          (trap-expr
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (invocation panicking ()))
+              (key-value
+                (literal z)
+                (literal 5)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trappedPanic)
+            (error-type)))))
+      (var-def
+        (variable trappedOk (type
+          (union-type
+            (user-defined-type P3)
+            (error-type))) (expr
+          (trap-expr
+            (mapping-constructor-expr
+              (mapping-spread-field
+                (check-panicked-expr
+                  (invocation produce (
+                    (literal ok)
+                    (literal false)))))
+              (key-value
+                (literal z)
+                (literal 6)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref trappedOk))))
+      (var-def
+        (variable trappedArg (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (invocation sink (
+              (mapping-constructor-expr
+                (mapping-spread-field
+                  (check-panicked-expr
+                    (invocation produce (
+                      (literal arg)
+                      (literal true)))))
+                (key-value
+                  (literal z)
+                  (literal 7)))
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 0))
+                (key-value
+                  (literal y)
+                  (literal 0))
+                (key-value
+                  (literal z)
+                  (literal 0)))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref trappedArg)
+            (error-type))))))))

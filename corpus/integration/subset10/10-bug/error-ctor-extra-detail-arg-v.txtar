@@ -1,0 +1,8 @@
+-- stdout --
+error("a",count=1)
+error("b")
+error("c",x=1,y=2)
+error("d",anything=true)
+error("e",p="x",q="y")
+error("f",type=1)
+-- stderr --

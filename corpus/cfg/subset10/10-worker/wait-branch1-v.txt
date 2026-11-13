@@ -1,0 +1,41 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation pick (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation pick (
+          (literal false))))))
+  )
+)
+(pick
+  (bb0 () (bb1 bb2)
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 7))))
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) ()
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (simple-var-ref r))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 7))
+  )
+)

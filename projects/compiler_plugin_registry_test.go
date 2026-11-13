@@ -154,7 +154,7 @@ func newCompilerPluginTestCompilation(
 ) (*PackageCompilation, *moduleContext) {
 	t.Helper()
 	typeEnv := semtypes.CreateTypeEnv()
-	compilerEnv := compilercontext.NewCompilerEnvironment(typeEnv, false)
+	compilerEnv := compilercontext.NewCompilerEnvironment(typeEnv, compilercontext.TraceOff)
 	env := NewEnvironment(os.DirFS(t.TempDir()), compilerEnv)
 	project := newBuildProjectWithEnv("", NewBuildOptions(), env)
 	compilerCtx := compilercontext.NewCompilerContext(compilerEnv)

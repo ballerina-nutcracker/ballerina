@@ -5,6 +5,7 @@ go 1.27
 toolchain go1.27.1
 
 require (
+	github.com/ballerina-nutcracker/ballerina/ast v0.7.0
 	github.com/ballerina-nutcracker/ballerina/bir v0.7.0
 	github.com/ballerina-nutcracker/ballerina/compilerplugin v0.7.0
 	github.com/ballerina-nutcracker/ballerina/context v0.7.0
@@ -24,7 +25,6 @@ require (
 )
 
 require (
-	github.com/ballerina-nutcracker/ballerina/ast v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/common v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/desugar v0.7.0 // indirect
 	github.com/Azure/go-ntlmssp v0.1.0 // indirect

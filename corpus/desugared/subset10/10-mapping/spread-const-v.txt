@@ -1,0 +1,41 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Point
+    (record-type
+      (field x
+        (value-type int))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":1,"b":2}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":0}))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"a":1,"b":2})
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"a":1,"b":2})
+            (literal b)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"a":1,"b":2})
+            (record-type
+              (field a
+                (finite-type
+                  (literal 1)))
+              (field b
+                (finite-type
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"a":1,"b":2})
+            (value-type readonly))))))))
