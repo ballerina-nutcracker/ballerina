@@ -1,0 +1,52 @@
+(Lookalike
+  (area
+    (bb0 () ()
+      (literal 4)
+    )
+  )
+)
+(Square
+  (area
+    (bb0 () ()
+      (literal 4)
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable s (type
+        (user-defined-type Shape)) (expr
+        (new
+          (user-defined-type Square) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation area expr:
+          (simple-var-ref s) ()))))
+    (var-def
+      (variable a (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type Square) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type Shape)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref a)
+          (user-defined-type ShapeAlias)))))
+    (var-def
+      (variable b (type
+        (value-type any)) (expr
+        (new
+          (user-defined-type Lookalike) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref b)
+          (user-defined-type Shape)))))
+  )
+)

@@ -33,3 +33,77 @@ public isolated function waitOnLatch(handle latch) = external;
 
 # Opens the latch, releasing every waiting strand. A latch may be opened once.
 public isolated function openLatch(handle latch) = external;
+
+// Defined here, and exported by lang.object as `object:Iterable`, so that the
+// value of a range expression, created below, can belong to it.
+public type Iterable distinct object {
+    # Create a new iterator.
+    #
+    # + return - a new iterator object
+    public function iterator() returns object {
+        public function next() returns record {| any|error value; |}|error?;
+    };
+};
+
+# Iterates over the integers of a range in increasing order.
+class IntRangeIterator {
+    private int current;
+    // The last integer of the range; meaningful only while `done` is false.
+    private final int last;
+    private boolean done;
+
+    isolated function init(int 'start, int end, boolean closed) {
+        self.current = 'start;
+        self.done = closed ? 'start > end : 'start >= end;
+        // When the range is not empty, `end - 1` cannot overflow, since `end` > `start`.
+        self.last = self.done || closed ? end : end - 1;
+    }
+
+    public isolated function next() returns record {| int value; |}? {
+        if self.done {
+            return ();
+        }
+        int value = self.current;
+        if value == self.last {
+            self.done = true;
+        } else {
+            self.current = value + 1;
+        }
+        return {value};
+    }
+}
+
+# The value of a range expression, an `Iterable<int,()>`. Each call to `iterator`
+# iterates over the whole range again.
+class IntRange {
+    *Iterable;
+    private final int 'start;
+    private final int end;
+    private final boolean closed;
+
+    isolated function init(int 'start, int end, boolean closed) {
+        self.'start = 'start;
+        self.end = end;
+        self.closed = closed;
+    }
+
+    public isolated function iterator() returns object {
+        public isolated function next() returns record {| int value; |}?;
+    } {
+        return new IntRangeIterator(self.'start, self.end, self.closed);
+    }
+}
+
+# Creates the value of a range expression that is not lowered to a foreach loop.
+#
+# + 'start - the first operand
+# + end - the second operand
+# + closed - true for `...`, false for `..<`
+# + return - an object iterating over the integers of the range
+public isolated function createIntRange(int 'start, int end, boolean closed) returns Iterable & object {
+    public isolated function iterator() returns object {
+        public isolated function next() returns record {| int value; |}?;
+    };
+} {
+    return new IntRange('start, end, closed);
+}

@@ -1,0 +1,59 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Shape
+    (object-type
+      (method-decl area public () (
+        (value-type int)))))
+  (type-definition ShapeAlias
+    (user-defined-type Shape))
+  (class-definition Square
+    (function init () ()
+      (block-function-body))
+    (function area () (
+      (value-type int))
+      (expr-function-body
+        (literal 4))))
+  (class-definition Lookalike
+    (function init () ()
+      (block-function-body))
+    (function area () (
+      (value-type int))
+      (expr-function-body
+        (literal 4))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (user-defined-type Shape)) (expr
+          (new
+            (user-defined-type Square) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation area expr:
+            (simple-var-ref s) ()))))
+      (var-def
+        (variable a (type
+          (value-type any)) (expr
+          (new
+            (user-defined-type Square) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (user-defined-type Shape)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (user-defined-type ShapeAlias)))))
+      (var-def
+        (variable b (type
+          (value-type any)) (expr
+          (new
+            (user-defined-type Lookalike) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref b)
+            (user-defined-type Shape))))))))
