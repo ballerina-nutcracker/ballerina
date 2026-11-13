@@ -300,6 +300,30 @@ public function main() {
     // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
     // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("Xml"); xml (case insensitive) is reserved by the specs.
     // @output {"id":"ok"}
+
+    // The declaration's pseudo-attributes are version, then optionally encoding and standalone, in that order.
+    string[] pseudoAttributes = [
+        "<?xml?><r id='ok'/>",
+        "<?xml encoding='UTF-8'?><r id='ok'/>",
+        "<?xml version='1.0' standalone='maybe'?><r id='ok'/>",
+        "<?xml version='1.0' foo='bar'?><r id='ok'/>",
+        "<?xml version='1.0' standalone='yes' encoding='UTF-8'?><r id='ok'/>",
+        "<?xml version='1.0' encoding=''?><r id='ok'/>",
+        "<?xml version='1.0'encoding='UTF-8'?><r id='ok'/>",
+        "<?xml  version = '1.0' encoding=\"UTF-8\" standalone='no' ?><r id='ok'/>"
+    ];
+    foreach string declaration in pseudoAttributes {
+        record {|string id?;|}|error parsed = xmldata:parseString(declaration);
+        show(parsed);
+    }
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected keyword 'version'
+    // @output E: failed to parse xml: XML syntax error on line 1: Invalid XML pseudo-attribute 'standalone' value 'maybe'; expected "yes" or "no"
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character 'f' (code 102); expected "?>" end marker
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected "?>" end marker
+    // @output E: failed to parse xml: XML syntax error on line 1: Missing XML pseudo-attribute 'encoding' value
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected either '?' or white space
+    // @output {"id":"ok"}
 }
 
 function nestedValue(int depth) returns xml {

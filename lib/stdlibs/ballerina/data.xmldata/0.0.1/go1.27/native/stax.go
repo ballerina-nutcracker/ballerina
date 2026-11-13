@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -212,6 +213,9 @@ func (r *staxReader) accept(token xml.Token, offset int64) (staxEvent, bool, err
 		if strings.EqualFold(t.Target, "xml") {
 			// Only an XML declaration at the very start of the document may use the reserved target.
 			if t.Target == "xml" && offset == 0 {
+				if message := xmlDeclarationError(string(t.Inst)); message != "" {
+					return eventNone, false, r.syntaxError(message)
+				}
 				return eventNone, true, nil
 			}
 			return eventNone, false, r.syntaxError(fmt.Sprintf("Illegal processing instruction target (%q); xml (case insensitive) is reserved by the specs.", t.Target))
@@ -222,6 +226,61 @@ func (r *staxReader) accept(token xml.Token, offset int64) (staxEvent, bool, err
 		return eventDTD, false, nil
 	}
 	return eventNone, true, nil
+}
+
+// xmlDeclarationError checks the pseudo-attributes of an XML declaration: version first, then an
+// optional encoding and standalone, in that order. It returns "" for a well-formed declaration.
+func xmlDeclarationError(inst string) string {
+	if strings.TrimSpace(inst) == "" {
+		return `Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.`
+	}
+	unexpected := func(rest, expected string) string {
+		return fmt.Sprintf("Unexpected character '%c' (code %d); expected %s", rest[0], rest[0], expected)
+	}
+	names := []string{"version", "encoding", "standalone"}
+	rest, next := inst, 0
+	for {
+		trimmed := strings.TrimLeft(rest, " \t\r\n")
+		if trimmed == "" {
+			return ""
+		}
+		if next > 0 && len(trimmed) == len(rest) {
+			return unexpected(trimmed, "either '?' or white space")
+		}
+		end := strings.IndexFunc(trimmed, func(c rune) bool { return c < 'a' || c > 'z' })
+		if end < 0 {
+			end = len(trimmed)
+		}
+		name := trimmed[:end]
+		found := slices.Index(names[next:], name)
+		switch {
+		case next == 0 && name != "version":
+			return unexpected(trimmed, "keyword 'version'")
+		case found < 0:
+			return unexpected(trimmed, `"?>" end marker`)
+		}
+		next += found + 1
+		rest = strings.TrimLeft(trimmed[end:], " \t\r\n")
+		if !strings.HasPrefix(rest, "=") {
+			return fmt.Sprintf("Missing '=' after XML pseudo-attribute '%s'", name)
+		}
+		rest = strings.TrimLeft(rest[1:], " \t\r\n")
+		if rest == "" || rest[0] != '\'' && rest[0] != '"' {
+			return fmt.Sprintf("Missing quote around XML pseudo-attribute '%s' value", name)
+		}
+		closing := strings.IndexByte(rest[1:], rest[0])
+		if closing < 0 {
+			return fmt.Sprintf("Missing quote around XML pseudo-attribute '%s' value", name)
+		}
+		value := rest[1 : 1+closing]
+		rest = rest[2+closing:]
+		switch {
+		case value == "":
+			return fmt.Sprintf("Missing XML pseudo-attribute '%s' value", name)
+		case name == "standalone" && value != "yes" && value != "no":
+			return fmt.Sprintf(`Invalid XML pseudo-attribute 'standalone' value '%s'; expected "yes" or "no"`, value)
+		}
+	}
 }
 
 func (r *staxReader) startElement(t xml.StartElement) error {

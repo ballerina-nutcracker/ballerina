@@ -87,4 +87,12 @@ E: failed to parse xml: XML syntax error on line 1: Illegal processing instructi
 E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
 E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("Xml"); xml (case insensitive) is reserved by the specs.
 {"id":"ok"}
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected keyword 'version'
+E: failed to parse xml: XML syntax error on line 1: Invalid XML pseudo-attribute 'standalone' value 'maybe'; expected "yes" or "no"
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'f' (code 102); expected "?>" end marker
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected "?>" end marker
+E: failed to parse xml: XML syntax error on line 1: Missing XML pseudo-attribute 'encoding' value
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected either '?' or white space
+{"id":"ok"}
 -- stderr --
