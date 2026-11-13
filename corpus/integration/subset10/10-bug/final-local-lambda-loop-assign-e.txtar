@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to potentially initialized final 'x'
+  --> final-local-lambda-loop-assign-e.bal:22:17
+   |
+22 |                 x = i; // @error cannot assign a value to potentially initialized final 'x'
+   |                 ^
