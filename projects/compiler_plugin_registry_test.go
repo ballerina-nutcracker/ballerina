@@ -29,6 +29,51 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
+// The only statically linked compiler plugin (ballerina/http) has no observable
+// effect on a module that does not declare services, so a corpus test cannot
+// show that a transitive import leaves the plugin inactive.
+func TestCompilerPluginActivationRequiresExplicitImport(t *testing.T) {
+	t.Parallel()
+	version, err := NewPackageVersionFromString("1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	appDescriptor := NewModuleDescriptorForDefaultModule(NewPackageDescriptor(
+		NewPackageOrg("acme"), NewPackageName("app"), version,
+	))
+	httpProvider := compilerPluginProvider{
+		org: "ballerina", pkg: "http",
+		plugins: []linkedCompilerPlugin{{
+			declaration: compilerPluginDeclaration{after: compilerplugin.AfterSemantics, function: "ValidateService"},
+		}},
+	}
+	resolver := &compilerPluginResolver{
+		moduleOwners: map[moduleIdentity]string{
+			{org: "ballerina", moduleName: "http"}: "ballerina/http",
+			{org: "acme", moduleName: "helper"}:    "acme/helper",
+		},
+		providers: map[string]compilerPluginProvider{"ballerina/http": httpProvider},
+	}
+
+	direct := &moduleContext{
+		moduleDescriptor: appDescriptor,
+		explicitImports:  []moduleImport{{org: "ballerina", moduleName: "http"}},
+	}
+	plugins := resolver.pluginsFor(direct)
+	if len(plugins) != 1 || plugins[0].declaration.function != "ValidateService" {
+		t.Fatalf("unexpected direct-import plugins: %#v", plugins)
+	}
+
+	transitiveOnly := &moduleContext{
+		moduleDescriptor: appDescriptor,
+		explicitImports:  []moduleImport{{org: "acme", moduleName: "helper"}},
+	}
+	plugins = resolver.pluginsFor(transitiveOnly)
+	if len(plugins) != 0 {
+		t.Fatalf("transitive import activated plugins: %#v", plugins)
+	}
+}
+
 // Corpus tests can only use compiler plugins statically linked into the bal
 // binary, so plugins with controlled transformers are registered here.
 func TestCompilerPluginResultsAreThreadedInDeclarationOrder(t *testing.T) {
@@ -146,6 +191,7 @@ func newCompilerPluginTestCompilation(
 	module := &moduleContext{
 		moduleDescriptor: appDescriptor,
 		explicitImports:  []moduleImport{{org: "acme", moduleName: "provider"}},
+		cfg:              &semantics.PackageCFG{},
 		bLangPkg:         initial,
 		compilerCtx:      compilerCtx,
 	}

@@ -1,0 +1,42 @@
+-- stdout --
+
+Running tests for module 'dataproviders'
+
+	intArrayDataProviderTest:0 has failed.
+
+
+	intArrayDataProviderTest:1 has failed.
+
+		[pass] intArrayDataProviderTest#2
+
+		[fail] intArrayDataProviderTest#0:
+
+		    The sum is not correct
+			 
+			expected: '4'
+			actual	: '3'
+			
+			
+
+		[fail] intArrayDataProviderTest#1:
+
+		    The sum is not correct
+			 
+			expected: '31'
+			actual	: '30'
+			
+			
+
+
+		1 passing
+		2 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Running tests for module 'dataproviders.module1'
+	No tests found
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

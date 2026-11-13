@@ -1,0 +1,25 @@
+-- stdout --
+
+	testSquare:bad has failed.
+
+		[pass] testSquare#good
+
+		[fail] testSquare#bad:
+
+		    Assertion Failed!
+			 
+			expected: '5'
+			actual	: '4'
+			
+			
+
+
+		1 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

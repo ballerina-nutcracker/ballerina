@@ -21,6 +21,7 @@ package compilerpluginregistry
 import (
 	"github.com/ballerina-nutcracker/ballerina/compilerplugin"
 	ballerina_http_9 "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/http/0.0.1/go1.27/compilerplugin"
+	ballerina_test_9 "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/test/0.0.1/go1.27/compilerplugin"
 )
 
 // RegisterPlugins registers every statically linked compiler plugin.
@@ -28,5 +29,9 @@ func RegisterPlugins(register Register) {
 	register("ballerina", "http", "ValidateService", compilerplugin.CompilerPlugin{
 		After:              compilerplugin.AfterSemantics,
 		PackageTransformer: ballerina_http_9.ValidateService,
+	})
+	register("ballerina", "test", "ProcessTests", compilerplugin.CompilerPlugin{
+		After:              compilerplugin.AfterSemantics,
+		PackageTransformer: ballerina_test_9.ProcessTests,
 	})
 }

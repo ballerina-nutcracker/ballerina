@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: nonExisting
+ --> tests/main_test.bal:4:17
+  |
+4 |     dependsOn: [nonExisting]
+  |                 ^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

@@ -1,0 +1,6 @@
+-- stdout --
+error: error while running failed tests : Invalid failed test data. Please run `bal test` command.
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

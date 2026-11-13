@@ -1,0 +1,18 @@
+-- stdout --
+
+		[fail] testEvalHardPanic:
+
+		    [fail evaluation for the function testEvalHardPanic]
+			boom
+			
+
+
+		0 passing
+		1 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

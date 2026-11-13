@@ -64,16 +64,20 @@ func createNewCmd() *cobra.Command {
 		Long: `	Create a new Ballerina package or workspace.
 
 	Creates the given path if it does not exist and initializes a Ballerina
-	package in it. It generates the Ballerina.toml, main.bal, and .gitignore
-	files inside the package directory. However, for existing paths, the
-	main.bal file is only created if there are no other Ballerina source
-	files (.bal) in the directory.
+	package in it. It generates the Ballerina.toml, main.bal, .gitignore, and
+	a sample tests/main_test.bal inside the package directory. However, for
+	existing paths, main.bal is only created if there are no other Ballerina
+	source files (.bal) in the directory, and the sample test file is only
+	created if the tests directory doesn't already have source files of its
+	own.
 
 	The package directory will have the structure below.
 		.
 		├── Ballerina.toml
 		├── .gitignore
-		└── main.bal
+		├── main.bal
+		└── tests
+			└── main_test.bal
 
 	Any directory becomes a Ballerina package if that directory has a
 	'Ballerina.toml' file. It contains the organization name, package name,
@@ -618,6 +622,30 @@ func initPackage(projectPath, packageName, orgName string, template templateName
 		createdFiles = append(createdFiles, sourcePath)
 	}
 
+	// Create the sample test file based on template (only if the tests
+	// directory doesn't already have .bal files of its own).
+	testsDir := filepath.Join(projectPath, projects.TestsDir)
+	if !hasExistingBalFiles(testsDir) {
+		testFile, testContent, err := getTemplateTestSource(template)
+		if err != nil {
+			cleanup()
+			return fmt.Errorf("failed to read test template: %w", err)
+		}
+
+		if err := os.MkdirAll(testsDir, 0755); err != nil {
+			cleanup()
+			return fmt.Errorf("failed to create tests directory: %w", err)
+		}
+		createdFiles = append(createdFiles, testsDir)
+
+		testPath := filepath.Join(testsDir, testFile)
+		if err := os.WriteFile(testPath, []byte(testContent), 0644); err != nil {
+			cleanup()
+			return fmt.Errorf("failed to create %s: %w", testFile, err)
+		}
+		createdFiles = append(createdFiles, testPath)
+	}
+
 	// Create .gitignore
 	gitignoreContent, err := templates.ReadTemplate(templates.Gitignore)
 	if err != nil {
@@ -665,5 +693,21 @@ func getTemplateSource(template templateName) (fileName string, content string, 
 	default: // templateDefault, templateMain
 		content, err = templates.ReadTemplate(templates.MainBal)
 		return "main.bal", content, err
+	}
+}
+
+// getTemplateTestSource returns the tests/ file name and content for the
+// given template's sample test.
+func getTemplateTestSource(template templateName) (fileName string, content string, err error) {
+	switch template {
+	case templateLib:
+		content, err = templates.ReadTemplate(templates.LibTestBal)
+		return "lib_test.bal", content, err
+	case templateService:
+		content, err = templates.ReadTemplate(templates.ServiceTestBal)
+		return "service_test.bal", content, err
+	default: // templateDefault, templateMain
+		content, err = templates.ReadTemplate(templates.MainTestBal)
+		return "main_test.bal", content, err
 	}
 }

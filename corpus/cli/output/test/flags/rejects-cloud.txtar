@@ -1,0 +1,10 @@
+-- stdout --
+-- stderr --
+ballerina: --cloud is not supported
+
+USAGE:
+    test [<source-file.bal> | <package-dir>]
+
+For more information try 'bal test --help'
+-- exitcode --
+1

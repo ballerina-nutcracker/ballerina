@@ -1,0 +1,10 @@
+-- stdout --
+-- stderr --
+ballerina: --graalvm is not supported: this interpreter has no separate native-image step
+
+USAGE:
+    test [<source-file.bal> | <package-dir>]
+
+For more information try 'bal test --help'
+-- exitcode --
+1

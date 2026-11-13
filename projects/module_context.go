@@ -61,19 +61,21 @@ type moduleContext struct {
 	compilerCtx     *context.CompilerContext
 	importedSymbols map[string]model.ExportedSymbolSpace
 	explicitImports []moduleImport
+	cfg             *semantics.PackageCFG
 	birPkg          *bir.BIRPackage
 }
 
 // newModuleContext creates a moduleContext from ModuleConfig.
 func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxTree bool) *moduleContext {
-	diagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor())
+	srcDiagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor(), false)
+	testDiagKeyPrefix := buildDiagKeyPrefix(project, moduleConfig.ModuleDescriptor(), true)
 
 	// Build source document context map
 	srcDocContextMap := make(map[DocumentID]*documentContext)
 	srcDocIDs := make([]DocumentID, 0, len(moduleConfig.SourceDocs()))
 	for _, srcDocConfig := range moduleConfig.SourceDocs() {
 		docID := srcDocConfig.DocumentID()
-		srcDocContextMap[docID] = newDocumentContext(srcDocConfig, disableSyntaxTree, diagKeyPrefix)
+		srcDocContextMap[docID] = newDocumentContext(srcDocConfig, disableSyntaxTree, srcDiagKeyPrefix)
 		srcDocIDs = append(srcDocIDs, docID)
 	}
 
@@ -82,7 +84,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 	testSrcDocIDs := make([]DocumentID, 0, len(moduleConfig.TestSourceDocs()))
 	for _, testDocConfig := range moduleConfig.TestSourceDocs() {
 		docID := testDocConfig.DocumentID()
-		testDocContextMap[docID] = newDocumentContext(testDocConfig, disableSyntaxTree, diagKeyPrefix)
+		testDocContextMap[docID] = newDocumentContext(testDocConfig, disableSyntaxTree, testDiagKeyPrefix)
 		testSrcDocIDs = append(testSrcDocIDs, docID)
 	}
 
@@ -110,7 +112,14 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 //   - workspace member:   "<member-dir>/[modules/<moduleNamePart>/]"
 //   - build named module: "modules/<moduleNamePart>/"
 //   - default module:     ""
-func buildDiagKeyPrefix(project Project, md ModuleDescriptor) string {
+//
+// buildDiagKeyPrefix builds the prefix documentContext.registrationKey()
+// combines with a document's bare name. isTest adds a "tests/" segment so a
+// test document's key (and hence the path printDiagnostic/printSourceSnippet
+// read the file back from) matches its real on-disk location — without it, a
+// diagnostic in tests/a_test.bal printed as the bare "a_test.bal", and
+// snippet rendering silently failed trying to read that nonexistent path.
+func buildDiagKeyPrefix(project Project, md ModuleDescriptor, isTest bool) string {
 	if project.Kind() == ProjectKindBala {
 		return md.Org().Value() + "/" + md.Name().String() + "/" + md.Version().String() + "::"
 	}
@@ -126,6 +135,9 @@ func buildDiagKeyPrefix(project Project, md ModuleDescriptor) string {
 	}
 	if !md.Name().IsDefaultModuleName() {
 		prefix += ModulesDir + "/" + md.Name().ModuleNamePart() + "/"
+	}
+	if isTest {
+		prefix += "tests/"
 	}
 	return prefix
 }
@@ -233,13 +245,24 @@ func resolveTypesAndSymbols(moduleCtx *moduleContext) {
 
 	compilerCtx := moduleCtx.compilerCtx
 
-	// Parse all source and test documents in parallel.
+	// Parse all source and test documents in parallel. Test documents only
+	// flow into the compiled package (symbol/type resolution, BIR, and hence
+	// test discovery — see lib/stdlibs/ballerina/test's compilerplugin
+	// package) when SkipTests is explicitly disabled, i.e. for `bal test`;
+	// `bal build`/`bal run` leave it at its default (true) and never compile
+	// test sources.
+	includeTestTrees := !moduleCtx.project.BuildOptions().SkipTests()
+	// A single-file project has no tests/ dir — its one file plays both
+	// roles, so its functions must be testable too.
+	treatSourceAsTestable := includeTestTrees && moduleCtx.project.Kind() == ProjectKindSingleFile
 	syntaxTrees := parseDocumentsParallel(
 		compilerCtx,
 		moduleCtx.srcDocIDs,
 		moduleCtx.srcDocContextMap,
 		moduleCtx.testSrcDocIDs,
 		moduleCtx.testDocContextMap,
+		includeTestTrees,
+		treatSourceAsTestable,
 	)
 
 	if compilerCtx.HasDiagnostics() || len(syntaxTrees) == 0 {
@@ -402,14 +425,17 @@ func collectExplicitImports(compilationUnits []*ast.BLangCompilationUnit, defaul
 	return imports
 }
 
-// parseDocumentsParallel parses source and test documents in parallel.
-// Returns syntax trees from source documents only (test docs are parsed but not returned).
+// parseDocumentsParallel parses source and test documents in parallel,
+// returning test trees too only when includeTestTrees is set (otherwise
+// test docs are still parsed for diagnostics, but their trees are dropped).
 func parseDocumentsParallel(
 	compilerCtx *context.CompilerContext,
 	srcDocIDs []DocumentID,
 	srcDocContextMap map[DocumentID]*documentContext,
 	testDocIDs []DocumentID,
 	testDocContextMap map[DocumentID]*documentContext,
+	includeTestTrees bool,
+	treatSourceAsTestable bool,
 ) []*st.SyntaxTree {
 	var (
 		mu          sync.Mutex
@@ -429,6 +455,7 @@ func parseDocumentsParallel(
 			defer wg.Done()
 			st := dc.parse(compilerCtx)
 			if st != nil {
+				st.IsTest = treatSourceAsTestable
 				mu.Lock()
 				syntaxTrees = append(syntaxTrees, st)
 				mu.Unlock()
@@ -436,7 +463,7 @@ func parseDocumentsParallel(
 		}(docCtx)
 	}
 
-	// Parse test documents - no syntax trees collected
+	// Parse test documents - only collect syntax trees if requested
 	for _, docID := range testDocIDs {
 		docCtx := testDocContextMap[docID]
 		if docCtx == nil {
@@ -446,7 +473,13 @@ func parseDocumentsParallel(
 		wg.Add(1)
 		go func(dc *documentContext) {
 			defer wg.Done()
-			dc.parse(compilerCtx)
+			st := dc.parse(compilerCtx)
+			if includeTestTrees && st != nil {
+				st.IsTest = true
+				mu.Lock()
+				syntaxTrees = append(syntaxTrees, st)
+				mu.Unlock()
+			}
 		}(docCtx)
 	}
 
@@ -473,6 +506,7 @@ func buildCompilationUnits(cx *context.CompilerContext, syntaxTrees []*st.Syntax
 		} else {
 			cu = nodebuilder.GetCompilationUnit(cx, st)
 		}
+		cu.IsTest = st.IsTest
 		if dumpAST {
 			fmt.Fprintln(os.Stderr, prettyPrinter.Print(cu))
 		}

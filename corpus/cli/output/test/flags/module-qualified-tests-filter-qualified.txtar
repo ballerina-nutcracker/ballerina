@@ -1,0 +1,14 @@
+-- stdout --
+
+Running tests for module 'modquantestmod.submod'
+		[pass] testInSubmod
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0

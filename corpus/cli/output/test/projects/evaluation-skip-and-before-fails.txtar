@@ -1,0 +1,26 @@
+-- stdout --
+
+	testA: has failed.
+
+	[fail] [before test function for the test]:
+	    setup always fails
+		
+		
+		[pass] testZCountsCheck
+
+		[fail] testA:
+
+		    a fails
+			
+			
+
+
+		1 passing
+		1 failing
+		2 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1
