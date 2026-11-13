@@ -53,27 +53,27 @@ func withTypeCache(cache *typeCache,
 }
 
 func parseAsType(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	source, _ := args[0].(values.XMLValue)
-	opts, _ := args[1].(*values.Map)
-	td, _ := args[2].(*values.TypeDesc)
+	source := args[0].(values.XMLValue)
+	opts := args[1].(*values.Map)
+	td := args[2].(*values.TypeDesc)
 	t := newTyperFor(cache, ctx, td)
 	result, err := traverseXML(t, readSourceOptions(opts), source, t.root)
 	return toResult(ctx, result, err)
 }
 
 func parseString(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	input, _ := args[0].(string)
+	input := args[0].(string)
 	return parseText(cache, ctx, input, args[1], args[2])
 }
 
 func parseBytes(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	input, _ := args[0].(*values.List)
+	input := args[0].(*values.List)
 	return parseText(cache, ctx, string(input.ToByteSlice()), args[1], args[2])
 }
 
 // parseStream reads the whole byte-block stream before parsing.
 func parseStream(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	byteStream, _ := args[0].(*values.Stream)
+	byteStream := args[0].(*values.Stream)
 	var input []byte
 	for {
 		next := byteStream.Next()
@@ -95,8 +95,8 @@ func parseStream(cache *typeCache, ctx *extern.Context, args []values.BalValue) 
 
 func parseText(cache *typeCache, ctx *extern.Context, input string, optsArg, tdArg values.BalValue) (values.BalValue, error) {
 	input = strings.TrimPrefix(input, "\uFEFF")
-	opts, _ := optsArg.(*values.Map)
-	td, _ := tdArg.(*values.TypeDesc)
+	opts := optsArg.(*values.Map)
+	td := tdArg.(*values.TypeDesc)
 	t := newTyperFor(cache, ctx, td)
 	result, err := parseXML(t, readSourceOptions(opts), input, t.root)
 	return toResult(ctx, result, err)
@@ -105,7 +105,7 @@ func parseText(cache *typeCache, ctx *extern.Context, input string, optsArg, tdA
 // validate checks the XML against a record type by converting it with the default options. Validating
 // against an XSD file is not supported.
 func validate(cache *typeCache, ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	source, _ := args[0].(values.XMLValue)
+	source := args[0].(values.XMLValue)
 	td, ok := args[1].(*values.TypeDesc)
 	if !ok {
 		return toResult(ctx, nil, invalidXMLError("validating XML against an XSD file is not supported"))
