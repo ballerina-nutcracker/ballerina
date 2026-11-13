@@ -180,12 +180,8 @@ func (l *loopTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
 	return l.parentResolver.deferAnnotationSite(site)
 }
 
-func (l *loopTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
-	return l.parentResolver.ensureNotEmpty(ty, onEmpty)
-}
-
-func (l *loopTypeResolver) ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool {
-	return l.parentResolver.ensureSubtype(sub, sup, onNotSubtype)
+func (l *loopTypeResolver) ensureTypeCheck(check func(cx semtypes.Context) bool, onFail func()) bool {
+	return l.parentResolver.ensureTypeCheck(check, onFail)
 }
 
 // validateLoopAssignments emits diagnostics for every assignment, inside the loop

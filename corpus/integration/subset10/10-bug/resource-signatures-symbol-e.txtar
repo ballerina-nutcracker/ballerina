@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: MissingType
+  --> resource-signatures-symbol-e.bal:18:34
+   |
+18 |     resource function get items/[MissingType id]() returns string; // @error
+   |                                  ^^^^^^^^^^^
