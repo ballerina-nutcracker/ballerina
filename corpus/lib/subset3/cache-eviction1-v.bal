@@ -34,7 +34,7 @@ function sizeAfterOverflow(int capacity, float evictionFactor) returns int|error
 public function main() returns error? {
     // Evicts ceil(capacity * evictionFactor) entries, computed exactly from the decimal factor and clamped to [1, capacity].
     io:println(check sizeAfterOverflow(10, 0.3)); // @output 8
-    // 15 entries are evicted, not the 16 that 32-bit float arithmetic gives (ballerina-platform/ballerina-library#9406).
+    // 32-bit float arithmetic evicts one more entry in each of the next three (ballerina-platform/ballerina-library#9406).
     io:println(check sizeAfterOverflow(50, 0.3)); // @output 36
     io:println(check sizeAfterOverflow(100, 0.6)); // @output 41
     io:println(check sizeAfterOverflow(100, 0.15)); // @output 86
@@ -66,6 +66,7 @@ public function main() returns error? {
     _ = check d.get("k0");
     check d.put("k1", 11);
     check d.put("x", 1);
+    // Overwriting k1 evicts nothing here either (ballerina-platform/ballerina-library#9401).
     io:println(d.keys()); // @output ["k1","x"]
 
     cache:Cache e = new (capacity = 3, evictionFactor = 0.34);

@@ -57,6 +57,7 @@ public function main() returns error? {
     check forever.put("b", "v", -1);
     check forever.put("c", "v", 1);
     runtime:sleep(2);
+    // hasKey treats the expired "c" as absent (ballerina-platform/ballerina-library#9402).
     io:println(forever.size(), " ", forever.hasKey("c")); // @output 3 false
     io:println(forever.get("a") is cache:Error, " ", forever.get("c") is cache:Error); // @output false true
     io:println(forever.size()); // @output 2
