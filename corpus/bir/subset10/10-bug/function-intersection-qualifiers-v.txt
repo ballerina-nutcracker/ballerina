@@ -1,0 +1,85 @@
+module $anon.. v 0.0.0;
+class C {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  next() -> int{
+    bb0 {
+      %2 = ConstantLoad 2
+      %0 = %2;
+      return;
+    }
+  }
+}
+one() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+callFn(function() returns nil|int&isolated function() returns int) -> nil|int{
+  bb0 {
+    %2 = f() -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+callNext(object { function next() returns nil|int }&object { isolated function next() returns int }) -> nil|int{
+  bb0 {
+    %2 = o.next() -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:one
+    f = %1;
+    %3 = callFn(f) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = f is function
+    %7 = %6;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = newObject $anon/.:C
+    %10 = %9.init() -> bb4;
+  }
+  bb4 {
+    %12 = %10 is nil
+    %12 ? bb5 : bb6;
+  }
+  bb5 {
+    %11 = %9;
+    GOTO bb7;
+  }
+  bb6 {
+    %11 = %10;
+    GOTO bb7;
+  }
+  bb7 {
+    o = %11;
+    %14 = callNext(o) -> bb8;
+  }
+  bb8 {
+    %15 = %14;
+    %16 = println(%15) -> bb9;
+  }
+  bb9 {
+    return;
+  }
+}

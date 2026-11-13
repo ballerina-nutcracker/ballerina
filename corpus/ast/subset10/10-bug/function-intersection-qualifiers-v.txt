@@ -1,0 +1,82 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition F1
+    (function-type () (
+      (union-type
+        (value-type int)
+        (value-type null)))))
+  (type-definition F2
+    (function-type () (
+      (value-type int))))
+  (type-definition O1
+    (object-type
+      (method-decl next () (
+        (union-type
+          (value-type int)
+          (value-type null))))))
+  (type-definition O2
+    (object-type
+      (method-decl next () (
+        (value-type int)))))
+  (class-definition C
+    (function next () (
+      (value-type int))
+      (expr-function-body
+        (literal 2))))
+  (function one () (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (function callFn (
+    (variable f (type
+      (intersection-type
+        (user-defined-type F1)
+        (user-defined-type F2))))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (return
+        (invocation f ()))))
+  (function callNext (
+    (variable o (type
+      (intersection-type
+        (user-defined-type O1)
+        (user-defined-type O2))))) (
+    (union-type
+      (value-type int)
+      (value-type null)))
+    (block-function-body
+      (return
+        (invocation next expr:
+          (simple-var-ref o) ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f (type
+          (intersection-type
+            (user-defined-type F1)
+            (user-defined-type F2))) (expr
+          (simple-var-ref one))))
+      (expression-stmt
+        (invocation io println (
+          (invocation callFn (
+            (simple-var-ref f))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref f)
+            (function-type () ())))))
+      (var-def
+        (variable o (type
+          (intersection-type
+            (user-defined-type O1)
+            (user-defined-type O2))) (expr
+          (new
+            (user-defined-type C) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation callNext (
+            (simple-var-ref o)))))))))
