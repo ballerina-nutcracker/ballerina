@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared resource method 'get'
+  --> resource-signatures-recursive-e.bal:25:5
+   |
+25 |     client object {
+   |     ^^^^^^^^^^^^^^^
+26 |         resource function get [Q first](); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 |         resource function get [Q second](); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |     } endpoint;
+   |     ^
+
+error[SEMANTIC_ERROR]: resource path parameter type must be a subtype of anydata
+  --> resource-signatures-recursive-e.bal:20:31
+   |
+20 |         resource function get [R value](); // @error
+   |                               ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: resource path parameter type must be a subtype of anydata
+  --> resource-signatures-recursive-e.bal:26:31
+   |
+26 |         resource function get [Q first](); // @error
+   |                               ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: resource path parameter type must be a subtype of anydata
+  --> resource-signatures-recursive-e.bal:27:31
+   |
+27 |         resource function get [Q second](); // @error
+   |                               ^^^^^^^^^^
