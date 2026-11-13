@@ -213,8 +213,8 @@ public function testMain() returns error? {
 	runExtern(t, tc, newTcpPal(), nil)
 }
 
-// TestTcpTLSProtocolVersions covers protocol.versions: Java's names (TLSv1 for TLS 1.0) are accepted, an
-// unknown name is an error, and so is a list that skips a version, which crypto/tls can't enable.
+// TestTcpTLSProtocolVersions covers protocol.versions on the listener and a round trip with TLSv1 listed;
+// the client's version errors need no socket and are in corpus/lib/subset3/tcp-tls-versions-v.
 func TestTcpTLSProtocolVersions(t *testing.T) {
 	t.Parallel()
 	skipIfNoLoopback(t)
@@ -261,11 +261,6 @@ function init() returns error? {
     check tlsListener.attach(new EchoServer());
 }
 
-function clientResult(string[] versions) returns string {
-    tcp:Client|tcp:Error c = new ("127.0.0.1", 1, secureSocket = {cert: CA_CERT, protocol: {name: tcp:TLS, versions}});
-    return c is tcp:Error ? c.message() : "connected";
-}
-
 function listenerResult(string[] versions) returns string {
     tcp:Listener|tcp:Error l = new (19396,
         secureSocket = {key: <tcp:CertKey>{certFile: SERVER_CERT, keyFile: SERVER_KEY}, protocol: {name: tcp:TLS, versions}}
@@ -274,9 +269,6 @@ function listenerResult(string[] versions) returns string {
 }
 
 public function testMain() returns error? {
-    io:println(clientResult(["TLSv1.2", "TLSv1.4"])); // @output Unsupported protocol: TLSv1.4
-    io:println(clientResult(["TLSv1.0"])); // @output Unsupported protocol: TLSv1.0
-    io:println(clientResult(["TLSv1.1", "TLSv1.3"])); // @output Unsupported protocol versions: TLSv1.1 and TLSv1.3 cannot be enabled without TLSv1.2
     io:println(listenerResult(["bogus"])); // @output Unsupported protocol: bogus
     io:println(listenerResult(["TLSv1", "TLSv1.2"])); // @output Unsupported protocol versions: TLSv1 and TLSv1.2 cannot be enabled without TLSv1.1
     io:println(listenerResult(["TLSv1", "TLSv1.1"])); // @output created
