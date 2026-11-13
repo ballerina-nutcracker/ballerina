@@ -70,4 +70,12 @@ E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
 E: failed to parse xml: XML syntax error on line 1: Duplicate attribute 'id'.
 E: failed to parse xml: XML syntax error on line 1: Duplicate attribute '{urn:n}id'.
 true
+{"id":"ok"}
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("XML"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("Xml"); xml (case insensitive) is reserved by the specs.
+{"id":"ok"}
 -- stderr --

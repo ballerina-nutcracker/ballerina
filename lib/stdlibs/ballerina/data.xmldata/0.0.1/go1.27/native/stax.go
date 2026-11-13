@@ -209,8 +209,12 @@ func (r *staxReader) accept(token xml.Token, offset int64) (staxEvent, bool, err
 		r.text = string(t)
 		return eventComment, false, nil
 	case xml.ProcInst:
-		if t.Target == "xml" {
-			return eventNone, true, nil
+		if strings.EqualFold(t.Target, "xml") {
+			// Only an XML declaration at the very start of the document may use the reserved target.
+			if t.Target == "xml" && offset == 0 {
+				return eventNone, true, nil
+			}
+			return eventNone, false, r.syntaxError(fmt.Sprintf("Illegal processing instruction target (%q); xml (case insensitive) is reserved by the specs.", t.Target))
 		}
 		r.text = string(t.Inst)
 		return eventProcessingInstruction, false, nil

@@ -250,6 +250,30 @@ public function main() {
     record {}|error distinctNs = xmldata:parseString("<r xmlns:p='urn:p' xmlns:q='urn:q' p:id='one' q:id='two'/>");
     io:println(distinctNs is record {});
     // @output true
+
+    // The XML declaration is allowed only at the very start; xml in any case is otherwise a reserved target.
+    string[] declarations = [
+        "<?xml version='1.0'?><r id='ok'/>",
+        "<r id='ok'/><?xml version='1.0'?>",
+        "<r id='ok'/><?XML version='1.0'?>",
+        "<r id='ok'><?xml version='1.0'?></r>",
+        "<!-- c --><?xml version='1.0'?><r id='ok'/>",
+        " <?xml version='1.0'?><r id='ok'/>",
+        "<?Xml version='1.0'?><r id='ok'/>",
+        "<r id='ok'/><?xml-stylesheet href='a'?>"
+    ];
+    foreach string declaration in declarations {
+        record {|string id?;|}|error parsed = xmldata:parseString(declaration);
+        show(parsed);
+    }
+    // @output {"id":"ok"}
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("XML"); xml (case insensitive) is reserved by the specs.
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("Xml"); xml (case insensitive) is reserved by the specs.
+    // @output {"id":"ok"}
 }
 
 function nestedValue(int depth) returns xml {
