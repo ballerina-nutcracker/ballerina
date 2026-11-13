@@ -75,6 +75,14 @@ type Two record {|
 
 type TwoOrAB Two|AB;
 
+type Small record {|
+    int a;
+|};
+
+type SmallOrA Small|"a";
+
+type SmallOrB Small|"b";
+
 function rep(string x, int n) returns string {
     if n == 0 {
         return "";
@@ -126,4 +134,10 @@ public function main() {
         io:println(d2, " ", d2.l === d2.r, " ", d2.l.a === d2.r.a);
     }
     // @output {"l":{"a":{"a":null,"b":1},"b":2},"r":{"a":{"a":null,"b":1},"b":2}} false false
+
+    // Unions that differ only in a singleton member are not given each other's conversion.
+    SmallOrA|error sa = jsondata:parseAsType("a", {}, SmallOrA);
+    SmallOrB|error sb = jsondata:parseAsType("b", {}, SmallOrB);
+    io:println(sa, " ", sb);
+    // @output a b
 }

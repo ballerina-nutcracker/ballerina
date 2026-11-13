@@ -123,23 +123,6 @@ func TestTypeCacheReusesUnionWithValueSubtype(t *testing.T) {
 	}
 }
 
-// TestTypeCacheKeepsValuePartsApart checks two unions that differ only in their value subtype are not given
-// each other's classification.
-func TestTypeCacheKeepsValuePartsApart(t *testing.T) {
-	t.Parallel()
-	env := semtypes.CreateTypeEnv()
-	cx := semtypes.ContextFrom(env)
-	record := closedRecord(env, semtypes.FieldFrom("a", semtypes.Int, false, false))
-	typer := newTyper(newTypeCache(), cx, record, nil)
-	for _, value := range []string{"a", "b", "a"} {
-		ti := typer.classify(semtypes.Union(record, semtypes.StringConst(value)))
-		member := ti.members[len(ti.members)-1]
-		if !semtypes.IsSameType(cx, member, semtypes.StringConst(value)) {
-			t.Fatalf("R|%q classified with value member %s", value, semtypes.ToString(cx, member))
-		}
-	}
-}
-
 func closedRecord(env semtypes.Env, fields ...semtypes.Field) semtypes.SemType {
 	md := semtypes.NewMappingDefinition()
 	return md.Define(env, fields, semtypes.Never)
