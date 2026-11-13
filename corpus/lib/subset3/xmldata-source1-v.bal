@@ -95,6 +95,7 @@ public function main() {
     Person|xmldata:Error r4 = xmldata:parseStream(s4);
     show(r4 is xmldata:Error);
     // @output true
+    // An error from the source stream is returned, even after a complete document (ballerina-platform/ballerina-library#9695).
     stream<byte[], error?> s5 = new (new FailingAfterDocument());
     Person|xmldata:Error r5 = xmldata:parseStream(s5);
     show(r5);
