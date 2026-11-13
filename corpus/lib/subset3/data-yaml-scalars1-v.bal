@@ -81,7 +81,7 @@ public function main() {
     show(yaml:parseString("[a]", {}, Chars));
     // json and anydata infer int, float, nil, boolean and string in that order for plain scalars.
     show(yaml:parseString("[1, 1.5, null, true, text, \"123\", 99999999999999999999, +12, 0x1F, .inf]", {}, Anydata));
-    // A quoted, block or !!str scalar is a string for json, anydata, unions and reserved words.
+    // A quoted, block or !!str scalar is a string for json, anydata, unions and reserved words (ballerina-platform/ballerina-library#9424).
     show(yaml:parseString("a: '1'\nb: \"1.\"\nc: \"true\"\nd: 'null'\ne: '~'\nf: |\n  12\ng: !!str 3\nh: 4", {}, json));
     show(yaml:parseString("['1', \"x\", 2]", {}, IntOrString));
     show(yaml:parseString("[\"true\", 'True', \"~\"]", {}, Strings));
@@ -90,7 +90,7 @@ public function main() {
     // A string scalar binds to a string singleton before converting to another singleton.
     show(yaml:parseString("[1, '1', \"1\"]", {}, OneOrString));
     show(yaml:parseString("[true, \"true\", null, 'null']", {}, TrueOrString));
-    // A quoted null is a string, so it is not () for a nilable or optional int.
+    // A quoted null is a string, so it is not () for a nilable or optional int (ballerina-platform/ballerina-library#9424).
     show(yaml:parseString("age: null", {}, NilableAge));
     show(yaml:parseString("age: \"null\"", {}, NilableAge));
     show(yaml:parseString("age: null", {allowDataProjection: {nilAsOptionalField: true}}, OptionalAge));

@@ -33,8 +33,9 @@ public function main() {
     // Core schema tags.
     show(yaml:parseString("[!!int 0x1F, !!int 0o17, !!int \"12\", !!float 1, !!float .inf, !!float -.Inf, !!bool True, !!null ~]"));
     show(yaml:parseString("!!float .NaN"));
-    // !!str has no effect: the expected type still decides.
-    show(yaml:parseString("!!str 123"));
+    // A !!str scalar is a string for json (ballerina-platform/ballerina-library#9424).
+    json|yaml:Error strTagged = yaml:parseString("!!str 123");
+    show(strTagged is string);
     show(yaml:parseString("[!!str 123]", {}, Strings));
     show(yaml:parseString("!<tag:yaml.org,2002:str> bar"));
     show(yaml:parseString("!!seq [1, 2]"));
@@ -42,7 +43,7 @@ public function main() {
     // JSON schema tags.
     show(yaml:parseString("[!!int 12, !!bool true, !!null null]", {schema: yaml:JSON_SCHEMA}));
     show(yaml:parseString("!!bool True", {schema: yaml:JSON_SCHEMA}));
-    // A tagged value must belong to the expected type.
+    // A tagged value must belong to the expected type (ballerina-platform/ballerina-library#9673).
     show(yaml:parseString("[!!bool true]", {}, Ints));
     // Malformed and unsupported tags.
     show(yaml:parseString("!!int abc"));
@@ -59,7 +60,7 @@ public function main() {
     show(yaml:parseString("%TAG !e! tag:yaml.org,2002:\n---\n!e!int \"5\""));
     show(yaml:parseString("%TAG !e! tag:example.com,2000:\n---\n!e!int 5"));
     show(yaml:parseString("%TAG !e! tag:yaml.org,2002:\n%TAG !e! tag:yaml.org,2002:\n---\na"));
-    // A tag handle is scoped to the document that declares it, even when the next one starts with ---.
+    // A tag handle is scoped to the document that declares it, even when the next one starts with --- (ballerina-platform/ballerina-library#9487).
     show(yaml:parseString("%TAG !e! tag:yaml.org,2002:\n--- !e!str a\n--- !e!str b", {}, Strings));
     show(yaml:parseString("%YAML 1.2\n---\na: 1"));
     show(yaml:parseString("%YAML 1.1\n---\na: 1"));
@@ -71,7 +72,7 @@ public function main() {
 
 // @output [31,15,12,1.0,Infinity,-Infinity,true,null]
 // @output NaN
-// @output 123
+// @output true
 // @output ["123"]
 // @output bar
 // @output [1,2]

@@ -57,17 +57,20 @@ public function main() {
     show(yaml:toYamlString([[1, 2], [3]]));
     Book book = {title: "Emma", year: 1815, tags: ["classic"]};
     show(yaml:toYamlString(book));
-    // Strings that would not read back as the same string are quoted, and nil is written as null.
+    // Strings that would not read back as the same string are quoted, and nil is written as null (ballerina-platform/ballerina-library#9669).
     show(yaml:toYamlString({a: "", b: "true", c: "123", d: "a: b", e: "- x", f: "a #b", g: "line1\nline2", h: " x", i: "say \"hi\"", j: ()}));
     show(yaml:toYamlString([1.0, 1.0e20, 1.0e-5, -0.0, 1.5e300]));
     show(yaml:toYamlString({a: 1}, {indentationPolicy: -1}));
+    // The document-end marker is quoted (ballerina-platform/ballerina-library#9394).
     show(yaml:toYamlString("..."));
+    // Flow indicators are quoted in flow style (ballerina-platform/ballerina-library#9395).
     show(yaml:toYamlString(["a,b", "c]d", {"k,1": "v{2}"}], {flowStyle: true}));
     show(yaml:toYamlString({a: 1, l: [1, 2]}, {indentationPolicy: 0}));
+    // With indentationPolicy 0, a nested mapping is an error (ballerina-platform/ballerina-library#9396).
     show(yaml:toYamlString({parent: {child: 1}}, {indentationPolicy: 0}));
     show(yaml:toYamlString({a: {}}, {indentationPolicy: 0}));
     show(yaml:toYamlString([{}], {indentationPolicy: 0}));
-    // Words the reader converts in every schema are quoted; the core schema also quotes its own forms.
+    // Words the reader converts in every schema are quoted; the core schema also quotes its own forms (ballerina-platform/ballerina-library#9417).
     string[] words = ["true", "True", "null", "~", "1", "1.5", "+12", "Infinity", "0x1p3", "0x1F", ".inf", "a: b"];
     yaml:YAMLSchema[] schemas = [yaml:FAILSAFE_SCHEMA, yaml:JSON_SCHEMA, yaml:CORE_SCHEMA];
     foreach yaml:YAMLSchema schema in schemas {
@@ -85,7 +88,7 @@ public function main() {
             io:println(yaml:parseString(written, {}, json));
         }
     }
-    // Canonical output tags each scalar with its own type, so it reads back with that type even when quoted.
+    // Canonical output tags each scalar with its own type, so it reads back with that type even when quoted (ballerina-platform/ballerina-library#9488).
     anydata[] scalars = [1949, true, (), 1.5, -float:Infinity, "1949"];
     foreach boolean forceQuotes in [false, true] {
         string|error canonical = yaml:toYamlString(scalars, {canonical: true, forceQuotes});

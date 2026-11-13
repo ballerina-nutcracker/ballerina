@@ -101,6 +101,7 @@ public function main() {
     // Maps.
     map<int>|yaml:Error ints = yaml:parseString("a: 1\nb: x\nc: 2");
     show(ints);
+    // A tagged value must fit the map's type (ballerina-platform/ballerina-library#9673).
     map<int>|yaml:Error tagged = yaml:parseString("a: !!bool true\nb: 2");
     show(tagged);
     map<string>|yaml:Error strings = yaml:parseString("a: true\nb: 1\nc: null");
@@ -111,6 +112,7 @@ public function main() {
     show(list);
     // Keys are strings; an empty key is "null".
     show(yaml:parseString("1: a\nnull: b\n\"a b\": c\n? d\n: e"));
+    // A duplicate key error names the key (ballerina-platform/ballerina-library#9060).
     show(yaml:parseString("a: 1\na: 2"));
     show(yaml:parseString("a: 1\na: 2", {allowMapEntryRedefinition: true}));
     show(yaml:parseString("a: 1\nb: 2\na: 3", {allowMapEntryRedefinition: true}));

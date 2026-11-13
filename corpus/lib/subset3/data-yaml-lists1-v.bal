@@ -63,13 +63,14 @@ public function main() {
     // Closed arrays and tuples drop extra members unless projection is disabled, and pad missing ones.
     show(yaml:parseString("[1, 2, 3]", {}, Fixed));
     show(yaml:parseString("[1, 2, 3]", {allowDataProjection: false}, Fixed));
+    // An open array binds normally with projection disabled (ballerina-platform/ballerina-library#9678).
     show(yaml:parseString("[1, 2]", {allowDataProjection: false}, Ints));
     show(yaml:parseString("[1]", {}, Fixed));
     show(yaml:parseString("[1, a, b]", {}, Pair));
     show(yaml:parseString("[1, a, b]", {allowDataProjection: false}, Pair));
     show(yaml:parseString("[1, a, b]", {}, PairRest));
     show(yaml:parseString("[1]", {}, Pair));
-    // Values in lists are converted from their own text.
+    // Values in lists are converted from their own text (ballerina-platform/ballerina-library#9668).
     show(yaml:parseString("[007, 1.50, x]", {}, Strings));
     show(yaml:parseString("[1.50, 12345678901234567890.123456789]", {}, Decimals));
     // Several documents bind to a list one document per member.

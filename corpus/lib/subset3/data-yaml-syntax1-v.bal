@@ -57,7 +57,7 @@ public function main() {
     show(yaml:parseString("a: !<tag:yaml.org,2002:str> x\nb: !<tag:yaml.org,2002:%69nt> 5"));
     show(yaml:parseString("--- a"));
     show(yaml:parseString("a: 1\n...\nb: 2"));
-    // Scalar styles fold and chomp as YAML specifies.
+    // Scalar styles fold and chomp as YAML specifies (ballerina-platform/ballerina-library#9666, #9667).
     text("a: \"x\n  y\"", "x y");
     text("a: \"x\n\n  y\"", "x\ny");
     text("a: \"x \\\n  y\"", "x y");

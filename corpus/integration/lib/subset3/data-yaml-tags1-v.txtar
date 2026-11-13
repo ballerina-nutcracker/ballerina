@@ -1,7 +1,7 @@
 -- stdout --
 [31,15,12,1.0,Infinity,-Infinity,true,null]
 NaN
-123
+true
 ["123"]
 bar
 [1,2]

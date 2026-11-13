@@ -49,6 +49,7 @@ function show(anydata|error value) {
 }
 
 public function main() {
+    // Nesting depth and alias expansion are limited (ballerina-platform/ballerina-library#9671).
     json|yaml:Error deepFlow = yaml:parseString(repeat("[", 10001));
     show(deepFlow);
     json|yaml:Error deepBlock = yaml:parseString(repeat("- ", 10001) + "x");
@@ -70,11 +71,13 @@ public function main() {
     json[]|yaml:Error aliasHeavyStream = yaml:parseString(repeat(aliasHeavy, 500));
     show(aliasHeavyStream is error ? aliasHeavyStream : aliasHeavyStream.length());
 
+    // Anchors are scoped to their document (ballerina-platform/ballerina-library#9672).
     json|yaml:Error crossDocument = yaml:parseString("--- &x 1\n--- *x");
     show(crossDocument);
     json|yaml:Error redefined = yaml:parseString("--- &x 1\n--- &x 2", {allowAnchorRedefinition: false});
     show(redefined);
 
+    // A cyclic value is an error (ballerina-platform/ballerina-library#9671).
     anydata[] cyclic = [1];
     cyclic.push(cyclic);
     show(yaml:toYamlString(cyclic));
@@ -83,6 +86,7 @@ public function main() {
     show(yaml:toYamlString([shared, shared]));
     show(yaml:toYamlString({a: 1}, {indentationPolicy: 1025}));
 
+    // Empty collections are written in flow style and read back (ballerina-platform/ballerina-library#9670).
     string|yaml:Error empty = yaml:toYamlString({a: [], b: {}, c: [[], {}]});
     show(empty);
     if empty is string {
@@ -102,7 +106,7 @@ public function main() {
 
     Person|yaml:Error person = yaml:parseString("full-name: Ann", {}, Person);
     show(person);
-    // Only @yaml:Name renames a field, so another annotation whose name ends in Name is ignored.
+    // Only @yaml:Name renames a field (ballerina-platform/ballerina-library#9414), so another annotation whose name ends in Name is ignored.
     Nick|yaml:Error nick = yaml:parseString("name: Ann", {}, Nick);
     show(nick);
     Nick|yaml:Error renamed = yaml:parseString("other: Ann", {}, Nick);

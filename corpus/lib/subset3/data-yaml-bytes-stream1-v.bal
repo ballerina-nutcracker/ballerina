@@ -45,6 +45,7 @@ function show(anydata|error value) {
 public function main() {
     map<string>|yaml:Error fromBytes = yaml:parseBytes("name: café".toBytes());
     show(fromBytes);
+    // A leading byte-order mark is ignored (ballerina-platform/ballerina-library#9681).
     map<string>|yaml:Error withBom = yaml:parseBytes([239, 187, 191, 97, 58, 32, 98]);
     show(withBom);
     map<string>|yaml:Error invalid = yaml:parseBytes([97, 58, 32, 255]);
@@ -71,7 +72,7 @@ public function main() {
     map<int>|yaml:Error empty = yaml:parseStream(none.toStream());
     show(empty);
 
-    // An error from the source stream is returned.
+    // An error from the source stream is returned (ballerina-platform/ballerina-library#9675).
     stream<byte[], error?> failing = new (new FailingStream());
     map<int>|yaml:Error streamError = yaml:parseStream(failing);
     show(streamError);
