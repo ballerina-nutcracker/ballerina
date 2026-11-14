@@ -221,52 +221,19 @@ main() -> nil|error{
     %152 = println(%151) -> bb34;
   }
   bb34 {
-    %153 = ConstantLoad name
-    %154 = ConstantLoad Carol
-    %155 = newMap {| json... |}{%153=%154}
-    missingWithDefault = %155;
-    %157 = ConstantLoad typedesc
-    %158 = fromJsonWithType(missingWithDefault,%157) -> bb35;
+    %153 = ConstantLoad hello
+    neitherIntNorBool = %153;
+    %155 = ConstantLoad typedesc
+    %156 = fromJsonWithType(neitherIntNorBool,%155) -> bb35;
   }
   bb35 {
-    withDefault = %158;
-    %160 = withDefault is error
-    %160 ? bb36 : bb39;
+    %157 = %156 is error
+    %158 = %157;
+    %159 = println(%158) -> bb36;
   }
   bb36 {
-    PushScopeFrame 2
-    %0 = message((1, withDefault)) -> bb37;
-  }
-  bb37 {
-    %1 = println(%0) -> bb38;
-  }
-  bb38 {
-    PopScopeFrame
-    GOTO bb39;
-  }
-  bb39 {
-    PushScopeFrame 8
-    %0 = ConstantLoad hello
-    neitherIntNorBool = %0;
-    %2 = ConstantLoad typedesc
-    %3 = fromJsonWithType(neitherIntNorBool,%2) -> bb40;
-  }
-  bb40 {
-    %4 = %3 is error
-    %5 = %4;
-    %6 = println(%5) -> bb41;
-  }
-  bb41 {
-    %7 = ConstantLoad <nil>
-    (1, %0) = %7;
-    PopScopeFrame
-    return;
-  }
-}
-$default$0() -> int{
-  bb0 {
-    %1 = ConstantLoad 99
-    %0 = %1;
+    %160 = ConstantLoad <nil>
+    %0 = %160;
     return;
   }
 }
