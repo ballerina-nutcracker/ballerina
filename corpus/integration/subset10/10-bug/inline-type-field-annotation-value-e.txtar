@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> inline-type-field-annotation-value-e.bal:25:29
+   |
+25 | record {| @FieldInfo {name: 1} int x; |} moduleWrongValueType = {x: 1}; // @error
+   |                             ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> inline-type-field-annotation-value-e.bal:32:33
+   |
+32 |     record {| @FieldInfo {name: 2} int x; |} localWrongValueType = {x: 2}; // @error
+   |                                 ^
+
+error[SEMANTIC_ERROR]: missing non-defaultable required record field 'name'
+  --> inline-type-field-annotation-value-e.bal:28:15
+   |
+28 |     record {| @FieldInfo int y; |} inner; // @error
+   |               ^^^^^^^^^^

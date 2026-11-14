@@ -1,0 +1,378 @@
+(package
+  (import-package ballerina io (as io))
+  (variable moduleVar (type
+    (record-type
+      (field x
+        (annotation-attachment RecordFieldMarker
+          (literal true))
+        (value-type int)))))
+  (annotation RecordFieldMarker
+    (attach-point recordfield))
+  (annotation ObjectFieldMarker
+    (attach-point objectfield))
+  (annotation FieldMarker
+    (attach-point field))
+  (annotation FieldInfo
+    (user-defined-type Meta)
+    (attach-point recordfield))
+  (annotation SourceFieldInfo const
+    (user-defined-type Meta)
+    (attach-point source recordfield))
+  (type-definition Meta
+    (record-type
+      (field name
+        (value-type string))))
+  (type-definition Nested
+    (record-type
+      (field inner
+        (record-type
+          (field y
+            (annotation-attachment RecordFieldMarker
+              (literal true))
+            (value-type int))))))
+  (type-definition RecordArray
+    (array-type
+      (record-type
+        (field x
+          (annotation-attachment RecordFieldMarker
+            (literal true))
+          (value-type int))) dimensions: 1 ([])))
+  (type-definition RecordOrInt
+    (union-type
+      (record-type
+        (field x
+          (annotation-attachment RecordFieldMarker
+            (literal true))
+          (value-type int)))
+      (value-type int)))
+  (type-definition ReadonlyRecord
+    (intersection-type
+      (value-type readonly)
+      (record-type
+        (field x
+          (annotation-attachment RecordFieldMarker
+            (literal true))
+          (value-type int)))))
+  (type-definition WithObject
+    (record-type
+      (field obj
+        (object-type
+          (field x
+            (annotation-attachment ObjectFieldMarker
+              (literal true))
+            (value-type int))))))
+  (type-definition LateConst
+    (record-type
+      (field inner
+        (record-type
+          (field y
+            (annotation-attachment SourceFieldInfo
+              (mapping-constructor-expr
+                (key-value
+                  (literal name)
+                  (simple-var-ref LATE))))
+            (value-type int))))))
+  (class-definition Point
+    (variable x (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 9)))))
+  (class-definition Holder
+    (variable held (type
+      (record-type
+        (field x
+          (annotation-attachment RecordFieldMarker
+            (literal true))
+          (value-type int)))))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal held))
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 10)))))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref moduleVar)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 1))))))
+  (function sum (
+    (variable a (type
+      (record-type
+        (field x
+          (annotation-attachment RecordFieldMarker
+            (literal true))
+          (value-type int)))))
+    (variable b (type
+      (record-type
+        (field x
+          (annotation-attachment FieldInfo
+            (mapping-constructor-expr
+              (key-value
+                (literal name)
+                (literal b))))
+          (value-type int)))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref a)
+            (literal x))
+          (index-based-access
+            (simple-var-ref b)
+            (literal x))))))
+  (function make () (
+    (record-type
+      (field x
+        (annotation-attachment RecordFieldMarker
+          (literal true))
+        (value-type int))))
+    (block-function-body
+      (return
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 12))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref moduleVar)
+            (literal x)))))
+      (var-def
+        (variable nested (type
+          (user-defined-type Nested)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal inner)
+              (mapping-constructor-expr
+                (key-value
+                  (literal y)
+                  (literal 2))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref nested)
+              (literal inner))
+            (literal y)))))
+      (var-def
+        (variable array (type
+          (user-defined-type RecordArray)) (expr
+          (list-constructor-expr
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 3)))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref array)
+              (literal 0))
+            (literal x)))))
+      (var-def
+        (variable recordOrInt (type
+          (user-defined-type RecordOrInt)) (expr
+          (literal 4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref recordOrInt))))
+      (var-def
+        (variable readonlyRecord (type
+          (user-defined-type ReadonlyRecord)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref readonlyRecord)
+            (literal x)))))
+      (var-def
+        (variable local (type
+          (record-type
+            (field x
+              (annotation-attachment RecordFieldMarker
+                (literal true))
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 6))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref local)
+            (literal x)))))
+      (var-def
+        (variable generic (type
+          (record-type
+            (field x
+              (annotation-attachment FieldMarker
+                (literal true))
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref generic)
+            (literal x)))))
+      (var-def
+        (variable valued (type
+          (record-type
+            (field x
+              (annotation-attachment FieldInfo
+                (mapping-constructor-expr
+                  (key-value
+                    (literal name)
+                    (literal literal))))
+              (annotation-attachment RecordFieldMarker
+                (literal true))
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 8))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref valued)
+            (literal x)))))
+      (var-def
+        (variable obj (type
+          (object-type
+            (field x
+              (annotation-attachment ObjectFieldMarker
+                (literal true))
+              (annotation-attachment FieldMarker
+                (literal true))
+              (value-type int)))) (expr
+          (new
+            (user-defined-type Point) ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref obj)
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (new
+                (user-defined-type Holder) ())
+              (literal held))
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation sum (
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 5)))
+            (mapping-constructor-expr
+              (key-value
+                (literal x)
+                (literal 6))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (invocation make ())
+            (literal x)))))
+      (var-def
+        (variable withObject (type
+          (user-defined-type WithObject)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal obj)
+              (new
+                (user-defined-type Point) ()))))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (index-based-access
+              (index-based-access
+                (simple-var-ref withObject)
+                (literal obj))
+              (literal x))
+            (literal 4)))))
+      (var-def
+        (variable lateConst (type
+          (user-defined-type LateConst)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal inner)
+              (mapping-constructor-expr
+                (key-value
+                  (literal y)
+                  (literal 14))))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (index-based-access
+              (simple-var-ref lateConst)
+              (literal inner))
+            (literal y)))))
+      (var-def
+        (variable mapped (type
+          (constrained-type
+            (builtin-ref-type map)
+            (record-type
+              (field x
+                (annotation-attachment RecordFieldMarker
+                  (literal true))
+                (value-type int))))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal a)
+              (mapping-constructor-expr
+                (key-value
+                  (literal x)
+                  (literal 15))))))))
+      (expression-stmt
+        (invocation io println (
+          (optional-field-based-access x
+            (index-based-access
+              (simple-var-ref mapped)
+              (literal a))))))
+      (var-def
+        (variable name (type
+          (value-type string)) (expr
+          (literal local))))
+      (var-def
+        (variable runtimeValue (type
+          (record-type
+            (field x
+              (annotation-attachment FieldInfo
+                (mapping-constructor-expr
+                  (key-value
+                    (literal name)
+                    (simple-var-ref name))))
+              (value-type int)))) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 16))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref runtimeValue)
+            (literal x))))))))
