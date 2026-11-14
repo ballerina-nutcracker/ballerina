@@ -18,6 +18,7 @@ package values
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -285,10 +286,8 @@ func enterCycleCheck(tc semtypes.Context, sourceType semtypes.SemType, source Ba
 }
 
 func mappingFieldType(tc semtypes.Context, target semtypes.SemType, atomic *semtypes.MappingAtomicType, key string) semtypes.SemType {
-	for _, name := range atomic.FieldNames() {
-		if name == key {
-			return atomic.FieldInnerVal(key)
-		}
+	if slices.Contains(atomic.FieldNames(), key) {
+		return atomic.FieldInnerVal(key)
 	}
 	return semtypes.MappingMemberTypeInnerVal(tc, target, semtypes.StringConst(key))
 }

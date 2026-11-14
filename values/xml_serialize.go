@@ -17,6 +17,7 @@ package values
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -82,8 +83,7 @@ func (s *xmlNamespaceState) choose(uri string, depth int, local bool) (string, b
 	bestDepth, bestOrder := -2, int(^uint(0)>>1)
 	bestPrefix := ""
 	found := false
-	for i := len(bindings) - 1; i >= 0; i-- {
-		binding := bindings[i]
+	for _, binding := range slices.Backward(bindings) {
 		prefix := binding.prefix
 		if active, ok := s.active[prefix]; !ok || active != binding {
 			continue
@@ -275,8 +275,8 @@ func (e *XMLElement) writeXMLString(b *strings.Builder, state *xmlNamespaceState
 		b.WriteString(elementName)
 		b.WriteByte('>')
 	}
-	for i := len(undos) - 1; i >= 0; i-- {
-		state.restore(undos[i])
+	for _, undo := range slices.Backward(undos) {
+		state.restore(undo)
 	}
 }
 

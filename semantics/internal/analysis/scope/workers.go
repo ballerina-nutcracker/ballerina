@@ -29,12 +29,12 @@ import (
 func NewWorker(parent Context, worker *ast.BLangNamedWorkerDeclaration) Context {
 	enclosing, _ := EnclosingFunction(parent)
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		retTy:       semtypes.FutureEventualType(parent.TyCtx(), parent.CompilerCtx().SymbolType(worker.Symbol())),
-		id:          nextScopeID(parent),
-		kind:        fnWorker,
+		outer:  parent,
+		need:   false,
+		locals: make(map[model.SymbolRef]VarDecl),
+		retTy:  semtypes.FutureEventualType(parent.TyCtx(), parent.CompilerCtx().SymbolType(worker.Symbol())),
+		id:     nextScopeID(parent),
+		kind:   fnWorker,
 	}
 	fc.class, fc.self = enclosing.class, enclosing.self
 	fc.isolated = enclosing.IsIsolated()
@@ -48,9 +48,9 @@ func NewWorker(parent Context, worker *ast.BLangNamedWorkerDeclaration) Context 
 // syntactic reference is not a single runtime reference.
 func NewRepeatedRegion(parent Context) Context {
 	return &repeatedRegionContext{
-		contextBase: contextBase{outer: parent},
-		ruleBase:    ruleBase{active: parent.rules()},
-		factsBase:   factsBase{need: parent.factsNeeded()},
+		outer:  parent,
+		active: parent.rules(),
+		need:   parent.factsNeeded(),
 	}
 }
 

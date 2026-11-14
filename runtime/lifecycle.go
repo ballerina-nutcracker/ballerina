@@ -19,6 +19,7 @@ package runtime
 import (
 	"fmt"
 	"iter"
+	"slices"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
@@ -253,8 +254,7 @@ func immediateStopAction(rt *Runtime) {
 		rt.exitCode = 131 // 128  + SIGQUIT
 	}
 	rt.state = StateImmediateStopping
-	for i := len(rt.immediateStopFns) - 1; i >= 0; i-- {
-		fn := rt.immediateStopFns[i]
+	for _, fn := range slices.Backward(rt.immediateStopFns) {
 		cx := exec.CreateContext(rt.env)
 		res, err := exec.Invoke(cx, fn, nil)
 		if err != nil {

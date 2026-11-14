@@ -141,26 +141,14 @@ func (g *Goto) GetKind() InstructionKind {
 
 func NewReturn(pos Location) *Return {
 	return &Return{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{
-					Pos: pos,
-				},
-			},
-		},
+		Pos: pos,
 	}
 }
 
 func NewGoto(thenBB *BIRBasicBlock, pos Location) *Goto {
 	return &Goto{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{
-					Pos: pos,
-				},
-			},
-			ThenBB: thenBB,
-		},
+		Pos:    pos,
+		ThenBB: thenBB,
 	}
 }
 
@@ -177,15 +165,9 @@ func (c *Call) GetLhsOperand() *BIROperand {
 
 func NewCall(call CallSite, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *Call {
 	return &Call{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{
-					Pos: pos,
-				},
-				LhsOp: lhsOp,
-			},
-			ThenBB: thenBB,
-		},
+		Pos:      pos,
+		LhsOp:    lhsOp,
+		ThenBB:   thenBB,
 		CallSite: call,
 	}
 }
@@ -212,37 +194,23 @@ func (l *LockEnd) GetKind() InstructionKind {
 
 func NewLockStart(key string, thenBB *BIRBasicBlock, pos Location) *LockStart {
 	return &LockStart{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{Pos: pos},
-			},
-			ThenBB: thenBB,
-		},
+		Pos:     pos,
+		ThenBB:  thenBB,
 		LockKey: key,
 	}
 }
 
 func NewLockEnd(key string, thenBB *BIRBasicBlock, pos Location) *LockEnd {
 	return &LockEnd{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{Pos: pos},
-			},
-			ThenBB: thenBB,
-		},
+		Pos:     pos,
+		ThenBB:  thenBB,
 		LockKey: key,
 	}
 }
 
 func NewPanic(errorOp *BIROperand, pos Location) *Panic {
 	return &Panic{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{
-					Pos: pos,
-				},
-			},
-		},
+		Pos:     pos,
 		ErrorOp: errorOp,
 	}
 }
@@ -257,13 +225,9 @@ func (r *ResourceFunctionCall) GetLhsOperand() *BIROperand {
 
 func NewResourceFunctionCall(call CallSite, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *ResourceFunctionCall {
 	return &ResourceFunctionCall{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{Pos: pos},
-				LhsOp:       lhsOp,
-			},
-			ThenBB: thenBB,
-		},
+		Pos:      pos,
+		LhsOp:    lhsOp,
+		ThenBB:   thenBB,
 		CallSite: call,
 	}
 }
@@ -273,10 +237,9 @@ func (s *StartAction) GetLhsOperand() *BIROperand { return s.LhsOp }
 
 func NewStartAction(call CallSite, isolated bool, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *StartAction {
 	return &StartAction{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
-			ThenBB:             thenBB,
-		},
+		Pos:        pos,
+		LhsOp:      lhsOp,
+		ThenBB:     thenBB,
 		Call:       call,
 		IsIsolated: isolated,
 	}
@@ -287,10 +250,9 @@ func (s *SingleWaitAction) GetLhsOperand() *BIROperand { return s.LhsOp }
 
 func NewSingleWaitAction(future BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *SingleWaitAction {
 	return &SingleWaitAction{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
-			ThenBB:             thenBB,
-		},
+		Pos:    pos,
+		LhsOp:  lhsOp,
+		ThenBB: thenBB,
 		Future: future,
 	}
 }
@@ -300,10 +262,9 @@ func (a *AlternateWaitAction) GetLhsOperand() *BIROperand { return a.LhsOp }
 
 func NewAlternateWaitAction(futures []BIROperand, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *AlternateWaitAction {
 	return &AlternateWaitAction{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
-			ThenBB:             thenBB,
-		},
+		Pos:     pos,
+		LhsOp:   lhsOp,
+		ThenBB:  thenBB,
 		Futures: futures,
 	}
 }
@@ -313,10 +274,9 @@ func (m *MultipleWaitAction) GetLhsOperand() *BIROperand { return m.LhsOp }
 
 func NewMultipleWaitAction(futures []BIROperand, fieldNames []string, ty semtypes.SemType, thenBB *BIRBasicBlock, lhsOp *BIROperand, pos Location) *MultipleWaitAction {
 	return &MultipleWaitAction{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{BIRNodeBase: BIRNodeBase{Pos: pos}, LhsOp: lhsOp},
-			ThenBB:             thenBB,
-		},
+		Pos:        pos,
+		LhsOp:      lhsOp,
+		ThenBB:     thenBB,
 		Futures:    futures,
 		FieldNames: fieldNames,
 		Type:       ty,
@@ -325,14 +285,8 @@ func NewMultipleWaitAction(futures []BIROperand, fieldNames []string, ty semtype
 
 func NewBranch(op *BIROperand, trueBB, falseBB *BIRBasicBlock, pos Location) *Branch {
 	return &Branch{
-		BIRTerminatorBase: BIRTerminatorBase{
-			BIRInstructionBase: BIRInstructionBase{
-				BIRNodeBase: BIRNodeBase{
-					Pos: pos,
-				},
-			},
-			ThenBB: trueBB,
-		},
+		Pos:     pos,
+		ThenBB:  trueBB,
 		Op:      op,
 		TrueBB:  trueBB,
 		FalseBB: falseBB,
