@@ -1,0 +1,5 @@
+-- stdout --
+Unsupported protocol: TLSv1.4
+Unsupported protocol: TLSv1.0
+Unsupported protocol versions: TLSv1.1 and TLSv1.3 cannot be enabled without TLSv1.2
+-- stderr --

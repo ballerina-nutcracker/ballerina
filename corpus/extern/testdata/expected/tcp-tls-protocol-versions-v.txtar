@@ -1,0 +1,6 @@
+-- stdout --
+Unsupported protocol: bogus
+Unsupported protocol versions: TLSv1 and TLSv1.2 cannot be enabled without TLSv1.1
+created
+hello
+-- stderr --
