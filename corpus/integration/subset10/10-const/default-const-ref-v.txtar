@@ -1,0 +1,5 @@
+-- stdout --
+{"inner":{"x":2,"s":"i"},"list":[{"x":2,"s":"i"},{"x":1,"s":"i"}]}
+true
+true
+-- stderr --

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> default-nested-inline-record-e.bal:25:13
+   |
+25 |     int x = "a"; // @error incompatible type in a default of an unused record
+   |             ^^^

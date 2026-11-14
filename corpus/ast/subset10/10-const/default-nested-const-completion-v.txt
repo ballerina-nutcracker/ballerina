@@ -1,0 +1,52 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr))))
+  (type-definition Inner
+    (record-type
+      (field port
+        (value-type int)
+        (field-based-access port
+          (simple-var-ref CONFIG)))))
+  (const CONFIG (
+    (user-defined-type Config)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal host)
+        (literal h)))))
+  (type-definition Config
+    (record-type
+      (field host
+        (value-type string))
+      (field port
+        (value-type int)
+        (literal 8080))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access port
+            (simple-var-ref CONFIG)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref CONFIG)
+            (mapping-constructor-expr
+              (key-value
+                (literal host)
+                (literal h))
+              (key-value
+                (literal port)
+                (literal 8080))))))))))

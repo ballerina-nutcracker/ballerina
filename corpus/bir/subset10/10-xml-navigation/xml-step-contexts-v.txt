@@ -315,7 +315,7 @@ $default$0() -> xml{
     %7 = elements(%4,%6) -> bb1;
   }
   bb1 {
-    %8 = fp $anon/.:$xmlStep$$module$0
+    %8 = fp $anon/.:$xmlStep$$module$1
     %9 = map(%7,%8) -> bb2;
   }
   bb2 {
@@ -330,7 +330,7 @@ $default$1() -> xml{
     %3 = elements(moduleSource,%2) -> bb1;
   }
   bb1 {
-    %4 = fp $anon/.:$xmlStep$$module$1
+    %4 = fp $anon/.:$xmlStep$$module$2
     %5 = map(%3,%4) -> bb2;
   }
   bb2 {
@@ -356,22 +356,22 @@ $xmlStep$$module$1(xml:Element) -> xml{
     return;
   }
 }
-$xmlStep$$module$2(xml:Element) -> xml<xml:Element>{
+$xmlStep$$module$2(xml:Element) -> xml{
+  bb0 {
+    %2 = getChildren($xmlStepItem) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$xmlStep$$module$3(xml:Element) -> xml<xml:Element>{
   bb0 {
     %2 = getChildren($xmlStepItem) -> bb1;
   }
   bb1 {
     %3 = xmlFilter(%2, [{"", "item"}])
     %0 = %3;
-    return;
-  }
-}
-$xmlStep$$module$3(xml:Element) -> xml{
-  bb0 {
-    %2 = getChildren($xmlStepItem) -> bb1;
-  }
-  bb1 {
-    %0 = %2;
     return;
   }
 }

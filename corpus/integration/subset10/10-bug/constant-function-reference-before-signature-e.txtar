@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> constant-function-reference-before-signature-e.bal:18:11
+   |
+18 | const K = f; // @error a function reference is not a constant expression
+   |           ^

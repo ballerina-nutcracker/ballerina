@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> default-spread-optional-e.bal:35:16
+   |
+35 | const Open A = {...<MaybeY>X}; // @error the spread value has no y and its default is not constant
+   |                ^^^^^^^^^^^^^^

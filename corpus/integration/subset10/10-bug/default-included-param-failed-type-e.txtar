@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for type definition R
+  --> default-included-param-failed-type-e.bal:16:1
+   |
+16 | type R R; // @error failed type is reused by included-parameter metadata
+   | ^^^^^^^^^

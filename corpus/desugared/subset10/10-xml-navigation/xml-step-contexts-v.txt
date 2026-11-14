@@ -51,7 +51,7 @@
             (simple-var-ref moduleSource)
             (literal <nil>)))
           (lambda
-            (function $xmlStep$$module$2 (
+            (function $xmlStep$$module$3 (
               (variable $xmlStepItem)) ()
               (expr-function-body
                 (xml-filter-expression
@@ -65,7 +65,7 @@
             (simple-var-ref moduleSource)
             (literal <nil>)))
           (lambda
-            (function $xmlStep$$module$3 (
+            (function $xmlStep$$module$0 (
               (variable $xmlStepItem)) ()
               (expr-function-body
                 (invocation lang.xml getChildren (
@@ -314,7 +314,7 @@
                 (xml-text-literal A)))
             (literal <nil>)))
           (lambda
-            (function $xmlStep$$module$0 (
+            (function $xmlStep$$module$1 (
               (variable $xmlStepItem)) ()
               (expr-function-body
                 (invocation lang.xml getChildren (
@@ -327,7 +327,7 @@
             (simple-var-ref moduleSource)
             (literal <nil>)))
           (lambda
-            (function $xmlStep$$module$1 (
+            (function $xmlStep$$module$2 (
               (variable $xmlStepItem)) ()
               (expr-function-body
                 (invocation lang.xml getChildren (

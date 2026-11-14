@@ -1,0 +1,9 @@
+-- stdout --
+true
+true
+true
+true
+true
+{"d":1,"f":2.0,"b":3,"fs":[1.0,2.0],"u":"s","lit":"b","ro":6,"md":{"k":4}}
+true
+-- stderr --

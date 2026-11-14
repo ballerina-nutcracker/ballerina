@@ -32,48 +32,66 @@ import (
 
 const notConstantExpressionMessage = "expression is not a constant expression"
 
-// isConstantExpression answers whether expr is structurally a constant
-// expression (spec §6.4), returning the first subexpression that is not. It
-// emits no diagnostic: a non-constant value on a non-const annotation is legal,
-// so that caller needs the answer without one.
-func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangExpression, bool) {
+func isConstantForm(t typeResolver, expr ast.BLangExpression) (ast.BLangExpression, bool) {
+	query := constantEligibility{t: t, visited: make(map[model.SymbolRef]bool)}
+	return query.expression(expr)
+}
+
+func isConstantExpression(t typeResolver, chain *binding, expr ast.BLangExpression) (ast.BLangExpression, bool, bool) {
+	query := constantEligibility{t: t, chain: chain, includeDefaults: true, visited: make(map[model.SymbolRef]bool)}
+	offender, constant := query.expression(expr)
+	return offender, constant, !query.failed
+}
+
+type constantEligibility struct {
+	t               typeResolver
+	chain           *binding
+	includeDefaults bool
+	visited         map[model.SymbolRef]bool
+	failed          bool
+}
+
+func (q *constantEligibility) expression(expr ast.BLangExpression) (ast.BLangExpression, bool) {
 	switch e := expr.(type) {
 	case *ast.BLangLiteral, *ast.BLangNumericLiteral, *ast.BLangConstRef:
 		return nil, true
 	case *ast.BLangVarRef:
-		if vs, ok := t.getSymbol(e.Symbol()).(model.ValueSymbol); ok && vs.IsConst() {
+		// model.ValueSymbol.IsConst also covers final variables and parameters,
+		// which are immutable bindings without a compile-time value. Only a
+		// constant symbol can be folded, and evaluateConstantReference agrees.
+		if _, ok := q.t.getSymbol(q.t.unnarrowedSymbol(e.Symbol())).(*model.ConstantValueSymbol); ok {
 			return nil, true
 		}
 		return expr, false
 	case *ast.BLangUnaryExpr:
-		return isConstantExpression(t, e.Expr)
+		return q.expression(e.Expr)
 	case *ast.BLangTypeConversionExpr:
-		return isConstantExpression(t, e.Expression)
+		return q.expression(e.Expression)
 	case *ast.BLangGroupExpr:
-		return isConstantExpression(t, e.Expression)
+		return q.expression(e.Expression)
 	case *ast.BLangTypeTestExpr:
-		return isConstantExpression(t, e.Expr)
+		return q.expression(e.Expr)
 	case *ast.BLangBinaryExpr:
-		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
+		if offender, ok := q.expression(e.LhsExpr); !ok {
 			return offender, false
 		}
-		return isConstantExpression(t, e.RhsExpr)
+		return q.expression(e.RhsExpr)
 	case *ast.BLangTernaryExpr:
-		if offender, ok := isConstantExpression(t, e.Condition); !ok {
+		if offender, ok := q.expression(e.Condition); !ok {
 			return offender, false
 		}
-		if offender, ok := isConstantExpression(t, e.ThenExpr); !ok {
+		if offender, ok := q.expression(e.ThenExpr); !ok {
 			return offender, false
 		}
-		return isConstantExpression(t, e.ElseExpr)
+		return q.expression(e.ElseExpr)
 	case *ast.BLangNilConditionalExpr:
-		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
+		if offender, ok := q.expression(e.LhsExpr); !ok {
 			return offender, false
 		}
-		return isConstantExpression(t, e.RhsExpr)
+		return q.expression(e.RhsExpr)
 	case *ast.BLangListConstructorExpr:
 		for _, member := range e.Exprs {
-			if offender, ok := isConstantExpression(t, member); !ok {
+			if offender, ok := q.expression(member); !ok {
 				return offender, false
 			}
 		}
@@ -81,7 +99,7 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	case *ast.BLangMappingConstructorExpr:
 		for _, field := range e.Fields {
 			if spread, isSpread := field.(*ast.BLangMappingSpreadField); isSpread {
-				if offender, ok := isConstantExpression(t, spread.Expr); !ok {
+				if offender, ok := q.expression(spread.Expr); !ok {
 					return offender, false
 				}
 				continue
@@ -91,25 +109,28 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 				return expr, false
 			}
 			if kv.Key != nil && kv.Key.Kind == ast.MappingKeyComputed {
-				if offender, ok := isConstantExpression(t, kv.Key.Expr); !ok {
+				if offender, ok := q.expression(kv.Key.Expr); !ok {
 					return offender, false
 				}
 			}
-			if offender, ok := isConstantExpression(t, kv.ValueExpr); !ok {
+			if offender, ok := q.expression(kv.ValueExpr); !ok {
 				return offender, false
 			}
+		}
+		if q.includeDefaults && !q.mappingDefaults(e) {
+			return e, false
 		}
 		return nil, true
 	case *ast.BLangTemplateExpr:
 		for _, insertion := range e.Insertions {
-			if offender, ok := isConstantExpression(t, insertion); !ok {
+			if offender, ok := q.expression(insertion); !ok {
 				return offender, false
 			}
 		}
 		return nil, true
 	case *ast.BLangXMLTemplateExpr:
 		for _, insertion := range e.Insertions {
-			if offender, ok := isConstantExpression(t, insertion); !ok {
+			if offender, ok := q.expression(insertion); !ok {
 				return offender, false
 			}
 		}
@@ -119,60 +140,176 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	}
 }
 
+// mappingDefaults checks the defaults of the fields the constructor may leave out. A field a spread
+// may supply is left to evaluation, which sees whether the spread value has it.
+func (q *constantEligibility) mappingDefaults(expr *ast.BLangMappingConstructorExpr) bool {
+	supplied := make(map[string]bool, len(expr.Fields))
+	for _, field := range expr.Fields {
+		switch field := field.(type) {
+		case *ast.BLangMappingSpreadField:
+			names, closed := spreadFieldPossibleNames(q.t, field)
+			if !closed {
+				return true
+			}
+			for _, name := range names {
+				supplied[name] = true
+			}
+		case *ast.BLangMappingKeyValueField:
+			if field.Key.Kind == ast.MappingKeyComputed {
+				return true
+			}
+			name, ok := common.StaticMappingKeyName(field.Key)
+			if !ok {
+				return true
+			}
+			supplied[name] = true
+		default:
+			return true
+		}
+	}
+	for _, field := range expr.FieldDefaults {
+		if supplied[field.FieldName] {
+			continue
+		}
+		owner, declaration := recordDefaultDeclarationFor(q.t, field.FnRef)
+		if declaration == nil {
+			if !field.IsConst {
+				return false
+			}
+			continue
+		}
+		if declaration.bodyStatus == resolutionFailed {
+			q.failed = true
+			return false
+		}
+		if q.visited[field.FnRef] {
+			continue
+		}
+		q.visited[field.FnRef] = true
+		body := declaration.body.expr.(ast.BLangExpression)
+		if _, raw := isConstantForm(owner, body); !raw {
+			return false
+		}
+		if declaration.bodyStatus == resolutionPending {
+			if !validateRecordDefaultDependencies(owner, field.FnRef, declaration.typeNode, body, body.GetPosition()) {
+				declaration.bodyStatus = resolutionFailed
+			}
+		}
+		if declaration.bodyStatus == resolutionFailed || !checkRecordDefaultBody(owner, q.chain, declaration) {
+			q.failed = true
+			return false
+		}
+		if _, eligible := q.expression(body); !eligible {
+			return false
+		}
+	}
+	return true
+}
+
+// spreadFieldPossibleNames lists the names the static type of a spread operand allows it to supply.
+// It reports false when the operand may also supply names it does not list.
+func spreadFieldPossibleNames(t typeResolver, field *ast.BLangMappingSpreadField) ([]string, bool) {
+	fields, rest, ok := semtypes.AllPossibleMappingFields(t.typeContext(), field.Expr.Type())
+	if !ok || mappingTypeInhabited(t, rest) {
+		return nil, false
+	}
+	names := make([]string, 0, len(fields))
+	for _, possible := range fields {
+		if mappingTypeInhabited(t, possible.Type) {
+			names = append(names, possible.Name)
+		}
+	}
+	return names, true
+}
+
+func classifyFieldDefault(t typeResolver, chain *binding, name string, field *ast.BField) (model.FieldDefault, bool) {
+	metadata := model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef}
+	outcome := constantDefaultValue(t, chain, metadata.FnRef)
+	switch outcome.kind {
+	case constantValue:
+		metadata.IsConst = true
+		metadata.Value = outcome.value
+	case constantFailed:
+		return model.FieldDefault{}, false
+	case constantRuntime:
+	}
+	return metadata, true
+}
+
 type constantExpressionEvaluator struct {
-	resolver    typeResolver
-	unsupported *unsupportedConstantForm
+	resolver   typeResolver
+	unfoldable *unfoldableConstant
 }
 
-// unsupportedConstantForm is a constant expression form we cannot fold yet. It
-// is not a fault in the program, so whether it is an error depends on the
-// caller: a non-const annotation evaluates such a value at runtime instead.
-type unsupportedConstantForm struct {
-	message string
-	loc     ast.Location
+// unfoldableConstant is why a constant-form expression cannot be folded: it
+// needs a value that is not constant, such as an omitted field whose default is
+// evaluated at runtime, or it uses a form we cannot fold yet. Evaluating it may
+// still succeed at runtime, so whether it is an error depends on the caller: a
+// record default or a non-const annotation is evaluated at runtime instead.
+type unfoldableConstant struct {
+	message       string
+	loc           ast.Location
+	unimplemented bool
 }
 
-func (u *unsupportedConstantForm) report(t typeResolver) {
-	t.unimplemented(u.message, u.loc)
+func (u *unfoldableConstant) report(t typeResolver) {
+	if u.unimplemented {
+		t.unimplemented(u.message, u.loc)
+		return
+	}
+	t.semanticError(u.message, u.loc)
 }
 
 // foldConstant evaluates a constant expression at compile time (spec §6.4). It
-// is called only on an expression isConstantExpression has accepted, so a
-// failure is never structural: it reports its own diagnostic at the failing
-// subexpression and returns false. A nil value with ok is a successful fold of
-// (), which is why failure is signalled by the bool alone.
-func foldConstant(t typeResolver, expr ast.BLangExpression) (values.BalValue, bool) {
-	value, unsupported, ok := tryFoldConstant(t, expr)
-	if unsupported != nil {
-		unsupported.report(t)
+// reports its own diagnostic at the failing subexpression and returns false,
+// both when the expression cannot be folded and when evaluating it fails. A nil
+// value with ok is a successful fold of (), which is why failure is signalled
+// by the bool alone.
+func foldConstant(t typeResolver, chain *binding, expr ast.BLangExpression) (values.BalValue, bool) {
+	value, unfoldable, ok := tryFoldConstant(t, chain, expr)
+	if unfoldable != nil {
+		unfoldable.report(t)
 	}
 	return value, ok
 }
 
-// tryFoldConstant is foldConstant for a caller that has a fallback when expr
-// uses a form we cannot fold yet: that failure is returned as unsupported
-// rather than reported. Every other failure is reported as in foldConstant.
-func tryFoldConstant(t typeResolver, expr ast.BLangExpression) (value values.BalValue,
-	unsupported *unsupportedConstantForm, ok bool,
+// tryFoldConstant is foldConstant for a caller that evaluates expr at runtime
+// when it cannot be folded: that failure is returned as unfoldable rather than
+// reported. A failure of the evaluation itself, which would also fail at
+// runtime, is reported as in foldConstant. Evaluation stops at the first
+// failure, so an evaluation failure after an unfoldable subexpression is left
+// to runtime.
+func tryFoldConstant(t typeResolver, chain *binding, expr ast.BLangExpression) (value values.BalValue,
+	unfoldable *unfoldableConstant, ok bool,
 ) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			t.internalError(fmt.Sprintf("constant expression evaluation panicked: %v", recovered), expr.GetPosition())
-			value, unsupported, ok = nil, nil, false
+			value, unfoldable, ok = nil, nil, false
 		}
 	}()
 	evaluator := constantExpressionEvaluator{resolver: t}
-	value, ok = evaluator.evaluate(expr)
-	return value, evaluator.unsupported, ok
+	value, ok = evaluator.evaluate(chain, expr)
+	return value, evaluator.unfoldable, ok
 }
 
+// semanticFailure reports a failure of the evaluation itself, which would also
+// fail at runtime.
 func (e *constantExpressionEvaluator) semanticFailure(message string, loc ast.Location) (values.BalValue, bool) {
 	e.resolver.semanticError(message, loc)
 	return nil, false
 }
 
+// nonConstantFailure records that the expression needs a value that is not
+// constant.
+func (e *constantExpressionEvaluator) nonConstantFailure(loc ast.Location) (values.BalValue, bool) {
+	e.unfoldable = &unfoldableConstant{message: notConstantExpressionMessage, loc: loc}
+	return nil, false
+}
+
+// unsupportedFailure records that the expression uses a form we cannot fold yet.
 func (e *constantExpressionEvaluator) unsupportedFailure(message string, loc ast.Location) (values.BalValue, bool) {
-	e.unsupported = &unsupportedConstantForm{message: message, loc: loc}
+	e.unfoldable = &unfoldableConstant{message: message, loc: loc, unimplemented: true}
 	return nil, false
 }
 
@@ -181,36 +318,36 @@ func (e *constantExpressionEvaluator) internalFailure(message string, loc ast.Lo
 	return nil, false
 }
 
-func (e *constantExpressionEvaluator) evaluate(expr ast.BLangExpression) (values.BalValue, bool) {
+func (e *constantExpressionEvaluator) evaluate(chain *binding, expr ast.BLangExpression) (values.BalValue, bool) {
 	switch expr := expr.(type) {
 	case *ast.BLangLiteral:
 		return expr.Value, true
 	case *ast.BLangNumericLiteral:
 		return expr.Value, true
 	case *ast.BLangGroupExpr:
-		return e.evaluate(expr.Expression)
+		return e.evaluate(chain, expr.Expression)
 	case *ast.BLangVarRef:
 		return e.evaluateConstantReference(expr.Symbol(), expr.GetPosition())
 	case *ast.BLangConstRef:
 		return e.evaluateConstantReference(expr.Symbol(), expr.GetPosition())
 	case *ast.BLangMappingConstructorExpr:
-		return e.evaluateMappingConstructor(expr)
+		return e.evaluateMappingConstructor(chain, expr)
 	case *ast.BLangListConstructorExpr:
-		return e.evaluateListConstructor(expr)
+		return e.evaluateListConstructor(chain, expr)
 	case *ast.BLangUnaryExpr:
-		return e.evaluateUnaryExpression(expr)
+		return e.evaluateUnaryExpression(chain, expr)
 	case *ast.BLangTernaryExpr:
-		return e.evaluateTernaryExpression(expr)
+		return e.evaluateTernaryExpression(chain, expr)
 	case *ast.BLangNilConditionalExpr:
-		return e.evaluateNilConditionalExpression(expr)
+		return e.evaluateNilConditionalExpression(chain, expr)
 	case *ast.BLangBinaryExpr:
-		return e.evaluateBinaryExpression(expr)
+		return e.evaluateBinaryExpression(chain, expr)
 	case *ast.BLangTypeConversionExpr:
-		return e.evaluateTypeConversion(expr)
+		return e.evaluateTypeConversion(chain, expr)
 	case *ast.BLangTypeTestExpr:
-		return e.evaluateTypeTest(expr)
+		return e.evaluateTypeTest(chain, expr)
 	case *ast.BLangTemplateExpr:
-		return e.evaluateStringTemplate(expr)
+		return e.evaluateStringTemplate(chain, expr)
 	case *ast.BLangXMLTemplateExpr:
 		return e.unsupportedFailure("constant xml template not implemented", expr.GetPosition())
 	default:
@@ -222,16 +359,17 @@ func (e *constantExpressionEvaluator) evaluateConstantReference(ref model.Symbol
 	ref = e.resolver.unnarrowedSymbol(ref)
 	sym, ok := e.resolver.getSymbol(ref).(*model.ConstantValueSymbol)
 	if !ok {
-		return e.semanticFailure(notConstantExpressionMessage, loc)
+		return e.nonConstantFailure(loc)
 	}
 	return sym.ConstantValue(), true
 }
 
-func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLangMappingConstructorExpr) (values.BalValue, bool) {
-	entries := make([]values.MapEntry, 0, len(expr.Fields))
+func (e *constantExpressionEvaluator) evaluateMappingConstructor(chain *binding, expr *ast.BLangMappingConstructorExpr) (values.BalValue, bool) {
+	entries := make([]values.MapEntry, 0, len(expr.Fields)+len(expr.FieldDefaults))
+	supplied := make(map[string]bool, len(expr.Fields))
 	for _, field := range expr.Fields {
 		if spread, ok := field.(*ast.BLangMappingSpreadField); ok {
-			value, ok := e.evaluate(spread.Expr)
+			value, ok := e.evaluate(chain, spread.Expr)
 			if !ok {
 				return nil, false
 			}
@@ -239,6 +377,7 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 			for _, key := range mapping.Keys() {
 				member, _ := mapping.Get(key)
 				entries = append(entries, values.MapEntry{Key: key, Value: member})
+				supplied[key] = true
 			}
 			continue
 		}
@@ -250,11 +389,33 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(expr *ast.BLang
 		if !ok {
 			return nil, false
 		}
-		value, ok := e.evaluate(kv.ValueExpr)
+		value, ok := e.evaluate(chain, kv.ValueExpr)
 		if !ok {
 			return nil, false
 		}
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
+		supplied[key] = true
+	}
+
+	for _, fieldDefault := range expr.FieldDefaults {
+		if supplied[fieldDefault.FieldName] {
+			continue
+		}
+		value := fieldDefault.Value
+		if _, declaration := recordDefaultDeclarationFor(e.resolver, fieldDefault.FnRef); declaration != nil {
+			outcome := constantDefaultValue(e.resolver, chain, fieldDefault.FnRef)
+			switch outcome.kind {
+			case constantValue:
+				value = outcome.value
+			case constantRuntime:
+				return e.nonConstantFailure(expr.GetPosition())
+			case constantFailed:
+				return nil, false
+			}
+		} else if !fieldDefault.IsConst {
+			return e.nonConstantFailure(expr.GetPosition())
+		}
+		entries = append(entries, values.MapEntry{Key: fieldDefault.FieldName, Value: value})
 	}
 
 	return e.readonlyMappingValue(entries, expr.GetPosition())
@@ -307,22 +468,17 @@ func (e *constantExpressionEvaluator) constantMappingKey(field *ast.BLangMapping
 		e.unsupportedFailure("constant computed mapping key not implemented", key.GetPosition())
 		return "", false
 	}
-	switch expr := key.Expr.(type) {
-	case *ast.BLangLiteral:
-		if value, ok := expr.Value.(string); ok {
-			return value, true
-		}
-	case *ast.BLangVarRef:
-		return expr.VariableName.GetValue(), true
+	if name, ok := common.StaticMappingKeyName(key); ok {
+		return name, true
 	}
 	e.resolver.internalError(fmt.Sprintf("unexpected constant mapping key expression %T", key.Expr), key.GetPosition())
 	return "", false
 }
 
-func (e *constantExpressionEvaluator) evaluateListConstructor(expr *ast.BLangListConstructorExpr) (values.BalValue, bool) {
+func (e *constantExpressionEvaluator) evaluateListConstructor(chain *binding, expr *ast.BLangListConstructorExpr) (values.BalValue, bool) {
 	initial := make([]values.BalValue, 0, max(len(expr.Exprs), expr.AtomicType.FixedLength()))
 	for i, member := range expr.Exprs {
-		value, ok := e.evaluate(member)
+		value, ok := e.evaluate(chain, member)
 		if !ok {
 			return nil, false
 		}
@@ -427,8 +583,8 @@ func (e *constantExpressionEvaluator) readonlyMappingValue(entries []values.MapE
 	return values.NewMap(ty, atomic, true, entries), true
 }
 
-func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUnaryExpr) (values.BalValue, bool) {
-	value, ok := e.evaluate(expr.Expr)
+func (e *constantExpressionEvaluator) evaluateUnaryExpression(chain *binding, expr *ast.BLangUnaryExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(chain, expr.Expr)
 	if !ok {
 		return nil, false
 	}
@@ -466,8 +622,8 @@ func (e *constantExpressionEvaluator) evaluateUnaryExpression(expr *ast.BLangUna
 		expr.GetPosition())
 }
 
-func (e *constantExpressionEvaluator) evaluateTernaryExpression(expr *ast.BLangTernaryExpr) (values.BalValue, bool) {
-	condition, ok := e.evaluate(expr.Condition)
+func (e *constantExpressionEvaluator) evaluateTernaryExpression(chain *binding, expr *ast.BLangTernaryExpr) (values.BalValue, bool) {
+	condition, ok := e.evaluate(chain, expr.Condition)
 	if !ok {
 		return nil, false
 	}
@@ -477,24 +633,24 @@ func (e *constantExpressionEvaluator) evaluateTernaryExpression(expr *ast.BLangT
 			expr.Condition.GetPosition())
 	}
 	if conditionValue {
-		return e.evaluate(expr.ThenExpr)
+		return e.evaluate(chain, expr.ThenExpr)
 	}
-	return e.evaluate(expr.ElseExpr)
+	return e.evaluate(chain, expr.ElseExpr)
 }
 
-func (e *constantExpressionEvaluator) evaluateNilConditionalExpression(expr *ast.BLangNilConditionalExpr) (values.BalValue, bool) {
-	lhs, ok := e.evaluate(expr.LhsExpr)
+func (e *constantExpressionEvaluator) evaluateNilConditionalExpression(chain *binding, expr *ast.BLangNilConditionalExpr) (values.BalValue, bool) {
+	lhs, ok := e.evaluate(chain, expr.LhsExpr)
 	if !ok {
 		return nil, false
 	}
 	if lhs != nil {
 		return lhs, true
 	}
-	return e.evaluate(expr.RhsExpr)
+	return e.evaluate(chain, expr.RhsExpr)
 }
 
-func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBinaryExpr) (values.BalValue, bool) {
-	lhs, ok := e.evaluate(expr.LhsExpr)
+func (e *constantExpressionEvaluator) evaluateBinaryExpression(chain *binding, expr *ast.BLangBinaryExpr) (values.BalValue, bool) {
+	lhs, ok := e.evaluate(chain, expr.LhsExpr)
 	if !ok {
 		return nil, false
 	}
@@ -519,7 +675,7 @@ func (e *constantExpressionEvaluator) evaluateBinaryExpression(expr *ast.BLangBi
 		// Other operators require both operands.
 	}
 
-	rhs, ok := e.evaluate(expr.RhsExpr)
+	rhs, ok := e.evaluate(chain, expr.RhsExpr)
 	if !ok {
 		return nil, false
 	}
@@ -773,8 +929,8 @@ func constantExactEqual(lhs, rhs values.BalValue) bool {
 	}
 }
 
-func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangTypeConversionExpr) (values.BalValue, bool) {
-	value, ok := e.evaluate(expr.Expression)
+func (e *constantExpressionEvaluator) evaluateTypeConversion(chain *binding, expr *ast.BLangTypeConversionExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(chain, expr.Expression)
 	if !ok {
 		return nil, false
 	}
@@ -786,8 +942,8 @@ func (e *constantExpressionEvaluator) evaluateTypeConversion(expr *ast.BLangType
 	return converted, true
 }
 
-func (e *constantExpressionEvaluator) evaluateTypeTest(expr *ast.BLangTypeTestExpr) (values.BalValue, bool) {
-	value, ok := e.evaluate(expr.Expr)
+func (e *constantExpressionEvaluator) evaluateTypeTest(chain *binding, expr *ast.BLangTypeTestExpr) (values.BalValue, bool) {
+	value, ok := e.evaluate(chain, expr.Expr)
 	if !ok {
 		return nil, false
 	}
@@ -828,7 +984,7 @@ func constantConversionError(value values.BalValue, targetType semtypes.SemType)
 	}
 }
 
-func (e *constantExpressionEvaluator) evaluateStringTemplate(expr *ast.BLangTemplateExpr) (values.BalValue, bool) {
+func (e *constantExpressionEvaluator) evaluateStringTemplate(chain *binding, expr *ast.BLangTemplateExpr) (values.BalValue, bool) {
 	if expr.Kind != ast.TemplateExprKindString || len(expr.Strings) != len(expr.Insertions)+1 {
 		return e.internalFailure(fmt.Sprintf("unexpected constant template expression kind %v", expr.Kind),
 			expr.GetPosition())
@@ -836,7 +992,7 @@ func (e *constantExpressionEvaluator) evaluateStringTemplate(expr *ast.BLangTemp
 	var result strings.Builder
 	for i, insertion := range expr.Insertions {
 		result.WriteString(expr.Strings[i])
-		value, ok := e.evaluate(insertion)
+		value, ok := e.evaluate(chain, insertion)
 		if !ok {
 			return nil, false
 		}

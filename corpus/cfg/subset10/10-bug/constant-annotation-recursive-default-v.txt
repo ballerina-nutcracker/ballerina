@@ -1,0 +1,21 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type Rec)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal r)
+            (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access x
+          (simple-var-ref r)))))
+    (expression-stmt
+      (invocation io println (
+        (optional-field-based-access x
+          (index-based-access
+            (simple-var-ref C)
+            (literal b))))))
+  )
+)

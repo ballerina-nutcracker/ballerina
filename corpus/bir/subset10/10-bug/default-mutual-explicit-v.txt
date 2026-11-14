@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| b: nil|{| a: nil|{| b: nil|..., never... |}, never... |}, never... |}{} defaults{b=$anon/.:$default$0}
+    a = %1;
+    %3 = newMap {| a: nil|{| b: nil|..., never... |}, never... |}{} defaults{a=$anon/.:$default$1}
+    b = %3;
+    %5 = println(a) -> bb1;
+  }
+  bb1 {
+    %6 = println(b) -> bb2;
+  }
+  bb2 {
+    %8 = ConstantLoad {"b":{"a":null}}
+    %7 = == a %8;
+    %9 = %7;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    %12 = ConstantLoad {"a":{"b":null}}
+    %11 = == b %12;
+    %13 = %11;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$default$0() -> nil|{| a: nil|{| b: nil|..., never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad <nil>
+    %3 = newMap {| a: nil|{| b: nil|..., never... |}, never... |}{%1=%2} defaults{a=$anon/.:$default$1}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> nil|{| b: nil|{| a: nil|..., never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad b
+    %2 = ConstantLoad <nil>
+    %3 = newMap {| b: nil|{| a: nil|{| b: nil|..., never... |}, never... |}, never... |}{%1=%2} defaults{b=$anon/.:$default$0}
+    %0 = %3;
+    return;
+  }
+}

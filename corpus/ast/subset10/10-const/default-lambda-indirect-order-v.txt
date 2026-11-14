@@ -1,0 +1,69 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field f
+        (function-type () (
+          (union-type
+            (user-defined-type S)
+            (value-type null))))
+        (lambda
+          (function $anonFunc$_0 () (
+            (union-type
+              (user-defined-type S)
+              (value-type null)))
+            (block-function-body
+              (return
+                (mapping-constructor-expr
+                  (key-value
+                    (literal r)
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal f)
+                        (lambda
+                          (function $anonFunc$_1 () (
+                            (union-type
+                              (user-defined-type S)
+                              (value-type null)))
+                            (expr-function-body
+                              (literal <nil>)))))))
+                  (key-value
+                    (literal k)
+                    (literal 5))))))))))
+  (type-definition S
+    (record-type
+      (field r
+        (user-defined-type R)
+        (mapping-constructor-expr))
+      (field k
+        (value-type int)
+        (literal 1))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (user-defined-type S)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable g (expr
+          (field-based-access f
+            (field-based-access r
+              (simple-var-ref s))))))
+      (var-def
+        (variable t (type
+          (union-type
+            (user-defined-type S)
+            (value-type null))) (expr
+          (invocation g ()))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref t)
+              (user-defined-type S))
+            (field-based-access k
+              (simple-var-ref t))
+            (unary-expr -
+              (literal 1)))))))))

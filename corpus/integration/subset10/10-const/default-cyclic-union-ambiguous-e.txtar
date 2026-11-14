@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> default-cyclic-union-ambiguous-e.bal:20:19
+   |
+20 |     (P|Q)? next = {x: 2}; // @error both P and Q are applicable
+   |                   ^^^^^^

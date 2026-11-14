@@ -1,0 +1,96 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field next
+        (union-type
+          (user-defined-type R)
+          (value-type null))
+        (mapping-constructor-expr
+          (key-value
+            (literal next)
+            (literal <nil>))))))
+  (type-definition A
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (literal 2))))
+  (type-definition B
+    (record-type
+      (field x
+        (value-type string))))
+  (function choose (
+    (variable value (type
+      (union-type
+        (user-defined-type A)
+        (user-defined-type B))))) (
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B)))
+    (block-function-body
+      (return
+        (simple-var-ref value))))
+  (variable result (expr
+    (invocation choose (
+      (mapping-constructor-expr
+        (key-value
+          (literal x)
+          (index-based-access
+            (group-expr
+              (query-expr
+                (from-clause
+                  (var-def
+                    (variable n (type
+                      (value-type int))))
+                  (list-constructor-expr
+                    (literal 1)))
+                (group-by-clause
+                  (grouping-key
+                    (var-def
+                      (variable row (type
+                        (record-type
+                          (field r
+                            (user-defined-type R)
+                            (mapping-constructor-expr))
+                          (field x
+                            (value-type int)
+                            (literal 1)))) (expr
+                        (mapping-constructor-expr
+                          (key-value
+                            (literal r)
+                            (mapping-constructor-expr
+                              (key-value
+                                (literal next)
+                                (literal <nil>))))
+                          (key-value
+                            (literal x)
+                            (simple-var-ref n))))))))
+                (select-clause
+                  (field-based-access x
+                    (simple-var-ref row)))))
+            (literal 0))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (field-based-access x
+            (simple-var-ref result)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (user-defined-type A)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref result)
+          (user-defined-type A))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (field-based-access y
+                (simple-var-ref result)))))) ())
+      (block-stmt))))

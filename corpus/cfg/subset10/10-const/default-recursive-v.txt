@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref A)
+          (user-defined-type Node)))))
+  )
+)

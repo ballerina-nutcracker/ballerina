@@ -1,0 +1,12 @@
+-- stdout --
+{"x":5}
+5
+true
+true
+{"x":5,"s":"a","b":true}
+{"s":"z","x":5,"b":true}
+{"x":1,"s":"z","b":false}
+{"x":7,"s":"a"}
+true
+true
+-- stderr --

@@ -153,8 +153,8 @@ func (l *loopTypeResolver) hasImplicitImport(name string) bool {
 	return l.parentResolver.hasImplicitImport(name)
 }
 
-func (l *loopTypeResolver) ensureResolved(ref model.SymbolRef, depth int) bool {
-	return l.parentResolver.ensureResolved(ref, depth)
+func (l *loopTypeResolver) ensureResolved(ref model.SymbolRef) bool {
+	return l.parentResolver.ensureResolved(ref)
 }
 
 func (l *loopTypeResolver) setMappingDefaults(atom *semtypes.MappingAtomicType, defaults []model.FieldDefault) {
@@ -192,4 +192,8 @@ func validateLoopAssignments(t typeResolver, loopT *loopTypeResolver, bodyEffect
 	}
 	chains = append(chains, loopT.continues...)
 	reportOutsideLoopAssignments(t, chains, loopEntry)
+}
+
+func (l *loopTypeResolver) resolutionContext() *typeResolutionContext {
+	return l.parentResolver.resolutionContext()
 }

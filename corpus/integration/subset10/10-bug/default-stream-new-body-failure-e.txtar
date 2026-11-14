@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> default-stream-new-body-failure-e.bal:18:42
+   |
+18 |     var s = new stream<record {| int x = true + 1; |}>(()); // @error invalid default in the stream type
+   |                                          ^^^^^^^^

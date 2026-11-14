@@ -1,0 +1,60 @@
+(describe
+  (bb0 () (bb1 bb2)
+    (simple-var-ref r)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal default))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal other))
+  )
+)
+(isDefault
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref v)
+        (user-defined-type DefaultR)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (mapping-constructor-expr))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 5))
+            (key-value
+              (literal leaf)
+              (mapping-constructor-expr
+                (key-value
+                  (literal n)
+                  (literal 1))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe (
+          (mapping-constructor-expr
+            (key-value
+              (literal leaf)
+              (mapping-constructor-expr
+                (key-value
+                  (literal n)
+                  (literal 2))))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isDefault (
+          (simple-var-ref A))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isDefault (
+          (simple-var-ref B))))))
+  )
+)

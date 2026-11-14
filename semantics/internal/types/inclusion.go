@@ -28,10 +28,12 @@ import (
 // collectIncludedMembers resolves each included type, validates that it can be included,
 // and returns all their flattened InclusionMembers. positions is parallel to inclusions and pos is the position of
 // the including type.
-func collectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, positions []diagnostics.Location, pos diagnostics.Location, depth int) ([]model.InclusionMember, bool) {
+func collectIncludedMembers(t typeResolver, inclusions []model.SymbolRef, positions []diagnostics.Location, pos diagnostics.Location) ([]model.InclusionMember, bool) {
 	var result []model.InclusionMember
 	for i, symRef := range inclusions {
-		t.ensureResolved(symRef, depth)
+		if !t.ensureResolved(symRef) {
+			return nil, false
+		}
 		incSym := getMemberCarrier(t, symRef)
 		if incSym == nil {
 			t.internalError("inclusion symbol is not a type symbol", diagnostics.Location{})

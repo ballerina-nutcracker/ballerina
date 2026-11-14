@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> default-query-join-body-failure-e.bal:19:32
+   |
+19 |         join record {| int x = true + 1; |} r in [{x: 1}] // @error invalid default in the join type
+   |                                ^^^^^^^^

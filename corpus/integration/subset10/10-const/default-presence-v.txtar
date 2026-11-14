@@ -1,0 +1,9 @@
+-- stdout --
+{"a":null,"b":1}
+{"b":null,"a":null}
+{"b":false,"i":0,"f":0.0,"s":"","l":[],"m":{}}
+true
+{"x":1}
+false
+{"y":"extra","x":1}
+-- stderr --

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: const annotation value must be a constant expression
+  --> record-default-const-annotation-e.bal:30:7
+   |
+30 | @info {label: "x"} // @error omits code, whose default is not constant
+   |       ^^^^^^^^^^^^

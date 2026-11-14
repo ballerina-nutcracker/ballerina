@@ -1,0 +1,46 @@
+(C
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access v
+          (simple-var-ref self))
+        (field-based-access x
+          (simple-var-ref r)))
+    )
+  )
+)
+(D
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access s
+          (simple-var-ref self))
+        (simple-var-ref s))
+    )
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable i (type
+        (user-defined-type I)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable h (type
+        (union-type
+          (user-defined-type C)
+          (user-defined-type D))) (expr
+        (field-based-access h
+          (simple-var-ref i)))))
+    (type-test-expr is
+      (simple-var-ref h)
+      (user-defined-type C))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access v
+          (simple-var-ref h)))))
+  )
+  (bb2 (bb1 bb0) ())
+)
