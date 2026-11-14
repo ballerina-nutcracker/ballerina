@@ -1,0 +1,52 @@
+-- stdout --
+application/octet-stream
+server stream
+bytes=10000 blocks=3
+{"data":"hello"}
+{"data":"a\nb","id":"1","event":"update"}
+text/event-stream
+no-cache,public
+["data: hello\n\nid: 1\nevent: update\ndata: a\ndata: b\n\n"]
+keep-alive
+false
+no-store
+["data: ok\n\nevent: error\ndata: db down\n\n"]
+{"value":{"data":"ok"}}
+true
+5
+{"value":{"data":"1"}}
+Error occurred while reading stream: Idle timeout triggered while reading inbound response entity body
+500
+true
+true
+true
+200
+0
+204
+304
+0
+200
+replaced by a stream
+19995 5678901234
+bytes=19995 blocks=5
+0 [""]
+0 [""]
+0 [""]
+["data: two\n\ndata: three\n\n"]
+["data: two\n\ndata: three\n\n"]
+4
+3
+100000
+307
+bytes=9 blocks=1
+[": first\n: \n: data: forged\ndata: real\n\nevent: error\ndata: Invalid value provided as event: the id field must not contain a line break.\n\n"]
+3
+2
+45
+44
+-- stderr --
+time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("db down")
+error [ballerina/http]: panic while handling GET /streams/panicking: invalid array index: 5
+time=<TIME> level=ERROR module="" message="failed to construct SseEvent" error=error GenericError ("Error occurred while reading stream: unexpected EOF")
+time=<TIME> level=ERROR module="" message="failed to construct SseEvent" error=error GenericError ("Error occurred while reading stream: Idle timeout triggered while reading inbound response entity body")
+time=<TIME> level=ERROR module="" message="unable to obtain byte array" error=error("Invalid value provided as event: the id field must not contain a line break.")

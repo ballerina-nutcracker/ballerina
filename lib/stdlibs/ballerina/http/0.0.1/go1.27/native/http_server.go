@@ -19,6 +19,7 @@ package native
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -395,9 +396,19 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
+				if rec == http.ErrAbortHandler {
+					panic(rec)
+				}
+				bodyPanic, headersSent := rec.(streamBodyPanic)
+				if headersSent {
+					rec = bodyPanic.value
+				}
 				msg := panicMessage(rec)
 				logMsg := fmt.Sprintf("error [ballerina/http]: panic while handling %s %s: %s\n", r.Method, r.URL.Path, msg)
 				_, _ = rt.Platform().IO.Stderr([]byte(logMsg))
+				if headersSent {
+					panic(http.ErrAbortHandler)
+				}
 				writeErrorJSON(rt, w, r, http.StatusInternalServerError, msg)
 			}
 		}()
@@ -492,7 +503,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResult(rt, ctx, state.types, w, r, accessorKey, result)
+		writeResult(rt, ctx, state.types, w, r, accessorKey, result, state.timeout)
 		return
 	}
 	// The path matched a service but no resource under the requested method. If
@@ -574,6 +585,7 @@ func buildRequest(method, rawPath, httpVersion string, headers map[string][]stri
 	default:
 		holder = &requestBodyHolder{buf: []byte{}, contentLength: 0}
 	}
+	holder.fromWire = true
 	return values.NewObject(
 		semtypes.Object,
 		map[string]values.BalValue{
@@ -617,7 +629,7 @@ func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request,
 // writeResult writes a Ballerina resource method return value as an HTTP response,
 // following jBallerina's Caller.returnResponse (http_connection.bal:141-196).
 func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
-	w http.ResponseWriter, r *http.Request, accessor string, result values.BalValue) {
+	w http.ResponseWriter, r *http.Request, accessor string, result values.BalValue, timeout time.Duration) {
 	switch v := result.(type) {
 	case nil:
 		w.WriteHeader(http.StatusAccepted)
@@ -640,7 +652,15 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 			holder = &responseBodyHolder{buf: data}
 			wireContentType = ct
 		}
-		writeResponseObject(w, v, holder, wireContentType)
+		writeResponseObject(w, r, v, holder, wireContentType, timeout)
+	case *values.Stream:
+		resp, err := createSSEResponse(ctx, v)
+		if err != nil {
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Message)
+			return
+		}
+		holder, _ := responseBodyOf(resp)
+		writeResponseObject(w, r, resp, holder, "", timeout)
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
@@ -681,7 +701,8 @@ func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTyp
 
 // wireContentType, when non-empty, replaces the Content-Type header, carrying the boundary a
 // multipart body was encoded with.
-func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string) {
+func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Object, holder *responseBodyHolder, wireContentType string,
+	timeout time.Duration) {
 	statusCodeVal, _ := resp.Get("statusCode")
 	statusCode := http.StatusOK
 	// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
@@ -722,27 +743,120 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *res
 	// WriteHeader must be called before writing the body; once body bytes
 	// start flowing via writeStream, headers are already committed, so a write error here
 	// can't be recovered with a JSON error body.
+	if holder.noCache && w.Header().Get("Cache-Control") == "" {
+		w.Header().Set("Cache-Control", "no-cache,public")
+	}
+	contentType := w.Header().Get("Content-Type")
+	if r.ProtoMajor == 1 && r.ProtoMinor == 1 && isEventStreamType(contentType) {
+		w.Header().Set("Connection", "keep-alive")
+	}
+	streamed := holder.source != nil || holder.reader != nil
+	if streamed || holder.wireTaken {
+		// A streamed body, or a taken one that sends only what was not read, no longer has the
+		// length a backend gave it; with nothing left, net/http sends Content-Length: 0.
+		w.Header().Del("Content-Length")
+	}
+	if streamed {
+		// Otherwise an HTTP/1 server consumes the unread request body before the response
+		// starts, which a body streamed from that request still needs.
+		_ = http.NewResponseController(w).EnableFullDuplex()
+	}
 	w.WriteHeader(statusCode)
-	_ = holder.writeStream(w)
+	eventStream := isEventStreamType(contentType)
+	switch {
+	case (streamed || holder.stream != nil) && !bodyAllowed(r.Method, statusCode):
+		// net/http discards the body, so the stream is never read.
+		releaseUnsentBody(holder, eventStream)
+	case holder.source != nil:
+		writeStreamedBody(w, holder.unsent(newBalStreamReader(holder.source)), holder.source, eventStream, timeout)
+	// Aborting tells the client that a relayed body which failed part-way is incomplete.
+	case holder.reader != nil:
+		if err := holder.writeReader(w, eventStream, timeout); err != nil {
+			panic(http.ErrAbortHandler)
+		}
+	default:
+		if err := holder.writeStream(w, eventStream, timeout); err != nil {
+			panic(http.ErrAbortHandler)
+		}
+	}
+}
+
+func bodyAllowed(method string, statusCode int) bool {
+	return method != http.MethodHead && statusCode != http.StatusNoContent && statusCode != http.StatusNotModified
+}
+
+// releaseUnsentBody closes a streamed or unread received body that is not sent, without reading
+// it. Like writeStreamedBody, it closes an event stream but leaves any other byte stream set with
+// setByteStream open.
+func releaseUnsentBody(holder *responseBodyHolder, eventStream bool) {
+	if holder.source == nil {
+		_ = holder.closeReader()
+		if r, _ := holder.takeWire(); r != nil {
+			_ = r.Close()
+		}
+		return
+	}
+	if eventStream && holder.source.Close != nil {
+		holder.source.Close()
+	}
+}
+
+// writeReader sends the part of a received body that getByteStream or getSseEventStream has
+// not handed on.
+func (h *responseBodyHolder) writeReader(w http.ResponseWriter, flush bool, timeout time.Duration) error {
+	r := h.reader
+	h.reader = nil
+	err := copyWithWriteDeadlines(w, h.unsent(r), flush, timeout)
+	_ = r.Close()
+	return err
+}
+
+// copyWithWriteDeadlines relays r to w, giving each write the listener timeout afresh and
+// clearing the deadline while waiting on r, so a body that keeps arriving is not cut off. With
+// flush set, as for an event stream, each write is sent at once.
+func copyWithWriteDeadlines(w http.ResponseWriter, r io.Reader, flush bool, timeout time.Duration) error {
+	rc := http.NewResponseController(w)
+	setDeadline := func(deadline time.Time) {
+		if timeout > 0 {
+			_ = rc.SetWriteDeadline(deadline)
+		}
+	}
+	// The handler's final flush runs under the last deadline set here.
+	defer func() { setDeadline(time.Now().Add(timeout)) }()
+	bufp := copyBufPool.Get().(*[]byte)
+	defer copyBufPool.Put(bufp)
+	buf := *bufp
+	for {
+		setDeadline(time.Time{})
+		n, err := r.Read(buf)
+		if n > 0 {
+			setDeadline(time.Now().Add(timeout))
+			if _, writeErr := w.Write(buf[:n]); writeErr != nil {
+				return writeErr
+			}
+			if flush {
+				if flushErr := rc.Flush(); flushErr != nil {
+					return flushErr
+				}
+			}
+		}
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+	}
 }
 
 // copyBufPool reuses 32 KB buffers for streaming a backend response body to the
-// downstream client. Without it, io.Copy → net/http's response.ReadFrom
-// allocates a fresh 32 KB buffer on every request (kernel splice is unavailable
-// when the source is a userspace stream), which dominates allocations at large
-// payloads.
+// downstream client, so a large relayed body does not allocate a fresh buffer per request.
 var copyBufPool = sync.Pool{New: func() any { b := make([]byte, 32*1024); return &b }}
 
-// onlyWriter exposes only Write, hiding any ReadFrom the underlying writer has,
-// so io.CopyBuffer uses our pooled buffer instead of response.ReadFrom's
-// per-call allocation. Output is identical — the ResponseWriter's Write already
-// handles chunked/content-length framing.
-type onlyWriter struct{ io.Writer }
-
-// writeStream writes the body to w via io.CopyBuffer (streaming, pooled buffer)
+// writeStream writes the body to w via copyWithWriteDeadlines (streaming, pooled buffer)
 // or w.Write (buffered), then closes the stream. After this call the holder is
 // exhausted.
-func (h *responseBodyHolder) writeStream(w io.Writer) error {
+func (h *responseBodyHolder) writeStream(w http.ResponseWriter, flush bool, timeout time.Duration) error {
 	var (
 		s   io.ReadCloser
 		buf []byte
@@ -758,9 +872,7 @@ func (h *responseBodyHolder) writeStream(w io.Writer) error {
 		}
 	})
 	if s != nil {
-		bufp := copyBufPool.Get().(*[]byte)
-		_, err := io.CopyBuffer(onlyWriter{w}, s, *bufp)
-		copyBufPool.Put(bufp)
+		err := copyWithWriteDeadlines(w, s, flush, timeout)
 		_ = s.Close()
 		return err
 	}
