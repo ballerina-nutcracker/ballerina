@@ -174,7 +174,7 @@ main() -> nil{
     nan = %57;
     %63 = ConstantLoad 1
     %64 = ConstantLoad 0
-    %65 = unknown %64;
+    %65 = - %64;
     %66 = ConstantLoad 0
     %68 = ConstantLoad 0
     %69 = %68;

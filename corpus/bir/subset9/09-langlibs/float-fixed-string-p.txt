@@ -4,7 +4,7 @@ main() -> nil{
     %1 = ConstantLoad 12.456
     %2 = %1;
     %3 = ConstantLoad 1
-    %4 = unknown %3;
+    %4 = - %3;
     %5 = %4;
     %6 = toFixedString(%2,%5) -> bb1;
   }

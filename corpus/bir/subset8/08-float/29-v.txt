@@ -34,7 +34,7 @@ main() -> nil{
   }
   bb6 {
     %21 = ConstantLoad 2.5
-    %22 = unknown %21;
+    %22 = - %21;
     $desugar$4 = %22;
     %24 = $desugar$4;
     %25 = $default$0(%24) -> bb7;
@@ -99,7 +99,7 @@ main() -> nil{
   }
   bb18 {
     %62 = ConstantLoad 0
-    %63 = unknown %62;
+    %63 = - %62;
     $desugar$12 = %63;
     %65 = $desugar$12;
     %66 = $default$0(%65) -> bb19;
@@ -116,10 +116,10 @@ main() -> nil{
   }
   bb21 {
     %73 = ConstantLoad 0.5
-    %74 = unknown %73;
+    %74 = - %73;
     x = %74;
     %76 = ConstantLoad 0.4
-    %77 = unknown %76;
+    %77 = - %76;
     y = %77;
     $desugar$14 = x;
     %80 = $desugar$14;
@@ -320,7 +320,7 @@ main() -> nil{
   }
   bb54 {
     %212 = ConstantLoad 1
-    %213 = unknown %212;
+    %213 = - %212;
     %214 = %213;
     %215 = ConstantLoad 0
     %216 = %215;

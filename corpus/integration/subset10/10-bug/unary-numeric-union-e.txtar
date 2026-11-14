@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: union types not supported for -
+  --> unary-numeric-union-e.bal:19:13
+   |
+19 |     var _ = -x; // @error mixed basic numeric types
+   |             ^^
+
+error[SEMANTIC_ERROR]: union types not supported for -
+  --> unary-numeric-union-e.bal:21:13
+   |
+21 |     var _ = -bf; // @error mixed basic numeric types
+   |             ^^^
+
+error[SEMANTIC_ERROR]: union types not supported for -
+  --> unary-numeric-union-e.bal:23:13
+   |
+23 |     var _ = -id; // @error mixed basic numeric types
+   |             ^^^
+
+error[SEMANTIC_ERROR]: union types not supported for -
+  --> unary-numeric-union-e.bal:25:13
+   |
+25 |     var _ = -fd; // @error mixed basic numeric types
+   |             ^^^
+
+error[SEMANTIC_ERROR]: union types not supported for -
+  --> unary-numeric-union-e.bal:27:13
+   |
+27 |     var _ = -nullable; // @error nil removal still leaves mixed basic numeric types
+   |             ^^^^^^^^^

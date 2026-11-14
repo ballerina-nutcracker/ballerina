@@ -10,7 +10,7 @@ main() -> nil{
   }
   bb2 {
     %5 = ConstantLoad 0
-    %6 = unknown %5;
+    %6 = - %5;
     %7 = %6;
     %8 = zero(%7) -> bb3;
   }
@@ -41,9 +41,9 @@ zero(float) -> string{
     PushScopeFrame 9
     %1 = (1, v);
     %2 = ConstantLoad 0
-    %3 = unknown %2;
+    %3 = - %2;
     %4 = %3;
-    %0 = unknown %1 %4;
+    %0 = === %1 %4;
     %0 ? bb2 : bb3;
   }
   bb2 {
@@ -58,7 +58,7 @@ zero(float) -> string{
     %6 = (1, v);
     %7 = ConstantLoad 0
     %8 = %7;
-    %5 = unknown %6 %8;
+    %5 = === %6 %8;
     %5 ? bb4 : bb5;
   }
   bb4 {

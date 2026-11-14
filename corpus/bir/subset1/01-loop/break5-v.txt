@@ -67,7 +67,7 @@ foo(int) -> int{
   bb7 {
     PushScopeFrame 2
     %0 = ConstantLoad 1
-    %1 = unknown %0;
+    %1 = - %0;
     (1, %0) = %1;
     PopScopeFrame
     return;
