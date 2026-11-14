@@ -144,6 +144,9 @@ type (
 		// inFunction is true for function and default-expression resolvers and for
 		// every resolver nested inside one.
 		inFunction bool
+		// hideOuterSelf hides the enclosing class or service `self` during lookup.
+		// Spec §6.8.1.2 binds `self` only in a method body, not in a parameter default.
+		hideOuterSelf bool
 	}
 )
 
@@ -427,10 +430,18 @@ func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 		return symbolLookup{ref: ref, kind: blockScopeKind, captured: false}, true
 	}
 	lookup, ok := bs.parent.GetSymbol(name)
-	if ok && lookup.kind == blockScopeKind && bs.captureRegionKind == captureRegionClosure {
+	if !ok {
+		return lookup, false
+	}
+	// A method parameter named `self` is already rejected by isShadowed, so any
+	// block-scoped `self` here is the class or service receiver.
+	if bs.hideOuterSelf && name == "self" && lookup.kind == blockScopeKind {
+		return symbolLookup{}, false
+	}
+	if lookup.kind == blockScopeKind && bs.captureRegionKind == captureRegionClosure {
 		lookup.captured = true
 	}
-	return lookup, ok
+	return lookup, true
 }
 
 func (bs *blockSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool) {
@@ -1197,11 +1208,14 @@ func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.Invo
 		}
 	}
 	params := fn.GetParameters()
+	hideSelfInDefaults := isMethodOfClassOrService(functionResolver)
 	for i := range params {
 		param := &params[i]
 		ok = resolveVariableDeclaredType(functionResolver, param, param.Symbol()) && ok
 		if param.Expr != nil {
-			ok = resolveExpr(newDefaultExprResolver(functionResolver, param), param.Expr) && ok
+			defResolver := newDefaultExprResolver(functionResolver, param)
+			defResolver.hideOuterSelf = hideSelfInDefaults
+			ok = resolveExpr(defResolver, param.Expr) && ok
 		}
 	}
 	if rest := fn.GetRestParam(); rest != nil {
@@ -2196,6 +2210,23 @@ func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope,
 			return bs.scope, true
 		}
 		resolver = bs.parent
+	}
+}
+
+// isMethodOfClassOrService reports whether functionResolver is a method, init,
+// or resource method whose immediate enclosing scope is a class or service body.
+// Nested functions inside a method body are excluded so their defaults may still
+// capture an enclosing `self` through normal lexical lookup.
+func isMethodOfClassOrService(functionResolver *blockSymbolResolver) bool {
+	parent, ok := functionResolver.parent.(*blockSymbolResolver)
+	if !ok {
+		return false
+	}
+	switch parent.node.(type) {
+	case *ast.BLangClassDefinition, *ast.BLangService:
+		return true
+	default:
+		return false
 	}
 }
 

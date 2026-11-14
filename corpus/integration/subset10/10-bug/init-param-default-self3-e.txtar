@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> init-param-default-self3-e.bal:20:80
+   |
+20 |     function init(function () returns int f = function () returns int { return self.foo; }) { // @error
+   |                                                                                ^^^^
