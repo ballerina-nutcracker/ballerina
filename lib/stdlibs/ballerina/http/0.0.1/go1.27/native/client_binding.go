@@ -104,7 +104,8 @@ func statusCodeError(ctx *extern.Context, types *httpTypes, resp *values.Object,
 func statusErrorPayload(ctx *extern.Context, types *httpTypes, resp *values.Object) (values.BalValue, *values.Error) {
 	body, err := responseBody(resp)
 	if err != nil {
-		return nil, values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		return nil, values.NewError(semtypes.Error, message, nil, "", nil)
 	}
 	// Short-circuited so a 4xx/5xx sent with a JSON content type and no body keeps its reason
 	// phrase instead of failing on the empty document.
@@ -152,7 +153,8 @@ func performDataBinding(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	// discarded, and so the underlying stream is drained and closed.
 	body, err := responseBody(resp)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil)
 	}
 	// jBallerina hands back a non-empty body here even though () was asked for; returning ()
 	// keeps the value within the requested type.
@@ -282,7 +284,8 @@ func jsonPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	tc := ctx.TypeCtx()
 	body, err := responseBody(resp)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil)
 	}
 	payload, jsonErr := decodeJSONBody(ctx, types, body)
 	if jsonErr != nil {
@@ -349,7 +352,8 @@ func responseBody(resp *values.Object) ([]byte, error) {
 func textValue(resp *values.Object) values.BalValue {
 	body, err := responseBody(resp)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil)
 	}
 	return string(body)
 }
@@ -357,7 +361,8 @@ func textValue(resp *values.Object) values.BalValue {
 func binaryValue(ctx *extern.Context, types *httpTypes, resp *values.Object) values.BalValue {
 	body, err := responseBody(resp)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil)
 	}
 	return byteArrayValue(ctx, types, body)
 }
@@ -374,7 +379,8 @@ func byteArrayValue(ctx *extern.Context, types *httpTypes, body []byte) *values.
 func formDataValue(ctx *extern.Context, types *httpTypes, resp *values.Object) values.BalValue {
 	body, err := responseBody(resp)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil)
 	}
 	parsed, parseErr := url.ParseQuery(string(body))
 	if parseErr != nil {
@@ -406,13 +412,13 @@ func xmlValue(ctx *extern.Context, resp *values.Object) values.BalValue {
 func decodeXMLBody(ctx *extern.Context, body []byte, source string) (values.BalValue, *values.Error) {
 	if len(body) == 0 {
 		return nil, values.NewError(semtypes.Error, "No content",
-			values.NewErrorWithMessage("Empty xml payload"), "NoContentError", nil)
+			values.NewError(semtypes.Error, "Empty xml payload", nil, "", nil), "NoContentError", nil)
 	}
 	parsed, err := values.ParseAsXMLValue(ctx.TypeCtx(), values.FromBytes(body), values.XMLLenientMode)
 	if err != nil {
-		return nil, values.NewError(semtypes.Error,
-			"Error occurred while retrieving the xml payload from the "+source,
-			values.NewErrorWithMessage(err.Error()), "GenericClientError", nil)
+		message := "Error occurred while retrieving the xml payload from the " + source
+		cause := values.NewError(semtypes.Error, err.Error(), nil, "", nil)
+		return nil, values.NewError(semtypes.Error, message, cause, "GenericClientError", nil)
 	}
 	return parsed, nil
 }
@@ -422,7 +428,7 @@ func decodeJSONBody(ctx *extern.Context, types *httpTypes, body []byte) (values.
 	dec.UseNumber()
 	var v interface{}
 	if err := dec.Decode(&v); err != nil {
-		return nil, values.NewErrorWithMessage("failed to parse JSON payload: " + err.Error())
+		return nil, values.NewError(semtypes.Error, "failed to parse JSON payload: "+err.Error(), nil, "", nil)
 	}
 	// Decode only consumes the first JSON value; without this check, trailing data after a
 	// well-formed value (a second document, or garbage) would be silently ignored.
@@ -431,7 +437,7 @@ func decodeJSONBody(ctx *extern.Context, types *httpTypes, body []byte) (values.
 		if err != nil {
 			message = err.Error()
 		}
-		return nil, values.NewErrorWithMessage("failed to parse JSON payload: " + message)
+		return nil, values.NewError(semtypes.Error, "failed to parse JSON payload: "+message, nil, "", nil)
 	}
 	return values.GoToBalValue(ctx.TypeCtx(), v, types.jsonListTy, types.jsonMapTy), nil
 }

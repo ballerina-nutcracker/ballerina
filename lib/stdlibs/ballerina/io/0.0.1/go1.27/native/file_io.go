@@ -55,7 +55,7 @@ func closedNextRecordType(env semtypes.Env, valueTy semtypes.SemType) semtypes.S
 }
 
 func fileIOError(msg string) values.BalValue {
-	return values.NewErrorWithMessage(msg)
+	return values.NewError(semtypes.Error, msg, nil, "", nil)
 }
 
 func splitLines(data []byte) []string {

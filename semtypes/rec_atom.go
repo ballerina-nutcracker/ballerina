@@ -39,10 +39,12 @@ func createRecAtom(index int) recAtom {
 	return newRecAtomFromInt(index)
 }
 
+//shallow:allow named XML recursive-atom constructor retains its semantic role
 func createXMLRecAtom(index int) recAtom {
 	return newRecAtomFromInt(index)
 }
 
+//shallow:allow named distinct recursive-atom constructor retains its semantic role
 func createDistinctRecAtom(index int) recAtom {
 	return newRecAtomFromInt(index)
 }

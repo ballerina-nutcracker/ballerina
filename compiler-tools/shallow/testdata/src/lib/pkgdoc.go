@@ -14,8 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package semtypes
-
-type properSubtypeData interface {
-	subtypeData
-}
+/* want "must be in the doc comment" */ //shallow:allow reason
+package lib

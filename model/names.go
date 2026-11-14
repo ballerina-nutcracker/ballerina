@@ -24,6 +24,7 @@ func RemoteMethodName(name string) string {
 	return remoteMethodPrefix + name
 }
 
+//shallow:allow public naming API keeps the remote-method prefix private
 func StripRemotePrefix(name string) string {
 	return strings.TrimPrefix(name, remoteMethodPrefix)
 }

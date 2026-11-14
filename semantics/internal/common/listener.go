@@ -53,6 +53,8 @@ func ListenerAttachPointBound(cx semtypes.Context) semtypes.SemType {
 // ListenerInitExpectedType returns the type a listener initializer may have
 // when the listener is declared as listenerTy. The initializer may also
 // evaluate to an error, on which module init panics.
+//
+//shallow:allow shared listener typing rule includes the error alternative for initialization
 func ListenerInitExpectedType(listenerTy semtypes.SemType) semtypes.SemType {
 	return semtypes.Union(listenerTy, semtypes.Error)
 }

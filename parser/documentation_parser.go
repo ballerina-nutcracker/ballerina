@@ -168,13 +168,11 @@ func (p *documentationParser) parseDocElements(docElements *[]st.STNode) {
 }
 
 func (p *documentationParser) convertToDocDescriptionToken(token st.STToken) st.STNode {
-	return st.CreateLiteralValueToken(st.DOCUMENTATION_DESCRIPTION, token.Text(),
-		token.LeadingMinutiae(), token.TrailingMinutiae())
+	return st.CreateLiteralValueTokenWithDiagnostics(st.DOCUMENTATION_DESCRIPTION, token.Text(), token.LeadingMinutiae(), token.TrailingMinutiae(), nil)
 }
 
 func (p *documentationParser) convertToCodeContentToken(token st.STToken) st.STNode {
-	return st.CreateLiteralValueToken(st.CODE_CONTENT, token.Text(),
-		token.LeadingMinutiae(), token.TrailingMinutiae())
+	return st.CreateLiteralValueTokenWithDiagnostics(st.CODE_CONTENT, token.Text(), token.LeadingMinutiae(), token.TrailingMinutiae(), nil)
 }
 
 func (p *documentationParser) parseInlineCode(startBacktick st.STNode) st.STNode {
@@ -247,7 +245,7 @@ func (p *documentationParser) parseCodeLine() st.STNode {
 
 func (p *documentationParser) createEmptyCodeContentToken() st.STNode {
 	emptyMinutiae := st.CreateEmptyNodeList()
-	return st.CreateLiteralValueToken(st.CODE_CONTENT, "", emptyMinutiae, emptyMinutiae)
+	return st.CreateLiteralValueTokenWithDiagnostics(st.CODE_CONTENT, "", emptyMinutiae, emptyMinutiae, nil)
 }
 
 func (p *documentationParser) parseHashToken() st.STNode {
@@ -298,7 +296,7 @@ func (p *documentationParser) parseBallerinaNameRefOrInlineCodeRef(referenceType
 	} else {
 		contentToken = p.combineAndCreateCodeContentToken()
 		if referenceGenre != referenceGenreNoKey {
-			contentToken = st.AddDiagnostic(contentToken, &common.WARNING_INVALID_BALLERINA_NAME_REFERENCE, contentToken.(st.STToken).Text())
+			contentToken = st.AddSyntaxDiagnostic(contentToken, st.CreateDiagnostic(&common.WARNING_INVALID_BALLERINA_NAME_REFERENCE, contentToken.(st.STToken).Text()))
 		} else {
 			isCodeRef = true
 		}
@@ -531,8 +529,7 @@ func (p *documentationParser) combineAndCreateCodeContentToken() st.STNode {
 	// Therefore, set only the trailing minutiae
 	leadingMinutiae := st.CreateEmptyNodeList()
 	trailingMinutiae := token.TrailingMinutiae()
-	return st.CreateLiteralValueToken(st.CODE_CONTENT, backtickContent.String(),
-		leadingMinutiae, trailingMinutiae)
+	return st.CreateLiteralValueTokenWithDiagnostics(st.CODE_CONTENT, backtickContent.String(), leadingMinutiae, trailingMinutiae, nil)
 }
 
 func (p *documentationParser) isBacktickExprToken(kind st.SyntaxKind) bool {

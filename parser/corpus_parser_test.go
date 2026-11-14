@@ -26,6 +26,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/st"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 	"github.com/ballerina-nutcracker/ballerina/tools/text"
 
@@ -165,7 +166,7 @@ func parseFile(t *testing.T, testCase test_util.TestCase) {
 
 	ast := ballerinaParser.Parse()
 
-	actualJSON := generateJSON(ast)
+	actualJSON := st.GenerateJSON(ast, kindName)
 
 	normalizedJSON := normalizeJSON(actualJSON)
 

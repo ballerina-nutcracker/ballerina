@@ -97,11 +97,13 @@ func isPositiveAtom(atom atom) bool {
 	return true
 }
 
+//shallow:allow named BDD path copy operation is shared by positive and general path traversal
 func bddPathClone(path bddPath) bddPath {
 
 	return newBddPathFromBddPath(path)
 }
 
+//shallow:allow shared BDD path factory supplies the initial all-path state
 func bddPathFrom() bddPath {
 	return newBddPath()
 }

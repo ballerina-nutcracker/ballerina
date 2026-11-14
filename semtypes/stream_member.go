@@ -18,12 +18,16 @@ package semtypes
 
 // StreamValueType returns T from stream<T, C>, or nil if streamTy is
 // not a subtype of Stream.
+//
+//shallow:allow public stream-value query hides the tuple index used to encode streams
 func StreamValueType(cx Context, streamTy SemType) SemType {
 	return streamMemberAt(cx, streamTy, 0)
 }
 
 // StreamCompletionType returns C from stream<T, C>, or nil if streamTy is
 // not a subtype of Stream.
+//
+//shallow:allow public stream-completion query hides the tuple index used to encode streams
 func StreamCompletionType(cx Context, streamTy SemType) SemType {
 	return streamMemberAt(cx, streamTy, 1)
 }

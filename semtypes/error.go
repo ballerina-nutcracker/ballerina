@@ -34,16 +34,12 @@ func ErrorDetailType(ctx Context, errorType SemType) (SemType, bool) {
 		}
 		return SemType{}, false
 	}
-	return getBasicSubtype(btMapping, mappingSd.(properSubtypeData)), true
+	return getBasicSubtype(btMapping, mappingSd.(subtypeData)), true
 }
 
 func errorDetailTop(ctx Context) SemType {
 	md := NewMappingDefinition()
 	return md.Define(ctx.Env(), nil, CreateCloneable(ctx))
-}
-
-func stripErrorDistinctAtoms(ty SemType) SemType {
-	return stripDistinctAtomsFromSemType(ty, btError, stripDistinctAtomsFromBdd)
 }
 
 func stripDistinctAtomsFromBdd(bdd bdd) bdd {
@@ -72,7 +68,7 @@ func ErrorWithDetail(detail SemType) SemType {
 	if sd == bddSubtypeRo {
 		return Error
 	}
-	return getBasicSubtype(btError, sd.(properSubtypeData))
+	return getBasicSubtype(btError, sd.(subtypeData))
 }
 
 func ErrorDistinct(distinctId int) SemType {

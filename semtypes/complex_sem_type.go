@@ -16,11 +16,12 @@
 
 package semtypes
 
+//shallow:allow shared semantic-type factory exposes a variadic subtype construction API
 func createComplexSemType(allBitset basicTypeBitSet, subtypeList ...basicSubtype) SemType {
 	return createComplexSemTypeWithAllBitSetSubtypeList(allBitset, subtypeList)
 }
 
-func createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(allBitset, someBitset basicTypeBitSet, subtypeDataList []properSubtypeData) SemType {
+func createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(allBitset, someBitset basicTypeBitSet, subtypeDataList []subtypeData) SemType {
 	return SemType{
 		allBits:  semTypeMarker | (allBitset & basicTypeMask),
 		someBits: someBitset & basicTypeMask,
@@ -30,7 +31,7 @@ func createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(allBitset, someB
 
 func createComplexSemTypeWithAllBitSetSubtypeList(allBitset basicTypeBitSet, subtypeList []basicSubtype) SemType {
 	var some basicTypeBitSet = 0
-	dataList := make([]properSubtypeData, len(subtypeList))
+	dataList := make([]subtypeData, len(subtypeList))
 	for i, basicSubtype := range subtypeList {
 		dataList[i] = basicSubtype.subtypeData
 		c := basicSubtype.basicTypeCode.Code()

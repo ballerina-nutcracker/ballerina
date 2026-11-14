@@ -73,10 +73,6 @@ func ensurePrefixMap(resolver symbolResolver, scope model.Scope) {
 		if s.Prefix == nil {
 			s.Prefix = make(map[string]model.ExportedSymbolSpace)
 		}
-	case *model.FunctionScope:
-		if s.Prefix == nil {
-			s.Prefix = make(map[string]model.ExportedSymbolSpace)
-		}
 	case *xmlnsChildScope:
 		if s.prefix == nil {
 			s.prefix = make(map[string]model.ExportedSymbolSpace)
@@ -98,8 +94,6 @@ func setLocalPrefix(scope model.Scope, prefix string, exported model.ExportedSym
 	case *model.ModuleScope:
 		s.Prefix[prefix] = exported
 	case *model.BlockScope:
-		s.Prefix[prefix] = exported
-	case *model.FunctionScope:
 		s.Prefix[prefix] = exported
 	case *xmlnsChildScope:
 		s.prefix[prefix] = exported
@@ -128,9 +122,6 @@ func localPrefixSpace(scope model.Scope, prefix string) (model.ExportedSymbolSpa
 	case *model.BlockScope:
 		exported, ok := s.Prefix[prefix]
 		return exported, ok
-	case *model.FunctionScope:
-		exported, ok := s.Prefix[prefix]
-		return exported, ok
 	case *xmlnsChildScope:
 		exported, ok := s.prefix[prefix]
 		return exported, ok
@@ -148,8 +139,6 @@ func lookupXMLNS(scope model.Scope, prefix string) (model.SymbolRef, model.Scope
 		return model.SymbolRef{}, nil, false
 	case *model.BlockScope:
 		return lookupXMLNS(s.Parent, prefix)
-	case *model.FunctionScope:
-		return lookupXMLNS(s.Parent, prefix)
 	case *xmlnsChildScope:
 		return lookupXMLNS(s.parent, prefix)
 	}
@@ -164,10 +153,6 @@ func processCompilationUnitXMLNS(resolver *compilationUnitSymbolResolver, cu *as
 		}
 		processXMLNSDecl(resolver, resolver.scope, decl)
 	}
-}
-
-func processBlockXMLNS(resolver *blockSymbolResolver, decl *ast.BLangXMLNS) bool {
-	return processXMLNSDecl(resolver, resolver.scope, decl)
 }
 
 func processXMLNSDecl(resolver symbolResolver, scope model.Scope, decl *ast.BLangXMLNS) bool {

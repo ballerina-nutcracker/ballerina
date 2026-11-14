@@ -48,11 +48,6 @@ type TypeDesc struct {
 	FieldAnnotations FieldAnnotationValues
 }
 
-// NewTypeDesc returns a fully initialized TypeDesc describing constraint.
-func NewTypeDesc(env semtypes.Env, constraint semtypes.SemType, annotations AnnotationValues) *TypeDesc {
-	return NewTypeDescWithFieldAnnotations(env, constraint, annotations, nil)
-}
-
 // NewTypeDescWithFieldAnnotations returns a fully initialized TypeDesc
 // describing constraint and carrying per-record-field annotations.
 func NewTypeDescWithFieldAnnotations(
@@ -325,8 +320,4 @@ func balStringLiteral(s string) string {
 	}
 	b.WriteByte('"')
 	return b.String()
-}
-
-func toStringNested(v BalValue, visited map[uintptr]bool) string {
-	return toString(v, visited, false)
 }

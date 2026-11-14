@@ -65,18 +65,22 @@ func bddPosMaybeEmpty(b bdd) bool {
 	}
 }
 
+//shallow:allow adapts subtypeData operands to the BDD union operation
 func bddSubtypeUnion(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddUnion(t1.(bdd), t2.(bdd))
 }
 
+//shallow:allow adapts subtypeData operands to the BDD intersection operation
 func bddSubtypeIntersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddIntersect(t1.(bdd), t2.(bdd))
 }
 
+//shallow:allow adapts subtypeData operands to the BDD difference operation
 func bddSubtypeDiff(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddDiff(t1.(bdd), t2.(bdd))
 }
 
+//shallow:allow adapts a subtypeData operand to the BDD complement operation
 func bddSubtypeComplement(t subtypeData) subtypeData {
 	return bddComplement(t.(bdd))
 }

@@ -25,11 +25,13 @@ type functionAtomicType struct {
 
 var _ AtomicType = &functionAtomicType{}
 
+//shallow:allow named function-type constructor selects the non-generic representation
 func functionAtomicTypeFrom(paramType SemType, rest SemType, qualifiers SemType) functionAtomicType {
 
 	return newFunctionAtomicType(paramType, rest, qualifiers, false)
 }
 
+//shallow:allow named function-type constructor selects the generic representation
 func functionAtomicTypeGenericFrom(paramType SemType, rest SemType, qualifiers SemType) functionAtomicType {
 
 	return newFunctionAtomicType(paramType, rest, qualifiers, true)

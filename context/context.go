@@ -46,10 +46,6 @@ func (c *CompilerContext) NewModuleScope(pkg model.PackageID, prefixes map[strin
 	return c.env.NewModuleScope(pkg, prefixes)
 }
 
-func (c *CompilerContext) NewFunctionScope(parent model.Scope, pkg model.PackageID) *model.FunctionScope {
-	return c.env.NewFunctionScope(parent, pkg)
-}
-
 func (c *CompilerContext) NewBlockScope(parent model.Scope, pkg model.PackageID) *model.BlockScope {
 	return c.env.NewBlockScope(parent, pkg)
 }

@@ -25,6 +25,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -188,7 +189,7 @@ func floatAtan2(_ *extern.Context, args []values.BalValue) (values.BalValue, err
 func floatFromString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	s := args[0].(string)
 	if !decimalFloatingPointStringPattern.MatchString(s) {
-		return values.NewErrorWithMessage("invalid decimal floating point string: " + s), nil
+		return values.NewError(semtypes.Error, "invalid decimal floating point string: "+s, nil, "", nil), nil
 	}
 	return parseFloat(s)
 }
@@ -196,7 +197,7 @@ func floatFromString(_ *extern.Context, args []values.BalValue) (values.BalValue
 func floatFromHexString(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	s := args[0].(string)
 	if !hexadecimalFloatingPointStringPattern.MatchString(s) {
-		return values.NewErrorWithMessage("invalid hexadecimal floating point string: " + s), nil
+		return values.NewError(semtypes.Error, "invalid hexadecimal floating point string: "+s, nil, "", nil), nil
 	}
 	return parseFloat(addMissingHexExponent(s))
 }
@@ -212,7 +213,9 @@ func addMissingHexExponent(s string) string {
 func parseFloat(s string) (values.BalValue, error) {
 	out, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return values.NewErrorWithMessage(err.Error()), nil
+		message := err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil),
+			nil
 	}
 	return out, nil
 }
@@ -242,7 +245,7 @@ func floatToFixedString(_ *extern.Context, args []values.BalValue) (values.BalVa
 	if args[1] != nil {
 		fractionDigits := args[1].(int64)
 		if fractionDigits < 0 {
-			panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
+			panic(values.NewError(semtypes.Error, "fractionDigits must be non-negative", nil, "", nil))
 		}
 		digits = int(fractionDigits)
 	}
@@ -258,7 +261,7 @@ func floatToExpString(_ *extern.Context, args []values.BalValue) (values.BalValu
 	if args[1] != nil {
 		fractionDigits := args[1].(int64)
 		if fractionDigits < 0 {
-			panic(values.NewErrorWithMessage("fractionDigits must be non-negative"))
+			panic(values.NewError(semtypes.Error, "fractionDigits must be non-negative", nil, "", nil))
 		}
 		digits = int(fractionDigits)
 	}

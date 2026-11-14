@@ -25,5 +25,7 @@ jobs:
         run: go test ./compiler-tools/nodebase
       - name: Test function usage checker
         run: go test ./compiler-tools/funcusage
+      - name: Test shallow declaration checker
+        run: go test ./compiler-tools/shallow/...
       - name: Run linters
         run: make -j4 lint

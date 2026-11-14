@@ -24,6 +24,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/common/constants"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -64,7 +65,8 @@ func getFormattedError(cs *callStack, r any) error {
 // panicWithExternError raises a native-call failure as a *values.Error so
 // that `trap` can recover it like any other Ballerina panic.
 func panicWithExternError(err error) {
-	panic(values.NewErrorWithMessage(err.Error()))
+	message := err.Error()
+	panic(values.NewError(semtypes.Error, message, nil, "", nil))
 }
 
 func panicMessage(r any) string {

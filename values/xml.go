@@ -96,18 +96,19 @@ func (e *XMLElement) ExpandedName() string {
 
 func (e *XMLElement) SetExpandedName(name string) {
 	if e.isReadonly {
-		panic(NewErrorWithMessage("cannot mutate readonly XML element"))
+		panic(NewError(semtypes.Error, "cannot mutate readonly XML element", nil, "", nil))
 	}
 	uri, local, err := ParseExpandedXMLName(name)
 	if err != nil || uri == XMLNSNamespaceURI {
 		if err == nil {
 			err = fmt.Errorf("element name cannot use the XMLNS namespace")
 		}
-		panic(NewErrorWithMessage(err.Error()))
+		message := err.Error()
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 	if uri == "" {
 		if value, ok := e.Attributes.Get(ExpandedXMLName(XMLNSNamespaceURI, "xmlns")); ok && value.(string) != "" {
-			panic(NewErrorWithMessage("unnamespaced XML element conflicts with its local default namespace"))
+			panic(NewError(semtypes.Error, "unnamespaced XML element conflicts with its local default namespace", nil, "", nil))
 		}
 	}
 	e.Prefix, e.LocalName, e.NamespaceURI = "", local, uri
@@ -115,11 +116,11 @@ func (e *XMLElement) SetExpandedName(name string) {
 
 func (e *XMLElement) SetXMLChildren(children XMLValue) {
 	if e.isReadonly {
-		panic(NewErrorWithMessage("cannot mutate readonly XML element"))
+		panic(NewError(semtypes.Error, "cannot mutate readonly XML element", nil, "", nil))
 	}
 	normalized := NewNormalizedXMLSequence([]XMLValue{children})
 	if xmlContainsElement(normalized, e) {
-		panic(NewErrorWithMessage("XML child cycle"))
+		panic(NewError(semtypes.Error, "XML child cycle", nil, "", nil))
 	}
 	e.Children = normalized
 }
@@ -183,21 +184,23 @@ var xmlTemplateAttributeEscaper = strings.NewReplacer(
 	"\r", "&#13;",
 )
 
-func escapeXMLContent(s string) string {
-	return xmlContentEscaper.Replace(s)
-}
-
 // EscapeXMLAttribute escapes characters in XML attribute values quoted with `"`.
+//
+//shallow:allow public escaping API keeps reusable replacers private
 func EscapeXMLAttribute(s string) string {
 	return xmlAttributeEscaper.Replace(s)
 }
 
 // EscapeXMLTemplateContent escapes an xml template insertion into character data.
+//
+//shallow:allow public escaping API keeps reusable replacers private
 func EscapeXMLTemplateContent(s string) string {
 	return xmlTemplateContentEscaper.Replace(s)
 }
 
 // EscapeXMLTemplateAttribute escapes an xml template insertion into an attribute value quoted with either `"` or `'`.
+//
+//shallow:allow public escaping API keeps reusable replacers private
 func EscapeXMLTemplateAttribute(s string) string {
 	return xmlTemplateAttributeEscaper.Replace(s)
 }
@@ -224,7 +227,8 @@ func (p *XMLProcessingInstruction) IterItems() []XMLValue { return []XMLValue{p}
 
 func (p *XMLProcessingInstruction) XMLString() string {
 	if strings.Contains(p.Data, "?>") {
-		panic(NewErrorWithMessage(fmt.Sprintf("xml processing instruction %q data must not contain '?>'", p.Target)))
+		message := fmt.Sprintf("xml processing instruction %q data must not contain '?>'", p.Target)
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return "<?" + p.Target + " " + p.Data + "?>"
 }
@@ -241,7 +245,7 @@ func (t *XMLText) IterItems() []XMLValue {
 }
 
 func (t *XMLText) XMLString() string {
-	return escapeXMLContent(t.Body)
+	return xmlContentEscaper.Replace(t.Body)
 }
 
 func (c *XMLComment) Type() semtypes.SemType { return c.semType }
@@ -252,7 +256,7 @@ func (c *XMLComment) IterItems() []XMLValue { return []XMLValue{c} }
 
 func (c *XMLComment) XMLString() string {
 	if strings.Contains(c.Body, "--") || strings.HasSuffix(c.Body, "-") {
-		panic(NewErrorWithMessage("xml comment body must not contain '--' or end with '-'"))
+		panic(NewError(semtypes.Error, "xml comment body must not contain '--' or end with '-'", nil, "", nil))
 	}
 	return "<!--" + c.Body + "-->"
 }
@@ -328,7 +332,8 @@ func NewXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProce
 
 func NewValidatedXMLProcessingInstruction(target, data string, isReadonly bool) *XMLProcessingInstruction {
 	if err := validateXMLProcessingInstruction(target, data); err != nil {
-		panic(NewErrorWithMessage(err.Error()))
+		message := err.Error()
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return NewXMLProcessingInstruction(target, data, isReadonly)
 }
@@ -352,7 +357,8 @@ func NewXMLComment(body string, isReadonly bool) *XMLComment {
 
 func NewValidatedXMLComment(body string, isReadonly bool) *XMLComment {
 	if err := validateXMLComment(body); err != nil {
-		panic(NewErrorWithMessage(err.Error()))
+		message := err.Error()
+		panic(NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return NewXMLComment(body, isReadonly)
 }

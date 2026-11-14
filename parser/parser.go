@@ -196,7 +196,7 @@ func (a *abstractParser) recover(token st.STToken, currentCtx common.ParserRuleC
 	isCompletion = isCompletion || token.Kind() == st.EOF_TOKEN
 	sol := a.errorHandler.Recover(currentCtx, token, isCompletion)
 	if sol == nil {
-		return &solution{Action: actionKeep, Ctx: currentCtx, RecoveredNode: failedToken(), TokenKind: st.EOF_TOKEN}
+		return &solution{Action: actionKeep, Ctx: currentCtx, RecoveredNode: st.CreateTokenWithDiagnostics(st.EOF_TOKEN, st.CreateEmptyNodeList(), st.CreateEmptyNodeList(), nil), TokenKind: st.EOF_TOKEN}
 	}
 	switch sol.Action {
 	case actionRemove:
@@ -211,7 +211,7 @@ func (a *abstractParser) recover(token st.STToken, currentCtx common.ParserRuleC
 }
 
 func (a *abstractParser) insertToken(kind st.SyntaxKind, context common.ParserRuleContext) {
-	a.insertedToken = createMissingTokenWithDiagnosticsFromParserRules(kind, context)
+	a.insertedToken = st.CreateMissingTokenWithDiagnostics(kind, context.GetErrorCode())
 }
 
 func (a *abstractParser) removeInsertedToken() {
@@ -253,7 +253,7 @@ func (a *abstractParser) isNodeListEmpty(node st.STNode) bool {
 
 func (a *abstractParser) cloneWithDiagnosticIfListEmpty(nodeList st.STNode, target st.STNode, diagnosticCode diagnostics.DiagnosticCode) st.STNode {
 	if a.isNodeListEmpty(nodeList) {
-		return st.AddDiagnostic(target, diagnosticCode)
+		return st.AddSyntaxDiagnostic(target, st.CreateDiagnostic(diagnosticCode))
 	}
 	return target
 }
@@ -601,13 +601,13 @@ func isDigit(c byte) bool {
 
 func (b *ballerinaParser) Parse() st.STNode {
 	ast := b.parseCompUnit()
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
+	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return st.GenerateJSON(ast, kindName) })
 	return ast
 }
 
 func (b *ballerinaParser) ParseImports() st.STNode {
 	ast := b.parseCompUnitImports()
-	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return generateJSON(ast) })
+	debugcommon.DebugWriteLazy(debugcommon.DUMP_ST, func() string { return st.GenerateJSON(ast, kindName) })
 	return ast
 }
 
@@ -692,7 +692,7 @@ func (b *ballerinaParser) ParseAsModuleMemberDeclaration() st.STNode {
 	if topLevelNode.Kind() == st.IMPORT_DECLARATION {
 		temp := topLevelNode
 		topLevelNode = b.createMissingSimpleVarDecl(true)
-		topLevelNode = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(topLevelNode, temp)
+		topLevelNode = st.CloneWithTrailingInvalidNodeMinutiae(topLevelNode, temp, nil, nil)
 	}
 	topLevelNode = b.invalidateRestAndAddToTrailingMinutiae(topLevelNode)
 	return topLevelNode
@@ -757,7 +757,7 @@ func (b *ballerinaParser) ParseAsIntermediateClause(allowActions bool) st.STNode
 	if intermediateClause.Kind() == st.SELECT_CLAUSE {
 		temp := intermediateClause
 		intermediateClause = b.createMissingWhereClause()
-		intermediateClause = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(intermediateClause, temp)
+		intermediateClause = st.CloneWithTrailingInvalidNodeMinutiae(intermediateClause, temp, nil, nil)
 	}
 	intermediateClause = b.invalidateRestAndAddToTrailingMinutiae(intermediateClause)
 	return intermediateClause
@@ -789,7 +789,7 @@ func (b *ballerinaParser) ParseAsMarkdownDocumentation() st.STNode {
 			&common.WARNING_MISSING_HASH_TOKEN)
 		docLine := st.CreateMarkdownDocumentationLineNode(st.MARKDOWN_DOCUMENTATION_LINE,
 			missingHash, st.CreateEmptyNodeList())
-		markdownDoc = st.CreateMarkdownDocumentationNode(st.CreateNodeListFromNodes(docLine))
+		markdownDoc = st.CreateMarkdownDocumentationNode(st.CreateNodeList(docLine))
 	}
 	markdownDoc = b.invalidateRestAndAddToTrailingMinutiae(markdownDoc)
 	return markdownDoc
@@ -974,7 +974,7 @@ func (b *ballerinaParser) parseTopLevelNodeWithMetadata(metadata st.STNode) st.S
 func (b *ballerinaParser) addMetadataNotAttachedDiagnostic(metadata st.STMetadataNode) st.STNode {
 	docString := metadata.DocumentationString
 	if docString != nil {
-		docString = st.AddDiagnostic(docString, &common.ERROR_DOCUMENTATION_NOT_ATTACHED_TO_A_CONSTRUCT)
+		docString = st.AddSyntaxDiagnostic(docString, st.CreateDiagnostic(&common.ERROR_DOCUMENTATION_NOT_ATTACHED_TO_A_CONSTRUCT))
 	}
 	annotList, ok := metadata.Annotations.(*st.STNodeList)
 	if !ok {
@@ -1636,7 +1636,7 @@ func (b *ballerinaParser) parseFuncDefOrMethodDeclEnd(metadata st.STNode, visibi
 		} else {
 			errorCode = common.ERROR_MISSING_RESOURCE_PATH_IN_RESOURCE_ACCESSOR_DEFINITION
 		}
-		name = st.AddDiagnostic(name, &errorCode)
+		name = st.AddSyntaxDiagnostic(name, st.CreateDiagnostic(&errorCode))
 		hasResourcePath = true
 	}
 	if hasResourcePath {
@@ -1772,7 +1772,7 @@ func (b *ballerinaParser) createResourceAccessorDefnOrDecl(metadata st.STNode, v
 	}
 	if !hasResourceQual {
 		validatedList = append(validatedList, st.CreateMissingToken(st.RESOURCE_KEYWORD, nil))
-		functionKeyword = st.AddDiagnostic(functionKeyword, &common.ERROR_MISSING_RESOURCE_KEYWORD)
+		functionKeyword = st.AddSyntaxDiagnostic(functionKeyword, st.CreateDiagnostic(&common.ERROR_MISSING_RESOURCE_KEYWORD))
 	}
 	if visibilityQualifier != nil {
 		b.updateFirstNodeInListWithLeadingInvalidNode(validatedList, visibilityQualifier,
@@ -3487,8 +3487,7 @@ func (b *ballerinaParser) parseQualifiedIdentifierNode(identifier st.STNode, isI
 
 func (b *ballerinaParser) createQualifiedNameReferenceNode(identifier st.STNode, colon st.STNode, varOrFuncName st.STNode) st.STNode {
 	if b.hasTrailingMinutiae(identifier) || b.hasTrailingMinutiae(colon) {
-		colon = st.AddDiagnostic(colon,
-			&common.ERROR_INTERVENING_WHITESPACES_ARE_NOT_ALLOWED)
+		colon = st.AddSyntaxDiagnostic(colon, st.CreateDiagnostic(&common.ERROR_INTERVENING_WHITESPACES_ARE_NOT_ALLOWED))
 	}
 	return st.CreateQualifiedNameReferenceNode(identifier, colon, varOrFuncName)
 }
@@ -3906,8 +3905,7 @@ func (b *ballerinaParser) createModuleVarDeclaration(metadata st.STNode, publicQ
 func (b *ballerinaParser) createConfigurableModuleVarDeclWithMissingInitializer(metadata st.STNode, publicQualifier st.STNode, varDeclQuals []st.STNode, typedBindingPattern st.STNode, semicolon st.STNode) st.STNode {
 	var assign st.STNode
 	assign = st.CreateMissingToken(st.EQUAL_TOKEN, nil)
-	assign = st.AddDiagnostic(assign,
-		&common.ERROR_CONFIGURABLE_VARIABLE_MUST_BE_INITIALIZED_OR_REQUIRED)
+	assign = st.AddSyntaxDiagnostic(assign, st.CreateDiagnostic(&common.ERROR_CONFIGURABLE_VARIABLE_MUST_BE_INITIALIZED_OR_REQUIRED))
 	questionMarkToken := st.CreateMissingToken(st.QUESTION_MARK_TOKEN, nil)
 	expr := st.CreateRequiredExpressionNode(questionMarkToken)
 	return b.createModuleVarDeclarationInner(metadata, publicQualifier, varDeclQuals, typedBindingPattern, assign, expr,
@@ -4381,7 +4379,7 @@ func (b *ballerinaParser) createMissingNaturalExpressionNode(optionalConstKeywor
 	prompt := st.CreateEmptyNodeList()
 	naturalExpr := st.CreateNaturalExpressionNode(optionalConstKeyword, naturalKeyword,
 		optionalParenthesizedArgList, openBrace, prompt, closeBrace)
-	naturalExpr = st.AddDiagnostic(naturalExpr, &common.ERROR_MISSING_NATURAL_PROMPT_BLOCK)
+	naturalExpr = st.AddSyntaxDiagnostic(naturalExpr, st.CreateDiagnostic(&common.ERROR_MISSING_NATURAL_PROMPT_BLOCK))
 	return naturalExpr
 }
 
@@ -4433,8 +4431,7 @@ func (b *ballerinaParser) createMissingObjectConstructor(annots st.STNode, quali
 	objConstructor := st.CreateObjectConstructorExpressionNode(annots, qualifierNodeList,
 		objectKeyword, st.CreateEmptyNode(), openBrace, st.CreateEmptyNodeList(),
 		closeBrace)
-	objConstructor = st.AddDiagnostic(objConstructor,
-		&common.ERROR_MISSING_OBJECT_CONSTRUCTOR_EXPRESSION)
+	objConstructor = st.AddSyntaxDiagnostic(objConstructor, st.CreateDiagnostic(&common.ERROR_MISSING_OBJECT_CONSTRUCTOR_EXPRESSION))
 	return objConstructor
 }
 
@@ -4748,8 +4745,7 @@ func (b *ballerinaParser) createXMLStepExpression(lhsExpr st.STNode) st.STNode {
 		slashLT = st.CloneWithLeadingInvalidNodeMinutiae(slashLT, slashToken, nil)
 		slashLT = st.CloneWithLeadingInvalidNodeMinutiae(slashLT, ltToken, nil)
 	} else {
-		slashLT = st.CreateToken(st.SLASH_LT_TOKEN, slashToken.LeadingMinutiae(),
-			ltToken.TrailingMinutiae())
+		slashLT = st.CreateTokenWithDiagnostics(st.SLASH_LT_TOKEN, slashToken.LeadingMinutiae(), ltToken.TrailingMinutiae(), nil)
 	}
 	namePattern := b.parseXMLNamePatternChain(slashLT)
 	xmlStepExtends := b.parseXMLStepExtends()
@@ -4859,8 +4855,7 @@ func (b *ballerinaParser) parseMemberAccessExpr(lhsExpr st.STNode, isRhsExpr boo
 		if listKeyExprNode.IsEmpty() {
 			missingVarRef := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
 			keyExpr = st.CreateNodeList(missingVarRef)
-			closeBracket = st.AddDiagnostic(closeBracket,
-				&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR)
+			closeBracket = st.AddSyntaxDiagnostic(closeBracket, st.CreateDiagnostic(&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR))
 		}
 	}
 	return st.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
@@ -5168,13 +5163,11 @@ func (b *ballerinaParser) getErrorArgList(functionArgs st.STNode) st.STNode {
 	case st.POSITIONAL_ARG:
 		errorArgList = append(errorArgList, arg)
 	case st.NAMED_ARG:
-		arg = st.AddDiagnostic(arg,
-			&common.ERROR_MISSING_ERROR_MESSAGE_IN_ERROR_CONSTRUCTOR)
+		arg = st.AddSyntaxDiagnostic(arg, st.CreateDiagnostic(&common.ERROR_MISSING_ERROR_MESSAGE_IN_ERROR_CONSTRUCTOR))
 		errorArgList = append(errorArgList, arg)
 	default:
-		arg = st.AddDiagnostic(arg,
-			&common.ERROR_MISSING_ERROR_MESSAGE_IN_ERROR_CONSTRUCTOR)
-		arg = st.AddDiagnostic(arg, &common.ERROR_REST_ARG_IN_ERROR_CONSTRUCTOR)
+		arg = st.AddSyntaxDiagnostic(arg, st.CreateDiagnostic(&common.ERROR_MISSING_ERROR_MESSAGE_IN_ERROR_CONSTRUCTOR))
+		arg = st.AddSyntaxDiagnostic(arg, st.CreateDiagnostic(&common.ERROR_REST_ARG_IN_ERROR_CONSTRUCTOR))
 		errorArgList = append(errorArgList, arg)
 	}
 	diagnosticErrorCode := &common.ERROR_REST_ARG_IN_ERROR_CONSTRUCTOR
@@ -5252,7 +5245,7 @@ func (b *ballerinaParser) parseArgList(firstArg st.STNode) st.STNode {
 					expr = nameRef
 				}
 				curArg = st.CreateNamedArgumentNode(expr, missingEqual, nameRef)
-				curArg = st.AddDiagnostic(curArg, errorCode)
+				curArg = st.AddSyntaxDiagnostic(curArg, st.CreateDiagnostic(errorCode))
 				argsList = append(argsList, argEnd, curArg)
 			} else {
 				argsList = b.updateLastNodeInListWithInvalidNode(argsList, argEnd, nil)
@@ -5607,7 +5600,7 @@ func (b *ballerinaParser) parseObjectFieldRhs(metadata st.STNode, visibilityQual
 		if isObjectTypeDesc {
 			fieldName = st.CloneWithTrailingInvalidNodeMinutiae(fieldName, equalsToken,
 				&common.ERROR_FIELD_INITIALIZATION_NOT_ALLOWED_IN_OBJECT_TYPE)
-			fieldName = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(fieldName, expression)
+			fieldName = st.CloneWithTrailingInvalidNodeMinutiae(fieldName, expression, nil, nil)
 			equalsToken = st.CreateEmptyNode()
 			expression = st.CreateEmptyNode()
 		}
@@ -6779,7 +6772,7 @@ func (b *ballerinaParser) parseAnnotation() st.STNode {
 	if b.isPredeclaredIdentifier(b.peek().Kind()) {
 		annotReference = b.parseQualifiedIdentifier(common.PARSER_RULE_CONTEXT_ANNOT_REFERENCE)
 	} else {
-		atToken = st.AddDiagnostic(atToken, &common.ERROR_MISSING_ANNOTATION_NAME)
+		atToken = st.AddSyntaxDiagnostic(atToken, st.CreateDiagnostic(&common.ERROR_MISSING_ANNOTATION_NAME))
 		annotReference = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 		annotReference = st.CreateSimpleNameReferenceNode(annotReference)
 	}
@@ -6941,7 +6934,7 @@ func (b *ballerinaParser) getExpressionAsStatement(expression st.STNode) st.STNo
 		expression = b.getExpression(expression)
 		exprStmt := st.CreateExpressionStatementNode(st.INVALID_EXPRESSION_STATEMENT,
 			expression, semicolon)
-		exprStmt = st.AddDiagnostic(exprStmt, &common.ERROR_INVALID_EXPRESSION_STATEMENT)
+		exprStmt = st.AddSyntaxDiagnostic(exprStmt, st.CreateDiagnostic(&common.ERROR_INVALID_EXPRESSION_STATEMENT))
 		return exprStmt
 	}
 }
@@ -7444,8 +7437,7 @@ func (b *ballerinaParser) parseAnnotationAttachPoints() st.STNode {
 			missingAttachPointIdent := st.CreateMissingToken(st.TYPE_KEYWORD, nil)
 			identList := st.CreateNodeList(missingAttachPointIdent)
 			attachPoint = st.CreateAnnotationAttachPointNode(st.CreateEmptyNode(), identList)
-			attachPoint = st.AddDiagnostic(attachPoint,
-				&common.ERROR_MISSING_ANNOTATION_ATTACH_POINT)
+			attachPoint = st.AddSyntaxDiagnostic(attachPoint, st.CreateDiagnostic(&common.ERROR_MISSING_ANNOTATION_ATTACH_POINT))
 			attachPoints = append(attachPoints, attachPoint)
 			break
 		}
@@ -7908,8 +7900,7 @@ func (b *ballerinaParser) parseForkStatement() st.STNode {
 	b.endContext()
 	forkStmt := st.CreateForkStatementNode(forkKeyword, openBrace, namedWorkerDeclarations, closeBrace)
 	if b.isNodeListEmpty(namedWorkerDeclarations) {
-		return st.AddDiagnostic(forkStmt,
-			&common.ERROR_MISSING_NAMED_WORKER_DECLARATION_IN_FORK_STMT)
+		return st.AddSyntaxDiagnostic(forkStmt, st.CreateDiagnostic(&common.ERROR_MISSING_NAMED_WORKER_DECLARATION_IN_FORK_STMT))
 	}
 	return forkStmt
 }
@@ -8467,7 +8458,7 @@ func (b *ballerinaParser) createMissingTemplateExpressionNode(reKeyword st.STNod
 	endingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
 	content := st.CreateEmptyNodeList()
 	templateExpr := st.CreateTemplateExpressionNode(kind, reKeyword, startingBackTick, content, endingBackTick)
-	templateExpr = st.AddDiagnostic(templateExpr, &common.ERROR_MISSING_BACKTICK_STRING)
+	templateExpr = st.AddSyntaxDiagnostic(templateExpr, st.CreateDiagnostic(&common.ERROR_MISSING_BACKTICK_STRING))
 	return templateExpr
 }
 
@@ -9017,11 +9008,10 @@ func (b *ballerinaParser) parseQueryExprRhs(queryConstructType st.STNode, isRhsE
 		// Now we need to attach the diagnostic to the last intermediate clause.
 		// If there are no intermediate clauses, then attach to the from clause.
 		if len(clauses) == 0 {
-			fromClause = st.AddDiagnostic(fromClause, &common.ERROR_MISSING_SELECT_CLAUSE)
+			fromClause = st.AddSyntaxDiagnostic(fromClause, st.CreateDiagnostic(&common.ERROR_MISSING_SELECT_CLAUSE))
 		} else {
 			lastIndex := (len(clauses) - 1)
-			intClauseWithDiagnostic := st.AddDiagnostic(clauses[lastIndex],
-				&common.ERROR_MISSING_SELECT_CLAUSE)
+			intClauseWithDiagnostic := st.AddSyntaxDiagnostic(clauses[lastIndex], st.CreateDiagnostic(&common.ERROR_MISSING_SELECT_CLAUSE))
 			clauses[lastIndex] = intClauseWithDiagnostic
 		}
 	}
@@ -9666,7 +9656,6 @@ func (b *ballerinaParser) parseSignedIntOrFloat() st.STNode {
 	nextToken := b.peek()
 
 	switch nextToken.Kind() {
-
 	case st.HEX_INTEGER_LITERAL_TOKEN,
 		st.DECIMAL_FLOATING_POINT_LITERAL_TOKEN,
 		st.HEX_FLOATING_POINT_LITERAL_TOKEN:
@@ -9886,11 +9875,9 @@ func (b *ballerinaParser) parseSignedRightShiftToken() st.STNode {
 	}
 	endLGToken := b.consume()
 	var doubleGTToken st.STNode
-	doubleGTToken = st.CreateToken(st.DOUBLE_GT_TOKEN, firstToken.LeadingMinutiae(),
-		endLGToken.TrailingMinutiae())
+	doubleGTToken = st.CreateTokenWithDiagnostics(st.DOUBLE_GT_TOKEN, firstToken.LeadingMinutiae(), endLGToken.TrailingMinutiae(), nil)
 	if b.hasTrailingMinutiae(firstToken) {
-		doubleGTToken = st.AddDiagnostic(doubleGTToken,
-			&common.ERROR_NO_WHITESPACES_ALLOWED_IN_RIGHT_SHIFT_OP)
+		doubleGTToken = st.AddSyntaxDiagnostic(doubleGTToken, st.CreateDiagnostic(&common.ERROR_NO_WHITESPACES_ALLOWED_IN_RIGHT_SHIFT_OP))
 	}
 	return doubleGTToken
 }
@@ -9903,15 +9890,13 @@ func (b *ballerinaParser) parseUnsignedRightShiftToken() st.STNode {
 	middleGTToken := b.consume()
 	endLGToken := b.consume()
 	var unsignedRightShiftToken st.STNode
-	unsignedRightShiftToken = st.CreateToken(st.TRIPPLE_GT_TOKEN,
-		firstToken.LeadingMinutiae(), endLGToken.TrailingMinutiae())
+	unsignedRightShiftToken = st.CreateTokenWithDiagnostics(st.TRIPPLE_GT_TOKEN, firstToken.LeadingMinutiae(), endLGToken.TrailingMinutiae(), nil)
 	validOpenGTToken := (!b.hasTrailingMinutiae(firstToken))
 	validMiddleGTToken := (!b.hasTrailingMinutiae(middleGTToken))
 	if validOpenGTToken && validMiddleGTToken {
 		return unsignedRightShiftToken
 	}
-	unsignedRightShiftToken = st.AddDiagnostic(unsignedRightShiftToken,
-		&common.ERROR_NO_WHITESPACES_ALLOWED_IN_UNSIGNED_RIGHT_SHIFT_OP)
+	unsignedRightShiftToken = st.AddSyntaxDiagnostic(unsignedRightShiftToken, st.CreateDiagnostic(&common.ERROR_NO_WHITESPACES_ALLOWED_IN_UNSIGNED_RIGHT_SHIFT_OP))
 	return unsignedRightShiftToken
 }
 
@@ -9939,8 +9924,7 @@ func (b *ballerinaParser) parseSingleOrAlternateWaitAction(waitKeyword st.STNode
 	if b.isEndOfWaitFutureExprList(nextToken.Kind()) {
 		b.endContext()
 		waitFutureExprs := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
-		waitFutureExprs = st.AddDiagnostic(waitFutureExprs,
-			&common.ERROR_MISSING_WAIT_FUTURE_EXPRESSION)
+		waitFutureExprs = st.AddSyntaxDiagnostic(waitFutureExprs, st.CreateDiagnostic(&common.ERROR_MISSING_WAIT_FUTURE_EXPRESSION))
 		return st.CreateWaitActionNode(waitKeyword, waitFutureExprs)
 	}
 	var waitFutureExprList []st.STNode
@@ -9977,10 +9961,9 @@ func (b *ballerinaParser) isEndOfWaitFutureExprList(nextTokenKind st.SyntaxKind)
 func (b *ballerinaParser) parseWaitFutureExpr() st.STNode {
 	waitFutureExpr := b.parseExpressionWithPrecedence(operatorPrecedenceBitwiseOr, true, true)
 	if waitFutureExpr.Kind() == st.MAPPING_CONSTRUCTOR {
-		waitFutureExpr = st.AddDiagnostic(waitFutureExpr,
-			&common.ERROR_MAPPING_CONSTRUCTOR_EXPR_AS_A_WAIT_EXPR)
+		waitFutureExpr = st.AddSyntaxDiagnostic(waitFutureExpr, st.CreateDiagnostic(&common.ERROR_MAPPING_CONSTRUCTOR_EXPR_AS_A_WAIT_EXPR))
 	} else if b.isAction(waitFutureExpr) {
-		waitFutureExpr = st.AddDiagnostic(waitFutureExpr, &common.ERROR_ACTION_AS_A_WAIT_EXPR)
+		waitFutureExpr = st.AddSyntaxDiagnostic(waitFutureExpr, st.CreateDiagnostic(&common.ERROR_ACTION_AS_A_WAIT_EXPR))
 	}
 	return waitFutureExpr
 }
@@ -10544,7 +10527,7 @@ func (b *ballerinaParser) parseByteArrayLiteral() st.STNode {
 		endingBackTick := st.CreateMissingToken(st.BACKTICK_TOKEN, nil)
 		content := st.CreateEmptyNode()
 		byteArrayLiteral := st.CreateByteArrayLiteralNode(ty, startingBackTick, content, endingBackTick)
-		byteArrayLiteral = st.AddDiagnostic(byteArrayLiteral, &common.ERROR_MISSING_BYTE_ARRAY_CONTENT)
+		byteArrayLiteral = st.AddSyntaxDiagnostic(byteArrayLiteral, st.CreateDiagnostic(&common.ERROR_MISSING_BYTE_ARRAY_CONTENT))
 		return byteArrayLiteral
 	}
 	content := b.parseByteArrayContent()
@@ -10577,10 +10560,9 @@ func (b *ballerinaParser) parseByteArrayLiteralWithContent(typeKeyword st.STNode
 		clonedStartingBackTick := startingBackTick
 		for index := 0; index < items.Size(); index++ {
 			item := items.Get(index)
-			clonedStartingBackTick = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(clonedStartingBackTick, item)
+			clonedStartingBackTick = st.CloneWithTrailingInvalidNodeMinutiae(clonedStartingBackTick, item, nil, nil)
 		}
-		newStartingBackTick = st.AddDiagnostic(clonedStartingBackTick,
-			&common.ERROR_INVALID_CONTENT_IN_BYTE_ARRAY_LITERAL)
+		newStartingBackTick = st.AddSyntaxDiagnostic(clonedStartingBackTick, st.CreateDiagnostic(&common.ERROR_INVALID_CONTENT_IN_BYTE_ARRAY_LITERAL))
 	}
 	endingBackTick := b.parseBacktickToken(common.PARSER_RULE_CONTEXT_TEMPLATE_END)
 	return st.CreateByteArrayLiteralNode(typeKeyword, newStartingBackTick, content, endingBackTick)
@@ -10837,8 +10819,7 @@ func (b *ballerinaParser) parseMatchStatement() st.STNode {
 	}
 	matchClauses := st.CreateNodeList(matchClausesList...)
 	if b.isNodeListEmpty(matchClauses) {
-		openBrace = st.AddDiagnostic(openBrace,
-			&common.ERROR_MATCH_STATEMENT_SHOULD_HAVE_ONE_OR_MORE_MATCH_CLAUSES)
+		openBrace = st.AddSyntaxDiagnostic(openBrace, st.CreateDiagnostic(&common.ERROR_MATCH_STATEMENT_SHOULD_HAVE_ONE_OR_MORE_MATCH_CLAUSES))
 	}
 	closeBrace := b.parseCloseBrace()
 	b.endContext()
@@ -10878,9 +10859,9 @@ func (b *ballerinaParser) parseMatchClause() st.STNode {
 		matchPatterns = st.CreateNodeList(constantPattern)
 		errorCode := &common.ERROR_MISSING_MATCH_PATTERN
 		if matchGuard != nil {
-			matchGuard = st.AddDiagnostic(matchGuard, errorCode)
+			matchGuard = st.AddSyntaxDiagnostic(matchGuard, st.CreateDiagnostic(errorCode))
 		} else {
-			rightDoubleArrow = st.AddDiagnostic(rightDoubleArrow, errorCode)
+			rightDoubleArrow = st.AddSyntaxDiagnostic(rightDoubleArrow, st.CreateDiagnostic(errorCode))
 		}
 	}
 	return st.CreateMatchClauseNode(matchPatterns, matchGuard, rightDoubleArrow, blockStmt)
@@ -11122,8 +11103,7 @@ func (b *ballerinaParser) createMissingFieldMatchPattern() st.STNode {
 	identifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 	matchPattern := st.CreateSimpleNameReferenceNode(identifier)
 	fieldMatchPatternMember := st.CreateFieldMatchPatternNode(fieldName, colon, matchPattern)
-	fieldMatchPatternMember = st.AddDiagnostic(fieldMatchPatternMember,
-		&common.ERROR_MISSING_FIELD_MATCH_PATTERN_MEMBER)
+	fieldMatchPatternMember = st.AddSyntaxDiagnostic(fieldMatchPatternMember, st.CreateDiagnostic(&common.ERROR_MISSING_FIELD_MATCH_PATTERN_MEMBER))
 	return fieldMatchPatternMember
 }
 
@@ -11606,8 +11586,7 @@ func (b *ballerinaParser) createCaptureBPWithMissingVarName(lhsType st.STNode, s
 	lhsType = b.getTypeDescFromExpr(lhsType)
 	rhsType = b.getTypeDescFromExpr(rhsType)
 	newTypeDesc := b.mergeTypes(lhsType, separatorToken, rhsType)
-	identifier := createMissingTokenWithDiagnosticsFromParserRules(st.IDENTIFIER_TOKEN,
-		common.PARSER_RULE_CONTEXT_VARIABLE_NAME)
+	identifier := st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN, common.PARSER_RULE_CONTEXT_VARIABLE_NAME.GetErrorCode())
 	captureBP := st.CreateCaptureBindingPatternNode(identifier)
 	return st.CreateTypedBindingPatternNode(newTypeDesc, captureBP)
 }
@@ -12289,8 +12268,7 @@ func (b *ballerinaParser) parseErrorArgListBindingPatternsWithList(argListBindin
 	case st.ERROR_BINDING_PATTERN:
 		missingIdentifier := st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
 		missingErrorMsgBP := st.CreateCaptureBindingPatternNode(missingIdentifier)
-		missingErrorMsgBP = st.AddDiagnostic(missingErrorMsgBP,
-			&common.ERROR_MISSING_ERROR_MESSAGE_BINDING_PATTERN)
+		missingErrorMsgBP = st.AddSyntaxDiagnostic(missingErrorMsgBP, st.CreateDiagnostic(&common.ERROR_MISSING_ERROR_MESSAGE_BINDING_PATTERN))
 		missingComma := st.CreateMissingTokenWithDiagnostics(st.COMMA_TOKEN,
 			&common.ERROR_MISSING_COMMA_TOKEN)
 		argListBindingPatterns = append(argListBindingPatterns, missingErrorMsgBP)
@@ -13416,7 +13394,7 @@ func (b *ballerinaParser) parseStatementStartBracketedListRhs(annots st.STNode, 
 			return st.CreateAmbiguousCollectionNode(st.BRACKETED_LIST, openBracket, members, closeBracket)
 		}
 		if len(members) == 0 {
-			openBracket = st.AddDiagnostic(openBracket, &common.ERROR_MISSING_TUPLE_MEMBER)
+			openBracket = st.AddSyntaxDiagnostic(openBracket, st.CreateDiagnostic(&common.ERROR_MISSING_TUPLE_MEMBER))
 		}
 		b.switchContext(common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)
 		b.startContext(common.PARSER_RULE_CONTEXT_TUPLE_MEMBERS)
@@ -14437,8 +14415,7 @@ func (b *ballerinaParser) getTypeDescFromExpr(expression st.STNode) st.STNode {
 		var simpleTypeDescIdentifier st.STNode
 		simpleTypeDescIdentifier = st.CreateMissingTokenWithDiagnostics(
 			st.IDENTIFIER_TOKEN, &common.ERROR_MISSING_TYPE_DESC)
-		simpleTypeDescIdentifier = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(simpleTypeDescIdentifier,
-			expression)
+		simpleTypeDescIdentifier = st.CloneWithTrailingInvalidNodeMinutiae(simpleTypeDescIdentifier, expression, nil, nil)
 		return st.CreateSimpleNameReferenceNode(simpleTypeDescIdentifier)
 	}
 }
@@ -14638,7 +14615,6 @@ func (b *ballerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappin
 		}
 		fields := st.CreateNodeList(fieldList...)
 		return st.CreateMappingConstructorExpressionNode(innerList.CollectionStartToken, fields,
-
 			innerList.CollectionEndToken)
 
 	case st.REST_BINDING_PATTERN:
@@ -14653,7 +14629,6 @@ func (b *ballerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappin
 		}
 
 		return st.CreateSpreadMemberNode(restBindingPattern.EllipsisToken,
-
 			restBindingPattern.VariableName)
 
 	case st.SPECIFIC_FIELD:
@@ -14663,7 +14638,6 @@ func (b *ballerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappin
 			return st.CreateEmptyNode()
 		}
 		return st.CreateSpecificFieldNode(field.ReadonlyKeyword, field.FieldName, field.Colon,
-
 			b.getExpression(field.ValueExpr))
 
 	case st.ERROR_CONSTRUCTOR:
@@ -14697,8 +14671,7 @@ func (b *ballerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappin
 		closeBracket := indexedExpressionNode.CloseBracket
 		missingVarRef := st.CreateSimpleNameReferenceNode(st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil))
 		keyExpr := st.CreateNodeList(missingVarRef)
-		closeBracket = st.AddDiagnostic(closeBracket,
-			&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR)
+		closeBracket = st.AddSyntaxDiagnostic(closeBracket, st.CreateDiagnostic(&common.ERROR_MISSING_KEY_EXPR_IN_MEMBER_ACCESS_EXPR))
 		return st.CreateIndexedExpressionNode(lhsExpr, openBracket, keyExpr, closeBracket)
 	case st.SIMPLE_NAME_REFERENCE, st.QUALIFIED_NAME_REFERENCE, st.COMPUTED_NAME_FIELD, st.SPREAD_FIELD, st.SPREAD_MEMBER:
 		return ambiguousNode
@@ -14706,7 +14679,7 @@ func (b *ballerinaParser) getExpressionInner(ambiguousNode st.STNode, isInMappin
 		var simpleVarRef st.STNode
 		simpleVarRef = st.CreateMissingTokenWithDiagnostics(st.IDENTIFIER_TOKEN,
 			&common.ERROR_MISSING_EXPRESSION)
-		simpleVarRef = st.CloneWithTrailingInvalidNodeMinutiaeWithoutDiagnostics(simpleVarRef, ambiguousNode)
+		simpleVarRef = st.CloneWithTrailingInvalidNodeMinutiae(simpleVarRef, ambiguousNode, nil, nil)
 		return st.CreateSimpleNameReferenceNode(simpleVarRef)
 	}
 }

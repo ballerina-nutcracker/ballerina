@@ -154,7 +154,7 @@ func (p *xmlParserErrorHandler) SeekMatch(currentCtx common.ParserRuleContext, l
 	}
 
 	result := newResult(make([]*solution, 0), matchingRulesCount)
-	result.solution = newSolution(actionKeep, currentCtx, p.GetExpectedTokenKind(currentCtx), currentCtx.String())
+	result.solution = newSolutionWithDepth(actionKeep, currentCtx, p.GetExpectedTokenKind(currentCtx), currentCtx.String(), -1)
 	return result
 }
 
@@ -271,7 +271,7 @@ func (p *xmlParserErrorHandler) GetNextRule(currentCtx common.ParserRuleContext,
 
 func (p *xmlParserErrorHandler) GetInsertSolution(ctx common.ParserRuleContext) *solution {
 	kind := p.GetExpectedTokenKind(ctx)
-	return newSolution(actionInsert, ctx, kind, ctx.String())
+	return newSolutionWithDepth(actionInsert, ctx, kind, ctx.String(), -1)
 }
 
 func (p *xmlParserErrorHandler) GetExpectedTokenKind(ctx common.ParserRuleContext) st.SyntaxKind {

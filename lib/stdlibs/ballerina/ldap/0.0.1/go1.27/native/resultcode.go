@@ -23,6 +23,7 @@ import (
 
 	goldap "github.com/go-ldap/ldap/v3"
 
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -88,7 +89,7 @@ func statusForCode(code uint16) string {
 // lang.error has no detail() yet — see README); callers that need it should
 // rely on the LDAP result code already embedded in the message text below.
 func ldapError(msg string) *values.Error {
-	return values.NewErrorWithMessage(msg)
+	return values.NewError(semtypes.Error, msg, nil, "", nil)
 }
 
 // ldapErrorFromErr converts a go-ldap operation error (or any other Go error,
@@ -100,7 +101,9 @@ func ldapError(msg string) *values.Error {
 func ldapErrorFromErr(err error) *values.Error {
 	var ldapErr *goldap.Error
 	if errors.As(err, &ldapErr) {
-		return values.NewErrorWithMessage(fmt.Sprintf("%s (%s)", err.Error(), statusForCode(ldapErr.ResultCode)))
+		message := fmt.Sprintf("%s (%s)", err.Error(), statusForCode(ldapErr.ResultCode))
+		return values.NewError(semtypes.Error, message, nil, "", nil)
 	}
-	return values.NewErrorWithMessage(err.Error())
+	message := err.Error()
+	return values.NewError(semtypes.Error, message, nil, "", nil)
 }

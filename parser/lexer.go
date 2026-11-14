@@ -740,7 +740,7 @@ func (l *lexer) getLiteral(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	trailingTrivia := l.processTrailingTrivia()
-	return st.CreateLiteralValueToken(kind, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueTokenWithDiagnostics(kind, lexeme, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *lexer) processDecimalFloatLiteral() st.STToken {
@@ -962,7 +962,7 @@ func (l *lexer) getBacktickToken() st.STToken {
 	// Therefore, do not process trailing trivia for starting back-tick. We reach here only for
 	// starting back-tick. Ending back-tick is processed by the template mode.
 	trailingTrivia := st.CreateEmptyNodeList()
-	return st.CreateTokenFrom(st.BACKTICK_TOKEN, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(st.BACKTICK_TOKEN, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *lexer) processExclamationMarkOperator() st.STToken {
@@ -1126,7 +1126,7 @@ func (l *lexer) processDocumentationString() st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	lexeme := l.getLexeme()
 	trailingTrivia := st.CreateEmptyNodeList() // No trailing trivia
-	return st.CreateLiteralValueToken(st.DOCUMENTATION_STRING, lexeme, leadingTrivia, trailingTrivia)
+	return st.CreateLiteralValueTokenWithDiagnostics(st.DOCUMENTATION_STRING, lexeme, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *lexer) processStringLiteral() st.STToken {
@@ -1223,7 +1223,7 @@ func (l *lexer) processUnquotedIdentifier() {
 func (l *lexer) getSyntaxToken(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	trailingTrivia := l.processTrailingTrivia()
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *lexer) getLeadingTrivia() st.STNode {
@@ -1372,7 +1372,7 @@ func (l *lexer) readTokenInInterpolation() st.STToken {
 func (l *lexer) getSyntaxTokenWithoutTrailingTrivia(kind st.SyntaxKind) st.STToken {
 	leadingTrivia := l.getLeadingTrivia()
 	trailingTrivia := st.CreateEmptyNodeList()
-	return st.CreateTokenFrom(kind, leadingTrivia, trailingTrivia)
+	return st.CreateTokenWithDiagnostics(kind, leadingTrivia, trailingTrivia, nil)
 }
 
 func (l *lexer) processLeadingTrivia() {

@@ -383,6 +383,7 @@ type (
 		IsConstant    bool
 	}
 
+	//shallow:allow marker struct
 	BLangNumericLiteral struct {
 		BLangLiteral
 	}
@@ -492,6 +493,7 @@ type (
 		Constraint semtypes.SemType
 	}
 
+	//shallow:allow marker struct
 	BLangInferredTypedescDefault struct {
 		bLangExpressionBase
 	}
@@ -1285,11 +1287,6 @@ func (b *BLangTrapExpr) GetExpression() BLangActionOrExpression {
 func IsStreamOperation(inv interface{ Receiver() BLangExpression }) bool {
 	recv := inv.Receiver()
 	return recv != nil && semtypes.IsSubtypeSimple(recv.Type(), semtypes.Stream)
-}
-
-// IsStreamNewExpression returns true when the new expression constructs a stream value.
-func IsStreamNewExpression(expr *BLangNewExpression) bool {
-	return semtypes.IsSubtypeSimple(expr.Type(), semtypes.Stream)
 }
 
 func NewBLangUnaryExpr(location diagnostics.Location, operator model.OperatorKind, expr BLangExpression) *BLangUnaryExpr {

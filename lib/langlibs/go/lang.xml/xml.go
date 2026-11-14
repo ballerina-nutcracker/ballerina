@@ -100,7 +100,7 @@ func xmlIteratorNextRecordType(ctx semtypes.Context, iteratorTy semtypes.SemType
 func get(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	items, index := asXML(args[0]).IterItems(), args[1].(int64)
 	if index < 0 || index >= int64(len(items)) {
-		panic(values.NewErrorWithMessage("XML index out of range"))
+		panic(values.NewError(semtypes.Error, "XML index out of range", nil, "", nil))
 	}
 	return items[index], nil
 }
@@ -113,7 +113,7 @@ func get(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 func stepIndex(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	items, index := asXML(args[0]).IterItems(), args[1].(int64)
 	if index < 0 {
-		panic(values.NewErrorWithMessage("XML index out of range"))
+		panic(values.NewError(semtypes.Error, "XML index out of range", nil, "", nil))
 	}
 	if index >= int64(len(items)) {
 		return values.NewNormalizedXMLSequence(nil), nil
@@ -127,7 +127,8 @@ func concat(_ *extern.Context, args []values.BalValue) (values.BalValue, error) 
 		switch value := arg.(type) {
 		case string:
 			if err := values.ValidateXMLCharacters(value); err != nil {
-				panic(values.NewErrorWithMessage(err.Error()))
+				message := err.Error()
+				panic(values.NewError(semtypes.Error, message, nil, "", nil))
 			}
 			items = append(items, values.NewXMLText(value))
 		case values.XMLValue:
@@ -159,7 +160,8 @@ func setChildren(_ *extern.Context, args []values.BalValue) (values.BalValue, er
 	switch value := args[1].(type) {
 	case string:
 		if err := values.ValidateXMLCharacters(value); err != nil {
-			panic(values.NewErrorWithMessage(err.Error()))
+			message := err.Error()
+			panic(values.NewError(semtypes.Error, message, nil, "", nil))
 		}
 		children = values.NewXMLText(value)
 	case values.XMLValue:
@@ -219,18 +221,18 @@ func createElement(ctx *extern.Context, args []values.BalValue) (values.BalValue
 	name, source, child := args[0].(string), args[1].(*values.Map), asXML(args[2])
 	uri, local, err := values.ParseExpandedXMLName(name)
 	if err != nil || uri == values.XMLNSNamespaceURI {
-		panic(values.NewErrorWithMessage("invalid XML element name"))
+		panic(values.NewError(semtypes.Error, "invalid XML element name", nil, "", nil))
 	}
 	var attrs []values.MapEntry
 	for _, key := range source.Keys() {
 		raw, _ := source.Get(key)
 		value := raw.(string)
 		if err := values.ValidateXMLCharacters(value); err != nil {
-			panic(values.NewErrorWithMessage(err.Error()))
+			panic(values.NewError(semtypes.Error, err.Error(), nil, "", nil))
 		}
 		aURI, aLocal, err := values.ParseExpandedXMLName(key)
 		if err != nil {
-			panic(values.NewErrorWithMessage(err.Error()))
+			panic(values.NewError(semtypes.Error, err.Error(), nil, "", nil))
 		}
 		if aURI == values.XMLNSNamespaceURI {
 			prefix := aLocal
@@ -238,13 +240,14 @@ func createElement(ctx *extern.Context, args []values.BalValue) (values.BalValue
 				prefix = ""
 			}
 			if err := values.ValidateNamespaceBinding(prefix, value); err != nil {
-				panic(values.NewErrorWithMessage(err.Error()))
+				message := err.Error()
+				panic(values.NewError(semtypes.Error, message, nil, "", nil))
 			}
 			if prefix == "" && value != "" && uri == "" {
-				panic(values.NewErrorWithMessage("unnamespaced XML element conflicts with its local default namespace"))
+				panic(values.NewError(semtypes.Error, "unnamespaced XML element conflicts with its local default namespace", nil, "", nil))
 			}
 		} else if aURI == "" && aLocal == "xmlns" {
-			panic(values.NewErrorWithMessage("xmlns must be a namespace attribute"))
+			panic(values.NewError(semtypes.Error, "xmlns must be a namespace attribute", nil, "", nil))
 		}
 		attrs = append(attrs, values.MapEntry{Key: key, Value: value})
 	}
@@ -261,7 +264,8 @@ func createComment(_ *extern.Context, args []values.BalValue) (values.BalValue, 
 
 func createText(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	if err := values.ValidateXMLCharacters(args[0].(string)); err != nil {
-		panic(values.NewErrorWithMessage(err.Error()))
+		message := err.Error()
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	return values.NewNormalizedXMLSequence([]values.XMLValue{values.NewXMLText(args[0].(string))}), nil
 }
@@ -270,7 +274,7 @@ func slice(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	items := asXML(args[0]).IterItems()
 	start, end := args[1].(int64), args[2].(int64)
 	if start < 0 || end < start || end > int64(len(items)) {
-		panic(values.NewErrorWithMessage("invalid XML slice bounds"))
+		panic(values.NewError(semtypes.Error, "invalid XML slice bounds", nil, "", nil))
 	}
 	return values.NewNormalizedXMLSequence(items[start:end]), nil
 }
@@ -297,7 +301,7 @@ func selectedElements(value values.XMLValue, name values.BalValue) values.XMLVal
 		var err error
 		uri, local, err = values.ParseExpandedXMLName(name.(string))
 		if err != nil || uri == values.XMLNSNamespaceURI {
-			panic(values.NewErrorWithMessage("invalid XML element name filter"))
+			panic(values.NewError(semtypes.Error, "invalid XML element name filter", nil, "", nil))
 		}
 	}
 	var result []values.XMLValue
@@ -382,7 +386,9 @@ func filter(ctx *extern.Context, args []values.BalValue) (values.BalValue, error
 func fromString(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	result, err := values.ParseAsXMLValue(ctx.TypeCtx(), args[0].(string), values.XMLStrictContentMode)
 	if err != nil {
-		return values.NewErrorWithMessage("lang.xml:fromString: " + err.Error()), nil
+		message := "lang.xml:fromString: " + err.Error()
+		return values.NewError(semtypes.Error, message, nil, "", nil),
+			nil
 	}
 	return result, nil
 }

@@ -17,6 +17,6 @@
 package semtypes
 
 type bdd interface {
-	properSubtypeData
+	subtypeData
 	canonicalKey() bddKey
 }

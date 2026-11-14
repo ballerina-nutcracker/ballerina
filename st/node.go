@@ -528,22 +528,16 @@ func (n *NodeList[T]) SeparatedElements() iter.Seq2[T, Token] {
 	}
 }
 
-type DocumentMemberDeclarationNode struct {
-	nonTerminalNodeBase
-}
-
+//shallow:allow marker struct
 type IdentifierToken struct {
 	tokenBase
 }
 
+//shallow:allow marker struct
 type ExternalTreeNodeList struct {
 	nonTerminalNodeBase
 }
 
 var _ Node = &ExternalTreeNodeList{}
 
-type LiteralValueToken struct {
-	tokenBase
-}
-
-var _ Node = &LiteralValueToken{}
+var _ Node = &tokenBase{}

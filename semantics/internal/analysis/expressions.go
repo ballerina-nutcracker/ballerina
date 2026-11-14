@@ -507,7 +507,7 @@ func validateNewExpr(cx scope.Context, e *ast.BLangNewExpression, expected semty
 			return scope.NoFacts, false
 		}
 	}
-	if ast.IsStreamNewExpression(e) {
+	if semtypes.IsSubtypeSimple(e.Type(), semtypes.Stream) {
 		if !validateStreamNewArgs(cx, e) {
 			return scope.NoFacts, false
 		}

@@ -65,6 +65,7 @@ func tableContainingKeySpecifier(cx Context, tableConstraint SemType, fieldNames
 	return tableContainingWithEnvSemTypeSemTypeSemType(cx.Env(), tableConstraint, normalizedKc, normalizedKs)
 }
 
+//shallow:allow named table constructor supplies the default mutability policy
 func tableContainingDefault(env Env, tableConstraint SemType) SemType {
 	return tableContainingWithEnvSemTypeCellMutability(env, tableConstraint, CellMutabilityLimited)
 }
@@ -87,6 +88,7 @@ func tableContaining(env Env, tableConstraint SemType, normalizedKc SemType, nor
 	return createBasicSemType(btTable, bdd)
 }
 
+//shallow:allow shared table constructor supplies the limited-mutability policy
 func tableContainingWithEnvSemTypeSemTypeSemType(env Env, tableConstraint SemType, normalizedKc SemType, normalizedKs SemType) SemType {
 	return tableContaining(env, tableConstraint, normalizedKc, normalizedKs, CellMutabilityLimited)
 }

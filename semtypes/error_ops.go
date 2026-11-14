@@ -20,24 +20,18 @@ type errorOps struct{}
 
 var _ basicTypeOps = &errorOps{}
 
-func errorSubtypeComplement(t subtypeData) subtypeData {
-	return bddSubtypeDiff(bddSubtypeRo, t)
-}
-
 func errorSubtypeIsEmpty(cx Context, t subtypeData) bool {
 	b := t.(bdd)
 	if bddPosMaybeEmpty(b) {
 		b = bddIntersect(b, bddSubtypeRo)
 	}
-	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), errorBddIsEmpty, b)
-}
-
-func errorBddIsEmpty(cx Context, b bdd) bool {
-	return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
+	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), func(cx Context, b bdd) bool {
+		return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
+	}, b)
 }
 
 func (e *errorOps) complement(d subtypeData) subtypeData {
-	return errorSubtypeComplement(d)
+	return bddSubtypeDiff(bddSubtypeRo, d)
 }
 
 func (e *errorOps) IsEmpty(cx Context, t subtypeData) bool {

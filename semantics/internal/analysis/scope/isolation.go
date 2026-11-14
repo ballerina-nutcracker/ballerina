@@ -94,7 +94,7 @@ func isolationStartAction(cx Context, start *ast.BLangStartAction, f Facts) {
 // isolationNewExpr: an isolated closure may only construct objects whose init
 // method is isolated.
 func isolationNewExpr(cx Context, n *ast.BLangNewExpression) {
-	if ast.IsStreamNewExpression(n) {
+	if semtypes.IsSubtypeSimple(n.Type(), semtypes.Stream) {
 		return
 	}
 	tyCtx := cx.TyCtx()

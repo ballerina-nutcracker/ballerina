@@ -28,10 +28,12 @@ func newRangeUnionFromIntRange(status int, r *intRange) rangeUnion {
 	return this
 }
 
+//shallow:allow named range-union constructor supplies the no-overlap result
 func rangeUnionFrom(status int) rangeUnion {
 	return newRangeUnionFromIntRange(status, nil)
 }
 
+//shallow:allow named range-union constructor supplies the overlapping-range result
 func fromWithRange(r intRange) rangeUnion {
 	return newRangeUnionFromIntRange(0, &r)
 }

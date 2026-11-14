@@ -19,6 +19,7 @@ package exec
 import (
 	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -32,7 +33,7 @@ func execNewStream(ctx *extern.Context, instr *bir.NewStream, frame *Frame) {
 func resolveStreamMethods(ctx *extern.Context, impl *values.Object) (next, close func() values.BalValue) {
 	nextHandle, ok := ctx.LookupObjectMethod(impl, "next")
 	if !ok {
-		panic(values.NewErrorWithMessage("stream implementor missing 'next' method"))
+		panic(values.NewError(semtypes.Error, "stream implementor missing 'next' method", nil, "", nil))
 	}
 	args := []values.BalValue{impl}
 	next = func() values.BalValue {

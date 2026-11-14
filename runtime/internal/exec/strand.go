@@ -118,7 +118,8 @@ func runStrand(parent *extern.Context, seed []callStackEntry, h *InvokableHandle
 	defer close(ch)
 	v, err := h.invoke(ctx, args)
 	if err != nil {
-		ch <- values.NewErrorWithMessage(err.Error())
+		message := err.Error()
+		ch <- values.NewError(semtypes.Error, message, nil, "", nil)
 		return
 	}
 	ch <- v

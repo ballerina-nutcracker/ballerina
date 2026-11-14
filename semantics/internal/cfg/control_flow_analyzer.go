@@ -233,6 +233,7 @@ func (c *lambdaCollector) Visit(node ast.BLangNode) ast.Visitor {
 
 func (c *lambdaCollector) VisitTypeData(*ast.TypeData) ast.Visitor { return c }
 
+//shallow:allow shared CFG entry point consistently selects a function body for analysis
 func analyzeFunction(ctx *context.CompilerContext, fn *ast.BLangFunction) (functionCFG, []workerCFG) {
 	return analyzeFunctionBody(ctx, fn.Body)
 }

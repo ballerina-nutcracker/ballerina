@@ -34,13 +34,10 @@ func MappingOfFieldTypes(env Env, fields []MappingFieldInfo) SemType {
 		cellFields = append(cellFields, cellFieldFrom(field.Name, cell))
 	}
 	md := NewMappingDefinition()
-	return md.defineFromCells(env, cellFields, mappingUndefCell(env))
-}
-
-// mappingUndefCell is the widest cell holding no value. The predefined undef cell is immutable,
-// which would exclude the mutable optional-never fields a record can declare.
-func mappingUndefCell(env Env) SemType {
-	return cellContainingWithEnvSemTypeCellMutability(env, Undef, CellMutabilityLimited)
+	// The predefined undef cell is immutable, which would exclude the mutable
+	// optional-never fields a record can declare.
+	rest := cellContainingWithEnvSemTypeCellMutability(env, Undef, CellMutabilityLimited)
+	return md.defineFromCells(env, cellFields, rest)
 }
 
 type MappingField struct {
