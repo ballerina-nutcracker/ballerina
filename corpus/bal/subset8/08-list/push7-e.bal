@@ -23,4 +23,10 @@ public function main() {
     v.push(); // @error
     int[0] e = [];
     e.push(1); // @error
+    int[1] one = [1];
+    int[1]|int[2] either = one;
+    either.push(2); // @error
+    [int] single = [1];
+    [int]|[int, int] tuples = single;
+    tuples.push(2); // @error
 }

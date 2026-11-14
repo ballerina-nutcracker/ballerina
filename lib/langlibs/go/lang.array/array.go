@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -102,11 +103,16 @@ func arrayMap(ctx *extern.Context, args []values.BalValue) (values.BalValue, err
 		items[i] = result
 	}
 
+	return newArrayOf(ctx, resultMemberTy, items), nil
+}
+
+// newArrayOf returns a new mutable array of memberTy holding items.
+func newArrayOf(ctx *extern.Context, memberTy semtypes.SemType, items []values.BalValue) *values.List {
 	resultDef := semtypes.NewListDefinition()
-	resultTy := resultDef.Define(ctx.TypeEnv(), nil, semtypes.ListRest(resultMemberTy))
+	resultTy := resultDef.Define(ctx.TypeEnv(), nil, semtypes.ListRest(memberTy))
 	atomic := semtypes.ToListAtomicType(ctx.TypeEnv(), resultTy)
-	filler, _ := values.FillerFactoryFor(ctx.TypeCtx(), resultMemberTy)
-	return values.NewList(resultTy, atomic, false, filler, 0, items), nil
+	filler, _ := values.FillerFactoryFor(ctx.TypeCtx(), memberTy)
+	return values.NewList(resultTy, atomic, false, filler, 0, items)
 }
 
 // arrayIndexOf returns nil (no match) once startIndex reaches the list's
@@ -142,6 +148,90 @@ func arrayRemoveAll(_ *extern.Context, args []values.BalValue) (values.BalValue,
 	list := args[0].(*values.List)
 	list.Clear()
 	return nil, nil
+}
+
+func arrayPop(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	return removeEnd(ctx, list, list.Len()-1), nil
+}
+
+func arrayShift(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	return removeEnd(ctx, args[0].(*values.List), 0), nil
+}
+
+func removeEnd(ctx *extern.Context, list *values.List, index int) values.BalValue {
+	if list.Len() == 0 {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("array index out of range: index: %d, size: 0", index)))
+	}
+	return list.RemoveAt(ctx.TypeCtx(), index)
+}
+
+func arrayUnshift(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	list := args[0].(*values.List)
+	list.Prepend(ctx.TypeCtx(), args[1:]...)
+	return nil, nil
+}
+
+func arrayReduce(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	source := args[0].(*values.List)
+	callback := args[1].(*values.Function)
+	acc := args[2]
+	callbackArgs := make([]values.BalValue, 2)
+	for i := range source.Len() {
+		callbackArgs[0] = acc
+		callbackArgs[1] = memberAt(source, i)
+		result, err := ctx.InvokeFunctionValue(callback, callbackArgs)
+		if err != nil {
+			return nil, err
+		}
+		acc = result
+	}
+	return acc, nil
+}
+
+// memberAt reads a member of a list that a callback may have shrunk while it
+// was being iterated, panicking with a Ballerina error once index is past its end.
+func memberAt(list *values.List, index int) values.BalValue {
+	if index >= list.Len() {
+		panic(values.NewErrorWithMessage(fmt.Sprintf("array index out of range: index: %d, size: %d", index, list.Len())))
+	}
+	return list.Get(index)
+}
+
+func arraySort(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+	source := args[0].(*values.List)
+	ascending := args[1].(string) == "ascending"
+	items := make([]values.BalValue, source.Len())
+	for i := range source.Len() {
+		items[i] = source.Get(i)
+	}
+	keys := items
+	if keyFn, ok := args[2].(*values.Function); ok {
+		keys = make([]values.BalValue, len(items))
+		keyArgs := make([]values.BalValue, 1)
+		for i, item := range items {
+			keyArgs[0] = item
+			result, err := ctx.InvokeFunctionValue(keyFn, keyArgs)
+			if err != nil {
+				return nil, err
+			}
+			keys[i] = result
+		}
+	}
+	order := make([]int, len(items))
+	for i := range order {
+		order[i] = i
+	}
+	sort.SliceStable(order, func(i, j int) bool {
+		return values.CompareK(keys[order[i]], keys[order[j]], ascending) == values.CmpLT
+	})
+	sorted := make([]values.BalValue, len(items))
+	for i, idx := range order {
+		sorted[i] = items[idx]
+	}
+
+	memberTy := semtypes.ListProj(ctx.TypeCtx(), source.Type, semtypes.Int)
+	return newArrayOf(ctx, memberTy, sorted), nil
 }
 
 func arrayToStream(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
@@ -203,6 +293,11 @@ func initArrayModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "remove", arrayRemove)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "removeAll", arrayRemoveAll)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "toStream", arrayToStream)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "pop", arrayPop)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "shift", arrayShift)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "unshift", arrayUnshift)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "reduce", arrayReduce)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "sort", arraySort)
 }
 
 func init() {

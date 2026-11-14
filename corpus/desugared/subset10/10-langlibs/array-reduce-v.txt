@@ -1,0 +1,235 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)
+            (literal 4)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_0 (
+                (variable acc (type
+                  (value-type int)))
+                (variable v (type
+                  (value-type int)))) (
+                (value-type int))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (simple-var-ref v)))))
+            (literal 0))))))
+      (var-def
+        (variable empty (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array reduce (
+            (simple-var-ref empty)
+            (lambda
+              (function $anonFunc$_1 (
+                (variable acc (type
+                  (value-type int)))
+                (variable v (type
+                  (value-type int)))) (
+                (value-type int))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (simple-var-ref v)))))
+            (literal 42))))))
+      (var-def
+        (variable joined (type
+          (value-type string)) (expr
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_2 (
+                (variable acc (type
+                  (value-type string)))
+                (variable v (type
+                  (value-type int)))) (
+                (value-type string))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (invocation lang.value toString (
+                      (simple-var-ref v)))))))
+            (literal >))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref joined))))
+      (var-def
+        (variable avg (type
+          (value-type float)) (expr
+          (binary-expr /
+            (invocation lang.array reduce (
+              (simple-var-ref values)
+              (lambda
+                (function $anonFunc$_3 (
+                  (variable acc (type
+                    (value-type float)))
+                  (variable v (type
+                    (value-type int)))) (
+                  (value-type float))
+                  (expr-function-body
+                    (binary-expr +
+                      (simple-var-ref acc)
+                      (type-conversion-expr
+                        (simple-var-ref v)
+                        (value-type float))))))
+              (literal 0)))
+            (literal 4)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref avg))))
+      (var-def
+        (variable t (type
+          (tuple-type
+            (value-type int)
+            (value-type string))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal a)))))
+      (var-def
+        (variable mixed (type
+          (value-type string)) (expr
+          (invocation lang.array reduce (
+            (simple-var-ref t)
+            (lambda
+              (function $anonFunc$_4 (
+                (variable acc (type
+                  (value-type string)))
+                (variable v (type
+                  (union-type
+                    (value-type int)
+                    (value-type string))))) (
+                (value-type string))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (invocation lang.value toString (
+                      (simple-var-ref v)))))))
+            (literal ))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mixed))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_5 (
+                (variable acc)
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (simple-var-ref v)))))
+            (literal 0))))))
+      (var-def
+        (variable product (expr
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_6 (
+                (variable acc)
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr *
+                    (simple-var-ref acc)
+                    (simple-var-ref v)))))
+            (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref product))))
+      (var-def
+        (variable total (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_7 (
+                (variable acc)
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (simple-var-ref v)))))
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref total))))
+      (var-def
+        (variable scaled (type
+          (value-type float)) (expr
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_8 (
+                (variable acc)
+                (variable v)) ()
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (type-conversion-expr
+                      (simple-var-ref v)
+                      (value-type float))))))
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref scaled))))
+      (var-def
+        (variable widened (type
+          (union-type
+            (value-type int)
+            (value-type null))) (expr
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_9 (
+                (variable acc (type
+                  (value-type int)))
+                (variable v (type
+                  (value-type int)))) (
+                (value-type int))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (simple-var-ref v)))))
+            (literal 0))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref widened))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array reduce (
+            (simple-var-ref values)
+            (lambda
+              (function $anonFunc$_10 (
+                (variable acc (type
+                  (value-type float)))
+                (variable v (type
+                  (value-type int)))) (
+                (value-type float))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref acc)
+                    (type-conversion-expr
+                      (simple-var-ref v)
+                      (value-type float))))))
+            (literal 0)))))))))

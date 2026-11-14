@@ -1,0 +1,45 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable values (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (trap-expr
+            (invocation lang.array reduce (
+              (simple-var-ref values)
+              (lambda
+                (function $anonFunc$_0 (
+                  (variable acc (type
+                    (value-type int)))
+                  (variable n (type
+                    (value-type int)))) (
+                  (value-type int))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.array removeAll (
+                        (simple-var-ref values))))
+                    (return
+                      (binary-expr +
+                        (simple-var-ref acc)
+                        (simple-var-ref n))))))
+              (literal 0)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref result)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (literal continued after trap)))))))

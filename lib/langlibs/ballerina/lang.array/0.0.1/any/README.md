@@ -17,18 +17,18 @@ Support status of the `lang.array` lang library functions against the public fun
 | lastIndexOf | Not Yet Supported | Not declared |
 | length | Supported | |
 | map | Supported | Handled by the compiler |
-| pop | Not Yet Supported | Not declared |
+| pop | Supported | Handled by the compiler |
 | push | Supported | Handled by the compiler |
-| reduce | Not Yet Supported | Not declared |
+| reduce | Supported | Handled by the compiler |
 | remove | Supported | Handled by the compiler |
 | removeAll | Supported | Handled by the compiler |
 | reverse | Not Yet Supported | Not declared |
 | setLength | Not Yet Supported | Not declared |
-| shift | Not Yet Supported | Not declared |
+| shift | Supported | Handled by the compiler |
 | slice | Not Yet Supported | Not declared |
 | some | Not Yet Supported | Not declared |
-| sort | Not Yet Supported | Not declared |
+| sort | Supported | |
 | toBase16 | Supported | |
 | toBase64 | Supported | |
 | toStream | Supported | Handled by the compiler |
-| unshift | Not Yet Supported | Not declared |
+| unshift | Supported | Handled by the compiler |
