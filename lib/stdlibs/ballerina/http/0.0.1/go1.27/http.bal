@@ -807,7 +807,7 @@ public isolated class Listener {
 # - `string` → `text/plain`
 # - `xml` → `application/xml`
 # - `byte[]` → `application/octet-stream`
-# - `http:Request` → content type and body taken from the request
+# - `http:Request` → headers, content type and body taken from the request
 # - `mime:Entity[]` → `multipart/form-data`
 # - everything else → serialised as `application/json`
 #
