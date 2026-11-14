@@ -1,0 +1,10 @@
+{
+  "source": "ambiguous.bal",
+  "position": {
+    "line": 19,
+    "character": 20
+  },
+  "expected": [
+    null
+  ]
+}

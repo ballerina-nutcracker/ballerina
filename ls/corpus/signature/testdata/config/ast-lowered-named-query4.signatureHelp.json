@@ -1,0 +1,40 @@
+{
+  "source": "ast-lowered-named.bal",
+  "position": {
+    "line": 21,
+    "character": 33
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "quoted(int type, string title)",
+          "parameters": [
+            {
+              "label": [
+                7,
+                15
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` type**"
+              }
+            },
+            {
+              "label": [
+                17,
+                29
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` title**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

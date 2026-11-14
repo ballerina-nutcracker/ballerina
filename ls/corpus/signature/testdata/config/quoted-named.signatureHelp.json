@@ -1,0 +1,40 @@
+{
+  "source": "quoted-named.bal",
+  "position": {
+    "line": 18,
+    "character": 29
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "foo(int type, string second)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                12
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` type**"
+              }
+            },
+            {
+              "label": [
+                14,
+                27
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string` second**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 0
+    }
+  ]
+}

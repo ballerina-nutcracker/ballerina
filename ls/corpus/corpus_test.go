@@ -17,6 +17,7 @@ package corpus
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -26,24 +27,30 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/core/compile"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/event"
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 	"github.com/ballerina-nutcracker/ballerina/ls/server"
+	"github.com/ballerina-nutcracker/ballerina/projects"
 )
 
 var update = flag.Bool("update", false, "update LSP corpus golden files")
 
 type transcript struct {
-	Source   string            `json:"source"`
-	Sources  map[string]string `json:"sources"`
-	Root     string            `json:"-"`
-	Messages []json.RawMessage `json:"messages"`
-	Expected []json.RawMessage `json:"expected"`
+	Source                  string            `json:"source"`
+	Sources                 map[string]string `json:"sources"`
+	Root                    string            `json:"-"`
+	Messages                []json.RawMessage `json:"messages"`
+	Expected                []json.RawMessage `json:"expected"`
+	HoldSignatureDependency bool              `json:"holdSignatureDependency,omitempty"`
+	Unordered               bool              `json:"unordered,omitempty"`
 }
 
 // The reader is replaced between batches; the server and output buffer are reused.
@@ -56,8 +63,9 @@ func (t *stepTransport) Read(p []byte) (int, error)  { return t.reader.Read(p) }
 func (t *stepTransport) Write(p []byte) (int, error) { return t.writer.Write(p) }
 
 type segment struct {
-	input     bytes.Buffer
-	diskWrite *diskWriteAction
+	input           bytes.Buffer
+	diskWrite       *diskWriteAction
+	signatureAction string
 }
 type diskWriteAction struct {
 	Path    string `json:"path"`
@@ -67,6 +75,48 @@ type diskWriteAction struct {
 
 const diskWriteMethod = "$test/writeFile"
 const diskDeleteMethod = "$test/deleteFile"
+
+const awaitSignatureDependency = "$test/awaitSignatureDependency"
+const releaseSignatureDependency = "$test/releaseSignatureDependency"
+
+// Block dependency resolution so fixtures can issue requests before a generation seals.
+type signatureGateRepository struct {
+	projects.Repository
+	entered     chan struct{}
+	released    chan struct{}
+	enterOnce   sync.Once
+	releaseOnce sync.Once
+}
+
+func newSignatureGateRepository(repository projects.Repository) *signatureGateRepository {
+	return &signatureGateRepository{Repository: repository, entered: make(chan struct{}), released: make(chan struct{})}
+}
+
+func (r *signatureGateRepository) await(ctx context.Context) error {
+	r.enterOnce.Do(func() { close(r.entered) })
+	select {
+	case <-r.released:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (r *signatureGateRepository) release() { r.releaseOnce.Do(func() { close(r.released) }) }
+
+func (r *signatureGateRepository) GetPackageVersions(ctx context.Context, org, name string, options projects.ResolutionOptions) ([]projects.PackageVersion, error) {
+	if err := r.await(ctx); err != nil {
+		return nil, err
+	}
+	return r.Repository.GetPackageVersions(ctx, org, name, options)
+}
+
+func (r *signatureGateRepository) GetPackage(ctx context.Context, org, name, version string, options projects.ResolutionOptions) (*projects.Package, error) {
+	if err := r.await(ctx); err != nil {
+		return nil, err
+	}
+	return r.Repository.GetPackage(ctx, org, name, version, options)
+}
 
 func TestCorpus(t *testing.T) {
 	t.Parallel()
@@ -172,21 +222,55 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 	transport := &stepTransport{}
 	bus := event.New()
 	defer bus.Close()
-	projectService := workspace.New(os.DirFS, bus)
+	var gate *signatureGateRepository
+	var options []workspace.Option
+	if fixture.HoldSignatureDependency {
+		gate = newSignatureGateRepository(projects.NewFileSystemRepository(os.DirFS(filepath.Join(rootPath, "repository")), "."))
+		options = append(options, workspace.WithRepositories([]projects.Repository{gate}))
+	}
+	projectService := workspace.New(os.DirFS, bus, options...)
 	compiler := compile.New(projectService, bus, compile.WithDebounce(0))
 	defer compiler.Shutdown()
 	srv := server.New(transport, projectService, compiler, bus)
-	defer srv.Flush()
+	defer func() {
+		if gate != nil {
+			gate.release()
+		}
+		srv.Flush()
+	}()
 	var actual []json.RawMessage
 	for _, seg := range buildSegments(messages) {
+		if seg.signatureAction != "" {
+			if gate == nil {
+				t.Fatal("signature dependency action needs holdSignatureDependency")
+			}
+			if seg.signatureAction == awaitSignatureDependency {
+				select {
+				case <-gate.entered:
+				case <-time.After(time.Minute):
+					t.Fatal("no dependency fetch started within one minute")
+				}
+				if _, _, sealed := compiler.DiagnosticsFor(rootPath); sealed {
+					t.Fatal("signature dependency gate must precede a sealed generation")
+				}
+			} else {
+				gate.release()
+			}
+			continue
+		}
 		if seg.diskWrite != nil {
 			applyDiskWrite(t, rootPath, seg.diskWrite)
 			continue
 		}
 		transport.reader = bytes.NewReader(seg.input.Bytes())
-		transport.writer.Reset()
+		if gate == nil {
+			transport.writer.Reset()
+		}
 		if err := srv.Serve(); err != nil {
 			t.Fatalf("Serve: %v", err)
+		}
+		if gate != nil {
+			continue
 		}
 		batch, err := readMessages(transport.writer.Bytes())
 		if err != nil {
@@ -194,12 +278,36 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 		}
 		actual = append(actual, batch...)
 	}
+	if gate != nil {
+		actual, err = readMessages(transport.writer.Bytes())
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 	if check != nil {
 		check(projectService, compiler, rootPath)
 	}
 	actualNorm := normalizeRoot(actual, fixture.Root)
 	if *update {
 		fixture.Expected = actualNorm
+		if strings.HasPrefix(fixturePath, "signature/") {
+			content, err := os.ReadFile(fixturePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected, err := json.MarshalIndent(fixture.Expected, "  ", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			updated, err := spliceTopLevelJSONField(content, "expected", expected)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(fixturePath, updated, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			return
+		}
 		updated, err := json.MarshalIndent(fixture, "", "  ")
 		if err != nil {
 			t.Fatal(err)
@@ -209,7 +317,17 @@ func runTranscriptWithCheck(t *testing.T, fixturePath string, check func(*worksp
 		}
 		return
 	}
-	if !reflect.DeepEqual(normalizeMessages(actualNorm), normalizeMessages(fixture.Expected)) {
+	actualValues, expectedValues := normalizeMessages(actualNorm), normalizeMessages(fixture.Expected)
+	if fixture.Unordered {
+		less := func(values []any, i, j int) bool {
+			a, _ := json.Marshal(values[i])
+			b, _ := json.Marshal(values[j])
+			return bytes.Compare(a, b) < 0
+		}
+		sort.Slice(actualValues, func(i, j int) bool { return less(actualValues, i, j) })
+		sort.Slice(expectedValues, func(i, j int) bool { return less(expectedValues, i, j) })
+	}
+	if !reflect.DeepEqual(actualValues, expectedValues) {
 		t.Fatalf("transcript output mismatch\nactual: %s\nexpected: %s", formatMessages(actual), formatMessages(fixture.Expected))
 	}
 }
@@ -235,6 +353,11 @@ func buildSegments(messages []protocol.Message) []segment {
 		}
 	}
 	for _, message := range messages {
+		if message.Method == awaitSignatureDependency || message.Method == releaseSignatureDependency {
+			flush()
+			segments = append(segments, segment{signatureAction: message.Method})
+			continue
+		}
 		if message.Method == diskWriteMethod || message.Method == diskDeleteMethod {
 			var action diskWriteAction
 			if err := json.Unmarshal(message.Params, &action); err != nil {

@@ -1,0 +1,40 @@
+{
+  "source": "arguments.bal",
+  "position": {
+    "line": 28,
+    "character": 18
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "arrays([int...] values, int|string value)",
+          "parameters": [
+            {
+              "label": [
+                7,
+                22
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`[int...]` values**"
+              }
+            },
+            {
+              "label": [
+                24,
+                40
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int|string` value**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}

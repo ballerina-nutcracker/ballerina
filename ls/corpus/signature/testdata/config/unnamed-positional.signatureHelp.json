@@ -1,0 +1,40 @@
+{
+  "source": "unnamed-positional.bal",
+  "position": {
+    "line": 19,
+    "character": 10
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "fn(int, string)",
+          "parameters": [
+            {
+              "label": [
+                3,
+                6
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int`**"
+              }
+            },
+            {
+              "label": [
+                8,
+                14
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`string`**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}
