@@ -30,10 +30,11 @@ type (
 		Results []benchResult `json:"results"`
 	}
 	benchResult struct {
-		Command string  `json:"command"`
-		Mean    float64 `json:"mean"`
-		Stddev  float64 `json:"stddev"`
-		Median  float64 `json:"median"`
+		Times   []float64 `json:"times"`
+		Command string    `json:"command"`
+		Mean    float64   `json:"mean"`
+		Stddev  float64   `json:"stddev"`
+		Median  float64   `json:"median"`
 	}
 )
 

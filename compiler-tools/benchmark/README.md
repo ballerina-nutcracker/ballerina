@@ -2,6 +2,14 @@
 
 A tool that compares interpreter performance or memory usage between two Git revisions. It checks out each revision in a temporary worktree, builds `./cli/cmd`, runs the same Ballerina target with both binaries, and writes an HTML report.
 
+## Nightly comparisons
+
+The [Nightly Performance workflow](../../.github/workflows/nightly-performance.yml)
+compares frozen default-branch revisions daily at 23:00 Asia/Colombo.
+[Statistical coordination and recovery](../benchmark-stats/README.md) use a
+separate pilot and final experiment. Local HTML/Markdown reports retain their
+descriptive heuristics; nightly issues use the paired statistical results.
+
 ## Prerequisites
 
 - **Git** — worktrees are created from the current repository
@@ -79,3 +87,22 @@ For memory usage, run:
 ```
 
 Memory mode runs each command with `/usr/bin/time` and reports peak RSS in MiB. It uses `-v` on Linux and `-l` on macOS. Warmup runs are discarded, and measured runs are summarized with mean, standard deviation, and median.
+
+## Paired raw samples
+
+Measurements use serial balanced pairs: base/head, head/base, base/head,
+head/base. Warmup pairs restart that ordering separately and are discarded.
+Time mode invokes hyperfine once per role with one measured run; memory mode
+invokes the platform `time` command once per role. Reports retain their local
+mean, sample standard deviation, median, and heuristic classifications.
+
+`--samples-jsonl PATH` writes version-1 metadata, individually flushed role
+samples, per-case completion records, and a final stream completion record.
+`--phase fixed|pilot|final` labels the stream (default `fixed`). A failed run
+leaves its earlier samples available for diagnosis.
+
+`--runs-file PATH` accepts a versioned plan, for example
+`{"version":1,"counts":{"1-v.bal":12}}`. Counts must exactly match the
+resolved case IDs and must be positive integers. It cannot accompany an
+explicit `--runs`. IDs are paths relative to a directory target, `.` for a
+package target, and the basename for a single file.
