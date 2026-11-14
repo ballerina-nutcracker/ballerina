@@ -324,7 +324,7 @@ type (
 		AnnotationSpaces []*SymbolSpace
 	}
 
-	BlockScopeBase struct {
+	blockScopeBase struct {
 		Parent Scope
 		Main   *SymbolSpace
 		Prefix map[string]ExportedSymbolSpace
@@ -333,11 +333,11 @@ type (
 	// This is a delimiter to help detect if we need to capture a symbol as a closure
 	// TODO: need to think how to implement closures correctly
 	FunctionScope struct {
-		BlockScopeBase
+		blockScopeBase
 	}
 
 	BlockScope struct {
-		BlockScopeBase
+		blockScopeBase
 	}
 
 	SymbolSpace struct {
@@ -1034,7 +1034,7 @@ func (space *ExportedSymbolSpace) GetAnnotationSymbol(name string) (SymbolRef, b
 	return SymbolRef{}, false
 }
 
-func (bs *BlockScopeBase) GetSymbol(name string) (SymbolRef, bool) {
+func (bs *blockScopeBase) GetSymbol(name string) (SymbolRef, bool) {
 	ref, ok := bs.Main.GetSymbol(name)
 	if ok {
 		return ref, true
@@ -1042,7 +1042,7 @@ func (bs *BlockScopeBase) GetSymbol(name string) (SymbolRef, bool) {
 	return bs.Parent.GetSymbol(name)
 }
 
-func (bs *BlockScopeBase) GetPrefixedSymbol(prefix, name string) (SymbolRef, bool) {
+func (bs *blockScopeBase) GetPrefixedSymbol(prefix, name string) (SymbolRef, bool) {
 	if bs.Prefix != nil {
 		if exported, ok := bs.Prefix[prefix]; ok {
 			return exported.GetSymbol(name)
@@ -1051,11 +1051,11 @@ func (bs *BlockScopeBase) GetPrefixedSymbol(prefix, name string) (SymbolRef, boo
 	return bs.Parent.GetPrefixedSymbol(prefix, name)
 }
 
-func (bs *BlockScopeBase) AddSymbol(name string, symbol Symbol) {
+func (bs *blockScopeBase) AddSymbol(name string, symbol Symbol) {
 	bs.Main.AddSymbol(name, symbol)
 }
 
-func (bs *BlockScopeBase) MainSpace() *SymbolSpace {
+func (bs *blockScopeBase) MainSpace() *SymbolSpace {
 	return bs.Main
 }
 

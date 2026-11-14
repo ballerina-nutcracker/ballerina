@@ -34,7 +34,7 @@ type BIRInstruction interface {
 	GetPos() Location
 }
 
-func (b BIRNodeBase) GetPos() Location {
+func (b birNodeBase) GetPos() Location {
 	return b.Pos
 }
 
@@ -44,12 +44,12 @@ type BIRVariableDcl interface {
 }
 
 type (
-	BIRNodeBase struct {
+	birNodeBase struct {
 		Pos Location
 	}
 
-	BIRInstructionBase struct {
-		BIRNodeBase
+	birInstructionBase struct {
+		birNodeBase
 		// Kind InstructionKind
 		LhsOp *BIROperand
 		Scope *BIRScope
@@ -61,7 +61,7 @@ type (
 	}
 
 	BIRPackage struct {
-		BIRNodeBase
+		birNodeBase
 		PackageID             *model.PackageID
 		GlobalVars            map[string]BIRGlobalVariableDcl
 		Functions             []BIRFunction
@@ -100,7 +100,7 @@ type (
 	}
 
 	birVariableDclBase struct {
-		BIRNodeBase
+		birNodeBase
 		Type semtypes.SemType
 		Name model.Name
 	}
@@ -117,7 +117,7 @@ type (
 	}
 
 	BIRFunction struct {
-		BIRNodeBase
+		birNodeBase
 		Name              model.Name
 		OriginalName      model.Name
 		Flags             model.Flag
@@ -140,7 +140,7 @@ type (
 	}
 
 	BIRBasicBlock struct {
-		BIRNodeBase
+		birNodeBase
 		Number       int
 		ID           model.Name
 		Instructions []BIRNonTerminator
@@ -148,7 +148,7 @@ type (
 	}
 
 	BIRParameter struct {
-		BIRNodeBase
+		birNodeBase
 		Name        model.Name
 		Flags       model.Flag
 		Annotations values.AnnotationValues
@@ -161,7 +161,7 @@ type (
 	}
 
 	BIROperand struct {
-		BIRNodeBase
+		birNodeBase
 		VariableDcl BIRVariableDcl
 		Address     Address
 	}

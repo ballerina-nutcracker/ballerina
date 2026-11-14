@@ -21,7 +21,7 @@ package st
 type ST{{.Name}} = ST{{.Base}}
 {{else}}
 type ST{{.Name}} struct {
-    {{if .Base}}ST{{.Base}}{{else}}STNodeBase{{end}}
+    {{if .Base}}ST{{.Base}}{{else}}stNodeBase{{end}}
 {{range .Attributes}}
     {{title .Name}} STNode
 {{end}}
@@ -64,7 +64,7 @@ func (n *ST{{.Name}}) ChildBuckets() []STNode {
 
 func (n *ST{{.Name}}) CreateFacade(position int, parent NonTerminalNode) Node {
     return &{{.Name}}{
-        {{if and .Base (ne .Base "Node")}}{{.Base}}: &NonTerminalNodeBase{
+        {{if and .Base (ne .Base "Node")}}{{.Base}}: &nonTerminalNodeBase{
         {{end}}internalNode: n,
             position: position,
             parent: parent,

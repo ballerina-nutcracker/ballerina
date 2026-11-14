@@ -141,7 +141,7 @@ const (
 	Error
 )
 
-type NodeBase struct {
+type nodeBase struct {
 	internalNode STNode
 	// TODO: does this needs to be int?
 	position              int
@@ -153,30 +153,30 @@ type NodeBase struct {
 }
 
 func NodeFrom(internalNode STNode, position int, parent NonTerminalNode) Node {
-	return &NodeBase{
+	return &nodeBase{
 		internalNode: internalNode,
 		position:     position,
 		parent:       parent,
 	}
 }
 
-func (n *NodeBase) Kind() SyntaxKind {
+func (n *nodeBase) Kind() SyntaxKind {
 	return n.internalNode.Kind()
 }
 
-func (n *NodeBase) Position() int {
+func (n *nodeBase) Position() int {
 	return n.position
 }
 
-func (n *NodeBase) Parent() NonTerminalNode {
+func (n *nodeBase) Parent() NonTerminalNode {
 	return n.parent
 }
 
-func (n *NodeBase) SetSyntaxTree(syntaxTree *SyntaxTree) {
+func (n *nodeBase) SetSyntaxTree(syntaxTree *SyntaxTree) {
 	n.syntaxTree = syntaxTree
 }
 
-func (n *NodeBase) Ancestor(filter func(Node) bool) *Node {
+func (n *nodeBase) Ancestor(filter func(Node) bool) *Node {
 	if n.parent == nil {
 		return nil
 	}
@@ -195,7 +195,7 @@ func (n *NodeBase) Ancestor(filter func(Node) bool) *Node {
 	return nil
 }
 
-func (n *NodeBase) Ancestors() []*Node {
+func (n *nodeBase) Ancestors() []*Node {
 	var ancestors []*Node
 	if n.parent == nil {
 		return ancestors
@@ -208,7 +208,7 @@ func (n *NodeBase) Ancestors() []*Node {
 	return ancestors
 }
 
-func (n *NodeBase) TextRange() TextRange {
+func (n *nodeBase) TextRange() TextRange {
 	if n.textRange.Length != 0 {
 		return n.textRange
 	}
@@ -222,7 +222,7 @@ func (n *NodeBase) TextRange() TextRange {
 	return n.textRange
 }
 
-func (n *NodeBase) TextRangeWithMinutiae() TextRange {
+func (n *nodeBase) TextRangeWithMinutiae() TextRange {
 	if n.textRangeWithMinutiae.Length != 0 {
 		return n.textRangeWithMinutiae
 	}
@@ -234,15 +234,15 @@ func (n *NodeBase) TextRangeWithMinutiae() TextRange {
 	return n.textRangeWithMinutiae
 }
 
-func (n *NodeBase) Location() NodeLocation {
+func (n *nodeBase) Location() NodeLocation {
 	return NodeLocation{node: n}
 }
 
-func (n *NodeBase) Diagnostics() iter.Seq[Diagnostic] {
+func (n *nodeBase) Diagnostics() iter.Seq[Diagnostic] {
 	panic("Diagnostics() should be implemented by child types")
 }
 
-func (n *NonTerminalNodeBase) Diagnostics() iter.Seq[Diagnostic] {
+func (n *nonTerminalNodeBase) Diagnostics() iter.Seq[Diagnostic] {
 	return func(yield func(Diagnostic) bool) {
 		if !n.internalNode.HasDiagnostics() {
 			return
@@ -266,23 +266,23 @@ func createSyntaxDiagnostic(diagnostic STNodeDiagnostic) Diagnostic {
 	panic("not implemented")
 }
 
-func (n *NonTerminalNodeBase) Children() []Node {
+func (n *nonTerminalNodeBase) Children() []Node {
 	panic("Children() should be implemented by child types")
 }
 
-func (n *NodeBase) HasDiagnostics() bool {
+func (n *nodeBase) HasDiagnostics() bool {
 	return n.internalNode.HasDiagnostics()
 }
 
-func (n *NodeBase) IsMissing() bool {
+func (n *nodeBase) IsMissing() bool {
 	return n.internalNode.IsMissing()
 }
 
-func (n *NodeBase) SyntaxTree() *SyntaxTree {
+func (n *nodeBase) SyntaxTree() *SyntaxTree {
 	return n.populateSyntaxTree()
 }
 
-func (n *NodeBase) LineRange() LineRange {
+func (n *nodeBase) LineRange() LineRange {
 	if n.lineRange.StartLine.Line != 0 || n.lineRange.EndLine.Line != 0 {
 		return n.lineRange
 	}
@@ -313,31 +313,31 @@ func (n *NodeBase) LineRange() LineRange {
 	return n.lineRange
 }
 
-func (n *NodeBase) LeadingMinutiae() MinutiaeList {
+func (n *nodeBase) LeadingMinutiae() MinutiaeList {
 	panic("LeadingMinutiae() should be implemented by child types")
 }
 
-func (n *NodeBase) TrailingMinutiae() MinutiaeList {
+func (n *nodeBase) TrailingMinutiae() MinutiaeList {
 	panic("TrailingMinutiae() should be implemented by child types")
 }
 
-func (n *NodeBase) LeadingInvalidTokens() []Token {
+func (n *nodeBase) LeadingInvalidTokens() []Token {
 	panic("LeadingInvalidTokens() should be implemented by child types")
 }
 
-func (n *NodeBase) TrailingInvalidTokens() []Token {
+func (n *nodeBase) TrailingInvalidTokens() []Token {
 	panic("TrailingInvalidTokens() should be implemented by child types")
 }
 
-func (n *NodeBase) InternalNode() STNode {
+func (n *nodeBase) InternalNode() STNode {
 	return n.internalNode
 }
 
-func (n *NodeBase) ToSourceCode() string {
+func (n *nodeBase) ToSourceCode() string {
 	panic("ToSourceCode() should be implemented by child types")
 }
 
-func (n *NodeBase) populateSyntaxTree() *SyntaxTree {
+func (n *nodeBase) populateSyntaxTree() *SyntaxTree {
 	if n.syntaxTree != nil {
 		return n.syntaxTree
 	}
@@ -361,16 +361,16 @@ type NonTerminalNode interface {
 	loadNode(childIndex int) Node
 	ChildInBucket(bucket int) Node
 }
-type NonTerminalNodeBase struct {
-	NodeBase
+type nonTerminalNodeBase struct {
+	nodeBase
 	childBuckets []Node
 }
 
-func (n *NonTerminalNodeBase) bucketCount() int {
+func (n *nonTerminalNodeBase) bucketCount() int {
 	return n.internalNode.BucketCount()
 }
 
-func (n *NonTerminalNodeBase) ChildNodes() iter.Seq[Node] {
+func (n *nonTerminalNodeBase) ChildNodes() iter.Seq[Node] {
 	return func(yield func(Node) bool) {
 		for i := range n.childBuckets {
 			if !yield(n.loadNode(i)) {
@@ -380,7 +380,7 @@ func (n *NonTerminalNodeBase) ChildNodes() iter.Seq[Node] {
 	}
 }
 
-func (n *NonTerminalNodeBase) loadNode(childIndex int) Node {
+func (n *nonTerminalNodeBase) loadNode(childIndex int) Node {
 	return n.ChildInBucket(childIndex)
 }
 
@@ -392,7 +392,7 @@ func into[T Node](node Node) T {
 	return typed
 }
 
-func (n *NonTerminalNodeBase) getChildPosition(bucket int) int {
+func (n *nonTerminalNodeBase) getChildPosition(bucket int) int {
 	childPos := n.position
 	start := 0
 	for i := bucket - 1; i >= 0; i-- {
@@ -411,7 +411,7 @@ func (n *NonTerminalNodeBase) getChildPosition(bucket int) int {
 	return childPos
 }
 
-func (n *NonTerminalNodeBase) ChildInBucket(bucket int) Node {
+func (n *nonTerminalNodeBase) ChildInBucket(bucket int) Node {
 	child := n.childBuckets[bucket]
 	if child != nil {
 		return child
@@ -430,13 +430,13 @@ type Token interface {
 	Text() string
 }
 
-type TokenBase struct {
-	NodeBase
+type tokenBase struct {
+	nodeBase
 	leadingMinutiaeList  MinutiaeList
 	trailingMinutiaeList MinutiaeList
 }
 
-func (t *TokenBase) Text() string {
+func (t *tokenBase) Text() string {
 	stToken, ok := t.internalNode.(STToken)
 	if !ok {
 		panic("expected STToken")
@@ -537,21 +537,21 @@ func (n *NodeList[T]) SeparatedElements() iter.Seq2[T, Token] {
 }
 
 type DocumentMemberDeclarationNode struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 type IdentifierToken struct {
-	TokenBase
+	tokenBase
 }
 
 type ExternalTreeNodeList struct {
-	NonTerminalNodeBase
+	nonTerminalNodeBase
 }
 
 var _ Node = &ExternalTreeNodeList{}
 
 type LiteralValueToken struct {
-	TokenBase
+	tokenBase
 }
 
 var _ Node = &LiteralValueToken{}

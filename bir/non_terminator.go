@@ -35,36 +35,36 @@ type MappingConstructorEntry interface {
 
 type (
 	Move struct {
-		BIRInstructionBase
+		birInstructionBase
 		RhsOp *BIROperand
 	}
 	BinaryOp struct {
-		BIRInstructionBase
+		birInstructionBase
 		Kind   InstructionKind
 		RhsOp1 BIROperand
 		RhsOp2 BIROperand
 	}
 
 	UnaryOp struct {
-		BIRInstructionBase
+		birInstructionBase
 		Kind  InstructionKind
 		RhsOp *BIROperand
 	}
 
 	ConstantLoad struct {
-		BIRInstructionBase
+		birInstructionBase
 		Value any
 	}
 
 	FieldAccess struct {
-		BIRInstructionBase
+		birInstructionBase
 		Kind  InstructionKind
 		KeyOp *BIROperand
 		RhsOp *BIROperand
 	}
 
 	NewArray struct {
-		BIRInstructionBase
+		birInstructionBase
 		SizeOp     *BIROperand
 		Type       semtypes.SemType
 		Values     []*BIROperand
@@ -74,7 +74,7 @@ type (
 
 	NewMap struct {
 		// JBallerina call this NewStruct but prints as NewMap
-		BIRInstructionBase
+		birInstructionBase
 		Type       semtypes.SemType
 		Values     []MappingConstructorEntry
 		Defaults   []MappingConstructorDefaultEntry
@@ -87,7 +87,7 @@ type (
 	}
 
 	NewError struct {
-		BIRInstructionBase
+		birInstructionBase
 		Type      semtypes.SemType
 		TypeName  string
 		MessageOp *BIROperand
@@ -96,7 +96,7 @@ type (
 	}
 
 	TypeCast struct {
-		BIRInstructionBase
+		birInstructionBase
 		RhsOp *BIROperand
 		// I don't think you need to the type desc part given only way you need to create a new value is with
 		// numeric conversions, which can be done with pure types
@@ -104,51 +104,51 @@ type (
 	}
 
 	TypeTest struct {
-		BIRInstructionBase
+		birInstructionBase
 		RhsOp      *BIROperand
 		Type       semtypes.SemType
 		IsNegation bool
 	}
 
 	NewObject struct {
-		BIRInstructionBase
+		birInstructionBase
 		ClassDefRef string
 	}
 
 	NewStream struct {
-		BIRInstructionBase
+		birInstructionBase
 		StreamType semtypes.SemType
 		ImplOp     *BIROperand
 	}
 
 	StreamNext struct {
-		BIRInstructionBase
+		birInstructionBase
 		StreamOp *BIROperand
 	}
 
 	StreamClose struct {
-		BIRInstructionBase
+		birInstructionBase
 		StreamOp *BIROperand
 	}
 
 	FPLoad struct {
-		BIRInstructionBase
+		birInstructionBase
 		FunctionLookupKey string
 		Type              semtypes.SemType
 		IsClosure         bool
 	}
 
 	PushScopeFrame struct {
-		BIRInstructionBase
+		birInstructionBase
 		NumLocals int
 	}
 
 	PopScopeFrame struct {
-		BIRInstructionBase
+		birInstructionBase
 	}
 
 	NewXMLElement struct {
-		BIRInstructionBase
+		birInstructionBase
 		Prefix       string
 		LocalName    string
 		NamespaceURI string
@@ -158,28 +158,28 @@ type (
 	}
 
 	NewXMLPI struct {
-		BIRInstructionBase
+		birInstructionBase
 		TargetOp *BIROperand
 		DataOp   *BIROperand
 	}
 
 	NewXMLComment struct {
-		BIRInstructionBase
+		birInstructionBase
 		BodyOp *BIROperand
 	}
 
 	NewXMLText struct {
-		BIRInstructionBase
+		birInstructionBase
 		BodyOp *BIROperand
 	}
 
 	NewXMLSequence struct {
-		BIRInstructionBase
+		birInstructionBase
 		Children []*BIROperand
 	}
 
 	EvalTemplateExpr struct {
-		BIRInstructionBase
+		birInstructionBase
 		Kind             TemplateKind
 		Strings          []string
 		LiteralsTotalLen int
@@ -187,7 +187,7 @@ type (
 	}
 
 	XMLFilter struct {
-		BIRInstructionBase
+		birInstructionBase
 		Source  *BIROperand
 		Filters []XMLNamePattern
 	}
