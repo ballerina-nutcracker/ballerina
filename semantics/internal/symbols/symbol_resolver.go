@@ -2267,6 +2267,17 @@ func resolveSelfFieldAccess(resolver symbolResolver, n *ast.BLangFieldBaseAccess
 	return ok
 }
 
+// resolvesToClassReceiverSelf reports whether "self" in this resolver refers to
+// the enclosing class or service receiver, not a module-level `'self`.
+func resolvesToClassReceiverSelf(r symbolResolver, classScope model.BlockLevelScope) bool {
+	lookup, ok := r.GetSymbol("self")
+	if !ok {
+		return false
+	}
+	classSelf, found := classScope.MainSpace().GetSymbol("self")
+	return found && lookup.ref == classSelf
+}
+
 func reportUnexpectedNode(r symbolResolver, node ast.Node) bool {
 	r.GetCtx().InternalError(fmt.Sprintf("unexpected node kind in symbol resolution: %T", node), node.GetPosition())
 	return false
@@ -2910,7 +2921,7 @@ func resolveFieldBaseAccess(r symbolResolver, n *ast.BLangFieldBaseAccess) bool 
 		r.markPrefixUsed(n.PkgAlias.GetValue())
 	}
 	if common.IsSelfFieldAccess(n) {
-		if classScope, ok := getEnclosingClassBodyScope(r); ok {
+		if classScope, ok := getEnclosingClassBodyScope(r); ok && resolvesToClassReceiverSelf(r, classScope) {
 			return resolveSelfFieldAccess(r, n, classScope)
 		}
 	}
