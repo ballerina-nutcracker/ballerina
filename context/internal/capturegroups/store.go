@@ -63,7 +63,7 @@ func (s *Store) Contains(group model.CaptureGroupRef, ref model.SymbolRef) bool 
 func (s *Store) groupAt(group model.CaptureGroupRef) map[model.SymbolRef]struct{} {
 	// Sanity check: every handle must come from Allocate on this store.
 	if group <= 0 || int(group) > len(s.groups) {
-		panic(fmt.Sprintf("capture group reference %d is out of range [1, %d]", group, len(s.groups)))
+		panic(fmt.Sprintf("capture group reference %d is out of range [1, %d]", group, len(s.groups))) //nolint:forbidigo // Capture handles must be allocated by this store.
 	}
 	return s.groups[group-1]
 }
