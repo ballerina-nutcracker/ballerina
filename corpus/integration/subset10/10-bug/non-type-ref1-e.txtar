@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: Listener
+  --> non-type-ref1-e.bal:17:29
+   |
+17 | function Listener(string x, Listener e) { // @error function name used as a parameter type
+   |                             ^^^^^^^^
