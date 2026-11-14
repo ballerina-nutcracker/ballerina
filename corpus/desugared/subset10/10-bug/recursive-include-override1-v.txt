@@ -1,0 +1,47 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition ClientCredentialsGrantConfig
+    (record-type
+      (field tokenUrl
+        (value-type string))
+      (field clientConfig
+        (user-defined-type ClientConfiguration)
+        (mapping-constructor-expr))))
+  (type-definition AnydataConfig
+    (record-type
+      (field auth optional
+        (value-type anydata))))
+  (type-definition ClientConfiguration
+    (record-type
+      (field auth optional
+        (user-defined-type ClientAuth))))
+  (type-definition ClientAuth
+    (user-defined-type ClientCredentialsGrantConfig))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type ClientCredentialsGrantConfig)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal tokenUrl)
+              (literal u))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal tokenUrl)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (index-based-access
+              (index-based-access
+                (simple-var-ref c)
+                (literal clientConfig))
+              (literal auth))
+            (value-type null)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr)))))

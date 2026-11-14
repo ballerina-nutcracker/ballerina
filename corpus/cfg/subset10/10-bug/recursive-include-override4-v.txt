@@ -1,0 +1,14 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (user-defined-type Node)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access next
+            (simple-var-ref n))
+          (value-type null)))))
+  )
+)

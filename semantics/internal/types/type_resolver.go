@@ -105,6 +105,7 @@ type typeResolver interface {
 	packageID() *model.PackageID
 
 	ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool
+	ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool
 	opaqueContext() *opaque.Context
 
 	// traceSpan is the span definition-level children attach to, and
@@ -128,11 +129,12 @@ func resolverContextForFunction(isolated bool) resolverContext {
 	return 0
 }
 
-// deferredEmptinessCheck is an emptiness check that was registered while the
-// type env still had unset recursive atoms. It runs once the env is ready.
-type deferredEmptinessCheck struct {
-	ty      semtypes.SemType
-	onEmpty func()
+// deferredTypeCheck is a type check that was registered while the type env
+// still had unset recursive atoms. It runs once the env is ready, calling
+// onFail when predicate reports false.
+type deferredTypeCheck struct {
+	predicate func(cx semtypes.Context) bool
+	onFail    func()
 }
 
 // resolutionStatus tracks lazy resolution progress for cycle detection.
@@ -226,7 +228,7 @@ type packageTypeResolver struct {
 	// own span while it runs; the concurrent body phase never writes it.
 	span context.TraceSpan
 
-	deferredEmptinessChecks []deferredEmptinessCheck
+	deferredTypeChecks []deferredTypeCheck
 }
 
 func (t *packageTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
@@ -237,28 +239,46 @@ func (t *packageTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()
 		}
 		return true
 	}
-	if t.isEphemeral() {
-		return true
-	}
-	t.deferredEmptinessChecks = append(t.deferredEmptinessChecks, deferredEmptinessCheck{ty: ty, onEmpty: onEmpty})
+	t.deferCheck(func(cx semtypes.Context) bool { return !semtypes.IsEmpty(cx, ty) }, onEmpty)
 	return true
 }
 
-// drainDeferredEmptinessChecks runs every queued emptiness check. The type
-// env must be ready at this point; if it is not, that signals that not all
-// recursive atoms were resolved which is a compiler bug.
-func (t *packageTypeResolver) drainDeferredEmptinessChecks() {
+func (t *packageTypeResolver) ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool {
+	if t.typeEnv().IsReady() {
+		if !semtypes.IsSubtype(t.typeContext(), sub, sup) {
+			onNotSubtype()
+			return false
+		}
+		return true
+	}
+	t.deferCheck(func(cx semtypes.Context) bool { return semtypes.IsSubtype(cx, sub, sup) }, onNotSubtype)
+	return true
+}
+
+// deferCheck queues a check to run once the type env is ready. Checks
+// registered while resolving ephemerally are dropped.
+func (t *packageTypeResolver) deferCheck(predicate func(cx semtypes.Context) bool, onFail func()) {
+	if t.isEphemeral() {
+		return
+	}
+	t.deferredTypeChecks = append(t.deferredTypeChecks, deferredTypeCheck{predicate: predicate, onFail: onFail})
+}
+
+// drainDeferredTypeChecks runs every queued type check. The type env must be
+// ready at this point; if it is not, that signals that not all recursive atoms
+// were resolved which is a compiler bug.
+func (t *packageTypeResolver) drainDeferredTypeChecks() {
 	if !t.typeEnv().IsReady() {
-		t.internalError("type env not ready when draining deferred emptiness checks", diagnostics.Location{})
+		t.internalError("type env not ready when draining deferred type checks", diagnostics.Location{})
 		return
 	}
 	cx := t.typeContext()
-	for _, c := range t.deferredEmptinessChecks {
-		if semtypes.IsEmpty(cx, c.ty) {
-			c.onEmpty()
+	for _, c := range t.deferredTypeChecks {
+		if !c.predicate(cx) {
+			c.onFail()
 		}
 	}
-	t.deferredEmptinessChecks = nil
+	t.deferredTypeChecks = nil
 }
 
 func (t *packageTypeResolver) typeContext() semtypes.Context        { return t.tyCtx }
@@ -581,6 +601,21 @@ func (f *functionTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func(
 	}
 	if semtypes.IsEmpty(f.typeContext(), ty) {
 		onEmpty()
+		return false
+	}
+	return true
+}
+
+// ensureSubtype follows the same context rules as ensureNotEmpty.
+func (f *functionTypeResolver) ensureSubtype(sub, sup semtypes.SemType, onNotSubtype func()) bool {
+	if !f.typeEnv().IsReady() {
+		if f.isEphemeral() {
+			return true
+		}
+		return f.parentResolver.ensureSubtype(sub, sup, onNotSubtype)
+	}
+	if !semtypes.IsSubtype(f.typeContext(), sub, sup) {
+		onNotSubtype()
 		return false
 	}
 	return true
@@ -1270,7 +1305,7 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 			resolveServiceType(t, svc, 0, attachPointBound)
 		}
 	}
-	t.drainDeferredEmptinessChecks()
+	t.drainDeferredTypeChecks()
 }
 
 // annotationTypeValid reports whether ty is a valid annotation type, i.e. a
@@ -8799,8 +8834,9 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				if !ok {
 					return semtypes.SemType{}, chain, false
 				}
-				if !semtypes.IsSubtype(t.typeContext(), constraint, semtypes.XML) {
+				if !t.ensureSubtype(constraint, semtypes.XML, func() {
 					t.semanticError(fmt.Sprintf("xml type constraint must be a subtype of xml, got %s", semtypes.ToString(t.typeContext(), constraint)), ty.GetPosition())
+				}) {
 					return semtypes.SemType{}, chain, false
 				}
 				return semtypes.XMLSequence(constraint), chain, true
@@ -8851,11 +8887,12 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		}
 		streamTy := d.Define(t.typeEnv(), valueTy, completionTy)
 		closeDefinition = nil
-		if !semtypes.IsSubtype(t.typeContext(), completionTy, semtypes.Union(semtypes.Error, semtypes.Nil)) {
+		if !t.ensureSubtype(completionTy, semtypes.Union(semtypes.Error, semtypes.Nil), func() {
 			t.semanticError(
 				"stream completion type must be a subtype of error?",
 				ty.CompletionType.TypeDescriptor.GetPosition(),
 			)
+		}) {
 			return semtypes.SemType{}, chain, false
 		}
 		return streamTy, chain, true
@@ -8919,12 +8956,12 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			resolvedFields[name] = true
 			if incMembers, exists := result.includedFields[name]; exists {
 				for _, incMember := range incMembers {
-					if !semtypes.IsSubtype(t.typeContext(), fieldTy, incMember.MemberType()) {
+					t.ensureSubtype(fieldTy, incMember.MemberType(), func() {
 						t.semanticError(
 							fmt.Sprintf("field '%s' of type that overrides included field is not a subtype of the included field type", name),
 							field.GetPosition(),
 						)
-					}
+					})
 				}
 				delete(result.includedFields, name)
 			}
@@ -9239,11 +9276,12 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 					)
 					return nil, false
 				}
-				if !semtypes.IsSubtype(t.typeContext(), dm.valueTy, incMember.ValueType) {
+				if !t.ensureSubtype(dm.valueTy, incMember.ValueType, func() {
 					t.semanticError(
 						fmt.Sprintf("member '%s' that overrides included member is not a subtype of the included member type", dm.name),
 						dm.pos,
 					)
+				}) {
 					return nil, false
 				}
 			}
