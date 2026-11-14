@@ -35,7 +35,7 @@ func TestNextLineStartPastEOF(t *testing.T) {
 func TestUTF16OffsetPastEOFClampsFast(t *testing.T) {
 	t.Parallel()
 	const text = "abc\n"
-	pos := protocol.Position{Line: 50_000_000, Character: 0}
+	pos := protocol.Position{Line: 4_294_967_295, Character: 0}
 
 	type result struct {
 		offset int
