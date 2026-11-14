@@ -1,0 +1,174 @@
+module $anon.. v 0.0.0;
+flag  boolean;
+ro  nil|boolean|int|float|decimal|string|readonly&[json...]|readonly&{| json... |};
+class Taker {
+  got string
+
+  init(error|{| name: string, never... |}) -> nil{
+    bb0 {
+      %4 = person is error
+      %4 ? bb1 : bb2;
+    }
+    bb1 {
+      %5 = message(person) -> bb4;
+    }
+    bb2 {
+      %7 = ConstantLoad name
+      %6 = person[%7];
+      %3 = %6;
+      GOTO bb3;
+    }
+    bb3 {
+      %8 = ConstantLoad got
+      self[%8] = %3;
+      return;
+    }
+    bb4 {
+      %3 = %5;
+      GOTO bb3;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad name
+    %2 = ConstantLoad ann
+    %3 = newMap {| json... |}{%1=%2}
+    j = %3;
+    %5 = newObject $anon/.:Taker
+    %6 = ConstantLoad typedesc
+    %7 = cloneWithType(j,%6) -> bb1;
+  }
+  bb1 {
+    %8 = %5.init(%7) -> bb2;
+  }
+  bb2 {
+    %10 = %8 is nil
+    %10 ? bb3 : bb4;
+  }
+  bb3 {
+    %9 = %5;
+    GOTO bb5;
+  }
+  bb4 {
+    %9 = %8;
+    GOTO bb5;
+  }
+  bb5 {
+    a = %9;
+    %13 = ConstantLoad got
+    %12 = a[%13];
+    %14 = println(%12) -> bb6;
+  }
+  bb6 {
+    %15 = newObject $anon/.:Taker
+    %16 = ConstantLoad typedesc
+    %17 = cloneWithType(j,%16) -> bb7;
+  }
+  bb7 {
+    %18 = %15.init(%17) -> bb8;
+  }
+  bb8 {
+    %20 = %18 is nil
+    %20 ? bb9 : bb10;
+  }
+  bb9 {
+    %19 = %15;
+    GOTO bb11;
+  }
+  bb10 {
+    %19 = %18;
+    GOTO bb11;
+  }
+  bb11 {
+    b = %19;
+    %23 = ConstantLoad got
+    %22 = b[%23];
+    %24 = println(%22) -> bb12;
+  }
+  bb12 {
+    %25 = newMap {| t: isolated object { string got; public isolated function init(error|{| name: string, never... |}) returns nil }, never... |}{} defaults{t=$anon/.:$default$0}
+    h = %25;
+    %28 = ConstantLoad got
+    %30 = ConstantLoad t
+    %29 = h[%30];
+    %27 = %29[%28];
+    %31 = println(%27) -> bb13;
+  }
+  bb13 {
+    %32 = ConstantLoad p
+    %33 = ConstantLoad typedesc
+    %34 = cloneWithType(j,%33) -> bb14;
+  }
+  bb14 {
+    %35 = newMap {| p: error|{| name: string, never... |}, never... |}{%32=%34}
+    m = %35;
+    %38 = ConstantLoad p
+    %37 = m[%38];
+    p = %37;
+    %41 = p is error
+    %41 ? bb15 : bb16;
+  }
+  bb15 {
+    %42 = message(p) -> bb18;
+  }
+  bb16 {
+    %44 = ConstantLoad name
+    %43 = p[%44];
+    %40 = %43;
+    GOTO bb17;
+  }
+  bb17 {
+    %45 = println(%40) -> bb19;
+  }
+  bb18 {
+    %40 = %42;
+    GOTO bb17;
+  }
+  bb19 {
+    return;
+  }
+}
+convert(){
+}
+$default$0() -> isolated object { string got; public isolated function init(error|{| name: string, never... |}) returns nil }{
+  bb0 {
+    %1 = newObject $anon/.:Taker
+    flag ? bb1 : bb2;
+  }
+  bb1 {
+    %3 = ConstantLoad typedesc
+    %4 = convert(ro,%3) -> bb4;
+  }
+  bb2 {
+    %5 = ConstantLoad typedesc
+    %6 = cloneWithType(ro,%5) -> bb5;
+  }
+  bb3 {
+    %7 = %1.init(%2) -> bb6;
+  }
+  bb4 {
+    %2 = %4;
+    GOTO bb3;
+  }
+  bb5 {
+    %2 = %6;
+    GOTO bb3;
+  }
+  bb6 {
+    %9 = %7 is nil
+    %9 ? bb7 : bb8;
+  }
+  bb7 {
+    %8 = %1;
+    GOTO bb9;
+  }
+  bb8 {
+    %8 = %7;
+    GOTO bb9;
+  }
+  bb9 {
+    %0 = %8;
+    return;
+  }
+}

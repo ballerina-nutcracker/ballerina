@@ -18,6 +18,7 @@ package common
 
 import (
 	"github.com/ballerina-nutcracker/ballerina/ast"
+	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/model"
 )
 
@@ -54,4 +55,24 @@ func namedTypeRefBeside(lhs, rhs ast.TypeDescriptor, kind ast.TypeKind) model.Sy
 func isValueTypeNode(typeDesc ast.TypeDescriptor, kind ast.TypeKind) bool {
 	valueType, ok := typeDesc.(*ast.BLangValueType)
 	return ok && valueType.TypeKind == kind
+}
+
+// NamedTypes skips references that are not types, such as the typedesc parameter `t` in a
+// dependently typed `returns t|error`.
+func NamedTypes(cx *context.CompilerContext, typeDesc ast.TypeDescriptor) []model.SymbolRef {
+	return appendNamedTypes(cx, nil, typeDesc)
+}
+
+func appendNamedTypes(cx *context.CompilerContext, namedTypes []model.SymbolRef, typeDesc ast.TypeDescriptor) []model.SymbolRef {
+	switch n := typeDesc.(type) {
+	case *ast.BLangReturnTypeDescriptor:
+		return appendNamedTypes(cx, namedTypes, n.TypeDescriptor)
+	case *ast.BLangUnionTypeNode:
+		namedTypes = appendNamedTypes(cx, namedTypes, n.Lhs().TypeDescriptor)
+		return appendNamedTypes(cx, namedTypes, n.Rhs().TypeDescriptor)
+	}
+	if ref := NamedTypeRef(typeDesc); !ref.IsEmpty() && cx.SymbolKind(ref) == model.SymbolKindType {
+		return append(namedTypes, ref)
+	}
+	return namedTypes
 }

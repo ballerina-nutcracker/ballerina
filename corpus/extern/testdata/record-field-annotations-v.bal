@@ -50,6 +50,36 @@ type Plain record {|
     int x;
 |};
 
+// Same shape as Person but without its annotations.
+type PersonTwin record {|
+    string name;
+    int age;
+    boolean active?;
+    string dynamic;
+    string sourceAnnotated;
+    string plain;
+|};
+
+Person|error moduleInferred = annotatedFieldsInferred();
+
+Person|error moduleAssigned = error("unset");
+
+class Holder {
+    Person|error person = annotatedFieldsInferred();
+
+    function describe(Person|error person) returns string {
+        return fieldsOf(person);
+    }
+}
+
+class Taker {
+    string got;
+
+    function init(Person|error person) {
+        self.got = fieldsOf(person);
+    }
+}
+
 public function main() {
     io:println(annotatedFields(Person)); //@output active,age,dynamic,name
     io:println(annotatedFields(Plain)); //@output
@@ -63,9 +93,94 @@ public function main() {
     io:println(hasMarker(Person, "active")); //@output true
     io:println(hasMarker(Person, "name")); //@output false
     io:println(fieldMetaName(Person, "sourceAnnotated")); //@output <absent>
+    Person|error inferred = annotatedFieldsInferred();
+    io:println(fieldsOf(inferred)); //@output active,age,dynamic,name
+    io:println(fieldsOf(moduleInferred)); //@output active,age,dynamic,name
+    error? checked = inferredThroughCheck();
+    io:println(checked is error ? checked.message() : ""); //@output active,age,dynamic,name
+    Person|PersonTwin|error ambiguous = annotatedFieldsInferred();
+    io:println(ambiguousFieldsOf(ambiguous)); //@output
+    Person|error assigned;
+    assigned = annotatedFieldsInferred();
+    io:println(fieldsOf(assigned)); //@output active,age,dynamic,name
+    moduleAssigned = annotatedFieldsInferred();
+    io:println(fieldsOf(moduleAssigned)); //@output active,age,dynamic,name
+    io:println(fieldsOf(annotatedFieldsInferred())); //@output active,age,dynamic,name
+    io:println(fieldsOf(value = annotatedFieldsInferred())); //@output active,age,dynamic,name
+    io:println(ambiguousFieldsOf(annotatedFieldsInferred())); //@output
+    io:println(fieldsOf(returnedInferred())); //@output active,age,dynamic,name
+    io:println(fieldsOf(exprBodyInferred())); //@output active,age,dynamic,name
+    function () returns Person|error lambda = function() returns Person|error {
+        return annotatedFieldsInferred();
+    };
+    io:println(fieldsOf(lambda())); //@output active,age,dynamic,name
+    function (Person|error) returns string fnValue = fieldsOf;
+    io:println(fnValue(annotatedFieldsInferred())); //@output active,age,dynamic,name
+    Holder holder = new;
+    io:println(fieldsOf(holder.person)); //@output active,age,dynamic,name
+    io:println(holder.describe(annotatedFieldsInferred())); //@output active,age,dynamic,name
+    boolean flag = true;
+    Person|error chosen = flag ? annotatedFieldsInferred() : error("unused");
+    io:println(fieldsOf(chosen)); //@output active,age,dynamic,name
+    Person|error grouped = (annotatedFieldsInferred());
+    io:println(fieldsOf(grouped)); //@output active,age,dynamic,name
+    Person|error trapped = trap annotatedFieldsInferred();
+    io:println(fieldsOf(trapped)); //@output active,age,dynamic,name
+    io:println(restFieldsOf(annotatedFieldsInferred(), annotatedFieldsInferred())); //@output active,age,dynamic,name;active,age,dynamic,name;
+    io:println(fieldsOf(workerInferred())); //@output active,age,dynamic,name
+    Person? noPerson = ();
+    Person|error elvis = noPerson ?: annotatedFieldsInferred();
+    io:println(fieldsOf(elvis)); //@output active,age,dynamic,name
+    io:println(defaultFieldsOf()); //@output active,age,dynamic,name
+    Taker taker = new (annotatedFieldsInferred());
+    io:println(taker.got); //@output active,age,dynamic,name
+    record {|
+        Person|error person = annotatedFieldsInferred();
+    |} personRecord = {};
+    io:println(fieldsOf(personRecord.person)); //@output active,age,dynamic,name
 }
 
+function inferredThroughCheck() returns error? {
+    Person person = check annotatedFieldsInferred();
+    _ = person;
+}
+
+function defaultFieldsOf(Person|error value = annotatedFieldsInferred()) returns string {
+    return fieldsOf(value);
+}
+
+function fieldsOf(Person|error value) returns string {
+    return value is error ? value.message() : "";
+}
+
+function restFieldsOf((Person|error)... values) returns string {
+    string result = "";
+    foreach var value in values {
+        result += fieldsOf(value) + ";";
+    }
+    return result;
+}
+
+function ambiguousFieldsOf(Person|PersonTwin|error value) returns string {
+    return value is error ? value.message() : "";
+}
+
+function returnedInferred() returns Person|error {
+    return annotatedFieldsInferred();
+}
+
+function workerInferred() returns Person|error {
+    worker w returns Person|error {
+        return annotatedFieldsInferred();
+    }
+    return wait w;
+}
+
+function exprBodyInferred() returns Person|error => annotatedFieldsInferred();
+
 function annotatedFields(typedesc<anydata> td) returns string = external;
+
+isolated function annotatedFieldsInferred(typedesc<anydata> td = <>) returns td|error = external;
 
 function fieldMetaName(typedesc<anydata> td, string fieldName) returns string = external;
 
