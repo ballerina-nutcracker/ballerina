@@ -434,9 +434,18 @@ func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 		return lookup, false
 	}
 	// A method parameter named `self` is already rejected by isShadowed, so any
-	// block-scoped `self` here is the class or service receiver.
+	// block-scoped `self` here is the class or service receiver. Spec §6.8.1.2
+	// does not bind that receiver in a parameter default; skip past the
+	// class/service scope so a module-level `'self` can still resolve.
 	if bs.hideOuterSelf && name == "self" && lookup.kind == blockScopeKind {
-		return symbolLookup{}, false
+		outer, found := parentPastEnclosingClassOrService(bs)
+		if !found {
+			return symbolLookup{}, false
+		}
+		lookup, ok = outer.GetSymbol(name)
+		if !ok {
+			return lookup, false
+		}
 	}
 	if lookup.kind == blockScopeKind && bs.captureRegionKind == captureRegionClosure {
 		lookup.captured = true
@@ -2227,6 +2236,23 @@ func isMethodOfClassOrService(functionResolver *blockSymbolResolver) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+// parentPastEnclosingClassOrService returns the resolver outside the nearest
+// enclosing class or service body along bs's parent chain.
+func parentPastEnclosingClassOrService(bs *blockSymbolResolver) (symbolResolver, bool) {
+	resolver := bs.parent
+	for {
+		br, ok := resolver.(*blockSymbolResolver)
+		if !ok {
+			return nil, false
+		}
+		switch br.node.(type) {
+		case *ast.BLangClassDefinition, *ast.BLangService:
+			return br.parent, true
+		}
+		resolver = br.parent
 	}
 }
 
