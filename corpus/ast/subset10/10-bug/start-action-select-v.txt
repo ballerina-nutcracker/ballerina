@@ -1,0 +1,321 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Client
+    (function $remote$scale (
+      (variable i (type
+        (value-type int)))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref i)
+            (literal 2))))))
+  (function times (
+    (variable i (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr *
+          (simple-var-ref i)
+          (literal 10)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable futures (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))
+            (select-clause
+              (start-action
+                (invocation times (
+                  (simple-var-ref i)))))))))
+      (var-def
+        (variable results (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr))))
+      (foreach
+        (var-def
+          (variable f (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))))
+        (simple-var-ref futures)
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref f))))))
+          (expression-stmt
+            (invocation push expr:
+              (simple-var-ref results) (
+              (simple-var-ref value))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref results))))
+      (var-def
+        (variable filtered (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)
+                (literal 4)))
+            (where-clause
+              (binary-expr ==
+                (binary-expr %
+                  (simple-var-ref i)
+                  (literal 2))
+                (literal 0)))
+            (let-clause
+              (var-def
+                (variable j (type
+                  (value-type int)) (expr
+                  (binary-expr +
+                    (simple-var-ref i)
+                    (literal 1))))))
+            (select-clause
+              (start-action
+                (invocation times (
+                  (simple-var-ref j)))))))))
+      (foreach
+        (var-def
+          (variable f (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))))
+        (simple-var-ref filtered)
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref f))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value))))))
+      (var-def
+        (variable casted (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 7)))
+            (select-clause
+              (type-conversion-expr
+                (start-action
+                  (invocation times (
+                    (simple-var-ref i))))
+                (constrained-type
+                  (builtin-ref-type future)
+                  (value-type int))))))))
+      (var-def
+        (variable castedValue (type
+          (value-type int)) (expr
+          (check-panicked-expr
+            (single-wait-action
+              (index-based-access
+                (simple-var-ref casted)
+                (literal 0)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref castedValue))))
+      (var-def
+        (variable pending (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (select-clause
+              (start-action
+                (invocation times (
+                  (simple-var-ref i)))))))))
+      (var-def
+        (variable waited (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable f (type
+                  (constrained-type
+                    (builtin-ref-type future)
+                    (value-type int)))))
+              (simple-var-ref pending))
+            (select-clause
+              (type-conversion-expr
+                (check-panicked-expr
+                  (single-wait-action
+                    (simple-var-ref f)))
+                (value-type int)))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref waited))))
+      (var-def
+        (variable ordered (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 3)
+                (literal 1)
+                (literal 2)))
+            (order-by-clause
+              (order-key descending
+                (simple-var-ref i)))
+            (limit-clause
+              (literal 2))
+            (select-clause
+              (type-conversion-expr
+                (start-action
+                  (invocation times (
+                    (simple-var-ref i))))
+                (constrained-type
+                  (builtin-ref-type future)
+                  (value-type int))))))))
+      (foreach
+        (var-def
+          (variable f (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))))
+        (simple-var-ref ordered)
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref f))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value))))))
+      (var-def
+        (variable grouped (type
+          (array-type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)
+                (literal 3)))
+            (group-by-clause
+              (grouping-key
+                (var-def
+                  (variable k (type
+                    (value-type int)) (expr
+                    (binary-expr %
+                      (simple-var-ref i)
+                      (literal 2)))))))
+            (select-clause
+              (start-action
+                (invocation times (
+                  (simple-var-ref k)))))))))
+      (foreach
+        (var-def
+          (variable f (type
+            (constrained-type
+              (builtin-ref-type future)
+              (value-type int)))))
+        (simple-var-ref grouped)
+        (block-stmt
+          (var-def
+            (variable value (type
+              (value-type int)) (expr
+              (check-panicked-expr
+                (single-wait-action
+                  (simple-var-ref f))))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref value))))))
+      (var-def
+        (variable cl (type
+          (user-defined-type Client)) (expr
+          (new ()))))
+      (var-def
+        (variable scaled (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (query-expr
+            (from-clause
+              (var-def
+                (variable i (type
+                  (value-type int))))
+              (list-constructor-expr
+                (literal 1)
+                (literal 2)))
+            (select-clause
+              (remote-method-call scale expr:
+                (simple-var-ref cl) (
+                (simple-var-ref i))))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref scaled))))
+      (var-def
+        (variable single (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (start-action
+            (invocation times (
+              (literal 8)))))))
+      (var-def
+        (variable waitedAny (type
+          (value-type any)) (expr
+          (type-conversion-expr
+            (single-wait-action
+              (simple-var-ref single))
+            (value-type any)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref waitedAny)))))))
