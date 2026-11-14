@@ -2680,7 +2680,7 @@ func resolveExprs(r symbolResolver, exprs []ast.BLangExpression) bool {
 
 func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 	switch n := expr.(type) {
-	case ast.BLangBadNode:
+	case ast.BLangBadNode, *ast.BLangBadExprOrAction:
 		return false
 	case *ast.BLangBinaryExpr:
 		ok := resolveOptionalExpr(r, n.LhsExpr)
@@ -2789,9 +2789,15 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 			ok = resolveOptionalExpr(r, n.Path[i].Expr) && ok
 		}
 		return resolveExprs(r, n.ArgExprs) && ok
-	default:
+	case *ast.BLangAlternateWorkerReceive,
+		*ast.BLangArrowFunction,
+		*ast.BLangCommitExpr,
+		*ast.BLangWildCardBindingPattern,
+		*ast.BLangWorkerReceive,
+		*ast.AbstractExpression:
 		return reportUnexpectedNode(r, expr)
 	}
+	panic("unreachable: unhandled expression in symbol resolution") //nolint:forbidigo // Every supported and rejected expression variant is handled above.
 }
 
 // resolveQueryExpr resolves a query expression so that only the initial
