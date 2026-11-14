@@ -1,0 +1,272 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (variable base (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref base)
+        (literal 7))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref base))))
+      (var-def
+        (variable base (type
+          (value-type int)) (expr
+          (literal 100))))
+      (var-def
+        (variable $desugar$0))
+      (assignment
+        (simple-var-ref $desugar$0)
+        (lambda
+          (function $default$0 (
+            (variable x (type
+              (value-type )))) ()
+            (block-function-body
+              (return
+                (simple-var-ref base))))))
+      (var-def
+        (variable add (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)))
+              (variable y (type
+                (value-type int)) (expr
+                (simple-var-ref base)))) (
+              (value-type int))
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref y))))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$1 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$2 (expr
+              (invocation $desugar$0 (
+                (simple-var-ref $desugar$1))))))
+          (invocation add (
+            (simple-var-ref $desugar$1)
+            (simple-var-ref $desugar$2)))))))
+      (assignment
+        (simple-var-ref base)
+        (literal 200))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$3 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$4 (expr
+              (invocation $desugar$0 (
+                (simple-var-ref $desugar$3))))))
+          (invocation add (
+            (simple-var-ref $desugar$3)
+            (simple-var-ref $desugar$4)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation add (
+            (literal 1)
+            (literal 2))))))
+      (var-def
+        (variable greeting (type
+          (value-type string)) (expr
+          (literal hi))))
+      (var-def
+        (variable $desugar$5))
+      (assignment
+        (simple-var-ref $desugar$5)
+        (lambda
+          (function $default$1 (
+            (variable name (type
+              (value-type )))) ()
+            (block-function-body
+              (return
+                (binary-expr +
+                  (binary-expr +
+                    (simple-var-ref greeting)
+                    (literal  ))
+                  (simple-var-ref name)))))))
+      (var-def
+        (variable greet (expr
+          (lambda
+            (function $anonFunc$_1 (
+              (variable name (type
+                (value-type string)))
+              (variable g (type
+                (value-type string)) (expr
+                (binary-expr +
+                  (binary-expr +
+                    (simple-var-ref greeting)
+                    (literal  ))
+                  (simple-var-ref name))))) (
+              (value-type string))
+              (expr-function-body
+                (simple-var-ref g)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$6 (expr
+              (literal a))))
+          (var-def
+            (variable $desugar$7 (expr
+              (invocation $desugar$5 (
+                (simple-var-ref $desugar$6))))))
+          (invocation greet (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)))))))
+      (var-def
+        (variable $desugar$8 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$9 (expr
+          (literal 2))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$8)
+          (simple-var-ref $desugar$9))
+        (block-stmt
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$8))))
+          (var-def
+            (variable s (type
+              (value-type string)) (expr
+              (binary-expr +
+                (literal v)
+                (invocation lang.value toString (
+                  (simple-var-ref i)))))))
+          (var-def
+            (variable $desugar$10))
+          (assignment
+            (simple-var-ref $desugar$10)
+            (lambda
+              (function $default$2 (
+                (variable x (type
+                  (value-type )))) ()
+                (block-function-body
+                  (return
+                    (binary-expr +
+                      (simple-var-ref s)
+                      (invocation lang.value toString (
+                        (simple-var-ref x)))))))))
+          (var-def
+            (variable f (expr
+              (lambda
+                (function $anonFunc$_2 (
+                  (variable x (type
+                    (value-type int)))
+                  (variable y (type
+                    (value-type string)) (expr
+                    (binary-expr +
+                      (simple-var-ref s)
+                      (invocation lang.value toString (
+                        (simple-var-ref x))))))) (
+                  (value-type string))
+                  (expr-function-body
+                    (simple-var-ref y)))))))
+          (expression-stmt
+            (invocation io println (
+              (expression-thunk
+              (var-def
+                (variable $desugar$11 (expr
+                  (literal 7))))
+              (var-def
+                (variable $desugar$12 (expr
+                  (invocation $desugar$10 (
+                    (simple-var-ref $desugar$11))))))
+              (invocation f (
+                (simple-var-ref $desugar$11)
+                (simple-var-ref $desugar$12)))))))
+          (assignment
+            (simple-var-ref $desugar$8)
+            (binary-expr +
+              (simple-var-ref $desugar$8)
+              (numeric-literal 1)))))
+      (var-def
+        (variable $desugar$13))
+      (assignment
+        (simple-var-ref $desugar$13)
+        (lambda
+          (function $default$3 (
+            (variable x (type
+              (value-type )))) ()
+            (block-function-body
+              (return
+                (simple-var-ref base))))))
+      (var-def
+        (variable apply (expr
+          (lambda
+            (function $anonFunc$_3 (
+              (variable h (type
+                (function-type (
+                  (value-type int)
+                  (value-type int)) (
+                  (value-type int)))))) (
+              (value-type int))
+              (expr-function-body
+                (expression-thunk
+                (var-def
+                  (variable $desugar$0 (expr
+                    (literal 1))))
+                (var-def
+                  (variable $desugar$1 (expr
+                    (invocation $desugar$13 (
+                      (simple-var-ref $desugar$0))))))
+                (invocation h (
+                  (simple-var-ref $desugar$0)
+                  (simple-var-ref $desugar$1))))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation apply (
+            (lambda
+              (function $anonFunc$_4 (
+                (variable x (type
+                  (value-type int)))
+                (variable y (type
+                  (value-type int)))) (
+                (value-type int))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref x)
+                    (simple-var-ref y))))))))))
+      (var-def
+        (variable fieldBase (type
+          (value-type int)) (expr
+          (literal 300))))
+      (var-def
+        (variable $desugar$14 (expr
+          (lambda
+            (function $default$4 () ()
+              (block-function-body
+                (return
+                  (simple-var-ref fieldBase))))))))
+      (var-def
+        (variable readField (expr
+          (lambda
+            (function $anonFunc$_5 (
+              (variable r (type
+                (record-type
+                  (field a
+                    (value-type int)
+                    (simple-var-ref fieldBase)))))) (
+              (value-type int))
+              (expr-function-body
+                (index-based-access
+                  (simple-var-ref r)
+                  (literal a))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readField (
+            (mapping-constructor-expr)))))))))

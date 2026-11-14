@@ -70,5 +70,5 @@ func (bs *blockSymbolResolver) recordCapture(ref model.SymbolRef) {
 }
 
 func (bs *blockSymbolResolver) declares(ref model.SymbolRef) bool {
-	return ref.SpaceIndex == bs.scope.MainSpace().SpaceIndex()
+	return bs.scope.MainSpace().Binds(ref)
 }

@@ -19,6 +19,7 @@ package desugar
 
 import (
 	"fmt"
+	"maps"
 	"sync"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -1516,14 +1517,24 @@ func createDefaultClosure(ctx desugarContext, def *model.DefaultableParam, expr 
 func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, symbol model.SymbolRef,
 	scope model.Scope,
 ) []*ast.BLangFunction {
+	functions := desugarParamDefaultClosures(ctx, fn, symbol)
+	types := desugarSignatureTypeDescs(ctx, fn, scope)
+	functions = append(functions, types.functions...)
+	for _, field := range types.recordFields {
+		functions = append(functions, field.fn)
+	}
+	return functions
+}
+
+// desugarParamDefaultClosures creates the default closures for the defaultable parameters of fn.
+func desugarParamDefaultClosures(ctx desugarContext, fn ast.FunctionSignature, symbol model.SymbolRef) []*ast.BLangFunction {
 	params := fn.Parameters()
 	sig, ok := ctx.functionSignature(symbol)
 	if !ok {
 		ctx.internalError("function signature not found", fn.GetPosition())
 		return nil
 	}
-	// Desugar closures for this function
-	functions := createDefaultClosures(ctx, sig,
+	return createDefaultClosures(ctx, sig,
 		func(i int) semtypes.SemType {
 			return ctx.symbolType(params[i].Symbol())
 		},
@@ -1534,18 +1545,18 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 			return params[i].Symbol()
 		},
 	)
+}
+
+// desugarSignatureTypeDescs desugars the defaults of the type descriptors used in the signature of fn.
+func desugarSignatureTypeDescs(ctx desugarContext, fn ast.FunctionSignature, scope model.Scope) desugaredTypeDescResult {
+	var result desugaredTypeDescResult
 	appendTypeDefaults := func(typeDesc ast.BType) {
 		if typeDesc == nil {
 			return
 		}
-		result := desugarTypeDesc(ctx, typeDesc, scope)
-		functions = append(functions, result.functions...)
-		for _, field := range result.recordFields {
-			functions = append(functions, field.fn)
-		}
+		result.append(desugarTypeDesc(ctx, typeDesc, scope))
 	}
-	// Desugar closures for types used in the function signature
-	for _, param := range params {
+	for _, param := range fn.Parameters() {
 		appendTypeDefaults(param.Type())
 	}
 	if restParam := fn.RestParameter(); restParam != nil {
@@ -1560,7 +1571,7 @@ func desugarFunctionParamDefaults(ctx desugarContext, fn ast.FunctionSignature, 
 			appendTypeDefaults(typeDesc)
 		}
 	}
-	return functions
+	return result
 }
 
 func desugarFunctionTypeParamDefaults(ctx desugarContext, fnType *ast.BLangFunctionType) []*ast.BLangFunction {
@@ -1931,8 +1942,10 @@ func desugarNestedFunction(cx *functionContext, fn *ast.BLangFunction) *ast.BLan
 		owner:             fn.Symbol(),
 		uniqueNamePrefix:  uniqueName(cx.pkgCtx, cx.uniqueNamePrefix, fn.Symbol()),
 		workerFutureSlots: cx.workerFutureSlots,
-		isIsolated:        fn.IsIsolated(),
-		span:              span,
+		// A call in the nested function reaches a local default closure of the enclosing function by capturing it.
+		defaultClosureVars: maps.Clone(cx.defaultClosureVars),
+		isIsolated:         fn.IsIsolated(),
+		span:               span,
 	}
 	fn = desugarFunctionWithContext(nested, fn)
 	cx.generatedFunctions = append(cx.generatedFunctions, nested.generatedFunctions...)

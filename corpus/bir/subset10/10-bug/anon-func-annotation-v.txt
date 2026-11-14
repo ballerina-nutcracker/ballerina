@@ -24,133 +24,135 @@ main() -> nil{
     %7 = println(%6) -> bb2;
   }
   bb2 {
-    %8 = fp $anon/.:$anonFunc$_4
-    defaultable = %8;
-    %10 = $default$2() -> bb3;
+    %9 = fp $anon/.:$default$2
+    $desugar$0 = %9;
+    %10 = fp $anon/.:$anonFunc$_4
+    defaultable = %10;
+    %12 = $desugar$0() -> bb3;
   }
   bb3 {
-    $desugar$0 = %10;
-    %12 = $desugar$0;
-    %13 = defaultable(%12) -> bb4;
+    $desugar$1 = %12;
+    %14 = $desugar$1;
+    %15 = defaultable(%14) -> bb4;
   }
   bb4 {
-    %14 = %13;
-    %15 = println(%14) -> bb5;
+    %16 = %15;
+    %17 = println(%16) -> bb5;
   }
   bb5 {
-    %16 = fp $anon/.:$anonFunc$_5
-    rest = %16;
-    %18 = ConstantLoad 1
-    %19 = %18;
-    %20 = ConstantLoad 2
+    %18 = fp $anon/.:$anonFunc$_5
+    rest = %18;
+    %20 = ConstantLoad 1
     %21 = %20;
-    %22 = ConstantLoad 3
+    %22 = ConstantLoad 2
     %23 = %22;
-    %24 = rest(%19,%21,%23) -> bb6;
+    %24 = ConstantLoad 3
+    %25 = %24;
+    %26 = rest(%21,%23,%25) -> bb6;
   }
   bb6 {
-    %25 = %24;
-    %26 = println(%25) -> bb7;
+    %27 = %26;
+    %28 = println(%27) -> bb7;
   }
   bb7 {
-    %27 = fp $anon/.:$anonFunc$_6
-    returnAnnotated = %27;
-    %29 = returnAnnotated() -> bb8;
+    %29 = fp $anon/.:$anonFunc$_6
+    returnAnnotated = %29;
+    %31 = returnAnnotated() -> bb8;
   }
   bb8 {
-    %30 = %29;
-    %31 = println(%30) -> bb9;
+    %32 = %31;
+    %33 = println(%32) -> bb9;
   }
   bb9 {
-    %32 = fp $anon/.:$anonFunc$_7
-    exprBody = %32;
-    %34 = ConstantLoad 5
-    %35 = %34;
-    %36 = exprBody(%35) -> bb10;
+    %34 = fp $anon/.:$anonFunc$_7
+    exprBody = %34;
+    %36 = ConstantLoad 5
+    %37 = %36;
+    %38 = exprBody(%37) -> bb10;
   }
   bb10 {
-    %37 = %36;
-    %38 = println(%37) -> bb11;
+    %39 = %38;
+    %40 = println(%39) -> bb11;
   }
   bb11 {
-    %39 = fp $anon/.:$anonFunc$_8
-    literalValue = %39;
-    %41 = ConstantLoad 6
-    %42 = %41;
-    %43 = literalValue(%42) -> bb12;
+    %41 = fp $anon/.:$anonFunc$_8
+    literalValue = %41;
+    %43 = ConstantLoad 6
+    %44 = %43;
+    %45 = literalValue(%44) -> bb12;
   }
   bb12 {
-    %44 = %43;
-    %45 = println(%44) -> bb13;
+    %46 = %45;
+    %47 = println(%46) -> bb13;
   }
   bb13 {
-    %46 = fp $anon/.:$anonFunc$_9
-    constValue = %46;
-    %48 = ConstantLoad 7
-    %49 = %48;
-    %50 = constValue(%49) -> bb14;
+    %48 = fp $anon/.:$anonFunc$_9
+    constValue = %48;
+    %50 = ConstantLoad 7
+    %51 = %50;
+    %52 = constValue(%51) -> bb14;
   }
   bb14 {
-    %51 = %50;
-    %52 = println(%51) -> bb15;
+    %53 = %52;
+    %54 = println(%53) -> bb15;
   }
   bb15 {
-    %53 = ConstantLoad local
-    local = %53;
-    %55 = fp $anon/.:$anonFunc$_10
-    runtimeValue = %55;
-    %57 = ConstantLoad 8
-    %58 = %57;
-    %59 = runtimeValue(%58) -> bb16;
+    %55 = ConstantLoad local
+    local = %55;
+    %57 = fp $anon/.:$anonFunc$_10
+    runtimeValue = %57;
+    %59 = ConstantLoad 8
+    %60 = %59;
+    %61 = runtimeValue(%60) -> bb16;
   }
   bb16 {
-    %60 = %59;
-    %61 = println(%60) -> bb17;
+    %62 = %61;
+    %63 = println(%62) -> bb17;
   }
   bb17 {
-    %62 = fp $anon/.:$anonFunc$_11
-    repeated = %62;
-    %64 = ConstantLoad 9
-    %65 = %64;
-    %66 = repeated(%65) -> bb18;
+    %64 = fp $anon/.:$anonFunc$_11
+    repeated = %64;
+    %66 = ConstantLoad 9
+    %67 = %66;
+    %68 = repeated(%67) -> bb18;
   }
   bb18 {
-    %67 = %66;
-    %68 = println(%67) -> bb19;
+    %69 = %68;
+    %70 = println(%69) -> bb19;
   }
   bb19 {
-    %69 = newMap {| fn: function(int) returns int, never... |}{} defaults{fn=$anon/.:$default$0}
-    holder = %69;
-    %72 = ConstantLoad fn
-    %71 = holder[%72];
-    held = %71;
-    %74 = ConstantLoad 9
-    %75 = %74;
-    %76 = held(%75) -> bb20;
+    %71 = newMap {| fn: function(int) returns int, never... |}{} defaults{fn=$anon/.:$default$0}
+    holder = %71;
+    %74 = ConstantLoad fn
+    %73 = holder[%74];
+    held = %73;
+    %76 = ConstantLoad 9
+    %77 = %76;
+    %78 = held(%77) -> bb20;
   }
   bb20 {
-    %77 = %76;
-    %78 = println(%77) -> bb21;
+    %79 = %78;
+    %80 = println(%79) -> bb21;
   }
   bb21 {
-    %79 = ConstantLoad 9
-    %80 = %79;
-    %81 = moduleFn(%80) -> bb22;
+    %81 = ConstantLoad 9
+    %82 = %81;
+    %83 = moduleFn(%82) -> bb22;
   }
   bb22 {
-    %82 = %81;
-    %83 = println(%82) -> bb23;
+    %84 = %83;
+    %85 = println(%84) -> bb23;
   }
   bb23 {
-    %84 = $default$1() -> bb24;
+    %86 = $default$1() -> bb24;
   }
   bb24 {
-    $desugar$1 = %84;
-    %86 = apply($desugar$1) -> bb25;
+    $desugar$2 = %86;
+    %88 = apply($desugar$2) -> bb25;
   }
   bb25 {
-    %87 = %86;
-    %88 = println(%87) -> bb26;
+    %89 = %88;
+    %90 = println(%89) -> bb26;
   }
   bb26 {
     return;

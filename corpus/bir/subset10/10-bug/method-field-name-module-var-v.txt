@@ -1,0 +1,98 @@
+module $anon.. v 0.0.0;
+base  int;
+class P {
+  base int
+
+  get() -> int{
+    bb0 {
+      %0 = base;
+      return;
+    }
+  }
+
+  getField() -> int{
+    bb0 {
+      %3 = ConstantLoad base
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 3
+      %3 = ConstantLoad base
+      self[%3] = %2;
+      return;
+    }
+  }
+
+  sum(int,int) -> int{
+    bb0 {
+      %5 = a;
+      %6 = b;
+      %4 = + %5 %6;
+      %0 = %4;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:P
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    p = %3;
+    %6 = ConstantLoad 1
+    $desugar$0 = %6;
+    %8 = $desugar$0;
+    %9 = $default$0(%8) -> bb5;
+  }
+  bb5 {
+    $desugar$1 = %9;
+    %11 = $desugar$0;
+    %12 = $desugar$1;
+    %13 = p.sum(%11,%12) -> bb6;
+  }
+  bb6 {
+    %14 = %13;
+    %15 = println(%14) -> bb7;
+  }
+  bb7 {
+    %16 = p.get() -> bb8;
+  }
+  bb8 {
+    %17 = %16;
+    %18 = println(%17) -> bb9;
+  }
+  bb9 {
+    %19 = p.getField() -> bb10;
+  }
+  bb10 {
+    %20 = %19;
+    %21 = println(%20) -> bb11;
+  }
+  bb11 {
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %0 = base;
+    return;
+  }
+}

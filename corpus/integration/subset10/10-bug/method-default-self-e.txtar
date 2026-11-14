@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: base
+  --> method-default-self-e.bal:25:35
+   |
+25 |     function fieldDefault(int a = base) returns int => a; // @error
+   |                                   ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: base
+  --> method-default-self-e.bal:27:41
+   |
+27 |     function fieldBody() returns int => base; // @error
+   |                                         ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> method-default-self-e.bal:19:31
+   |
+19 |     function m(int a, int b = self.base) returns int => a + b; // @error
+   |                               ^^^^
+
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> method-default-self-e.bal:21:26
+   |
+21 |     function get(int a = self.base * 10) returns int { // @error
+   |                          ^^^^
+
+error[SEMANTIC_ERROR]: redeclared symbol 'self'
+  --> method-default-self-e.bal:29:24
+   |
+29 |     function selfParam(int self) returns int => self; // @error
+   |                        ^^^^^^^^

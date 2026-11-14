@@ -1,0 +1,96 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition P
+    (variable base (type
+      (value-type int)) (expr
+      (literal 3)))
+    (function m () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable f (expr
+            (lambda
+              (function $anonFunc$_0 (
+                (variable a (type
+                  (value-type int)))
+                (variable b (type
+                  (value-type int)) (expr
+                  (field-based-access base
+                    (simple-var-ref self))))) (
+                (value-type int))
+                (expr-function-body
+                  (binary-expr +
+                    (simple-var-ref a)
+                    (simple-var-ref b))))))))
+        (return
+          (invocation f (
+            (literal 1)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable base (type
+          (value-type int)) (expr
+          (literal 100))))
+      (var-def
+        (variable add (expr
+          (lambda
+            (function $anonFunc$_1 (
+              (variable x (type
+                (value-type int)))
+              (variable y (type
+                (value-type int)) (expr
+                (simple-var-ref base)))) (
+              (value-type int))
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref y))))))))
+      (var-def
+        (variable callAdd (expr
+          (lambda
+            (function $anonFunc$_2 () (
+              (value-type int))
+              (expr-function-body
+                (invocation add (
+                  (literal 1)))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation callAdd ()))))
+      (var-def
+        (variable typed (type
+          (function-type (
+            (value-type int)
+            (value-type int)) (
+            (value-type int)))) (expr
+          (lambda
+            (function $anonFunc$_3 (
+              (variable x (type
+                (value-type int)))
+              (variable y (type
+                (value-type int)))) (
+              (value-type int))
+              (expr-function-body
+                (binary-expr +
+                  (simple-var-ref x)
+                  (simple-var-ref y))))))))
+      (var-def
+        (variable callTyped (expr
+          (lambda
+            (function $anonFunc$_4 () (
+              (value-type int))
+              (expr-function-body
+                (invocation typed (
+                  (literal 2)))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation callTyped ()))))
+      (var-def
+        (variable p (type
+          (user-defined-type P)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation m expr:
+            (simple-var-ref p) ())))))))

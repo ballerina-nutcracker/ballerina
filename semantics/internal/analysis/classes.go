@@ -31,7 +31,7 @@ import (
 // each inclusion; an error in one does not abandon the others.
 func validateClass(cx scope.Context, c *ast.BLangClassDefinition) {
 	fields := common.DeclaredNodes(c.Fields)
-	info := scope.NewClassInfo(cx, c.Name.GetValue(), c.IsIsolated(), fields,
+	info := scope.NewClassInfo(cx, c.Name.GetValue(), c.IsIsolated(), c.Scope(), fields,
 		memberFieldDescriptors(cx.CompilerCtx().SymbolMembers(c.Symbol())), c.InitFunction)
 	validateClassInner(cx, info, fields, c.InitFunction, common.MethodsInResolutionOrder(c.Methods), c.ResourceMethods)
 	if !c.IsIsolated() {
@@ -56,7 +56,7 @@ func validateService(cx scope.Context, svc *ast.BLangService) {
 	for i := range svc.AttachedExprs {
 		validateServiceListener(cx, svc, i)
 	}
-	info := scope.NewClassInfo(cx, "", svc.IsIsolated(), svc.Fields, serviceFieldDescriptors(cx, svc), svc.InitFunction)
+	info := scope.NewClassInfo(cx, "", svc.IsIsolated(), svc.Scope(), svc.Fields, serviceFieldDescriptors(cx, svc), svc.InitFunction)
 	validateClassInner(cx, info, svc.Fields, svc.InitFunction, common.MethodsInResolutionOrder(svc.Methods), svc.ResourceMethods)
 	if !svc.IsIsolated() {
 		for i := range svc.Inclusions {
