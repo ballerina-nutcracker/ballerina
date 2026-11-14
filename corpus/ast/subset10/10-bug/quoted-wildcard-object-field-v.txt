@@ -1,0 +1,23 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition O
+    (object-type
+      (field '_
+        (value-type int))))
+  (class-definition C
+    (variable '_ (type
+      (value-type int)) (expr
+      (literal 6))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type O)) (expr
+          (new
+            (user-defined-type C) ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access '_
+            (simple-var-ref o))))))))

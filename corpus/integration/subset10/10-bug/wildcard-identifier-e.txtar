@@ -1,0 +1,73 @@
+-- stdout --
+-- stderr --
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:19:5
+   |
+19 |     _ += 1; // @error
+   |     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:21:10
+   |
+21 |     x += _; // @error
+   |          ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:22:13
+   |
+22 |     int y = _; // @error
+   |             ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:23:9
+   |
+23 |     foo(_); // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:24:5
+   |
+24 |     _ a = 1; // @error
+   |     ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:26:14
+   |
+26 |     int c = <_>b; // @error
+   |              ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:27:9
+   |
+27 |     int|_ d = 1; // @error
+   |         ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:28:17
+   |
+28 |     var e = new _(); // @error
+   |                 ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:29:36
+   |
+29 |     function (int) returns int f = _ => 1; // @error
+   |                                    ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:35:24
+   |
+35 | function bar() returns _ { // @error
+   |                        ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:40:6
+   |
+40 |     *_; // @error
+   |      ^
+
+error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
+  --> wildcard-identifier-e.bal:44:5
+   |
+44 |     _ // @error
+   |     ^

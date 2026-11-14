@@ -1911,12 +1911,12 @@ func optionalFieldAccess(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangF
 	if !ok {
 		return baseEffect, false
 	}
+	baseTy := expr.Expr.Type()
 	keyOperand := ctx.addTempVar(semtypes.String)
-	baseEffect.block.Instructions = append(baseEffect.block.Instructions, bir.NewConstantLoad(keyOperand, expr.Field.GetValue(), pos))
+	baseEffect.block.Instructions = append(baseEffect.block.Instructions, bir.NewConstantLoad(keyOperand, expr.FieldName(baseTy), pos))
 	resultOperand := ctx.addTempVar(expr.Type())
 	load := bir.NewFieldAccess(bir.InstructionKindMapLoad, resultOperand, keyOperand, baseEffect.result, pos)
 
-	baseTy := expr.Expr.Type()
 	// TODO: cover the error-base path when lax optional access typing is
 	// supported: https://github.com/ballerina-nutcracker/ballerina/issues/558
 	if semtypes.IsNever(semtypes.Intersect(baseTy, semtypes.Error)) {

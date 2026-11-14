@@ -573,9 +573,13 @@ func (n *nodeBuilder) createBLangIdentifierWith(token st.Token, underscoreMessag
 		return ast.BLangIdentifier{}, false
 	}
 	identifierName := token.Text()
-	if identifierName == "_" || identifierName == "'_" {
+	if identifierName == "_" {
 		n.cx.SyntaxError(underscoreMessage, pos)
 		return ast.BLangIdentifier{}, false
+	}
+	if identifierName == "'_" {
+		// `'_` keeps its quote so that it stays distinct from the wildcard model.IGNORE.
+		return ast.NewBLangIdentifier(pos, identifierName, identifierName), true
 	}
 	return createIdentifier(pos, &identifierName, &identifierName), true
 }
@@ -2488,12 +2492,11 @@ func (n *nodeBuilder) transformEnumMember(enumMemberNode *st.EnumMemberNode, pub
 		}
 		expr = literal
 	}
-	memberTypeName := identifierToken.Text()
 	emptyStr := ""
 	memberType := createUserDefinedType(
 		n.getPosition(identifierToken),
 		createIdentifier(diagnostics.NewBuiltinLocation(), &emptyStr, &emptyStr),
-		createIdentifier(n.getPosition(identifierToken), &memberTypeName, &memberTypeName),
+		ast.NewBLangIdentifier(n.getPosition(identifierToken), identifier.GetValue(), identifierToken.Text()),
 	)
 	stringType := &ast.BLangValueType{TypeKind: ast.TypeKindString}
 	stringType.SetPosition(diagnostics.NewBuiltinLocation())
@@ -3438,11 +3441,11 @@ func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) (*ast.BL
 		n.internalError(fmt.Sprintf("unexpected mapping field name node %T", fieldName), fieldName)
 		return nil, false
 	}
-	identifier, ok := n.createBLangIdentifier(nameToken)
+	_, ok := n.createBLangIdentifier(nameToken)
 	if !ok {
 		return nil, false
 	}
-	return fieldNameLiteral(n.getPosition(fieldName), identifier.Value), true
+	return fieldNameLiteral(n.getPosition(fieldName), identifierTokenValue(nameToken)), true
 }
 
 func fieldNameLiteral(pos diagnostics.Location, name string) *ast.BLangLiteral {
@@ -5604,7 +5607,7 @@ func (n *nodeBuilder) transformInferredParam(paramNode *st.SimpleNameReferenceNo
 	if !n.expectNode(paramNode) {
 		return inferredParam{}, false
 	}
-	return inferredParam{node: paramNode, name: n.transformIdentifierWith(paramNode.Name(), nil, "'_' cannot be used as an identifier")}, true
+	return inferredParam{node: paramNode, name: n.transformIdentifier(paramNode.Name())}, true
 }
 
 func (n *nodeBuilder) transformStartAction(startActionNode *st.StartActionNode) (*ast.BLangStartAction, bool) {
@@ -6068,6 +6071,11 @@ func (n *nodeBuilder) transformErrorConstructorExpression(errorConstructorExpres
 			if !ok {
 				return nil, false
 			}
+			if namedArg.Name.GetValue() == "'_" {
+				nameToken := arg.ArgumentName().Name()
+				name := ast.NewBLangIdentifier(n.getPosition(nameToken), identifierTokenValue(nameToken), nameToken.Text())
+				namedArg.Name = &name
+			}
 			namedArgs = append(namedArgs, *namedArg)
 		case *st.RestArgumentNode:
 			n.cx.InternalError("rest arguments not supported in error constructor", n.getPosition(arg))
@@ -6257,7 +6265,8 @@ func (n *nodeBuilder) addObjectTypeField(objectType *ast.BLangObjectType, object
 	}
 	fieldType := n.transformType(objectField.TypeName())
 	fieldNameToken := objectField.FieldName()
-	if !n.expectToken(fieldNameToken) || !n.expectOptionalToken(objectField.EqualsToken()) {
+	fieldIdentifier, ok := n.createBLangIdentifier(fieldNameToken)
+	if !ok || !n.expectOptionalToken(objectField.EqualsToken()) {
 		return false
 	}
 	if expression := objectField.Expression(); expression != nil {
@@ -6266,7 +6275,7 @@ func (n *nodeBuilder) addObjectTypeField(objectType *ast.BLangObjectType, object
 	if !n.expectToken(objectField.SemicolonToken()) {
 		return false
 	}
-	fieldName, _ := normalizedIdentifierValue(fieldNameToken.Text())
+	fieldName := fieldIdentifier.Value
 	bField := ast.NewBObjectField(
 		n.getPosition(objectField),
 		fieldName,
@@ -6329,13 +6338,14 @@ func (n *nodeBuilder) addObjectTypeMethod(objectType *ast.BLangObjectType, metho
 		return false
 	}
 	methodNameToken := asToken(methodDecl.MethodName())
-	if !n.expectToken(methodNameToken) {
+	methodIdentifier, ok := n.createBLangIdentifier(methodNameToken)
+	if !ok {
 		return false
 	}
 	if _, ok := n.createResourcePathSegments(methodDecl.RelativeResourcePath()); !ok {
 		return false
 	}
-	methodName, _ := normalizedIdentifierValue(methodNameToken.Text())
+	methodName := methodIdentifier.Value
 	if qualifiers.kind == ast.ObjectMemberKindRemoteMethod {
 		methodName = model.RemoteMethodName(methodName)
 	}

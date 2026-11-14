@@ -1161,6 +1161,15 @@ func (b *BLangFieldBaseAccess) GetFieldName() IdentifierNode {
 	return b.Field
 }
 
+// FieldName returns the lookup name for a field of the given receiver type.
+func (b *BLangFieldBaseAccess) FieldName(receiverType semtypes.SemType) string {
+	name := b.Field.GetValue()
+	if semtypes.ContainsBasicType(receiverType, semtypes.Mapping) {
+		return strings.TrimPrefix(name, "'")
+	}
+	return name
+}
+
 // SetLax marks this field access as requiring lax runtime semantics.
 func (b *BLangFieldBaseAccess) SetLax() {
 	b.flags |= valueExpressionFlagLax
