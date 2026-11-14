@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:47:21
+   |
+47 |     DetailError e = error("missing"); // @error code has no default
+   |                     ^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:52:35
+   |
+52 |     CodeNoteError|ReasonError e = error("selected", code = 1); // @error named arguments do not select a union member
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:57:23
+   |
+57 |     NarrowedError e = error("narrowed"); // @error default of x does not fit byte
+   |                       ^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:62:26
+   |
+62 |     ConflictingError e = error("conflicting"); // @error both intersected records declare defaults
+   |                          ^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: error detail arguments are incompatible with error detail type
+  --> error-detail-default-field-e.bal:67:30
+   |
+67 |     FittingNarrowedError e = error("fitting"); // @error default of x is not applied to a narrowed field
+   |                              ^^^^^^^^^^^^^^^^
