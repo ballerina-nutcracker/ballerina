@@ -23,6 +23,7 @@
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
   - Supports `object-field`, `method-defn` and `object-type-inclusion` members
   - Supports [`remote-method-defn`](https://ballerina.io/spec/lang/master/#remote-method-defn) for client classes and `resource-method-defn` for service classes
+  - [`self`](https://ballerina.io/spec/lang/master/#section_6.8.1.2) is bound only in a method body; references to `self` in a method or `init` parameter default are rejected
 
 ## Statements
 
@@ -343,3 +344,4 @@ These are intentional departures from the [language specification](https://balle
 - Only `client`, `service` and `isolated` `object-type-quals` / `class-type-quals` are supported
 - Supports `object-field-descriptor`, `method-decl`, `remote-method-decl` and `resource-method-decl` members
 - Supports `included-record-param`, `rest-param` and `defaultable-param` in methods
+- Method and `init` parameter defaults may not refer to [`self`](https://ballerina.io/spec/lang/master/#section_6.8.1.2)
