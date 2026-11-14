@@ -337,7 +337,7 @@ var (
 )
 
 // Methods for creating STNodes
-func CreateInvalidTokenMinutiaeNode(token STToken) *STInvalidTokenMinutiaeNode {
+func createInvalidTokenMinutiaeNode(token STToken) *STInvalidTokenMinutiaeNode {
 	return createNodeAndAddChildren(&STInvalidTokenMinutiaeNode{
 		kind:  INVALID_TOKEN_MINUTIAE_NODE,
 		token: token,
@@ -428,7 +428,7 @@ func CreateInvalidToken(tokenText string) *STInvalidToken {
 }
 
 func CreateInvalidNodeMinutiae(invalidToken STToken) STNode {
-	invalidNode := CreateInvalidTokenMinutiaeNode(invalidToken)
+	invalidNode := createInvalidTokenMinutiaeNode(invalidToken)
 	return createNodeAndAddChildren(&STInvalidNodeMinutiae{
 		kind:        INVALID_NODE_MINUTIAE,
 		text:        ToSourceCode(invalidNode),
@@ -470,12 +470,12 @@ func findToken(n STNode, dir direction) STToken {
 			}
 			panic("expected STToken")
 		}
-		if !IsSTNodePresent(child) || (IsSTNodeList(child) && child.BucketCount() == 0) {
+		if !IsSTNodePresent(child) || (isSTNodeList(child) && child.BucketCount() == 0) {
 			continue
 		}
 		var token STToken
 		if dir == forward {
-			token = FirstToken(child)
+			token = firstToken(child)
 		} else {
 			token = LastToken(child)
 		}
@@ -489,7 +489,7 @@ func findToken(n STNode, dir direction) STToken {
 	panic("failed to find last token")
 }
 
-func FirstToken(n STNode) STToken {
+func firstToken(n STNode) STToken {
 	token, ok := n.(STToken)
 	if ok {
 		return token
@@ -633,7 +633,7 @@ func (n stNodeBase) IsMissing() bool {
 	return isFlagSet(n.flags, isMissingFlag)
 }
 
-func Tokens(n STNode) []STToken {
+func tokensOf(n STNode) []STToken {
 	token, ok := n.(STToken)
 	if ok {
 		return []STToken{token}
@@ -641,7 +641,7 @@ func Tokens(n STNode) []STToken {
 	tokens := make([]STToken, 0, n.BucketCount())
 	for _, child := range n.ChildBuckets() {
 		if IsSTNodePresent(child) {
-			tokens = append(tokens, Tokens(child)...)
+			tokens = append(tokens, tokensOf(child)...)
 		}
 	}
 	return tokens
@@ -1132,7 +1132,7 @@ func isFlagSet(flags uint8, flag uint8) bool {
 	return (flags & flag) != 0
 }
 
-func IsSTNodeList(child STNode) bool {
+func isSTNodeList(child STNode) bool {
 	return child.Kind() == LIST
 }
 
@@ -1157,24 +1157,18 @@ func CloneWithLeadingInvalidNodeMinutiae(toClone STNode, invalidNode STNode, dia
 	}
 
 	// Otherwise it's a non-token STNode (Java line 457-465)
-	firstToken := FirstToken(toClone)
+	first := firstToken(toClone)
 	firstTokenWithInvalidNodeMinutiae := CloneWithLeadingInvalidNodeMinutiae(
-		firstToken, invalidNode, diagnosticCode, args...).(STToken)
-	return Replace(toClone, firstToken, firstTokenWithInvalidNodeMinutiae)
-}
-
-// CloneWithLeadingInvalidNodeMinutiaeWithoutDiagnostics clones without adding diagnostics
-// Port from Java SyntaxErrors.java:444-446
-func CloneWithLeadingInvalidNodeMinutiaeWithoutDiagnostics(toClone STNode, invalidNode STNode) STNode {
-	return CloneWithLeadingInvalidNodeMinutiae(toClone, invalidNode, nil)
+		first, invalidNode, diagnosticCode, args...).(STToken)
+	return Replace(toClone, first, firstTokenWithInvalidNodeMinutiae)
 }
 
 func CreateMissingTokenWithDiagnostics(expectedKind SyntaxKind, diagnosticCode diagnostics.DiagnosticCode) STToken {
-	diagnosticList := []STNodeDiagnostic{CreateDiagnosticWithArgs(diagnosticCode)}
+	diagnosticList := []STNodeDiagnostic{createDiagnosticWithArgs(diagnosticCode)}
 	return CreateMissingToken(expectedKind, diagnosticList)
 }
 
-func CreateDiagnosticWithArgs(diagnosticCode diagnostics.DiagnosticCode, args ...any) STNodeDiagnostic {
+func createDiagnosticWithArgs(diagnosticCode diagnostics.DiagnosticCode, args ...any) STNodeDiagnostic {
 	return STNodeDiagnostic{
 		code: diagnosticCode,
 		args: args,
@@ -1234,7 +1228,7 @@ func ToToken(node STNode) STToken {
 // If minutiae is a STNodeList, adds all elements; otherwise adds single node
 // Port from Java SyntaxErrors.java:579-592
 func addMinutiaeToList(list []STNode, minutiae STNode) []STNode {
-	if !IsSTNodeList(minutiae) {
+	if !isSTNodeList(minutiae) {
 		return append(list, minutiae)
 	}
 
@@ -1252,7 +1246,7 @@ func addMinutiaeToList(list []STNode, minutiae STNode) []STNode {
 // Port from Java SyntaxErrors.java:557-577
 func convertInvalidNodeToMinutiae(invalidNode STNode, diagnosticCode diagnostics.DiagnosticCode, args ...any) []STNode {
 	minutiaeList := []STNode{}
-	tokens := Tokens(invalidNode)
+	tokens := tokensOf(invalidNode)
 
 	for _, token := range tokens {
 		// Add leading minutiae
@@ -2952,7 +2946,7 @@ func GetQualifiedNameRefNode(parentNode STNode, leftMost bool) STNode {
 			panic("expected STQualifiedNameReferenceNode")
 		}
 		modulePrefix := qualifiedNameRefNode.ModulePrefix
-		if IsValidSimpleNameRef(ToToken(modulePrefix)) {
+		if isValidSimpleNameRef(ToToken(modulePrefix)) {
 			return parentNode
 		} else {
 			return nil
@@ -2964,13 +2958,13 @@ func GetQualifiedNameRefNode(parentNode STNode, leftMost bool) STNode {
 	} else {
 		firstOrLastChild = parentNode.ChildInBucket(parentNode.BucketCount() - 1)
 	}
-	if IsNonTerminalNode(firstOrLastChild) {
+	if isNonTerminalNode(firstOrLastChild) {
 		return GetQualifiedNameRefNode(firstOrLastChild, leftMost)
 	}
 	return nil
 }
 
-func IsValidSimpleNameRef(modulePrefixIdentifier STToken) bool {
+func isValidSimpleNameRef(modulePrefixIdentifier STToken) bool {
 	switch modulePrefixIdentifier.Text() {
 	case "error", "future", "map", "object", "stream", "table", "transaction", "typedesc", "xml":
 		return false
@@ -2980,13 +2974,8 @@ func IsValidSimpleNameRef(modulePrefixIdentifier STToken) bool {
 }
 
 // SyntaxUtils
-func IsNonTerminalNode(node STNode) bool {
-	return !IsToken(node)
-}
-
-func IsToken(node STNode) bool {
-	_, ok := node.(STToken)
-	return ok
+func isNonTerminalNode(node STNode) bool {
+	return !isToken(node)
 }
 
 // ========== Query Expression Methods (STNodeFactory.java:1467-1606) ==========

@@ -856,7 +856,7 @@ func TestXMLSequenceOfPI(t *testing.T) {
 func TestXMLNeverSequence(t *testing.T) {
 	env := CreateTypeEnv()
 	cx := ContextFrom(env)
-	ty := XMLSingleton(xmlPrimitiveNever)
+	ty := xmlSingleton(xmlPrimitiveNever)
 	actual := ToString(cx, ty)
 	expected := "xml<never>"
 	if actual != expected {

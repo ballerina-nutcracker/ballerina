@@ -365,11 +365,6 @@ func bddListMemberTypeInnerVal(cx Context, b bdd, key subtypeData, accum SemType
 	}
 }
 
-func newListOps() listOps {
-	this := listOps{}
-	return this
-}
-
 func (l *listOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	return bddSubtypeUnion(d1, d2)
 }

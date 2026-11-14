@@ -77,7 +77,7 @@ type Lexer struct {
 // NewLexer creates a Lexer for the given TOML source string.
 func NewLexer(source string) *Lexer {
 	return &Lexer{
-		reader: NewInputReader(source),
+		reader: newInputReader(source),
 		mode:   ModeDefault,
 	}
 }

@@ -18,7 +18,6 @@ package tomlparser
 
 import (
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -381,22 +380,6 @@ func TestReadFile(t *testing.T) {
 	toml, err := Read(os.DirFS("."), "testdata/sample.toml")
 	if err != nil {
 		t.Fatalf("Failed to read TOML file: %v", err)
-	}
-
-	title, ok := toml.GetString("title")
-	if !ok {
-		t.Fatalf("GetString(%q) returned ok=false; want true", "title")
-	}
-	if title != "Server Configuration" {
-		t.Errorf("GetString(%q) = %q, want %q", "title", title, "Server Configuration")
-	}
-}
-
-func TestReadStream(t *testing.T) {
-	reader := strings.NewReader(sampleToml)
-	toml, err := ReadStream(reader)
-	if err != nil {
-		t.Fatalf("Failed to read TOML from stream: %v", err)
 	}
 
 	title, ok := toml.GetString("title")

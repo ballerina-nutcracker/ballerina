@@ -26,11 +26,6 @@ type decimalOps struct {
 
 var _ basicTypeOps = &decimalOps{}
 
-func newDecimalOps() decimalOps {
-	this := decimalOps{}
-	return this
-}
-
 func (d *decimalOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	var values []enumerableType[decimal.Decimal]
 	var v1 enumerableSubtype[decimal.Decimal] = new(t1.(decimalSubtype))

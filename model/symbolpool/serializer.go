@@ -83,6 +83,7 @@ type symbolWriter struct {
 	externalRefKeys []serializedSymbolRefKey
 }
 
+//funcusage:test-hook symbol serialization is exercised by roundtrip tests until package writing uses it
 func Marshal(exported model.ExportedSymbolSpace, env *context.CompilerEnvironment) ([]byte, error) {
 	sw := &symbolWriter{
 		cp:          newConstantPool(),

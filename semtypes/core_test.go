@@ -70,7 +70,7 @@ func TestSingleNumericType(t *testing.T) {
 	result = SingleNumericType(Boolean)
 	assertFalse(t, result.IsPresent(), "Boolean should not return a single numeric type")
 
-	result = SingleNumericType(singleton(int64(1)))
+	result = SingleNumericType(IntConst(1))
 	assertTrue(t, result.IsPresent(), "singleton int should return Int")
 	assertEqual(t, result.Get(), Int)
 
@@ -540,4 +540,24 @@ func TestStringSubtypeSingleValue(t *testing.T) {
 	// implementation may handle this differently. The core functionality (single value
 	// extraction) is already tested by the assertions above.
 	_ = intersect3 // Suppress unused variable warning
+}
+
+func intSubtypeWidenUnsigned(d subtypeData) subtypeData {
+	if _, ok := d.(allOrNothingSubtype); ok {
+		return d
+	}
+	v := d.(intSubtype)
+	if v.Ranges[0].Min < int64(0) {
+		return createAll()
+	}
+	r := v.Ranges[len(v.Ranges)-1]
+	i := int64(8)
+	for i <= int64(32) {
+		if r.Max < (int64(1) << i) {
+			w := createSingleRangeSubtype(int64(0), ((int64(1) << i) - 1))
+			return w
+		}
+		i = (i * 2)
+	}
+	return createAll()
 }

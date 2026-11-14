@@ -712,18 +712,10 @@ func newClassDefnBase() classDefnBase {
 	return b
 }
 
-func NewBLangClassDefinition() BLangClassDefinition {
-	return NewBLangClassDefinitionWithFlags(0)
-}
-
 func NewBLangClassDefinitionWithFlags(flags model.Flag) BLangClassDefinition {
 	b := BLangClassDefinition{classDefnBase: newClassDefnBase()}
 	b.flags = flags | model.FlagClass
 	return b
-}
-
-func NewBLangService() BLangService {
-	return NewBLangServiceWithFlags(0)
 }
 
 func NewBLangServiceWithFlags(flags model.Flag) BLangService {
@@ -1152,10 +1144,6 @@ func (m *bLangVariableBase) SetInitialExpression(expr BLangActionOrExpression) {
 }
 
 // BLangTypeDefinition methods
-
-func NewBLangTypeDefinition() *BLangTypeDefinition {
-	return NewBLangTypeDefinitionWithData(Location{}, nil, TypeData{}, nil, 0)
-}
 
 func NewBLangTypeDefinitionWithData(pos Location, name IdentifierNode, typeData TypeData, documentation *BLangMarkdownDocumentation, flags model.Flag) *BLangTypeDefinition {
 	return &BLangTypeDefinition{

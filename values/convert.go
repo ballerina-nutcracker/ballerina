@@ -243,7 +243,7 @@ func tryConvertBasicType(tc semtypes.Context, value BalValue, target semtypes.Se
 func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType) (BalValue, *conversionFailure) {
 	switch {
 	case semtypes.IsSubtype(tc, target, semtypes.Byte):
-		n, err := NumericConvertToInt(value)
+		n, err := numericConvertToInt(value)
 		if err != nil {
 			return nil, newConversionFailure(err.Error())
 		}
@@ -252,18 +252,18 @@ func convertNumeric(tc semtypes.Context, value BalValue, target semtypes.SemType
 		}
 		return nil, incompatibleConversion(tc, value, target)
 	case semtypes.IsSubtypeSimple(target, semtypes.Int):
-		n, err := NumericConvertToInt(value)
+		n, err := numericConvertToInt(value)
 		if err != nil {
 			return nil, newConversionFailure(err.Error())
 		}
 		return n, nil
 	case semtypes.IsSubtypeSimple(target, semtypes.Float):
 		// value is guaranteed int64/float64/*decimal.Decimal by tryConvertBasicType's type
-		// switch, so NumericConvertToFloat can't hit its error case (non-numeric input) here.
-		f, _ := NumericConvertToFloat(value)
+		// switch, so numericConvertToFloat can't hit its error case (non-numeric input) here.
+		f, _ := numericConvertToFloat(value)
 		return f, nil
 	default: // DECIMAL
-		d, err := NumericConvertToDecimal(value)
+		d, err := numericConvertToDecimal(value)
 		if err != nil {
 			return nil, newConversionFailure(err.Error())
 		}

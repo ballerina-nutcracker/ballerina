@@ -21,11 +21,6 @@ type stringOps struct {
 
 var _ basicTypeOps = &stringOps{}
 
-func newStringOps() stringOps {
-	this := stringOps{}
-	return this
-}
-
 func (s *stringOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
 	sd1 := d1.(stringSubtype)
 	sd2 := d2.(stringSubtype)

@@ -19,7 +19,6 @@ package tomlparser
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 	"reflect"
 	"strings"
@@ -55,44 +54,12 @@ func readFile(fsys fs.FS, path string) (string, error) {
 	return string(content), nil
 }
 
-func readFromReader(reader io.Reader) (string, error) {
-	content, err := io.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-	return string(content), nil
-}
-
 func Read(fsys fs.FS, path string) (*Toml, error) {
 	content, err := readFile(fsys, path)
 	if err != nil {
 		return nil, err
 	}
 	return ReadString(content)
-}
-
-func ReadWithSchema(fsys fs.FS, path string, schema Schema) (*Toml, error) {
-	content, err := readFile(fsys, path)
-	if err != nil {
-		return nil, err
-	}
-	return ReadStringWithSchema(content, schema)
-}
-
-func ReadStream(reader io.Reader) (*Toml, error) {
-	content, err := readFromReader(reader)
-	if err != nil {
-		return nil, err
-	}
-	return ReadString(content)
-}
-
-func ReadStreamWithSchema(reader io.Reader, schema Schema) (*Toml, error) {
-	content, err := readFromReader(reader)
-	if err != nil {
-		return nil, err
-	}
-	return ReadStringWithSchema(content, schema)
 }
 
 // ReadString parses TOML content using the native Go parser.
@@ -112,23 +79,8 @@ func ReadString(content string) (*Toml, error) {
 	return t, nil
 }
 
-func ReadStringWithSchema(content string, schema Schema) (*Toml, error) {
-	t, err := ReadString(content)
-	if err != nil {
-		return t, err
-	}
-
-	validator := NewValidator(schema)
-	validationErr := validator.Validate(t)
-	if validationErr != nil {
-		return t, validationErr
-	}
-
-	return t, nil
-}
-
 func (t *Toml) Validate(schema Schema) error {
-	validator := NewValidator(schema)
+	validator := newValidator(schema)
 	return validator.Validate(t)
 }
 

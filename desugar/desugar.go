@@ -748,7 +748,7 @@ func desugarInitFn(
 // createLifeCycleHooks generates `$start`, `$gracefulStop` and `$immediateStop`
 // for the module and appends them to pkg.Functions. Each function iterates
 // the `$moduleListeners` array and invokes the listener method that
-// ListenerMethodFor returns for the function name, propagating errors via
+// listenerMethodFor returns for the function name, propagating errors via
 // `check`.
 func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleListenersRef *ast.BLangVarRef, initPos diagnostics.Location) {
 	compilerCtx := pkgCtx.compilerCtx
@@ -830,7 +830,7 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 		fnScope := compilerCtx.NewFunctionScope(nil, *pkgID)
 		fn.SetScope(fnScope)
 
-		foreachStmt := buildForeach(fnScope, ListenerMethodFor(fnName))
+		foreachStmt := buildForeach(fnScope, listenerMethodFor(fnName))
 
 		body := &ast.BLangBlockFunctionBody{Stmts: []ast.StatementNode{foreachStmt}}
 		body.SetPosition(initPos)
@@ -845,16 +845,16 @@ func createLifeCycleHooks(pkgCtx *packageContext, pkg *ast.BLangPackage, moduleL
 
 // Names of the per-module lifecycle dispatch functions emitted by desugar.
 // Each one iterates the module's listener array and invokes the matching
-// listener method (see ListenerMethodFor).
+// listener method (see listenerMethodFor).
 const (
 	StartFunctionName         = model.ModuleStartFunctionName
 	GracefulStopFunctionName  = model.ModuleGracefulStopFunctionName
 	ImmediateStopFunctionName = model.ModuleImmediateStopFunctionName
 )
 
-// ListenerMethodFor returns the listener method name that the given lifecycle
+// listenerMethodFor returns the listener method name that the given lifecycle
 // dispatch function calls. Returns "" if name is not a lifecycle function.
-func ListenerMethodFor(name string) string {
+func listenerMethodFor(name string) string {
 	switch name {
 	case StartFunctionName:
 		return "start"
@@ -1126,27 +1126,6 @@ func createArrayPushInvocation(pkgCtx *packageContext, listExpr, valueExpr ast.B
 	inv.SetSymbol(pushRef)
 	inv.Ty = semtypes.Nil
 	inv.SetPosition(valueExpr.GetPosition())
-	return inv
-}
-
-func buildListenerStartInvocation(pkgCtx *packageContext, listenerExpr ast.BLangExpression) *ast.BLangInvocation {
-	listenerTy := listenerExpr.Type()
-	if semtypes.IsZero(listenerTy) {
-		pkgCtx.internalError("listener expression has no type at desugar", listenerExpr.GetPosition())
-		return nil
-	}
-	startFnTy := semtypes.ObjectMemberType(pkgCtx.typeCtx(), semtypes.StringConst("start"), listenerTy)
-	if semtypes.IsZero(startFnTy) {
-		pkgCtx.internalError("listener type has no start method type at desugar", listenerExpr.GetPosition())
-		return nil
-	}
-	inv := &ast.BLangInvocation{}
-	inv.Name = newIdentifier("start")
-	inv.Expr = listenerExpr
-	argListDefn := semtypes.NewListDefinition()
-	argListTy := argListDefn.Define(pkgCtx.typeEnv(), nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
-	inv.Ty = semtypes.FunctionReturnType(pkgCtx.typeCtx(), startFnTy, argListTy)
-	inv.SetPosition(listenerExpr.GetPosition())
 	return inv
 }
 

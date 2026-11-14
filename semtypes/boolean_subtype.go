@@ -36,14 +36,6 @@ func booleanSubtypeFrom(value bool) booleanSubtype {
 	return newBooleanSubtypeFromBool(value)
 }
 
-func booleanSubtypeContains(d subtypeData, b bool) bool {
-	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
-		return allOrNothingSubtype.IsAllSubtype()
-	}
-	r := d.(booleanSubtype)
-	return r.Value == b
-}
-
 func BooleanConst(value bool) SemType {
 	t := booleanSubtypeFrom(value)
 	return getBasicSubtype(btBoolean, t)

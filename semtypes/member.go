@@ -24,10 +24,6 @@ type Member struct {
 	Immutable  bool
 }
 
-func newMember(name string, valueTy SemType, kind MemberKind, visibility string, immutable bool) *Member {
-	return &Member{Name: name, ValueType: valueTy, Kind: kind, Visibility: visibility, Immutable: immutable}
-}
-
 type memberTag interface {
 	field() Field
 }

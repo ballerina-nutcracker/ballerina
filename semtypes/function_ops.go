@@ -102,11 +102,6 @@ func functionIntersectRet(cx Context, pos conjunctionHandle) SemType {
 	return Intersect(cx.FunctionAtomType(cx.conjunctionAtom(pos)).RetType, functionIntersectRet(cx, cx.conjunctionNext(pos)))
 }
 
-func NewFunctionOps() functionOps {
-	this := functionOps{}
-	return this
-}
-
 func (f *functionOps) functionTheta(cx Context, t0 SemType, t1 SemType, pos conjunctionHandle) bool {
 	if pos == conjunctionNil {
 		return (IsEmpty(cx, t0) || IsEmpty(cx, t1))

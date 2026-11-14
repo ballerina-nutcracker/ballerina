@@ -30,7 +30,7 @@ type validatorImpl struct {
 	schema Schema
 }
 
-func NewValidator(schema Schema) Validator {
+func newValidator(schema Schema) Validator {
 	return &validatorImpl{
 		schema: schema,
 	}

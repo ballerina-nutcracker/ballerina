@@ -74,10 +74,6 @@ func intSubtypeMax(subtype intSubtype) int64 {
 	return subtype.Ranges[len(subtype.Ranges)-1].Max
 }
 
-func intSubtypeMin(subtype intSubtype) int64 {
-	return subtype.Ranges[0].Min
-}
-
 func (i *intOps) IsEmpty(cx Context, t subtypeData) bool {
 	return notIsEmpty(cx, t)
 }

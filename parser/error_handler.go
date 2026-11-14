@@ -70,13 +70,6 @@ func formatSTToken(token st.STToken) string {
 	return fmt.Sprintf("%s:%s", kindStr, token.Text())
 }
 
-func formatSTNode(node st.STNode) string {
-	if node == nil {
-		return "nil"
-	}
-	return st.ToSexpr(node)
-}
-
 func formatSolution(sol *solution) string {
 	if sol == nil {
 		return "nil"

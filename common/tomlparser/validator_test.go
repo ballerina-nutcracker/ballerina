@@ -27,7 +27,7 @@ import (
 var fsys = os.DirFS(".")
 
 func TestSchemaFromPath(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema from path: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestSchemaFromString(t *testing.T) {
 		}
 	}`
 
-	schema, err := NewSchemaFromString(schemaJSON)
+	schema, err := newSchemaFromString(schemaJSON)
 	if err != nil {
 		t.Fatalf("Failed to create schema from string: %v", err)
 	}
@@ -56,25 +56,8 @@ func TestSchemaFromString(t *testing.T) {
 	}
 }
 
-func TestSchemaFromFile(t *testing.T) {
-	file, err := os.Open("testdata/sample-schema.json")
-	if err != nil {
-		t.Fatalf("Failed to open schema file: %v", err)
-	}
-	defer func() { _ = file.Close() }()
-
-	schema, err := NewSchemaFromFile(file)
-	if err != nil {
-		t.Fatalf("Failed to create schema from file: %v", err)
-	}
-
-	if schema == nil {
-		t.Fatal("Schema should not be nil")
-	}
-}
-
 func TestValidatorWithValidToml(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
@@ -84,7 +67,7 @@ func TestValidatorWithValidToml(t *testing.T) {
 		t.Fatalf("Failed to read TOML: %v", err)
 	}
 
-	validator := NewValidator(schema)
+	validator := newValidator(schema)
 	err = validator.Validate(tomlDoc)
 	if err != nil {
 		t.Errorf("Validation should pass for valid TOML: %v", err)
@@ -96,7 +79,7 @@ func TestValidatorWithValidToml(t *testing.T) {
 }
 
 func TestValidatorWithInvalidToml(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
@@ -106,7 +89,7 @@ func TestValidatorWithInvalidToml(t *testing.T) {
 		t.Fatalf("Failed to read TOML: %v", err)
 	}
 
-	validator := NewValidator(schema)
+	validator := newValidator(schema)
 	err = validator.Validate(tomlDoc)
 	if err == nil {
 		t.Error("Validation should fail for invalid TOML")
@@ -128,14 +111,19 @@ func TestValidatorWithInvalidToml(t *testing.T) {
 }
 
 func TestReadWithSchema(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
 
-	tomlDoc, err := ReadWithSchema(fsys, "testdata/ballerina-package.toml", schema)
+	content, err := readFile(fsys, "testdata/ballerina-package.toml")
 	if err != nil {
-		t.Errorf("ReadWithSchema should succeed for valid TOML: %v", err)
+		t.Fatalf("Failed to read TOML file: %v", err)
+	}
+
+	tomlDoc, err := readStringWithSchema(content, schema)
+	if err != nil {
+		t.Errorf("readStringWithSchema should succeed for valid TOML: %v", err)
 	}
 
 	if tomlDoc == nil {
@@ -149,14 +137,19 @@ func TestReadWithSchema(t *testing.T) {
 }
 
 func TestReadWithSchemaInvalid(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
 
-	tomlDoc, err := ReadWithSchema(fsys, "testdata/invalid-sample.toml", schema)
+	content, err := readFile(fsys, "testdata/invalid-sample.toml")
+	if err != nil {
+		t.Fatalf("Failed to read TOML file: %v", err)
+	}
+
+	tomlDoc, err := readStringWithSchema(content, schema)
 	if err == nil {
-		t.Error("ReadWithSchema should fail for invalid TOML")
+		t.Error("readStringWithSchema should fail for invalid TOML")
 	}
 
 	if tomlDoc == nil {
@@ -179,7 +172,7 @@ func TestReadStringWithSchema(t *testing.T) {
 		}
 	}`
 
-	schema, err := NewSchemaFromString(schemaJSON)
+	schema, err := newSchemaFromString(schemaJSON)
 	if err != nil {
 		t.Fatalf("Failed to create schema: %v", err)
 	}
@@ -189,9 +182,9 @@ name = "test"
 version = "1.0.0"
 `
 
-	tomlDoc, err := ReadStringWithSchema(tomlContent, schema)
+	tomlDoc, err := readStringWithSchema(tomlContent, schema)
 	if err != nil {
-		t.Errorf("ReadStringWithSchema should succeed: %v", err)
+		t.Errorf("readStringWithSchema should succeed: %v", err)
 	}
 
 	if tomlDoc == nil {
@@ -209,7 +202,7 @@ func TestReadStringWithSchemaInvalid(t *testing.T) {
 		}
 	}`
 
-	schema, err := NewSchemaFromString(schemaJSON)
+	schema, err := newSchemaFromString(schemaJSON)
 	if err != nil {
 		t.Fatalf("Failed to create schema: %v", err)
 	}
@@ -219,35 +212,13 @@ name = "test"
 unexpected = "field"
 `
 
-	tomlDoc, err := ReadStringWithSchema(tomlContent, schema)
+	tomlDoc, err := readStringWithSchema(tomlContent, schema)
 	if err == nil {
-		t.Error("ReadStringWithSchema should fail for invalid TOML")
+		t.Error("readStringWithSchema should fail for invalid TOML")
 	}
 
 	if len(tomlDoc.Diagnostics()) == 0 {
 		t.Error("Expected diagnostics for validation errors")
-	}
-}
-
-func TestReadStreamWithSchema(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
-	if err != nil {
-		t.Fatalf("Failed to load schema: %v", err)
-	}
-
-	file, err := os.Open("testdata/ballerina-package.toml")
-	if err != nil {
-		t.Fatalf("Failed to open TOML file: %v", err)
-	}
-	defer func() { _ = file.Close() }()
-
-	tomlDoc, err := ReadStreamWithSchema(file, schema)
-	if err != nil {
-		t.Errorf("ReadStreamWithSchema should succeed: %v", err)
-	}
-
-	if tomlDoc == nil {
-		t.Fatal("TOML document should not be nil")
 	}
 }
 
@@ -257,7 +228,7 @@ func TestValidateMethod(t *testing.T) {
 		t.Fatalf("Failed to read TOML: %v", err)
 	}
 
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
@@ -274,7 +245,7 @@ func TestValidateMethodWithInvalidData(t *testing.T) {
 		t.Fatalf("Failed to read TOML: %v", err)
 	}
 
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
@@ -290,7 +261,7 @@ func TestValidateMethodWithInvalidData(t *testing.T) {
 }
 
 func TestSchemaWithRequiredFields(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/required-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/required-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
@@ -321,14 +292,14 @@ func TestSchemaValidationWithTypeError(t *testing.T) {
 		}
 	}`
 
-	schema, err := NewSchemaFromString(schemaJSON)
+	schema, err := newSchemaFromString(schemaJSON)
 	if err != nil {
 		t.Fatalf("Failed to create schema: %v", err)
 	}
 
 	tomlContent := `count = "not a number"`
 
-	_, err = ReadStringWithSchema(tomlContent, schema)
+	_, err = readStringWithSchema(tomlContent, schema)
 	if err == nil {
 		t.Error("Validation should fail for type mismatch")
 	}
@@ -346,14 +317,14 @@ func TestSchemaValidationWithArrays(t *testing.T) {
 		}
 	}`
 
-	schema, err := NewSchemaFromString(schemaJSON)
+	schema, err := newSchemaFromString(schemaJSON)
 	if err != nil {
 		t.Fatalf("Failed to create schema: %v", err)
 	}
 
 	tomlContent := `tags = ["tag1", "tag2", "tag3"]`
 
-	tomlDoc, err := ReadStringWithSchema(tomlContent, schema)
+	tomlDoc, err := readStringWithSchema(tomlContent, schema)
 	if err != nil {
 		t.Errorf("Validation should succeed for valid array: %v", err)
 	}
@@ -365,7 +336,7 @@ func TestSchemaValidationWithArrays(t *testing.T) {
 }
 
 func TestSchemaValidationWithNestedObjects(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
@@ -377,7 +348,7 @@ name = "mypackage"
 version = "1.0.0"
 `
 
-	tomlDoc, err := ReadStringWithSchema(tomlContent, schema)
+	tomlDoc, err := readStringWithSchema(tomlContent, schema)
 	if err != nil {
 		t.Errorf("Validation should succeed for nested object: %v", err)
 	}
@@ -389,12 +360,12 @@ version = "1.0.0"
 }
 
 func TestValidatorWithNilToml(t *testing.T) {
-	schema, err := NewSchemaFromPath(fsys, "testdata/sample-schema.json")
+	schema, err := newSchemaFromPath(fsys, "testdata/sample-schema.json")
 	if err != nil {
 		t.Fatalf("Failed to load schema: %v", err)
 	}
 
-	validator := NewValidator(schema)
+	validator := newValidator(schema)
 	err = validator.Validate(nil)
 	if err == nil {
 		t.Error("Validator should return error for nil TOML")
@@ -408,8 +379,23 @@ func TestValidatorWithNilToml(t *testing.T) {
 func TestSchemaInvalidJSON(t *testing.T) {
 	invalidJSON := `{"invalid json`
 
-	_, err := NewSchemaFromString(invalidJSON)
+	_, err := newSchemaFromString(invalidJSON)
 	if err == nil {
 		t.Error("Should fail for invalid JSON schema")
 	}
+}
+
+func readStringWithSchema(content string, schema Schema) (*Toml, error) {
+	t, err := ReadString(content)
+	if err != nil {
+		return t, err
+	}
+
+	validator := newValidator(schema)
+	validationErr := validator.Validate(t)
+	if validationErr != nil {
+		return t, validationErr
+	}
+
+	return t, nil
 }

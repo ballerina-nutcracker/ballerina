@@ -17,38 +17,15 @@
 package semtypes
 
 type tableOps struct {
+	bddOpsBase
 }
 
 var _ basicTypeOps = &tableOps{}
 
-func tableSubtypeComplement(t subtypeData) subtypeData {
-	return bddSubtypeDiff(listSubtypeThreeElement, t)
+func (*tableOps) complement(t subtypeData) subtypeData {
+	return listBackedComplement(listSubtypeThreeElement, t)
 }
 
-func tableSubtypeIsEmpty(cx Context, t subtypeData) bool {
-	b := t.(bdd)
-	if bddPosMaybeEmpty(b) {
-		b = bddIntersect(b, listSubtypeThreeElement)
-	}
-	return listSubtypeIsEmpty(cx, b)
-}
-
-func (t *tableOps) complement(d subtypeData) subtypeData {
-	return tableSubtypeComplement(d)
-}
-
-func (t *tableOps) IsEmpty(cx Context, d subtypeData) bool {
-	return tableSubtypeIsEmpty(cx, d)
-}
-
-func (t *tableOps) Union(d1 subtypeData, d2 subtypeData) subtypeData {
-	return bddSubtypeUnion(d1, d2)
-}
-
-func (t *tableOps) Intersect(d1 subtypeData, d2 subtypeData) subtypeData {
-	return bddSubtypeIntersect(d1, d2)
-}
-
-func (t *tableOps) Diff(d1 subtypeData, d2 subtypeData) subtypeData {
-	return bddSubtypeDiff(d1, d2)
+func (*tableOps) IsEmpty(cx Context, t subtypeData) bool {
+	return listBackedIsEmpty(cx, listSubtypeThreeElement, t)
 }

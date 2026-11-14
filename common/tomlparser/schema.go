@@ -19,7 +19,6 @@ package tomlparser
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -35,15 +34,15 @@ type schemaImpl struct {
 	compiled *jsonschema.Schema
 }
 
-func NewSchemaFromPath(fsys fs.FS, path string) (Schema, error) {
+func newSchemaFromPath(fsys fs.FS, path string) (Schema, error) {
 	content, err := readFile(fsys, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read schema file %s: %w", path, err)
 	}
-	return NewSchemaFromString(content)
+	return newSchemaFromString(content)
 }
 
-func NewSchemaFromString(content string) (Schema, error) {
+func newSchemaFromString(content string) (Schema, error) {
 	var schemaDoc any
 	if err := json.Unmarshal([]byte(content), &schemaDoc); err != nil {
 		return nil, fmt.Errorf("failed to parse schema JSON: %w", err)
@@ -65,18 +64,6 @@ func NewSchemaFromString(content string) (Schema, error) {
 	}, nil
 }
 
-func NewSchemaFromReader(reader io.Reader) (Schema, error) {
-	content, err := readFromReader(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema: %w", err)
-	}
-	return NewSchemaFromString(content)
-}
-
-func NewSchemaFromFile(file fs.File) (Schema, error) {
-	return NewSchemaFromReader(file)
-}
-
 func (s *schemaImpl) Validate(data any) error {
 	if err := s.compiled.Validate(data); err != nil {
 		return fmt.Errorf("schema validation failed: %w", err)
@@ -85,9 +72,9 @@ func (s *schemaImpl) Validate(data any) error {
 }
 
 func (s *schemaImpl) FromPath(fsys fs.FS, path string) (Schema, error) {
-	return NewSchemaFromPath(fsys, path)
+	return newSchemaFromPath(fsys, path)
 }
 
 func (s *schemaImpl) FromString(content string) (Schema, error) {
-	return NewSchemaFromString(content)
+	return newSchemaFromString(content)
 }

@@ -32,8 +32,8 @@ type InputReader struct {
 	markByte int    // byte position saved by Mark()
 }
 
-// NewInputReader creates an InputReader from a source string.
-func NewInputReader(source string) *InputReader {
+// newInputReader creates an InputReader from a source string.
+func newInputReader(source string) *InputReader {
 	return &InputReader{
 		runes: []rune(source),
 		line:  1,

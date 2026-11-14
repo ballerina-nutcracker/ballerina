@@ -16,11 +16,7 @@
 
 package semtypes
 
-import (
-	"slices"
-
-	"github.com/ballerina-nutcracker/ballerina/common"
-)
+import "github.com/ballerina-nutcracker/ballerina/common"
 
 type stringSubtypeListCoverage struct {
 	IsSubtype bool
@@ -58,27 +54,6 @@ func newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(charData charStri
 
 func stringSubtypeFrom(chara charStringSubtype, nonChar nonCharStringSubtype) stringSubtype {
 	return newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(chara, nonChar)
-}
-
-func stringSubtypeContains(d subtypeData, s string) bool {
-	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
-		return allOrNothingSubtype.IsAllSubtype()
-	}
-	st := d.(stringSubtype)
-	chara := st.charData
-	nonChar := st.nonCharData
-	if len(s) == 1 {
-		charString := enumerableCharStringFrom(s)
-		if slices.Contains(chara.Values(), charString) {
-			return chara.Allowed()
-		}
-		return !nonChar.Allowed()
-	}
-	stringString := enumerableStringFrom(s)
-	if slices.Contains(nonChar.Values(), stringString) {
-		return nonChar.Allowed()
-	}
-	return !nonChar.Allowed()
 }
 
 func createStringSubtype(chara charStringSubtype, nonChar nonCharStringSubtype) subtypeData {

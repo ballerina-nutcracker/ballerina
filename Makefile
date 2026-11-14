@@ -18,6 +18,7 @@ PYTHON ?= python3
 LIST_WORKSPACE_MODULES = go list -m -f '{{if .Main}}{{.Dir}}{{end}}' all | sed 's|\\|/|g'
 WORKSPACE_ROOT := $(subst \,/,$(CURDIR))
 DATA_MODULES := $(shell $(PYTHON) .github/scripts/check_lint_configs.py --data-modules)
+STRICT_MODULES := $(shell $(PYTHON) .github/scripts/check_lint_configs.py --strict-modules)
 WORKSPACE_MODULE_DIRS := $(subst \,/,$(shell $(LIST_WORKSPACE_MODULES)))
 WORKSPACE_MODULES := . $(patsubst $(WORKSPACE_ROOT)/%,%,$(filter-out $(WORKSPACE_ROOT),$(WORKSPACE_MODULE_DIRS)))
 BUILD_MODULES := $(filter-out compiler-tools/%,$(WORKSPACE_MODULES))
@@ -29,7 +30,7 @@ VET_MODULE_TARGETS := $(addprefix vet-module/,$(WORKSPACE_MODULES))
 LINT_MODULE_TARGETS := $(addprefix lint-module/,$(LINT_MODULES))
 TEST_RUNNER = .github/scripts/run_native_tests.py
 
-.PHONY: build vet lint lint-configs lint-walks lint-node-bases force test test-coverage test-race check update-testdata release install-hooks \
+.PHONY: build vet lint lint-configs lint-walks lint-node-bases lint-func-usage force test test-coverage test-race check update-testdata release install-hooks \
 	test-wasm test-wasm-corpus-light test-wasm-corpus-integration benchmark-corpus
 
 force:
@@ -62,18 +63,22 @@ vet-module/%: force
 	@echo "Vetting $*"
 	@(cd "$*" && go vet ./...)
 
-lint: $(LINT_MODULE_TARGETS) lint-walks lint-node-bases
+lint: $(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage
 
 lint-configs:
 	@$(PYTHON) .github/scripts/check_lint_configs.py
 
-$(LINT_MODULE_TARGETS) lint-walks lint-node-bases: | lint-configs
+$(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage: | lint-configs
 
 $(addprefix lint-module/,$(DATA_MODULES)): lint-node-bases
 
 lint-node-bases:
 	@echo "Checking node base visibility"
 	@go run ./compiler-tools/nodebase $(addprefix ./,$(DATA_MODULES))
+
+lint-func-usage:
+	@echo "Checking function usage"
+	@go run ./compiler-tools/funcusage $(STRICT_MODULES)
 
 lint-walks:
 	@echo "Checking AST walk purity"
