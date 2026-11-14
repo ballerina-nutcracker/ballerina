@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: identifier 'size' cannot be used as a key for a rest field; use a string literal instead
+  --> cache2-e.bal:23:28
+   |
+23 |     cache:CacheConfig _ = {size: 1}; // @error
+   |                            ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected "LRU", got "MRU"
+  --> cache2-e.bal:22:44
+   |
+22 |     cache:CacheConfig _ = {evictionPolicy: "MRU"}; // @error
+   |                                            ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "10"
+  --> cache2-e.bal:21:37
+   |
+21 |     cache:Cache _ = new (capacity = "10"); // @error
+   |                                     ^^^^

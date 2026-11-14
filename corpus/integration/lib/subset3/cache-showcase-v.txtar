@@ -1,0 +1,11 @@
+-- stdout --
+3 4
+false true
+A
+Unsupported cache value '()' for the key: n.
+Cache entry from the given key: zz, is not available.
+2
+0
+1 false 0
+0
+-- stderr --
