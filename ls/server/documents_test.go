@@ -18,9 +18,44 @@ package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 )
+
+func TestNextLineStartPastEOF(t *testing.T) {
+	t.Parallel()
+	const text = "abc\n"
+	next, ok := nextLineStart(text, len(text))
+	if ok {
+		t.Fatalf("nextLineStart(%q, %d) = (%d, true), want ok=false", text, len(text), next)
+	}
+}
+
+func TestUTF16OffsetPastEOFClampsFast(t *testing.T) {
+	t.Parallel()
+	const text = "abc\n"
+	pos := protocol.Position{Line: 50_000_000, Character: 0}
+
+	type result struct {
+		offset int
+		ok     bool
+	}
+	done := make(chan result, 1)
+	go func() {
+		offset, ok := utf16Offset(text, pos)
+		done <- result{offset, ok}
+	}()
+
+	select {
+	case got := <-done:
+		if !got.ok || got.offset != len(text) {
+			t.Fatalf("utf16Offset(%q, line=%d) = %d ok=%v, want %d ok=true", text, pos.Line, got.offset, got.ok, len(text))
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatalf("utf16Offset(%q, line=%d) did not finish within 200ms", text, pos.Line)
+	}
+}
 
 func TestApplyChangesUTF16(t *testing.T) {
 	t.Parallel()
