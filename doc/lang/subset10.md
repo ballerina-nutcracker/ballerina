@@ -343,3 +343,4 @@ These are intentional departures from the [language specification](https://balle
 - Only `client`, `service` and `isolated` `object-type-quals` / `class-type-quals` are supported
 - Supports `object-field-descriptor`, `method-decl`, `remote-method-decl` and `resource-method-decl` members
 - Supports `included-record-param`, `rest-param` and `defaultable-param` in methods
+- A non-private field of a `readonly isolated` class must have a type that is a subtype of `readonly|isolated object {}`, because field types of a `readonly` class are not yet intersected with `readonly` ([#1043](https://github.com/ballerina-nutcracker/ballerina/issues/1043))

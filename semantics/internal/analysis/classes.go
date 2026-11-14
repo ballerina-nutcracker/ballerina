@@ -33,7 +33,7 @@ func validateClass(cx scope.Context, c *ast.BLangClassDefinition) {
 	fields := common.DeclaredNodes(c.Fields)
 	info := scope.NewClassInfo(cx, c.Name.GetValue(), c.IsIsolated(), fields,
 		memberFieldDescriptors(cx.CompilerCtx().SymbolMembers(c.Symbol())), c.InitFunction)
-	validateClassInner(cx, info, fields, c.InitFunction, common.MethodsInResolutionOrder(c.Methods), c.ResourceMethods)
+	validateClassInner(cx, info, c.IsReadonly(), fields, c.InitFunction, common.MethodsInResolutionOrder(c.Methods), c.ResourceMethods)
 	if !c.IsIsolated() {
 		for i := range c.Inclusions {
 			validateInclusionNotIsolated(cx, c.Inclusions[i], c.InclusionPositions[i])
@@ -57,7 +57,7 @@ func validateService(cx scope.Context, svc *ast.BLangService) {
 		validateServiceListener(cx, svc, i)
 	}
 	info := scope.NewClassInfo(cx, "", svc.IsIsolated(), svc.Fields, serviceFieldDescriptors(cx, svc), svc.InitFunction)
-	validateClassInner(cx, info, svc.Fields, svc.InitFunction, common.MethodsInResolutionOrder(svc.Methods), svc.ResourceMethods)
+	validateClassInner(cx, info, svc.IsReadonly(), svc.Fields, svc.InitFunction, common.MethodsInResolutionOrder(svc.Methods), svc.ResourceMethods)
 	if !svc.IsIsolated() {
 		for i := range svc.Inclusions {
 			validateInclusionNotIsolated(cx, svc.Inclusions[i], svc.InclusionPositions[i])
@@ -149,7 +149,7 @@ func hasSingleApplicableAttachPointListType(tyCtx semtypes.Context, segments []s
 
 // validateClassInner validates the members of a class or service body; a
 // member that reports is abandoned and the next one runs.
-func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
+func validateClassInner(cx scope.Context, info scope.ClassInfo, readonly bool, fields []*ast.BLangVariable, initFn *ast.BLangFunction,
 	methods []common.NamedClassMethod, resourceMethods []*ast.BLangResourceMethod) {
 	for _, field := range fields {
 		validateVariable(cx, field, cx.CompilerCtx().SymbolType(field.Symbol()))
@@ -167,7 +167,7 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BL
 	}
 	if info.IsIsolated() {
 		for _, field := range fields {
-			validateIsolatedClassField(cx, field)
+			validateIsolatedClassField(cx, field, readonly)
 		}
 	}
 	for i := 1; i < len(resourceMethods); i++ {
@@ -175,11 +175,24 @@ func validateClassInner(cx scope.Context, info scope.ClassInfo, fields []*ast.BL
 	}
 }
 
-// validateIsolatedClassField: a public field of an isolated object must be
-// final and of a readonly type.
-func validateIsolatedClassField(cx scope.Context, field *ast.BLangVariable) {
-	if field.IsPublic() && !scope.IsImmutableField(cx, field) {
-		cx.SemanticErr("public field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly\"", field.GetPosition())
+// validateIsolatedClassField: a non-private field of an isolated object must
+// be final (implicitly so in a readonly object) and of a type that is a
+// subtype of readonly | isolated object {}. Spec 6.8.1 makes every field of a
+// readonly object isolated, but field types of a readonly class are not yet
+// intersected with readonly (#1043), so the type check still applies to them.
+func validateIsolatedClassField(cx scope.Context, field *ast.BLangVariable, readonlyObject bool) {
+	if field.IsPrivate() {
+		return
+	}
+	tyCtx := cx.TyCtx()
+	isolatedType := semtypes.IsSubtype(tyCtx, cx.CompilerCtx().SymbolType(field.Symbol()), semtypes.CreateIsolated(tyCtx))
+	switch {
+	case readonlyObject:
+		if !isolatedType {
+			cx.SemanticErr("non-private field of a readonly isolated object must have a type that is a subtype of \"readonly|isolated object {}\"", field.GetPosition())
+		}
+	case !field.IsFinal() || !isolatedType:
+		cx.SemanticErr("non-private field of an isolated object must be \"final\" and have a type that is a subtype of \"readonly|isolated object {}\"", field.GetPosition())
 	}
 }
 

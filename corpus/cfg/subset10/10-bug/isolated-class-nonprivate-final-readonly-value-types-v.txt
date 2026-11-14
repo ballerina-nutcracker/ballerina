@@ -1,0 +1,63 @@
+(Iso
+  (id
+    (bb0 () ()
+      (return
+        (literal 7))
+    )
+  )
+)
+(double
+  (bb0 () ()
+    (binary-expr *
+      (simple-var-ref a)
+      (literal 2))
+  )
+)
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new ()))))
+    (var-def
+      (variable f (expr
+        (field-based-access f
+          (simple-var-ref h)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f (
+          (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access td
+            (simple-var-ref h))
+          (constrained-type
+            (value-type typedesc)
+            (value-type int))))))
+    (var-def
+      (variable maybe (type
+        (union-type
+          (user-defined-type IsoObj)
+          (value-type null))) (expr
+        (field-based-access maybe
+          (simple-var-ref h)))))
+    (type-test-expr is
+      (simple-var-ref maybe)
+      (user-defined-type IsoObj))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (invocation id expr:
+          (simple-var-ref maybe) ()))))
+  )
+  (bb2 (bb1 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access none
+            (simple-var-ref h))
+          (value-type null)))))
+  )
+)

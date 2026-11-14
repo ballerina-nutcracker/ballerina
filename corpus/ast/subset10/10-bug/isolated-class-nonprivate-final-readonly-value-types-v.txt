@@ -1,0 +1,90 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition IsoObj
+    (object-type isolated
+      (method-decl id () (
+        (value-type int)))))
+  (class-definition Iso
+    (function id () (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 7)))))
+  (function double (
+    (variable a (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr *
+        (simple-var-ref a)
+        (literal 2))))
+  (class-definition Holder
+    (variable f (type
+      (function-type (
+        (value-type int)) (
+        (value-type int)))) (expr
+      (simple-var-ref double)))
+    (variable td (type
+      (constrained-type
+        (value-type typedesc)
+        (value-type int))) (expr
+      (typedesc-expr
+        (value-type int))))
+    (variable maybe (type
+      (union-type
+        (user-defined-type IsoObj)
+        (value-type null))) (expr
+      (new
+        (user-defined-type Iso) ())))
+    (variable none (type
+      (union-type
+        (user-defined-type IsoObj)
+        (value-type null))) (expr
+      (literal <nil>))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (var-def
+        (variable f (expr
+          (field-based-access f
+            (simple-var-ref h)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f (
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access td
+              (simple-var-ref h))
+            (constrained-type
+              (value-type typedesc)
+              (value-type int))))))
+      (var-def
+        (variable maybe (type
+          (union-type
+            (user-defined-type IsoObj)
+            (value-type null))) (expr
+          (field-based-access maybe
+            (simple-var-ref h)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref maybe)
+          (user-defined-type IsoObj))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (invocation id expr:
+                (simple-var-ref maybe) ()))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (type-test-expr is
+              (field-based-access none
+                (simple-var-ref h))
+              (value-type null)))))))))

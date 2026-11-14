@@ -89,7 +89,7 @@ func NewClassInfo(cx Context, name string, isolated bool, fields []*ast.BLangVar
 			name:      fieldName,
 			sym:       sym,
 			lockKey:   fieldLockKey(ctx.SymbolPackage(sym), name, sym, fieldName),
-			immutable: IsImmutableField(cx, field),
+			immutable: isImmutableField(cx, field),
 		})
 	}
 	slices.SortFunc(info.fields, func(a, b fieldInfo) int { return strings.Compare(a.name, b.name) })
@@ -99,8 +99,8 @@ func NewClassInfo(cx Context, name string, isolated bool, fields []*ast.BLangVar
 	return info
 }
 
-// IsImmutableField reports whether field is final and of a readonly type.
-func IsImmutableField(cx Context, field *ast.BLangVariable) bool {
+// isImmutableField reports whether field is final and of a readonly type.
+func isImmutableField(cx Context, field *ast.BLangVariable) bool {
 	return field.IsFinal() && semtypes.IsSubtype(cx.TyCtx(), cx.CompilerCtx().SymbolType(field.Symbol()), semtypes.ValReadonly)
 }
 
