@@ -8,7 +8,7 @@ main() -> nil{
     %1 = / %3 %5;
     nan0 = %1;
     %8 = ConstantLoad 0
-    %9 = unknown %8;
+    %9 = - %8;
     %10 = %9;
     %11 = ConstantLoad 0
     %12 = %11;
@@ -21,7 +21,7 @@ main() -> nil{
     %14 = / %16 %18;
     pInf = %14;
     %21 = ConstantLoad 1
-    %22 = unknown %21;
+    %22 = - %21;
     %23 = %22;
     %24 = ConstantLoad 0
     %25 = %24;
@@ -60,7 +60,7 @@ main() -> nil{
     %45 = ConstantLoad 0
     %46 = %45;
     %47 = ConstantLoad 0
-    %48 = unknown %47;
+    %48 = - %47;
     %49 = %48;
     %50 = eq(%46,%49) -> bb7;
   }

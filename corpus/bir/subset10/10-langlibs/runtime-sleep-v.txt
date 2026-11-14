@@ -24,7 +24,7 @@ main() -> nil{
   }
   bb5 {
     %13 = ConstantLoad 1
-    %14 = unknown %13;
+    %14 = - %13;
     %15 = %14;
     %16 = sleep(%15) -> bb6;
   }

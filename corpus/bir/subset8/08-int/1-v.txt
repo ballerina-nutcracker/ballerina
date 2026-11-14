@@ -55,7 +55,7 @@ testAround(int) -> nil{
     %7 = roundTrip(%6) -> bb1;
   }
   bb1 {
-    %8 = unknown pow2;
+    %8 = - pow2;
     %9 = %8;
     %10 = roundTrip(%9) -> bb2;
   }
@@ -64,7 +64,7 @@ testAround(int) -> nil{
     %12 = roundTrip(%11) -> bb3;
   }
   bb3 {
-    %14 = unknown pow2;
+    %14 = - pow2;
     %15 = %14;
     %16 = ConstantLoad 1
     %17 = %16;

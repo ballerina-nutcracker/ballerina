@@ -13,7 +13,7 @@ main() -> nil{
   }
   bb2 {
     %8 = ConstantLoad 1
-    %9 = unknown %8;
+    %9 = - %8;
     %10 = %9;
     %11 = ConstantLoad 2
     %12 = %11;
@@ -27,7 +27,7 @@ main() -> nil{
     %16 = ConstantLoad 0
     %17 = %16;
     %18 = ConstantLoad 0
-    %19 = unknown %18;
+    %19 = - %18;
     %20 = %19;
     %21 = floatMul(%17,%20) -> bb5;
   }
@@ -97,7 +97,7 @@ main() -> nil{
   }
   bb14 {
     %69 = ConstantLoad 1
-    %70 = unknown %69;
+    %70 = - %69;
     %71 = %70;
     %72 = ConstantLoad 0
     %73 = %72;
@@ -117,7 +117,7 @@ main() -> nil{
   }
   bb16 {
     %85 = ConstantLoad 1
-    %86 = unknown %85;
+    %86 = - %85;
     %87 = %86;
     %88 = ConstantLoad 0
     %89 = %88;
@@ -142,7 +142,7 @@ main() -> nil{
   }
   bb19 {
     %104 = ConstantLoad 1
-    %105 = unknown %104;
+    %105 = - %104;
     %106 = %105;
     %107 = ConstantLoad 2
     %108 = %107;
@@ -154,7 +154,7 @@ main() -> nil{
     %112 = ConstantLoad 0
     %113 = %112;
     %114 = ConstantLoad 0
-    %115 = unknown %114;
+    %115 = - %114;
     %116 = %115;
     %111 = / %113 %116;
     %117 = %111;
@@ -214,7 +214,7 @@ main() -> nil{
   }
   bb25 {
     %165 = ConstantLoad 1
-    %166 = unknown %165;
+    %166 = - %165;
     %167 = %166;
     %168 = ConstantLoad 0
     %169 = %168;
@@ -232,7 +232,7 @@ main() -> nil{
   }
   bb26 {
     %181 = ConstantLoad 1
-    %182 = unknown %181;
+    %182 = - %181;
     %183 = %182;
     %184 = ConstantLoad 0
     %185 = %184;
@@ -265,7 +265,7 @@ main() -> nil{
   }
   bb29 {
     %207 = ConstantLoad 1
-    %208 = unknown %207;
+    %208 = - %207;
     %209 = %208;
     %210 = ConstantLoad 0
     %211 = %210;

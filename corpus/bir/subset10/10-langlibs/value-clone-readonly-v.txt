@@ -19,7 +19,7 @@ main() -> nil{
     %8 = clone(cfg) -> bb1;
   }
   bb1 {
-    %7 = unknown %8 cfg;
+    %7 = === %8 cfg;
     %9 = %7;
     %10 = println(%9) -> bb2;
   }
@@ -33,7 +33,7 @@ main() -> nil{
     %18 = clone(ids) -> bb3;
   }
   bb3 {
-    %17 = unknown %18 ids;
+    %17 = === %18 ids;
     %19 = %17;
     %20 = println(%19) -> bb4;
   }
@@ -51,21 +51,21 @@ main() -> nil{
   }
   bb5 {
     holderClone = %30;
-    %32 = unknown holderClone holder;
+    %32 = === holderClone holder;
     %33 = %32;
     %34 = println(%33) -> bb6;
   }
   bb6 {
     %37 = ConstantLoad cfg
     %36 = holderClone[%37];
-    %35 = unknown %36 cfg;
+    %35 = === %36 cfg;
     %38 = %35;
     %39 = println(%38) -> bb7;
   }
   bb7 {
     %42 = ConstantLoad ids
     %41 = holderClone[%42];
-    %40 = unknown %41 ids;
+    %40 = === %41 ids;
     %43 = %40;
     %44 = println(%43) -> bb8;
   }
@@ -74,7 +74,7 @@ main() -> nil{
     %46 = holderClone[%47];
     %49 = ConstantLoad xs
     %48 = holder[%49];
-    %45 = unknown %46 %48;
+    %45 = === %46 %48;
     %50 = %45;
     %51 = println(%50) -> bb9;
   }
@@ -83,7 +83,7 @@ main() -> nil{
     %54 = clone(widened) -> bb10;
   }
   bb10 {
-    %53 = unknown %54 ids;
+    %53 = === %54 ids;
     %55 = %53;
     %56 = println(%55) -> bb11;
   }
@@ -93,7 +93,7 @@ main() -> nil{
     %60 = clone(f) -> bb12;
   }
   bb12 {
-    %59 = unknown %60 f;
+    %59 = === %60 f;
     %61 = %59;
     %62 = println(%61) -> bb13;
   }
@@ -103,7 +103,7 @@ main() -> nil{
     %66 = clone(lambda) -> bb14;
   }
   bb14 {
-    %65 = unknown %66 lambda;
+    %65 = === %66 lambda;
     %67 = %65;
     %68 = println(%67) -> bb15;
   }

@@ -35,7 +35,7 @@ loop() -> int{
   }
   bb3 {
     %8 = ConstantLoad 1
-    %9 = unknown %8;
+    %9 = - %8;
     %0 = %9;
     return;
   }

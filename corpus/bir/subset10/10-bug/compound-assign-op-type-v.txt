@@ -2,13 +2,13 @@ module $anon.. v 0.0.0;
 main() -> nil{
   bb0 {
     %1 = ConstantLoad 1
-    %2 = unknown %1;
+    %2 = - %1;
     i = %2;
     %4 = ConstantLoad 200
     b = %4;
     %7 = b;
     %8 = i;
-    %6 = unknown %7 %8;
+    %6 = & %7 %8;
     b = %6;
     %9 = b;
     %10 = println(%9) -> bb1;
@@ -16,7 +16,7 @@ main() -> nil{
   bb1 {
     %12 = b;
     %13 = i;
-    %11 = unknown %12 %13;
+    %11 = >> %12 %13;
     b = %11;
     %14 = b;
     %15 = println(%14) -> bb2;
@@ -27,7 +27,7 @@ main() -> nil{
     %19 = c;
     %20 = ConstantLoad 2
     %21 = %20;
-    %18 = unknown %19 %21;
+    %18 = | %19 %21;
     c = %18;
     %22 = c;
     %23 = println(%22) -> bb3;
@@ -36,7 +36,7 @@ main() -> nil{
     %25 = c;
     %26 = ConstantLoad 1
     %27 = %26;
-    %24 = unknown %25 %27;
+    %24 = ^ %25 %27;
     c = %24;
     %28 = c;
     %29 = println(%28) -> bb4;
@@ -46,7 +46,7 @@ main() -> nil{
     w = %30;
     %33 = w;
     %34 = i;
-    %32 = unknown %33 %34;
+    %32 = & %33 %34;
     w = %32;
     %35 = w;
     %36 = println(%35) -> bb5;
@@ -58,7 +58,7 @@ main() -> nil{
     k = %39;
     %42 = j;
     %43 = k;
-    %41 = unknown %42 %43;
+    %41 = & %42 %43;
     j = %41;
     %44 = j;
     %45 = println(%44) -> bb6;
@@ -69,7 +69,7 @@ main() -> nil{
     %49 = u;
     %50 = ConstantLoad 4
     %51 = %50;
-    %48 = unknown %49 %51;
+    %48 = >>> %49 %51;
     u = %48;
     %52 = u;
     %53 = println(%52) -> bb7;
@@ -84,7 +84,7 @@ main() -> nil{
     %60 = %59;
     %61 = ConstantLoad 15
     %62 = %61;
-    %63 = unknown %60 %62;
+    %63 = & %60 %62;
     bs[%58] = %63;
     %65 = ConstantLoad 0
     %64 = bs[%65];
