@@ -18,6 +18,8 @@ package birgen
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -46,6 +48,7 @@ type packageContext struct {
 	// PR-TODO: extract them to memoized types struc
 	stringMapTy      semtypes.SemType // Memoized map<string> type
 	serviceClassKeys map[*ast.BLangService]string
+	typeDescs        typeDescCache
 }
 
 func (c *packageContext) typeContext() semtypes.Context {
@@ -382,6 +385,7 @@ func newContext(compilerCtx *compilerctx.CompilerContext, packageID *model.Packa
 		packageID:        packageID,
 		birPkg:           birPkg,
 		serviceClassKeys: make(map[*ast.BLangService]string),
+		typeDescs:        newTypeDescCache(),
 		typeCtx:          semtypes.TypeCheckContext(compilerCtx.GetTypeEnv()),
 	}
 	return c
@@ -1288,13 +1292,89 @@ func newTypeDescValue(ctx context, constraint semtypes.SemType, typeDesc ast.Typ
 	return newTypeDescValueForSymbol(ctx, constraint, udt.Symbol())
 }
 
+// newTypeDescValueForSymbol returns the typedesc of the named type at symRef. Typedescs are built
+// once per module and shared, so every use of a type, and of its field types, is one value.
 func newTypeDescValueForSymbol(ctx context, constraint semtypes.SemType, symRef model.SymbolRef) *values.TypeDesc {
-	return values.NewTypeDescWithFieldAnnotations(
-		ctx.typeEnv(),
-		constraint,
-		ctx.compilerContext().SymbolAnnotationValues(symRef),
-		ctx.compilerContext().RecordFieldAnnotationValues(symRef),
-	)
+	cache := &ctx.function().pkgCtx.typeDescs
+	if td, ok := cache.built[symRef]; ok {
+		return td
+	}
+	var fresh []*values.TypeDesc
+	td := cache.build(ctx, constraint, symRef, &fresh)
+	cache.dropUnannotatedFieldTypes(fresh)
+	return td
+}
+
+// typeDescCache holds the typedescs of a module's named types.
+type typeDescCache struct {
+	built map[model.SymbolRef]*values.TypeDesc
+	// annotated holds the built typedescs from which an annotation can be reached.
+	annotated map[*values.TypeDesc]bool
+}
+
+func newTypeDescCache() typeDescCache {
+	return typeDescCache{
+		built:     make(map[model.SymbolRef]*values.TypeDesc),
+		annotated: make(map[*values.TypeDesc]bool),
+	}
+}
+
+// build builds the typedesc of the named type at symRef together with the typedescs of its fields'
+// named types, reusing the ones already built so that recursive types end in a cycle. It appends
+// each typedesc it creates to fresh.
+func (c *typeDescCache) build(ctx context, constraint semtypes.SemType, symRef model.SymbolRef, fresh *[]*values.TypeDesc) *values.TypeDesc {
+	if td, ok := c.built[symRef]; ok {
+		return td
+	}
+	cx := ctx.compilerContext()
+	td := values.NewTypeDescWithFieldAnnotations(ctx.typeEnv(), constraint,
+		cx.SymbolAnnotationValues(symRef), cx.RecordFieldAnnotationValues(symRef))
+	c.built[symRef] = td
+	*fresh = append(*fresh, td)
+	for _, member := range cx.SymbolMembers(symRef) {
+		field, ok := member.(*model.FieldDescriptor)
+		if !ok || field.TypeRef == (model.SymbolRef{}) {
+			continue
+		}
+		td.FieldTypes[field.MemberName()] = c.build(ctx, cx.SymbolType(field.TypeRef), field.TypeRef, fresh)
+	}
+	// A type that looks through to another named type, as in `type Arr Inner[]`, shares that type's
+	// field types. The map is shared rather than copied because the target may still be being built.
+	if typeRef := cx.SymbolTypeRef(symRef); typeRef != (model.SymbolRef{}) {
+		td.FieldTypes = c.build(ctx, cx.SymbolType(typeRef), typeRef, fresh).FieldTypes
+	}
+	return td
+}
+
+// dropUnannotatedFieldTypes removes from the fresh typedescs the field types from which no
+// annotation can be reached, so a typedesc carries nested typedescs only when they have annotations
+// to show. Typedescs built earlier need no update: their field types were all built with them.
+func (c *typeDescCache) dropUnannotatedFieldTypes(fresh []*values.TypeDesc) {
+	for changed := true; changed; {
+		changed = false
+		// Field types are built after their owner, so walking backwards settles acyclic types in one pass.
+		for _, td := range slices.Backward(fresh) {
+			if !c.annotated[td] && c.reachesAnnotation(td) {
+				c.annotated[td] = true
+				changed = true
+			}
+		}
+	}
+	for _, td := range fresh {
+		maps.DeleteFunc(td.FieldTypes, func(_ string, fieldTd *values.TypeDesc) bool { return !c.annotated[fieldTd] })
+	}
+}
+
+func (c *typeDescCache) reachesAnnotation(td *values.TypeDesc) bool {
+	if len(td.Annotations) > 0 || len(td.FieldAnnotations) > 0 {
+		return true
+	}
+	for _, fieldTd := range td.FieldTypes {
+		if c.annotated[fieldTd] {
+			return true
+		}
+	}
+	return false
 }
 
 func annotAccessExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangAnnotAccessExpr) (expressionEffect, bool) {

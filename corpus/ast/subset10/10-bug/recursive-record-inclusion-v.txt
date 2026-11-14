@@ -1,0 +1,149 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null)))))
+  (type-definition TaggedNode
+    (record-type
+      (field tag
+        (value-type string))))
+  (type-definition Tree
+    (record-type
+      (field children
+        (array-type
+          (user-defined-type Tree) dimensions: 1 ([])))))
+  (type-definition NamedTree
+    (record-type
+      (field name
+        (value-type string))))
+  (type-definition DefaultTree
+    (record-type
+      (field left
+        (union-type
+          (user-defined-type DefaultTree)
+          (value-type null))
+        (literal <nil>))
+      (field n
+        (value-type int)
+        (literal 5))))
+  (type-definition Ext
+    (record-type
+      (field s
+        (value-type string))))
+  (type-definition Opts
+    (record-type
+      (field v
+        (value-type int)
+        (literal 7))
+      (field next
+        (union-type
+          (user-defined-type Alias)
+          (value-type null))
+        (literal <nil>))))
+  (type-definition Alias
+    (user-defined-type Opts))
+  (type-definition ChainedOpts
+    (record-type
+      (field w
+        (value-type int)
+        (literal 8))
+      (field next
+        (union-type
+          (user-defined-type OuterAlias)
+          (value-type null))
+        (literal <nil>))))
+  (type-definition OuterAlias
+    (user-defined-type InnerAlias))
+  (type-definition InnerAlias
+    (user-defined-type ChainedOpts))
+  (function optsValue (
+    (variable opts (type
+      (user-defined-type Alias)))) (
+    (value-type int))
+    (expr-function-body
+      (field-based-access v
+        (simple-var-ref opts))))
+  (function chainedValue (
+    (variable opts (type
+      (user-defined-type OuterAlias)))) (
+    (value-type int))
+    (expr-function-body
+      (field-based-access w
+        (simple-var-ref opts))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (user-defined-type TaggedNode)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 1))
+            (key-value
+              (literal next)
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal 2))
+                (key-value
+                  (literal next)
+                  (literal <nil>))))
+            (key-value
+              (literal tag)
+              (literal t))))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access next
+            (simple-var-ref n)))))
+      (var-def
+        (variable t (type
+          (user-defined-type NamedTree)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal children)
+              (list-constructor-expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal children)
+                    (list-constructor-expr)))))
+            (key-value
+              (literal name)
+              (literal root))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation length expr:
+            (field-based-access children
+              (simple-var-ref t)) ()))))
+      (var-def
+        (variable e (type
+          (user-defined-type Ext)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal s)
+              (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e))))
+      (expression-stmt
+        (invocation io println (
+          (invocation optsValue (
+            (named-arg v
+              (literal 3)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation optsValue ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation chainedValue (
+            (named-arg w
+              (literal 4)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation chainedValue ())))))))
