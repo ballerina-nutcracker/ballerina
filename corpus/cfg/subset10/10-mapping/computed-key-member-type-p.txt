@@ -11,7 +11,7 @@
           (key-value
             (literal id)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref k)
             (literal s))))))
     (expression-stmt

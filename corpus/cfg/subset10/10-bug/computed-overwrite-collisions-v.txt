@@ -13,7 +13,7 @@
           (key-value
             (literal id)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 2))))))
     (expression-stmt
@@ -27,7 +27,7 @@
           (builtin-ref-type map)
           (value-type int))) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 3))
           (key-value
@@ -55,7 +55,7 @@
         (mapping-constructor-expr
           (mapping-spread-field
             (simple-var-ref seed))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 4))))))
     (expression-stmt
@@ -69,7 +69,7 @@
           (builtin-ref-type map)
           (value-type int))) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 5))
           (mapping-spread-field
@@ -85,7 +85,7 @@
           (key-value
             (literal id)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 9))))))
     (expression-stmt
@@ -98,13 +98,13 @@
           (builtin-ref-type map)
           (value-type int))) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 6))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 7))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 8))))))
     (expression-stmt

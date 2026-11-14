@@ -1,0 +1,4 @@
+-- stdout --
+a{"a":1}{"a":true}
+{"c":"a"}
+-- stderr --
