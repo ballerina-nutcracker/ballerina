@@ -1,0 +1,29 @@
+(package
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (expr-function-body
+      (literal 42)))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (expr-function-body
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type readonly))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":{"y":2},"b":{"y":5}}))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (index-based-access
+              (literal {"a":{"y":2},"b":{"y":5}})
+              (literal a)))))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":{"y":1}})))))))
