@@ -1,0 +1,52 @@
+-- stdout --
+{"name":"Ann","address":{"city":"Colombo","zip":100},"scores":[1,2,3],"salary":1500.5,"active":true,"manager":null}
+{"id":"a","extra":[1,{"k":"v"}],"flag":false}
+{"id":"a","b":"x","c":"y"}
+error: incompatible expected type 'string' for value '1'
+{"a":1.0,"b":2.5}
+{"a":1,"b":2}
+error: incompatible expected type 'int' for value 'x'
+{"home":{"city":"Kandy","zip":200}}
+[1,2,3]
+[1,2]
+error: array size is not compatible with the expected size
+[1,2,0,0]
+[[1],[2,3]]
+error: incompatible expected type 'int' for value 'x'
+[1,"a"]
+[1,"a"]
+error: array size is not compatible with the expected size
+[7,""]
+[1,"a","b","c"]
+error: incompatible value 's' for type 'int' in field 'a.b'
+error: incompatible value '300' for type 'byte' in field 'a.b'
+error: incompatible value 'y' for type 'int' in field 'a.x'
+{"city":"Galle","zip":300}
+error: undefined field 'extra'
+error: required field 'zip' not present in JSON
+{"name":"a"}
+error: incompatible value 'null' for type 'int' in field 'age'
+{"name":"a"}
+{"name":"a","alias":null}
+error: required field 'alias' not present in JSON
+error: invalid type for field 'm'
+2
+4
+5.0
+1.25
+error: incompatible expected type 'string' for value '1'
+error: incompatible expected type 'int' for value 'x'
+error: incompatible expected type 'byte' for value '256'
+B
+error: incompatible expected type '("A"|"B")' for value 'C'
+
+
+true
+text
+[1,2]
+{"city":"X","zip":1}
+{"a":[1,{"b":null}]}
+[1,"two"]
+true
+{"city":"Matara","zip":400}
+-- stderr --
