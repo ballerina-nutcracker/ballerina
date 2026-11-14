@@ -18,7 +18,6 @@ package desugar_test
 
 import (
 	"flag"
-	"fmt"
 	"sort"
 	"strings"
 	"testing"
@@ -131,7 +130,7 @@ func testDesugar(t *testing.T, testCase test_util.TestCase) {
 	}
 
 	// Serialize AST after desugaring
-	prettyPrinter := ast.PrettyPrinter{Fallback: prettyPrintFallback}
+	prettyPrinter := ast.PrettyPrinter{Fallback: desugar.PrettyPrintFallback}
 	actualAST := prettyPrinter.Print(result.Package)
 
 	// If update flag is set, update expected file
@@ -293,26 +292,4 @@ func normalizeDesugaredAST(s string) string {
 	}
 	canonicaliseInitFnBodies(root)
 	return printSExp(root)
-}
-
-// prettyPrintFallback handles desugar-introduced AST nodes when serializing a
-// desugared package via ast.PrettyPrinter. Wire it in by setting
-// PrettyPrinter.Fallback to this function.
-func prettyPrintFallback(p *ast.PrettyPrinter, node ast.BLangNode) {
-	switch n := node.(type) {
-	case *desugar.BLangServiceInit:
-		p.StartNode()
-		p.PrintString("service-init")
-		p.EndNode()
-	case *desugar.BLangExpressionThunk:
-		p.StartNode()
-		p.PrintString("expression-thunk")
-		for _, stmt := range n.InitStmts {
-			p.PrintInner(stmt.(ast.BLangNode))
-		}
-		p.PrintInner(n.Expr)
-		p.EndNode()
-	default:
-		panic(fmt.Sprintf("desugar pretty printer: unsupported node %T", n)) //nolint:forbidigo // Fail when the test printer misses a desugar-owned node.
-	}
 }

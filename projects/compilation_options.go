@@ -130,6 +130,7 @@ type CompilationOptions struct {
 	dumpBIR                       optionalBool
 	dumpBIRFile                   optionalBool
 	dumpCFG                       optionalBool
+	dumpDesugaredAST              optionalBool
 	dumpGraph                     optionalBool
 	dumpRawGraphs                 optionalBool
 	dumpTokens                    optionalBool
@@ -193,6 +194,11 @@ func (c CompilationOptions) DumpBIRFile() bool {
 // DumpCFG returns whether CFG dumping is enabled.
 func (c CompilationOptions) DumpCFG() bool {
 	return c.dumpCFG.valueOr(false)
+}
+
+// DumpDesugaredAST returns whether desugared AST dumping is enabled.
+func (c CompilationOptions) DumpDesugaredAST() bool {
+	return c.dumpDesugaredAST.valueOr(false)
 }
 
 // DumpCFGFormat returns the CFG dump format.
@@ -311,6 +317,7 @@ func (c CompilationOptions) AcceptTheirs(theirs CompilationOptions) CompilationO
 		dumpBIR:                       acceptOptionalBool(c.dumpBIR, theirs.dumpBIR),
 		dumpBIRFile:                   acceptOptionalBool(c.dumpBIRFile, theirs.dumpBIRFile),
 		dumpCFG:                       acceptOptionalBool(c.dumpCFG, theirs.dumpCFG),
+		dumpDesugaredAST:              acceptOptionalBool(c.dumpDesugaredAST, theirs.dumpDesugaredAST),
 		dumpGraph:                     acceptOptionalBool(c.dumpGraph, theirs.dumpGraph),
 		dumpRawGraphs:                 acceptOptionalBool(c.dumpRawGraphs, theirs.dumpRawGraphs),
 		dumpTokens:                    acceptOptionalBool(c.dumpTokens, theirs.dumpTokens),
@@ -412,6 +419,12 @@ func (b *CompilationOptionsBuilder) WithDumpBIRFile(value bool) *CompilationOpti
 // WithDumpCFG sets CFG dumping flag.
 func (b *CompilationOptionsBuilder) WithDumpCFG(value bool) *CompilationOptionsBuilder {
 	b.options.dumpCFG = optionalBoolOf(value)
+	return b
+}
+
+// WithDumpDesugaredAST sets desugared AST dumping flag.
+func (b *CompilationOptionsBuilder) WithDumpDesugaredAST(value bool) *CompilationOptionsBuilder {
+	b.options.dumpDesugaredAST = optionalBoolOf(value)
 	return b
 }
 
