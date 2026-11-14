@@ -1,0 +1,42 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (array-type
+          (value-type int) dimensions: 2 ([][]))) (expr
+        (query-expr
+          (from-clause
+            (var-def
+              (variable i (type
+                (value-type int))))
+            (list-constructor-expr
+              (literal 3)
+              (literal 1)
+              (literal 3)))
+          (let-clause
+            (var-def
+              (variable f (type
+                (constrained-type
+                  (builtin-ref-type future)
+                  (value-type int))) (expr
+                (start-action
+                  (invocation one ()))))))
+          (group-by-clause
+            (grouping-key
+              (simple-var-ref i)))
+          (select-clause
+            (list-constructor-expr
+              (simple-var-ref i)
+              (invocation lang.array length (
+                (list-constructor-expr
+                  (simple-var-ref f))))))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(one
+  (bb0 () ()
+    (literal 1)
+  )
+)
