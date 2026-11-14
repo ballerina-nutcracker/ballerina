@@ -1,0 +1,226 @@
+{
+  "source": "cancelled-wait-remains-usable.bal",
+  "sources": null,
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/cancelled-wait-remains-usable.bal",
+          "languageId": "ballerina",
+          "version": 1,
+          "text": "${source}"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/cancelled-wait-remains-usable.bal"
+        },
+        "position": {
+          "line": 1,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$/cancelRequest",
+      "params": {
+        "id": 2
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flush",
+      "params": {}
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "${root}/cancelled-wait-remains-usable.bal"
+        },
+        "position": {
+          "line": 1,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "$test/flushRequests",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "capabilities": {
+          "textDocumentSync": {
+            "openClose": true,
+            "change": 2,
+            "save": true
+          },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "error": {
+        "code": -32800,
+        "message": "request cancelled"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "${root}/cancelled-wait-remains-usable.bal",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "result": [
+        {
+          "label": "annotation",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "annotation",
+          "insertText": "annotation typeName name on attachmentPoint;"
+        },
+        {
+          "label": "class",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "class",
+          "insertText": "class className {\n\t\n}"
+        },
+        {
+          "label": "const",
+          "kind": 14,
+          "detail": "Keyword",
+          "filterText": "const",
+          "insertText": "const "
+        },
+        {
+          "label": "enum",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "enum",
+          "insertText": "enum enumName {\n\t\n}"
+        },
+        {
+          "label": "function",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "function",
+          "insertText": "function name() {\n\t\n}"
+        },
+        {
+          "label": "function \u003cname\u003e(..) =\u003e \u003cexpression\u003e",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "function",
+          "insertText": "function name() =\u003e ();"
+        },
+        {
+          "label": "import",
+          "kind": 14,
+          "detail": "Keyword",
+          "filterText": "import",
+          "insertText": "import "
+        },
+        {
+          "label": "service",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "service",
+          "insertText": "service on listenerName {\n\t\n}"
+        },
+        {
+          "label": "type",
+          "kind": 14,
+          "detail": "Keyword",
+          "filterText": "type",
+          "insertText": "type "
+        },
+        {
+          "label": "type \u003cErrorName\u003e error\u003c?\u003e",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "type_error",
+          "insertText": "type ErrorName error\u003cmap\u003canydata\u003e\u003e;"
+        },
+        {
+          "label": "type \u003cObjectName\u003e object",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "type_object",
+          "insertText": "type ObjectName object {};"
+        },
+        {
+          "label": "type \u003cRecordName\u003e record {||}",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "type_record",
+          "insertText": "type RecordName record {|\n\t\n|};"
+        },
+        {
+          "label": "type \u003cRecordName\u003e record {}",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "type_record",
+          "insertText": "type RecordName record {\n\t\n};"
+        },
+        {
+          "label": "usable",
+          "kind": 3,
+          "detail": "function() returns nil",
+          "insertText": "usable"
+        },
+        {
+          "label": "xmlns",
+          "kind": 15,
+          "detail": "Snippet",
+          "filterText": "xmlns",
+          "insertText": "xmlns \"\" as ns;"
+        }
+      ]
+    }
+  ]
+}

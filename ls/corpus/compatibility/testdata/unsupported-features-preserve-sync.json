@@ -185,6 +185,12 @@
             "openClose": true,
             "change": 2,
             "save": true
+          },
+          "completionProvider": {
+            "triggerCharacters": [
+              ":",
+              "."
+            ]
           }
         }
       }
@@ -244,10 +250,14 @@
     {
       "jsonrpc": "2.0",
       "id": "completion-before-edit",
-      "error": {
-        "code": -32601,
-        "message": "method not found"
-      }
+      "result": [
+        {
+          "label": "main",
+          "kind": 3,
+          "detail": "function() returns nil",
+          "insertText": "main"
+        }
+      ]
     },
     {
       "jsonrpc": "2.0",
@@ -269,10 +279,14 @@
     {
       "jsonrpc": "2.0",
       "id": "completion-after-edit",
-      "error": {
-        "code": -32601,
-        "message": "method not found"
-      }
+      "result": [
+        {
+          "label": "main",
+          "kind": 3,
+          "detail": "function() returns nil",
+          "insertText": "main"
+        }
+      ]
     },
     {
       "jsonrpc": "2.0",

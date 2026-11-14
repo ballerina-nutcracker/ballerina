@@ -1,0 +1,9 @@
+{
+  "position": {
+    "line": 2,
+    "character": 12
+  },
+  "source": "type_def/source/source10.bal",
+  "description": "A prefix that is not bound to an import gives no module items",
+  "items": []
+}
