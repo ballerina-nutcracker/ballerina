@@ -6217,13 +6217,17 @@ func (n *nodeBuilder) transformObjectTypeDescriptor(objectTypeDescriptorNode *st
 	}
 
 	members := objectTypeDescriptorNode.Members()
+	resourceIndex := 0
 	for member := range members.Iterator() {
 		var ok bool
 		switch member := member.(type) {
 		case *st.ObjectFieldNode:
 			ok = n.addObjectTypeField(objectType, member)
 		case *st.MethodDeclarationNode:
-			ok = n.addObjectTypeMethod(objectType, member)
+			ok = n.addObjectTypeMethod(objectType, member, resourceIndex)
+			if member.Kind() == st.RESOURCE_ACCESSOR_DECLARATION {
+				resourceIndex++
+			}
 		case *st.TypeReferenceNode:
 			var inclusion *ast.BLangUserDefinedType
 			inclusion, ok = n.transformTypeReference(member)
@@ -6314,7 +6318,7 @@ func (n *nodeBuilder) objectMethodQualifiers(qualifiers st.NodeList[st.Token]) (
 	return result, true
 }
 
-func (n *nodeBuilder) addObjectTypeMethod(objectType *ast.BLangObjectType, methodDecl *st.MethodDeclarationNode) bool {
+func (n *nodeBuilder) addObjectTypeMethod(objectType *ast.BLangObjectType, methodDecl *st.MethodDeclarationNode, resourceIndex int) bool {
 	if !n.expectNode(methodDecl) {
 		return false
 	}
@@ -6325,7 +6329,7 @@ func (n *nodeBuilder) addObjectTypeMethod(objectType *ast.BLangObjectType, metho
 	if !ok || !n.expectToken(methodDecl.FunctionKeyword()) {
 		return false
 	}
-	if methodDecl.Kind() != st.METHOD_DECLARATION {
+	if methodDecl.Kind() != st.METHOD_DECLARATION && methodDecl.Kind() != st.RESOURCE_ACCESSOR_DECLARATION {
 		n.internalError("unexpected member kind in object type descriptor", methodDecl)
 		return false
 	}
@@ -6333,12 +6337,20 @@ func (n *nodeBuilder) addObjectTypeMethod(objectType *ast.BLangObjectType, metho
 	if !n.expectToken(methodNameToken) {
 		return false
 	}
-	if _, ok := n.createResourcePathSegments(methodDecl.RelativeResourcePath()); !ok {
+	resourcePath, ok := n.createResourcePathSegments(methodDecl.RelativeResourcePath())
+	if !ok {
 		return false
 	}
 	methodName, _ := normalizedIdentifierValue(methodNameToken.Text())
-	if qualifiers.kind == ast.ObjectMemberKindRemoteMethod {
+	accessor := ""
+	switch qualifiers.kind {
+	case ast.ObjectMemberKindRemoteMethod:
 		methodName = model.RemoteMethodName(methodName)
+	case ast.ObjectMemberKindResourceMethod:
+		accessor = methodName
+		methodName = model.ResourceMethodName(accessor, resourceIndex)
+	case ast.ObjectMemberKindField, ast.ObjectMemberKindMethod:
+		// Ordinary methods keep their source name.
 	}
 
 	functionFlags := qualifiers.functionFlags
@@ -6358,6 +6370,8 @@ func (n *nodeBuilder) addObjectTypeMethod(objectType *ast.BLangObjectType, metho
 		return false
 	}
 	bMethod := ast.NewBMethodDecl(n.getPosition(methodDecl), methodName, qualifiers.kind, qualifiers.isPublic, functionFlags)
+	bMethod.Accessor = accessor
+	bMethod.ResourcePath = resourcePath
 	bMethod.ParamListPos = signature.paramListPos
 	bMethod.RequiredParams = signature.requiredParams
 	bMethod.RestParam = signature.restParam

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: redeclared resource method 'get'
+  --> resource-signatures-duplicate-e.bal:18:16
+   |
+18 | type Duplicate client object { // @error
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     resource function get items/[int first]() returns string;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     resource function get items/[int second]() returns string;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | };
+   | ^

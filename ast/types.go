@@ -134,8 +134,10 @@ type (
 	BMethodDecl struct {
 		bObjectFieldBase
 		BLangFunctionType
-		memberKind ObjectMemberKind
-		symbol     model.SymbolRef
+		ResourcePath []BLangResourcePathSegment
+		Accessor     string
+		memberKind   ObjectMemberKind
+		symbol       model.SymbolRef
 	}
 
 	BLangObjectType struct {
@@ -399,6 +401,8 @@ func NewBMethodDecl(pos Location, name string, kind ObjectMemberKind, isPublic b
 		name:          name,
 		bLangTypeBase: bLangTypeBase{flags: functionFlags},
 		memberKind:    kind,
+		ResourcePath:  nil,
+		Accessor:      "",
 	}
 	if isPublic {
 		method.flags |= model.FlagPublic

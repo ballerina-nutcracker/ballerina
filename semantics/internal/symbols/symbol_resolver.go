@@ -2174,7 +2174,7 @@ func allocateObjectResourceMethodSymbols(ms *compilationUnitSymbolResolver, bloc
 			ok = false
 			continue
 		}
-		mangledName := className + "." + mangledResourceMethodName(rm.Name.GetValue(), idx)
+		mangledName := className + "." + model.ResourceMethodName(rm.Name.GetValue(), idx)
 		symRef, symbolOk := ms.allocateResourceMethodSymbol(ms.scope, rm, mangledName, classDef.IsPublic() && rm.IsPublic())
 		ok = symbolOk && ok
 		networkClassSym.AddResourceMethod(symRef)
@@ -2185,7 +2185,7 @@ func allocateObjectResourceMethodSymbols(ms *compilationUnitSymbolResolver, bloc
 func allocateServiceResourceMethodSymbols(ms *compilationUnitSymbolResolver, blockRes *blockSymbolResolver, resourceMethods []*ast.BLangResourceMethod) bool {
 	ok := true
 	for idx, rm := range resourceMethods {
-		key := mangledResourceMethodName(rm.Name.GetValue(), idx)
+		key := model.ResourceMethodName(rm.Name.GetValue(), idx)
 		_, symbolOk := ms.allocateResourceMethodSymbol(blockRes.scope, rm, key, rm.IsPublic())
 		ok = symbolOk && ok
 	}
@@ -2212,11 +2212,6 @@ func (ms *compilationUnitSymbolResolver) allocateResourceMethodSymbol(targetScop
 	symRef, _ := targetScope.MainSpace().GetSymbol(symbolName)
 	rm.SetSymbol(symRef)
 	return symRef, ok
-}
-
-//shallow:allow shared resource naming helper keeps object and service method keys consistent
-func mangledResourceMethodName(methodName string, idx int) string {
-	return fmt.Sprintf("$resource$%s$%d", methodName, idx)
 }
 
 func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangResourceMethod) bool {
@@ -3123,9 +3118,20 @@ func resolveObjectMember(r symbolResolver, member ast.ObjectMember) bool {
 
 func resolveMethodDecl(r symbolResolver, n *ast.BMethodDecl) bool {
 	ok := resolveFunctionTypeSymbols(r, &n.BLangFunctionType)
+	for i := range n.ResourcePath {
+		if paramType := n.ResourcePath[i].ParamType; paramType != nil {
+			ok = resolveTypeDesc(r, paramType) && ok
+		}
+	}
 	if n.Symbol().IsEmpty() {
 		space := r.GetScope().MainSpace()
-		index := space.AppendSymbol(model.NewFunctionSymbol(n.Name(), model.TypedFunctionSignature{}, false, n.GetPosition()))
+		var symbol model.FunctionSymbol
+		if n.MemberKind() == ast.ObjectMemberKindResourceMethod {
+			symbol = model.NewResourceMethodSymbol(n.Name(), n.Accessor, n.IsPublic(), n.GetPosition())
+		} else {
+			symbol = model.NewFunctionSymbol(n.Name(), model.TypedFunctionSignature{}, false, n.GetPosition())
+		}
+		index := space.AppendSymbol(symbol)
 		n.SetSymbol(space.RefAt(index))
 	}
 	return associateFunctionSignatureRef(r.GetCtx(), n.Symbol(), n.SignatureRef(), n.GetPosition()) && ok
