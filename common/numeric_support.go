@@ -17,6 +17,7 @@
 package common
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 )
@@ -61,7 +62,7 @@ func NormalizeHexFloatLiteral(text string) string {
 }
 
 // ParseIntLiteral parses the text of an int literal. It returns an int64 when the value fits, otherwise the value as a
-// float64. ok is false when text is not an int literal or its value does not fit a float64.
+// float64, which is ±Inf when the value does not fit a float64. ok is false when text is not an int literal.
 func ParseIntLiteral(text string) (value any, ok bool) {
 	digits, radix := text, 10
 	if HasHexIndicator(text) {
@@ -78,7 +79,7 @@ func ParseIntLiteral(text string) (value any, ok bool) {
 		floatText = text + "p0"
 	}
 	f, err := strconv.ParseFloat(floatText, 64)
-	if err != nil {
+	if err != nil && !errors.Is(err, strconv.ErrRange) {
 		return nil, false
 	}
 	return f, true

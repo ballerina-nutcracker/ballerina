@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: int literal out of range: 99999999999999999999
+  --> int-literal-out-of-range2-e.bal:19:11
+   |
+19 | const C = 99999999999999999999; // @error out of range for int
+   |           ^^^^^^^^^^^^^^^^^^^^
