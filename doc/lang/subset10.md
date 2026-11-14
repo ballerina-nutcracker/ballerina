@@ -37,6 +37,7 @@
 - [Lock statement](https://ballerina.io/spec/lang/master/#lock-stmt)
 - [Call](https://ballerina.io/spec/lang/master/#call-stmt)
 - [If/else](https://ballerina.io/spec/lang/master/#section_7.18)
+  - A branch made unreachable by a constant condition (e.g. the false branch of `if true`) does not contribute to narrowing where the branches merge ([spec#1029](https://github.com/ballerina-platform/ballerina-spec/issues/1029)).
 - [While](https://ballerina.io/spec/lang/master/#while-stmt)
 - [Local variable declarations](https://ballerina.io/spec/lang/master/#local-var-decl-stmt)
 - [Return](https://ballerina.io/spec/lang/master/#return-stmt)

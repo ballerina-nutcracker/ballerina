@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of an isolated variable must be inside a lock statement
+  --> module-lambda-body-e.bal:30:12
+   |
+30 |     return counter; // @error an isolated variable is read outside a lock
+   |            ^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "s"
+  --> module-lambda-body-e.bal:23:13
+   |
+23 |     int x = "s"; // @error a string is not an int
+   |             ^^^
