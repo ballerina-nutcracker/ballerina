@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> service-field-init-self2-e.bal:40:16
+   |
+40 |         return self.foo; // @error
+   |                ^^^^

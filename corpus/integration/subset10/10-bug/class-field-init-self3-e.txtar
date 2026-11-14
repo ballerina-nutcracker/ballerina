@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> class-field-init-self3-e.bal:20:15
+   |
+20 |     int bar = self.get(); // @error
+   |               ^^^^

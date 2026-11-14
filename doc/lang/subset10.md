@@ -17,11 +17,13 @@
 - [Module variable declarations](https://ballerina.io/spec/lang/master/#module-var-decl)
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
+  - Binds [`self`](https://ballerina.io/spec/lang/master/#section_6.8.1.2) only within method bodies; it is not in scope in a `field-initializer`
 - [Type definition](https://ballerina.io/spec/lang/master/#module-type-defn)
 - [Enum declarations](https://ballerina.io/spec/lang/master/#module-enum-decl)
 - [Class definition](https://ballerina.io/spec/lang/master/#section_8.6)
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
   - Supports `object-field`, `method-defn` and `object-type-inclusion` members
+  - Binds [`self`](https://ballerina.io/spec/lang/master/#section_6.8.1.2) only within method bodies; it is not in scope in a `field-initializer`
   - Supports [`remote-method-defn`](https://ballerina.io/spec/lang/master/#remote-method-defn) for client classes and `resource-method-defn` for service classes
 
 ## Statements
