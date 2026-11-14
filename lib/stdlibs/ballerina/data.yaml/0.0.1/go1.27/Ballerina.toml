@@ -1,0 +1,4 @@
+[package]
+org     = "ballerina"
+name    = "data.yaml"
+version = "0.0.1"
