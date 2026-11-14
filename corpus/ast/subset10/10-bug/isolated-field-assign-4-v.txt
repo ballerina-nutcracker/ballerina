@@ -1,0 +1,260 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Summary
+    (variable total (type
+      (value-type int)))
+    (variable first (type
+      (value-type int)))
+    (function init (
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 1)))))
+      (variable extra (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))) (expr
+        (list-constructor-expr
+          (literal 7)
+          (literal 8))))) (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable sum (type
+            (value-type int)) (expr
+            (literal 0))))
+        (foreach
+          (var-def
+            (variable v (type
+              (value-type int))))
+          (simple-var-ref arr)
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref sum)
+              (simple-var-ref v))))
+        (if
+          (binary-expr >
+            (invocation length expr:
+              (simple-var-ref extra) ())
+            (literal 0))
+          (block-stmt
+            (compound-assignment +
+              (simple-var-ref sum)
+              (index-based-access
+                (simple-var-ref extra)
+                (literal 0)))) ())
+        (block-stmt
+          (assignment
+            (field-based-access total
+              (simple-var-ref self))
+            (binary-expr +
+              (simple-var-ref sum)
+              (invocation length expr:
+                (simple-var-ref m) ())))
+          (assignment
+            (field-based-access first
+              (simple-var-ref self))
+            (index-based-access
+              (simple-var-ref arr)
+              (literal 0))))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (binary-expr +
+                (field-based-access total
+                  (simple-var-ref self))
+                (field-based-access first
+                  (simple-var-ref self)))))))))
+  (class-definition Isolatable
+    (variable frozen (type
+      (intersection-type
+        (array-type
+          (value-type int) dimensions: 1 ([]))
+        (value-type readonly))))
+    (variable fresh (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (variable summary (type
+      (user-defined-type Summary)))
+    (function init (
+      (variable frozen (type
+        (intersection-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (value-type readonly))))
+      (variable a (type
+        (value-type int)))
+      (variable summary (type
+        (user-defined-type Summary)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access frozen
+            (simple-var-ref self))
+          (simple-var-ref frozen))
+        (assignment
+          (field-based-access fresh
+            (simple-var-ref self))
+          (list-constructor-expr
+            (simple-var-ref a)
+            (binary-expr +
+              (simple-var-ref a)
+              (literal 1))))
+        (assignment
+          (field-based-access summary
+            (simple-var-ref self))
+          (simple-var-ref summary))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (binary-expr +
+                (index-based-access
+                  (field-based-access frozen
+                    (simple-var-ref self))
+                  (literal 0))
+                (index-based-access
+                  (field-based-access fresh
+                    (simple-var-ref self))
+                  (literal 1))))))))
+    (function summaryTotal () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (invocation get expr:
+                (field-based-access summary
+                  (simple-var-ref self)) ())))))))
+  (class-definition Chosen
+    (variable arr (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (function init (
+      (variable b (type
+        (value-type boolean)))
+      (variable k (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access arr
+            (simple-var-ref self))
+          (ternary-expr
+            (simple-var-ref b)
+            (list-constructor-expr
+              (simple-var-ref k))
+            (list-constructor-expr)))))
+    (function size () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (return
+              (invocation length expr:
+                (field-based-access arr
+                  (simple-var-ref self)) ())))))))
+  (class-definition Plain
+    (variable arr (type
+      (array-type
+        (value-type int) dimensions: 1 ([]))))
+    (function init (
+      (variable arr (type
+        (array-type
+          (value-type int) dimensions: 1 ([]))))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access arr
+            (simple-var-ref self))
+          (simple-var-ref arr)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable shared (type
+          (array-type
+            (value-type int) dimensions: 1 ([]))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal 2)
+            (literal 3)))))
+      (var-def
+        (variable s (type
+          (user-defined-type Summary)) (expr
+          (new (
+            (simple-var-ref shared))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref shared)
+          (literal 0))
+        (literal 99))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref s) ()))))
+      (var-def
+        (variable s2 (type
+          (user-defined-type Summary)) (expr
+          (new (
+            (simple-var-ref shared)
+            (mapping-constructor-expr)
+            (list-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref s2) ()))))
+      (var-def
+        (variable i (type
+          (user-defined-type Isolatable)) (expr
+          (new (
+            (list-constructor-expr
+              (literal 10))
+            (literal 20)
+            (simple-var-ref s))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref i) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation summaryTotal expr:
+            (simple-var-ref i) ()))))
+      (var-def
+        (variable c (type
+          (user-defined-type Chosen)) (expr
+          (new (
+            (literal true)
+            (literal 4))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation size expr:
+            (simple-var-ref c) ()))))
+      (var-def
+        (variable p (type
+          (user-defined-type Plain)) (expr
+          (new (
+            (simple-var-ref shared))))))
+      (assignment
+        (index-based-access
+          (simple-var-ref shared)
+          (literal 1))
+        (literal 5))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (field-based-access arr
+              (simple-var-ref p))
+            (literal 1))))))))

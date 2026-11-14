@@ -1,0 +1,33 @@
+(first
+  (bb0 () ()
+    (return
+      (index-based-access
+        (simple-var-ref values)
+        (literal 0)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation first ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation pick (
+          (literal false))))))
+  )
+)
+(pick
+  (bb0 () ()
+    (return
+      (ternary-expr
+        (simple-var-ref b)
+        (list-constructor-expr
+          (index-based-access
+            (simple-var-ref values)
+            (literal 0)))
+        (list-constructor-expr
+          (invocation lang.array length (
+            (simple-var-ref values))))))
+  )
+)

@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: value assigned to a field of an isolated object must be an isolated expression
+  --> isolated-field-assign-2-e.bal:22:24
+   |
+22 |             self.arr = a; // @error
+   |                        ^
+
+error[SEMANTIC_ERROR]: value assigned to a field of an isolated object must be an isolated expression
+  --> isolated-field-assign-2-e.bal:36:24
+   |
+36 |             self.arr = a; // @error
+   |                        ^
+
+error[SEMANTIC_ERROR]: value assigned to a field of an isolated object must be an isolated expression
+  --> isolated-field-assign-2-e.bal:47:24
+   |
+47 |             self.arr = a; // @error
+   |                        ^
+
+error[SEMANTIC_ERROR]: value assigned to a field of an isolated object must be an isolated expression
+  --> isolated-field-assign-2-e.bal:58:24
+   |
+58 |             self.arr = x; // @error
+   |                        ^
+
+error[SEMANTIC_ERROR]: value assigned to a field of an isolated object must be an isolated expression
+  --> isolated-field-assign-2-e.bal:69:28
+   |
+69 |                 self.arr = a; // @error
+   |                            ^
+
+error[SEMANTIC_ERROR]: value assigned to a field of an isolated object must be an isolated expression
+  --> isolated-field-assign-2-e.bal:80:24
+   |
+80 |             self.arr = a; // @error
+   |                        ^
