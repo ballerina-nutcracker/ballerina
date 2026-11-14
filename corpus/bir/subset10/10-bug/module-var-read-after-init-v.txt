@@ -1,0 +1,14 @@
+module $anon.. v 0.0.0;
+branches  int;
+loop  int;
+main() -> nil{
+  bb0 {
+    %1 = println(branches) -> bb1;
+  }
+  bb1 {
+    %2 = println(loop) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}

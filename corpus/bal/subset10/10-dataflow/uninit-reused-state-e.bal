@@ -28,7 +28,7 @@ function f(boolean c) {
         if false {
             x = 2; // @error
         }
-        io:println(x); // @error spurious, see https://github.com/ballerina-nutcracker/ballerina/issues/1236
+        io:println(x);
     }
 }
 

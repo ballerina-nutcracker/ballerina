@@ -15,6 +15,7 @@
   - Supports annotation values evaluated from constant and runtime expressions
   - Supports `service remote function` annotations on remote methods of service classes and service declarations, including `object function` annotation compatibility
 - [Module variable declarations](https://ballerina.io/spec/lang/master/#module-var-decl)
+  - Currently references to a variable declared without an initializer are not checked for definite assignment in functions that `init` calls ([#1637](https://github.com/ballerina-nutcracker/ballerina/issues/1637)) or in other module variables' initializers ([#1636](https://github.com/ballerina-nutcracker/ballerina/issues/1636))
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
 - [Type definition](https://ballerina.io/spec/lang/master/#module-type-defn)

@@ -17,9 +17,3 @@ error[SEMANTIC_ERROR]: unreachable code
    |
 26 |             x = 2; // @error
    |             ^^^^^^
-
-error[SEMANTIC_ERROR]: variable may not be initialized
-  --> uninit-foreach-dead-code-e.bal:28:20
-   |
-28 |         io:println(x); // @error spurious, see https://github.com/ballerina-nutcracker/ballerina/issues/1236
-   |                    ^

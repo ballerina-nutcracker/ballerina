@@ -1,0 +1,89 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable n (type
+    (value-type int)) (expr
+    (literal 2)))
+  (variable inBranch (type
+    (value-type int)))
+  (variable whileTrue (type
+    (value-type int)))
+  (variable whileCond (type
+    (value-type int)))
+  (variable foreachBody (type
+    (value-type int)))
+  (function init () (
+    (value-type null))
+    (block-function-body
+      (if
+        (binary-expr >
+          (simple-var-ref n)
+          (literal 0))
+        (block-stmt
+          (assignment
+            (simple-var-ref inBranch)
+            (literal 1))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref inBranch))))) (
+        (block-stmt
+          (assignment
+            (simple-var-ref inBranch)
+            (literal 2)))))
+      (while
+        (literal true)
+        (block-stmt
+          (assignment
+            (simple-var-ref whileTrue)
+            (literal 3))
+          (break)))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref whileTrue))))
+      (assignment
+        (simple-var-ref whileCond)
+        (simple-var-ref n))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (simple-var-ref whileCond))
+        (block-stmt
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (foreach
+        (var-def
+          (variable j (type
+            (value-type int))))
+        (binary-expr ..<
+          (literal 0)
+          (simple-var-ref n))
+        (block-stmt
+          (assignment
+            (simple-var-ref foreachBody)
+            (simple-var-ref j))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref foreachBody))))))
+      (assignment
+        (simple-var-ref foreachBody)
+        (literal 5))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inBranch))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref whileTrue))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref whileCond))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref foreachBody)))))))
