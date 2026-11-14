@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 (compilation-unit (position 1:1 1:1)
-(package-id $anon . 0.0.0)
+(package-id $anon missing-int-literal 0.0.0)
   (function (position 1:1 20:1) main () (
     (value-type (position <built-in>) null))
     (block-function-body (position 17:17 20:1)

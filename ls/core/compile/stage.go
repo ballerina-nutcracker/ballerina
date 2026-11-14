@@ -158,6 +158,7 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 	env := d.ctx.DiagnosticEnv()
 	docIDs := module.DocumentIDs()
 	units := make([]*ast.BLangCompilationUnit, 0, len(docIDs))
+	pkgID := d.newPackageID(module.Descriptor())
 
 	for _, docID := range docIDs {
 		doc := module.Document(docID)
@@ -174,18 +175,17 @@ func (d *moduleDriver) ensureParsed(module *projects.Module) {
 			continue
 		}
 		if syntaxTree.RootNode.HasDiagnostics() {
-			units = append(units, nodebuilder.GetRecoveredCompilationUnit(d.ctx, syntaxTree))
+			units = append(units, nodebuilder.GetRecoveredCompilationUnit(d.ctx, pkgID, syntaxTree))
 			d.hasBadNodes = true
 			continue
 		}
-		units = append(units, nodebuilder.GetCompilationUnit(d.ctx, syntaxTree))
+		units = append(units, nodebuilder.GetCompilationUnit(d.ctx, pkgID, syntaxTree))
 	}
 
 	if len(units) == 0 {
 		return
 	}
 
-	pkgID := d.newPackageID(module.Descriptor())
 	for _, cu := range units {
 		cu.SetPackageID(pkgID)
 	}

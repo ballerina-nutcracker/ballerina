@@ -110,22 +110,36 @@ func (c *PackageCompilation) compileModulesInternal() {
 			return false
 		}
 
-		// Phase 1: Parse, AST, symbol resolution, top-level type resolution.
-		// Sequential because symbol/type resolution of a module needs its dependencies
-		// to have published their public symbol spaces. We still run Phase 1 for every
-		// module (even after some errored) so we collect all top-level diagnostics in
-		// one shot, but a dependent of an errored module is skipped to avoid cascading
-		// noise (its imports would not resolve).
+		// Phase 1a: Parse, AST build. No cross-module dependency, so this runs
+		// concurrently across the whole package regardless of topological order.
+		//
+		// Exception: --dump-tokens/--dump-st/--dump-ast/--dump-recovered-ast write straight
+		// to stderr with no ordering between modules, so concurrent parsing would interleave
+		// dumped output nondeterministically. Parse sequentially when any is set instead.
+		opts := c.compilationOptions
+		runPerModule(c.packageResolution.topologicallySortedModuleList,
+			!opts.DumpTokens() && !opts.DumpST() && !opts.DumpAST() && !opts.DumpRecoveredAST(),
+			func(m *moduleContext) {
+				if m.getCompilationState() != moduleCompilationStateLoadedFromSources {
+					// TODO: Handle LOADED_FROM_CACHE state - load symbols from BIR
+					return
+				}
+				parseModule(m)
+			})
+
+		// Phase 1b: import, symbol, and top-level type resolution. Sequential, since a
+		// module's resolution needs its dependencies' published symbols. Runs for every
+		// module so all top-level diagnostics are collected in one shot, but a dependent
+		// of an errored module is skipped to avoid cascading noise.
 		for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
 			if moduleCtx.getCompilationState() != moduleCompilationStateLoadedFromSources {
-				// TODO: Handle LOADED_FROM_CACHE state - load symbols from BIR
 				continue
 			}
 			if dependencyErrored(moduleCtx) {
 				erroredModules[moduleCtx.getModuleID()] = struct{}{}
 				continue
 			}
-			resolveTypesAndSymbols(moduleCtx)
+			resolveSymbolsAndTypes(moduleCtx)
 			if moduleCtx.compilerCtx.HasErrors() {
 				erroredModules[moduleCtx.getModuleID()] = struct{}{}
 			}
@@ -137,16 +151,17 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// resolved across the whole package; running them now produces noisy
 		// cascading diagnostics or panics on nil types.
 		if len(erroredModules) > 0 {
-			c.collectModuleDiagnostics(&allDiagnostics)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
 
 		modules := c.packageResolution.topologicallySortedModuleList
-		// Phase 2: local node resolution, semantic analysis, and CFG analysis.
-		runModulePhase(modules, analyzeAndCreateCFG)
+		// Phase 2: local node resolution, semantic analysis, and CFG analysis (parallel -
+		// no cross-module dependencies).
+		runPerModule(modules, true, analyzeAndCreateCFG)
 		if modulesHaveErrors(modules) {
-			c.collectModuleDiagnostics(&allDiagnostics)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
@@ -154,52 +169,76 @@ func (c *PackageCompilation) compileModulesInternal() {
 		// Phase 3: compiler plugins. This is a package-wide barrier before desugaring.
 		c.compilerPluginManager = newCompilerPluginResolver(modules)
 		if modulesHaveErrors(modules) {
-			c.collectModuleDiagnostics(&allDiagnostics)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
-		runModulePhase(modules, func(module *moduleContext) {
+		runPerModule(modules, true, func(module *moduleContext) {
 			c.runCompilerPlugins(module)
 		})
 		if modulesHaveErrors(modules) {
-			c.collectModuleDiagnostics(&allDiagnostics)
+			c.collectModuleDiagnostics(&allDiagnostics, false)
 			c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 			return
 		}
 
-		// Phase 4: desugar only after every module completed plugins without errors.
-		runModulePhase(modules, desugarModule)
+		// Phase 4: desugar (parallel - no cross-module dependencies, and every module
+		// completed plugins without errors), pipelined with BIR generation when
+		// GenerateCode is set.
+		generateCode := c.compilationOptions.GenerateCode()
+		runPerModule(modules, true, func(m *moduleContext) {
+			desugarModule(m)
+			if generateCode && m.getCompilationState() == moduleCompilationStateCompiled {
+				generateCodeInternal(m)
+			}
+		})
 
-		// Collect diagnostics from all modules
-		c.collectModuleDiagnostics(&allDiagnostics)
+		phase4Errored := false
+		for _, moduleCtx := range modules {
+			if moduleCtx.getCompilationState() != moduleCompilationStateCompiled {
+				phase4Errored = true
+				break
+			}
+		}
+
+		// Collect diagnostics from all modules. dropBIRDiags drops BIR-gen diagnostics if a
+		// sibling failed Phase 4, since they'd only be noise from an unreliable context.
+		c.collectModuleDiagnostics(&allDiagnostics, phase4Errored)
 	}
 
 	c.diagnosticResult = NewDiagnosticResult(allDiagnostics)
 }
 
-func runModulePhase(modules []*moduleContext, phase func(*moduleContext)) {
+// runPerModule runs fn once per module, in parallel when concurrent is true. A panic in
+// one module doesn't stop the others; the first one is re-raised after all finish.
+func runPerModule(modules []*moduleContext, concurrent bool, fn func(*moduleContext)) {
 	var wg sync.WaitGroup
 	var panicsMu sync.Mutex
 	var panics []any
-	for _, module := range modules {
-		if module.getCompilationState() != moduleCompilationStateLoadedFromSources {
+	run := func(m *moduleContext) {
+		defer func() {
+			if r := recover(); r != nil {
+				panicsMu.Lock()
+				panics = append(panics, r)
+				panicsMu.Unlock()
+			}
+		}()
+		fn(m)
+	}
+	for _, moduleCtx := range modules {
+		if !concurrent {
+			run(moduleCtx)
 			continue
 		}
 		wg.Add(1)
-		go func(module *moduleContext) {
+		go func(m *moduleContext) {
 			defer wg.Done()
-			defer func() {
-				if recovered := recover(); recovered != nil {
-					panicsMu.Lock()
-					panics = append(panics, recovered)
-					panicsMu.Unlock()
-				}
-			}()
-			phase(module)
-		}(module)
+			run(m)
+		}(moduleCtx)
 	}
 	wg.Wait()
 	if len(panics) > 0 {
+		// TODO: report diagnostics for panics instead of crashing the process.
 		panic(panics[0])
 	}
 }
@@ -254,12 +293,18 @@ func (c *PackageCompilation) runCompilerPlugins(module *moduleContext) {
 	}
 }
 
-// collectModuleDiagnostics appends per-module compilation diagnostics to dst,
-// applying severity filtering for bala projects.
-func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnostic) {
+// collectModuleDiagnostics appends per-module compilation diagnostics to dst, applying
+// severity filtering for bala projects. dropBIRDiags, when true, truncates a module's
+// diagnostics to those recorded before its (pipelined) BIR generation ran — see the call
+// site in compileModulesInternal for why.
+func (c *PackageCompilation) collectModuleDiagnostics(dst *[]diagnostics.Diagnostic, dropBIRDiags bool) {
 	isBala := c.getPackageContext().getProject().Kind() == ProjectKindBala
 	for _, moduleCtx := range c.packageResolution.topologicallySortedModuleList {
-		for _, diag := range moduleCtx.getDiagnostics() {
+		diags := moduleCtx.getDiagnostics()
+		if dropBIRDiags && moduleCtx.birGenAttempted {
+			diags = diags[:moduleCtx.birGenDiagStart]
+		}
+		for _, diag := range diags {
 			severity := diag.DiagnosticInfo().Severity()
 			if isBala && severity != diagnostics.Error && severity != diagnostics.Fatal {
 				continue

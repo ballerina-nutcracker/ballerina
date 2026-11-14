@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
 (compilation-unit (position 1:1 1:1)
-(package-id $anon . 0.0.0)
+(package-id $anon recovered-ast 0.0.0)
   (variable (position 1:1 18:1) (bad-identifier) (type
     (user-defined-type (position 1:1 17:4) foo)))
   (function (position 21:1 27:1) add
