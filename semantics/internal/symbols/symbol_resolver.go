@@ -438,11 +438,10 @@ func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 	// does not bind that receiver in a parameter default; skip past the
 	// class/service scope so a module-level `'self` can still resolve.
 	if bs.hideOuterSelf && name == "self" && lookup.kind == blockScopeKind {
-		outer, found := parentPastEnclosingClassOrService(bs)
-		if !found {
-			return symbolLookup{}, false
-		}
-		lookup, ok = outer.GetSymbol(name)
+		// hideOuterSelf is only set for class/service methods, so an enclosing
+		// class or service resolver is always present on this path.
+		enclosing, _ := enclosingClassOrServiceResolver(bs)
+		lookup, ok = enclosing.parent.GetSymbol(name)
 		if !ok {
 			return lookup, false
 		}
@@ -2209,6 +2208,16 @@ func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangR
 }
 
 func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope, bool) {
+	bs, ok := enclosingClassOrServiceResolver(resolver)
+	if !ok {
+		return nil, false
+	}
+	return bs.scope, true
+}
+
+// enclosingClassOrServiceResolver returns the nearest enclosing class or
+// service block resolver along resolver's parent chain (including resolver).
+func enclosingClassOrServiceResolver(resolver symbolResolver) (*blockSymbolResolver, bool) {
 	for {
 		bs, ok := resolver.(*blockSymbolResolver)
 		if !ok {
@@ -2216,7 +2225,7 @@ func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope,
 		}
 		switch bs.node.(type) {
 		case *ast.BLangClassDefinition, *ast.BLangService:
-			return bs.scope, true
+			return bs, true
 		}
 		resolver = bs.parent
 	}
@@ -2236,23 +2245,6 @@ func isMethodOfClassOrService(functionResolver *blockSymbolResolver) bool {
 		return true
 	default:
 		return false
-	}
-}
-
-// parentPastEnclosingClassOrService returns the resolver outside the nearest
-// enclosing class or service body along bs's parent chain.
-func parentPastEnclosingClassOrService(bs *blockSymbolResolver) (symbolResolver, bool) {
-	resolver := bs.parent
-	for {
-		br, ok := resolver.(*blockSymbolResolver)
-		if !ok {
-			return nil, false
-		}
-		switch br.node.(type) {
-		case *ast.BLangClassDefinition, *ast.BLangService:
-			return br.parent, true
-		}
-		resolver = br.parent
 	}
 }
 
