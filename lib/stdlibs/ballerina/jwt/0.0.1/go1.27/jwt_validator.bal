@@ -17,6 +17,7 @@
 
 import ballerina/cache;
 import ballerina/crypto;
+import ballerina/log;
 import ballerina/time;
 
 # Represents JWT validator configurations.
@@ -111,7 +112,8 @@ public isolated function validate(string jwt, ValidatorConfig validatorConfig) r
     return validateJwt(jwt, validatorConfig);
 }
 
-isolated function validateJwt(string jwt, ValidatorConfig validatorConfig) returns Payload|Error {
+isolated function validateJwt(string jwt, ValidatorConfig validatorConfig, cache:Cache? jwksCache = ())
+                              returns Payload|Error {
     [Header, Payload] decoded = check decode(jwt);
     Header header = decoded[0];
     Payload payload = decoded[1];
@@ -119,7 +121,7 @@ isolated function validateJwt(string jwt, ValidatorConfig validatorConfig) retur
         return prepareError("Mandatory field signing algorithm (alg) is not provided in JOSE header.");
     }
     check validateJwtRecords(header, payload, validatorConfig);
-    check validateSignature(jwt, header, validatorConfig);
+    check validateSignature(jwt, header, validatorConfig, jwksCache);
     return payload;
 }
 
@@ -313,7 +315,8 @@ isolated function getJwtSignature(string encodedSignature) returns byte[]|Error 
     }
 }
 
-isolated function validateSignature(string jwt, Header header, ValidatorConfig validatorConfig) returns Error? {
+isolated function validateSignature(string jwt, Header header, ValidatorConfig validatorConfig,
+                                    cache:Cache? jwksCache) returns Error? {
     SigningAlgorithm alg = <SigningAlgorithm>header?.alg;  // The `()` value is already validated.
     ValidatorSignatureConfig? validatorSignatureConfig = validatorConfig?.signatureConfig;
     // jBallerina goes on to read a missing signature segment and panics: https://github.com/ballerina-platform/ballerina-library/issues/9710
@@ -337,7 +340,15 @@ isolated function validateSignature(string jwt, Header header, ValidatorConfig v
     if jwksConfig !is () {
         string? kid = header?.kid;
         if kid is string {
-            return prepareError("JWKS-based signature validation is not yet supported.");
+            json jwk = check getJwk(kid, jwksConfig.url, jwksConfig.clientConfig, jwksCache);
+            if jwk is () {
+                return prepareError("No JWK found for kid '" + kid + "'.");
+            }
+            crypto:PublicKey publicKey = check getPublicKeyByJwks(jwk);
+            boolean signatureValidation = check assertRsaSignature(alg, assertion, signature, publicKey);
+            if !signatureValidation {
+                return prepareError("JWT signature validation with JWKS configurations has failed.");
+            }
         } else {
             return prepareError("Key ID (kid) is not provided in JOSE header.");
         }
@@ -428,6 +439,86 @@ isolated function validateCertificate(crypto:PublicKey publicKey) returns boolea
     [int, decimal] notAfter = certificate.notAfter;
     return currentTime[0] >= notBefore[0] && currentTime[0] <= notAfter[0];
 }
+
+isolated function getPublicKeyByJwks(json jwk) returns crypto:PublicKey|Error {
+    json|error modulus = jwk.n;
+    json|error exponent = jwk.e;
+    if modulus is string && exponent is string {
+        // crypto:buildRsaPublicKey expects hex rather than the JWK's Base64 URL values here (#1679).
+        byte[]|Error modulusBytes = decodeBase64Url(modulus);
+        byte[]|Error exponentBytes = decodeBase64Url(exponent);
+        if modulusBytes is Error {
+            return prepareError("Public key generation failed.", modulusBytes);
+        }
+        if exponentBytes is Error {
+            return prepareError("Public key generation failed.", exponentBytes);
+        }
+        crypto:PublicKey|crypto:Error publicKey = crypto:buildRsaPublicKey(modulusBytes.toBase16(),
+            exponentBytes.toBase16());
+        if publicKey is crypto:Error {
+            return prepareError("Public key generation failed.", publicKey);
+        }
+        return publicKey;
+    } else if modulus is error {
+        return prepareError("Failed to access modulus from the JWK '" + jwk.toString() + "'.");
+    } else if exponent is error {
+        return prepareError("Failed to access exponent from the JWK '" + jwk.toString() + "'.");
+    } else {
+        return prepareError("Failed to access modulus or exponent as a 'string' property from the JWK '" + jwk.toString() + "'.");
+    }
+}
+
+isolated function getJwk(string kid, string url, ClientConfiguration clientConfig, cache:Cache? jwksCache) returns json|Error {
+    if jwksCache is cache:Cache {
+        if jwksCache.hasKey(kid) {
+            any|cache:Error jwk = jwksCache.get(kid);
+            if jwk is json {
+                return jwk;
+            } else {
+                log:printDebug("Failed to retrieve JWK for the kid '" + kid + "' from the cache.");
+            }
+        }
+    }
+    string|Error stringResponse = getJwksResponse(url, clientConfig);
+    if stringResponse is string {
+        json[] jwksArray = check getJwksArray(stringResponse);
+        foreach json jwk in jwksArray {
+            json|error responseKid = jwk.kid;
+            if responseKid is json && responseKid == kid {
+                return jwk;
+            }
+        }
+    } else {
+        return prepareError("Failed to call JWKS endpoint '" + url + "'.", stringResponse);
+    }
+}
+
+isolated function getJwksArray(string stringResponse) returns json[]|Error {
+    json|error jsonResponse = fromJsonString(stringResponse);
+    if jsonResponse is json {
+        json|error jwks = jsonResponse.keys;
+        if jwks is json[] {
+            return jwks;
+        } else if jwks is json {
+            // jBallerina casts with `<json[]>` and panics: https://github.com/ballerina-platform/ballerina-library/issues/9714
+            return prepareError("Failed to access 'keys' property as an array from the JSON '" + jsonResponse.toString() + "'.");
+        } else {
+            return prepareError("Failed to access 'keys' property from the JSON '" + jsonResponse.toString() + "'.", jwks);
+        }
+    } else {
+        return prepareError("Failed to convert '" + stringResponse + "' to JSON.", jsonResponse);
+    }
+}
+
+isolated function getJwksResponse(string url, ClientConfiguration clientConfig) returns string|Error {
+    string|error response = externGetJwksResponse(url, clientConfig);
+    if response is error {
+        return error Error(response.message());
+    }
+    return response;
+}
+
+isolated function externGetJwksResponse(string url, ClientConfiguration clientConfig) returns string|error = external;
 
 isolated function assertRsaSignature(SigningAlgorithm alg, byte[] assertion, byte[] signaturePart,
                                      crypto:PublicKey publicKey) returns boolean|Error {

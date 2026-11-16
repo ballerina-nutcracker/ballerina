@@ -59,6 +59,7 @@ func initJwtModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "externDecodeBase64Url", decodeBase64URL(types))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "toJsonString", toJSONString)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "fromJsonString", fromJSONString(types))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "externGetJwksResponse", getJwksResponse(rt))
 }
 
 func init() {

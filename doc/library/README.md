@@ -14,7 +14,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
-| [jwt](../../lib/stdlibs/ballerina/jwt/0.0.1/go1.27/README.md) | 10 | 0 | 1 | 91% |
+| [jwt](../../lib/stdlibs/ballerina/jwt/0.0.1/go1.27/README.md) | 10 | 1 | 0 | 91% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
@@ -28,7 +28,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **307** | **36** | **71** | **74%** |
+| **Total**                                         | **307** | **37** | **70** | **74%** |
 
 ## Notable Behavioural Changes
 
@@ -97,7 +97,9 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **Malformed claim types return an error.** jBallerina panics with `TypeCastError` when a token's header or payload is not a JSON object, or when `typ`, `cty`, `kid`, `iss`, `sub`, `jti` or `aud` has an unexpected JSON type; the Go-native version returns a `jwt:Error` naming the field (<https://github.com/ballerina-platform/ballerina-library/issues/9709>).
 - **A token without a signature segment validates when no signature is configured.** jBallerina panics with `IndexOutOfRange` when `jwt:validate` gets a two-segment token and the `ValidatorConfig` has no `signatureConfig`; the Go-native version skips the signature check, as it does for a three-segment token (<https://github.com/ballerina-platform/ballerina-library/issues/9710>).
 - **A public key without a certificate is accepted.** jBallerina rejects a `crypto:PublicKey` given as `certFile` that carries no certificate with `Public key certificate validity period has passed.`; the Go-native version checks the validity period only when the key has a certificate (<https://github.com/ballerina-platform/ballerina-library/issues/9711>).
-- **Decoding errors carry Go's error text in their cause.** The cause of a Base64 URL or JSON decoding failure holds the Go library's message (e.g. `illegal base64 data at input byte 1`) instead of the JVM's (`Illegal base64 character 24`); the outer `jwt:Error` messages are unchanged.
+- **The JWKS client times out.** jBallerina's JWKS client has no timeout, so an endpoint that never answers blocks validation forever; the Go-native version gives up after 15 seconds connecting or 30 seconds waiting for the response, the defaults `ballerina/oauth2` uses (<https://github.com/ballerina-platform/ballerina-library/issues/9713>).
+- **Malformed JWKS input returns an error.** jBallerina panics when the JWKS `keys` member is not an array or the JWKS URL is not a valid URI; the Go-native version returns a `jwt:Error` (`Failed to access 'keys' property as an array ...` or `Failed to create URI for the provided value ...`) (<https://github.com/ballerina-platform/ballerina-library/issues/9714>).
+- **Decoding errors carry Go's error text in their cause.** The cause of a Base64 URL or JSON decoding failure holds the Go library's message (e.g. `illegal base64 data at input byte 1`) instead of the JVM's (`Illegal base64 character 24`), and so do JWKS request failures (e.g. `connect: connection refused`); the outer `jwt:Error` messages are unchanged.
 
 ### ldap
 

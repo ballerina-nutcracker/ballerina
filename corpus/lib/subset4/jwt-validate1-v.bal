@@ -140,7 +140,6 @@ public function main() returns error? {
     show(jwt:validate("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZSJ9.a$b", {signatureConfig: {secret: "secret"}})); // @output Base64 URL decode failed for JWT signature. (cause: true)
     show(jwt:validate(token, {signatureConfig: {}})); // @output valid alice
     show(jwt:validate(token, {signatureConfig: {certFile: RSA_CERT_PATH}})); // @output Unsupported RSA algorithm 'HS256'. (cause: false)
-    show(jwt:validate(token, {signatureConfig: {jwksConfig: {url: "https://localhost/jwks"}}})); // @output JWKS-based signature validation is not yet supported. (cause: false)
     show(jwt:validate(bare, {signatureConfig: {jwksConfig: {url: "https://localhost/jwks"}}})); // @output Key ID (kid) is not provided in JOSE header. (cause: false)
     show(jwt:validate("a.b.c.d", {})); // @output Invalid JWT. (cause: false)
 
