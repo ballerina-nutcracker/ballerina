@@ -27,3 +27,8 @@ func TestJwtKeyStore(t *testing.T) {
 	t.Parallel()
 	runExtern(t, fileCase("jwt-keystore-v"), testharness.NewTestPal(), nil)
 }
+
+func TestJwtTrustStore(t *testing.T) {
+	t.Parallel()
+	runExtern(t, fileCase("jwt-truststore-v"), testharness.NewTestPal(), nil)
+}

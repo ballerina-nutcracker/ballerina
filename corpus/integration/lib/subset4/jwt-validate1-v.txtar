@@ -1,0 +1,45 @@
+-- stdout --
+valid alice
+valid alice
+valid alice
+JWT signature validation with shared secret has failed. (cause: false)
+JWT contained invalid issuer name 'wso2' (cause: false)
+JWT contained invalid username 'alice' (cause: false)
+JWT contained invalid audience. (cause: false)
+JWT contained invalid audience. (cause: false)
+JWT contained invalid JWT ID 'j1' (cause: false)
+JWT contained invalid key ID 'k1' (cause: false)
+JWT must contain a 'zz' custom claim. (cause: false)
+JWT contained invalid custom claim 'scp: read' (cause: false)
+JWT must contain a valid issuer name. (cause: false)
+JWT must contain a valid username. (cause: false)
+JWT must contain a valid JWT ID. (cause: false)
+JWT must contain a valid key ID. (cause: false)
+valid -
+JWT contained invalid audience. (cause: false)
+JWT must contain a valid audience. (cause: false)
+valid -
+JWT is expired. (cause: false)
+valid alice
+JWT is used before not-before-time (nbf). (cause: false)
+valid alice
+JWT is expired. (cause: false)
+valid alice
+valid alice
+Not a valid JWS. Signature part is required. (cause: false)
+Base64 URL decode failed for JWT signature. (cause: true)
+valid alice
+Unsupported RSA algorithm 'HS256'. (cause: false)
+JWKS-based signature validation is not yet supported. (cause: false)
+Key ID (kid) is not provided in JOSE header. (cause: false)
+Invalid JWT. (cause: false)
+valid bob
+valid bob
+SHA256 signature verification failed. (cause: true)
+Unsupported HMAC algorithm 'RS256'. (cause: false)
+Failed to decode public key. (cause: true)
+valid -
+valid -
+JWT signature validation with shared secret has failed. (cause: false)
+JWT signature validation with shared secret has failed. (cause: false)
+-- stderr --
