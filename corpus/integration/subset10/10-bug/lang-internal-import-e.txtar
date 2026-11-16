@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: module 'ballerina/lang.__internal' is internal and cannot be imported
+  --> lang-internal-import-e.bal:19:1
+   |
+19 | import ballerina/lang.__internal; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: module 'ballerina/lang.__internal' is internal and cannot be imported
+  --> lang-internal-import-e.bal:20:1
+   |
+20 | import ballerina/lang.'__internal as internal; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused import prefix '__internal'
+  --> lang-internal-import-e.bal:19:1
+   |
+19 | import ballerina/lang.__internal; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused import prefix 'internal'
+  --> lang-internal-import-e.bal:20:1
+   |
+20 | import ballerina/lang.'__internal as internal; // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
