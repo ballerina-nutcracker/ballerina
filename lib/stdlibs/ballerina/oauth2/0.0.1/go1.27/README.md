@@ -2,14 +2,15 @@
 
 ## Overview
 
-This module provides a framework for interacting with OAuth2 authorization servers as specified in [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) and [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662). Its client OAuth2 provider obtains and refreshes access tokens with the client credentials, password, refresh token and JWT bearer grants, and its listener OAuth2 provider validates tokens against an introspection endpoint; the `http` module and other network modules use both for authentication. The Go Native Interpreter currently supports the client OAuth2 provider with all four grant types.
+This module provides a framework for interacting with OAuth2 authorization servers as specified in [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) and [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662). Its client OAuth2 provider obtains and refreshes access tokens with the client credentials, password, refresh token and JWT bearer grants, and its listener OAuth2 provider validates tokens against an introspection endpoint; the `http` module and other network modules use both for authentication. The Go Native Interpreter currently supports the client OAuth2 provider with all four grant types and the listener OAuth2 provider.
 
 ## Key Functionalities
 
 - Obtain access tokens with the client credentials, password, refresh token and JWT bearer grant types through `oauth2:ClientOAuth2Provider`.
 - Cache an access token until it expires (less the configured clock skew) and refresh it with the cached or configured refresh token.
 - Send client credentials in the `Authorization` header or the request body, with scopes, optional parameters, custom headers and a custom payload.
-- Reach token endpoints over HTTPS, trusting a certificate file and presenting a client certificate.
+- Validate access tokens against an introspection endpoint with `oauth2:ListenerOAuth2Provider`, optionally caching the responses.
+- Reach token and introspection endpoints over HTTPS, trusting a certificate file and presenting a client certificate.
 
 ## Examples
 
@@ -52,9 +53,10 @@ Support Levels:
 | JWT bearer grant | Supported | `oauth2:JwtBearerGrantConfig` |
 | Credential bearer | Supported | `oauth2:CredentialBearer` with `AUTH_HEADER_BEARER` and `POST_BODY_BEARER` |
 | Client OAuth2 provider | Supported | `oauth2:ClientOAuth2Provider`; `init` requests the first token and panics if that fails |
-| Listener OAuth2 provider | Not Yet Supported | `oauth2:ListenerOAuth2Provider`, `oauth2:IntrospectionConfig` and `oauth2:IntrospectionResponse` are not declared yet |
+| Listener OAuth2 provider | Supported | `oauth2:ListenerOAuth2Provider`, `oauth2:IntrospectionConfig`, `oauth2:IntrospectionResponse`; responses are cached when `cacheConfig` is set |
 
 ### Notable Behavioural Changes
 
 - **A restricted custom header returns an error.** jBallerina panics with `IllegalArgumentException` when `customHeaders` holds a header Java's HTTP client restricts (`Connection`, `Content-Length`, `Expect`, `Host`, `Upgrade`); the Go-native version returns an `oauth2:Error` caused by `Failed to send the request to the endpoint. restricted header name: "<name>"` (<https://github.com/ballerina-platform/ballerina-library/issues/9715>).
+- **A malformed introspection response returns an error.** jBallerina panics when the introspection response is not a JSON object or a known field has an unexpected type (e.g. `"exp": "soon"`, a fractional `exp` or an `aud` array); the Go-native version returns an `oauth2:Error` caused by `Invalid value for the introspection response field '<name>'.` (<https://github.com/ballerina-platform/ballerina-library/issues/9716>).
 - **Endpoint and JSON errors carry Go's error text in their cause.** The cause of a failed request (e.g. `connect: connection refused`, or a request timeout) or of an unparsable response holds the Go library's message instead of the JVM's (`null`, `request timed out`, `FromJsonStringError`); the outer `oauth2:Error` messages are unchanged.
