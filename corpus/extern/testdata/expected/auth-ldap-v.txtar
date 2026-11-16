@@ -14,6 +14,7 @@ st*r ["stars"]
 foo\\* ["escaped"]
 sp ["escaped"]
 carol ["staff"]
+alice ["admin","dev"]
 Failed to get groups for the username 'alice' from LDAP user store. | Membership attribute is not set in configurations.
 [LDAP: error code 49 - Invalid Credentials]
 Not an LDAP URL: http://localhost:389
