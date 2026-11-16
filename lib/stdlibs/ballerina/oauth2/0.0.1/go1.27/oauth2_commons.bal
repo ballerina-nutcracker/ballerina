@@ -1,0 +1,97 @@
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+//
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+import ballerina/crypto;
+
+# Represents the configurations of the client used to call the introspection endpoint.
+#
+# + httpVersion - The HTTP version of the client
+# + customHeaders - The list of custom HTTP headers
+# + customPayload - The list of custom HTTP payload parameters
+# + auth - The client auth configurations
+# + secureSocket - SSL/TLS-related configurations
+# + connectTimeout - Maximum time(in seconds) to wait for a connection to be established. By default, uses the global
+#   configuration `globalConnectTimeout` which defaults to 15 seconds
+# + reqTimeout - Maximum time(in seconds) to wait for a response before the request times out. By default, uses the global
+#   configuration `globalReqTimeout` which defaults to 30 seconds
+public type ClientConfiguration record {|
+    HttpVersion httpVersion = HTTP_1_1;
+    map<string> customHeaders?;
+    string customPayload?;
+    ClientAuth auth?;
+    SecureSocket secureSocket?;
+    decimal connectTimeout?;
+    decimal reqTimeout?;
+|};
+
+// A `{}` default for a field of this type fails to compile because the type refers back to the records holding the
+// field (#1325), so those defaults call this function instead.
+isolated function emptyClientConfiguration() returns ClientConfiguration => {};
+
+# Represents the the authentication configuration types for the HTTP client used for token introspection.
+public type ClientAuth ClientCredentialsGrantConfig|PasswordGrantConfig|RefreshTokenGrantConfig;
+
+# Represents the HTTP versions.
+public enum HttpVersion {
+    HTTP_1_1,
+    HTTP_2
+}
+
+# Represents the SSL/TLS configurations.
+#
+# + disable - Disable SSL validation
+# + cert - Configurations associated with the `crypto:TrustStore` or single certificate file that the client trusts
+# + key - Configurations associated with the `crypto:KeyStore` or combination of certificate and private key of the client
+public type SecureSocket record {|
+    boolean disable = false;
+    crypto:TrustStore|string cert?;
+    crypto:KeyStore|CertKey key?;
+|};
+
+# Represents the combination of the certificate file path, private key file path, and private key password if encrypted.
+#
+# + certFile - A file containing the certificate
+# + keyFile - A file containing the private key
+# + keyPassword - Password of the private key (if encrypted)
+public type CertKey record {|
+   string certFile;
+   string keyFile;
+   string keyPassword?;
+|};
+
+# Represents the credential-bearing methods.
+public enum CredentialBearer {
+    AUTH_HEADER_BEARER,
+    POST_BODY_BEARER
+}
+
+isolated function doHttpRequest(string url, ClientConfiguration clientConfig, map<string> headers, string payload)
+                                returns string|Error {
+    decimal connectTimeout = clientConfig?.connectTimeout ?: globalConnectTimeout;
+    decimal reqTimeout = clientConfig?.reqTimeout ?: globalReqTimeout;
+    string|error response = externDoHttpRequest(url, clientConfig, headers, payload, connectTimeout, reqTimeout);
+    if response is error {
+        return error Error(response.message());
+    }
+    return response;
+}
+
+isolated function externDoHttpRequest(string url, ClientConfiguration clientConfig, map<string> headers,
+        string payload, decimal connectTimeout, decimal reqTimeout) returns string|error = external;
+
+// `fromJsonString` is not available in lang.value yet (#1674).
+isolated function fromJsonString(string value) returns json|error = external;

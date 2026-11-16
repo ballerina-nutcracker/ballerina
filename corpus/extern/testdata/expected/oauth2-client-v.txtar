@@ -1,0 +1,40 @@
+-- stdout --
+cc-1
+cc-1
+{"auth":"Basic YyAxOnMmMQ==","body":"grant_type=client_credentials&scope=a b&k=v&extra=1","ct":"application/x-www-form-urlencoded","x":["h1"]}
+{"auth":"","body":"grant_type=client_credentials&client_id=c1&client_secret=s1","ct":"application/x-www-form-urlencoded","x":null}
+{"auth":"Basic YzE6czE=","body":"grant_type=password&username=al%20ice&password=p%40ss%26word","ct":"application/x-www-form-urlencoded","x":null}
+{"auth":"","body":"grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=a.b.c","ct":"application/x-www-form-urlencoded","x":null}
+{"auth":"Basic YzE6czE=","body":"grant_type=refresh_token&refresh_token=r1&scope=x","ct":"application/x-www-form-urlencoded","x":null}
+cc-18
+cc-19
+refreshed-rt-7
+refreshed-rt-7
+Failed to generate OAuth2 token. | Failed to refresh access token since refresh configurations are not provided. | no cause
+Failed to generate OAuth2 token. | Client-id or client-secret cannot be empty. | no cause
+{"auth":"","body":"grant_type=refresh_token&refresh_token=rt-10&scope=s&q=2&client_id=c1&client_secret=s1","ct":"application/x-www-form-urlencoded","x":null}
+refreshed-rt-11
+refreshed-rt-r12
+refreshed-rt-13
+Failed to generate OAuth2 token. | Client-id or client-secret cannot be empty. | no cause
+cc-25
+ne-26
+init failed: Client-id or client-secret cannot be empty. | no cause
+init failed: Client-id or client-secret cannot be empty. | no cause
+init failed: Client-id or client-secret cannot be empty. | no cause
+init failed: Client-id or client-secret cannot be empty. | no cause
+init failed: Failed to call the token endpoint 'http://testserver/401'. | Failed to get a success response from the endpoint. Response code: '401'. Response body: 'unauthorized'
+init failed: Failed to get JSON from the response payload. | invalid character 'o' in literal null (expecting 'u')
+init failed: Failed to access 'access_token' property from the JSON. | missing map key 'access_token'
+init failed: Failed to extract 'access_token' property as a 'string' from the JSON. | no cause
+init failed: Failed to get JSON from the response payload. | number '12345678901234567890' is out of the int range
+cc-32
+init failed: Failed to call the token endpoint 'http://testserver/a b'. | Failed to create URI for the provided value "http://testserver/a b".
+init failed: Failed to call the token endpoint 'http://testserver/token'. | OAuth2 connection timeout must be greater than zero
+init failed: Failed to call the token endpoint 'http://testserver/token'. | OAuth2 request timeout must be greater than zero
+Failed to call the token endpoint 'http://testserver/hang'.
+cc-34
+init failed: Failed to call the token endpoint 'http://testserver/token'. | Failed to send the request to the endpoint. restricted header name: "Host"
+init failed: Failed to call the token endpoint 'http://testserver/token'. | Failed to send the request to the endpoint. restricted header name: "content-length"
+15 30 15 30
+-- stderr --

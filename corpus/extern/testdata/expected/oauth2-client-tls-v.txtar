@@ -1,0 +1,12 @@
+-- stdout --
+cc-
+cc-
+cc-
+failed: Failed to get a success response from the endpoint. Response code: '401'. Response body: ''
+true
+failed: Failed to init SSL context. Need to configure 'crypto:TrustStore' or 'cert' with client SSL certificates file.
+failed: Failed to init SSL context. crypto:TrustStore is not yet supported for secureSocket.cert; use a certificate file path instead
+failed: Failed to init SSL context. crypto:KeyStore is not yet supported for secureSocket.key; use an oauth2:CertKey instead
+failed: Failed to init SSL context. an encrypted private key is not yet supported for secureSocket.key
+true
+-- stderr --

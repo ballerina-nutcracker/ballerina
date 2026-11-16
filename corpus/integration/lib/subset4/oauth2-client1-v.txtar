@@ -1,0 +1,11 @@
+-- stdout --
+15 30
+15 30
+HTTP_1_1 HTTP_2 AUTH_HEADER_BEARER POST_BODY_BEARER INFER_REFRESH_CONFIG
+3600 0 AUTH_HEADER_BEARER {"httpVersion":"HTTP_1_1"}
+true Client-id or client-secret cannot be empty. | no cause
+true Client-id or client-secret cannot be empty. | no cause
+true Failed to get JSON from the response payload. | invalid character 'e' in literal true (expecting 'r')
+true Failed to get JSON from the response payload. | invalid character 'e' in literal true (expecting 'r')
+true Failed to get JSON from the response payload. | invalid character 'e' in literal true (expecting 'r')
+-- stderr --

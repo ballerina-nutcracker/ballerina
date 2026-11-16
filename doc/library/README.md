@@ -19,6 +19,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
 | [mime](../../lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md)               | 15 | 2 | 2 | 79% |
 | [mqtt](../../lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md)               | 21 | 2 | 2 | 84% |
+| [oauth2](../../lib/stdlibs/ballerina/oauth2/0.0.1/go1.27/README.md) | 7 | 2 | 1 | 70% |
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
@@ -27,7 +28,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **297** | **36** | **70** | **74%** |
+| **Total**                                         | **304** | **38** | **71** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -131,6 +132,11 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **SecureSocket.protocol selects the TLS version.** jBallerina reads the protocol name and version from `SecureSocket` instead of `SecureSocket.protocol`, so `protocol` is ignored and every TLS connection offers only TLS 1.2; the Go-native version honours `protocol.version`, offering TLS 1.2 and 1.3 for `"1.3"` and only TLS 1.1 or 1.0 for `"1.1"` or `"1.0"`, so a broker that requires TLS 1.2 rejects a `"1.1"` client that jBallerina connects. An unknown version keeps the TLS 1.2 default — reported as https://github.com/ballerina-platform/ballerina-library/issues/9408.
 - **Certificate and key paths in errors are not made absolute.** jBallerina reports a missing certificate or key file with its absolute path; the Go-native version reports the path as it was configured.
 - **Service methods are validated when the service is attached, not at compile time.** jBallerina's compiler plugin rejects an invalid mqtt `service` declaration (an unknown remote method, a non-`remote` handler, or a wrong parameter count, parameter type or return type) as a compile error, but its `attach()` accepts any `service class` value and binds whatever values it dispatches to the parameters. This port has no compiler plugin, so `Listener.attach()` applies the same rules to every service, including `service class` values jBallerina would accept, and returns an `mqtt:Error` carrying the plugin's message; a module-level `service on new mqtt:Listener(...)` declaration with an invalid service fails at program start-up.
+
+### oauth2
+
+- **A restricted custom header returns an error.** jBallerina panics with `IllegalArgumentException` when `customHeaders` holds a header Java's HTTP client restricts (`Connection`, `Content-Length`, `Expect`, `Host`, `Upgrade`); the Go-native version returns an `oauth2:Error` caused by `Failed to send the request to the endpoint. restricted header name: "<name>"` (<https://github.com/ballerina-platform/ballerina-library/issues/9715>).
+- **Endpoint and JSON errors carry Go's error text in their cause.** The cause of a failed request (e.g. `connect: connection refused`, or a request timeout) or of an unparsable response holds the Go library's message instead of the JVM's (`null`, `request timed out`, `FromJsonStringError`); the outer `oauth2:Error` messages are unchanged.
 
 ### os
 
