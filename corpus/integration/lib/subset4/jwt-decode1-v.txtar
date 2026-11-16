@@ -1,0 +1,26 @@
+-- stdout --
+{"alg":"HS256","typ":"JWT","kid":"k1","x5t":"t"} {"iss":"wso2","sub":"alice","aud":["a","b"],"exp":1700000000,"nbf":1600000000,"iat":0,"jti":"j","num":1.5,"e":1E+2,"obj":{"z":1,"a":[true,null,"s"]}}
+true true true
+{"alg":"RS384","cty":"JWT"} {"aud":"single"}
+{"alg":"RS512"} {"sub":"x"}
+{"alg":"HS384"} {"sub":"x"}
+{"alg":"HS256"} {"aud":["1","b"]}
+Invalid JWT. (cause: false)
+Invalid JWT. (cause: false)
+Invalid JWT. (cause: false)
+String to JSON conversion failed for JWT paylaod. (cause: true)
+Base64 URL decode failed for JWT header. (cause: true)
+Base64 URL decode failed for JWT payload. (cause: true)
+String to JSON conversion failed for JWT header. (cause: true)
+String to JSON conversion failed for JWT header. (cause: true)
+String to JSON conversion failed for JWT paylaod. (cause: true)
+Failed to convert byte[] of decoded header to string. (cause: true)
+Unsupported signing algorithm 'none'. (cause: false)
+Unsupported signing algorithm 'ES256'. (cause: false)
+JWT header is not a JSON object. (cause: false)
+JWT payload is not a JSON object. (cause: false)
+Invalid value for the JWT header field 'typ'. A string is expected. (cause: false)
+Invalid value for the JWT header field 'kid'. A string is expected. (cause: false)
+Invalid value for the JWT payload field 'iss'. A string is expected. (cause: false)
+Invalid value for the JWT payload field 'aud'. A string is expected. (cause: false)
+-- stderr --
