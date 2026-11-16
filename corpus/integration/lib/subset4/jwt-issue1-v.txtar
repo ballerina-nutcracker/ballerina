@@ -1,0 +1,27 @@
+-- stdout --
+eyJhbGciOiJIUzI1NiIsICJ0eXAiOiJKV1QiLCAia2lkIjoiazEifQ
+true
+wso2 alice ["ballerina","nutcracker"] id-1
+300 true
+read write | true
+{"list":[1,2.5,true,null],"decimal":1.50}
+1.0E-7 12345678901234568
+eyJhbGciOiJIUzM4NCIsICJ0eXAiOiJKV1QifQ
+eyJhbGciOiJIUzUxMiIsICJ0eXAiOiJKV1QifQ
+eyJhbGciOiJSUzI1NiIsICJ0eXAiOiJKV1QifQ true
+eyJhbGciOiJSUzM4NCIsICJ0eXAiOiJKV1QifQ
+eyJhbGciOiJSUzUxMiIsICJ0eXAiOiJKV1QifQ
+true
+eyJhbGciOiJub25lIiwgInR5cCI6IkpXVCJ9 true
+eyJhbGciOiJub25lIiwgInR5cCI6IkpXVCJ9
+Signing JWT requires keystore information or private key information. (cause: false)
+Unsupported signing algorithm 'RS256'. (cause: false)
+Unsupported signing algorithm 'HS256'. (cause: false)
+Failed to decode private key. (cause: true)
+Failed to decode private key. (cause: true)
+RSA private key signing failed for SHA256 algorithm. (cause: true)
+RSA private key signing failed for SHA384 algorithm. (cause: true)
+RSA private key signing failed for SHA512 algorithm. (cause: true)
+wso2
+Failed to generate a self-signed JWT. (cause: true)
+-- stderr --
