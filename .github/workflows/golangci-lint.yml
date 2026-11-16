@@ -21,6 +21,8 @@ jobs:
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
       - name: Test lint config policy checker
         run: python3 .github/scripts/test_check_lint_configs.py
+      - name: Test lang library dependency checker
+        run: python3 .github/scripts/test_check_langlib_deps.py
       - name: Test node base visibility checker
         run: go test ./compiler-tools/nodebase
       - name: Test function usage checker
