@@ -1,0 +1,4 @@
+-- stdout --
+alice ["admin","dev"]
+[LDAP: error code 49 - Invalid Credentials]
+-- stderr --

@@ -47,8 +47,7 @@ const (
 type ldapUserStore struct {
 	rt                   *runtime.Runtime
 	conn                 *goldap.Conn
-	address              string
-	tlsCfg               *pal.TLSConfig
+	servers              []ldapServer
 	connectTimeout       time.Duration
 	readTimeout          time.Duration
 	userSearchBases      []string
@@ -57,6 +56,12 @@ type ldapUserStore struct {
 	groupNameAttribute   string
 	groupNameListFilter  string
 	membershipAttribute  string
+}
+
+// ldapServer is one entry of the connectionUrl list; tlsCfg is set for an ldaps:// URL.
+type ldapServer struct {
+	address string
+	tlsCfg  *pal.TLSConfig
 }
 
 func initLdapConnectionExtern(rt *runtime.Runtime) extern.NativeFunc {
@@ -81,37 +86,39 @@ func initLdapConnectionExtern(rt *runtime.Runtime) extern.NativeFunc {
 			}
 		}
 
-		connectionURL := stringField(config, "connectionUrl")
-		address, ldaps, ok := parseLdapURL(connectionURL)
-		if !ok {
-			return values.NewErrorWithMessage("Not an LDAP URL: " + connectionURL), nil
-		}
-		store.address = address
-
 		// As in jBallerina, a secure socket is validated even for an ldap:// URL, but only ldaps:// uses it.
-		var tlsCfg *pal.TLSConfig
+		tlsCfg := &pal.TLSConfig{}
 		if v, ok := config.Get("secureSocket"); ok {
 			var err error
 			if tlsCfg, err = trustConfig(rt, v.(*values.Map)); err != nil {
 				return values.NewErrorWithMessage(err.Error()), nil
 			}
 		}
-		if ldaps {
-			if tlsCfg == nil {
-				tlsCfg = &pal.TLSConfig{}
+		// Like JNDI's provider URL, connectionUrl may list several space-separated URLs, tried in order.
+		connectionURL := stringField(config, "connectionUrl")
+		for _, u := range strings.Fields(connectionURL) {
+			address, ldaps, ok := parseLdapURL(u)
+			if !ok {
+				return values.NewErrorWithMessage("Not an LDAP URL: " + connectionURL), nil
 			}
-			store.tlsCfg = tlsCfg
+			server := ldapServer{address: address}
+			if ldaps {
+				server.tlsCfg = tlsCfg
+			}
+			store.servers = append(store.servers, server)
+		}
+		if len(store.servers) == 0 {
+			return values.NewErrorWithMessage("Not an LDAP URL: " + connectionURL), nil
 		}
 
-		conn, err := store.dial()
-		if err != nil {
-			return values.NewErrorWithMessage(namingMessage(err)), nil
-		}
 		// JNDI sends an empty connection password as an unauthenticated simple bind; go-ldap refuses it by default.
 		bindRequest := goldap.NewSimpleBindRequest(stringField(config, "connectionName"), stringField(config, "connectionPassword"), nil)
 		bindRequest.AllowEmptyPassword = true
-		if _, err := conn.SimpleBind(bindRequest); err != nil {
-			_ = conn.Close()
+		conn, err := store.dial(func(conn *goldap.Conn) error {
+			_, err := conn.SimpleBind(bindRequest)
+			return err
+		})
+		if err != nil {
 			return values.NewErrorWithMessage(namingMessage(err)), nil
 		}
 		store.conn = conn
@@ -132,14 +139,11 @@ func authenticateWithLdapExtern(_ *extern.Context, args []values.BalValue) (valu
 	if userDN == "" {
 		return values.NewErrorWithMessage("Username cannot be found in the directory."), nil
 	}
-	conn, err := store.dial()
+	conn, err := store.dial(func(conn *goldap.Conn) error { return conn.Bind(userDN, password) })
 	if err != nil {
 		return values.NewErrorWithMessage(namingMessage(err)), nil
 	}
-	defer func() { _ = conn.Close() }()
-	if err := conn.Bind(userDN, password); err != nil {
-		return values.NewErrorWithMessage(namingMessage(err)), nil
-	}
+	_ = conn.Close()
 	return nil, nil
 }
 
@@ -167,18 +171,38 @@ func storeOf(provider *values.Object) *ldapUserStore {
 	return v.(*ldapUserStore)
 }
 
-func (s *ldapUserStore) dial() (*goldap.Conn, error) {
+// dial connects and binds to the first server in the connectionUrl list that accepts both. As in JNDI, only
+// invalid credentials stop it trying the next server; otherwise the last server's error is returned.
+func (s *ldapUserStore) dial(bind func(*goldap.Conn) error) (*goldap.Conn, error) {
+	var err error
+	for _, server := range s.servers {
+		var conn *goldap.Conn
+		if conn, err = s.dialServer(server); err != nil {
+			continue
+		}
+		if err = bind(conn); err == nil {
+			return conn, nil
+		}
+		_ = conn.Close()
+		if goldap.IsErrorWithCode(err, goldap.LDAPResultInvalidCredentials) {
+			return nil, err
+		}
+	}
+	return nil, err
+}
+
+func (s *ldapUserStore) dialServer(server ldapServer) (*goldap.Conn, error) {
 	ctx := context.Background()
 	if s.connectTimeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, s.connectTimeout)
 		defer cancel()
 	}
-	netConn, err := s.rt.Platform().Net.Dial(ctx, "tcp", s.address, "", s.tlsCfg)
+	netConn, err := s.rt.Platform().Net.Dial(ctx, "tcp", server.address, "", server.tlsCfg)
 	if err != nil {
 		return nil, err
 	}
-	conn := goldap.NewConn(netConn, s.tlsCfg != nil)
+	conn := goldap.NewConn(netConn, server.tlsCfg != nil)
 	if s.readTimeout > 0 {
 		conn.SetTimeout(s.readTimeout)
 	}

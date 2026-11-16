@@ -137,6 +137,8 @@ public function main() {
     auth:ListenerLdapUserStoreBasicAuthProvider posixLower = new (ldapConfig(url, membershipAttribute = "memberuid"));
     show(posixLower.authenticate(credential("carol:pw"))); // @output carol ["staff"]
 
+    auth:ListenerLdapUserStoreBasicAuthProvider failover = new (ldapConfig("ldap://127.0.0.1:1 " + url));
+    show(failover.authenticate(credential("alice:s3cret"))); // @output alice ["admin","dev"]
 
     auth:ListenerLdapUserStoreBasicAuthProvider noMembership = new (ldapConfig(url, membershipAttribute = ""));
     show(noMembership.authenticate(credential("alice:s3cret"))); // @output Failed to get groups for the username 'alice' from LDAP user store. | Membership attribute is not set in configurations.
@@ -176,6 +178,44 @@ public function main() {
 }
 `, server.addr())
 	runAuthLdapCase(t, "auth-ldap-timeout-v", balContent)
+}
+
+// Like JNDI, a server that fails the bind for any reason other than invalid credentials is skipped.
+func TestAuthLdapUserStoreBindFailover(t *testing.T) {
+	t.Parallel()
+	server := newFakeLdapServer(t, fakeLdapBindDN, fakeLdapBindPW, nil)
+	defer server.close()
+	seedAuthLdapDirectory(server)
+	otherAdmin := newFakeLdapServer(t, fakeLdapBindDN, "other", nil)
+	defer otherAdmin.close()
+	stalled, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listening: %v", err)
+	}
+	defer func() { _ = stalled.Close() }()
+	go func() {
+		for {
+			conn, err := stalled.Accept()
+			if err != nil {
+				return
+			}
+			t.Cleanup(func() { _ = conn.Close() })
+		}
+	}()
+
+	balContent := `
+import ballerina/auth;
+import ballerina/io;
+` + fmt.Sprintf(authLdapConfig, fakeLdapBindDN, fakeLdapBindPW) + fmt.Sprintf(`
+public function main() {
+    string url = "ldap://%s";
+    auth:ListenerLdapUserStoreBasicAuthProvider stalledFirst = new (ldapConfig("ldap://%s " + url, readTimeout = 0.2));
+    show(stalledFirst.authenticate(credential("alice:s3cret"))); // @output alice ["admin","dev"]
+    auth:ListenerLdapUserStoreBasicAuthProvider|error rejectedFirst = trap new (ldapConfig("ldap://%s " + url));
+    io:println(rejectedFirst is auth:Error ? rejectedFirst.message() : "connected"); // @output [LDAP: error code 49 - Invalid Credentials]
+}
+`, server.addr(), stalled.Addr(), otherAdmin.addr())
+	runAuthLdapCase(t, "auth-ldap-failover-v", balContent)
 }
 
 // jBallerina ignores secureSocket.cert for ldaps:// and fails the handshake: https://github.com/ballerina-platform/ballerina-library/issues/9706
