@@ -28,18 +28,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// testResultsReportDir/File mirror jballerina's TesterinaConstants
-// REPORT_DIR_NAME/RESULTS_JSON_FILE ("report"/"test_results.json").
+// testResultsReportDir/File are the on-disk "report"/"test_results.json"
+// path components under the target directory.
 const (
 	testResultsReportDir  = "report"
 	testResultsReportFile = "test_results.json"
 )
 
-// testStatusEntryJSON/moduleStatusFileJSON mirror the on-disk shape
-// native/test_io.go's writeModuleStatusReport already writes to each
-// module's module_status.json (see lib/stdlibs/ballerina/test — kept in
-// sync with that file, not re-derived from it, since the two live in
-// different Go modules).
+// testStatusEntryJSON/moduleStatusFileJSON mirror module_status.json's
+// on-disk shape, kept in sync by hand with testrunner.TestStatusEntry/
+// ModuleStatus, the types that write it.
 type testStatusEntryJSON struct {
 	Name           string `json:"name"`
 	Status         string `json:"status"`
@@ -54,10 +52,9 @@ type moduleStatusFileJSON struct {
 	Tests      []testStatusEntryJSON `json:"tests"`
 }
 
-// moduleTestResult mirrors jballerina's ModuleStatus entity, adding the
-// "name" field the per-module file itself doesn't carry (module_status.json
-// is keyed by its own directory name on disk, so the name is supplied by
-// the caller instead of read from the file's contents).
+// moduleTestResult adds a "name" field to module_status.json's content; the
+// per-module file itself doesn't carry one, since it's keyed by its own
+// directory name on disk, so the name is supplied by the caller instead.
 type moduleTestResult struct {
 	Name       string                `json:"name"`
 	TotalTests int                   `json:"totalTests"`
@@ -67,12 +64,8 @@ type moduleTestResult struct {
 	Tests      []testStatusEntryJSON `json:"tests"`
 }
 
-// packageTestResult mirrors jballerina's PackageTestResult entity (JSON
-// field names match its Gson-serialized shape). Coverage-related fields
-// (coveredLines, missedLines, coveragePercentage, moduleCoverage) are
-// omitted entirely — code coverage isn't implemented in this port (see
-// TODO.md's "Deferred bal test features"), so emitting zero-valued coverage
-// fields would misrepresent "not measured" as "measured at zero".
+// packageTestResult is one package's test_results.json content. Coverage
+// fields are omitted because coverage isn't measured.
 type packageTestResult struct {
 	ProjectName  string             `json:"projectName"`
 	TotalTests   int                `json:"totalTests"`
@@ -82,10 +75,9 @@ type packageTestResult struct {
 	ModuleStatus []moduleTestResult `json:"moduleStatus"`
 }
 
-// workspaceTestReport mirrors jballerina's TestReport entity — the
-// workspace-level wrapper written only when testing a whole workspace
-// (a single package's own report is its packageTestResult, unwrapped,
-// matching TestCommand.java's `report.getPackages().get(0)` special case).
+// workspaceTestReport is the workspace-level wrapper written only when
+// testing a whole workspace; a single package's own report is its
+// packageTestResult, unwrapped.
 type workspaceTestReport struct {
 	WorkspaceName string              `json:"workspaceName"`
 	TotalTests    int                 `json:"totalTests"`
@@ -95,24 +87,14 @@ type workspaceTestReport struct {
 	Packages      []packageTestResult `json:"packages"`
 }
 
-// buildPackageTestResult reads back every one of the package's modules'
-// module_status.json cache files (written by ballerina/test's
-// moduleStatusReport whenever --test-report is set — see filter.bal's
-// setTestOptions) and aggregates them into one packageTestResult, mirroring
-// jballerina's RunTestsTask#performPostTestsTasks. A module with no
-// module_status.json (it had zero discovered tests, so startSuite()
-// returned via its "No tests found" fast path without ever registering a
-// report generator) is simply skipped, matching jballerina's own
-// loadModuleStatusFromFile-returns-null-so-continue behavior. The second
-// return value is false if no module produced a status file at all (the
-// whole package had zero tests), signaling the caller to skip writing a
-// report entirely — matching jballerina's own "no tests found" no-op.
-func buildPackageTestResult(pkg *projects.Package, modules []*projects.Module, projectDir string) (packageTestResult, bool) {
+// buildPackageTestResult aggregates the modules' module_status.json files,
+// skipping modules without one. It returns false if none had one.
+func buildPackageTestResult(pkg *projects.Package, modules []*projects.Module, targetDir string) (packageTestResult, bool) {
 	result := packageTestResult{ProjectName: pkg.PackageName().Value()}
 	hadAny := false
 
 	for _, module := range modules {
-		statusPath := filepath.Join(projectDir, projects.TargetDir, "cache", "tests_cache",
+		statusPath := filepath.Join(targetDir, "cache", "tests_cache",
 			module.ModuleName().String(), "module_status.json")
 		data, err := os.ReadFile(statusPath)
 		if err != nil {
@@ -145,12 +127,11 @@ func buildPackageTestResult(pkg *projects.Package, modules []*projects.Module, p
 
 // writeTestResultsReport writes data (a packageTestResult for a single
 // package, or a workspaceTestReport for a whole workspace) as
-// target/report/test_results.json under targetRoot, printing the same
-// "Generating Test Report" + file-path messages as jballerina's
-// TestCommand#generateTestReport. HTML report generation is out of scope
-// (no report.zip template ported — see TODO.md).
-func writeTestResultsReport(cmd *cobra.Command, targetRoot string, data any) error {
-	reportDir := filepath.Join(targetRoot, projects.TargetDir, testResultsReportDir)
+// report/test_results.json under targetDir, printing a "Generating Test
+// Report" message with the file path. HTML report generation is out of
+// scope.
+func writeTestResultsReport(cmd *cobra.Command, targetDir string, data any) error {
+	reportDir := filepath.Join(targetDir, testResultsReportDir)
 	if err := os.MkdirAll(reportDir, 0o755); err != nil {
 		return testError("error occurred while generating test report: %w", err)
 	}

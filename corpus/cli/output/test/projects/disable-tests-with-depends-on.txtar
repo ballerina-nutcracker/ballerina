@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	disabledependson
 test "testFunction3" depends on function "testDisableFunction2", but it is either disabled or not included
 -- stderr --
 ballerina: there are test failures

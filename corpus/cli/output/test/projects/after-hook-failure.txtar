@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	afterhookfailure
 	[fail] [after test function for the test]:
 	    after hook failed
 		

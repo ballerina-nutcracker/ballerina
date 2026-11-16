@@ -126,12 +126,7 @@ func newModuleContext(project Project, moduleConfig ModuleConfig, disableSyntaxT
 //   - build named module: "modules/<moduleNamePart>/"
 //   - default module:     ""
 //
-// buildDiagKeyPrefix builds the prefix documentContext.registrationKey()
-// combines with a document's bare name. isTest adds a "tests/" segment so a
-// test document's key (and hence the path printDiagnostic/printSourceSnippet
-// read the file back from) matches its real on-disk location — without it, a
-// diagnostic in tests/a_test.bal printed as the bare "a_test.bal", and
-// snippet rendering silently failed trying to read that nonexistent path.
+// isTest appends "tests/" so a test document's key matches its path on disk.
 func buildDiagKeyPrefix(project Project, md ModuleDescriptor, isTest bool) string {
 	if project.Kind() == ProjectKindBala {
 		return md.Org().Value() + "/" + md.Name().String() + "/" + md.Version().String() + "::"
@@ -261,12 +256,8 @@ func parseModule(moduleCtx *moduleContext) {
 	// Per-module package ID so anonymous-name counters don't interleave across concurrently built modules.
 	pkgID := createModelPackageID(compilerCtx, moduleCtx.moduleDescriptor)
 
-	// Parse all source and test documents in parallel. Test documents only
-	// flow into the compiled package (symbol/type resolution, BIR, and hence
-	// test discovery — see lib/stdlibs/ballerina/test's compilerplugin
-	// package) when SkipTests is explicitly disabled, i.e. for `bal test`;
-	// `bal build`/`bal run` leave it at its default (true) and never compile
-	// test sources.
+	// Parse all documents in parallel; test documents are included only when
+	// SkipTests is false (bal test).
 	includeTestTrees := !moduleCtx.project.BuildOptions().SkipTests()
 	// A single-file project has no tests/ dir — its one file plays both
 	// roles, so its functions must be testable too.

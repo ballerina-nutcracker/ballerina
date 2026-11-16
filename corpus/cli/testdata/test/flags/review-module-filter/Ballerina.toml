@@ -1,4 +1,4 @@
 [package]
 org = "testorg"
-name = "badminpassrate"
+name = "reviewmodfilter"
 version = "0.1.0"

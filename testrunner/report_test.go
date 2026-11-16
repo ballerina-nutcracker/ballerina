@@ -135,7 +135,7 @@ func TestWriteConsoleReport_SystemConsoleSuppressesPassLines(t *testing.T) {
 	WriteConsoleReport(&sb, report, true, 0)
 
 	if strings.Contains(sb.String(), "[pass]") {
-		t.Errorf("expected no [pass] line when isSystemConsole is true, got %q", sb.String())
+		t.Errorf("expected no [pass] line when isTerminal is true, got %q", sb.String())
 	}
 }
 

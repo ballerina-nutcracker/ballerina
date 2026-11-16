@@ -30,8 +30,8 @@ func RegisterPlugins(register Register) {
 		After:              compilerplugin.AfterSemantics,
 		PackageTransformer: ballerina_http_9.ValidateService,
 	})
-	register("ballerina", "test", "ProcessTests", compilerplugin.CompilerPlugin{
+	register("ballerina", "test", "DiscoverTests", compilerplugin.CompilerPlugin{
 		After:              compilerplugin.AfterSemantics,
-		PackageTransformer: ballerina_test_9.ProcessTests,
+		PackageTransformer: ballerina_test_9.DiscoverTests,
 	})
 }

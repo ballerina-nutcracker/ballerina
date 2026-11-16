@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	beforegroupsaftergroups2
 		[pass] testFunction
 		[pass] testFunction2
 		[pass] testFunction3

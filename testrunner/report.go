@@ -14,13 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package-level reporter, a Go port of report.bal — console output
-// (consoleReport, plus the live notices execute.bal prints as it runs) and
-// the two JSON artifacts (statusreport.go: moduleStatusReport,
-// failedTestsReport), reading directly from a RunReport instead of
-// report.bal's own ReportData/Result classes. Byte-for-byte format verified
-// directly against real golden fixtures (cli/cmd/testdata/golden-output),
-// not reconstructed from reading report.bal alone — see report_test.go.
 package testrunner
 
 import (
@@ -32,10 +25,7 @@ import (
 )
 
 // Summary is RunReport's aggregate pass/fail/skip counts and overall exit
-// code — execute.bal#startSuite's exitCode is 1 if any test or hook failed,
-// 0 otherwise; every enableExit() call site in the original corresponds to
-// either a Fail Result or a HookFailure here, so both are derivable instead
-// of needing their own tracked flag.
+// code. ExitCode is 1 if any test or hook failed, 0 otherwise.
 type Summary struct {
 	Passed, Failed, Skipped int
 	ExitCode                int
@@ -60,41 +50,15 @@ func Summarize(report RunReport) Summary {
 	return s
 }
 
-// WriteConsoleReport mirrors execute.bal#startSuite's console output byte
-// for byte, printing the part that comes after every test and hook has
-// already run:
-//  1. [pass] lines — only when !isSystemConsole, matching
-//     report.bal#consoleReport's isSystemConsole() gate (ballerina/test
-//     hides them on an interactive terminal, keeps them for piped/CI output).
-//  2. [fail] lines with each one's formatted message.
-//  3. The passing/failing/skipped counts, or "No tests found" if nothing ran
-//     (this is consoleReport's own empty check; execute.bal#startSuite has a
-//     separate, earlier "No tests found" — single-tab, no exec-time line
-//     at all — for zero discovered tests, which a caller is expected to
-//     have already handled before ever calling Run, the same way
-//     cli/cmd/test.go already checks testplan.TestPlan.HasAny()).
-//  4. The execution time line.
-//
-// The live notices — a hook failure (printExecutionError) or a test/row
-// failure's "has failed" line (handleTestFuncOutput/
-// handleDataDrivenTestOutput/isTestReadyToExecute) — print separately and
-// earlier than all of this, from Run itself via writeConsoleEvent, the
-// instant each happens, interleaved with that test/hook's own output
-// exactly as jballerina prints them live; see Run's doc comment.
-//
-// Passes and fails are printed as two separate groups (every pass, in its
-// own relative order, then every fail, in its own relative order) rather
-// than interleaved in overall execution order — ported exactly from
-// ReportData storing them in two separate arrays (passed/failed) that
-// consoleReport iterates one after the other.
-func WriteConsoleReport(w io.Writer, report RunReport, isSystemConsole bool, executionTime time.Duration) {
-	if !isSystemConsole {
+// WriteConsoleReport prints the end-of-suite report: [pass] lines (only when
+// isTerminal is false), [fail] lines with their messages, the counts and
+// the execution time. Run has already printed the "has failed" notices.
+func WriteConsoleReport(w io.Writer, report RunReport, isTerminal bool, executionTime time.Duration) {
+	if !isTerminal {
 		for _, r := range resultsByStatus(report.Results, Pass) {
 			_, _ = fmt.Fprintln(w, "\t\t[pass] "+r.Name)
 			// An evaluation test prints its pass-rate message even when it
-			// passed — the only TestType that does — matching
-			// consoleReport's own `if entry.testType() == EVAL_TEST` check
-			// inside the passedCases() loop.
+			// passed — the only TestType that does.
 			if r.Type == EvalTest {
 				_, _ = fmt.Fprintln(w, "\n\t\t    "+formatFailedError(r.Message, 3))
 			}
@@ -102,9 +66,7 @@ func WriteConsoleReport(w io.Writer, report RunReport, isSystemConsole bool, exe
 	}
 	for _, r := range resultsByStatus(report.Results, Fail) {
 		_, _ = fmt.Fprintln(w, "\n\t\t[fail] "+r.Name+":")
-		// "+\n": see writeHookFailure's comment — reproduces getErrorMessage's
-		// trailing newline without storing it in Result.Message itself.
-		// Skipped for RawMessage — see Result.RawMessage's own doc comment.
+		// RawMessage messages print as is; see Result.RawMessage's doc.
 		message := r.Message
 		if !r.RawMessage {
 			message += "\n"
@@ -136,14 +98,9 @@ func writeConsoleEvent(w io.Writer, ev ConsoleEvent) {
 	}
 }
 
-// writeHookFailure mirrors execute.bal#printExecutionError. A HookFailure's
-// Message is always "functionName\nerrorMessage" (set that way by
-// invokeHook, matching executeFunction's own ExecutionError construction),
-// so splitting on the first newline recovers both parts. The "+\n" before
-// formatFailedError reproduces getErrorMessage's trailing newline, which the
-// original bakes into the stored error message itself; this port keeps
-// HookFailure.Message free of that synthetic newline and adds it back only
-// here, at format time, rather than polluting the stored value.
+// writeHookFailure prints a hook failure notice. A HookFailure's Message is
+// always "functionName\nerrorMessage", so splitting on the first newline
+// recovers both parts.
 func writeHookFailure(w io.Writer, hf HookFailure) {
 	name, message := hf.Message, ""
 	if idx := strings.IndexByte(hf.Message, '\n'); idx >= 0 {
@@ -152,16 +109,11 @@ func writeHookFailure(w io.Writer, hf HookFailure) {
 	_, _ = fmt.Fprintln(w, "\t[fail] "+name+"["+hf.Hook+"]:\n\t    "+formatFailedError(message+"\n", 2))
 }
 
-// writeTestFailureNotice mirrors handleTestFuncOutput/
-// handleDataDrivenTestOutput's inline println (HasSuffix true: a colon
-// always present, empty for a general test, the row key for a data-driven
-// row) and isTestReadyToExecute's diagnostics-failure println (HasSuffix
-// false: no colon at all).
+// writeTestFailureNotice prints a "has failed" notice: with a colon and
+// suffix (empty for a general test, the row key for a data-driven row) when
+// HasSuffix is true, or without a colon at all when it's false.
 func writeTestFailureNotice(w io.Writer, n TestFailureNotice) {
-	// fmt.Fprint, not Fprintln: the trailing "\n\n" is two real, distinct
-	// newlines confirmed against a golden fixture (the notice's own
-	// template newline, plus println's implicit one in the original) — not
-	// a mistaken double newline for vet to flag.
+	// fmt.Fprint, not Fprintln: the trailing "\n\n" is two deliberate newlines.
 	if n.HasSuffix {
 		_, _ = fmt.Fprint(w, "\n\t"+n.Name+":"+n.Suffix+" has failed.\n\n")
 	} else {
@@ -169,13 +121,11 @@ func writeTestFailureNotice(w io.Writer, n TestFailureNotice) {
 	}
 }
 
-// writeEvalReport mirrors report.bal#printEvaluationReportInConsole: the
-// per-run breakdown printed after a failing evaluation test's own summary
-// message — one line per run for a non-data-driven evaluation (run id +
-// message), one run-header line plus one line per data-provider row for a
-// data-driven one. Outcomes == nil distinguishes the two, matching
-// jballerina's own EvaluationRunWithoutDataSet vs EvaluationRunWithDataSet
-// type-based dispatch.
+// writeEvalReport prints the per-run breakdown after a failing evaluation
+// test's own summary message — one line per run for a non-data-driven
+// evaluation (run id + message), one run-header line plus one line per
+// data-provider row for a data-driven one. Outcomes == nil distinguishes the
+// two.
 func writeEvalReport(w io.Writer, eval *EvalSummary) {
 	if eval == nil {
 		return
@@ -195,9 +145,8 @@ func writeEvalReport(w io.Writer, eval *EvalSummary) {
 	}
 }
 
-// getConsoleMessage mirrors report.bal#getConsoleMessage: an empty message
-// (that run/entry passed) prints as "passed"; otherwise each embedded
-// newline is reindented to indent, matching the original's regex replace.
+// getConsoleMessage returns "passed" for an empty message (that run/entry
+// passed); otherwise each embedded newline is reindented to indent.
 func getConsoleMessage(message, indent string) string {
 	if message == "" {
 		return "passed"
@@ -205,8 +154,8 @@ func getConsoleMessage(message, indent string) string {
 	return strings.ReplaceAll(message, "\n", indent)
 }
 
-// formatFailedError ports report.bal#formatFailedError: split the message on
-// "\n", append a trailing empty line, then rejoin indented by tabCount tabs.
+// formatFailedError splits message on "\n", appends a trailing empty line,
+// then rejoins indented by tabCount tabs.
 func formatFailedError(message string, tabCount int) string {
 	lines := append(strings.Split(message, "\n"), "")
 	return strings.Join(lines, "\n"+strings.Repeat("\t", tabCount))

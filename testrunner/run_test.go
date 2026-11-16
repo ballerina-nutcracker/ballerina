@@ -78,8 +78,8 @@ func TestRun_ReportEndToEnd(t *testing.T) {
 // failed" notice to w before Run returns, rather than buffering it for
 // WriteConsoleReport to print afterwards — the bug this guards against had
 // every notice appearing only after the whole suite (and all its tests' own
-// printed output) had already finished, instead of interleaved live the way
-// jballerina prints them.
+// printed output) had already finished, instead of interleaved live as each
+// one happens.
 func TestRun_WritesFailureNoticeLive(t *testing.T) {
 	t.Parallel()
 	rt, plan := compileAndRun(t, "failing")

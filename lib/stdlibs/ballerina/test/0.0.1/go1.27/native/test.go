@@ -32,22 +32,22 @@ const (
 	moduleName = "test"
 )
 
-// getBallerinaType mirrors jballerina's BallerinaTypeCheck#getBallerinaType.
+// getBallerinaType returns args[0]'s general basic type name (e.g. "string").
 func getBallerinaType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-	// Widen past the per-value singleton SemTypeForValue returns (e.g. the exact
-	// string "hello") to the general basic type ("string"), matching jballerina.
+	// Widen past the per-value singleton SemTypeForValue returns (e.g. the
+	// exact string "hello") to the general basic type ("string").
 	ty := semtypes.WidenToBasicTypes(values.SemTypeForValue(args[0]))
 	return semtypes.ToString(ctx.TypeCtx(), ty), nil
 }
 
-// getStringDiff mirrors jballerina's AssertionDiffEvaluator#getStringDiff.
+// getStringDiff returns a unified-diff-style comparison of actual vs expected.
 func getStringDiff(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	actual, _ := args[0].(string)
 	expected, _ := args[1].(string)
 	return unifiedStringDiff(actual, expected), nil
 }
 
-// getKeysDiff mirrors jballerina's AssertionDiffEvaluator#getKeysDiff.
+// getKeysDiff returns the keys present in only one of actualKeys/expectedKeys.
 func getKeysDiff(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	actualKeys := stringListValues(args[0])
 	expectedKeys := stringListValues(args[1])
@@ -68,8 +68,7 @@ func getKeysDiff(_ *extern.Context, args []values.BalValue) (values.BalValue, er
 	return b.String(), nil
 }
 
-// unifiedStringDiff renders a unified-diff-style comparison, matching the visible shape of
-// jballerina's java-diff-utils-backed output. Not verified byte-for-byte against it.
+// unifiedStringDiff renders a unified-diff-style comparison of actual vs expected.
 func unifiedStringDiff(actual, expected string) string {
 	actualLines := chunkLines(actual)
 	expectedLines := chunkLines(expected)
@@ -116,7 +115,7 @@ type diffOp struct {
 	line string
 }
 
-// chunkLines mirrors jballerina's AssertionDiffEvaluator#getValueList.
+// chunkLines splits s into lines, further splitting any line over maxLen.
 func chunkLines(s string) []string {
 	const maxLen = 80
 	var out []string
@@ -229,8 +228,9 @@ func joinWithLeadingSpace(keys []string) string {
 	return b.String()
 }
 
-// sprintf mirrors jballerina's StringUtils#sprintf. Only %s is exercised by this module
-// (assert.bal); other specifiers are best-effort, unverified against jballerina.
+// sprintf substitutes each format specifier in order with the corresponding
+// stringified arg. Only %s is exercised by this module (assert.bal); other
+// specifiers are best-effort.
 func sprintf(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	format, _ := args[0].(string)
 	restArgs := stringifyRestArgs(args)

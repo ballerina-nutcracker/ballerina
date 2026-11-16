@@ -1,6 +1,8 @@
 -- stdout --
 
-Running tests for module 'multimodpkg'
+Running Tests
+
+	multimodpkg
 		[pass] testDefaultModule
 
 
@@ -10,7 +12,7 @@ Running tests for module 'multimodpkg'
 
 		Test execution time : <DURATION>s
 
-Running tests for module 'multimodpkg.submod'
+	multimodpkg.submod
 		[pass] testSubmodule
 
 

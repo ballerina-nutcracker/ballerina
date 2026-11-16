@@ -83,7 +83,7 @@ func TestSelect_ModuleQualified(t *testing.T) {
 
 	// Matches: qualifier equals this module.
 	included, err := testfilter.Select(plan, testfilter.SelectOptions{
-		Tests: "pkg.submod:testA", ModuleName: "pkg.submod", PackageName: "pkg",
+		Tests: "pkg.submod:testA", ModuleName: "pkg.submod",
 	})
 	if err != nil {
 		t.Fatalf("Select: %v", err)
@@ -94,7 +94,7 @@ func TestSelect_ModuleQualified(t *testing.T) {
 
 	// Doesn't match: qualifier names a different module.
 	included, err = testfilter.Select(plan, testfilter.SelectOptions{
-		Tests: "pkg.othermod:testA", ModuleName: "pkg.submod", PackageName: "pkg",
+		Tests: "pkg.othermod:testA", ModuleName: "pkg.submod",
 	})
 	if err != nil {
 		t.Fatalf("Select: %v", err)

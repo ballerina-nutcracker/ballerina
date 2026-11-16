@@ -1,0 +1,29 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid config: minPassRate must be between 0.0 and 1.0, found: 1.5
+ --> tests/main_test.bal:3:1
+  |
+3 | @test:Config {runs: 2, minPassRate: 1.5}
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid config: minPassRate must be between 0.0 and 1.0, found: -0.5
+ --> tests/main_test.bal:6:1
+  |
+6 | @test:Config {runs: 2, minPassRate: -0.5}
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid config: runs must be a positive integer, found: 0
+ --> tests/main_test.bal:9:1
+  |
+9 | @test:Config {runs: 0}
+  | ^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid config: minPassRate must be between 0.0 and 1.0, found: float:NaN
+  --> tests/main_test.bal:12:1
+   |
+12 | @test:Config {runs: 2, minPassRate: float:NaN}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	skipbeforeeachfailure
 	[fail] beforeEachFails[before each function for the test]:
 	    beforeEach failed
 		

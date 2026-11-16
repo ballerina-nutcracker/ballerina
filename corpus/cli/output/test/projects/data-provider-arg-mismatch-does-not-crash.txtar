@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	ddmismatchmod
+
 	testMismatched:one has failed.
 
 

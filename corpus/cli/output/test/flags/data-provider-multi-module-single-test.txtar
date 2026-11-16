@@ -1,9 +1,11 @@
 -- stdout --
 
-Running tests for module 'dataproviders'
+Running Tests
+
+	dataproviders
 	No tests found
 
-Running tests for module 'dataproviders.module1'
+	dataproviders.module1
 		[pass] stringDataProviderMod1Test#1
 
 

@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	failedbeforegroup
 	[fail] beforeGroupsFunc1[before groups function for the test]:
 	    Failed before group for g1
 		

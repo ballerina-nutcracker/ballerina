@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	assertmapkeydiff
+
 	testMapKeyMismatch: has failed.
 
 

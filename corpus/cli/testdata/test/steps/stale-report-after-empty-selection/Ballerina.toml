@@ -1,4 +1,4 @@
 [package]
 org = "testorg"
-name = "badruns"
+name = "stalereportpkg"
 version = "0.1.0"

@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	aftergroupsfailure
 	[fail] afterUnitGroupFails[after test group function for the test]:
 	    afterGroups failed
 		

@@ -55,25 +55,3 @@ func TestStore_OverwritesPreviousEntry(t *testing.T) {
 		t.Errorf("expected the second Store to win, got %+v, ok=%v", got, ok)
 	}
 }
-
-// TestForget_RemovesTheEntry guards a long-lived-host (e.g. a language
-// server) scenario: Store never evicts anything on its own, so a process
-// that opens and closes many modules over its lifetime needs an explicit
-// way to bound the store's size.
-func TestForget_RemovesTheEntry(t *testing.T) {
-	t.Parallel()
-	key := ModuleKey{Org: "testorg", Module: "store_test_mod_c"}
-	Store(key, &TestPlan{Tests: []TestFunction{{Name: "testA"}}})
-
-	Forget(key)
-
-	if _, ok := Load(key); ok {
-		t.Error("expected Load to find nothing after Forget")
-	}
-}
-
-func TestForget_MissingKeyIsANoOp(t *testing.T) {
-	t.Parallel()
-	// Must not panic for a key that was never stored.
-	Forget(ModuleKey{Org: "testorg", Module: "store_test_never_stored_either"})
-}

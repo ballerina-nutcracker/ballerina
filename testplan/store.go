@@ -57,13 +57,3 @@ func Load(key ModuleKey) (*TestPlan, bool) {
 	}
 	return v.(*TestPlan), true
 }
-
-// Forget removes the stored TestPlan for key, if any — a no-op if nothing
-// was stored. A one-shot CLI process never needs this (the whole store is
-// freed when the process exits); a long-lived host that opens and closes
-// many modules over its lifetime should call this when a module is removed
-// from the project, so the store doesn't grow for as long as the process
-// runs. There is no bulk/clear-all operation — evict what you opened.
-func Forget(key ModuleKey) {
-	store.Delete(key)
-}

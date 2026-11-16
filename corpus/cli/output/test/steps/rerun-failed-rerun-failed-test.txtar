@@ -1,6 +1,10 @@
 -- stdout --
 $ bal test <FIXTURE>
 
+Running Tests
+
+	rerun_failed
+
 	testFunctionFail1: has failed.
 
 
@@ -28,6 +32,10 @@ $ bal test <FIXTURE>
 
 		Test execution time : <DURATION>s
 $ bal test <FIXTURE> --rerun-failed
+
+Running Tests
+
+	rerun_failed
 
 	testFunctionFail1: has failed.
 

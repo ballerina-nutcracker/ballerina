@@ -81,8 +81,7 @@ type TestPlan struct {
 }
 
 // HasAny reports whether anything was discovered at all — a module with no
-// @test:* annotations anywhere (e.g. no test files, or test files with none)
-// needs no ballerina/test registration glue at all.
+// @test:* annotations anywhere (e.g. no test files, or test files with none).
 func (p *TestPlan) HasAny() bool {
 	return len(p.Tests) > 0 || len(p.BeforeSuite) > 0 || len(p.AfterSuite) > 0 ||
 		len(p.BeforeEach) > 0 || len(p.AfterEach) > 0 || len(p.BeforeGroups) > 0 || len(p.AfterGroups) > 0

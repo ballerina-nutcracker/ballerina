@@ -1,0 +1,29 @@
+-- stdout --
+$ bal test <FIXTURE> --test-report
+
+Running Tests
+
+	stalereportpkg
+		[pass] testPass
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+Generating Test Report
+	<ROOT>/target/report/test_results.json
+$ bal test <FIXTURE> --test-report --tests missing
+
+Running Tests
+
+	stalereportpkg
+	No tests found
+
+Generating Test Report
+	<ROOT>/target/report/test_results.json
+-- stderr --
+-- exitcode --
+0

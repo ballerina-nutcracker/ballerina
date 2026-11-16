@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	skipaftereachfails
 	[fail] afterEach[after each test function for the test]:
 	    divide by zero
 		

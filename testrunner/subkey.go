@@ -27,13 +27,8 @@ import (
 // this map has no sub-key restriction: every data row runs.
 type SubKeyFilters map[string][]string
 
-// SplitTestsEntry splits one raw --tests entry ("[module:]name[#key]") into
-// its optional module qualifier, base test name, and optional data-provider
-// sub-key — matching filter.bal#containsAPrefix's colon-vs-hash precedence
-// rule (a '#' before the colon means the colon belongs to something after
-// the data key, not a module qualifier). Shared by this package's own
-// sub-key filtering and cli/internal/testfilter's name/module filtering,
-// which otherwise parsed the exact same syntax twice.
+// SplitTestsEntry splits one --tests entry ("[module:]name[#key]"). A colon
+// after the '#' belongs to the key, not to a module qualifier.
 func SplitTestsEntry(entry string) (module, name, key string, hasKey bool) {
 	name = entry
 	if colon := strings.Index(name, ":"); colon >= 0 {
@@ -60,9 +55,9 @@ func ParseSubKeyFilters(tests string) SubKeyFilters {
 		if !hasKey {
 			continue
 		}
-		// jballerina's "--tests name#'key'" convention wraps a sub-key in
-		// single quotes when disambiguating from the comma-separated list;
-		// strip only a matching outer pair before matching in matches().
+		// A "--tests name#'key'" entry wraps a sub-key in single quotes
+		// when disambiguating from the comma-separated list; strip only a
+		// matching outer pair before matching in matches().
 		if len(key) >= 2 && key[0] == '\'' && key[len(key)-1] == '\'' {
 			key = key[1 : len(key)-1]
 		}
@@ -72,9 +67,9 @@ func ParseSubKeyFilters(tests string) SubKeyFilters {
 }
 
 // matches reports whether a row's key, for the data-driven test named name,
-// should actually execute — ported from skipDataDrivenTest's suffixMatch:
-// true outright if name has no recorded sub-key filter (the common case),
-// otherwise an exact or wildcard match against any one of its filters.
+// should actually execute: true outright if name has no recorded sub-key
+// filter (the common case), otherwise an exact or wildcard match against any
+// one of its filters.
 func (f SubKeyFilters) matches(name, key string) bool {
 	keys, ok := f[name]
 	if !ok {
@@ -89,11 +84,10 @@ func (f SubKeyFilters) matches(name, key string) bool {
 		if escapedFilter == escapedKey {
 			return true
 		}
-		// Wildcard matching only when the filter actually carries one —
-		// matching skipDataDrivenTest's own `includesStr(.., WILDCARD)`
-		// guard, which keeps a literal key from being treated as a pattern.
+		// Wildcard matching only when the filter actually carries one, so a
+		// literal key isn't treated as a pattern.
 		if strings.Contains(escapedFilter, "*") {
-			if matched, err := native.MatchWildcard(escapedKey, escapedFilter); err == nil && matched {
+			if native.MatchWildcard(escapedKey, escapedFilter) {
 				return true
 			}
 		}

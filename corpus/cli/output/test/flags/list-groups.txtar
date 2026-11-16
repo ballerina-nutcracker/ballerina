@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	listgroups
 	Following groups are available :
 	[unit, fast]
 -- stderr --

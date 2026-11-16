@@ -18,31 +18,10 @@ package testplan
 
 import "slices"
 
-// UpdateGraph computes the Graph for newPlan by reusing as much of prevGraph
-// as possible, given that it was built from prevPlan. It exists for a
-// long-lived host that recompiles the same module repeatedly (a language
-// server reacting to edits, say) and wants to avoid re-validating and
-// re-ordering tests that didn't change on every keystroke — a one-shot CLI
-// process, which builds a module's graph exactly once, has no use for this
-// and should keep calling BuildGraph directly.
-//
-// Only a test's DependsOn and Enable affect graph shape (see BuildGraph); a
-// test is "unaffected" by an update when both are identical to prevPlan, and
-// it is not itself a (transitive) dependent of anything that is affected or
-// was removed. Only the affected set is re-validated and re-ordered; it is
-// appended after the unaffected tests' preserved relative order, which is
-// always a valid topological order for newPlan but is not guaranteed to be
-// byte-identical to a fresh BuildGraph(newPlan) call: if unrelated,
-// unaffected tests were reordered relative to each other in newPlan.Tests
-// (not merely added to or removed around), a fresh build could interleave
-// them differently than this incremental one does. Reordering unrelated
-// tests' declarations doesn't happen from ordinary edits (adding, removing,
-// or changing a test), only from physically moving existing declarations
-// around in the source, so this is a known, accepted limitation rather than
-// something this function detects or corrects for.
-//
-// If prevPlan or prevGraph is nil, UpdateGraph is equivalent to
-// BuildGraph(newPlan).
+// UpdateGraph returns the Graph for newPlan, reusing prevGraph (built from
+// prevPlan) for tests whose DependsOn/Enable chain is unchanged. The order is
+// valid for newPlan but can differ from BuildGraph(newPlan) when unchanged
+// tests were reordered. A nil prevPlan or prevGraph falls back to BuildGraph.
 func UpdateGraph(prevPlan *TestPlan, prevGraph *Graph, newPlan *TestPlan) (*Graph, error) {
 	if prevPlan == nil || prevGraph == nil {
 		return BuildGraph(newPlan)
@@ -139,10 +118,8 @@ func UpdateGraph(prevPlan *TestPlan, prevGraph *Graph, newPlan *TestPlan) (*Grap
 	g := &Graph{Dependents: make(map[string][]string, len(prevGraph.Dependents))}
 	// Carry over edges whose dependency side is unaffected, dropping any
 	// dependent that will be re-added fresh by the affected-set visit below
-	// (avoids double-recording the same edge). The common case — nothing in
-	// dependents needs dropping — reuses the existing slice verbatim rather
-	// than copying it, so an update touching a few tests doesn't pay to
-	// reallocate every untouched test's dependents list.
+	// (avoids double-recording the same edge). Reuse an untouched dependents
+	// slice as is; copy only when an edge is dropped.
 	for depName, dependents := range prevGraph.Dependents {
 		if removed[depName] || affected[depName] {
 			continue
@@ -200,8 +177,7 @@ func keys(m map[string]bool) []string {
 }
 
 // mergeByName merges kept (already sorted by name) with added (sorted by
-// name) into one combined, sorted-by-name slice in O(len(kept)+len(added)) —
-// the actual saving over re-sorting every independent test on every update.
+// name) into one combined, sorted-by-name slice.
 func mergeByName(kept []string, added []TestFunction) []string {
 	result := make([]string, 0, len(kept)+len(added))
 	i, j := 0, 0

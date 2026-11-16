@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	inithookmod
 	[fail] [before test function for the test]:
 	    function init not found
 		

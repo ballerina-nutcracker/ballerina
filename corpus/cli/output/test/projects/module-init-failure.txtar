@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	initfailmod
 -- stderr --
 error: divide by zero
         at testorg/initfailmod:init(main_test.bal:3)

@@ -1,6 +1,10 @@
 -- stdout --
 $ bal test <FIXTURE>
 
+Running Tests
+
+	rerunpkg
+
 	testBad: has failed.
 
 		[pass] testGood
@@ -18,6 +22,10 @@ $ bal test <FIXTURE>
 
 		Test execution time : <DURATION>s
 $ bal test <FIXTURE> --rerun-failed
+
+Running Tests
+
+	rerunpkg
 
 	testBad: has failed.
 

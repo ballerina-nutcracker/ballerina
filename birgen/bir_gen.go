@@ -36,8 +36,6 @@ func birLoc(de *diagnostics.DiagnosticEnv, pos diagnostics.Location) bir.Locatio
 	return bir.NewLocation(de.FileName(pos), de.StartLine(pos), de.EndLine(pos), de.StartColumn(pos), de.EndColumn(pos))
 }
 
-// Since BLangNodeVisitor is anyway deprecated in jBallerina, we'll try to do this more cleanly
-
 type packageContext struct {
 	CompilerContext *compilerctx.CompilerContext
 	packageID       *model.PackageID // Current package ID
@@ -423,8 +421,6 @@ func GenBir(ctx *compilerctx.CompilerContext, ast *ast.BLangPackage) *bir.BIRPac
 			return nil
 		}
 		birPkg.InitFunction = initFunc
-		// Not registered under its normal lookup key — see
-		// TestTestCommand_BeforeHookNamedInitNotFound for why.
 	}
 	for _, function := range ast.Functions {
 		if _, isOpaque := ctx.GetSymbol(function.Symbol()).(*model.OpaqueFunctionSymbol); isOpaque {

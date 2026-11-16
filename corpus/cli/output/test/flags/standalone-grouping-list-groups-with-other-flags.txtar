@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	standalone-groups-test
+
 Warning: Other flags are skipped when list-groups flag is provided.
 
 	Following groups are available :

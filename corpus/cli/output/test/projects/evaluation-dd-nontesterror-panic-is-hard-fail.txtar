@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	evaldddhardpanic
+
 		[fail] testEvalDDHardPanic:
 
 		    [fail data provider for the function testEvalDDHardPanic]

@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	grouping
+
 	testFunc5: has failed.
 
 		[pass] testFunc1
