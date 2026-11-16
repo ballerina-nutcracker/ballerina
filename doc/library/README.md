@@ -8,7 +8,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
-| [auth](../../lib/stdlibs/ballerina/auth/0.0.1/go1.27/README.md) | 5 | 2 | 1 | 62% |
+| [auth](../../lib/stdlibs/ballerina/auth/0.0.1/go1.27/README.md) | 6 | 3 | 0 | 67% |
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
@@ -27,11 +27,21 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **286** | **38** | **70** | **72%** |
+| **Total**                                         | **287** | **39** | **69** | **72%** |
 
 ## Notable Behavioural Changes
 
 Consolidated from each package's README. Only permanent divergences are listed here: architectural Go-level constraints, and fixes of jBallerina bugs (new entries link their upstream issue). Temporary language gaps are tracked as support-table rows in the per-package tables instead.
+
+### auth
+
+- **LDAPS uses the configured certificate.** jBallerina loads `secureSocket.cert` but verifies an `ldaps://` server against the JVM default trust store, so a server signed by the configured CA fails the handshake; the Go-native version trusts the configured certificate (<https://github.com/ballerina-platform/ballerina-library/issues/9706>).
+- **LDAP timeouts keep their fractional part.** jBallerina truncates `connectionTimeout` and `readTimeout` to whole seconds, so a value below one second disables the timeout; the Go-native version applies the configured value exactly (<https://github.com/ballerina-platform/ballerina-library/issues/9707>).
+- **A user DN ending in a backslash is supported.** jBallerina panics with `StringIndexOutOfBoundsException` while building the group filter for such a DN; the Go-native version escapes the trailing backslash and returns the user's groups (<https://github.com/ballerina-platform/ballerina-library/issues/9708>).
+- **LDAP connection and file errors carry Go's error text.** A network or certificate-file failure during `init` panics with the Go platform message (e.g. `dial tcp 127.0.0.1:389: connect: connection refused`) instead of the JVM's (`Connection refused (connect failed)`), and a network failure or timeout in `authenticate` has go-ldap's message as its cause (e.g. `LDAP Result Code 200 "Network Error": ldap: connection timed out`); LDAP result errors keep jBallerina's `[LDAP: error code N - message]` form.
+- **Membership values are escaped in the group filter.** jBallerina inserts the user's DN into the group filter with any `*` left unescaped, and a `memberUid` value without escaping, so a user whose name is `*` matches every group with a `memberUid` and receives its scopes; the Go-native version escapes both as RFC 4515 filter values (<https://github.com/ballerina-platform/ballerina-library/issues/9717>).
+- **`membershipAttribute` matches `memberUid` case-insensitively.** jBallerina uses the user's RDN value only when `membershipAttribute` is exactly `memberUid`, so `memberuid` searches for the user's DN and finds none of the user's posix groups; the Go-native version compares the attribute name case-insensitively, as LDAP does (<https://github.com/ballerina-platform/ballerina-library/issues/9718>).
+- **A backslash before `*` in the user's DN is kept in the group filter.** jBallerina escapes each RDN of the user's DN with the rule it uses for usernames, where `\*` stands for a literal `*`, so for a DN such as `uid=foo\\*,ou=Users,dc=example,dc=com` it drops the backslash, searches for a different DN and gives the user none of their groups; the Go-native version escapes the DN text as an RFC 4515 filter value as it is (<https://github.com/ballerina-platform/ballerina-library/issues/9726>).
 
 ### avro
 
@@ -171,4 +181,4 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **`Client->receiveDatagram()` reports the sender's address.** jBallerina fills the returned `Datagram`'s `remoteHost`/`remotePort` from the packet's recipient, which is the client's own local address — a bug in the reference implementation that contradicts the field documentation. This port reports the address of the peer that sent the datagram.
 - **`Caller.remoteHost`/`Caller.remotePort` are `final string`/`final int`.** jBallerina declares them as mutable `string?`/`int?` fields defaulting to `()`, but always sets them before a handler runs. This port declares them as never-nil `final` fields; code that reads them as `string?`/`int?` still compiles, but assigning to them does not.
 
-The remaining packages (`auth`, `math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
+The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.

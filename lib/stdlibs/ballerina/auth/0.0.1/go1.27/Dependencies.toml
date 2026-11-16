@@ -3,6 +3,11 @@ dependencies-toml-version = "2"
 
 [[package]]
 org     = "ballerina"
+name    = "crypto"
+version = "0.0.1"
+
+[[package]]
+org     = "ballerina"
 name    = "log"
 version = "0.0.1"
 
@@ -11,5 +16,6 @@ org     = "ballerina"
 name    = "auth"
 version = "0.0.1"
 dependencies = [
+    {org = "ballerina", name = "crypto"},
     {org = "ballerina", name = "log"}
 ]

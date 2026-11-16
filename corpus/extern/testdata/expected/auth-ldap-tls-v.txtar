@@ -1,0 +1,5 @@
+-- stdout --
+alice ["admin","dev"]
+Failed to authenticate username 'alice' with LDAP user store. | [LDAP: error code 49 - Invalid Credentials]
+true
+-- stderr --
