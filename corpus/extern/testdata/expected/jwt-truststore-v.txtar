@@ -1,0 +1,6 @@
+-- stdout --
+alice
+Unsupported RSA algorithm 'HS256'.
+Failed to decode public key.
+alice
+-- stderr --

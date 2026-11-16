@@ -1,0 +1,12 @@
+-- stdout --
+authenticated alice 1
+authenticated alice 1
+Credential format does not match to JWT format. | no cause
+Credential format does not match to JWT format. | no cause
+Credential format does not match to JWT format. | no cause
+JWT validation failed. | JWT contained invalid issuer name 'x'
+JWT validation failed. | JWT is expired.
+authenticated bob -
+authenticated bob -
+JWT validation failed. | Unsupported signing algorithm 'none'.
+-- stderr --
