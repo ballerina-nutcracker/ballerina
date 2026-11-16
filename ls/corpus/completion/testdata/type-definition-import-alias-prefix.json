@@ -144,6 +144,29 @@
           "insertText": "anydata"
         },
         {
+          "label": "ballerina/auth",
+          "kind": 9,
+          "detail": "Module",
+          "sortText": "076",
+          "filterText": "auth",
+          "insertText": "auth",
+          "additionalTextEdits": [
+            {
+              "range": {
+                "start": {
+                  "line": 1,
+                  "character": 0
+                },
+                "end": {
+                  "line": 1,
+                  "character": 0
+                }
+              },
+              "newText": "import ballerina/auth;\n"
+            }
+          ]
+        },
+        {
           "label": "ballerina/avro",
           "kind": 9,
           "detail": "Module",
