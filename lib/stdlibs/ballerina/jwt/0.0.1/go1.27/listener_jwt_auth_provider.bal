@@ -38,6 +38,7 @@ public isolated class ListenerJwtAuthProvider {
 
     private final ValidatorConfig validatorConfig;
     private final cache:Cache? jwtCache;
+    private final cache:Cache? jwksCache;
 
     # Provides authentication based on the provided JWT.
     #
@@ -50,6 +51,21 @@ public isolated class ListenerJwtAuthProvider {
         } else {
             self.jwtCache = ();
         }
+        var jwksConfig = validatorConfig?.signatureConfig?.jwksConfig;
+        if jwksConfig !is () {
+            ClientConfiguration clientConfig = jwksConfig.clientConfig;
+            cache:CacheConfig? jwksCacheConfig = jwksConfig?.cacheConfig;
+            if jwksCacheConfig is cache:CacheConfig {
+                cache:Cache jwksCache = new (jwksCacheConfig);
+                self.jwksCache = jwksCache;
+                Error? result = preloadJwksToCache(jwksCache, jwksConfig.url, clientConfig);
+                if result is Error {
+                    panic result;
+                }
+                return;
+            }
+        }
+        self.jwksCache = ();
     }
 
     # Authenticates the provided JWT against the configured validator.
@@ -73,7 +89,7 @@ public isolated class ListenerJwtAuthProvider {
             }
         }
 
-        Payload|Error validationResult = validateJwt(credential, self.getValidatorConfig());
+        Payload|Error validationResult = validateJwt(credential, self.getValidatorConfig(), self.getJwksCache());
         if validationResult is Payload {
             if jwtCache is cache:Cache {
                 addToCache(jwtCache, credential, validationResult);
@@ -91,10 +107,39 @@ public isolated class ListenerJwtAuthProvider {
         }
     }
 
+    private isolated function getJwksCache() returns cache:Cache? {
+        lock {
+            return self.jwksCache;
+        }
+    }
+
     private isolated function getValidatorConfig() returns ValidatorConfig {
         lock {
             return self.validatorConfig.clone();
         }
+    }
+}
+
+isolated function preloadJwksToCache(cache:Cache jwksCache, string url, ClientConfiguration clientConfig) returns Error? {
+    string|Error stringResponse = getJwksResponse(url, clientConfig);
+    if stringResponse is string {
+        json[] jwksArray = check getJwksArray(stringResponse);
+        foreach json jwk in jwksArray {
+            json|error kid = jwk.kid;
+            if kid is string {
+                cache:Error? cachedResult = jwksCache.put(kid, jwk);
+                if cachedResult is cache:Error {
+                    return prepareError("Failed to put JWK for the kid '" + kid + "' to the cache.", cachedResult);
+                }
+            } else if kid is error {
+                return prepareError("Failed to access 'kid' property from the JSON '" + jwk.toString() + "'.", kid);
+            } else {
+                return prepareError("Failed to extract 'kid' property as a 'string' from the JSON '" + jwk.toString() + "'.");
+            }
+        }
+        return;
+    } else {
+        return prepareError("Failed to call JWKS endpoint to preload JWKS to the cache.", stringResponse);
     }
 }
 

@@ -30,7 +30,6 @@ Not a valid JWS. Signature part is required. (cause: false)
 Base64 URL decode failed for JWT signature. (cause: true)
 valid alice
 Unsupported RSA algorithm 'HS256'. (cause: false)
-JWKS-based signature validation is not yet supported. (cause: false)
 Key ID (kid) is not provided in JOSE header. (cause: false)
 Invalid JWT. (cause: false)
 valid bob

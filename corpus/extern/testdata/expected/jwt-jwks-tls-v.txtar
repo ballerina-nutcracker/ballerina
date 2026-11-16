@@ -1,0 +1,13 @@
+-- stdout --
+valid bob
+valid bob
+valid bob
+valid bob
+true
+true
+Failed to init SSL context. Need to configure 'crypto:TrustStore' or 'cert' with client SSL certificates file.
+Failed to init SSL context. crypto:TrustStore is not yet supported for secureSocket.cert; use a certificate file path instead
+Failed to init SSL context. crypto:KeyStore is not yet supported for secureSocket.key; use a jwt:CertKey instead
+Failed to init SSL context. an encrypted private key is not yet supported for secureSocket.key
+true
+-- stderr --

@@ -1,0 +1,25 @@
+-- stdout --
+valid bob
+valid bob
+valid bob
+valid -
+No JWK found for kid 'zz'. | no cause
+JWT signature validation with JWKS configurations has failed. | no cause
+Unsupported RSA algorithm 'HS256'. | no cause
+Failed to call JWKS endpoint 'http://testserver/created'. | Failed to get a success response from the endpoint. Response code: '201'. Response body: '{"keys":[]}'
+Failed to call JWKS endpoint 'http://testserver/missing'. | Failed to get a success response from the endpoint. Response code: '404'. Response body: 'missing'
+Failed to access 'keys' property as an array from the JSON '{"keys":{}}'. | no cause
+Failed to access 'keys' property from the JSON '{"x":1}'. | missing map key 'keys'
+Failed to convert 'not json' to JSON. | invalid character 'o' in literal null (expecting 'u')
+Failed to access modulus from the JWK '{"kid":"k1","e":"AQAB"}'. | no cause
+Failed to access exponent from the JWK '{"kid":"k1","n":"AQAB"}'. | no cause
+Failed to access modulus or exponent as a 'string' property from the JWK '{"kid":"k1","n":1,"e":"AQAB"}'. | no cause
+Public key generation failed. | Input is not a valid Base64 URL encoded value. illegal base64 data at input byte 0
+Failed to call JWKS endpoint 'http://testserver/a b'. | Failed to create URI for the provided value "http://testserver/a b".
+valid bob
+JWT validation failed. | No JWK found for kid 'zz'.
+Failed to access 'kid' property from the JSON '{"n":"a","e":"b"}'.
+Failed to extract 'kid' property as a 'string' from the JSON '{"kid":1,"n":"a","e":"b"}'.
+Failed to call JWKS endpoint to preload JWKS to the cache.
+valid bob
+-- stderr --
