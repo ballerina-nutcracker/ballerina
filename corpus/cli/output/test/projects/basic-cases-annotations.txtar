@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	annotations
 		[pass] jsonDataProviderTest#0
 		[pass] stringDataProviderTest#0
 		[pass] stringDataProviderTest#1

@@ -21,17 +21,32 @@ import (
 	"io"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/testplan"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-// testErrorTypeName is ballerina/test:TestError's runtime values.Error.TypeName
-// (set only because assert.bal's createBallerinaError — TestError's sole
-// constructor — uses the explicit `error TestError(...)` form). Comparing
-// against it is how testrunner tells an assertion failure apart from any
-// other panicked/returned error, e.g. for the "name:" vs "name" console
-// notice form and for evaluation hard-failure handling below.
-const testErrorTypeName = "TestError"
+// resolveTestErrorType returns the concrete runtime semtype of
+// ballerina/test:TestError, obtained by invoking its own constructor
+// (assert.bal's createBallerinaError) — the only way to get the actual
+// distinct type-id birgen assigned it in this compiled program. A bare
+// TypeName string match can't tell that type apart from an unrelated type a
+// test module defines under the same name.
+func resolveTestErrorType(rt *runtime.Runtime) (semtypes.SemType, bool) {
+	fn, ok := runtime.LookupFunction(rt, "ballerina", "test", "createBallerinaError")
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	retVal, err := runtime.InvokeFunction(rt, fn, []values.BalValue{"", ""})
+	if err != nil {
+		return semtypes.SemType{}, false
+	}
+	errVal, ok := retVal.(*values.Error)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	return errVal.Type, true
+}
 
 // HookFailure records a suite/group/each hook that panicked, tracked
 // separately from a test Result's own pass/fail/skip outcome.
@@ -49,10 +64,8 @@ type RunReport struct {
 	HookFailures []HookFailure
 }
 
-// ConsoleEvent is one live console notice in the order Run produced it —
-// exactly one field set, since a single executeOne can interleave a test
-// failure and a hook failure that can't be reconstructed later from
-// Results/HookFailures alone.
+// ConsoleEvent is one live console notice in the order Run produced it;
+// exactly one field is set.
 type ConsoleEvent struct {
 	Hook        *HookFailure
 	TestFailure *TestFailureNotice
@@ -67,24 +80,22 @@ type TestFailureNotice struct {
 	HasSuffix bool
 }
 
-// Run executes a suite (BeforeSuite, every included test in graph.Order with
-// its full hook/data-provider lifecycle, then AfterSuite). See this
-// package's doc comment (run.go) for what's not yet covered.
-//
-// w receives each "has failed" console notice (test or hook) the instant it
-// happens, interleaved with that test/hook's own output (which the invoked
-// Ballerina function writes directly, e.g. via io:println) exactly as
-// jballerina does — see execute.bal's inline println calls. A test or hook's
-// own output isn't itself routed through w; only the notice is.
+// Run executes a suite: BeforeSuite, every included test in graph.Order with
+// its hooks and data provider, then AfterSuite. Each "has failed" notice is
+// written to w as it happens; the tests' own output does not go through w.
 func Run(w io.Writer, rt *runtime.Runtime, org, module string, plan *testplan.TestPlan, graph *testplan.Graph, included map[string]bool, subKeyFilters SubKeyFilters) RunReport {
+	testErrorType, hasTestErrorType := resolveTestErrorType(rt)
 	r := &runner{
 		w: w, rt: rt, org: org, module: module, plan: plan, graph: graph, included: included,
-		byName:         indexByName(plan.Tests),
-		perTestSkip:    make(map[string]bool),
-		groupTotal:     computeGroupTotals(plan, included),
-		groupExecuted:  make(map[string]int),
-		groupSkipAfter: make(map[string]bool),
-		subKeyFilters:  subKeyFilters,
+		byName:           indexByName(plan.Tests),
+		perTestSkip:      make(map[string]bool),
+		groupTotal:       computeGroupTotals(plan, included),
+		groupExecuted:    make(map[string]int),
+		groupSkipAfter:   make(map[string]bool),
+		subKeyFilters:    subKeyFilters,
+		typeCtx:          semtypes.TypeCheckContext(rt.GetTypeEnv()),
+		testErrorType:    testErrorType,
+		hasTestErrorType: hasTestErrorType,
 	}
 	return r.run()
 }
@@ -99,23 +110,20 @@ type runner struct {
 	included map[string]bool
 	byName   map[string]testplan.TestFunction
 
-	// shouldSkip mirrors execute.bal's module-level `shouldSkip`: once a
-	// BeforeSuite/BeforeEach/AfterEach hook fails, it is set and never
-	// cleared — every remaining test and Each-hook in the whole run is
-	// skipped, matching the real engine's behavior exactly (confirmed by
-	// reading it directly: there is no reset function anywhere).
+	// shouldSkip is set once a BeforeSuite/BeforeEach/AfterEach hook fails,
+	// and never cleared: every remaining test and Each-hook in the run is
+	// skipped.
 	shouldSkip           bool
 	shouldAfterSuiteSkip bool
 
 	// perTestSkip is set on a test by name when one of its dependencies
-	// failed or was itself skipped (skip-cascade) or its own BeforeGroups
-	// hook failed — mirrors ExecutionManager.setSkip/isSkip.
+	// failed or was itself skipped (skip-cascade), or its own BeforeGroups
+	// hook failed.
 	perTestSkip map[string]bool
 
-	// groupTotal/groupExecuted are register.bal's GroupStatusRegistry,
-	// scoped to the included+enabled subset (registration-time counts in
-	// the old engine only ever covered what was actually registered, which
-	// is exactly today's `included` set).
+	// groupTotal/groupExecuted track each included+enabled group's test
+	// count and how many of its tests have run so far, to fire
+	// BeforeGroups/AfterGroups exactly once per group.
 	groupTotal     map[string]int
 	groupExecuted  map[string]int
 	groupSkipAfter map[string]bool
@@ -125,7 +133,22 @@ type runner struct {
 	// no sub-key restriction is in effect for any test.
 	subKeyFilters SubKeyFilters
 
+	// typeCtx/testErrorType/hasTestErrorType back isTestError — see
+	// resolveTestErrorType. hasTestErrorType is false only if ballerina/test
+	// itself failed to load, in which case nothing is ever treated as a
+	// TestError.
+	typeCtx          semtypes.Context
+	testErrorType    semtypes.SemType
+	hasTestErrorType bool
+
 	hookFailures []HookFailure
+}
+
+// isTestError reports whether balErr is specifically ballerina/test:TestError
+// — a subtype check against its real distinct type-id, not a name match, so
+// a test module's own same-named type is never mistaken for it.
+func (r *runner) isTestError(balErr *values.Error) bool {
+	return r.hasTestErrorType && semtypes.IsSubtype(r.typeCtx, balErr.Type, r.testErrorType)
 }
 
 func indexByName(tests []testplan.TestFunction) map[string]testplan.TestFunction {
@@ -169,8 +192,7 @@ func (r *runner) run() RunReport {
 		}
 		t := r.byName[name]
 		if !t.Enable {
-			// A disabled test is excluded entirely, not counted as skipped
-			// (matches jballerina).
+			// A disabled test is excluded entirely, not counted as skipped.
 			continue
 		}
 		results = append(results, r.executeOne(t)...)
@@ -264,7 +286,7 @@ func (r *runner) executeDataDriven(t testplan.TestFunction) []Result {
 				results = append(results, Result{Name: name, Status: Skip})
 			case t.Before != "" && r.invokeHook(t.Before, "before test function for the test", false):
 				// A before: failure reports this row under the test's bare
-				// name, not "name#key" — matches jballerina, not a bug.
+				// name, not "name#key" — intentional, not a bug.
 				results = append(results, Result{Name: t.Name, Status: Skip})
 			default:
 				if r.subKeyMatches(t.Name, row.key) {
@@ -286,15 +308,9 @@ func (r *runner) executeDataDriven(t testplan.TestFunction) []Result {
 	return results
 }
 
-// invoke calls fnName and reports the outcome under testName[#suffix] —
-// distinct from fnName so a data-driven row reports as "name#key" while
-// invoking its real function name. A failure also records a console event:
-// the "name:" colon form is used for an assertion failure (TestError) or a
-// data-driven row (suffix != ""); any other returned/panicked error (or a
-// framework-level failure like "function not found") prints "name" with no
-// colon, confirmed against real jballerina — it uses the colon form only
-// for a test:TestError or a data-driven row, never a plain returned/
-// panicked error.
+// invoke calls fnName and reports the outcome under testName[#suffix]. A
+// failure prints "name:" for a TestError or a data-driven row, otherwise
+// "name".
 func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue, testType TestType) (result Result) {
 	resultName := testName
 	if suffix != "" {
@@ -306,7 +322,7 @@ func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue,
 		if rec := recover(); rec != nil {
 			result.Status = Fail
 			result.Message = panicMessage(rec)
-			if balErr, ok := rec.(*values.Error); ok && balErr.TypeName == testErrorTypeName {
+			if balErr, ok := rec.(*values.Error); ok && r.isTestError(balErr) {
 				hasSuffix = true
 			}
 		}
@@ -327,7 +343,7 @@ func (r *runner) invoke(fnName, testName, suffix string, args []values.BalValue,
 	} else if errVal, ok := retVal.(*values.Error); ok {
 		result.Status = Fail
 		result.Message = panicMessage(errVal)
-		if errVal.TypeName == testErrorTypeName {
+		if r.isTestError(errVal) {
 			hasSuffix = true
 		}
 	}
@@ -343,8 +359,7 @@ func (r *runner) executeEvaluation(t testplan.TestFunction) (result Result, shou
 	for run := 1; run <= t.Runs; run++ {
 		// Skip is checked before BeforeEach runs at all, not after — an
 		// already-skipped (e.g. failed dependsOn) evaluation runs zero
-		// each-hooks, confirmed against real jballerina: it never enters
-		// this loop body in the first place.
+		// each-hooks: it never enters this loop body in the first place.
 		if skip := r.perTestSkip[t.Name] || r.shouldSkip; skip {
 			return Result{Name: t.Name, Status: Skip}, true
 		}
@@ -352,16 +367,13 @@ func (r *runner) executeEvaluation(t testplan.TestFunction) (result Result, shou
 		if t.Before != "" && r.invokeHook(t.Before, "before test function for the test", false) {
 			// A before: failure aborts the whole evaluation immediately,
 			// not just this one run, and runs no AfterEach for this
-			// iteration — matches jballerina's
-			// executeNonDataDrivenEvaluation, which returns right after the
-			// before: check, before ever reaching executeAfterEachFunctions.
+			// iteration.
 			return Result{Name: t.Name, Status: Skip}, true
 		}
 
 		ok, errMsg, hardErr := r.invokeEvaluationRun(t.Name, nil, false)
 		if hardErr != nil {
-			// Also returns before AfterEach, matching jballerina's
-			// InvalidArgumentError branch.
+			// Also returns before AfterEach.
 			return Result{Name: t.Name, Status: Fail, Message: hardErr.Error(), RawMessage: true, Type: EvalTest}, true
 		}
 		if ok {
@@ -452,7 +464,7 @@ func evaluationResult(t testplan.TestFunction, observedPassRate float64, runs []
 func (r *runner) invokeEvaluationRun(fnName string, args []values.BalValue, isDataDriven bool) (passed bool, errMsg string, hardErr error) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			if balErr, ok := rec.(*values.Error); ok && balErr.TypeName == testErrorTypeName {
+			if balErr, ok := rec.(*values.Error); ok && r.isTestError(balErr) {
 				errMsg = panicMessage(balErr)
 				return
 			}

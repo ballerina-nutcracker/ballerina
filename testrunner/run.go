@@ -34,15 +34,6 @@
 // row is dropped with no Result at all, but its before:/after: hooks still
 // run, and any transitively enabled dependent bypasses the restriction
 // entirely.
-//
-// A note on the `*.bal` references throughout this package's comments
-// (execute.bal, serialExecuter.bal, register.bal, report.bal, filter.bal,
-// registration_api.bal): these are jBallerina's own testerina
-// implementation sources — the Java-based ballerina/test engine this
-// package is a from-scratch Go port of — not files that ever existed in
-// this repo. The references are kept deliberately, because they record
-// *why* several non-obvious behaviors here are shaped the way they are;
-// read them against jballerina upstream, not against this repo's history.
 package testrunner
 
 import (
@@ -78,18 +69,10 @@ type Result struct {
 	Name    string
 	Status  Status
 	Message string   // non-empty only when Status == Fail
-	Type    TestType // GeneralTest unless this Result came from a data row
+	Type    TestType // GeneralTest unless this Result came from a data row or is an EvalTest
 
-	// RawMessage is true if Message is already a complete, standalone error
-	// string that must NOT get WriteConsoleReport's synthetic trailing-"\n"
-	// treatment (see its own doc comment on why that "+\n" exists at all).
-	// Every ordinary test/row failure's Message comes from getErrorMessage's
-	// convention (err.message() + "\n") somewhere upstream in the original
-	// engine, which this port deliberately doesn't bake into Message itself
-	// — RawMessage is the one documented exception: a data provider's own
-	// invocation failure is reported via a bare `error("Failed to execute
-	// the data provider")` (registerTestConfig), never passed through
-	// getErrorMessage at all, so it must be formatted without that trick.
+	// RawMessage is true when Message is printed as is, without the trailing
+	// "\n" WriteConsoleReport adds to an ordinary failure message.
 	RawMessage bool
 
 	// Eval is non-nil only when Type == EvalTest — the per-run breakdown
@@ -98,9 +81,9 @@ type Result struct {
 	Eval *EvalSummary
 }
 
-// TestType mirrors types.bal's TestType enum — report.bal#getTestType reads
-// this same distinction to decide a failed row's rerun-JSON sub-key
-// quoting (statusreport.go), the one place it affects this port's output.
+// TestType distinguishes a general test from a data-driven row or an
+// evaluation test. It decides a failed row's rerun-JSON sub-key quoting
+// (statusreport.go), the one place it affects this port's output.
 type TestType int
 
 const (
@@ -111,22 +94,19 @@ const (
 )
 
 // EvalSummary is an evaluation test's (TestFunction.IsEvaluation()) outcome
-// across all of its Runs — ported from jballerina's EvaluationSummary.
-// ObservedPassRate is passedIterations/Runs for a non-data-driven
-// evaluation, or the average of each run's own passedEntries/totalEntries
-// for a data-driven one.
+// across all of its Runs. ObservedPassRate is passedIterations/Runs for a
+// non-data-driven evaluation, or the average of each run's own
+// passedEntries/totalEntries for a data-driven one.
 type EvalSummary struct {
 	TargetPassRate   float64
 	ObservedPassRate float64
 	RunResults       []EvalRun
 }
 
-// EvalRun is one run (1..Runs) of an evaluation test — jballerina's
-// EvaluationRunWithoutDataSet/EvaluationRunWithDataSet collapsed into one
-// shape: Outcomes is nil for a non-data-driven evaluation (ErrorMessage
-// alone describes that run's single invocation), populated for a
-// data-driven one (one entry per data-provider row that ran, PassRate that
-// row set's own passedEntries/totalEntries).
+// EvalRun is one run (1..Runs) of an evaluation test. Outcomes is nil for a
+// non-data-driven evaluation (ErrorMessage alone describes that run's single
+// invocation), populated for a data-driven one (one entry per data-provider
+// row that ran, PassRate that row set's own passedEntries/totalEntries).
 type EvalRun struct {
 	ID           int
 	ErrorMessage string // non-data-driven only; "" if that run passed
@@ -135,18 +115,14 @@ type EvalRun struct {
 }
 
 // EvalOutcome is one data-provider row's result within one EvalRun of a
-// data-driven evaluation test — jballerina's EvaluationOutcome.
+// data-driven evaluation test.
 type EvalOutcome struct {
 	ID           string
 	ErrorMessage string // "" if that row passed
 }
 
-// panicMessage extracts a readable message from whatever runtime.InvokeFunction
-// panics with. A failed assertion panics with *values.Error (confirmed by
-// experiment, not assumed — see the implementation plan's Phase 3 notes);
-// its Message field holds exactly the text assert.bal constructs. Any other
-// panic shape is formatted generically, the same way a Ballerina `trap`
-// catches any panic, not just assertion-shaped ones.
+// panicMessage returns a *values.Error's message (what a failed assertion
+// panics with) and formats any other value with %v.
 func panicMessage(r any) string {
 	if balErr, ok := r.(*values.Error); ok {
 		return balErr.Message

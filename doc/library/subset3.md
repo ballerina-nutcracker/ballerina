@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, and the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker.
+Subset 3 extends the released [subset 2](subset2.md) with the `avro` module — Avro binary serialization and deserialization driven by an Avro schema string — plus stream-based file read/write additions and byte channels in the `io` module, building on the language's new `stream` type; client-side response data binding, XML payloads, and `anydata` resource returns for the `http` module; the new `ballerina/protobuf` package, providing the protobuf well-known types (`Any`, `Struct`, `Timestamp`, `Duration`, `Empty`, and the scalar wrapper types) used by generated gRPC client/service code; the new `file` module; and the new `ballerina/uuid` package, providing RFC 4122 UUID generation, validation, and conversion. It also adds the new `ballerina/ldap` package, a client for reading and modifying entries on an LDAP directory server, the new `ballerina/udp` package, providing connectionless and connection-oriented UDP clients and a UDP listener, the new `ballerina/mime` module for MIME media types, entities, and multipart bodies, the new `ballerina/task` package, providing one-time and recurring job scheduling, job management, and task services on a listener, the new `ballerina/mqtt` package, an MQTT v5 client and listener for publishing and receiving messages through a broker, and the new `ballerina/test` package, providing `bal test`'s annotations, config types, and assertion functions (mocking is not yet supported).
 
 ## [avro](https://github.com/ballerina-platform/module-ballerina-avro/blob/master/docs/spec/spec.md)
 
@@ -416,3 +416,19 @@ Types: `task:Job`, `task:JobId`, `task:TaskPolicy`, `task:ErrorPolicy`, `task:Wa
 | `configureWorkerPool(workerCount?, waitingTime?)` | `waitingTime` is how late a run may be before the waiting policy treats it as missed |
 | `getTimeInMillies(time)` | Epoch milliseconds of a future `time:Civil` |
 | `new task:Listener(trigger = ...)`, `attach` / `detach`, `start` / `gracefulStop` / `immediateStop` | Runs each attached `task:Service` on the trigger, retrying failed executions per `retryConfig`; `execute` must be declared `public`; warm-backup task coordination is not yet supported |
+
+## [test](https://github.com/ballerina-platform/ballerina-lang/tree/master/misc/testerina)
+
+The annotations, config types, and assertion functions `bal test` discovers and runs test code against. Discovery and execution themselves live in this port's compiler plugin and `testrunner`, not in this module.
+
+Types: `test:TestConfig`, `test:AfterSuiteConfig`, `test:BeforeGroupsConfig`, `test:AfterGroupsConfig`, `test:DataProviderReturnType`, `test:TestError`.
+
+| Feature | Notes |
+|---|---|
+| `@test:Config {...}` | `enable`, `groups`, `dependsOn`, `dataProvider`, `before`, `after`, `serialExecution`, and (for an evaluation test) `minPassRate`/`runs` |
+| `@test:BeforeSuite` / `@test:AfterSuite` | `AfterSuiteConfig.alwaysRun` honored |
+| `@test:BeforeGroups` / `@test:AfterGroups` | Group-scoped hooks; `AfterGroupsConfig.alwaysRun` honored |
+| `@test:BeforeEach` / `@test:AfterEach` | Run once per test, including once per data-driven test (not per row) |
+| `assertTrue` / `assertFalse` / `assertEquals` / `assertNotEquals` / `assertExactEquals` / `assertNotExactEquals` / `assertFail` | Raise `test:TestError` on failure |
+
+Mocking (`test:mock`, `MockFunction`, `MockObject`, stub generation, `test:ANY`, `test:MockConfig`) is not yet supported.

@@ -14,20 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Package testfilter computes, in Go, which of a testplan.TestPlan's tests
-// should actually run for a given `bal test` invocation — the
-// --tests/--groups/--disable-groups/--rerun-failed inclusion decision that
-// lib/stdlibs/ballerina/test/0.0.1/go1.27/filter.bal historically made
-// entirely in Ballerina, at registration time.
-//
-// This is the Go-native equivalent of upstream's compiler-plugin-based test
-// framework design's Schedule (github.com/ballerina-nutcracker/ballerina PRs
-// #921/#922): cli/cmd/test.go's testrunner-based wiring calls this package's
-// Select directly and never calls into ballerina/test's own
-// setTestOptions/filter.bal at all — this package is the sole owner of the
-// inclusion decision (and, for --rerun-failed, of detecting and reporting an
-// invalid rerun_test.json), not a Go-side pre-filter sitting in front of a
-// Ballerina backstop.
+// Package testfilter decides which tests of a testplan.TestPlan run for a
+// `bal test` invocation, from --tests, --groups, --disable-groups and
+// --rerun-failed.
 package testfilter
 
 import (
@@ -41,24 +30,22 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/testrunner"
 )
 
-// SelectOptions mirrors the raw CLI flags/context filter.bal's setTestOptions
-// already receives — see cli/cmd/test.go's existing call.
+// SelectOptions holds the raw CLI flag values used to compute Select's
+// inclusion decision.
 type SelectOptions struct {
 	Tests, Groups, DisableGroups string // raw, comma-separated CLI flag values
 	RerunFailed                  bool
 	RerunJSONPath                string // <target>/rerun_test.json; only read if RerunFailed
-	ModuleName, PackageName      string // ModuleName is already fully-qualified (e.g. "pkg" or "pkg.submod")
+	ModuleName                   string // fully-qualified (e.g. "pkg" or "pkg.submod")
 }
 
 // Select returns the set of plan.Tests' names that should actually run. A
-// name present and true in the result should run; any other discovered test
-// name should not. Suite/each/group hooks are never filtered by this
-// decision — testrunner.Run always runs every one of them.
+// name present and true in the result should run; every other discovered
+// test should not. Suite/each/group hooks are never filtered here —
+// testrunner.Run always runs every one of them.
 //
-// The returned map is never nil, distinguishing "restrict to this set"
-// (including an empty set, meaning "run nothing") from the nil sentinel
-// testrunner.Run itself treats as "no filtering at all" when included is
-// never passed (e.g. a direct, non-CLI caller).
+// The returned map is never nil: an empty map means "run nothing", distinct
+// from testrunner.Run's own nil-means-no-filtering sentinel.
 func Select(plan *testplan.TestPlan, opts SelectOptions) (map[string]bool, error) {
 	var included map[string]bool
 	if opts.RerunFailed {
@@ -74,11 +61,9 @@ func Select(plan *testplan.TestPlan, opts SelectOptions) (map[string]bool, error
 	return included, nil
 }
 
-// selectByFilters ports filter.bal#registerTestConfig's three independent,
-// ANDed checks (groups / disable-groups / hasTest), applied here before
-// registration instead of inside it. If Tests/Groups/DisableGroups are all
-// empty, every test matches — the same as filter.bal's own "no filter set"
-// default.
+// selectByFilters applies the groups / disable-groups / hasTest checks,
+// ANDed together. If Tests/Groups/DisableGroups are all empty, every test
+// matches.
 func selectByFilters(plan *testplan.TestPlan, opts SelectOptions) map[string]bool {
 	groups := splitList(opts.Groups)
 	disableGroups := splitList(opts.DisableGroups)
@@ -92,7 +77,7 @@ func selectByFilters(plan *testplan.TestPlan, opts SelectOptions) map[string]boo
 		if len(disableGroups) > 0 && hasGroup(t.Groups, disableGroups) {
 			continue
 		}
-		if len(filters) > 0 && !hasTest(t.Name, opts.ModuleName, opts.PackageName, filters) {
+		if len(filters) > 0 && !hasTest(t.Name, opts.ModuleName, filters) {
 			continue
 		}
 		included[t.Name] = true
@@ -112,11 +97,9 @@ func hasGroup(testGroups, filterGroups []string) bool {
 
 // testFilter is one parsed --tests entry: a base name or wildcard pattern,
 // with any module qualifier and data-provider sub-key already stripped. The
-// sub-key is deliberately discarded — it names a data-driven sub-case that
-// only exists once the provider function runs, a runtime concern this
-// package doesn't resolve (see the package doc comment). The original,
-// unmodified --tests string still reaches ballerina/test's own filter.bal,
-// which continues to narrow data-driven sub-cases by key exactly as today.
+// sub-key is discarded here — it names a data-driven sub-case that only
+// exists once the provider function runs; sub-key filtering is applied
+// separately via testrunner.ParseSubKeyFilters.
 type testFilter struct {
 	Name   string // base name or wildcard pattern
 	Module string // "" if this entry wasn't module-qualified
@@ -131,16 +114,12 @@ func parseTestFilters(raw string) []testFilter {
 	return filters
 }
 
-// hasTest ports filter.bal#hasTest/matchModuleName. Module qualification
-// matches either the test's exact fully-qualified module name or the bare
-// package name (meaning "any module in this package") — a simpler, exact
-// comparison than filter.bal's own substring-containment check, safe to
-// differ from since filter.bal remains the authoritative backstop: any test
-// this function over-includes is still subject to filter.bal's own check
-// once registered.
-func hasTest(name, moduleName, packageName string, filters []testFilter) bool {
+// hasTest reports whether name matches one of filters, by exact name or '*'
+// wildcard, unqualified or qualified by moduleName. "--tests <package>:<fn>"
+// is scoped to the default module alone, not any submodule's.
+func hasTest(name, moduleName string, filters []testFilter) bool {
 	moduleOK := func(f testFilter) bool {
-		return f.Module == "" || f.Module == moduleName || f.Module == packageName
+		return f.Module == "" || f.Module == moduleName
 	}
 	for _, f := range filters {
 		if f.Name == name && !strings.Contains(f.Name, "*") && moduleOK(f) {
@@ -151,7 +130,7 @@ func hasTest(name, moduleName, packageName string, filters []testFilter) bool {
 		if !strings.Contains(f.Name, "*") {
 			continue
 		}
-		if matched, err := native.MatchWildcard(name, f.Name); err == nil && matched && moduleOK(f) {
+		if native.MatchWildcard(name, f.Name) && moduleOK(f) {
 			return true
 		}
 	}
@@ -160,11 +139,10 @@ func hasTest(name, moduleName, packageName string, filters []testFilter) bool {
 
 // closeDependsOn adds every function transitively reachable via an included
 // test's DependsOn, regardless of whether that dependency itself matches any
-// filter, belongs to an included group, or is enabled — reproducing both
-// "--tests dependentFn auto-includes its dependency" and "a disabled
-// dependency pulled in this way still gets registered, so the
-// depends-on-a-disabled-function error still fires" (see the package doc
-// comment and TODO.md).
+// filter, belongs to an included group, or is enabled, so "--tests
+// dependentFn" auto-includes its dependency and a disabled dependency pulled
+// in this way still registers (and still reports depends-on-a-disabled-
+// function if applicable).
 func closeDependsOn(plan *testplan.TestPlan, included map[string]bool) {
 	byName := make(map[string]testplan.TestFunction, len(plan.Tests))
 	for _, t := range plan.Tests {
@@ -190,29 +168,20 @@ func closeDependsOn(plan *testplan.TestPlan, included map[string]bool) {
 	}
 }
 
-// rerunEntryJSON mirrors rerun_test.json's per-module entry shape, matching
-// native/test_io.go's rerunEntryJSON and cli/cmd/testreport.go's reader.
+// rerunEntryJSON is the part of testrunner.RerunEntry that Select reads back.
 type rerunEntryJSON struct {
 	TestNames    []string            `json:"testNames"`
 	SubTestNames map[string][]string `json:"subTestNames"`
 }
 
 // ErrInvalidRerunData reports that --rerun-failed's rerun_test.json is
-// missing, malformed, or has no entry for this module — the three
-// conditions native/test_io.go's readModuleRerunEntryFactory collapses into
-// one message. This package is the only place that detects them, now that
-// nothing calls through to ballerina/test's own setTestOptions.
-//
-// The sentinel's own text is kept lint-clean (lowercase, no trailing
-// period); the exact user-facing wording lives with the CLI that prints it
-// (cli/cmd/test.go's invalidRerunDataMessage), since that string must match
-// jballerina byte-for-byte and is pinned by golden fixtures. Callers
-// distinguish it with errors.Is.
+// missing, malformed, or has no entry for this module. The user-facing
+// message is cli/cmd/test.go's invalidRerunDataMessage; callers match this
+// sentinel with errors.Is.
 var ErrInvalidRerunData = errors.New("invalid failed test data")
 
 // readRerunEntries reads and parses opts.RerunJSONPath, shared by
-// selectRerunFailed and SubKeysFromRerun so the two don't each independently
-// read and unmarshal the exact same file.
+// selectRerunFailed and SubKeysFromRerun.
 func readRerunEntries(path string) (map[string]rerunEntryJSON, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -226,11 +195,10 @@ func readRerunEntries(path string) (map[string]rerunEntryJSON, error) {
 }
 
 // selectRerunFailed reads the module's rerun_test.json entry and uses its
-// test names directly, with no group/wildcard/module matching (matching
-// filter.bal#parseRerunJson's own behavior of replacing --tests-based
-// selection entirely). Any read/parse problem (missing file, malformed
-// JSON, no entry for this module) is reported as an error rather than
-// silently yielding an empty set.
+// test names directly, with no group/wildcard/module matching, replacing any
+// --tests-based selection entirely. Any read/parse problem (missing file,
+// malformed JSON, no entry for this module) is reported as an error rather
+// than silently yielding an empty set.
 func selectRerunFailed(opts SelectOptions) (map[string]bool, error) {
 	entries, err := readRerunEntries(opts.RerunJSONPath)
 	if err != nil {
@@ -250,15 +218,11 @@ func selectRerunFailed(opts SelectOptions) (map[string]bool, error) {
 // SubKeysFromRerun reads opts.RerunJSONPath's entry for opts.ModuleName and
 // returns its recorded per-test sub-key filters, in the shape
 // testrunner.SubKeyFilters expects — nil if opts.RerunFailed is false, or if
-// the file/module entry can't be read (Select's own error from
-// selectRerunFailed already covers reporting that condition for the same
-// file; this just returns a zero value rather than re-detecting it).
+// the file/module entry can't be read.
 //
 // A map-shaped data provider's recorded key comes back single-quoted (see
-// BuildRerunEntry's write-side quoting, mirroring
-// report.bal#failedTestsReport); this strips that wrapping back off,
-// mirroring execute.bal#skipDataDrivenTest's own read-side unquoting. A
-// bare, unquoted key (a tuple-array-shaped provider's) passes through
+// BuildRerunEntry's write-side quoting); this strips that wrapping back off.
+// A bare, unquoted key (a tuple-array-shaped provider's) passes through
 // unchanged.
 func SubKeysFromRerun(opts SelectOptions) map[string][]string {
 	if !opts.RerunFailed {

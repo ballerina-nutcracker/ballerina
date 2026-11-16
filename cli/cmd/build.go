@@ -291,10 +291,9 @@ func runBuild(cmd *cobra.Command, args []string, opts *buildOptions) error {
 				return buildError("no package found at path %s within workspace %s", memberDir, absBaseDir)
 			}
 
-			// Stop at the first member that fails, matching jballerina
-			// (which aborts the whole process on a compile error) instead
-			// of continuing to later members. targetDirOverride is always ""
-			// here since it was rejected above for the all-members case.
+			// Stop at the first member that fails, rather than continuing
+			// to later members. targetDirOverride is always "" here since
+			// it was rejected above for the all-members case.
 			if err := buildOneProject(cmd, opts, stderr, fsys, memberProject, memberDir, targetDirOverride); err != nil {
 				return err
 			}

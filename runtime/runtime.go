@@ -191,19 +191,10 @@ func (rt *Runtime) Listen() {
 	rt.transition(StateListening)
 }
 
-// RequestGracefulStop transitions a Listening runtime into graceful
-// shutdown, running every registered $gracefulStop/onGracefulStop handler
-// synchronously before returning (gracefulStopAction/stoppedAction run on
-// the calling goroutine, and ExitStatus is buffered, so there's nothing
-// further to wait on afterward). No-op if the runtime isn't currently
-// Listening — e.g. it already stopped itself via Listen's no-listeners
-// fast path, or a $start failure already drove it to Stopped.
-//
-// Callers that, unlike bal run, don't want to run forever once listening
-// (e.g. bal test: start any listeners so the package under test can be
-// exercised, then tear them down once the suite finishes) use this instead
-// of blocking on <-rt.ExitStatus.
-func (rt *Runtime) RequestGracefulStop() {
+// GracefulStop moves a Listening runtime to graceful shutdown and runs
+// every $gracefulStop handler before returning. It is a no-op unless the
+// runtime is Listening.
+func (rt *Runtime) GracefulStop() {
 	rt.mu.Lock()
 	if rt.state != StateListening {
 		rt.mu.Unlock()

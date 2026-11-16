@@ -22,6 +22,7 @@ import (
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -34,6 +35,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
@@ -89,6 +91,7 @@ func TestBalCLI(t *testing.T) {
 		{"BalPackTargetDir", testBalPackTargetDir},
 		{"BalBuildCorpus", testBalBuildCorpus},
 		{"BalBuildTargetDir", testBalBuildTargetDir},
+		{"BalTestTargetDir", testBalTestTargetDir},
 		{"BalCleanCorpus", testBalCleanCorpus},
 		{"BalAddCorpus", testBalAddCorpus},
 		{"BalNewCorpus", testBalNewCorpus},
@@ -824,6 +827,109 @@ func testBalBuildTargetDir(t *testing.T, cli *balCLI) {
 	if _, err := os.Stat(binPath); err != nil {
 		t.Fatalf("expected built binary at %s: %v", binPath, err)
 	}
+}
+
+// testBalTestTargetDir verifies `bal test --target-dir <dir>` writes every
+// test artifact (rerun_test.json, cache/tests_cache/<module>/
+// module_status.json, report/test_results.json) directly under <dir>
+// instead of <projectDir>/target, for both an absolute and a relative
+// override, and for a workspace as well as a single package. Regression
+// test for #1718.
+func testBalTestTargetDir(t *testing.T, cli *balCLI) {
+	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
+	flagsRoot := filepath.Join(repoRoot, "corpus", "cli", "testdata", "test", "flags")
+
+	// sandboxFixture copies fixture into a fresh sandbox so the run never
+	// touches the checked-in testdata tree, regardless of targetDir.
+	sandboxFixture := func(t *testing.T, fixture string) string {
+		t.Helper()
+		sandbox := t.TempDir()
+		copyDir(t, filepath.Join(flagsRoot, fixture), sandbox)
+		return sandbox
+	}
+
+	runWithTargetDir := func(t *testing.T, projectDir, targetDir string) {
+		t.Helper()
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir,
+			"test", projectDir, "--test-report", "--target-dir", targetDir)
+		if exitCode != 1 {
+			t.Fatalf("expected exit 1 (one failing test), got %d\nstderr:\n%s", exitCode, stderr)
+		}
+		if _, err := os.Stat(filepath.Join(projectDir, "target")); !os.IsNotExist(err) {
+			t.Errorf("expected no target/ dir under the project itself, stat error: %v", err)
+		}
+	}
+
+	checkSinglePackageReport := func(t *testing.T, dir string) {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(dir, "report", "test_results.json"))
+		if err != nil {
+			t.Fatalf("expected report/test_results.json under %s: %v", dir, err)
+		}
+		var report corpusPackageTestResult
+		if err := json.Unmarshal(data, &report); err != nil {
+			t.Fatalf("test_results.json is not valid JSON: %v", err)
+		}
+		if report.TotalTests != 2 || report.Passed != 1 || report.Failed != 1 {
+			t.Errorf("expected 2 total/1 passed/1 failed, got %+v", report)
+		}
+		for _, p := range []string{
+			filepath.Join(dir, "rerun_test.json"),
+			filepath.Join(dir, "cache", "tests_cache", "reportsinglemod", "module_status.json"),
+		} {
+			if _, err := os.Stat(p); err != nil {
+				t.Errorf("expected %s to exist: %v", p, err)
+			}
+		}
+	}
+
+	t.Run("absolute", func(t *testing.T) {
+		t.Parallel()
+		projectDir := sandboxFixture(t, "report-single-package")
+		dir := t.TempDir()
+		runWithTargetDir(t, projectDir, dir)
+		checkSinglePackageReport(t, dir)
+	})
+
+	t.Run("relative", func(t *testing.T) {
+		t.Parallel()
+		// --target-dir is resolved relative to the process's own cwd
+		// (matching build.go), not to projectDir, so this must land under
+		// repoRoot (the CLI's cmd.Dir) rather than under projectDir.
+		projectDir := sandboxFixture(t, "report-single-package")
+		relName := fmt.Sprintf("bal-test-target-dir-tmp-%d", time.Now().UnixNano())
+		absDir := filepath.Join(repoRoot, relName)
+		t.Cleanup(func() { _ = os.RemoveAll(absDir) })
+		runWithTargetDir(t, projectDir, relName)
+		checkSinglePackageReport(t, absDir)
+	})
+
+	t.Run("workspace", func(t *testing.T) {
+		t.Parallel()
+		workspaceDir := sandboxFixture(t, "report-workspace")
+		dir := t.TempDir()
+		_, stderr, exitCode := runCLICommand(t, balBin, repoRoot, coverDir,
+			"test", workspaceDir, "--test-report", "--target-dir", dir)
+		if exitCode != 1 {
+			t.Fatalf("expected exit 1 (one member failing), got %d\nstderr:\n%s", exitCode, stderr)
+		}
+		for _, member := range []string{"passing", "failing"} {
+			if _, err := os.Stat(filepath.Join(workspaceDir, member, "target")); !os.IsNotExist(err) {
+				t.Errorf("expected no target/ dir under member %q, stat error: %v", member, err)
+			}
+		}
+		data, err := os.ReadFile(filepath.Join(dir, "report", "test_results.json"))
+		if err != nil {
+			t.Fatalf("expected report/test_results.json under %s: %v", dir, err)
+		}
+		var report corpusWorkspaceTestReport
+		if err := json.Unmarshal(data, &report); err != nil {
+			t.Fatalf("test_results.json is not valid JSON: %v", err)
+		}
+		if report.TotalTests != 2 || report.Passed != 1 || report.Failed != 1 || len(report.Packages) != 2 {
+			t.Errorf("expected 2 total/1 passed/1 failed across both members, got %+v", report)
+		}
+	})
 }
 
 // testBalCleanCorpus exercises `bal clean` end-to-end through the
@@ -3667,8 +3773,8 @@ func testBalBuildLoadWarning(t *testing.T, cli *balCLI) {
 }
 
 // testBalBuildWorkspacePartialFailure covers a workspace where one member
-// fails to compile: bal build must stop there, not attempt later members
-// (matching jballerina), while still exiting non-zero.
+// fails to compile: bal build must stop there, not attempt later members,
+// while still exiting non-zero.
 func testBalBuildWorkspacePartialFailure(t *testing.T, cli *balCLI) {
 	balBin, repoRoot, coverDir := cli.relBin, cli.repoRoot, cli.coverDir
 	workspaceDir := filepath.Join("corpus", "cli", "testdata", "build", "workspace-partial-failure", "project")

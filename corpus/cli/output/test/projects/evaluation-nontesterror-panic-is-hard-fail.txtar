@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	evalhardpanic
+
 		[fail] testEvalHardPanic:
 
 		    [fail evaluation for the function testEvalHardPanic]

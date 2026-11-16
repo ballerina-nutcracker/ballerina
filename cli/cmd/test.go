@@ -30,7 +30,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/cli/internal/testfilter"
 	debugcommon "github.com/ballerina-nutcracker/ballerina/common"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/rt"
-	"github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/test/0.0.1/go1.27/native"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/projects"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
@@ -41,10 +40,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// invalidRerunDataMessage is the user-facing wording for an unusable
-// --rerun-failed rerun_test.json, matching jballerina byte-for-byte. Lives
-// here rather than in testfilter.ErrInvalidRerunData: a Go error string
-// carrying this trailing period would violate staticcheck's ST1005.
+// invalidRerunDataMessage is the exact user-facing wording for an unusable
+// --rerun-failed rerun_test.json. Lives here rather than in
+// testfilter.ErrInvalidRerunData: a Go error string carrying this trailing
+// period would violate staticcheck's ST1005.
 const invalidRerunDataMessage = "error while running failed tests : Invalid failed test data. Please run `bal test` command."
 
 type testCmdOptions struct {
@@ -84,11 +83,10 @@ func createTestCmd() *cobra.Command {
 	member package of a workspace.
 
 	Discovers '@test:*'-annotated functions in the package's test sources
-	(or, for a standalone file, in the file itself), registers them with
-	ballerina/test, and executes them in-process, printing a pass/fail/skip
-	summary. When run at a workspace root, every member package's tests run
-	in turn; when run inside one member's own directory, only that member's
-	tests run.`,
+	(or, for a standalone file, in the file itself) and executes them
+	in-process, printing a pass/fail/skip summary. When run at a workspace
+	root, every member package's tests run in turn; when run inside one
+	member's own directory, only that member's tests run.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runTest(cmd, args, opts)
@@ -123,11 +121,24 @@ func testError(format string, args ...any) error {
 	return usageError("test [<source-file.bal> | <package-dir>]", format, args...)
 }
 
+// testTargetDir resolves the directory test artifacts (rerun data, module
+// status, reports) are written under: project.BuildOptions().TargetDir()
+// (the --target-dir override, already made absolute in runTest) if set,
+// otherwise projectDir/target. project.TargetDir() itself can't be used
+// here — it falls back to its own sourceRoot, which the CLI loads as a
+// relative "." rather than projectDir's absolute path.
+func testTargetDir(project projects.Project, projectDir string) string {
+	if override := project.BuildOptions().TargetDir(); override != "" {
+		return override
+	}
+	return filepath.Join(projectDir, projects.TargetDir)
+}
+
 func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 	stderr := cmd.ErrOrStderr()
 
 	// Unsupported-scope flags: fail clearly rather than silently misbehaving
-	// or crashing (see TODO.md's "Deferred bal test features").
+	// or crashing.
 	if opts.graalvm || opts.graalvmOpts != "" {
 		return testError("--graalvm is not supported: this interpreter has no separate native-image step")
 	}
@@ -141,11 +152,23 @@ func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 		_, _ = fmt.Fprintln(stderr, "warning: --parallel is not supported yet; running tests serially")
 	}
 
+	// --target-dir is resolved relative to the process cwd (matching
+	// build.go/pack.go/run.go's own --target-dir), independent of the
+	// package-dir arg.
+	var targetDirOverride string
+	if opts.targetDir != "" {
+		abs, err := filepath.Abs(opts.targetDir)
+		if err != nil {
+			return testError("resolve target directory: %w", err)
+		}
+		targetDirOverride = abs
+	}
+
 	buildOpts := projects.NewBuildOptionsBuilder().
 		WithSkipTests(false).
 		WithOffline(opts.offline).
 		WithSticky(opts.sticky).
-		WithTargetDir(opts.targetDir).
+		WithTargetDir(targetDirOverride).
 		WithTestReport(opts.testReport).
 		WithDumpAST(opts.dumpAST).
 		WithDumpBIR(opts.dumpBIR).
@@ -258,25 +281,25 @@ func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 				return testError("no package found at path %s within workspace %s", absBaseDir, workspaceRoot)
 			}
 			exitCode, pkgResult, err := runTestsForProject(cmd, opts, stderr, fsys, memberProject, absBaseDir)
-			return finishStandaloneTestRun(cmd, absBaseDir, exitCode, pkgResult, err)
+			return finishStandaloneTestRun(cmd, testTargetDir(memberProject, absBaseDir), exitCode, pkgResult, err)
 		}
 
 		return runTestsForWorkspace(cmd, opts, stderr, fsys, effectiveLoadPath, workspace, absBaseDir, ballerinaEnvPath, &buildOpts)
 	}
 
 	exitCode, pkgResult, err := runTestsForProject(cmd, opts, stderr, fsys, project, absBaseDir)
-	return finishStandaloneTestRun(cmd, absBaseDir, exitCode, pkgResult, err)
+	return finishStandaloneTestRun(cmd, testTargetDir(project, absBaseDir), exitCode, pkgResult, err)
 }
 
 // finishStandaloneTestRun writes the package's test_results.json if
 // requested, then translates a non-zero suite exit code into the usual
 // "there are test failures" command error.
-func finishStandaloneTestRun(cmd *cobra.Command, projectDir string, exitCode int, pkgResult *packageTestResult, err error) error {
+func finishStandaloneTestRun(cmd *cobra.Command, targetDir string, exitCode int, pkgResult *packageTestResult, err error) error {
 	if err != nil {
 		return err
 	}
 	if pkgResult != nil {
-		if reportErr := writeTestResultsReport(cmd, projectDir, *pkgResult); reportErr != nil {
+		if reportErr := writeTestResultsReport(cmd, targetDir, *pkgResult); reportErr != nil {
 			return reportErr
 		}
 	}
@@ -313,14 +336,10 @@ func runTestsForWorkspace(cmd *cobra.Command, opts *testCmdOptions, stderr io.Wr
 			return testError("no package found at path %s within workspace %s", memberDir, workspaceAbsRoot)
 		}
 
-		pkgName := memberProject.CurrentPackage().PackageName().Value()
-		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "\nRunning tests for package '%s'\n", pkgName)
-
 		exitCode, pkgResult, err := runTestsForProject(cmd, opts, stderr, fsys, memberProject, memberDir)
 		if err != nil {
 			// A genuine load/compile/internal error, not just "some tests
-			// failed" — matches jballerina's re-throw for non-test-failure
-			// exceptions instead of continuing to the next member.
+			// failed" — stop here instead of continuing to the next member.
 			return err
 		}
 		if exitCode != 0 {
@@ -339,7 +358,7 @@ func runTestsForWorkspace(cmd *cobra.Command, opts *testCmdOptions, stderr io.Wr
 			report.Failed += pkg.Failed
 			report.Skipped += pkg.Skipped
 		}
-		if err := writeTestResultsReport(cmd, workspaceAbsRoot, report); err != nil {
+		if err := writeTestResultsReport(cmd, testTargetDir(workspace, workspaceAbsRoot), report); err != nil {
 			return err
 		}
 	}
@@ -368,12 +387,26 @@ func runTestsForProject(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 	}
 
 	modules := pkg.Modules()
+	anyHasTests := false
+	for _, module := range modules {
+		if discoverTests(stderr, compilation, module).HasAny() {
+			anyHasTests = true
+			break
+		}
+	}
+	if anyHasTests {
+		_, _ = fmt.Fprint(cmd.OutOrStdout(), "\nRunning Tests\n")
+	}
+
 	var exitCode int
 	var err error
 	if len(modules) == 1 {
-		// Fast path, and identical behavior to before multi-module support:
+		// Fast path, identical behavior to before multi-module support:
 		// always run the (only) module, even with zero discovered tests —
-		// startSuite() itself reports "No tests found" in that case.
+		// runTestsForModule itself reports "No tests found" in that case.
+		if anyHasTests {
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "\n\t%s\n", modules[0].ModuleName().String())
+		}
 		exitCode, err = runTestsForModule(cmd, opts, stderr, fsys, project, compilation, modules[0], projectDir)
 	} else {
 		exitCode, err = runTestsForModules(cmd, opts, stderr, fsys, project, compilation, modules, projectDir)
@@ -385,7 +418,7 @@ func runTestsForProject(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 	if !opts.testReport {
 		return exitCode, nil, nil
 	}
-	result, hadAny := buildPackageTestResult(pkg, modules, projectDir)
+	result, hadAny := buildPackageTestResult(pkg, modules, testTargetDir(project, projectDir))
 	if !hadAny {
 		return exitCode, nil, nil
 	}
@@ -404,7 +437,7 @@ func runTestsForModules(cmd *cobra.Command, opts *testCmdOptions, stderr io.Writ
 			continue
 		}
 		anyHadTests = true
-		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "\nRunning tests for module '%s'\n", module.ModuleName().String())
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "\n\t%s\n", module.ModuleName().String())
 		exitCode, err := runTestsForModule(cmd, opts, stderr, fsys, project, compilation, module, projectDir)
 		if err != nil {
 			return 1, err
@@ -467,10 +500,11 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	project projects.Project, compilation *projects.PackageCompilation,
 	module *projects.Module, projectDir string) (int, error) {
 	discovered := discoverTests(stderr, compilation, module)
+	targetDir := testTargetDir(project, projectDir)
 
 	moduleName := module.ModuleName().String()
 	pkgName := module.PackageInstance().PackageName().Value()
-	rerunPath := filepath.Join(projectDir, projects.TargetDir, "rerun_test.json")
+	rerunPath := filepath.Join(targetDir, "rerun_test.json")
 	included, err := testfilter.Select(discovered, testfilter.SelectOptions{
 		Tests:         opts.tests,
 		Groups:        opts.groups,
@@ -478,12 +512,10 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		RerunFailed:   opts.rerunFailed,
 		RerunJSONPath: rerunPath,
 		ModuleName:    moduleName,
-		PackageName:   pkgName,
 	})
 	if err != nil {
-		// Mirrors filter.bal#setTestOptions's own handling of an invalid
-		// --rerun-failed rerun_test.json: print the message and report it as
-		// a suite failure (exit 1), not a hard CLI usage error.
+		// An invalid --rerun-failed rerun_test.json is reported as a suite
+		// failure (exit 1), not a hard CLI usage error.
 		message := err.Error()
 		if errors.Is(err, testfilter.ErrInvalidRerunData) {
 			message = invalidRerunDataMessage
@@ -493,7 +525,7 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	}
 
 	// --list-groups lists every discovered group and short-circuits,
-	// ignoring other selection flags (matches jballerina).
+	// ignoring other selection flags.
 	if opts.listGroups {
 		if listGroupsOtherFlagsWarning(opts) {
 			_, _ = fmt.Fprint(os.Stdout, "\nWarning: Other flags are skipped when list-groups flag is provided.\n\n")
@@ -502,12 +534,15 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 		return 0, nil
 	}
 
-	// Mirrors startSuite's own "testRegistry.getFunctions().length() == 0 &&
-	// getDependentFunctions().length() == 0" check — register.bal only ever
-	// registers an *included* test, so an empty included set is exactly that
-	// condition's Go-side equivalent.
+	// An empty included set means zero tests were selected to run.
 	if len(included) == 0 {
 		_, _ = fmt.Fprintln(os.Stdout, "\tNo tests found")
+		if opts.testReport || opts.codeCoverage {
+			statusPath := filepath.Join(targetDir, "cache", "tests_cache", moduleName, "module_status.json")
+			if err := testrunner.WriteModuleStatusFile(statusPath, testrunner.BuildModuleStatus(testrunner.RunReport{})); err != nil {
+				return 1, err
+			}
+		}
 		return 0, nil
 	}
 
@@ -517,10 +552,9 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	selected := filterPlan(discovered, included)
 	graph, err := testplan.BuildGraph(selected)
 	if err != nil {
-		// Mirrors startSuite's own `orderTests()` failure branch: print the
-		// message and report it as a suite failure (exit 1), not a hard CLI
-		// usage error — a cyclic or disabled dependency is a problem with the
-		// test code, not with how bal test was invoked.
+		// A cyclic or disabled dependency is a problem with the test code,
+		// not with how bal test was invoked, so report it as a suite failure
+		// (exit 1), not a hard CLI usage error.
 		_, _ = fmt.Fprintln(os.Stdout, err.Error())
 		return 1, nil
 	}
@@ -554,8 +588,7 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	}
 	rt.Listen()
 
-	// --rerun-failed replaces --tests-based selection entirely (matching
-	// filter.bal#setTestOptions's own mutually-exclusive branching), so a
+	// --rerun-failed replaces --tests-based selection entirely, so a
 	// data-driven test's previously-failed sub-keys come from rerun_test.json
 	// instead of (never alongside) a --tests "name#key" value.
 	subKeyFilters := testrunner.ParseSubKeyFilters(opts.tests)
@@ -577,17 +610,17 @@ func runTestsForModule(cmd *cobra.Command, opts *testCmdOptions, stderr io.Write
 	// listeners the same way bal run does, but unlike bal run (meant to run
 	// forever until a signal), it must tear them down itself once done, or
 	// registered runtime:onGracefulStop handlers never run.
-	rt.RequestGracefulStop()
+	rt.GracefulStop()
 
 	// ballerina/test's own println writes straight to the real process
 	// stdout rather than through cobra's captured writer — this matches that
 	// existing split (cmd.OutOrStdout() is only used for the "Running tests
 	// for module/package" headers around this call) rather than introducing
 	// a new one.
-	testrunner.WriteConsoleReport(os.Stdout, report, native.IsSystemConsole(), executionTime)
+	testrunner.WriteConsoleReport(os.Stdout, report, isTerminal(), executionTime)
 
 	if opts.testReport || opts.codeCoverage {
-		statusPath := filepath.Join(projectDir, projects.TargetDir, "cache", "tests_cache", moduleName, "module_status.json")
+		statusPath := filepath.Join(targetDir, "cache", "tests_cache", moduleName, "module_status.json")
 		if err := testrunner.WriteModuleStatusFile(statusPath, testrunner.BuildModuleStatus(report)); err != nil {
 			return 1, err
 		}
@@ -638,9 +671,8 @@ func testGroupsList(plan *testplan.TestPlan, included map[string]bool) []string 
 	return groups
 }
 
-// printGroupsList ports execute.bal#startSuite's --list-groups branch
-// exactly: "\tFollowing groups are available :\n\t[g1, g2]" or
-// "\tThere are no groups available!".
+// printGroupsList prints "\tFollowing groups are available :\n\t[g1, g2]",
+// or "\tThere are no groups available!" when groups is empty.
 func printGroupsList(w io.Writer, groups []string) {
 	if len(groups) == 0 {
 		_, _ = fmt.Fprintln(w, "\tThere are no groups available!")
@@ -651,7 +683,7 @@ func printGroupsList(w io.Writer, groups []string) {
 }
 
 // listGroupsOtherFlagsWarning reports whether any selection flag is set
-// alongside --list-groups, which jballerina warns about and ignores.
+// alongside --list-groups; those flags are then ignored, with a warning.
 func listGroupsOtherFlagsWarning(opts *testCmdOptions) bool {
 	return opts.rerunFailed || opts.codeCoverage || opts.testReport ||
 		opts.groups != "" || opts.disableGroups != "" || opts.tests != ""

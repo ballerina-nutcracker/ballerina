@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	evaluationtestpassesandfails
 		[pass] testEval
 
 		    evaluation passed with an average pass rate of 0.6666666666666666

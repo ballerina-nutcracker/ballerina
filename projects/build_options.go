@@ -56,7 +56,13 @@ func (b BuildOptions) DumpBuildTime() bool {
 }
 
 // SkipTests returns whether tests should be skipped.
-// By default, tests are skipped (returns true if unset).
+// By default, tests are skipped (returns true if unset): test documents are
+// parsed for dependency resolution regardless (see
+// resolveOwnDirectDependencies), but a listener-less package's test-declared
+// services/init code must never actually run outside bal test, which an
+// "include by default" value cannot prevent (bal run has no separate gate
+// for that). Set explicitly (CLI flag or Ballerina.toml's
+// build-options.skipTests) to opt in to test compilation for bal run/build.
 func (b BuildOptions) SkipTests() bool {
 	return b.skipTests.valueOr(true)
 }

@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	skipbeforesuitefails
 	[fail] beforeSuite[before test suite function]:
 	    divide by zero
 		

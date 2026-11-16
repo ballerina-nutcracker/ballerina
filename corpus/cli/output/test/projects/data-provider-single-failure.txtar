@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	dataprovidersinglefailure
+
 	testSquare:bad has failed.
 
 		[pass] testSquare#good

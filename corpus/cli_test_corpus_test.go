@@ -57,6 +57,9 @@ var rootPathSuffixPattern = regexp.MustCompile(`<ROOT>[^\s"]*`)
 // "Generating Test Report" can print verbatim), so fixtures stay
 // deterministic across platforms.
 func normalizeBalTestOutput(s, repoRoot string, extraRoots ...string) string {
+	// A %q-quoted path doubles every backslash on Windows; undo that first
+	// so the patterns below match quoted and unquoted paths alike.
+	s = strings.ReplaceAll(s, `\\`, `\`)
 	s = normalizePaths(test_util.NormalizeNewlines(s), repoRoot)
 	for _, root := range extraRoots {
 		s = normalizePaths(s, root)
@@ -327,9 +330,10 @@ func testBalTestFlagsCorpus(t *testing.T, cli *balCLI) {
 // invocations would. Mirrors cli/cmd/test_golden_test.go's
 // runGoldenScenarioSteps, now through the shared pre-built binary.
 type balTestStepsCase struct {
-	name    string
-	fixture string
-	steps   [][]string // each entry: extra args after "test <sandboxDir>"
+	name       string
+	fixture    string
+	steps      [][]string         // each entry: extra args after "test <sandboxDir>"
+	checkFiles []balTestFileCheck // asserted against the sandbox after all steps run
 }
 
 var balTestFlagCases = []balTestFlagCase{
@@ -348,8 +352,7 @@ var balTestFlagCases = []balTestFlagCase{
 	{"data-provider-after-failing", "data-providers", []string{"--tests", "testDividingValuesWithAfterFailing,testExecutionOfAfterFailing"}, nil},
 	{"data-provider-single-failure-cascade", "data-providers", []string{"--tests", "testExecutionOfDataValueFailing"}, nil},
 	// testFunction3#'<key>' round-trips 7 special-character keys through a
-	// percent-encoded, single-quoted --tests filter — a direct port of
-	// jballerina's testCodeFragmentKeys, args precomputed via
+	// percent-encoded, single-quoted --tests filter, args precomputed via
 	// native.EscapeSpecialCharacters since this table is a plain literal.
 	{"data-provider-code-fragment-key-0", "data-providers", []string{"--tests", "testFunction3#'%60'%22%5Ca%22%22'"}, nil},
 	{"data-provider-code-fragment-key-1", "data-providers", []string{"--tests", "testFunction3#'%22%5Cu{D7FF}%22%22%09%22'"}, nil},
@@ -358,8 +361,7 @@ var balTestFlagCases = []balTestFlagCase{
 	{"data-provider-code-fragment-key-4", "data-providers", []string{"--tests", "testFunction3#'%281'"}, nil},
 	{"data-provider-code-fragment-key-5", "data-providers", []string{"--tests", "testFunction3#'a:x(c%2Cd)[]; ^(x|y).ok();'"}, nil},
 	{"data-provider-code-fragment-key-6", "data-providers", []string{"--tests", "testFunction3#'map<any> v = { %22x%22: 1 };'"}, nil},
-	// Same 7 keys with one character each replaced by a '*' wildcard — a
-	// direct port of jballerina's testCodeFragmentKeysWithWildCard.
+	// Same 7 keys with one character each replaced by a '*' wildcard.
 	{"data-provider-code-fragment-key-wildcard-0", "data-providers", []string{"--tests", "testFunction3#'%60'%22%5C*%22%22'"}, nil},
 	{"data-provider-code-fragment-key-wildcard-1", "data-providers", []string{"--tests", "testFunction3#'%22%5Cu{D7FF}%22*%09%22'"}, nil},
 	{"data-provider-code-fragment-key-wildcard-2", "data-providers", []string{"--tests", "testFunction3#'a +%0A* b'"}, nil},
@@ -379,6 +381,10 @@ var balTestFlagCases = []balTestFlagCase{
 	{"rejects-cloud", "rejects-unsupported-flags", []string{"--cloud", "docker"}, nil},
 	{"module-qualified-tests-filter-bare", "module-qualified-tests-filter", []string{"--tests", "testInSubmod"}, nil},
 	{"module-qualified-tests-filter-qualified", "module-qualified-tests-filter", []string{"--tests", "modquantestmod.submod:testInSubmod"}, nil},
+	// A bare package-qualified filter ("<package>:<fn>") selects fn in the
+	// default module only; testShared also exists in .submod but must not
+	// run there too.
+	{"review-module-filter-default-qualified", "review-module-filter", []string{"--tests", "reviewmodfilter:testShared"}, nil},
 	{"selected-function-non-existing", "selected-function", []string{"--tests", "nonExistingFunc"}, nil},
 	{"selected-function-dependent-disabled", "selected-function", []string{"--tests", "testDependentDisabledFunc"}, nil},
 	{"selected-function-single", "selected-function", []string{"--tests", "testFunc"}, nil},
@@ -392,11 +398,10 @@ var balTestFlagCases = []balTestFlagCase{
 	{"group-filtering", "group-filtering", []string{"--groups", "unit"}, nil},
 	{"standalone-all-passing", "standalone-all-passing.bal", nil, nil},
 	{"standalone-rejects-non-bal-file", "standalone-rejects-non-bal-file/notes.txt", nil, nil},
-	// jballerina's testListingOfSingleTestGroups: --list-groups lists every
-	// discovered group.
+	// --list-groups lists every discovered group.
 	{"standalone-grouping-list-groups", "standalone-groups-test.bal", []string{"--list-groups"}, nil},
-	// jballerina's testListGroupsWithOtherFlags: --groups g1 --list-groups
-	// still lists every group and prints the "other flags skipped" warning.
+	// --groups g1 --list-groups still lists every group and prints the
+	// "other flags skipped" warning.
 	{"standalone-grouping-list-groups-with-other-flags", "standalone-groups-test.bal", []string{"--groups", "g1", "--list-groups"}, nil},
 	{"workspace-single-member-passing", "workspace-single-member/passing", nil, nil},
 	{"workspace-single-member-failing", "workspace-single-member/failing", nil, nil},
@@ -413,9 +418,7 @@ var balTestFlagCases = []balTestFlagCase{
 // balTestFlagCheckCases are cli/cmd/test_test.go ports whose correctness
 // needs a generated file's content, not just stdout/stderr/exitcode.
 var balTestFlagCheckCases = []balTestFlagCheckCase{
-	// jballerina-equivalent: a failing suite writes rerun_test.json listing
-	// only the failed test. Direct port of
-	// TestTestCommand_FailureExitsNonZeroAndWritesRerunFile.
+	// A failing suite writes rerun_test.json listing only the failed test.
 	{
 		name: "failure-writes-rerun-file", fixture: "hasfailure",
 		checkFiles: []balTestFileCheck{{
@@ -434,9 +437,7 @@ var balTestFlagCheckCases = []balTestFlagCheckCase{
 			},
 		}},
 	},
-	// Direct port of TestTestCommand_RerunFailed_FullTest (jballerina's
-	// testFullTest): 2 passing/2 failing writes rerun_test.json with the 2
-	// failures.
+	// 2 passing/2 failing writes rerun_test.json with the 2 failures.
 	{
 		name: "rerun-failed-full-test", fixture: "rerun-failed-full-test",
 		checkFiles: []balTestFileCheck{{
@@ -579,10 +580,33 @@ var balTestFlagCheckCases = []balTestFlagCheckCase{
 }
 
 var balTestStepsCases = []balTestStepsCase{
-	{"rerun-failed-with-data-provider", "rerun-failed-with-data-provider", [][]string{nil, {"--rerun-failed"}}},
-	{"rerun-failed-with-array-data-provider", "rerun-failed-with-array-data-provider", [][]string{nil, {"--rerun-failed"}}},
-	{"rerun-failed-only-runs-previous-failures", "rerun-failed-only-runs-previous-failures", [][]string{nil, {"--rerun-failed"}}},
-	{"rerun-failed-rerun-failed-test", "rerun-failed-rerun-failed-test", [][]string{nil, {"--rerun-failed"}}},
+	{"rerun-failed-with-data-provider", "rerun-failed-with-data-provider", [][]string{nil, {"--rerun-failed"}}, nil},
+	{"rerun-failed-with-array-data-provider", "rerun-failed-with-array-data-provider", [][]string{nil, {"--rerun-failed"}}, nil},
+	{"rerun-failed-only-runs-previous-failures", "rerun-failed-only-runs-previous-failures", [][]string{nil, {"--rerun-failed"}}, nil},
+	{"rerun-failed-rerun-failed-test", "rerun-failed-rerun-failed-test", [][]string{nil, {"--rerun-failed"}}, nil},
+	// Regression for #1717: a first run with one passing test writes
+	// totalTests:1 to the report; a second run selecting no tests
+	// (--tests missing) must overwrite it with a zero-test report, not
+	// leave the first run's totalTests:1 in place.
+	{
+		"stale-report-after-empty-selection", "stale-report-after-empty-selection",
+		[][]string{{"--test-report"}, {"--test-report", "--tests", "missing"}},
+		[]balTestFileCheck{{
+			path: filepath.Join("target", "report", "test_results.json"),
+			check: func(t *testing.T, data []byte) {
+				var report corpusPackageTestResult
+				if err := json.Unmarshal(data, &report); err != nil {
+					t.Fatalf("test_results.json is not valid JSON: %v", err)
+				}
+				if report.TotalTests != 0 || report.Passed != 0 {
+					t.Errorf("expected a zero-test report after an empty selection, got %+v", report)
+				}
+				if len(report.ModuleStatus) != 1 || report.ModuleStatus[0].Tests == nil {
+					t.Errorf("expected moduleStatus[0].tests to be [], not null, got %+v", report.ModuleStatus)
+				}
+			},
+		}},
+	},
 }
 
 func testBalTestStepsCorpus(t *testing.T, cli *balCLI) {
@@ -604,7 +628,7 @@ func testBalTestStepsCorpus(t *testing.T, cli *balCLI) {
 				}
 				displayArgs := append([]string{"test", "<FIXTURE>"}, extraArgs...)
 				fmt.Fprintf(&combined, "$ bal %s\n", strings.Join(displayArgs, " "))
-				combined.WriteString(normalizeBalTestOutput(stdout, cli.repoRoot))
+				combined.WriteString(normalizeBalTestOutput(stdout, cli.repoRoot, sandbox))
 				lastExit = exitCode
 			}
 			actualExit := strconv.Itoa(lastExit)
@@ -626,6 +650,9 @@ func testBalTestStepsCorpus(t *testing.T, cli *balCLI) {
 			if combined.String() != expectedStdout || actualExit != expectedExit {
 				t.Fatalf("mismatch for steps case %q (expected file %s)\n%s\ngot:\n%s",
 					tc.name, expectedPath, test_util.FormatExpectedGot(expectedExit, actualExit), combined.String())
+			}
+			for _, fc := range tc.checkFiles {
+				assertBalTestFileCheck(t, sandbox, fc)
 			}
 		})
 	}

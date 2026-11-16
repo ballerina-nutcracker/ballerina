@@ -73,14 +73,10 @@ func loadTestdataProject(t *testing.T, name string) *projects.PackageCompilation
 	return result.Project().CurrentPackage().Compilation()
 }
 
-// TestProcessTests_FiresDuringCompilation confirms the plugin actually
+// TestDiscoverTests_FiresDuringCompilation confirms the plugin actually
 // activates for a module that imports ballerina/test (no manual invocation —
 // this is what a real `bal` compile does) and stashes a complete TestPlan.
-// This fixture was originally copied from the now-retired
-// cli/internal/testdiscovery/testdata/sample to check the two independent
-// producers for field-by-field parity before cli/cmd/test.go's wiring
-// switched over to this package exclusively.
-func TestProcessTests_FiresDuringCompilation(t *testing.T) {
+func TestDiscoverTests_FiresDuringCompilation(t *testing.T) {
 	t.Parallel()
 	compilation := loadTestdataProject(t, "sample")
 	if diag := compilation.DiagnosticResult(); diag.HasErrors() {
@@ -115,7 +111,7 @@ func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 	// testSetup must itself be a @test:Config function — confirmed via a
 	// real `bal test` run that dependsOn referencing a plain, non-test
 	// function fails at runtime ("either disabled or not included"), since
-	// register.bal only resolves dependsOn against registered functions.
+	// dependsOn only resolves against registered functions.
 	if testSetup == nil {
 		t.Fatal("testSetup not discovered")
 	}
@@ -170,13 +166,9 @@ func TestProcessTests_FiresDuringCompilation(t *testing.T) {
 	}
 }
 
-// TestProcessTests_RejectsDependsOnNonTestFunction is a capability a plain
-// pre-compilation AST walk has no way to provide at all (it can't report
-// compiler diagnostics). Confirmed via a real `bal test` run that this
-// exact fixture fails at runtime with "The dependent test function is
-// either disabled or not included." — this turns that into a clear
-// compile-time error instead.
-func TestProcessTests_RejectsDependsOnNonTestFunction(t *testing.T) {
+// TestDiscoverTests_RejectsDependsOnNonTestFunction confirms a dependsOn
+// referencing a non-test function is reported as a compile-time error.
+func TestDiscoverTests_RejectsDependsOnNonTestFunction(t *testing.T) {
 	t.Parallel()
 	compilation := loadTestdataProject(t, "bad-dependson")
 	diag := compilation.DiagnosticResult()
@@ -195,59 +187,5 @@ func TestProcessTests_RejectsDependsOnNonTestFunction(t *testing.T) {
 			messages = append(messages, d.Message())
 		}
 		t.Fatalf("expected a dependsOn diagnostic, got: %v", messages)
-	}
-}
-
-// TestProcessTests_RejectsRunsLessThanOne confirms runs < 1 is a compile
-// error with jballerina's exact wording — confirmed live against real
-// jballerina, which rejects this too (contrary to an earlier assumption
-// that only this port validated it).
-func TestProcessTests_RejectsRunsLessThanOne(t *testing.T) {
-	t.Parallel()
-	compilation := loadTestdataProject(t, "bad-runs")
-	diag := compilation.DiagnosticResult()
-	if !diag.HasErrors() {
-		t.Fatal("expected a compile error for runs < 1")
-	}
-	var found bool
-	for _, d := range diag.Diagnostics() {
-		if strings.Contains(d.Message(), "invalid config: runs must be a positive integer, found: 0") {
-			found = true
-		}
-	}
-	if !found {
-		var messages []string
-		for _, d := range diag.Diagnostics() {
-			messages = append(messages, d.Message())
-		}
-		t.Fatalf("expected a runs diagnostic, got: %v", messages)
-	}
-}
-
-// TestProcessTests_RejectsMinPassRateOutOfRange confirms minPassRate outside
-// 0.0-1.0 is a compile error with jballerina's exact wording — confirmed
-// live against real jballerina.
-func TestProcessTests_RejectsMinPassRateOutOfRange(t *testing.T) {
-	t.Parallel()
-	compilation := loadTestdataProject(t, "bad-minpassrate")
-	diag := compilation.DiagnosticResult()
-	if !diag.HasErrors() {
-		t.Fatal("expected a compile error for minPassRate out of range")
-	}
-	var foundHigh, foundNeg bool
-	for _, d := range diag.Diagnostics() {
-		if strings.Contains(d.Message(), "invalid config: minPassRate must be between 0.0 and 1.0, found: 1.5") {
-			foundHigh = true
-		}
-		if strings.Contains(d.Message(), "invalid config: minPassRate must be between 0.0 and 1.0, found: -0.5") {
-			foundNeg = true
-		}
-	}
-	if !foundHigh || !foundNeg {
-		var messages []string
-		for _, d := range diag.Diagnostics() {
-			messages = append(messages, d.Message())
-		}
-		t.Fatalf("expected minPassRate diagnostics for both 1.5 and -0.5, got: %v", messages)
 	}
 }

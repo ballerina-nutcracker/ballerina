@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	failedaftergroups
 	[fail] afterGroupsFunc1[after test group function for the test]:
 	    divide by zero
 		

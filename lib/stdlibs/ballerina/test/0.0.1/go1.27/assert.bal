@@ -36,14 +36,12 @@ type AssertError record {
 #
 # + return - An AssertError with custom message and category
 public isolated function createBallerinaError(string errorMessage, string category) returns TestError {
-    // category is unused in jballerina too; discarded to satisfy the unused-param check.
+    // category is unused; discarded to satisfy the unused-param check.
     _ = category;
     // The explicit `error TestError(...)` constructor form (rather than the
-    // implicit `error(...)`) is required for birgen to record "TestError" as
-    // this value's runtime TypeName (values.Error.TypeName) — only a
-    // distinct type reference does, per errorConstructorTypeName. testrunner
-    // uses that TypeName to tell an assertion failure apart from any other
-    // panicked/returned error.
+    // implicit `error(...)`) gives the result TestError's real distinct
+    // type-id, which testrunner checks for to tell an assertion failure
+    // apart from any other panicked/returned error.
     return error TestError(errorMessage);
 }
 
@@ -274,7 +272,7 @@ isolated function getInequalityErrorMsg(any|error actual, any|error expected, st
     return errorMsg;
 }
 
-// mapHasKey stands in for the not-yet-implemented lang.map:hasKey (see TODO.md).
+// mapHasKey stands in for the not-yet-implemented lang.map:hasKey.
 isolated function mapHasKey(map<anydata> m, string k) returns boolean {
     foreach string existingKey in m.keys() {
         if existingKey == k {
@@ -333,8 +331,8 @@ isolated function getMapValueDiff(map<anydata> actualMap, map<anydata> expectedM
     return diffValue;
 }
 
-// ValueComparisonResult replaces jballerina's `[string, int]` tuple return: list-binding-pattern
-// assignments (`[a, b] = ...`) aren't implemented yet (see TODO.md).
+// ValueComparisonResult is a record, not a `[string, int]` tuple: list
+// binding patterns aren't supported yet.
 type ValueComparisonResult record {|
     string diff;
     int count;

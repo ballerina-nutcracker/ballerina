@@ -1,6 +1,8 @@
 -- stdout --
 
-Running tests for module 'dataproviders'
+Running Tests
+
+	dataproviders
 		[pass] testFunction2#Case#1
 		[pass] testFunction2#Case#2
 		[pass] testFunction2#Case#3
@@ -12,7 +14,7 @@ Running tests for module 'dataproviders'
 
 		Test execution time : <DURATION>s
 
-Running tests for module 'dataproviders.module1'
+	dataproviders.module1
 	No tests found
 -- stderr --
 -- exitcode --

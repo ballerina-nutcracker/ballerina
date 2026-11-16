@@ -1,6 +1,10 @@
 -- stdout --
 $ bal test <FIXTURE>
 
+Running Tests
+
+	rerunfailedwitharraydataprovider
+
 	testAdd:1 has failed.
 
 		[pass] testAdd#0
@@ -21,6 +25,10 @@ $ bal test <FIXTURE>
 
 		Test execution time : <DURATION>s
 $ bal test <FIXTURE> --rerun-failed
+
+Running Tests
+
+	rerunfailedwitharraydataprovider
 
 	testAdd:1 has failed.
 

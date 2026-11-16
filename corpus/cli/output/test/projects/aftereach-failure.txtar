@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	aftereachfailure
 	[fail] afterEachFails[after each test function for the test]:
 	    afterEach failed
 		

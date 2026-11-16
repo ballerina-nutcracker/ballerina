@@ -22,16 +22,12 @@ import (
 	"strings"
 )
 
-// Graph is the validated dependency structure built from a TestPlan's tests —
-// a Go port of execute.bal's orderTests/restructureTest (register.bal's
-// ExecutionManager bookkeeping), confirmed to match its error messages
-// exactly against the corpus (testerina-disabled-dependency-v and a
-// hand-verified cyclic-dependency case).
+// Graph is the validated dependency structure of a TestPlan's tests: an
+// execution order and the reverse of each test's DependsOn edges.
 type Graph struct {
 	// Order lists every test name in a valid topological order: tests with
-	// no dependencies come first (sorted by name, matching register.bal's
-	// sortTestFunctionsByName), followed by dependent tests in an order
-	// where each one follows everything it depends on.
+	// no dependencies come first, sorted by name, followed by dependent tests
+	// in an order where each one follows everything it depends on.
 	Order []string
 
 	// Dependents maps a test name to the names of tests that depend on it —
@@ -89,33 +85,34 @@ type graphBuilder struct {
 	visited map[string]bool
 }
 
-// visit mirrors restructureTest's recursion exactly: path is the chain of
-// test names from the DFS root to testFunction (exclusive), threaded as a
-// fresh extended slice at each call rather than a shared push/pop stack —
-// the same approach execute.bal's own comment documents using for the same
-// reason (no array pop in this interpreter yet).
+// visit appends testFunction to Order after its dependencies; path holds the
+// test names from the DFS root to testFunction, for cycle reporting.
 func (b *graphBuilder) visit(testFunction TestFunction, path []string) error {
 	currentPath := append(append([]string{}, path...), testFunction.Name)
 
-	for _, depName := range testFunction.DependsOn {
-		dep, ok := b.byName[depName]
-		if !ok {
-			return fmt.Errorf("the dependent test function is either disabled or not included")
-		}
+	// A disabled test never runs, so its own DependsOn chain is never
+	// exercised either — skip validating it.
+	if testFunction.Enable {
+		for _, depName := range testFunction.DependsOn {
+			dep, ok := b.byName[depName]
+			if !ok {
+				return fmt.Errorf("the dependent test function is either disabled or not included")
+			}
 
-		if !dep.Enable {
-			return fmt.Errorf("test %q depends on function %q, but it is either disabled or not included",
-				testFunction.Name, dep.Name)
-		}
-		b.graph.Dependents[dep.Name] = append(b.graph.Dependents[dep.Name], testFunction.Name)
+			if !dep.Enable {
+				return fmt.Errorf("test %q depends on function %q, but it is either disabled or not included",
+					testFunction.Name, dep.Name)
+			}
+			b.graph.Dependents[dep.Name] = append(b.graph.Dependents[dep.Name], testFunction.Name)
 
-		if cycleStart := indexOf(currentPath, dep.Name); cycleStart != -1 {
-			cycle := append(append([]string{}, currentPath[cycleStart:]...), dep.Name)
-			return fmt.Errorf("cyclic test dependencies detected: %s", strings.Join(cycle, " -> "))
-		}
-		if !b.visited[dep.Name] {
-			if err := b.visit(dep, currentPath); err != nil {
-				return err
+			if cycleStart := indexOf(currentPath, dep.Name); cycleStart != -1 {
+				cycle := append(append([]string{}, currentPath[cycleStart:]...), dep.Name)
+				return fmt.Errorf("cyclic test dependencies detected: %s", strings.Join(cycle, " -> "))
+			}
+			if !b.visited[dep.Name] {
+				if err := b.visit(dep, currentPath); err != nil {
+					return err
+				}
 			}
 		}
 	}

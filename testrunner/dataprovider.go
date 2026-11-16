@@ -24,17 +24,8 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-// errDataProviderFailed is a Go-side sentinel only — ported from
-// registration_api.bal#registerTestConfig, whose `diagnostics = error("Failed
-// to execute the data provider")` is a single fixed message used regardless
-// of what actually went wrong (a panic, an error value the provider
-// legitimately returned, or an unrecognized shape all collapse to this one
-// string, discarding the specific underlying message entirely). Callers
-// display the exact, capitalized original text directly as a Result.Message
-// literal rather than through this error's own .Error() text, since an
-// errors.New argument is linted as a Go-style message (lowercase, no
-// trailing punctuation) and would otherwise drift from the real one users
-// are meant to see.
+// errDataProviderFailed marks any data provider failure (panic, error value
+// or unsupported shape); users see DataProviderFailedMessage instead.
 var errDataProviderFailed = errors.New("failed to execute the data provider")
 
 // DataProviderFailedMessage is the exact console/report text for a data
@@ -42,11 +33,10 @@ var errDataProviderFailed = errors.New("failed to execute the data provider")
 const DataProviderFailedMessage = "Failed to execute the data provider"
 
 // dataRow is one (key, args) pair extracted from a data provider's return
-// value — confirmed by experiment (not assumed) to come back as either a
-// *values.Map (keyed test cases, e.g. `{"one": [1, 1], "two": [2, 4]}`) or a
-// *values.List (positional test cases, keyed by stringified index), with
-// each entry itself a *values.List of plain Go-native argument values
-// (int64, etc. — no wrapper type to unwrap).
+// value: either a *values.Map (keyed test cases, e.g.
+// `{"one": [1, 1], "two": [2, 4]}`) or a *values.List (positional test
+// cases, keyed by stringified index), with each entry itself a *values.List
+// of plain Go-native argument values.
 type dataRow struct {
 	key  string
 	args []values.BalValue
@@ -54,13 +44,10 @@ type dataRow struct {
 
 // dataProviderRows invokes the named data provider function and extracts
 // its rows, along with which of the two supported return shapes it used —
-// report.bal#getTestType reads the same distinction to decide whether a
-// failed row's rerun-JSON sub-key gets single-quoted (see statusreport.go).
-// A data provider that panics, legitimately returns an error value (its
-// declared return type is itself `error|map<...>|...[][]`), or returns an
-// unrecognized shape are all reported identically via errDataProviderFailed
-// — mirrors registerTestConfig's own `trap invokeFunction(dataProvider, [])`
-// check, which collapses all three into the same `output is error` branch.
+// that distinction decides whether a failed row's rerun-JSON sub-key gets
+// single-quoted (see statusreport.go). A data provider that panics,
+// legitimately returns an error value, or returns an unrecognized shape are
+// all reported identically via errDataProviderFailed.
 func (r *runner) dataProviderRows(name string) (rows []dataRow, testType TestType, err error) {
 	defer func() {
 		if rec := recover(); rec != nil {

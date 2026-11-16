@@ -1,6 +1,8 @@
 -- stdout --
 
-Running tests for module 'sourcelessmods.module1'
+Running Tests
+
+	sourcelessmods.module1
 		[pass] test1
 
 
@@ -10,7 +12,7 @@ Running tests for module 'sourcelessmods.module1'
 
 		Test execution time : <DURATION>s
 
-Running tests for module 'sourcelessmods.module2'
+	sourcelessmods.module2
 		[pass] test2
 
 

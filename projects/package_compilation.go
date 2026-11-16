@@ -88,12 +88,7 @@ func (c *PackageCompilation) compileModulesInternal() {
 			for _, docCtx := range moduleCtx.srcDocContextMap {
 				de.RegisterFile(docCtx.registrationKey(), docCtx.getTextDocument())
 			}
-			// Test documents only need registering when their syntax trees actually
-			// flow into compilation (SkipTests(false), i.e. `bal test` — see
-			// resolveTypesAndSymbols/parseDocumentsParallel). Otherwise nodebuilder
-			// never produces a position needing this file's index, and `bal build`/
-			// `bal run` (SkipTests(true), the default) must not register unrelated
-			// files as a side effect.
+			// Register test documents only when they are compiled (SkipTests false).
 			if !moduleCtx.project.BuildOptions().SkipTests() {
 				for _, docCtx := range moduleCtx.testDocContextMap {
 					de.RegisterFile(docCtx.registrationKey(), docCtx.getTextDocument())

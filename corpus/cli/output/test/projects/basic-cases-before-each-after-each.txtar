@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	beforeeachaftereach
 		[pass] testFunc
 		[pass] testFunc2
 		[pass] testFunc3

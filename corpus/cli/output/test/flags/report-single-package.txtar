@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	reportsinglemod
+
 	testFail: has failed.
 
 		[pass] testPass

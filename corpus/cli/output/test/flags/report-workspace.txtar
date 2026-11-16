@@ -1,6 +1,8 @@
 -- stdout --
 
-Running tests for package 'passing'
+Running Tests
+
+	passing
 		[pass] testGood
 
 
@@ -10,7 +12,9 @@ Running tests for package 'passing'
 
 		Test execution time : <DURATION>s
 
-Running tests for package 'failing'
+Running Tests
+
+	failing
 
 	testBad: has failed.
 

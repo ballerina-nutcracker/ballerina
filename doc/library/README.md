@@ -22,11 +22,12 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
 | [task](../../lib/stdlibs/ballerina/task/0.0.1/go1.27/README.md)               | 15 | 1 | 1 | 88% |
+| [test](../../lib/stdlibs/ballerina/test/0.0.1/go1.27/README.md)               | 10 | 0 | 4 | 71% |
 | [time](../../lib/stdlibs/ballerina/time/0.0.1/go1.27/README.md)               | 29 | 3 | 0 | 91% |
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **36** | **69** | **73%** |
+| **Total**                                         | **291** | **36** | **73** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -145,6 +146,10 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **The skipped-trigger log uses Go's zone abbreviation.** The `LOG_AND_IGNORE` message prints the trigger start time in Java's `Date.toString` layout; the Go-native version uses the same layout with the zone abbreviation from the Go time zone database, which can differ (for example `+0530` instead of `IST`).
 - **A panic in a listener service is reported as a single line.** jBallerina prints an uncaught-exception stack trace from the virtual thread running the service; the Go-native version recovers the panic and prints `error: <message>` to stderr.
 - **Non-isolated jobs run concurrently.** jBallerina runs a job whose class or `execute` method is not isolated under the runtime's lock for non-isolated strands; the Go-native version runs every execution on its own strand, like `http` resources — use isolated jobs and `lock` statements for shared state.
+
+### test
+
+- **No mocking support.** jBallerina's `ballerina/test` includes a function- and object-mocking framework (`test:mock`, `MockFunction`, `MockObject`, stub generation); none of it is implemented in this port. Test code that uses mocking will fail to compile.
 
 ### time
 

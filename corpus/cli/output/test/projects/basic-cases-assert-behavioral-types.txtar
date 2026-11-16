@@ -1,4 +1,8 @@
 -- stdout --
+
+Running Tests
+
+	behavioraltypes
 		[pass] testAssertObjectArrayEquals
 		[pass] testAssertObjectArrayEqualsNegative
 		[pass] testAssertObjectArrayNotEquals

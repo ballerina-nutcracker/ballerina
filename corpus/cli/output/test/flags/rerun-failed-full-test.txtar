@@ -1,5 +1,9 @@
 -- stdout --
 
+Running Tests
+
+	rerun_failed
+
 	testFunctionFail1: has failed.
 
 

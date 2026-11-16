@@ -1,0 +1,19 @@
+-- stdout --
+
+Running Tests
+
+	reviewmodfilter
+		[pass] testShared
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+
+	reviewmodfilter.submod
+	No tests found
+-- stderr --
+-- exitcode --
+0

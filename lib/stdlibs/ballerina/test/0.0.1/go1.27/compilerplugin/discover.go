@@ -15,13 +15,14 @@
 // under the License.
 
 // Package compilerplugin discovers @test:* annotated functions as a real
-// compiler plugin — the sole producer of a testplan.TestPlan. ProcessTests
+// compiler plugin — the sole producer of a testplan.TestPlan. DiscoverTests
 // discovers and validates only; it stashes the result in testplan's
 // process-local store rather than transforming or returning it.
 package compilerplugin
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -36,11 +37,11 @@ const (
 	moduleName = "test"
 )
 
-// ProcessTests is the registered compiler plugin entry point (see
+// DiscoverTests is the registered compiler plugin entry point (see
 // CompilerPlugin.toml). It discovers every @test:* annotated function in
 // pkg, validates dependsOn references, stashes the result in testplan's
 // store keyed by pkg's module identity, and returns pkg unchanged.
-func ProcessTests(compilerCtx *context.CompilerContext, _ model.ExportedSymbolSpace, pkg *ast.BLangPackage) (*ast.BLangPackage, error) {
+func DiscoverTests(compilerCtx *context.CompilerContext, _ model.ExportedSymbolSpace, pkg *ast.BLangPackage) (*ast.BLangPackage, error) {
 	plan := discover(compilerCtx, pkg)
 	validateDependsOn(compilerCtx, pkg, plan)
 	testplan.Store(moduleKey(pkg), plan)
@@ -69,11 +70,8 @@ func validateDependsOn(compilerCtx *context.CompilerContext, pkg *ast.BLangPacka
 	}
 }
 
-// validateEvaluationConfig reports a compile error for an out-of-range
-// minPassRate or runs, anchored on the whole @test:Config attachment —
-// confirmed live against real jballerina, which rejects both with this
-// exact wording and anchor, contrary to an earlier assumption here that
-// only this port validated runs.
+// validateEvaluationConfig reports an out-of-range minPassRate or runs on
+// the @test:Config attachment.
 func validateEvaluationConfig(compilerCtx *context.CompilerContext, att ast.BLangAnnotationAttachment, test testplan.TestFunction) {
 	if test.Runs < 1 {
 		compilerCtx.SemanticError(
@@ -81,9 +79,9 @@ func validateEvaluationConfig(compilerCtx *context.CompilerContext, att ast.BLan
 			att.GetPosition(),
 		)
 	}
-	if test.MinPassRate < 0.0 || test.MinPassRate > 1.0 {
+	if math.IsNaN(test.MinPassRate) || test.MinPassRate < 0.0 || test.MinPassRate > 1.0 {
 		compilerCtx.SemanticError(
-			fmt.Sprintf("invalid config: minPassRate must be between 0.0 and 1.0, found: %s", values.FormatFloat(test.MinPassRate)),
+			fmt.Sprintf("invalid config: minPassRate must be between 0.0 and 1.0, found: %s", values.BalString(test.MinPassRate, nil)),
 			att.GetPosition(),
 		)
 	}
@@ -117,7 +115,7 @@ func discover(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) *test
 
 	p := &testplan.TestPlan{}
 	for _, fn := range pkg.Functions {
-		// jballerina silently ignores @test:* annotations outside tests/.
+		// @test:* annotations outside tests/ are silently ignored.
 		if !fn.IsTestable() {
 			continue
 		}

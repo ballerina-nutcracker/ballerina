@@ -18,8 +18,6 @@ package native
 
 import (
 	"testing"
-
-	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 func TestMatchWildcard(t *testing.T) {
@@ -38,25 +36,17 @@ func TestMatchWildcard(t *testing.T) {
 		{"testFoo", `test\`, false},        // a trailing "\" in the pattern must not break compilation
 	}
 	for _, c := range cases {
-		got, err := matchWildcard(nil, []values.BalValue{c.name, c.pattern})
-		if err != nil {
-			t.Fatalf("matchWildcard(%q, %q): %v", c.name, c.pattern, err)
-		}
-		if got != c.want {
-			t.Errorf("matchWildcard(%q, %q) = %v, want %v", c.name, c.pattern, got, c.want)
+		if got := MatchWildcard(c.name, c.pattern); got != c.want {
+			t.Errorf("MatchWildcard(%q, %q) = %v, want %v", c.name, c.pattern, got, c.want)
 		}
 	}
 }
 
 func TestEscapeSpecialCharacters(t *testing.T) {
 	t.Parallel()
-	got, err := escapeSpecialCharacters(nil, []values.BalValue{`a,b"c`})
-	if err != nil {
-		t.Fatalf("escapeSpecialCharacters: %v", err)
-	}
-	s, _ := got.(string)
-	if s == `a,b"c` {
-		t.Errorf("expected special characters to be encoded, got unchanged %q", s)
+	got := EscapeSpecialCharacters(`a,b"c`)
+	if got == `a,b"c` {
+		t.Errorf("expected special characters to be encoded, got unchanged %q", got)
 	}
 }
 

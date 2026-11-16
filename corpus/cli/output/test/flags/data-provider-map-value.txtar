@@ -1,6 +1,8 @@
 -- stdout --
 
-Running tests for module 'dataproviders'
+Running Tests
+
+	dataproviders
 
 	testGetState:1 has failed.
 
@@ -22,7 +24,7 @@ Running tests for module 'dataproviders'
 
 		Test execution time : <DURATION>s
 
-Running tests for module 'dataproviders.module1'
+	dataproviders.module1
 	No tests found
 -- stderr --
 ballerina: there are test failures
