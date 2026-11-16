@@ -1,0 +1,24 @@
+-- stdout --
+true read write c1 alice Bearer
+1 1 s a i j
+{"auth":"Bearer cc-1","extra":"v","hint":"access_token"}
+false -
+false -
+Credential cannot be empty. | no cause
+true -
+true bob
+OAuth2 validation failed. | Invalid value for the introspection response field 'exp'.
+OAuth2 validation failed. | Invalid value for the introspection response field 'exp'.
+OAuth2 validation failed. | Invalid value for the introspection response field 'aud'.
+OAuth2 validation failed. | Invalid value for the introspection response field 'active'.
+OAuth2 validation failed. | Invalid value for the introspection response field 'iat'.
+OAuth2 validation failed. | The introspection response is not a JSON object.
+OAuth2 validation failed. | Failed to call the introspection endpoint 'http://testserver/401'.
+OAuth2 validation failed. | Failed to convert 'not json' to JSON.
+false -
+true
+true bob
+true bob
+true
+true bob
+-- stderr --

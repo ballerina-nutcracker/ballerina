@@ -19,7 +19,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
 | [mime](../../lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md)               | 15 | 2 | 2 | 79% |
 | [mqtt](../../lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md)               | 21 | 2 | 2 | 84% |
-| [oauth2](../../lib/stdlibs/ballerina/oauth2/0.0.1/go1.27/README.md) | 7 | 2 | 1 | 70% |
+| [oauth2](../../lib/stdlibs/ballerina/oauth2/0.0.1/go1.27/README.md) | 8 | 2 | 0 | 80% |
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
 | [protobuf](../../lib/stdlibs/ballerina/protobuf/0.0.1/go1.27/README.md)       | 11 | 2 | 0 | 85% |
 | [random](../../lib/stdlibs/ballerina/random/0.0.1/go1.27/README.md)           | 3 | 1 | 1 | 60% |
@@ -28,7 +28,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **304** | **38** | **71** | **73%** |
+| **Total**                                         | **305** | **38** | **70** | **74%** |
 
 ## Notable Behavioural Changes
 
@@ -136,6 +136,7 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### oauth2
 
 - **A restricted custom header returns an error.** jBallerina panics with `IllegalArgumentException` when `customHeaders` holds a header Java's HTTP client restricts (`Connection`, `Content-Length`, `Expect`, `Host`, `Upgrade`); the Go-native version returns an `oauth2:Error` caused by `Failed to send the request to the endpoint. restricted header name: "<name>"` (<https://github.com/ballerina-platform/ballerina-library/issues/9715>).
+- **A malformed introspection response returns an error.** jBallerina panics when the introspection response is not a JSON object or a known field has an unexpected type (e.g. `"exp": "soon"`, a fractional `exp` or an `aud` array); the Go-native version returns an `oauth2:Error` caused by `Invalid value for the introspection response field '<name>'.` (<https://github.com/ballerina-platform/ballerina-library/issues/9716>).
 - **Endpoint and JSON errors carry Go's error text in their cause.** The cause of a failed request (e.g. `connect: connection refused`, or a request timeout) or of an unparsable response holds the Go library's message instead of the JVM's (`null`, `request timed out`, `FromJsonStringError`); the outer `oauth2:Error` messages are unchanged.
 
 ### os

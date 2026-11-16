@@ -123,6 +123,20 @@ func introspect(_ http.ResponseWriter, r *http.Request, form url.Values, reply f
 		reply(200, map[string]any{"active": true, "exp": time.Now().Unix() + 1})
 	case "string-exp":
 		reply(200, map[string]any{"active": true, "exp": "soon"})
+	case "numeric-string-exp":
+		reply(200, map[string]any{"active": true, "exp": "99999999999"})
+	case "aud-array":
+		reply(200, map[string]any{"active": true, "aud": []string{"a", "b"}})
+	case "active-string":
+		reply(200, map[string]any{"active": "yes"})
+	case "iat-string":
+		reply(200, map[string]any{"active": true, "iat": "1"})
+	case "decimal-exp":
+		reply(200, map[string]any{"active": true, "exp": 1.5})
+	case "no-exp":
+		reply(200, map[string]any{"active": true, "username": "bob"})
+	case "array":
+		reply(200, []int{1})
 	default:
 		reply(200, map[string]any{"active": false})
 	}
@@ -213,4 +227,11 @@ public function main() {
 		ExpectedPath: filepath.Join(expectedDir, "oauth2-client-tls-v.txtar"),
 	}
 	runExtern(t, tc, newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+func TestOAuth2Introspection(t *testing.T) {
+	t.Parallel()
+	server := oauth2Server()
+	defer server.Close()
+	runExtern(t, fileCase("oauth2-introspection-v"), newHTTPPal(rewriteClient(server.URL)), nil)
 }
