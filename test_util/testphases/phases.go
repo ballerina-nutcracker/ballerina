@@ -130,6 +130,7 @@ var builtinStdlibs = []stdlibEntry{
 	subModuleEntry("protobuf", "types.timestamp", "0.0.1", "go1.27"),
 	subModuleEntry("protobuf", "types.wrappers", "0.0.1", "go1.27"),
 	flatEntry("ldap", "0.0.1", "go1.27"),
+	flatEntry("auth", "0.0.1", "go1.27"),
 	flatEntry("udp", "0.0.1", "go1.27"),
 }
 

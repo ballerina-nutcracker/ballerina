@@ -8,6 +8,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 
 | Package                                           | Supported | Partially Supported | Not Yet Supported | Support % |
 |---------------------------------------------------|---|---|---|---|
+| [auth](../../lib/stdlibs/ballerina/auth/0.0.1/go1.27/README.md) | 5 | 2 | 1 | 62% |
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
@@ -26,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **281** | **36** | **69** | **73%** |
+| **Total**                                         | **286** | **38** | **70** | **72%** |
 
 ## Notable Behavioural Changes
 
@@ -170,4 +171,4 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **`Client->receiveDatagram()` reports the sender's address.** jBallerina fills the returned `Datagram`'s `remoteHost`/`remotePort` from the packet's recipient, which is the client's own local address — a bug in the reference implementation that contradicts the field documentation. This port reports the address of the peer that sent the datagram.
 - **`Caller.remoteHost`/`Caller.remotePort` are `final string`/`final int`.** jBallerina declares them as mutable `string?`/`int?` fields defaulting to `()`, but always sets them before a handler runs. This port declares them as never-nil `final` fields; code that reads them as `string?`/`int?` still compiles, but assigning to them does not.
 
-The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
+The remaining packages (`auth`, `math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.

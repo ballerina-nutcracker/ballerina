@@ -1,0 +1,9 @@
+-- stdout --
+bob ["admin","dev"]
+custom failure
+true
+false
+Credential cannot be empty.
+File user store values are not provided or not properly configured.
+File user store values are not provided or not properly configured.
+-- stderr --
