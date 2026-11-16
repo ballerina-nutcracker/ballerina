@@ -132,6 +132,7 @@ var builtinStdlibs = []stdlibEntry{
 	subModuleEntry("protobuf", "types.wrappers", "0.0.1", "go1.27"),
 	flatEntry("ldap", "0.0.1", "go1.27"),
 	flatEntry("udp", "0.0.1", "go1.27"),
+	flatEntry("oauth2", "0.0.1", "go1.27"),
 }
 
 // moduleBalFiles returns the sorted list of .bal file paths (embed-FS relative)
