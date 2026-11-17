@@ -409,6 +409,191 @@ public function main() {
     // @output true
     // @output false
     // @output false
+
+    // A DOCTYPE and processing instructions get the same checks for a union target, and the entities declared in
+    // the internal subset expand.
+    string body = "<t><r><id>x</id></r></t>";
+    string[] doctypeInputs = [
+        "<!DOCTYPE>" + body,
+        "<!DOCTYPEt>" + body,
+        "<!DOCTYPE 1t>" + body,
+        "<!DOCTYPE a><!DOCTYPE b>" + body,
+        "<!DOCTYPE t [garbage]>" + body,
+        "<?p \u{1}?>" + body,
+        "<t><r><id>x<?p \u{1}?></id></r></t>",
+        "<t><!--\u{1}--><r><id>x</id></r></t>",
+        // U+FFFE and U+FFFF are rejected (ballerina-platform/ballerina-library#9742).
+        "<?p \u{FFFE}?>" + body,
+        "<!--\u{FFFF}-->" + body,
+        "<!DOCTYPE t [<!-- c --><?pi x?><!ATTLIST t a CDATA #IMPLIED><!ENTITY % p \"v\">]>" + body,
+        "<!DOCTYPE t [<!ENTITY e \"v&#65;\"><!ENTITY e \"w\">]><t><r><id>&e;</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY e 'a'><!ENTITY f \"&e;b&#38;#60;\">]><t><r><id a=\"&f;\">&f;</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY e \"<b>v</b>\">]><t><r><id>&e;</id></r></t>",
+        "<!DOCTYPE t SYSTEM \"t.dtd\" [<!ENTITY e SYSTEM \"e.xml\">]><t><r><id>&e;</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY e \"&f;\"><!ENTITY f \"&e;\">]><t><r><id>&e;</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY e \"v\">]><t><r><id>&g;</id></r></t>"
+    ];
+    foreach string input in doctypeInputs {
+        record {|record {|string id;|}|record {|int n;|} r;|}|error parsed = trap xmldata:parseString(input);
+        show(parsed);
+    }
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character '>' (code 62) (expected a name start character)
+    // @output E: failed to parse xml: XML syntax error on line 1: Unrecognized XML directive '<!DOCTYPEt' (misspelled DOCTYPE?).
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character '1' (code 49) (expected a name start character)
+    // @output E: failed to parse xml: XML syntax error on line 1: Duplicate DOCTYPE declaration
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character 'g' (code 103) (in internal DTD subset; expected a '<' to start a directive)
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+    // @output E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFE
+    // @output E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFF
+    // @output {"r":{"id":"x"}}
+    // @output {"r":{"id":"vA"}}
+    // @output {"r":{"id":"ab&lt;"}}
+    // @output E: failed to parse xml: XML syntax error on line 1: Entity "e" contains markup, which is not supported
+    // @output E: failed to parse xml: XML syntax error on line 1: External entity "e" is not supported
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal entity expansion: entity "e" expands itself recursively
+    // @output E: failed to parse xml: XML syntax error on line 1: invalid character entity &g;
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected character '>' (code 62) (expected a name start character)
+    // @output E: xml root element is missing
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+    // A record target stops at the DOCTYPE, as in jBallerina, after checking the declaration up to its subset.
+    foreach string input in [doctypeInputs[0], doctypeInputs[4], doctypeInputs[5], doctypeInputs[6], doctypeInputs[7], doctypeInputs[8], doctypeInputs[9]] {
+        record {|record {|string id;|} r;|}|error parsed = xmldata:parseString(input);
+        show(parsed);
+    }
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+    // @output E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+    // @output E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFE
+    // @output E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFF
+
+    // The internal subset's attribute defaults apply, with the first declaration of an attribute binding, and its
+    // parameter entities expand to the declarations they hold.
+    string[] subsetInputs = [
+        "<!DOCTYPE t [<!ATTLIST r a CDATA \"p\tq&#9;r\" b NMTOKENS '  m  n ' c CDATA #IMPLIED><!ATTLIST r a CDATA 'two' c CDATA 'c'>]>" + body,
+        "<!DOCTYPE t [<!ATTLIST r a CDATA #FIXED 'd'>]><t><r a='given'><id>x</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY e 'ev'><!ATTLIST r a (x|y) '&e;!' b NOTATION (n) 'n'>]>" + body,
+        "<!DOCTYPE t [<!ATTLIST r a CDATA '&e;'><!ENTITY e 'ev'>]>" + body,
+        "<!DOCTYPE t [<!ATTLIST r a CDATA 'a<b'>]>" + body,
+        "<!DOCTYPE t [<!ATTLIST r a FOO 'd'>]>" + body,
+        "<!DOCTYPE t [<!ENTITY % pe \"<!ENTITY e 'w'>\"><!ENTITY % pe \"<!ENTITY e 'v'>\"> %pe; %undeclared;]><t><r><id>&e;</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY % pe SYSTEM 'pe.dtd'> %pe;]>" + body,
+        "<!DOCTYPE t [<!ENTITY % pe \"<!ENTITY e \"> %pe; 'w'>]>" + body
+    ];
+    foreach string input in subsetInputs {
+        record {|record {|string id; string a?; string b?; string c?;|}|record {|int n;|} r;|}|error parsed = trap xmldata:parseString(input);
+        show(parsed);
+    }
+    // @output {"r":{"a":"p q\tr","b":"m n","id":"x"}}
+    // @output {"r":{"a":"given","id":"x"}}
+    // @output {"r":{"a":"ev!","b":"n","id":"x"}}
+    // @output E: failed to parse xml: XML syntax error on line 1: Undeclared general entity "e"
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected '<' in attribute value
+    // @output E: failed to parse xml: XML syntax error on line 1: Unrecognized attribute type "FOO"
+    // @output {"r":{"id":"w"}}
+    // @output E: failed to parse xml: XML syntax error on line 1: External parameter entity "pe" is not supported
+    // @output E: failed to parse xml: XML syntax error on line 1: Unexpected end of DOCTYPE declaration; expected ']' to end the internal subset
+
+    // Entities expand only when referenced. As in jBallerina, a document makes at most 100000 expansions, nested
+    // ones and those of parameter entities included, nested at most 500 deep. The text they add is also capped at
+    // 2^26 characters, which jBallerina leaves unbounded (ballerina-platform/ballerina-library#9775).
+    string[] limitInputs = [
+        entityLevels(8) + body,
+        entityLevels(4) + "<t><r><id>" + repeat("&a4;", 9) + "</id></r></t>",
+        entityLevels(4) + "<t><r><id>" + repeat("&a4;", 10) + "</id></r></t>",
+        entityLevels(4) + "<t><r a='" + repeat("&a4;", 5) + "'><id>" + repeat("&a4;", 5) + "</id></r></t>",
+        parameterLevels(4) + body,
+        parameterLevels(5) + body,
+        entityChain(500) + "<t><r><id>&e500;</id></r></t>",
+        entityChain(501) + "<t><r><id>&e501;</id></r></t>",
+        parameterChain(500) + "<t><r><id>&z;</id></r></t>",
+        parameterChain(501) + "<t><r><id>&z;</id></r></t>",
+        "<!DOCTYPE t [<!ENTITY b \"" + repeat("b", 10000) + "\">]><t><r><id>" + repeat("&b;", 6711) + "</id></r></t>"
+    ];
+    foreach string input in limitInputs {
+        record {|record {|string id;|}|record {|int n;|} r;|}|error parsed = trap xmldata:parseString(input);
+        if parsed is error {
+            show(parsed);
+        } else {
+            io:println(parsed.r is record {|string id;|} ? (<record {|string id;|}>parsed.r).id.length() : -1);
+        }
+    }
+    // @output 1
+    // @output 90000
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+    // @output 1
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+    // @output 1
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion depth limit (500) exceeded
+    // @output 1
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion depth limit (500) exceeded
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+    // References after an empty element count once (55555 expansions). An attribute default counts towards the
+    // text cap for each element it is applied to, and one built from entities also when declared
+    // (ballerina-platform/ballerina-library#9775).
+    string entityDefault = "<!DOCTYPE t [<!ENTITY b \"" + repeat("b", 10000) + "\"><!ATTLIST r a CDATA \"" + repeat("&b;", 67) + "\">]>";
+    string literalDefault = "<!DOCTYPE t [<!ATTLIST r a CDATA \"" + repeat("b", 1000000) + "\">]>";
+    string[] repeatedInputs = [
+        entityLevels(4) + "<t>" + repeat("<x/><r a='&a4;'/>", 5) + "</t>",
+        entityDefault + "<t>" + repeat("<r/>", 99) + "<r a='x'/></t>",
+        entityDefault + "<t>" + repeat("<r/>", 100) + "</t>",
+        literalDefault + "<t>" + repeat("<r/>", 67) + "</t>",
+        literalDefault + "<t>" + repeat("<r/>", 68) + "</t>"
+    ];
+    foreach string input in repeatedInputs {
+        record {|record {|string a?;|}[]|record {|int n;|} r;|}|error parsed = trap xmldata:parseString(input);
+        if parsed is error {
+            show(parsed);
+        } else {
+            io:println(parsed.r is record {|string a?;|}[] ? (<record {|string a?;|}[]>parsed.r).length() : -1);
+        }
+    }
+    // @output 5
+    // @output 100
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+    // @output 67
+    // @output E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+    record {|record {|string id;|} r;|}|error unreferenced = xmldata:parseString(entityLevels(8) + body);
+    show(unreferenced);
+    // @output E: xml root element is missing
+}
+
+// entityLevels declares entities a0 to a<levels>, where a<i> holds ten references to a<i-1>.
+function entityLevels(int levels) returns string {
+    string s = "<!DOCTYPE t [<!ENTITY a0 \"a\">";
+    foreach int i in 1 ... levels {
+        s += "<!ENTITY a" + i.toString() + " \"" + repeat("&a" + (i - 1).toString() + ";", 10) + "\">";
+    }
+    return s + "]>";
+}
+
+// parameterLevels expands parameter entity p<levels>, where p<i> holds ten references to p<i-1>.
+function parameterLevels(int levels) returns string {
+    string s = "<!DOCTYPE t [<!ENTITY % p0 \"<!-- c -->\">";
+    foreach int i in 1 ... levels {
+        s += "<!ENTITY % p" + i.toString() + " \"" + repeat("&#37;p" + (i - 1).toString() + ";", 10) + "\">";
+    }
+    return s + "%p" + levels.toString() + ";]>";
+}
+
+// entityChain declares entities e1 to e<n>, where e<i> references e<i-1>, so &e<n>; nests n expansions deep.
+function entityChain(int n) returns string {
+    string s = "<!DOCTYPE t [<!ENTITY e1 \"z\">";
+    foreach int i in 2 ... n {
+        s += "<!ENTITY e" + i.toString() + " \"&e" + (i - 1).toString() + ";\">";
+    }
+    return s + "]>";
+}
+
+// parameterChain declares parameter entities p1 to p<n>, where p<i> declares an entity and references p<i+1>,
+// so %p1; nests n expansions deep.
+function parameterChain(int n) returns string {
+    string s = "<!DOCTYPE t [";
+    foreach int i in 1 ..< n {
+        s += "<!ENTITY % p" + i.toString() + " \"<!ENTITY y" + i.toString() + " 'y'> &#37;p" + (i + 1).toString() + ";\">";
+    }
+    return s + "<!ENTITY % p" + n.toString() + " \"<!ENTITY z 'z'>\"> %p1;]>";
 }
 
 function nestedValue(int depth) returns xml {

@@ -10,7 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
-| [data.xmldata](../../lib/stdlibs/ballerina/data.xmldata/0.0.1/go1.27/README.md) | 2 | 8 | 7 | 12% |
+| [data.xmldata](../../lib/stdlibs/ballerina/data.xmldata/0.0.1/go1.27/README.md) | 2 | 9 | 7 | 11% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -27,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **283** | **44** | **76** | **70%** |
+| **Total**                                         | **283** | **45** | **76** | **70%** |
 
 ## Notable Behavioural Changes
 
@@ -69,6 +69,8 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **`int` subtype and `byte` fields are converted with a range check.** jBallerina's `parseString` rejects an element mapped to an `int` subtype such as `int:Signed8`, or to `byte`, with `invalid rest type`, its `parseAsType` rejects an `int` subtype element with `unsupported input type`, and both replace an `int` subtype attribute value with `0` ([ballerina-library#9510](https://github.com/ballerina-platform/ballerina-library/issues/9510)); the Go-native version converts the value and checks it against the type's range, so `200` for `int:Signed8` returns `'string' value '200' cannot be converted to 'lang.int:Signed8'`.
 - **A recursive record target is parsed.** jBallerina's `parseString` fails with `failed to parse xml: 'null'` when the target record refers to itself, as in `type Node record { Node a?; }`, even for `<a><a></a></a>`, while an equivalent non-recursive record parses; the Go-native version parses into the recursive record, giving `{"a":{}}` ([ballerina-library#9635](https://github.com/ballerina-platform/ballerina-library/issues/9635)).
 - **Every parse path applies the 1000-level element depth limit.** jBallerina's `parseAsType` has no element depth limit, so a 1001-level `xml` value converts and a value nested about 2000 levels or more fails with a `failed to get xml as string: ...` stack-overflow error, and its `parseString` with a target that contains a union panics with a `TypeCastError` instead of returning the depth-limit error; the Go-native version returns `failed to parse xml: Maximum Element Depth limit (1000) Exceeded` from `parseString`, `parseBytes`, `parseStream` and `parseAsType` for every target type ([ballerina-library#9643](https://github.com/ballerina-platform/ballerina-library/issues/9643)).
+- **U+FFFE and U+FFFF are rejected.** jBallerina's `parseString` accepts the noncharacters U+FFFE and U+FFFF, which XML 1.0 excludes, in text, attribute values, comments and processing instructions, and converts the document; the Go-native version rejects them as it does other illegal characters ([ballerina-library#9742](https://github.com/ballerina-platform/ballerina-library/issues/9742)).
+- **Entity text is capped at 2^26 characters.** jBallerina limits a document's entity expansions to 100000 and their nesting to 500 but not the text they add, and copies each attribute-list default into every element it applies to, so a document of a few kilobytes can exhaust the heap; the Go-native version fails a document whose entity expansions and applied attribute-list defaults add more than 2^26 characters with `Maximum entity expansion length limit (67108864 characters) exceeded` ([ballerina-library#9775](https://github.com/ballerina-platform/ballerina-library/issues/9775)).
 
 ### file
 

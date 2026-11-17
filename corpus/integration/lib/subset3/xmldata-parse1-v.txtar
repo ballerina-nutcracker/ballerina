@@ -127,4 +127,54 @@ true
 true
 false
 false
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '>' (code 62) (expected a name start character)
+E: failed to parse xml: XML syntax error on line 1: Unrecognized XML directive '<!DOCTYPEt' (misspelled DOCTYPE?).
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '1' (code 49) (expected a name start character)
+E: failed to parse xml: XML syntax error on line 1: Duplicate DOCTYPE declaration
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'g' (code 103) (in internal DTD subset; expected a '<' to start a directive)
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFE
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFF
+{"r":{"id":"x"}}
+{"r":{"id":"vA"}}
+{"r":{"id":"ab&lt;"}}
+E: failed to parse xml: XML syntax error on line 1: Entity "e" contains markup, which is not supported
+E: failed to parse xml: XML syntax error on line 1: External entity "e" is not supported
+E: failed to parse xml: XML syntax error on line 1: Illegal entity expansion: entity "e" expands itself recursively
+E: failed to parse xml: XML syntax error on line 1: invalid character entity &g;
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '>' (code 62) (expected a name start character)
+E: xml root element is missing
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFE
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFF
+{"r":{"a":"p q\tr","b":"m n","id":"x"}}
+{"r":{"a":"given","id":"x"}}
+{"r":{"a":"ev!","b":"n","id":"x"}}
+E: failed to parse xml: XML syntax error on line 1: Undeclared general entity "e"
+E: failed to parse xml: XML syntax error on line 1: Unexpected '<' in attribute value
+E: failed to parse xml: XML syntax error on line 1: Unrecognized attribute type "FOO"
+{"r":{"id":"w"}}
+E: failed to parse xml: XML syntax error on line 1: External parameter entity "pe" is not supported
+E: failed to parse xml: XML syntax error on line 1: Unexpected end of DOCTYPE declaration; expected ']' to end the internal subset
+1
+90000
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+1
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+1
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion depth limit (500) exceeded
+1
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion depth limit (500) exceeded
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+5
+100
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+67
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+E: xml root element is missing
 -- stderr --

@@ -41,11 +41,12 @@ type xmlParser struct {
 func parseXML(t *typer, opts sourceOptions, input string, target semtypes.SemType) (result values.BalValue, err error) {
 	defer recoverAsParseError(&err)
 	if t.containsUnionType(target) {
-		if err := checkWellFormed(input); err != nil {
+		doctype, err := checkWellFormed(input)
+		if err != nil {
 			return nil, newXMLError("failed to parse xml: %s", err.Error())
 		}
 		// The reader has checked the text, so lenient mode only builds the value, skipping a prolog DOCTYPE.
-		source, err := values.ParseAsXMLValue(t.tc, input[declarationEnd(input):], values.XMLLenientMode)
+		source, err := values.ParseAsXMLValueWithDTD(t.tc, input[declarationEnd(input):], values.XMLLenientMode, doctype)
 		if err != nil {
 			return nil, xmlParseError(err.Error())
 		}
@@ -73,15 +74,19 @@ func parseXML(t *typer, opts sourceOptions, input string, target semtypes.SemTyp
 	return t.build(p.currentNode)
 }
 
-// checkWellFormed runs the reader over input so a union target gets the XML 1.0 checks ParseAsXMLValue skips.
-func checkWellFormed(input string) error {
+// checkWellFormed runs the reader over input so a union target gets the XML 1.0 checks ParseAsXMLValue skips,
+// returning what the internal subset adds to the document.
+func checkWellFormed(input string) (values.XMLDTD, error) {
 	reader := newStaxReader(input)
 	for reader.hasNext() {
 		if _, err := reader.next(); err != nil {
-			return err
+			return values.XMLDTD{}, err
 		}
 	}
-	return nil
+	if reader.dtd == nil {
+		return values.XMLDTD{}, nil
+	}
+	return values.XMLDTD{Entities: reader.dtd.expanded, AttributeDefaults: reader.dtd.attributeDefaults()}, nil
 }
 
 func (p *xmlParser) parse(root typeInfo) error {

@@ -75,8 +75,16 @@ type staxReader struct {
 	seenRoot   bool
 	finished   bool
 	open       []xml.Name
-	// declarationError is reported by the first next call.
-	declarationError string
+	// pendingError is reported by the next call to next.
+	pendingError string
+	seenDoctype  bool
+	// subset is the internal subset of the DOCTYPE just read, parsed when the reader moves past it.
+	subset        string
+	subsetPending bool
+	dtd           *dtd
+	// scanned is the offset whose entity references were last counted, as the decoder returns the end of an
+	// empty element without reading.
+	scanned int64
 }
 
 // xmlWhitespace is XML 1.0's S production, narrower than strings.TrimSpace's Unicode spaces.
@@ -99,9 +107,10 @@ func newStaxReader(input string) *staxReader {
 		input:   input,
 		decoder: decoder,
 		scopes:  []map[string]string{{"xml": values.XMLNamespaceURI}},
+		scanned: -1,
 	}
 	if end > 0 {
-		r.declarationError = xmlDeclarationError(input[len("<?xml") : end-len("?>")])
+		r.pendingError = xmlDeclarationError(input[len("<?xml") : end-len("?>")])
 	}
 	return r
 }
@@ -127,12 +136,28 @@ func (r *staxReader) eventType() staxEvent {
 }
 
 func (r *staxReader) next() (staxEvent, error) {
-	if message := r.declarationError; message != "" {
-		r.declarationError = ""
+	if message := r.pendingError; message != "" {
+		r.pendingError = ""
 		return eventNone, r.syntaxError(message)
+	}
+	if r.subsetPending {
+		r.subsetPending = false
+		var message string
+		if r.dtd, message = parseInternalSubset(r.subset); message != "" {
+			return eventNone, r.syntaxError(message)
+		}
+		r.decoder.Entity = r.dtd.expanded
 	}
 	for {
 		offset := r.decoder.InputOffset()
+		if r.dtd != nil && offset != r.scanned {
+			r.scanned = offset
+			for _, name := range entityReferences(r.input[offset:]) {
+				if message := r.dtd.reference(name); message != "" {
+					return eventNone, r.syntaxError(message)
+				}
+			}
+		}
 		token, err := r.decoder.RawToken()
 		if errors.Is(err, io.EOF) {
 			if r.depth > 0 || !r.seenRoot {
@@ -143,6 +168,13 @@ func (r *staxReader) next() (staxEvent, error) {
 			return r.event, nil
 		}
 		if err != nil {
+			var syntax *xml.SyntaxError
+			if errors.As(err, &syntax) && r.dtd != nil {
+				name := strings.TrimSuffix(strings.TrimPrefix(syntax.Msg, "invalid character entity &"), ";")
+				if message := r.dtd.referenceError(name); message != "" {
+					return eventNone, r.syntaxError(message)
+				}
+			}
 			return eventNone, err
 		}
 		event, skip, err := r.accept(token, r.input[offset:r.decoder.InputOffset()])
@@ -176,6 +208,11 @@ func (r *staxReader) accept(token xml.Token, raw string) (staxEvent, bool, error
 		}
 		if err := r.startElement(t); err != nil {
 			return eventNone, false, err
+		}
+		if r.dtd != nil {
+			if message := r.dtd.applyDefaults(t.Name, t.Attr); message != "" {
+				return eventNone, false, r.syntaxError(message)
+			}
 		}
 		r.depth++
 		r.seenRoot = true
@@ -219,12 +256,18 @@ func (r *staxReader) accept(token xml.Token, raw string) (staxEvent, bool, error
 		}
 		return eventCharacters, false, nil
 	case xml.Comment:
+		if message := illegalCharError(string(t)); message != "" {
+			return eventNone, false, r.syntaxError(message)
+		}
 		r.text = string(t)
 		return eventComment, false, nil
 	case xml.ProcInst:
 		// The opening XML declaration never reaches the decoder, so any other use of the target is reserved.
 		if strings.EqualFold(t.Target, "xml") {
 			return eventNone, false, r.syntaxError(fmt.Sprintf("Illegal processing instruction target (%q); xml (case insensitive) is reserved by the specs.", t.Target))
+		}
+		if message := illegalCharError(string(t.Inst)); message != "" {
+			return eventNone, false, r.syntaxError(message)
 		}
 		r.text = string(t.Inst)
 		return eventProcessingInstruction, false, nil
@@ -237,10 +280,71 @@ func (r *staxReader) accept(token xml.Token, raw string) (staxEvent, bool, error
 			return eventNone, false, r.syntaxError(fmt.Sprintf("Unexpected character '%c' (code %d) after '<!' (malformed comment?)", c, c))
 		case r.seenRoot:
 			return eventNone, false, r.syntaxError("Can not have DOCTYPE declaration in epilog")
+		case r.seenDoctype:
+			return eventNone, false, r.syntaxError("Duplicate DOCTYPE declaration")
 		}
+		r.seenDoctype = true
+		subset, message := parseDoctype(raw)
+		if message != "" {
+			return eventNone, false, r.syntaxError(message)
+		}
+		// Like a StAX reader, the internal subset is checked only when reading past the DOCTYPE event.
+		r.subset, r.subsetPending = subset, true
 		return eventDTD, false, nil
 	}
 	return eventNone, true, nil
+}
+
+// illegalCharError reports a character XML 1.0 [2] excludes, as encoding/xml does only for text and attributes.
+func illegalCharError(s string) string {
+	for _, c := range s {
+		switch {
+		case c < 0x20 && c != '\t' && c != '\n' && c != '\r':
+			return fmt.Sprintf("Illegal character ((CTRL-CHAR, code %d))", c)
+		case c == 0xFFFE || c == 0xFFFF:
+			return fmt.Sprintf("illegal character code %U", c)
+		}
+	}
+	return ""
+}
+
+// entityReferences returns the names in the general entity references of the text or start tag that opens s,
+// which encoding/xml expands as it reads that token.
+func entityReferences(s string) []string {
+	end := strings.IndexByte(s, '<')
+	if end != 0 {
+		if end < 0 {
+			end = len(s)
+		}
+	} else if c, _ := utf8.DecodeRuneInString(s[1:]); isNameRune(c, true) {
+		end = tagEnd(s)
+	}
+	var names []string
+	walkReferences(s[:end], "", func(_, ref string) string {
+		if ref != "" && ref[0] != '#' && predefinedEntities[ref] == "" {
+			names = append(names, ref)
+		}
+		return ""
+	})
+	return names
+}
+
+// tagEnd returns the offset just past the start tag that opens s, skipping a '>' in an attribute value.
+func tagEnd(s string) int {
+	var quote byte
+	for i := 1; i < len(s); i++ {
+		switch {
+		case quote != 0:
+			if s[i] == quote {
+				quote = 0
+			}
+		case s[i] == '"' || s[i] == '\'':
+			quote = s[i]
+		case s[i] == '>':
+			return i + 1
+		}
+	}
+	return len(s)
 }
 
 // charRefError checks the character references in raw markup for surrogates: encoding/xml decodes them to
