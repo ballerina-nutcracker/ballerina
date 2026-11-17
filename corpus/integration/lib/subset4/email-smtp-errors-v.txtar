@@ -1,0 +1,26 @@
+-- stdout --
+username-only: [Invalid configuration: provide 'username'+'password' for basic auth, 'username'+'auth' for OAuth2, or neither for unauthenticated mode.]
+password-only: [Invalid configuration: provide 'username'+'password' for basic auth, 'username'+'auth' for OAuth2, or neither for unauthenticated mode.]
+pem-without-certificate: [Could not parse certificate: /tmp/bal_email_key.pem]
+not-text: [Content type of the email should be text.]
+send-not-text: [Content type of the email should be text.]
+invalid-content-type: [Invalid content type: text]
+missing-from: [The 'from' field is mandatory when using SMTP client without authentication. Please specify the 'from' address in the email message.]
+whitespace-address: [Local address contains control or whitespace]
+address-list: [Illegal address]
+bad-cc: [Illegal address]
+bad-bcc: [Illegal address]
+bad-reply-to: [Local address contains control or whitespace]
+bad-sender: [Local address contains control or whitespace]
+bad-from: [Illegal address]
+bad-header-name: [Invalid header name: Bad Name]
+cleared-to: [Error while sending the message to SMTP server : No recipient addresses ]
+no-recipients: [Error while sending the message to SMTP server : No recipient addresses ]
+bad-charset: [Unsupported charset: x-no-such-charset]
+multipart-file: [The content type of a file attachment cannot be multipart: multipart/mixed]
+invalid-attachment-type: [Invalid content type for the attachment '/tmp/bal_email_attachment.txt': not a type]
+missing-file: [IOException while sending message]
+true
+true
+invalid-entity-type: [Invalid content type for the attachment: multipart/;;]
+-- stderr --

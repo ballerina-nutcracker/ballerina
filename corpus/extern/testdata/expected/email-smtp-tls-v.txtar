@@ -1,0 +1,22 @@
+-- stdout --
+ssl-default-protocol: sent
+ssl-der-cert: sent
+ssl-bundle: sent
+ssl-tls13: sent
+ssl-cipher: sent
+ssl-untrusted: Could not connect to SMTP host: 127.0.0.1
+ssl-system-trust: Could not connect to SMTP host: 127.0.0.1
+ssl-hostname: Could not connect to SMTP host: localhost
+ssl-no-hostname-check: sent
+starttls-always: sent
+starttls-auto: sent
+starttls-untrusted: Could not convert socket to TLS
+starttls-always-unsupported: STARTTLS is required but host does not support STARTTLS
+starttls-auto-unsupported: sent
+never-with-secure-socket: sent
+never: sent
+missing-cert: init error: /no/such/cert.pem (No such file or directory)
+garbage-cert: init error: Could not parse certificate
+bad-version: init error: Unsupported TLS protocol version: SSLv3
+bad-cipher: init error: Unsupported cipher suite: NOT_A_CIPHER
+-- stderr --
