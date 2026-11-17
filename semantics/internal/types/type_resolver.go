@@ -6637,37 +6637,9 @@ func additiveSingletonType(t typeResolver, lhsTy, rhsTy semtypes.SemType, op mod
 		}
 		return semtypes.SemType{}, true
 	case bothSameType(semtypes.Int):
-		lhsValue := semtypes.SingleShape(lhsTy)
-		rhsValue := semtypes.SingleShape(rhsTy)
-		if lhsValue.IsPresent() && rhsValue.IsPresent() {
-			var resultValue int64
-			switch op {
-			case model.OperatorKind_ADD:
-				resultValue = lhsValue.Get().Value.(int64) + rhsValue.Get().Value.(int64)
-			case model.OperatorKind_SUB:
-				resultValue = lhsValue.Get().Value.(int64) - rhsValue.Get().Value.(int64)
-			default:
-				t.internalError(fmt.Sprintf("unexpect additive operand %s", string(op)), loc)
-			}
-			return semtypes.IntConst(resultValue), true
-		}
-		return semtypes.SemType{}, true
+		return foldAdditiveConst(t, lhsTy, rhsTy, op, loc, semtypes.IntConst), true
 	case bothSameType(semtypes.Float):
-		lhsValue := semtypes.SingleShape(lhsTy)
-		rhsValue := semtypes.SingleShape(rhsTy)
-		if lhsValue.IsPresent() && rhsValue.IsPresent() {
-			var resultValue float64
-			switch op {
-			case model.OperatorKind_ADD:
-				resultValue = lhsValue.Get().Value.(float64) + rhsValue.Get().Value.(float64)
-			case model.OperatorKind_SUB:
-				resultValue = lhsValue.Get().Value.(float64) - rhsValue.Get().Value.(float64)
-			default:
-				t.internalError(fmt.Sprintf("unexpect additive operand %s", string(op)), loc)
-			}
-			return semtypes.FloatConst(resultValue), true
-		}
-		return semtypes.SemType{}, true
+		return foldAdditiveConst(t, lhsTy, rhsTy, op, loc, semtypes.FloatConst), true
 	case bothSameType(semtypes.Decimal):
 		lhsValue := semtypes.SingleShape(lhsTy)
 		rhsValue := semtypes.SingleShape(rhsTy)
@@ -6693,6 +6665,24 @@ func additiveSingletonType(t typeResolver, lhsTy, rhsTy semtypes.SemType, op mod
 	default:
 		return semtypes.SemType{}, true
 	}
+}
+
+func foldAdditiveConst[T int64 | float64](t typeResolver, lhsTy, rhsTy semtypes.SemType, op model.OperatorKind, loc diagnostics.Location, toConst func(T) semtypes.SemType) semtypes.SemType {
+	lhsValue := semtypes.SingleShape(lhsTy)
+	rhsValue := semtypes.SingleShape(rhsTy)
+	if !lhsValue.IsPresent() || !rhsValue.IsPresent() {
+		return semtypes.SemType{}
+	}
+	var resultValue T
+	switch op {
+	case model.OperatorKind_ADD:
+		resultValue = lhsValue.Get().Value.(T) + rhsValue.Get().Value.(T)
+	case model.OperatorKind_SUB:
+		resultValue = lhsValue.Get().Value.(T) - rhsValue.Get().Value.(T)
+	default:
+		t.internalError(fmt.Sprintf("unexpect additive operand %s", string(op)), loc)
+	}
+	return toConst(resultValue)
 }
 
 func resolveAdditiveExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr, expectedType semtypes.SemType) (semtypes.SemType, expressionEffect, bool) {
@@ -6813,13 +6803,14 @@ func resolveRangeExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr)
 	return resultTy, effect, true
 }
 
-func resolveShiftExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (semtypes.SemType, expressionEffect, bool) {
+type intOperandExprInnerResolver func(t typeResolver, chain *binding, lhsTy semtypes.SemType, rhs ast.BLangActionOrExpression, op model.OperatorKind, pos diagnostics.Location) (semtypes.SemType, expressionEffect, bool)
+
+func resolveIntOperandExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr, resolveInner intOperandExprInnerResolver) (semtypes.SemType, expressionEffect, bool) {
 	lhsResult, ok := resolveActionOrExpression(t, chain, expr.LhsExpr, semtypes.Int)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	lhsTy, lhsEffect := lhsResult.ty, lhsResult.effect
-	resultTy, effect, ok := resolveShiftExprInner(t, sequentialChain(t, lhsEffect), lhsTy, expr.RhsExpr, expr.GetOperatorKind(), expr.GetPosition())
+	resultTy, effect, ok := resolveInner(t, sequentialChain(t, lhsResult.effect), lhsResult.ty, expr.RhsExpr, expr.GetOperatorKind(), expr.GetPosition())
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -6963,20 +6954,6 @@ func resolveMultiplicativeExprInner(t typeResolver, chain *binding, lhsTy semtyp
 		resultTy = semtypes.Union(semtypes.Nil, resultTy)
 	}
 	return resultTy, defaultExpressionEffect(chain), true
-}
-
-func resolveBitWiseExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (semtypes.SemType, expressionEffect, bool) {
-	lhsResult, ok := resolveActionOrExpression(t, chain, expr.LhsExpr, semtypes.Int)
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	lhsTy, lhsEffect := lhsResult.ty, lhsResult.effect
-	resultTy, effect, ok := resolveBitWiseExprInner(t, sequentialChain(t, lhsEffect), lhsTy, expr.RhsExpr, expr.GetOperatorKind(), expr.GetPosition())
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	setNodeType(t, expr, resultTy)
-	return resultTy, effect, true
 }
 
 func resolveBitWiseExprInner(t typeResolver, chain *binding, lhsTy semtypes.SemType, rhs ast.BLangActionOrExpression, op model.OperatorKind, pos diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {
@@ -7123,11 +7100,11 @@ func resolveBinaryExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr
 	case model.OperatorKind_CLOSED_RANGE, model.OperatorKind_HALF_OPEN_RANGE:
 		return resolveRangeExpr(t, chain, expr)
 	case model.OperatorKind_BITWISE_LEFT_SHIFT, model.OperatorKind_BITWISE_RIGHT_SHIFT, model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT:
-		return resolveShiftExpr(t, chain, expr)
+		return resolveIntOperandExpr(t, chain, expr, resolveShiftExprInner)
 	case model.OperatorKind_LESS_THAN, model.OperatorKind_LESS_EQUAL, model.OperatorKind_GREATER_THAN, model.OperatorKind_GREATER_EQUAL:
 		return resolveRelationalExpr(t, chain, expr)
 	case model.OperatorKind_BITWISE_AND, model.OperatorKind_BITWISE_OR, model.OperatorKind_BITWISE_XOR:
-		return resolveBitWiseExpr(t, chain, expr)
+		return resolveIntOperandExpr(t, chain, expr, resolveBitWiseExprInner)
 	default:
 		t.internalError(fmt.Sprintf("Unexpected binary expr %s", expr.OpKind), expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
@@ -7169,22 +7146,23 @@ func resolveEqualityExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryEx
 func resolveLogicalExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (semtypes.SemType, expressionEffect, bool) {
 	switch expr.OpKind {
 	case model.OperatorKind_AND:
-		return resolveAndExpr(t, chain, expr)
+		return resolveShortCircuitExpr(t, chain, expr, resolveAndExprInner)
 	case model.OperatorKind_OR:
-		return resolveOrExpr(t, chain, expr)
+		return resolveShortCircuitExpr(t, chain, expr, resolveOrExprInner)
 	default:
 		t.internalError(fmt.Sprintf("Unexpected logical expression op %s", string(expr.OpKind)), expr.GetPosition())
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
 }
 
-func resolveAndExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (semtypes.SemType, expressionEffect, bool) {
+type shortCircuitExprInnerResolver func(t typeResolver, chain *binding, lhsTy semtypes.SemType, lhsEffect expressionEffect, rhs ast.BLangActionOrExpression, pos diagnostics.Location) (semtypes.SemType, expressionEffect, bool)
+
+func resolveShortCircuitExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr, resolveInner shortCircuitExprInnerResolver) (semtypes.SemType, expressionEffect, bool) {
 	lhsResult, ok := resolveActionOrExpression(t, chain, expr.LhsExpr, semtypes.SemType{})
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	lhsTy, lhsEffect := lhsResult.ty, lhsResult.effect
-	resultTy, effect, ok := resolveAndExprInner(t, chain, lhsTy, lhsEffect, expr.RhsExpr, expr.GetPosition())
+	resultTy, effect, ok := resolveInner(t, chain, lhsResult.ty, lhsResult.effect, expr.RhsExpr, expr.GetPosition())
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
@@ -7215,20 +7193,6 @@ func resolveAndExprInner(t typeResolver, _ *binding, lhsTy semtypes.SemType, lhs
 	ifTrue := mergeChains(t, lhsEffect.ifTrue, rhsEffect.ifTrue, semtypes.Intersect)
 	ifFalse := mergeChains(t, lhsEffect.ifFalse, mergeChains(t, lhsEffect.ifTrue, rhsEffect.ifFalse, semtypes.Intersect), semtypes.Union)
 	return resultTy, expressionEffect{ifTrue: ifTrue, ifFalse: ifFalse}, true
-}
-
-func resolveOrExpr(t typeResolver, chain *binding, expr *ast.BLangBinaryExpr) (semtypes.SemType, expressionEffect, bool) {
-	lhsResult, ok := resolveActionOrExpression(t, chain, expr.LhsExpr, semtypes.SemType{})
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	lhsTy, lhsEffect := lhsResult.ty, lhsResult.effect
-	resultTy, effect, ok := resolveOrExprInner(t, chain, lhsTy, lhsEffect, expr.RhsExpr, expr.GetPosition())
-	if !ok {
-		return semtypes.SemType{}, expressionEffect{}, false
-	}
-	setNodeType(t, expr, resultTy)
-	return resultTy, effect, true
 }
 
 func resolveOrExprInner(t typeResolver, _ *binding, lhsTy semtypes.SemType, lhsEffect expressionEffect, rhs ast.BLangActionOrExpression, _ diagnostics.Location) (semtypes.SemType, expressionEffect, bool) {

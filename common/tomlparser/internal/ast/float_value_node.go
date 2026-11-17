@@ -22,15 +22,11 @@ import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // FloatValueNode holds a floating-point value.
 type FloatValueNode struct {
-	value float64
-	loc   diagnostics.Location
+	scalarValueNode[float64]
 }
 
 func NewFloatValueNode(value float64, loc diagnostics.Location) *FloatValueNode {
-	return &FloatValueNode{value: value, loc: loc}
+	return &FloatValueNode{scalarValueNode[float64]{value: value, loc: loc}}
 }
 
-func (n *FloatValueNode) Kind() TomlType            { return TypeFloat }
-func (n *FloatValueNode) Loc() diagnostics.Location { return n.loc }
-func (n *FloatValueNode) Value() float64            { return n.value }
-func (n *FloatValueNode) NativeValue() any          { return n.value }
+func (n *FloatValueNode) Kind() TomlType { return TypeFloat }

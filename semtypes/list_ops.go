@@ -80,42 +80,16 @@ func listFormulaIsEmpty(cx Context, pos conjunctionHandle, neg conjunctionHandle
 	return !listInhabited(cx, indices, memberTypesArray, nRequired, neg)
 }
 
+type listInhabitedFunc func(cx Context, indices []int, memberTypes []SemType, nRequired int, neg conjunctionHandle) bool
+
 func listInhabitedFast(cx Context, indices []int, memberTypes []SemType, nRequired int, neg conjunctionHandle) bool {
 	if neg == conjunctionNil {
 		return true
 	}
 	nt := cx.ListAtomType(cx.conjunctionAtom(neg))
 	negNext := cx.conjunctionNext(neg)
-	if nRequired > 0 && IsNever(listMemberAtInnerVal(nt.members, nt.rest, indices[nRequired-1])) {
-		return listInhabitedFast(cx, indices, memberTypes, nRequired, negNext)
-	}
-	negLen := nt.members.FixedLength
-	if negLen > 0 {
-		for i := range memberTypes {
-			index := indices[i]
-			if index >= negLen {
-				break
-			}
-			negMemberType := listMemberAt(nt.members, nt.rest, index)
-			common := Intersect(memberTypes[i], negMemberType)
-			if IsEmpty(cx, common) {
-				return listInhabitedFast(cx, indices, memberTypes, nRequired, negNext)
-			}
-		}
-		lenMemberTypes := len(memberTypes)
-		if lenMemberTypes < len(indices) && indices[lenMemberTypes] < negLen {
-			return listInhabitedFast(cx, indices, memberTypes, nRequired, negNext)
-		}
-
-		for i := nRequired; i < len(memberTypes); i++ {
-			if indices[i] >= negLen {
-				break
-			}
-			t := memberTypes[:i]
-			if listInhabitedFast(cx, indices, t, nRequired, negNext) {
-				return true
-			}
-		}
+	if inhabited, decided := listInhabitedAgainstNegLength(cx, indices, memberTypes, nRequired, nt, negNext, listInhabitedFast); decided {
+		return inhabited
 	}
 	for i := range memberTypes {
 		d := Diff(memberTypes[i], listMemberAt(nt.members, nt.rest, indices[i]))
@@ -124,6 +98,45 @@ func listInhabitedFast(cx Context, indices []int, memberTypes []SemType, nRequir
 		}
 	}
 	return false
+}
+
+// listInhabitedAgainstNegLength handles the cases where the negated atom nt can be skipped because of its required
+// members or fixed length, or where a shorter sample is inhabited. decided is false when the caller must still
+// compare the member types against nt.
+func listInhabitedAgainstNegLength(cx Context, indices []int, memberTypes []SemType, nRequired int, nt *ListAtomicType,
+	negNext conjunctionHandle, inhabitedFn listInhabitedFunc,
+) (inhabited bool, decided bool) {
+	if nRequired > 0 && IsNever(listMemberAtInnerVal(nt.members, nt.rest, indices[nRequired-1])) {
+		return inhabitedFn(cx, indices, memberTypes, nRequired, negNext), true
+	}
+	negLen := nt.members.FixedLength
+	if negLen <= 0 {
+		return false, false
+	}
+	for i := range memberTypes {
+		index := indices[i]
+		if index >= negLen {
+			break
+		}
+		negMemberType := listMemberAt(nt.members, nt.rest, index)
+		common := Intersect(memberTypes[i], negMemberType)
+		if IsEmpty(cx, common) {
+			return inhabitedFn(cx, indices, memberTypes, nRequired, negNext), true
+		}
+	}
+	lenMemberTypes := len(memberTypes)
+	if lenMemberTypes < len(indices) && indices[lenMemberTypes] < negLen {
+		return inhabitedFn(cx, indices, memberTypes, nRequired, negNext), true
+	}
+	for i := nRequired; i < len(memberTypes); i++ {
+		if indices[i] >= negLen {
+			break
+		}
+		if inhabitedFn(cx, indices, memberTypes[:i], nRequired, negNext) {
+			return true, true
+		}
+	}
+	return false, false
 }
 
 func listSampleTypes(cx Context, members fixedLengthArray, rest SemType, indices []int) ([]SemType, int) {
@@ -228,54 +241,25 @@ func fixedArrayShallowCopy(array fixedLengthArray) fixedLengthArray {
 func listInhabited(cx Context, indices []int, memberTypes []SemType, nRequired int, neg conjunctionHandle) bool {
 	if neg == conjunctionNil {
 		return true
-	} else {
-		nt := cx.ListAtomType(cx.conjunctionAtom(neg))
-		negNext := cx.conjunctionNext(neg)
-		if nRequired > 0 && IsNever(listMemberAtInnerVal(nt.members, nt.rest, indices[nRequired-1])) {
-			return listInhabited(cx, indices, memberTypes, nRequired, negNext)
-		}
-		negLen := nt.members.FixedLength
-		if negLen > 0 {
-			for i := range memberTypes {
-				index := indices[i]
-				if index >= negLen {
-					break
-				}
-				negMemberType := listMemberAt(nt.members, nt.rest, index)
-				common := Intersect(memberTypes[i], negMemberType)
-				if IsEmpty(cx, common) {
-					return listInhabited(cx, indices, memberTypes, nRequired, negNext)
-				}
-			}
-			lenMemberTypes := len(memberTypes)
-			if lenMemberTypes < len(indices) && indices[lenMemberTypes] < negLen {
-				return listInhabited(cx, indices, memberTypes, nRequired, negNext)
-			}
-			for i := nRequired; i < len(memberTypes); i++ {
-				if indices[i] >= negLen {
-					break
-				}
-				t := memberTypes[:i]
-				if listInhabited(cx, indices, t, nRequired, negNext) {
-					return true
-				}
-			}
-		}
-		for i := range memberTypes {
-			d := Diff(memberTypes[i], listMemberAt(nt.members, nt.rest, indices[i]))
-			if !IsEmpty(cx, d) {
-				// Clone the slice
-				t := make([]SemType, len(memberTypes))
-				copy(t, memberTypes)
-				t[i] = d
-				nReq := max(i+1, nRequired)
-				if listInhabited(cx, indices, t, nReq, negNext) {
-					return true
-				}
-			}
-		}
-		return false
 	}
+	nt := cx.ListAtomType(cx.conjunctionAtom(neg))
+	negNext := cx.conjunctionNext(neg)
+	if inhabited, decided := listInhabitedAgainstNegLength(cx, indices, memberTypes, nRequired, nt, negNext, listInhabited); decided {
+		return inhabited
+	}
+	for i := range memberTypes {
+		d := Diff(memberTypes[i], listMemberAt(nt.members, nt.rest, indices[i]))
+		if !IsEmpty(cx, d) {
+			t := make([]SemType, len(memberTypes))
+			copy(t, memberTypes)
+			t[i] = d
+			nReq := max(i+1, nRequired)
+			if listInhabited(cx, indices, t, nReq, negNext) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func listMemberAtInnerVal(fixedArray fixedLengthArray, rest SemType, index int) SemType {

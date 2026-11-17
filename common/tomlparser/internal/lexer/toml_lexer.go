@@ -589,25 +589,18 @@ func (l *Lexer) processHexLiteral(line, col, offset int) Token {
 
 // processOctalLiteral reads a 0o... octal integer.
 func (l *Lexer) processOctalLiteral(line, col, offset int) Token {
-	l.reader.Advance() // consume 'o' or 'O'
-	digitSeen := false
-	for isOctalDigit(l.reader.Peek()) {
-		digitSeen = true
-		l.reader.Advance()
-	}
-	lexeme := l.reader.GetMarkedChars()
-	if !digitSeen {
-		l.addError("missing digit after base prefix", line, col)
-		return Token{Kind: TokenInvalid, Value: lexeme, Line: line, Column: col, Offset: offset}
-	}
-	return Token{Kind: TokenOctInt, Value: lexeme, Line: line, Column: col, Offset: offset}
+	return l.processBasePrefixedDigits(line, col, offset, isOctalDigit, TokenOctInt)
 }
 
 // processBinaryLiteral reads a 0b... binary integer.
 func (l *Lexer) processBinaryLiteral(line, col, offset int) Token {
-	l.reader.Advance() // consume 'b' or 'B'
+	return l.processBasePrefixedDigits(line, col, offset, isBinaryDigit, TokenBinaryInt)
+}
+
+func (l *Lexer) processBasePrefixedDigits(line, col, offset int, isDigit func(rune) bool, kind TokenKind) Token {
+	l.reader.Advance() // consume the base prefix letter
 	digitSeen := false
-	for isBinaryDigit(l.reader.Peek()) {
+	for isDigit(l.reader.Peek()) {
 		digitSeen = true
 		l.reader.Advance()
 	}
@@ -616,7 +609,7 @@ func (l *Lexer) processBinaryLiteral(line, col, offset int) Token {
 		l.addError("missing digit after base prefix", line, col)
 		return Token{Kind: TokenInvalid, Value: lexeme, Line: line, Column: col, Offset: offset}
 	}
-	return Token{Kind: TokenBinaryInt, Value: lexeme, Line: line, Column: col, Offset: offset}
+	return Token{Kind: kind, Value: lexeme, Line: line, Column: col, Offset: offset}
 }
 
 // processExponent reads the exponent part of a float literal.
