@@ -1,0 +1,78 @@
+module $anon.. v 0.0.0;
+launch(int) -> future<int>{
+  bb0 {
+    captured = seed;
+    %3 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %7 = closure_fp $anon/.:$worker:launch:fork0:w
+    $desugar$3 = %7;
+    %9 = closure_fp $anon/.:$worker:launch:fork0:v
+    $desugar$4 = %9;
+    %11 = start $desugar$3() isolated=false -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %11;
+    %12 = start $desugar$4() isolated=false -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %12;
+    %13 = openLatch($desugar$0) -> bb4;
+  }
+  bb4 {
+    %0 = $desugar$1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    %2 = %1;
+    %3 = launch(%2) -> bb1;
+  }
+  bb1 {
+    escaped = %3;
+    %5 = ConstantLoad launched
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = wait escaped -> bb3;
+  }
+  bb3 {
+    result = %7;
+    %9 = println(result) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$worker:launch:fork0:v() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = (1, captured);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, captured) = %2;
+    return;
+  }
+}
+$worker:launch:fork0:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    %4 = (1, captured);
+    %5 = ConstantLoad 2
+    %6 = %5;
+    %3 = * %4 %6;
+    %0 = %3;
+    return;
+  }
+}

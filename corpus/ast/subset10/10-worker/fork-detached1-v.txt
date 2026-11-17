@@ -1,0 +1,56 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function launch (
+    (variable seed (type
+      (value-type int)))) (
+    (constrained-type
+      (builtin-ref-type future)
+      (value-type int)))
+    (block-function-body
+      (var-def
+        (variable captured (type
+          (value-type int)) (expr
+          (simple-var-ref seed))))
+      (fork
+        (named-worker w (
+          (value-type int))
+          (block-function-body
+            (expression-stmt
+              (single-wait-action
+                (simple-var-ref v)))
+            (return
+              (binary-expr *
+                (simple-var-ref captured)
+                (literal 2)))))
+        (named-worker v (
+          (value-type null))
+          (block-function-body
+            (compound-assignment +
+              (simple-var-ref captured)
+              (literal 1)))))
+      (return
+        (simple-var-ref w))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable escaped (type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int))) (expr
+          (invocation launch (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (literal launched))))
+      (var-def
+        (variable result (type
+          (union-type
+            (value-type int)
+            (error-type))) (expr
+          (single-wait-action
+            (simple-var-ref escaped)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref result)))))))

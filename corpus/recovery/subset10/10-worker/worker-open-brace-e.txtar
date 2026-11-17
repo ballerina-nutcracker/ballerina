@@ -1,0 +1,116 @@
+-- worker-open-brace-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+// A missing brace of a worker body or of a fork is reported, and the worker
+// is still analysed.
+function forkWorkerOpenBrace() {
+    fork {
+        worker w
+            int x = 1; // @error missing open brace
+        }
+    }
+}
+
+function bodyWorkerOpenBrace() {
+    worker w
+        int x = 1; // @error missing open brace
+    }
+}
+
+function forkOpenBrace() {
+    fork
+        worker w { // @error missing open brace of the fork
+            int x = 1; // @error unused variable
+        }
+    }
+}
+-- ast --
+(package
+  (function forkWorkerOpenBrace () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker w (
+          (value-type null))
+          (block-function-body
+            (var-def
+              (variable x (type
+                (value-type int)) (expr
+                (literal 1)))))))))
+  (function bodyWorkerOpenBrace () (
+    (value-type null))
+    (block-function-body
+      (named-worker w (
+        (value-type null))
+        (block-function-body
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (literal 1))))))))
+  (function forkOpenBrace () (
+    (value-type null))
+    (block-function-body
+      (fork
+        (named-worker w (
+          (value-type null))
+          (block-function-body
+            (var-def
+              (variable x (type
+                (value-type int)) (expr
+                (literal 1))))))))))
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> worker-open-brace-e.bal:22:1
+   |
+22 |             int x = 1; // @error missing open brace
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |         }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> worker-open-brace-e.bal:29:1
+   |
+29 |         int x = 1; // @error missing open brace
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 |     }
+   |
+
+error[SEMANTIC_ERROR]: unused variable 'x'
+  --> worker-open-brace-e.bal:36:1
+   |
+36 |             int x = 1; // @error unused variable
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 |         }
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> worker-open-brace-e.bal:22:1
+   |
+22 |             int x = 1; // @error missing open brace
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> worker-open-brace-e.bal:29:1
+   |
+29 |         int x = 1; // @error missing open brace
+   |
+
+error[SYNTAX_ERROR]: missing open brace token
+  --> worker-open-brace-e.bal:35:1
+   |
+35 |         worker w { // @error missing open brace of the fork
+   |

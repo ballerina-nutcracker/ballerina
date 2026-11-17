@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function boom () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal boom))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:main:fork0:a () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (invocation boom ()))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable _ (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1))))))))

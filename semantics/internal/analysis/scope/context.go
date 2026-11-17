@@ -117,9 +117,9 @@ type (
 		id       ScopeID
 		kind     functionKind
 		isolated bool
-		// workerRefs maps each named worker declared in the function's body to
-		// the one value reference already seen for it, nil until one is.
-		workerRefs map[model.SymbolRef]*ast.BLangVarRef
+		// workerRegions maps each worker of a region declared in this closure to
+		// the reference table of its region.
+		workerRegions map[model.SymbolRef]*workerRegion
 	}
 
 	lockContext struct {
@@ -277,11 +277,12 @@ func NewLambda(parent Context, node invokableSignatureNode) Context {
 
 func newFunctionContext(parent Context, node invokableSignatureNode) *functionContext {
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		symbol:      node.Symbol(),
-		id:          nextScopeID(parent),
+		contextBase:   contextBase{outer: parent},
+		factsBase:     factsBase{need: false},
+		locals:        make(map[model.SymbolRef]VarDecl),
+		workerRegions: make(map[model.SymbolRef]*workerRegion),
+		symbol:        node.Symbol(),
+		id:            nextScopeID(parent),
 	}
 	if sig, ok := parent.CompilerCtx().FunctionTypedSignature(node.Symbol()); ok {
 		fc.retTy = sig.ReturnType
@@ -300,11 +301,12 @@ func finishFunctionContext(fc *functionContext, node invokableSignatureNode) Con
 func NewExpressionClosure(parent Context, kind ClosureKind) Context {
 	enclosing, hasEnclosing := EnclosingFunction(parent)
 	fc := &functionContext{
-		contextBase: contextBase{outer: parent},
-		factsBase:   factsBase{need: false},
-		locals:      make(map[model.SymbolRef]VarDecl),
-		id:          nextScopeID(parent),
-		kind:        fnExpressionClosure,
+		contextBase:   contextBase{outer: parent},
+		factsBase:     factsBase{need: false},
+		locals:        make(map[model.SymbolRef]VarDecl),
+		workerRegions: make(map[model.SymbolRef]*workerRegion),
+		id:            nextScopeID(parent),
+		kind:          fnExpressionClosure,
 	}
 	if hasEnclosing {
 		fc.class, fc.self = enclosing.class, enclosing.self

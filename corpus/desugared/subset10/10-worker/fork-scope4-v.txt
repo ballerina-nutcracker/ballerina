@@ -1,0 +1,151 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function localNamedLikeWorker () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:localNamedLikeWorker:fork0:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable w (type
+                    (value-type int)) (expr
+                    (literal 5))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref w)
+                    (literal 1)))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function nestedForkWorkerNamedLikeWorker () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:nestedForkWorkerNamedLikeWorker:fork0:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation lang.__internal createLatch ()))))
+                (var-def
+                  (variable $desugar$1))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (lambda
+                      (function $worker:nestedForkWorkerNamedLikeWorker.$worker:nestedForkWorkerNamedLikeWorker:fork0:w:fork1:w () (
+                        (value-type int))
+                        (block-function-body
+                          (expression-stmt
+                            (invocation lang.__internal waitOnLatch (
+                              (simple-var-ref $desugar$0))))
+                          (return
+                            (literal 20))))))))
+                (assignment
+                  (simple-var-ref $desugar$1)
+                  (start-action
+                    (invocation $desugar$2 ())))
+                (expression-stmt
+                  (invocation lang.__internal openLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable inner (type
+                    (value-type int)) (expr
+                    (single-wait-action
+                      (simple-var-ref $desugar$1)))))
+                (return
+                  (binary-expr +
+                    (simple-var-ref inner)
+                    (literal 1)))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function lambdaParamNamedLikeWorker () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:lambdaParamNamedLikeWorker:fork0:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable f (expr
+                    (lambda
+                      (function $anonFunc$_0 (
+                        (variable w (type
+                          (value-type int)))) (
+                        (value-type int))
+                        (block-function-body
+                          (return
+                            (binary-expr *
+                              (simple-var-ref w)
+                              (literal 2)))))))))
+                (return
+                  (invocation f (
+                    (literal 150))))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation localNamedLikeWorker ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedForkWorkerNamedLikeWorker ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambdaParamNamedLikeWorker ())))))))

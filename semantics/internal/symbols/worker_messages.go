@@ -45,16 +45,18 @@ type workerMessageGroup struct {
 	withModuleLevelNodes bool
 }
 
-func newWorkerMessageGroup(body *ast.BLangBlockFunctionBody, withModuleLevelNodes bool) *workerMessageGroup {
+func newWorkerMessageGroup(region *ast.WorkerRegion, withModuleLevelNodes bool) *workerMessageGroup {
 	group := &workerMessageGroup{
 		actions:              make(map[model.SymbolRef][]ast.BLangAction),
-		defaultWorker:        body.DefaultWorker,
 		namedWorkers:         make(map[string]model.SymbolRef),
 		sendMessages:         make(map[model.SymbolRef]*[]model.WorkerMessageRef),
 		withModuleLevelNodes: withModuleLevelNodes,
 	}
-	group.addWorker(body.DefaultWorker, &body.DefaultWorkerSendMessages)
-	for _, worker := range body.Workers {
+	if defaultWorker := region.DefaultWorker; defaultWorker != nil {
+		group.defaultWorker = defaultWorker.Symbol()
+		group.addWorker(defaultWorker.Symbol(), &defaultWorker.SendMessages)
+	}
+	for _, worker := range region.Workers {
 		if worker.Symbol().IsEmpty() {
 			// The declaration was already rejected.
 			group.invalid = true
@@ -64,6 +66,10 @@ func newWorkerMessageGroup(body *ast.BLangBlockFunctionBody, withModuleLevelNode
 		group.addWorker(worker.Symbol(), &worker.SendMessages)
 	}
 	return group
+}
+
+func (g *workerMessageGroup) hasDefaultWorker() bool {
+	return !g.defaultWorker.IsEmpty()
 }
 
 func (g *workerMessageGroup) addWorker(worker model.SymbolRef, sendMessages *[]model.WorkerMessageRef) {
@@ -142,6 +148,11 @@ func resolveMessagePeer(resolver symbolResolver, peer *ast.BLangWorkerPeer, pos 
 			invalidate(group)
 			return nil, model.SymbolRef{}, false
 		}
+		if !group.hasDefaultWorker() {
+			ctx.SemanticError("worker interactions are only allowed between peers", peer.Pos)
+			invalidate(group)
+			return nil, model.SymbolRef{}, false
+		}
 		peer.Symbol = group.defaultWorker
 		return group, worker, true
 	}
@@ -157,7 +168,7 @@ func resolveMessagePeer(resolver symbolResolver, peer *ast.BLangWorkerPeer, pos 
 		}
 	}
 	if lookup, found := resolver.GetSymbol(peer.Name); found && ctx.GetSymbol(lookup.ref).Kind() == model.SymbolKindWorker {
-		ctx.Unimplemented("worker message send/receive is not supported here", peer.Pos)
+		ctx.SemanticError("worker interactions are only allowed between peers", peer.Pos)
 		invalidate(enclosingGroupOf(owner, lookup.ref))
 	} else {
 		ctx.SemanticError("undefined worker '"+peer.Name+"'", peer.Pos)

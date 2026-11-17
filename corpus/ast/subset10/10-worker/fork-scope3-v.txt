@@ -1,0 +1,66 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function laterForkWorkerWaits () (
+    (value-type int))
+    (block-function-body
+      (fork
+        (named-worker a (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 1)))))
+      (fork
+        (named-worker b (
+          (value-type int))
+          (block-function-body
+            (var-def
+              (variable x (type
+                (value-type int)) (expr
+                (single-wait-action
+                  (simple-var-ref a)))))
+            (return
+              (binary-expr +
+                (simple-var-ref x)
+                (literal 1))))))
+      (return
+        (single-wait-action
+          (simple-var-ref b)))))
+  (function nestedBlockWaits (
+    (variable flag (type
+      (value-type boolean)))) (
+    (value-type int))
+    (block-function-body
+      (fork
+        (named-worker a (
+          (value-type int))
+          (block-function-body
+            (return
+              (literal 3)))))
+      (if
+        (simple-var-ref flag)
+        (block-stmt
+          (var-def
+            (variable x (type
+              (value-type int)) (expr
+              (single-wait-action
+                (simple-var-ref a)))))
+          (return
+            (simple-var-ref x))) ())
+      (block-stmt
+        (return
+          (literal 0)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation laterForkWorkerWaits ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedBlockWaits (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation nestedBlockWaits (
+            (literal false)))))))))

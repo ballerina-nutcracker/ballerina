@@ -129,25 +129,48 @@ type (
 	BLangBlockFunctionBody struct {
 		bLangFunctionBodyBase
 		InitStmts []StatementNode
-		Workers   []*BLangNamedWorkerDeclaration
-		Stmts     []StatementNode
-		// DefaultWorker is the default worker symbol; zero when Workers is empty.
-		DefaultWorker model.SymbolRef
-		// DefaultWorkerSendMessages are the messages the default worker sends.
-		DefaultWorkerSendMessages []model.WorkerMessageRef
+		// Region is nil when the body declares no named workers.
+		Region *WorkerRegion
+		// Stmts is empty when Region is set: the statements after the named
+		// workers belong to Region.DefaultWorker.
+		Stmts []StatementNode
+	}
+
+	// WorkerRegion is a set of named workers started together as peers, with an
+	// optional default worker.
+	WorkerRegion struct {
+		Workers []*BLangNamedWorkerDeclaration
+		// DefaultWorker is nil for a region without a default worker.
+		DefaultWorker *BLangDefaultWorker
+		// NamePrefix makes the generated names of the region's workers unique
+		// within the enclosing function: "" for a body, "fork<N>" for the N-th
+		// fork of the enclosing function body.
+		NamePrefix string
+	}
+
+	workerBase struct {
+		bLangNodeBase
+		// SendMessages are the messages the worker sends.
+		SendMessages []model.WorkerMessageRef
+		symbol       model.SymbolRef
+	}
+
+	// BLangDefaultWorker is the default worker of a function body with named
+	// workers: the statements after the named worker declarations. They run in
+	// the function's own scope, so it is not a function boundary.
+	BLangDefaultWorker struct {
+		workerBase
+		Stmts []StatementNode
 	}
 
 	BLangNamedWorkerDeclaration struct {
-		bLangNodeBase
+		workerBase
 		captureOwnerBase
 		Name           string
 		AnnAttachments []BLangAnnotationAttachment
 		ReturnType     *BLangReturnTypeDescriptor
 		Body           *BLangBlockFunctionBody
-		// SendMessages are the messages the worker sends.
-		SendMessages []model.WorkerMessageRef
-		symbol       model.SymbolRef
-		scope        model.Scope
+		scope          model.Scope
 	}
 
 	BLangExprFunctionBody struct {
@@ -519,11 +542,11 @@ func (n *BLangAnnotationAttachment) SetSymbol(symbolRef model.SymbolRef) {
 	n.symbol = symbolRef
 }
 
-func (n *BLangNamedWorkerDeclaration) Symbol() model.SymbolRef {
+func (n *workerBase) Symbol() model.SymbolRef {
 	return n.symbol
 }
 
-func (n *BLangNamedWorkerDeclaration) SetSymbol(symbolRef model.SymbolRef) {
+func (n *workerBase) SetSymbol(symbolRef model.SymbolRef) {
 	n.symbol = symbolRef
 }
 
@@ -552,6 +575,7 @@ var (
 	_ BNodeWithSymbol   = &BLangAnnotation{}
 	_ BNodeWithSymbol   = &BLangAnnotationAttachment{}
 	_ BNodeWithSymbol   = &BLangNamedWorkerDeclaration{}
+	_ BNodeWithSymbol   = &BLangDefaultWorker{}
 	_ NodeWithScope     = &BLangNamedWorkerDeclaration{}
 	_ BNodeWithSymbol   = &BLangXMLNS{}
 	_ NodeWithScope     = &BLangClassDefinition{}

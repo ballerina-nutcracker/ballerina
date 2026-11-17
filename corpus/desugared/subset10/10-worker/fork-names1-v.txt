@@ -1,0 +1,291 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang value (as lang.value))
+  (import-package ballerina lang xml (as lang.xml))
+  (function twoBlocks (
+    (variable flag (type
+      (value-type boolean)))) (
+    (value-type string))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type xml)) (expr
+          (xml-element-literal a
+            (xml-element-literal b
+              (xml-text-literal one))))))
+      (if
+        (simple-var-ref flag)
+        (block-stmt
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation lang.__internal createLatch ()))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation lang.__internal createWorkerMessage ()))))
+          (var-def
+            (variable $desugar$2))
+          (var-def
+            (variable $desugar$3))
+          (var-def
+            (variable $desugar$4 (expr
+              (lambda
+                (function $worker:twoBlocks:fork0:w$body () (
+                  (value-type string))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.__internal setWorkerMessageValue (
+                        (simple-var-ref $desugar$1)
+                        (invocation lang.value toString (
+                          (group-expr
+                            (invocation lang.xml map (
+                              (invocation lang.xml elements (
+                                (simple-var-ref x)
+                                (literal <nil>)))
+                              (lambda
+                                (function $xmlStep$twoBlocks$fork0$w$0 (
+                                  (variable $xmlStepItem)) ()
+                                  (expr-function-body
+                                    (xml-filter-expression
+                                      (invocation lang.xml getChildren (
+                                        (simple-var-ref $xmlStepItem)))
+                                      (xml-name-pattern-identifier b)))))))))))))
+                    (return
+                      (literal first))))))))
+          (var-def
+            (variable $desugar$6 (expr
+              (lambda
+                (function $worker:twoBlocks:fork0:w () (
+                  (value-type string))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.__internal waitOnLatch (
+                        (simple-var-ref $desugar$0))))
+                    (var-def
+                      (variable $desugar$5 (expr
+                        (invocation $desugar$4 ()))))
+                    (expression-stmt
+                      (invocation lang.__internal awaitWorkerMessageDelivery (
+                        (list-constructor-expr
+                          (simple-var-ref $desugar$1))
+                        (list-constructor-expr
+                          (simple-var-ref $desugar$3)))))
+                    (return
+                      (simple-var-ref $desugar$5))))))))
+          (var-def
+            (variable $desugar$7 (expr
+              (lambda
+                (function $worker:twoBlocks:fork0:v () (
+                  (value-type string))
+                  (block-function-body
+                    (expression-stmt
+                      (invocation lang.__internal waitOnLatch (
+                        (simple-var-ref $desugar$0))))
+                    (return
+                      (invocation lang.__internal getWorkerMessageValue (
+                        (simple-var-ref $desugar$1)
+                        (simple-var-ref $desugar$2))))))))))
+          (assignment
+            (simple-var-ref $desugar$2)
+            (start-action
+              (invocation $desugar$6 ())))
+          (assignment
+            (simple-var-ref $desugar$3)
+            (start-action
+              (invocation $desugar$7 ())))
+          (expression-stmt
+            (invocation lang.__internal openLatch (
+              (simple-var-ref $desugar$0))))
+          (var-def
+            (variable a (type
+              (value-type string)) (expr
+              (single-wait-action
+                (simple-var-ref $desugar$2)))))
+          (var-def
+            (variable b (type
+              (value-type string)) (expr
+              (single-wait-action
+                (simple-var-ref $desugar$3)))))
+          (return
+            (binary-expr +
+              (binary-expr +
+                (simple-var-ref a)
+                (literal :))
+              (simple-var-ref b)))) ())
+      (block-stmt
+        (var-def
+          (variable $desugar$8 (expr
+            (invocation lang.__internal createLatch ()))))
+        (var-def
+          (variable $desugar$9 (expr
+            (invocation lang.__internal createWorkerMessage ()))))
+        (var-def
+          (variable $desugar$10))
+        (var-def
+          (variable $desugar$11))
+        (var-def
+          (variable $desugar$12 (expr
+            (lambda
+              (function $worker:twoBlocks:fork1:w$body () (
+                (value-type string))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal setWorkerMessageValue (
+                      (simple-var-ref $desugar$9)
+                      (invocation lang.value toString (
+                        (group-expr
+                          (invocation lang.xml map (
+                            (invocation lang.xml elements (
+                              (simple-var-ref x)
+                              (literal <nil>)))
+                            (lambda
+                              (function $xmlStep$twoBlocks$fork1$w$0 (
+                                (variable $xmlStepItem)) ()
+                                (expr-function-body
+                                  (xml-filter-expression
+                                    (invocation lang.xml getChildren (
+                                      (simple-var-ref $xmlStepItem)))
+                                    (xml-name-pattern-identifier a)))))))))))))
+                  (return
+                    (literal second))))))))
+        (var-def
+          (variable $desugar$14 (expr
+            (lambda
+              (function $worker:twoBlocks:fork1:w () (
+                (value-type string))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$8))))
+                  (var-def
+                    (variable $desugar$13 (expr
+                      (invocation $desugar$12 ()))))
+                  (expression-stmt
+                    (invocation lang.__internal awaitWorkerMessageDelivery (
+                      (list-constructor-expr
+                        (simple-var-ref $desugar$9))
+                      (list-constructor-expr
+                        (simple-var-ref $desugar$11)))))
+                  (return
+                    (simple-var-ref $desugar$13))))))))
+        (var-def
+          (variable $desugar$15 (expr
+            (lambda
+              (function $worker:twoBlocks:fork1:v () (
+                (value-type string))
+                (block-function-body
+                  (expression-stmt
+                    (invocation lang.__internal waitOnLatch (
+                      (simple-var-ref $desugar$8))))
+                  (return
+                    (invocation lang.__internal getWorkerMessageValue (
+                      (simple-var-ref $desugar$9)
+                      (simple-var-ref $desugar$10))))))))))
+        (assignment
+          (simple-var-ref $desugar$10)
+          (start-action
+            (invocation $desugar$14 ())))
+        (assignment
+          (simple-var-ref $desugar$11)
+          (start-action
+            (invocation $desugar$15 ())))
+        (expression-stmt
+          (invocation lang.__internal openLatch (
+            (simple-var-ref $desugar$8))))
+        (var-def
+          (variable a (type
+            (value-type string)) (expr
+            (single-wait-action
+              (simple-var-ref $desugar$10)))))
+        (var-def
+          (variable b (type
+            (value-type string)) (expr
+            (single-wait-action
+              (simple-var-ref $desugar$11)))))
+        (return
+          (binary-expr +
+            (binary-expr +
+              (simple-var-ref a)
+              (literal :))
+            (simple-var-ref b))))))
+  (function lambdaAndEnclosing () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable g (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable $desugar$0 (expr
+                    (invocation lang.__internal createLatch ()))))
+                (var-def
+                  (variable $desugar$1))
+                (var-def
+                  (variable $desugar$2 (expr
+                    (lambda
+                      (function $worker:lambdaAndEnclosing.$anonFunc$_0:fork0:w () (
+                        (value-type int))
+                        (block-function-body
+                          (expression-stmt
+                            (invocation lang.__internal waitOnLatch (
+                              (simple-var-ref $desugar$0))))
+                          (return
+                            (literal 1))))))))
+                (assignment
+                  (simple-var-ref $desugar$1)
+                  (start-action
+                    (invocation $desugar$2 ())))
+                (expression-stmt
+                  (invocation lang.__internal openLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (single-wait-action
+                    (simple-var-ref $desugar$1)))))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (invocation lang.__internal createLatch ()))))
+      (var-def
+        (variable $desugar$1))
+      (var-def
+        (variable $desugar$2 (expr
+          (lambda
+            (function $worker:lambdaAndEnclosing:fork0:w () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (literal 2))))))))
+      (assignment
+        (simple-var-ref $desugar$1)
+        (start-action
+          (invocation $desugar$2 ())))
+      (expression-stmt
+        (invocation lang.__internal openLatch (
+          (simple-var-ref $desugar$0))))
+      (var-def
+        (variable a (type
+          (value-type int)) (expr
+          (single-wait-action
+            (simple-var-ref $desugar$1)))))
+      (return
+        (binary-expr +
+          (simple-var-ref a)
+          (invocation g ())))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation twoBlocks (
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation twoBlocks (
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lambdaAndEnclosing ())))))))
