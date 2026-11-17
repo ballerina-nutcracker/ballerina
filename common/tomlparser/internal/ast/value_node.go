@@ -18,6 +18,8 @@
 
 package ast
 
+import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
+
 // ValueNode is the base interface for all value types.
 type ValueNode interface {
 	Node
@@ -25,3 +27,13 @@ type ValueNode interface {
 	// string, bool, int64, float64, []any, or map[string]any
 	NativeValue() any
 }
+
+// scalarValueNode holds a scalar value of type T and its source location.
+type scalarValueNode[T any] struct {
+	value T
+	loc   diagnostics.Location
+}
+
+func (n *scalarValueNode[T]) Loc() diagnostics.Location { return n.loc }
+func (n *scalarValueNode[T]) Value() T                  { return n.value }
+func (n *scalarValueNode[T]) NativeValue() any          { return n.value }

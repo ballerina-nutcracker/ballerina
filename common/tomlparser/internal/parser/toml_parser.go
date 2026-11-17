@@ -519,79 +519,41 @@ func (p *Parser) parseValue() ast.ValueNode {
 }
 
 func (p *Parser) parseBasicString() ast.ValueNode {
-	openTok := p.reader.read() // consume "
-	var content string
-	tok := p.reader.peek()
-	if tok.Kind == lexer.TokenIdentifier {
-		content = tok.Value
-		p.reader.read()
-	}
-	closeTok := p.reader.peek()
-	if closeTok.Kind == lexer.TokenDoubleQuote {
-		closeTok = p.reader.read()
-	} else {
-		p.addError("unterminated basic string", openTok)
-	}
-	loc := p.locationOf(openTok, closeTok)
-	return ast.NewStringValueNode(content, loc)
+	return p.parseStringValue(lexer.TokenDoubleQuote, "unterminated basic string", false)
 }
 
 func (p *Parser) parseMultilineBasicString() ast.ValueNode {
 	// TODO: TOML-P2 — full multiline string semantics (first-newline trim, backslash continuation)
-	openTok := p.reader.read() // consume """
-	var content string
-	tok := p.reader.peek()
-	if tok.Kind == lexer.TokenIdentifier {
-		content = tok.Value
-		p.reader.read()
-	}
-	// Trim leading newline as per TOML spec for multiline strings.
-	content = strings.TrimPrefix(content, "\n")
-	content = strings.TrimPrefix(content, "\r\n")
-	closeTok := p.reader.peek()
-	if closeTok.Kind == lexer.TokenTripleDoubleQuote {
-		closeTok = p.reader.read()
-	} else {
-		p.addError("unterminated multiline basic string", openTok)
-	}
-	loc := p.locationOf(openTok, closeTok)
-	return ast.NewStringValueNode(content, loc)
+	return p.parseStringValue(lexer.TokenTripleDoubleQuote, "unterminated multiline basic string", true)
 }
 
 func (p *Parser) parseLiteralString() ast.ValueNode {
-	openTok := p.reader.read() // consume '
-	var content string
-	tok := p.reader.peek()
-	if tok.Kind == lexer.TokenIdentifier {
-		content = tok.Value
-		p.reader.read()
-	}
-	closeTok := p.reader.peek()
-	if closeTok.Kind == lexer.TokenSingleQuote {
-		closeTok = p.reader.read()
-	} else {
-		p.addError("unterminated literal string", openTok)
-	}
-	loc := p.locationOf(openTok, closeTok)
-	return ast.NewStringValueNode(content, loc)
+	return p.parseStringValue(lexer.TokenSingleQuote, "unterminated literal string", false)
 }
 
 func (p *Parser) parseMultilineLiteralString() ast.ValueNode {
 	// TODO: TOML-P2 — full multiline literal string semantics
-	openTok := p.reader.read() // consume '''
+	return p.parseStringValue(lexer.TokenTripleSingleQuote, "unterminated multiline literal string", true)
+}
+
+func (p *Parser) parseStringValue(closeKind lexer.TokenKind, unterminatedMessage string, multiline bool) ast.ValueNode {
+	openTok := p.reader.read()
 	var content string
 	tok := p.reader.peek()
 	if tok.Kind == lexer.TokenIdentifier {
 		content = tok.Value
 		p.reader.read()
 	}
-	content = strings.TrimPrefix(content, "\n")
-	content = strings.TrimPrefix(content, "\r\n")
+	if multiline {
+		// Trim leading newline as per TOML spec for multiline strings.
+		content = strings.TrimPrefix(content, "\n")
+		content = strings.TrimPrefix(content, "\r\n")
+	}
 	closeTok := p.reader.peek()
-	if closeTok.Kind == lexer.TokenTripleSingleQuote {
+	if closeTok.Kind == closeKind {
 		closeTok = p.reader.read()
 	} else {
-		p.addError("unterminated multiline literal string", openTok)
+		p.addError(unterminatedMessage, openTok)
 	}
 	loc := p.locationOf(openTok, closeTok)
 	return ast.NewStringValueNode(content, loc)
