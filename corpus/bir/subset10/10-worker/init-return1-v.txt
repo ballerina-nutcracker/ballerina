@@ -16,19 +16,25 @@ early(boolean) -> int{
   }
   bb3 {
     $desugar$0 = %2;
-    %5 = closure_fp $anon/.:$worker:early:w
-    $desugar$2 = %5;
-    %7 = start $desugar$2() isolated=false -> bb4;
+    %6 = closure_fp $anon/.:$worker:early:$function
+    $desugar$3 = %6;
+    %8 = closure_fp $anon/.:$worker:early:w
+    $desugar$4 = %8;
+    %10 = start $desugar$3() isolated=false -> bb4;
   }
   bb4 {
-    $desugar$1 = %7;
-    %8 = openLatch($desugar$0) -> bb5;
+    $desugar$1 = %10;
+    %11 = start $desugar$4() isolated=false -> bb5;
   }
   bb5 {
-    %9 = wait $desugar$1 -> bb6;
+    $desugar$2 = %11;
+    %12 = openLatch($desugar$0) -> bb6;
   }
   bb6 {
-    %0 = %9;
+    %13 = wait $desugar$1 -> bb7;
+  }
+  bb7 {
+    %0 = %13;
     return;
   }
 }
@@ -76,6 +82,18 @@ main() -> nil{
     %17 = println(started) -> bb9;
   }
   bb9 {
+    return;
+  }
+}
+$worker:early:$function() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %2;
     return;
   }
 }

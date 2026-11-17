@@ -17,19 +17,25 @@ inc(int|string) -> int{
   }
   bb3 {
     $desugar$0 = %4;
-    %7 = closure_fp $anon/.:$worker:inc:w
-    $desugar$2 = %7;
-    %9 = start $desugar$2() isolated=false -> bb4;
+    %8 = closure_fp $anon/.:$worker:inc:$function
+    $desugar$3 = %8;
+    %10 = closure_fp $anon/.:$worker:inc:w
+    $desugar$4 = %10;
+    %12 = start $desugar$3() isolated=false -> bb4;
   }
   bb4 {
-    $desugar$1 = %9;
-    %10 = openLatch($desugar$0) -> bb5;
+    $desugar$1 = %12;
+    %13 = start $desugar$4() isolated=false -> bb5;
   }
   bb5 {
-    %11 = wait $desugar$1 -> bb6;
+    $desugar$2 = %13;
+    %14 = openLatch($desugar$0) -> bb6;
   }
   bb6 {
-    %0 = %11;
+    %15 = wait $desugar$1 -> bb7;
+  }
+  bb7 {
+    %0 = %15;
     return;
   }
 }
@@ -52,6 +58,18 @@ main() -> nil{
     %9 = println(%8) -> bb4;
   }
   bb4 {
+    return;
+  }
+}
+$worker:inc:$function() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$2) -> bb2;
+  }
+  bb2 {
+    %0 = %2;
     return;
   }
 }

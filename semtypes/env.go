@@ -110,14 +110,20 @@ func (e *env) assertNotFrozenForRecAtom() {
 }
 
 func (e *env) recListAtomCount() int {
+	e.recListAtomsMutex.Lock()
+	defer e.recListAtomsMutex.Unlock()
 	return len(e.recListAtoms)
 }
 
 func (e *env) recMappingAtomCount() int {
+	e.recMappingAtomsMutex.Lock()
+	defer e.recMappingAtomsMutex.Unlock()
 	return len(e.recMappingAtoms)
 }
 
 func (e *env) recFunctionAtomCount() int {
+	e.recFunctionAtomsMutex.Lock()
+	defer e.recFunctionAtomsMutex.Unlock()
 	return len(e.recFunctionAtoms)
 }
 

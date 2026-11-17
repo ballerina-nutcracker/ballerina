@@ -1,0 +1,138 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 0
+    count = %1;
+    %3 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %5 = createWorkerMessage() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %5;
+    %7 = createWorkerMessage() -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %7;
+    %11 = closure_fp $anon/.:$worker:main:$function$body
+    $desugar$5 = %11;
+    %13 = closure_fp $anon/.:$worker:main:$function
+    $desugar$7 = %13;
+    %15 = closure_fp $anon/.:$worker:main:a$body
+    $desugar$8 = %15;
+    %17 = closure_fp $anon/.:$worker:main:a
+    $desugar$10 = %17;
+    %19 = start $desugar$7() isolated=false -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %19;
+    %20 = start $desugar$10() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %20;
+    %21 = openLatch($desugar$0) -> bb6;
+  }
+  bb6 {
+    %22 = wait $desugar$3 -> bb7;
+  }
+  bb7 {
+    %0 = %22;
+    return;
+  }
+}
+$worker:main:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$5)() -> bb2;
+  }
+  bb2 {
+    $desugar$6 = %2;
+    %4 = ConstantLoad 1
+    %5 = newArray list[%4]{(1, $desugar$1)}
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, $desugar$4)}
+    %8 = awaitWorkerMessageDelivery(%5,%7) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$6;
+    return;
+  }
+}
+$worker:main:$function$body() -> nil{
+  bb0 {
+    %1 = ConstantLoad 5
+    (1, count) = %1;
+    %2 = ConstantLoad 0
+    %3 = %2;
+    %4 = setWorkerMessageValue((1, $desugar$1),%3) -> bb1;
+  }
+  bb1 {
+    %5 = getWorkerMessageValue((1, $desugar$2),(1, $desugar$4)) -> bb2;
+  }
+  bb2 {
+    _ = %5;
+    %7 = (1, count);
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %10 = (1, count);
+    %11 = ConstantLoad 100
+    %12 = %11;
+    %9 = + %10 %12;
+    (1, count) = %9;
+    %13 = wait (1, $desugar$4) -> bb4;
+  }
+  bb4 {
+    r = %13;
+    %15 = r;
+    %16 = ConstantLoad  
+    %17 = (1, count);
+    %18 = println(%15,%16,%17) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$worker:main:a() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$8)() -> bb2;
+  }
+  bb2 {
+    $desugar$9 = %2;
+    %4 = ConstantLoad 1
+    %5 = newArray list[%4]{(1, $desugar$2)}
+    %6 = ConstantLoad 1
+    %7 = newArray list[%6]{(1, $desugar$3)}
+    %8 = awaitWorkerMessageDelivery(%5,%7) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$9;
+    return;
+  }
+}
+$worker:main:a$body() -> int{
+  bb0 {
+    %1 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$3)) -> bb1;
+  }
+  bb1 {
+    _ = %1;
+    %4 = (1, count);
+    %5 = ConstantLoad 10
+    %6 = %5;
+    %3 = + %4 %6;
+    (1, count) = %3;
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %9 = setWorkerMessageValue((1, $desugar$2),%8) -> bb2;
+  }
+  bb2 {
+    %0 = (1, count);
+    return;
+  }
+}

@@ -1,6 +1,7 @@
 (package
   (import-package ballerina io (as io))
   (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang array (as lang.array))
   (function length () (
     (value-type int))
     (block-function-body
@@ -20,7 +21,21 @@
       (var-def
         (variable $desugar$1))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:length:$function () (
+              (value-type int))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (return
+                  (single-wait-action
+                    (simple-var-ref $desugar$2)))))))))
+      (var-def
+        (variable $desugar$4 (expr
           (lambda
             (function $worker:length:w () (
               (value-type int))
@@ -34,7 +49,11 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action isolated
-          (invocation $desugar$2 ())))
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action isolated
+          (invocation $desugar$4 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))

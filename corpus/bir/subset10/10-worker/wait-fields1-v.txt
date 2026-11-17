@@ -5,36 +5,54 @@ main() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %5 = closure_fp $anon/.:$worker:main:w1
-    $desugar$3 = %5;
-    %7 = closure_fp $anon/.:$worker:main:w2
-    $desugar$4 = %7;
-    %9 = start $desugar$3() isolated=false -> bb2;
+    %6 = closure_fp $anon/.:$worker:main:$function
+    $desugar$4 = %6;
+    %8 = closure_fp $anon/.:$worker:main:w1
+    $desugar$5 = %8;
+    %10 = closure_fp $anon/.:$worker:main:w2
+    $desugar$6 = %10;
+    %12 = start $desugar$4() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %9;
-    %10 = start $desugar$4() isolated=false -> bb3;
+    $desugar$1 = %12;
+    %13 = start $desugar$5() isolated=false -> bb3;
   }
   bb3 {
-    $desugar$2 = %10;
-    %11 = openLatch($desugar$0) -> bb4;
+    $desugar$2 = %13;
+    %14 = start $desugar$6() isolated=false -> bb4;
   }
   bb4 {
-    %12 = wait {a: $desugar$1, b: $desugar$2} -> bb5;
+    $desugar$3 = %14;
+    %15 = openLatch($desugar$0) -> bb5;
   }
   bb5 {
-    r = %12;
-    %15 = ConstantLoad a
-    %14 = r[%15];
-    %16 = %14;
-    %17 = println(%16) -> bb6;
+    %16 = wait $desugar$1 -> bb6;
   }
   bb6 {
-    %19 = ConstantLoad b
-    %18 = r[%19];
-    %20 = println(%18) -> bb7;
+    %0 = %16;
+    return;
   }
-  bb7 {
+}
+$worker:main:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait {a: (1, $desugar$2), b: (1, $desugar$3)} -> bb2;
+  }
+  bb2 {
+    r = %2;
+    %5 = ConstantLoad a
+    %4 = r[%5];
+    %6 = %4;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad b
+    %8 = r[%9];
+    %10 = println(%8) -> bb4;
+  }
+  bb4 {
     return;
   }
 }

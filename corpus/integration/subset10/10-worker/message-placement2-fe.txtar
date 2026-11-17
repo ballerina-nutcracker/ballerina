@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement2-fe.bal:22:29
+   |
+22 |     int[] _ = from int i in <- a select i; // @error worker message send/receive is not supported here
+   |                             ^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> message-placement2-fe.bal:29:40
+   |
+29 |     int[] _ = from int _ in [1] select <- a; // @error worker message send/receive is not supported here
+   |                                        ^^^^

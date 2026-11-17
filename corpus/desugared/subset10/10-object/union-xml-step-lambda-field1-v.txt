@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
   (class-definition Holder
     (variable l (type
       (union-type
