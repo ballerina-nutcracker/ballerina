@@ -15,6 +15,8 @@ linters:
     - unparam
     - wastedassign
   settings:
+    dupl:
+      threshold: 100
     usetesting:
       os-temp-dir: true
     reassign:
@@ -49,6 +51,11 @@ linters:
 
   disable:
     - unused
+  exclusions:
+    rules:
+      # Duplicate-code detection applies to production code only.
+      - path: _test\.go$
+        linters: [dupl]
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

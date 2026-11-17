@@ -22,15 +22,11 @@ import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // StringValueNode holds a string value (basic or literal, single or multiline).
 type StringValueNode struct {
-	value string
-	loc   diagnostics.Location
+	scalarValueNode[string]
 }
 
 func NewStringValueNode(value string, loc diagnostics.Location) *StringValueNode {
-	return &StringValueNode{value: value, loc: loc}
+	return &StringValueNode{scalarValueNode[string]{value: value, loc: loc}}
 }
 
-func (n *StringValueNode) Kind() TomlType            { return TypeString }
-func (n *StringValueNode) Loc() diagnostics.Location { return n.loc }
-func (n *StringValueNode) Value() string             { return n.value }
-func (n *StringValueNode) NativeValue() any          { return n.value }
+func (n *StringValueNode) Kind() TomlType { return TypeString }

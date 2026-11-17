@@ -101,7 +101,7 @@ func StringConst(value string) SemType {
 	var chara charStringSubtype
 	var nonChar nonCharStringSubtype
 	if codePointCount(value, 0, len(value)) == 1 {
-		chara = charStringSubtypeFrom(true, []enumerableType[string]{enumerableCharStringFrom(value)})
+		chara = charStringSubtypeFrom(true, []enumerableType[string]{enumerableStringFrom(value)})
 		nonChar = nonCharStringSubtypeFrom(true, emptyStringArr)
 	} else {
 		chara = charStringSubtypeFrom(true, emptyCharArr)
