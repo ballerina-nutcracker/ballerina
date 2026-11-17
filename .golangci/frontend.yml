@@ -16,6 +16,8 @@ linters:
     - wastedassign
     - forbidigo
   settings:
+    dupl:
+      threshold: 100
     usetesting:
       os-temp-dir: true
     reassign:
@@ -56,6 +58,9 @@ linters:
     - unused
   exclusions:
     rules:
+      # Duplicate-code detection applies to production code only.
+      - path: _test\.go$
+        linters: [dupl]
       # Ignore only reports consisting entirely of these private AST bases.
       # Missing concrete implementations must still fail exhaustiveness checks.
       - linters: [gochecksumtype]

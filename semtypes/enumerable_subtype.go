@@ -29,44 +29,30 @@ var (
 	gt = 1
 )
 
+// The union of two subtypes is the complement of the intersection of their complements.
 func enumerableSubtypeUnion[T any](t1 enumerableSubtype[T], t2 enumerableSubtype[T], result *[]enumerableType[T]) bool {
-	b1 := t1.Allowed()
-	b2 := t2.Allowed()
-	var allowed bool
-	if b1 && b2 {
-		enumerableListUnion(t1.Values(), t2.Values(), result)
-		allowed = true
-	} else if (!b1) && (!b2) {
-		enumerableListIntersect(t1.Values(), t2.Values(), result)
-		allowed = false
-	} else if b1 && (!b2) {
-		enumerableListDiff(t2.Values(), t1.Values(), result)
-		allowed = false
-	} else {
-		enumerableListDiff(t1.Values(), t2.Values(), result)
-		allowed = false
-	}
-	return allowed
+	return !enumerableValuesIntersect(!t1.Allowed(), t1.Values(), !t2.Allowed(), t2.Values(), result)
 }
 
 func enumerableSubtypeIntersect[T any](t1 enumerableSubtype[T], t2 enumerableSubtype[T], result *[]enumerableType[T]) bool {
-	b1 := t1.Allowed()
-	b2 := t2.Allowed()
-	var allowed bool
-	if b1 && b2 {
-		enumerableListIntersect(t1.Values(), t2.Values(), result)
-		allowed = true
-	} else if (!b1) && (!b2) {
-		enumerableListUnion(t1.Values(), t2.Values(), result)
-		allowed = false
-	} else if b1 && (!b2) {
-		enumerableListDiff(t1.Values(), t2.Values(), result)
-		allowed = true
-	} else {
-		enumerableListDiff(t2.Values(), t1.Values(), result)
-		allowed = true
+	return enumerableValuesIntersect(t1.Allowed(), t1.Values(), t2.Allowed(), t2.Values(), result)
+}
+
+func enumerableValuesIntersect[T any](allowed1 bool, values1 []enumerableType[T], allowed2 bool, values2 []enumerableType[T], result *[]enumerableType[T]) bool {
+	switch {
+	case allowed1 && allowed2:
+		enumerableListIntersect(values1, values2, result)
+		return true
+	case !allowed1 && !allowed2:
+		enumerableListUnion(values1, values2, result)
+		return false
+	case allowed1:
+		enumerableListDiff(values1, values2, result)
+		return true
+	default:
+		enumerableListDiff(values2, values1, result)
+		return true
 	}
-	return allowed
 }
 
 func enumerableListUnion[T any](v1 []enumerableType[T], v2 []enumerableType[T], result *[]enumerableType[T]) {

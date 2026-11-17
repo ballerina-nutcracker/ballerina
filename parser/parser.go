@@ -1685,20 +1685,20 @@ func (b *ballerinaParser) createFunctionDefinition(metadata st.STNode, visibilit
 		functionKeyword, name, resourcePath, funcSignature, body)
 }
 
-func (b *ballerinaParser) validateMethodQualifiers(visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode) (st.STNode, st.STNode) {
+// validateMemberFuncQualifiers keeps the regular function qualifiers and the given member qualifier,
+// attaching the rest as invalid nodes. It reports whether the member qualifier was present.
+func (b *ballerinaParser) validateMemberFuncQualifiers(qualifierList []st.STNode, functionKeyword st.STNode, memberQualifierKind st.SyntaxKind) ([]st.STNode, bool, st.STNode) {
 	var validatedList []st.STNode
-	hasRemoteQual := false
-	i := 0
-	for ; i < len(qualifierList); i++ {
-		qualifier := qualifierList[i]
-		nextIndex := (i + 1)
+	hasMemberQual := false
+	for i, qualifier := range qualifierList {
+		nextIndex := i + 1
 		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
 			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
 				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
 			continue
 		}
-		if qualifier.Kind() == st.REMOTE_KEYWORD {
-			hasRemoteQual = true
+		if qualifier.Kind() == memberQualifierKind {
+			hasMemberQual = true
 			validatedList = append(validatedList, qualifier)
 			continue
 		}
@@ -1714,6 +1714,11 @@ func (b *ballerinaParser) validateMethodQualifiers(visibilityQualifier st.STNode
 				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
 		}
 	}
+	return validatedList, hasMemberQual, functionKeyword
+}
+
+func (b *ballerinaParser) validateMethodQualifiers(visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode) (st.STNode, st.STNode) {
+	validatedList, hasRemoteQual, functionKeyword := b.validateMemberFuncQualifiers(qualifierList, functionKeyword, st.REMOTE_KEYWORD)
 	if visibilityQualifier != nil {
 		if hasRemoteQual {
 			b.updateFirstNodeInListWithLeadingInvalidNode(validatedList, visibilityQualifier,
@@ -1742,34 +1747,7 @@ func (b *ballerinaParser) createMethodDeclaration(metadata st.STNode, visibility
 }
 
 func (b *ballerinaParser) createResourceAccessorDefnOrDecl(metadata st.STNode, visibilityQualifier st.STNode, qualifierList []st.STNode, functionKeyword st.STNode, name st.STNode, resourcePath st.STNode, funcSignature st.STNode, isObjectTypeDesc bool) st.STNode {
-	var validatedList []st.STNode
-	hasResourceQual := false
-	i := 0
-	for ; i < len(qualifierList); i++ {
-		qualifier := qualifierList[i]
-		nextIndex := (i + 1)
-		if b.isSyntaxKindInList(validatedList, qualifier.Kind()) {
-			b.updateLastNodeInListWithInvalidNode(validatedList, qualifier,
-				&common.ERROR_DUPLICATE_QUALIFIER, st.ToToken(qualifier).Text())
-			continue
-		}
-		if qualifier.Kind() == st.RESOURCE_KEYWORD {
-			hasResourceQual = true
-			validatedList = append(validatedList, qualifier)
-			continue
-		}
-		if b.isRegularFuncQual(qualifier.Kind()) {
-			validatedList = append(validatedList, qualifier)
-			continue
-		}
-		if len(qualifierList) == nextIndex {
-			functionKeyword = st.CloneWithLeadingInvalidNodeMinutiae(functionKeyword, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
-		} else {
-			b.updateANodeInListWithLeadingInvalidNode(qualifierList, nextIndex, qualifier,
-				&common.ERROR_QUALIFIER_NOT_ALLOWED, st.ToToken(qualifier).Text())
-		}
-	}
+	validatedList, hasResourceQual, functionKeyword := b.validateMemberFuncQualifiers(qualifierList, functionKeyword, st.RESOURCE_KEYWORD)
 	if !hasResourceQual {
 		validatedList = append(validatedList, st.CreateMissingToken(st.RESOURCE_KEYWORD, nil))
 		functionKeyword = st.AddSyntaxDiagnostic(functionKeyword, st.CreateDiagnostic(&common.ERROR_MISSING_RESOURCE_KEYWORD))
@@ -2336,6 +2314,8 @@ func (b *ballerinaParser) parseTypeDescriptorWithinContext(qualifiers []st.STNod
 
 func (b *ballerinaParser) parseTypeDescriptorInner(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence typePrecedence) st.STNode {
 	typeDesc := b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
+	// var is parsed as a built-in simple type. However, since var is not allowed everywhere,
+	// validate it here. This is done to give better error messages.
 	if ((typeDesc.Kind() == st.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
 		var missingToken st.STNode
 		missingToken = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
@@ -2483,22 +2463,6 @@ func (b *ballerinaParser) parseTypeDescriptorInternal(qualifiers []st.STNode, co
 		return b.parseSingletonTypeDesc()
 	}
 	return b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
-}
-
-func (b *ballerinaParser) parseTypeDescriptorInternalWithPrecedence(qualifiers []st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool, isInConditionalExpr bool, precedence typePrecedence) st.STNode {
-	typeDesc := b.parseTypeDescriptorInternal(qualifiers, context, isInConditionalExpr)
-
-	// var is parsed as a built-in simple type. However, since var is not allowed everywhere,
-	// validate it here. This is done to give better error messages.
-	if ((typeDesc.Kind() == st.VAR_TYPE_DESC) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_IN_TYPE_BINDING_PATTERN)) && (context != common.PARSER_RULE_CONTEXT_TYPE_DESC_BEFORE_IDENTIFIER_IN_GROUPING_KEY) {
-		var missingToken st.STNode
-		missingToken = st.CreateMissingToken(st.IDENTIFIER_TOKEN, nil)
-		missingToken = st.CloneWithLeadingInvalidNodeMinutiae(missingToken, typeDesc,
-			&common.ERROR_INVALID_USAGE_OF_VAR)
-		typeDesc = st.CreateSimpleNameReferenceNode(missingToken.(st.STToken))
-	}
-
-	return b.parseComplexTypeDescriptorInternal(typeDesc, context, isTypedBindingPattern, precedence)
 }
 
 func (b *ballerinaParser) getTypeDescRecoveryCtx(qualifiers []st.STNode) common.ParserRuleContext {
@@ -6419,26 +6383,9 @@ func (b *ballerinaParser) parseOnKeyword() st.STNode {
 
 func (b *ballerinaParser) parseListeners() st.STNode {
 	b.startContext(common.PARSER_RULE_CONTEXT_LISTENERS_LIST)
-	var listeners []st.STNode
-	nextToken := b.peek()
-	if b.isEndOfListeners(nextToken.Kind()) {
-		b.endContext()
-		return st.CreateEmptyNodeList()
-	}
-	expr := b.parseExpression()
-	listeners = append(listeners, expr)
-	var listenersMemberEnd st.STNode
-	for !b.isEndOfListeners(b.peek().Kind()) {
-		listenersMemberEnd = b.parseListenersMemberEnd()
-		if listenersMemberEnd == nil {
-			break
-		}
-		listeners = append(listeners, listenersMemberEnd)
-		expr = b.parseExpression()
-		listeners = append(listeners, expr)
-	}
+	listeners := b.parseSeparatedFieldList(b.isEndOfListeners, b.parseExpression, b.parseListenersMemberEnd)
 	b.endContext()
-	return st.CreateNodeList(listeners...)
+	return listeners
 }
 
 func (b *ballerinaParser) isEndOfListeners(tokenKind st.SyntaxKind) bool {
@@ -7821,7 +7768,7 @@ func (b *ballerinaParser) parseLockKeyword() st.STNode {
 
 func (b *ballerinaParser) parseUnionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	pipeToken := b.consume()
-	rightTypeDesc := b.parseTypeDescriptorInternalWithPrecedence(nil, context, isTypedBindingPattern, false,
+	rightTypeDesc := b.parseTypeDescriptorInner(nil, context, isTypedBindingPattern, false,
 		typePrecedenceUnion)
 	return b.mergeTypesWithUnion(leftTypeDesc, pipeToken, rightTypeDesc)
 }
@@ -7934,13 +7881,7 @@ func (b *ballerinaParser) parseListConstructorExpr() st.STNode {
 }
 
 func (b *ballerinaParser) parseListMembers() st.STNode {
-	var listMembers []st.STNode
-	if b.isEndOfListConstructor(b.peek().Kind()) {
-		return st.CreateEmptyNodeList()
-	}
-	listMember := b.parseListMember()
-	listMembers = append(listMembers, listMember)
-	return b.parseListMembersInner(listMembers)
+	return b.parseSeparatedFieldList(b.isEndOfListConstructor, b.parseListMember, b.parseListConstructorMemberEnd)
 }
 
 func (b *ballerinaParser) parseListMembersInner(listMembers []st.STNode) st.STNode {
@@ -8081,26 +8022,7 @@ func (b *ballerinaParser) parseTableKeyword() st.STNode {
 }
 
 func (b *ballerinaParser) parseRowList() st.STNode {
-	nextToken := b.peek()
-	if b.isEndOfTableRowList(nextToken.Kind()) {
-		return st.CreateEmptyNodeList()
-	}
-	var mappings []st.STNode
-	mapExpr := b.parseMappingConstructorExpr()
-	mappings = append(mappings, mapExpr)
-	nextToken = b.peek()
-	var rowEnd st.STNode
-	for !b.isEndOfTableRowList(nextToken.Kind()) {
-		rowEnd = b.parseTableRowEnd()
-		if rowEnd == nil {
-			break
-		}
-		mappings = append(mappings, rowEnd)
-		mapExpr = b.parseMappingConstructorExpr()
-		mappings = append(mappings, mapExpr)
-		nextToken = b.peek()
-	}
-	return st.CreateNodeList(mappings...)
+	return b.parseSeparatedFieldList(b.isEndOfTableRowList, b.parseMappingConstructorExpr, b.parseTableRowEnd)
 }
 
 func (b *ballerinaParser) isEndOfTableRowList(tokenKind st.SyntaxKind) bool {
@@ -9634,7 +9556,7 @@ func (b *ballerinaParser) parseOptionalPeerWorkerName() st.STNode {
 
 func (b *ballerinaParser) parseIntersectionTypeDescriptor(leftTypeDesc st.STNode, context common.ParserRuleContext, isTypedBindingPattern bool) st.STNode {
 	bitwiseAndToken := b.consume()
-	rightTypeDesc := b.parseTypeDescriptorInternalWithPrecedence(nil, context, isTypedBindingPattern, false,
+	rightTypeDesc := b.parseTypeDescriptorInner(nil, context, isTypedBindingPattern, false,
 		typePrecedenceIntersection)
 	return b.mergeTypesWithIntersection(leftTypeDesc, bitwiseAndToken, rightTypeDesc)
 }
@@ -9790,27 +9712,23 @@ func (b *ballerinaParser) parseMultipleReceiveWorkers() st.STNode {
 	return st.CreateReceiveFieldsNode(openBrace, receiveFields, closeBrace)
 }
 
-func (b *ballerinaParser) parseReceiveFields() st.STNode {
-	var receiveFields []st.STNode
-	nextToken := b.peek()
-	if b.isEndOfReceiveFields(nextToken.Kind()) {
+func (b *ballerinaParser) parseSeparatedFieldList(isEndOfFields func(st.SyntaxKind) bool, parseField func() st.STNode, parseFieldEnd func() st.STNode) st.STNode {
+	if isEndOfFields(b.peek().Kind()) {
 		return st.CreateEmptyNodeList()
 	}
-	receiveField := b.parseReceiveField()
-	receiveFields = append(receiveFields, receiveField)
-	nextToken = b.peek()
-	var recieveFieldEnd st.STNode
-	for !b.isEndOfReceiveFields(nextToken.Kind()) {
-		recieveFieldEnd = b.parseReceiveFieldEnd()
-		if recieveFieldEnd == nil {
+	fields := []st.STNode{parseField()}
+	for !isEndOfFields(b.peek().Kind()) {
+		fieldEnd := parseFieldEnd()
+		if fieldEnd == nil {
 			break
 		}
-		receiveFields = append(receiveFields, recieveFieldEnd)
-		receiveField = b.parseReceiveField()
-		receiveFields = append(receiveFields, receiveField)
-		nextToken = b.peek()
+		fields = append(fields, fieldEnd, parseField())
 	}
-	return st.CreateNodeList(receiveFields...)
+	return st.CreateNodeList(fields...)
+}
+
+func (b *ballerinaParser) parseReceiveFields() st.STNode {
+	return b.parseSeparatedFieldList(b.isEndOfReceiveFields, b.parseReceiveField, b.parseReceiveFieldEnd)
 }
 
 func (b *ballerinaParser) isEndOfReceiveFields(nextTokenKind st.SyntaxKind) bool {
@@ -9995,26 +9913,7 @@ func (b *ballerinaParser) parseMultiWaitAction(waitKeyword st.STNode) st.STNode 
 }
 
 func (b *ballerinaParser) parseWaitFields() st.STNode {
-	var waitFields []st.STNode
-	nextToken := b.peek()
-	if b.isEndOfWaitFields(nextToken.Kind()) {
-		return st.CreateEmptyNodeList()
-	}
-	waitField := b.parseWaitField()
-	waitFields = append(waitFields, waitField)
-	nextToken = b.peek()
-	var waitFieldEnd st.STNode
-	for !b.isEndOfWaitFields(nextToken.Kind()) {
-		waitFieldEnd = b.parseWaitFieldEnd()
-		if waitFieldEnd == nil {
-			break
-		}
-		waitFields = append(waitFields, waitFieldEnd)
-		waitField = b.parseWaitField()
-		waitFields = append(waitFields, waitField)
-		nextToken = b.peek()
-	}
-	return st.CreateNodeList(waitFields...)
+	return b.parseSeparatedFieldList(b.isEndOfWaitFields, b.parseWaitField, b.parseWaitFieldEnd)
 }
 
 func (b *ballerinaParser) isEndOfWaitFields(nextTokenKind st.SyntaxKind) bool {
@@ -12750,19 +12649,30 @@ func (b *ballerinaParser) mergeTypesWithIntersection(lhsTypeDesc st.STNode, bitw
 	return b.createIntersectionTypeDesc(lhsTypeDesc, bitwiseAndToken, rhsTypeDesc)
 }
 
-func (b *ballerinaParser) replaceLeftMostUnionWithAUnion(typeDesc st.STNode, pipeToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
-	leftTypeDesc := unionTypeDesc.LeftTypeDesc
-	if leftTypeDesc.Kind() == st.UNION_TYPE_DESC {
-		leftUnionTypeDesc, ok := leftTypeDesc.(*st.STUnionTypeDescriptorNode)
-		if !ok {
-			b.internalError("expected *st.STUnionTypeDescriptorNode")
-			return st.CreateEmptyNode()
-		}
-		newLeftTypeDesc := b.replaceLeftMostUnionWithAUnion(typeDesc, pipeToken, leftUnionTypeDesc)
-		return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
+// replaceLeftMostOperand descends the left operands of binaryTypeDesc while they have the same kind and
+// replaces the left-most operand with createBinary(typeDesc, operator, operand).
+func (b *ballerinaParser) replaceLeftMostOperand(typeDesc st.STNode, operator st.STNode, binaryTypeDesc st.STNode, createBinary func(st.STNode, st.STNode, st.STNode) st.STNode) st.STNode {
+	var leftTypeDesc st.STNode
+	switch binaryTypeDesc := binaryTypeDesc.(type) {
+	case *st.STUnionTypeDescriptorNode:
+		leftTypeDesc = binaryTypeDesc.LeftTypeDesc
+	case *st.STIntersectionTypeDescriptorNode:
+		leftTypeDesc = binaryTypeDesc.LeftTypeDesc
+	default:
+		b.internalError("expected a union or intersection type descriptor")
+		return st.CreateEmptyNode()
 	}
-	leftTypeDesc = b.createUnionTypeDesc(typeDesc, pipeToken, leftTypeDesc)
-	return st.Replace(unionTypeDesc, unionTypeDesc.LeftTypeDesc, leftTypeDesc)
+	var newLeftTypeDesc st.STNode
+	if leftTypeDesc.Kind() == binaryTypeDesc.Kind() {
+		newLeftTypeDesc = b.replaceLeftMostOperand(typeDesc, operator, leftTypeDesc, createBinary)
+	} else {
+		newLeftTypeDesc = createBinary(typeDesc, operator, leftTypeDesc)
+	}
+	return st.Replace(binaryTypeDesc, leftTypeDesc, newLeftTypeDesc)
+}
+
+func (b *ballerinaParser) replaceLeftMostUnionWithAUnion(typeDesc st.STNode, pipeToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
+	return b.replaceLeftMostOperand(typeDesc, pipeToken, unionTypeDesc, b.createUnionTypeDesc)
 }
 
 func (b *ballerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, unionTypeDesc *st.STUnionTypeDescriptorNode) st.STNode {
@@ -12790,18 +12700,7 @@ func (b *ballerinaParser) replaceLeftMostUnionWithAIntersection(typeDesc st.STNo
 }
 
 func (b *ballerinaParser) replaceLeftMostIntersectionWithAIntersection(typeDesc st.STNode, bitwiseAndToken st.STNode, intersectionTypeDesc *st.STIntersectionTypeDescriptorNode) st.STNode {
-	leftTypeDesc := intersectionTypeDesc.LeftTypeDesc
-	if leftTypeDesc.Kind() == st.INTERSECTION_TYPE_DESC {
-		leftIntersectionTypeDesc, ok := leftTypeDesc.(*st.STIntersectionTypeDescriptorNode)
-		if !ok {
-			b.internalError("expected *st.STIntersectionTypeDescriptorNode")
-			return st.CreateEmptyNode()
-		}
-		newLeftTypeDesc := b.replaceLeftMostIntersectionWithAIntersection(typeDesc, bitwiseAndToken, leftIntersectionTypeDesc)
-		return st.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, newLeftTypeDesc)
-	}
-	leftTypeDesc = b.createIntersectionTypeDesc(typeDesc, bitwiseAndToken, leftTypeDesc)
-	return st.Replace(intersectionTypeDesc, intersectionTypeDesc.LeftTypeDesc, leftTypeDesc)
+	return b.replaceLeftMostOperand(typeDesc, bitwiseAndToken, intersectionTypeDesc, b.createIntersectionTypeDesc)
 }
 
 func (b *ballerinaParser) getArrayTypeDesc(openBracket st.STNode, member st.STNode, closeBracket st.STNode, lhsTypeDesc st.STNode) st.STNode {
