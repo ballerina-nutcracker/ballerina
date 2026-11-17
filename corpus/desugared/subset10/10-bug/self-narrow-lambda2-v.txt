@@ -1,0 +1,44 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Named
+    (object-type
+      (method-decl name () (
+        (value-type string)))))
+  (class-definition Box
+    (function init () ()
+      (block-function-body))
+    (function describe () (
+      (value-type string))
+      (block-function-body
+        (if
+          (type-test-expr is
+            (simple-var-ref self)
+            (user-defined-type Named))
+          (block-stmt
+            (var-def
+              (variable f (type
+                (function-type () (
+                  (value-type string)))) (expr
+                (lambda
+                  (function $anonFunc$_0 () (
+                    (value-type string))
+                    (block-function-body
+                      (return
+                        (invocation name expr:
+                          (simple-var-ref self) ()))))))))
+            (return
+              (invocation f ()))) ())
+        (block-stmt
+          (return
+            (literal unnamed))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable b (type
+          (user-defined-type Box)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation describe expr:
+            (simple-var-ref b) ())))))))
