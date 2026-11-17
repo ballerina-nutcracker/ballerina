@@ -1,0 +1,28 @@
+-- stdout --
+rejected-rcpt: [Error while sending the message to SMTP server : Invalid Addresses nobody@localhost]
+rejected-from: [Error while sending the message to SMTP server : 550 sender rejected ]
+accepted-after-reject: [sent]
+rejected-data: [Error while sending the message to SMTP server : 554 message rejected ]
+auth-plain: [sent]
+auth-failed: [535 5.7.8 Authentication failed]
+auth-unsupported: [No authentication mechanisms supported by both server and client]
+helo-without-auth: [sent]
+anonymous: [sent]
+legacy-auth-login: [sent]
+dropped-after-mail: [Exception reading response]
+utf8-unsupported: [SMTPUTF8 is required for non-ASCII addresses but host does not support SMTPUTF8]
+utf8: [sent]
+message-id-utf8-unsupported: [SMTPUTF8 is required for non-ASCII message IDs but host does not support SMTPUTF8]
+message-id-utf8: [sent]
+nested-message-id-utf8-unsupported: [SMTPUTF8 is required for non-ASCII message IDs but host does not support SMTPUTF8]
+nested-message-id-utf8: [sent]
+bare-reply-code: [sent]
+rcpt-421: [Error while sending the message to SMTP server : 421 service closing ]
+ehlo-421: [421 service closing]
+long-reply-line: [Could not connect to SMTP host: 127.0.0.1]
+error("response line too long")
+long-reply: [Could not connect to SMTP host: 127.0.0.1]
+error("response too long")
+refused: [Could not connect to SMTP host: 127.0.0.1]
+true
+-- stderr --

@@ -216,14 +216,10 @@ func EncodeMultipart(ctx *extern.Context, parts []*values.Object, boundary strin
 // is encoded recursively, and a generated boundary is added to the header written for it.
 func encodePart(ctx *extern.Context, part *values.Object) (textproto.MIMEHeader, []byte, error) {
 	header := entityHeaders(part)
-	body := getEntityBody(part)
-	if body == nil || body.kind != bodyParts {
+	nested, ok := EntityBodyParts(part)
+	if !ok {
 		data, err := bytesForBody(ctx, part)
 		return header, data, err
-	}
-	nested := make([]*values.Object, body.parts.Len())
-	for i := range nested {
-		nested[i], _ = body.parts.Get(i).(*values.Object)
 	}
 	contentType, found := entityHeaderValue(part, "content-type")
 	if !found {
@@ -255,31 +251,8 @@ func setHeaderValue(header textproto.MIMEHeader, name, value string) {
 // keeping each header name's original casing.
 func entityHeaders(obj *values.Object) textproto.MIMEHeader {
 	result := textproto.MIMEHeader{}
-	namesVal, _ := obj.Get("headerNames")
-	names, ok := namesVal.(*values.List)
-	if !ok {
-		return result
-	}
-	hmVal, _ := obj.Get("headerMap")
-	hm, ok := hmVal.(*values.Map)
-	if !ok {
-		return result
-	}
-	for i := range names.Len() {
-		name, _ := names.Get(i).(string)
-		v, ok := hm.Get(strings.ToLower(name))
-		if !ok {
-			continue
-		}
-		list, ok := v.(*values.List)
-		if !ok {
-			continue
-		}
-		vals := make([]string, list.Len())
-		for j := range list.Len() {
-			vals[j], _ = list.Get(j).(string)
-		}
-		result[name] = vals
+	for _, h := range EntityHeaders(obj) {
+		result[h.Name] = h.Values
 	}
 	return result
 }
