@@ -80,6 +80,11 @@ func initEmailModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "initImapClientEndpoint", initImapClientExtern(rt))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "imapRead", imapReadExtern(rt, strArrTy))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "imapClose", closeExtern(imapStateField))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "initListener", initListenerExtern(rt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "startListener", startListenerExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "stopListener", stopListenerExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "register", registerServiceExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "deregister", deregisterServiceExtern)
 }
 
 func init() {

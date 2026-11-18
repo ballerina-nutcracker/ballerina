@@ -1,0 +1,14 @@
+-- stdout --
+Error while connecting to the IMAP store: [AUTHENTICATIONFAILED] Authentication failed
+Repeat Interval cannot be zero.
+Repeat Interval cannot be zero.
+Repeat interval must be >= 0
+started
+started
+started
+first m1, second m1
+first m2
+first closed
+first m3
+first closed
+-- stderr --

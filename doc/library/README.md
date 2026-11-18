@@ -10,7 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 |---------------------------------------------------|---|---|---|---|
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
-| [email](../../lib/stdlibs/ballerina/email/0.0.1/go1.27/README.md)             | 16 | 1 | 5 | 70% |
+| [email](../../lib/stdlibs/ballerina/email/0.0.1/go1.27/README.md)             | 19 | 1 | 2 | 83% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
 | [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 12 | 36 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
@@ -27,7 +27,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                         | **297** | **37** | **74** | **72%** |
+| **Total**                                         | **300** | **37** | **71** | **73%** |
 
 ## Notable Behavioural Changes
 
@@ -80,6 +80,15 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **IMAP reads never expunge.** jBallerina closes the folder with `CLOSE` before each read, which permanently deletes the messages other clients flagged `\Deleted`; the Go-native version never sends `CLOSE` or `EXPUNGE`, and does not return messages flagged `\Deleted` (<https://github.com/ballerina-platform/ballerina-library/issues/9772>).
 - **IMAP messages are marked seen after they are read.** jBallerina's body fetch sets `\Seen` before the message is converted, so a message that fails to convert is never returned; the Go-native version fetches with `BODY.PEEK[]` and sets `\Seen` only after the message is converted, so separate clients reading one folder at the same time can both return a message (<https://github.com/ballerina-platform/ballerina-library/issues/9773>).
 - **IMAP reads after close return an error.** jBallerina's `ImapClient->receiveMessage` panics with an `IllegalStateException` after `close`; the Go-native version returns the `email:Error` `Not connected`, as `PopClient` does (<https://github.com/ballerina-platform/ballerina-library/issues/9774>).
+- **Listener initialization errors are returned.** jBallerina's `PopListener` and `ImapListener` panic when the client cannot connect, log in or read its `secureSocket` certificate; the Go-native version returns the `email:Error` from `init` (<https://github.com/ballerina-platform/ballerina-library/issues/9776>).
+- **Services attached with a path receive mail.** jBallerina's `attach` ignores a service whose name is a `string[]`, such as `service /inbox on listener`; the Go-native version attaches it and ignores the name (<https://github.com/ballerina-platform/ballerina-library/issues/9777>).
+- **Every attached service receives mail.** jBallerina keeps one service per service class, so attaching a second service of the same class replaces the first; the Go-native version dispatches to each attached service object (<https://github.com/ballerina-platform/ballerina-library/issues/9778>).
+- **detach detaches the service.** jBallerina's `detach` does nothing, so the service keeps receiving mail; the Go-native version removes it (<https://github.com/ballerina-platform/ballerina-library/issues/9779>).
+- **onClose is called when the listener stops.** jBallerina never calls `onClose`; the Go-native version calls it with `()` on `gracefulStop` and `immediateStop` of a started listener (<https://github.com/ballerina-platform/ballerina-library/issues/9780>).
+- **Undeclared service methods are skipped.** jBallerina reports `No such method: onError` for each polling error, and calls `onClose`, on a service that does not declare them; the Go-native version calls only the methods a service declares, and writes a polling error to stderr when no attached service declares `onError` (<https://github.com/ballerina-platform/ballerina-library/issues/9781>).
+- **start is idempotent.** jBallerina schedules another polling job on each `start`, and the stop cancels only the last one, so polling continues after the stop; the Go-native version ignores `start` on a started listener (<https://github.com/ballerina-platform/ballerina-library/issues/9782>).
+- **Each poll reads every waiting message.** jBallerina reads one message per `pollingInterval`, so with the default 30 seconds a backlog of 100 messages takes 50 minutes; the Go-native version reads until the folder is empty, an error is reported, a message cannot be deleted or marked seen, or the listener stops (<https://github.com/ballerina-platform/ballerina-library/issues/9783>).
+- **Listeners without services do not consume mail.** jBallerina polls a started listener with no attached services, deleting or marking seen messages that nothing receives; the Go-native version polls only while an attached service declares `onMessage` (<https://github.com/ballerina-platform/ballerina-library/issues/9784>).
 - **TLS versions form a range.** jBallerina enables exactly the listed `protocol.versions`; the Go-native version enables every version from the lowest to the highest listed — Go's TLS library accepts only a version range.
 - **Unknown TLS versions and cipher suites fail at initialization.** jBallerina accepts any `protocol.versions` or `ciphers` entry and fails the handshake when sending; the Go-native version returns `Unsupported TLS protocol version: <name>` or `Unsupported cipher suite: <name>` from `init` — it validates them when the client is created.
 - **Address error messages.** JavaMail reports several specific address parse messages; the Go-native version reports `Illegal address` or `Local address contains control or whitespace` — Go's address parser reports different details.
