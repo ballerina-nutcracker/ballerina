@@ -43,7 +43,11 @@ jobs:
           node-version: ${{ matrix.variant.node }}
 
       - name: Install gdb
-        run: sudo apt-get install -y -qq gdb >/dev/null
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends gdb >/dev/null
+          gdb --version | head -1
 
       - name: Build wasm test binary
         run: |
