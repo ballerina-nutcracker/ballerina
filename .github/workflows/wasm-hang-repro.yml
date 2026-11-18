@@ -17,9 +17,9 @@ jobs:
       matrix:
         shard: [1, 2, 3]
         variant:
-          - { name: node24-gdb, node: "", flags: "" }
-          - { name: node22, node: "22", flags: "" }
-          - { name: node24-no-tier-up, node: "", flags: "--no-wasm-tier-up" }
+          - { name: go1.27.4-node24, go: "1.27.4", node: "", flags: "" }
+          - { name: go1.27.1-node26, go: "1.27.1", node: "26.13.1", flags: "" }
+          - { name: go1.27.4-node26, go: "1.27.4", node: "26.13.1", flags: "" }
     env:
       GOOS: js
       GOARCH: wasm
@@ -34,7 +34,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.27.1'
+          go-version: ${{ matrix.variant.go }}
 
       - name: Set up Node
         if: matrix.variant.node != ''
@@ -53,6 +53,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/bin"
           go test -c -o "$RUNNER_TEMP/bin/scope.wasm" ./semantics/internal/analysis/scope
+          go version
           node --version
           # Same as go_js_wasm_exec, plus the variant's V8 flags.
           cat > "$RUNNER_TEMP/bin/wasm_exec" <<EOF
