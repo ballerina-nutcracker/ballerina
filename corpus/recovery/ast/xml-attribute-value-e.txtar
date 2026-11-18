@@ -1,0 +1,234 @@
+-- xml-attribute-value-e.bal --
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+function interpolatedValue() {
+    xml v = xml `<a k=${"v"}/>`; // @error
+}
+
+function missingValue() {
+    xml v = xml `<a k/>`; // @error
+}
+
+function emptyValue() {
+    xml v = xml `<a k=/>`; // @error
+}
+
+function colonValue() {
+    xml v = xml `<a k=:/>`; // @error
+}
+
+function interpolatedValueBeforeQualifiedName() {
+    xml v = xml `<a k=${"v"}:x=""/>`; // @error
+}
+
+function consecutiveInterpolations() {
+    xml v = xml `<a k=${"v"} ${"w"}/>`; // @error
+}
+
+function quotedValues() {
+    xml v = xml `<a k="x${"v"}y" b='z'/>`;
+}
+
+function missingValueBeforeSpacedSlash() {
+    xml v = xml `<a k/ >`; // @error
+}
+-- ast --
+(compilation-unit (position 1:1 1:1)
+(package-id $anon . 0.0.0)
+  (function (position 1:1 20:1) interpolatedValue () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 17:30 20:1)
+      (var-def (position 18:1 19:1)
+        (variable (position 18:1 19:1) v (type
+          (value-type (position 18:1 18:9) xml)) (expr
+          (xml-template-literal (position 18:13 18:32)
+            (template-string "<a k=\"")
+            (xml-template-attribute-insertion
+              (literal (position 18:25 18:28) v))
+            (template-string "\"/>")))))))
+  (function (position 20:1 24:1) missingValue () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 21:25 24:1)
+      (var-def (position 22:1 23:1)
+        (variable (position 22:1 23:1) v (type
+          (value-type (position 22:1 22:9) xml)) (expr
+          (xml-element-literal (position 22:18 22:24) a
+            (xml-attribute (position 22:21 22:22) k
+              (literal (position 22:22 22:22) ))))))))
+  (function (position 24:1 28:1) emptyValue () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 25:23 28:1)
+      (var-def (position 26:1 27:1)
+        (variable (position 26:1 27:1) v (type
+          (value-type (position 26:1 26:9) xml)) (expr
+          (xml-element-literal (position 26:18 26:25) a
+            (xml-attribute (position 26:21 26:23) k
+              (literal (position 26:23 26:23) ))))))))
+  (function (position 28:1 32:1) colonValue () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 29:23 32:1)
+      (var-def (position 30:1 31:1)
+        (variable (position 30:1 31:1) v (type
+          (value-type (position 30:1 30:9) xml)) (expr
+          (xml-element-literal (position 30:18 30:26) a
+            (xml-attribute (position 30:21 30:24) k
+              (literal (position 30:23 30:24) ))))))))
+  (function (position 32:1 35:1) interpolatedValueBeforeQualifiedName () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 33:49 35:1)
+      (var-def (position 34:1 34:47)
+        (variable (position 34:1 34:47) v (type
+          (value-type (position 34:1 34:9) xml)) (expr
+          (xml-template-literal (position 34:13 34:35)
+            (template-string "<a k=\"")
+            (xml-template-attribute-insertion
+              (literal (position 34:25 34:28) v))
+            (template-string "\" x=\"\"/>")))))))
+  (function (position 35:1 38:50) consecutiveInterpolations () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 37:36 38:50)
+      (var-def (position 37:38 38:48)
+        (variable (position 37:38 38:48) v (type
+          (value-type (position 37:38 38:7) xml)) (expr
+          (xml-template-literal (position 38:11 38:36)
+            (template-string "<a k=\"")
+            (xml-template-attribute-insertion
+              (literal (position 38:23 38:26) v))
+            (template-string "")
+            (xml-template-attribute-insertion
+              (literal (position 38:29 38:32) w))
+            (template-string "\"/>")))))))
+  (function (position 38:50 42:41) quotedValues () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 41:22 42:41)
+      (var-def (position 41:24 42:39)
+        (variable (position 41:24 42:39) v (type
+          (value-type (position 41:24 42:6) xml)) (expr
+          (xml-template-literal (position 42:10 42:37)
+            (template-string "<a k=\"x")
+            (xml-template-attribute-insertion
+              (literal (position 42:23 42:26) v))
+            (template-string "y\" b='z'/>")))))))
+  (function (position 42:41 46:35) missingValueBeforeSpacedSlash () (
+    (value-type (position <built-in>) null))
+    (block-function-body (position 45:37 46:35)
+      (var-def (position 45:39 46:33)
+        (variable (position 45:39 46:33) v (type
+          (value-type (position 45:39 46:4) xml)) (expr
+          (bad-expr-or-action template (position 46:8 46:21) (tokens ("xml" 46:8 46:11) ("`" 46:12 46:13) ("<" 46:13 46:14) ("/" 46:17 46:18) (">" 46:19 46:20) ("`" 46:20 46:21)))))))))
+-- stderr --
+error[SYNTAX_ERROR]: invalid token
+  --> xml-attribute-value-e.bal:30:23
+   |
+30 |     xml v = xml `<a k=:/>`; // @error
+   |                       ^
+
+error[SYNTAX_ERROR]: invalid token
+  --> xml-attribute-value-e.bal:34:29
+   |
+34 |     xml v = xml `<a k=${"v"}:x=""/>`; // @error
+   |                             ^
+
+error[SYNTAX_ERROR]: invalid whitespace after
+  --> xml-attribute-value-e.bal:46:17
+   |
+46 |     xml v = xml `<a k/ >`; // @error
+   |                 ^^
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:18:23
+   |
+18 |     xml v = xml `<a k=${"v"}/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:18:29
+   |
+18 |     xml v = xml `<a k=${"v"}/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:22:22
+   |
+22 |     xml v = xml `<a k/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:22:22
+   |
+22 |     xml v = xml `<a k/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:26:23
+   |
+26 |     xml v = xml `<a k=/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:26:23
+   |
+26 |     xml v = xml `<a k=/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:30:23
+   |
+30 |     xml v = xml `<a k=:/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:34:23
+   |
+34 |     xml v = xml `<a k=${"v"}:x=""/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:38:21
+   |
+38 |     xml v = xml `<a k=${"v"} ${"w"}/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:38:33
+   |
+38 |     xml v = xml `<a k=${"v"} ${"w"}/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:46:17
+   |
+46 |     xml v = xml `<a k/ >`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing double quote token
+  --> xml-attribute-value-e.bal:46:17
+   |
+46 |     xml v = xml `<a k/ >`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> xml-attribute-value-e.bal:22:22
+   |
+22 |     xml v = xml `<a k/>`; // @error
+   |
+
+error[SYNTAX_ERROR]: missing equal token
+  --> xml-attribute-value-e.bal:46:17
+   |
+46 |     xml v = xml `<a k/ >`; // @error
+   |

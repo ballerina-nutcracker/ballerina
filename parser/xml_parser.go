@@ -35,6 +35,8 @@ func newXMLParser(tokenReader *tokenReader, interpolationExprs []st.STNode) *xml
 			tokenReader:          tokenReader,
 			invalidNodeInfoStack: make([]invalidNodeInfo, 0),
 			insertedToken:        nil,
+			ctx:                  tokenReader.ctx,
+			location:             tokenReader.location,
 		},
 		interpolationExprs: interpolationExprs,
 	}
@@ -267,7 +269,7 @@ func (p *xmlParser) parseAttributeValue() st.STNode {
 	startQuote := p.parseXMLStartQuote(common.PARSER_RULE_CONTEXT_XML_QUOTE_START)
 	items := make([]st.STNode, 0)
 	nextToken := p.peek()
-	for !p.isEndOfXMLAttributeValue(nextToken.Kind()) {
+	for p.isXMLAttributeValueItem(nextToken.Kind()) {
 		contentItem := p.parseXMLCharacterSet()
 		items = append(items, contentItem)
 		nextToken = p.peek()
@@ -286,19 +288,8 @@ func (p *xmlParser) parseXMLStartQuote(ctx common.ParserRuleContext) st.STNode {
 	return p.parseXMLStartQuote(ctx)
 }
 
-func (p *xmlParser) isEndOfXMLAttributeValue(kind st.SyntaxKind) bool {
-	switch kind {
-	case st.EOF_TOKEN,
-		st.BACKTICK_TOKEN,
-		st.LT_TOKEN,
-		st.GT_TOKEN,
-		st.DOUBLE_QUOTE_TOKEN,
-		st.SINGLE_QUOTE_TOKEN,
-		st.IDENTIFIER_TOKEN:
-		return true
-	default:
-		return false
-	}
+func (p *xmlParser) isXMLAttributeValueItem(kind st.SyntaxKind) bool {
+	return kind == st.XML_TEXT_CONTENT || kind == st.INTERPOLATION_START_TOKEN
 }
 
 func (p *xmlParser) parseXMLText() st.STNode {
