@@ -1,19 +1,24 @@
 # Supported ballerina library features
 
-Subset 4 extends the released [subset 3](subset3.md) with the new `ballerina/email` package, starting with an SMTP client that sends plain-text, HTML and multipart messages with attachments over plaintext, implicit TLS or STARTTLS connections.
+Subset 4 extends the released [subset 3](subset3.md) with the new `ballerina/email` package: an SMTP client that sends plain-text, HTML and multipart messages with attachments, and a POP3 client that receives them, over plaintext, implicit TLS or STARTTLS connections.
 
 ## [email](https://github.com/ballerina-platform/module-ballerina-email/blob/master/docs/spec/spec.md)
 
-Types: `email:SmtpClient` (client class), `email:SmtpConfiguration`, `email:Message`, `email:Options`, `email:Attachment`, `email:SecureSocket`, `email:Security`, `email:Protocol`, `email:Service`, `email:Error`.
+Types: `email:SmtpClient` and `email:PopClient` (client classes), `email:SmtpConfiguration`, `email:PopConfiguration`, `email:Message`, `email:Options`, `email:Attachment`, `email:SecureSocket`, `email:Security`, `email:Protocol`, `email:Service`, `email:Error`.
 
 | Method | Notes |
 |---|---|
 | `new email:SmtpClient(host, username?, password?, *clientConfig)` | Basic authentication with a username and password, or no authentication when both are omitted; any other combination returns `email:Error`. Configuration problems such as an unreadable `secureSocket.cert` are returned as `email:Error`. No connection is made until a message is sent |
 | `SmtpClient->sendMessage(email)` | Sends an `email:Message`; a `contentType` that does not contain `text` returns `email:Error` |
 | `SmtpClient->send(to, subject, from, body, *options)` | Sends a message built from the arguments and `email:Options` |
+| `new email:PopClient(host, username, password, *clientConfig)` | Connects and authenticates with `USER`/`PASS` to check the server and credentials; a failure returns `email:Error` |
+| `PopClient->receiveMessage(folder, timeout)` | Returns the first message in the mailbox and deletes it, checking again after 1 second and then at doubling intervals of up to 30 seconds until `timeout` seconds pass, and returning `()` if none arrives; only `INBOX` (in any case) is a valid folder. A message the server refuses to delete is still returned. `timeout` bounds the waits between checks, not an exchange with the server, which has its own 5-minute limit |
+| `PopClient->close()` | Closes the client; later reads, and reads waiting between checks, return `email:Error`, while a read already exchanging with the server finishes and returns its message |
 
 Each send opens a new connection, authenticates with `AUTH LOGIN` or `AUTH PLAIN` when the server offers it, and delivers to every To, Cc and Bcc address. A message with only `body` or only `htmlBody` is a single text part, both bodies form a `multipart/alternative`, and attachments follow that body content in a `multipart/mixed`. `contentType`, including its charset, applies to the text body, or to the HTML body when it is the only body. Non-ASCII addresses are sent with the SMTPUTF8 extension, and fail on servers that do not offer it. Headers in `headers` replace generated headers of the same name; a `To`, `Cc` or `Bcc` header replaces that recipient list, and an empty value clears it. Waits on the server are bounded by the RFC 5321 client timeouts. Attachments can be `mime:Entity` values, including nested multipart entities, or `email:Attachment` files sent with their `contentType`.
 
-`security` selects `SSL` (implicit TLS, the default on port 465), `START_TLS_ALWAYS`, `START_TLS_AUTO` or `START_TLS_NEVER`. `secureSocket` supplies the trusted certificates (a PEM bundle or a DER file), TLS versions, cipher suites and host-name verification for whichever TLS the mode uses.
+A received message has `body` from its first `text/plain` part and `htmlBody` from its first `text/html` part not marked as attachments, also inside `multipart/alternative`, `multipart/mixed` and `multipart/related`, decoded in their charsets; other parts are `mime:Entity` attachments with their headers, a message whose top-level MIME structure cannot be parsed has its raw body as `body`, and a nested part whose content type cannot be parsed is an `application/octet-stream` attachment. Addresses are returned as JavaMail formats them, `replyTo` falls back to the From addresses, and `headers` keeps the last value of a repeated header.
 
-Not covered in this subset: OAuth2 SMTP authentication, the POP3 and IMAP clients, and the POP3 and IMAP listeners.
+`security` selects `SSL` (implicit TLS, the default, on port 465 for SMTP and 995 for POP3), `START_TLS_ALWAYS`, `START_TLS_AUTO` or `START_TLS_NEVER`. `secureSocket` supplies the trusted certificates (a PEM bundle or a DER file), TLS versions, cipher suites and host-name verification for whichever TLS the mode uses.
+
+Not covered in this subset: OAuth2 SMTP authentication, the IMAP client, and the POP3 and IMAP listeners.

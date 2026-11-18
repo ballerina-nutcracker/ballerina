@@ -1,0 +1,9 @@
+-- stdout --
+ssl: implicit
+starttls-always: stls
+starttls-auto-unsupported: plain
+starttls-always-unsupported: Error while connecting to the POP3 store: STLS is required but host does not support STLS
+starttls-auto-refused: refused
+starttls-always-refused: Error while connecting to the POP3 store: TLS not available
+capa-dropped: Error while connecting to the POP3 store: Connect failed
+-- stderr --
