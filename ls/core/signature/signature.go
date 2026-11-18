@@ -204,8 +204,9 @@ func contentEnd(loc ast.Location, text string) (int, bool) {
 const unsupportedParameter = -2
 
 type argumentSlot struct {
-	start, end int
-	parameter  int
+	start, end    int
+	parameter     int
+	unmatchedName bool
 }
 
 // activeParameter returns the parameter index at offset, or -1 when no parameter matches.
@@ -230,7 +231,15 @@ func activeParameter(call ast.BLangNode, args []ast.BLangExpression, sig model.U
 	parameter := -1
 	switch {
 	case index < len(slots):
-		parameter = slots[index].parameter
+		slot := slots[index]
+		parameter = slot.parameter
+		// Recovery can parse the next line's assignment as a named argument. That slot starts
+		// right after the comma or parenthesis, so skip its leading whitespace.
+		nameStart := slot.end - len(strings.TrimLeft(text[slot.start:slot.end], " \t\r\n"))
+		if slot.unmatchedName && offset < nameStart && strings.ContainsAny(text[offset:nameStart], "\r\n") &&
+			!closedBefore(call, args, text, len(text)) {
+			parameter = positionalParameter(receivers+index, sig)
+		}
 	case !named:
 		parameter = positionalParameter(receivers+index, sig)
 	}
@@ -326,16 +335,18 @@ func argumentSlots(call ast.BLangNode, args []ast.BLangExpression, receivers int
 			}
 			continue
 		}
-		parameter := -1
+		slot := argumentSlot{start: loc.StartOffset(), end: loc.EndOffset(), parameter: -1}
 		if namedArg, ok := arg.(*ast.BLangNamedArgsExpression); ok {
 			named = true
 			if index, ok := namedParameterIndex(namedArg, sig); ok {
-				parameter = index
+				slot.parameter = index
+			} else {
+				slot.unmatchedName = true
 			}
 		} else if !named {
-			parameter = positionalParameter(i, sig)
+			slot.parameter = positionalParameter(i, sig)
 		}
-		slots = append(slots, argumentSlot{start: loc.StartOffset(), end: loc.EndOffset(), parameter: parameter})
+		slots = append(slots, slot)
 	}
 	slices.SortStableFunc(slots, func(a, b argumentSlot) int { return cmp.Compare(a.start, b.start) })
 	return slots, named, synthesized
