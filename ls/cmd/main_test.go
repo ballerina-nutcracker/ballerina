@@ -30,6 +30,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/ls/protocol"
 	"github.com/ballerina-nutcracker/ballerina/projects"
+	"github.com/ballerina-nutcracker/ballerina/test_util/goroutinedump"
 )
 
 const hostRepositoryPanic = "host repository version lookup panic"
@@ -71,6 +72,7 @@ type hostTestTransport struct {
 }
 
 func TestServeHostRecordsRecoveredCompilePanicWithoutProtocolOutput(t *testing.T) {
+	goroutinedump.AtCleanup(t)
 	t.Parallel()
 	root := t.TempDir()
 	source := "import acme/dep;\npublic function main() {}\n"

@@ -23,6 +23,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/context"
 	"github.com/ballerina-nutcracker/ballerina/semantics/internal/analysis/scope"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/test_util/goroutinedump"
 	"github.com/ballerina-nutcracker/ballerina/test_util/testphases"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
@@ -44,6 +45,7 @@ function g() {
 // sequentially because they share one compiler context and count its
 // diagnostics.
 func TestSemanticErrIsForwardedUnchanged(t *testing.T) {
+	goroutinedump.AtCleanup(t)
 	t.Parallel()
 	env := context.NewCompilerEnvironment(semtypes.CreateTypeEnv(), context.TraceOff)
 	ctx := context.NewCompilerContext(env)

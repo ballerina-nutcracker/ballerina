@@ -1,0 +1,83 @@
+name: WASM exit hang repro
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  repro:
+    name: WASM exit hang repro (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      GOOS: js
+      GOARCH: wasm
+      GOEXPERIMENT: greenteagc
+      GOGC: "1000"
+      RUNS: "40"
+      RUN_TIMEOUT: "180"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.1'
+
+      - name: Build wasm test binaries
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          go test -c -o "$RUNNER_TEMP/bin/scope.wasm" ./semantics/internal/analysis/scope
+          go test -c -o "$RUNNER_TEMP/bin/lscmd.wasm" ./ls/cmd
+
+      - name: Run test binaries repeatedly
+        run: |
+          set -uo pipefail
+          wasm_exec="$(go env GOROOT)/lib/wasm/go_js_wasm_exec"
+          logs="$RUNNER_TEMP/logs"
+          mkdir -p "$logs"
+          hangs=0
+          for i in $(seq 1 "$RUNS"); do
+            for target in scope:semantics/internal/analysis/scope lscmd:ls/cmd; do
+              name="${target%%:*}"
+              dir="${target#*:}"
+              out="$logs/$name-$i.log"
+              start=$(date +%s)
+              (cd "$dir" && timeout -s QUIT "$RUN_TIMEOUT" "$wasm_exec" "$RUNNER_TEMP/bin/$name.wasm" -test.timeout 30m) >"$out" 2>&1
+              rc=$?
+              took=$(( $(date +%s) - start ))
+              goroutines=$(grep -c '^goroutine ' "$out" || true)
+              echo "run=$i target=$name rc=$rc seconds=$took goroutines_at_cleanup=$goroutines last=$(tail -n 1 "$out")"
+              if [[ $rc -eq 124 || $rc -gt 128 ]]; then
+                hangs=$((hangs + 1))
+                echo "::error::$name run $i did not exit within ${RUN_TIMEOUT}s (rc=$rc)"
+                echo "----- full output of $name run $i -----"
+                cat "$out"
+                echo "----- end of $name run $i -----"
+              elif [[ $rc -ne 0 ]]; then
+                echo "::error::$name run $i failed (rc=$rc)"
+                cat "$out"
+              fi
+            done
+          done
+          echo "Sample goroutine dump from a passing scope run:"
+          sed -n '/WASM-HANG-DIAG goroutines/,/WASM-HANG-DIAG end/p' "$logs/scope-1.log"
+          echo "Sample goroutine dump from a passing ls/cmd run:"
+          sed -n '/WASM-HANG-DIAG goroutines/,/WASM-HANG-DIAG end/p' "$logs/lscmd-1.log"
+          echo "hangs=$hangs"
+          [[ $hangs -eq 0 ]]
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: wasm-hang-logs-${{ matrix.shard }}
+          path: ${{ runner.temp }}/logs
