@@ -78,12 +78,12 @@ func (p *emailPal) Platform() pal.Platform {
 	return base
 }
 
-func runEmailCase(t *testing.T, name, balContent string) {
+func runEmailCase(t *testing.T, name, balContent string, externs ...testharness.ExternRegistration) {
 	t.Helper()
-	runEmailCaseWith(t, newEmailPal(), name, balContent)
+	runEmailCaseWith(t, newEmailPal(), name, balContent, externs...)
 }
 
-func runEmailCaseWith(t *testing.T, p *emailPal, name, balContent string) {
+func runEmailCaseWith(t *testing.T, p *emailPal, name, balContent string, externs ...testharness.ExternRegistration) {
 	t.Helper()
 	tmpBalFile := filepath.Join(t.TempDir(), name+".bal")
 	if err := os.WriteFile(tmpBalFile, []byte(balContent), 0o644); err != nil {
@@ -94,7 +94,7 @@ func runEmailCaseWith(t *testing.T, p *emailPal, name, balContent string) {
 		InputPath:    tmpBalFile,
 		ExpectedPath: filepath.Join(expectedDir, name+".txtar"),
 	}
-	runExtern(t, tc, p, nil)
+	runExtern(t, tc, p, externs)
 }
 
 func writeTempFile(t *testing.T, name string, data []byte) string {

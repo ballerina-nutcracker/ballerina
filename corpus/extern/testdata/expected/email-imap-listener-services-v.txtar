@@ -1,0 +1,4 @@
+-- stdout --
+observer m1, watcher m1, observer m2, watcher m2, observer m3, watcher m3
+observer closed: true
+-- stderr --

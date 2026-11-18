@@ -1,0 +1,13 @@
+-- stdout --
+after panic
+finished, closed
+finished, closed, after restart
+finished, closed
+stopped from handler, other stop, closed, other closed
+restart, stopping, restarted
+after
+lock released
+recorder error Couldn't connect to host
+-- stderr --
+error: handler panicked
+error: onClose panicked
