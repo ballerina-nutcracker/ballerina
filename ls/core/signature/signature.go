@@ -25,6 +25,7 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/ls/core/workspace"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
+	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 )
 
 // Help is a rendered call signature and its active parameter.
@@ -437,16 +438,17 @@ func methodReference(cx *context.CompilerContext, receiver ast.BLangExpression, 
 func callSignature(sm compile.SealedModule, node ast.BLangNode, chain []ast.BLangNode) (model.SymbolRef, string, model.UntypedFunctionSignature, bool) {
 	cx := sm.Context()
 	var raw model.Symbol
+	var receiver ast.BLangExpression
 	switch n := node.(type) {
 	case *ast.BLangInvocation:
-		raw = n.RawSymbol
+		raw, receiver = n.RawSymbol, n.Expr
 		if _, resolved := raw.(*model.SymbolRef); !resolved && n.Name != nil {
 			if ref, ok := methodReference(cx, n.Expr, n.Name.GetValue()); ok {
 				raw = &ref
 			}
 		}
 	case *ast.BLangRemoteMethodCallAction:
-		raw = n.RawSymbol
+		raw, receiver = n.RawSymbol, n.Expr
 		if _, resolved := raw.(*model.SymbolRef); !resolved && n.Name != nil {
 			if ref, ok := methodReference(cx, n.Expr, model.RemoteMethodName(n.Name.GetValue())); ok {
 				raw = &ref
@@ -483,6 +485,12 @@ func callSignature(sm compile.SealedModule, node ast.BLangNode, chain []ast.BLan
 	ref, ok := raw.(*model.SymbolRef)
 	if !ok || ref == nil || ref.IsEmpty() {
 		return model.SymbolRef{}, "", model.UntypedFunctionSignature{}, false
+	}
+	if receiver != nil && cx.SymbolLocation(*ref) == diagnostics.NewBuiltinLocation() {
+		// A synthetic method symbol can carry the types of the arguments rather than the declared parameters.
+		if declared, ok := methodReference(cx, receiver, cx.SymbolName(*ref)); !ok || declared != *ref {
+			return model.SymbolRef{}, "", model.UntypedFunctionSignature{}, false
+		}
 	}
 	sig, ok := cx.GetFunctionSignature(*ref)
 	return *ref, model.StripRemotePrefix(cx.SymbolName(originRef(cx, *ref))), sig, ok
