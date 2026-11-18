@@ -17,6 +17,7 @@
 package native
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -89,4 +90,59 @@ func EncodeCharset(s, charset string) ([]byte, error) {
 // line break.
 func MimeBase64(data []byte) string {
 	return mimeEncode(data)
+}
+
+// DecodeCharset decodes data as Java's new String(bytes, charset) does: UTF-8 when charset is
+// empty, and U+FFFD for each malformed sequence.
+func DecodeCharset(data []byte, charset string) (string, error) {
+	return decodeCharset(data, charset)
+}
+
+// Part is a decoded MIME part for NewEntities: its headers in wire order and either its
+// transfer-decoded body or, for a multipart part, its child parts.
+type Part struct {
+	Headers   []EntityHeader
+	Body      []byte
+	Multipart bool
+	Parts     []Part
+}
+
+// NewEntities creates a mime:Entity[] holding one entity per part, with the part's headers and
+// body, or its child parts as body parts.
+func NewEntities(ctx *extern.Context, parts []Part) (*values.List, error) {
+	list, err := newBodyParts(ctx, len(parts))
+	if err != nil {
+		return nil, err
+	}
+	for i, part := range parts {
+		obj := list.Get(i).(*values.Object)
+		if err := addHeaders(ctx, obj, part.Headers); err != nil {
+			return nil, err
+		}
+		if !part.Multipart {
+			setEntityBody(obj, &entityBody{kind: bodyBytes, bytes: part.Body, fromChannel: true})
+			continue
+		}
+		children, err := NewEntities(ctx, part.Parts)
+		if err != nil {
+			return nil, err
+		}
+		setEntityBody(obj, &entityBody{kind: bodyParts, parts: children})
+	}
+	return list, nil
+}
+
+func addHeaders(ctx *extern.Context, obj *values.Object, headers []EntityHeader) error {
+	handle, ok := ctx.LookupObjectMethod(obj, "addHeader")
+	if !ok {
+		return errors.New("mime: Entity.addHeader not found")
+	}
+	for _, h := range headers {
+		for _, value := range h.Values {
+			if _, err := ctx.InvokeMethod(handle, []values.BalValue{obj, h.Name, value}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

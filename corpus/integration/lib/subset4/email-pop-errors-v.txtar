@@ -1,0 +1,5 @@
+-- stdout --
+Error while initializing POP3 client properties: /no/such/cert.pem (No such file or directory)
+Error while initializing POP3 client properties: Could not parse certificate: /tmp/bal_email_pop_garbage.pem
+Username and password must not contain CR or LF characters
+-- stderr --

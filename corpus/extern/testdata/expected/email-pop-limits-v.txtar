@@ -1,0 +1,6 @@
+-- stdout --
+deep body=
+32 application/octet-stream
+long within 10s: true
+long 1600001
+-- stderr --

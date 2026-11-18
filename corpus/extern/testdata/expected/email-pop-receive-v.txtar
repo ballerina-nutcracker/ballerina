@@ -1,0 +1,79 @@
+-- stdout --
+plain: to=bob@localhost cc=[] bcc=[] replyTo=Alice <alice@localhost> from=Alice <alice@localhost> sender= contentType=text/plain
+> body=line1\r\nline2\r\n htmlBody=<none>
+mixed: to=["bob@localhost","Carol <carol@localhost>"] cc=dave@localhost bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=OUTER
+> body=plain text htmlBody=<p>html</p>
+> attachment application/json (attachment; filename=data.json) = [123,34,107,34,58,32,49,125]
+> attachment application/octet-stream = [0,1,2,255]
+alternative: to=bob@localhost cc=[] bcc=[] replyTo=replies@localhost from=alice@localhost sender=agent@localhost contentType=multipart/alternative; boundary=ALT
+> body=plain only htmlBody=<b>html only</b>
+html: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/html; charset=UTF-8
+> body= htmlBody=<p>only html</p>\r\n
+latin1: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/csv; charset=ISO-8859-1
+> body=café\r\n htmlBody=<none>
+grüße: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=application/json
+> body={"a": 1}\r\n htmlBody=<none>
+broken: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed
+> body=no boundary\r\n htmlBody=<none>
+pdf: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=application/pdf
+> body= htmlBody=<none>
+> attachment application/pdf = [37,80,68,70]
+related: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/related; boundary=REL
+> body= htmlBody=<img src="cid:logo">
+> attachment image/png = [1,2,3]
+nested: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=A
+> body=see parts htmlBody=<none>
+> attachment multipart/mixed; boundary=B:
+> > attachment text/plain = [110,111,32,116,121,112,101]
+> > attachment text/plain; name=x.txt (attachment) = [120]
+names: to="Doe, John" <john@localhost> cc=[] bcc=[] replyTo==?UTF-8?q?J=C3=BCrgen?= <juergen@localhost> from==?UTF-8?q?J=C3=BCrgen?= <juergen@localhost> sender= contentType=text/plain
+> body=hi\r\n htmlBody=<none>
+no recipients: to=[] cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=hi\r\n htmlBody=<none>
+café: to=["bob@localhost","<broken"] cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain; charset=x-unknown
+> body=unknown charset\r\n htmlBody=<none>
+windows-1252: to=["=?UTF-8?q?Jos=C3=A9?= <jose@localhost>","\"Doe, John\" <john@localhost>"] cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=hi\r\n htmlBody=<none>
+leading attachment: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=L
+> body=body after htmlBody=<none>
+> attachment application/pdf (attachment; filename=my report.pdf) = [37,80,68,70]
+unpadded: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=hello htmlBody=<none>
+attached multipart: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/alternative; boundary=X
+> body=outer htmlBody=<none>
+> attachment multipart/mixed; boundary=Y (attachment; filename=fwd):
+> > attachment text/plain = [105,110,110,101,114]
+: to=[] cc=[] bcc=[] replyTo=[] from= sender= contentType=text/plain
+> body= htmlBody=<none>
+text and html: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=M
+> body=plain part htmlBody=<i>html part</i>
+text after related: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=M
+> body=late text htmlBody=<none>
+> attachment multipart/related; boundary=R:
+> > attachment image/png = [112,110,103]
+csv attachment: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/csv
+> body= htmlBody=<none>
+> attachment text/csv (attachment; filename=r.csv) = [97,44,98,13,10]
+bad address: to=["\"Doe, John\" <john@localhost>","bad@@addr"] cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=hi\r\n htmlBody=<none>
+broken nested: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=M
+> body=text htmlBody=<none>
+> attachment application/octet-stream = [114,97,119]
+truncated: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=M
+> body=cut short htmlBody=<none>
+unterminated: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=M
+> body=body htmlBody=<none>
+> attachment application/octet-stream = [97,98,99,13,10]
+café latin1: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=hi\r\n htmlBody=<none>
+café utf8: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=hi\r\n htmlBody=<none>
+no separator: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=text/plain
+> body=body text\r\n htmlBody=<none>
+close only: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=B
+> body=message text\r\n--B--\r\n htmlBody=<none>
+related root: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/related; boundary=R; start="<root>"
+> body= htmlBody=<p>root</p>
+> attachment text/html = [60,112,62,102,105,114,115,116,60,47,112,62]
+none
+-- stderr --

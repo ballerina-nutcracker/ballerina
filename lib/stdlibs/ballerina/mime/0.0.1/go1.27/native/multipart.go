@@ -167,18 +167,11 @@ func newBodyParts(ctx *extern.Context, count int) (*values.List, error) {
 // addEntityHeaders adds each part header through Entity.addHeader, in sorted name
 // order since textproto.MIMEHeader does not keep the wire order.
 func addEntityHeaders(ctx *extern.Context, obj *values.Object, header textproto.MIMEHeader) error {
-	handle, ok := ctx.LookupObjectMethod(obj, "addHeader")
-	if !ok {
-		return fmt.Errorf("mime: Entity.addHeader not found")
-	}
+	headers := make([]EntityHeader, 0, len(header))
 	for _, name := range slices.Sorted(maps.Keys(header)) {
-		for _, value := range header[name] {
-			if _, err := ctx.InvokeMethod(handle, []values.BalValue{obj, name, value}); err != nil {
-				return err
-			}
-		}
+		headers = append(headers, EntityHeader{Name: name, Values: header[name]})
 	}
-	return nil
+	return addHeaders(ctx, obj, headers)
 }
 
 // EncodeMultipart serializes body parts into multipart wire bytes, generating a boundary when
