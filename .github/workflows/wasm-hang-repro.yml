@@ -9,23 +9,29 @@ permissions:
 
 jobs:
   repro:
-    name: WASM exit hang repro (shard ${{ matrix.shard }})
+    name: WASM exit hang repro (${{ matrix.variant.name }} ${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4]
+        variant:
+          - { name: stack-gogc1000, ref: "", gogc: "1000" }
+          - { name: stack-gogc100, ref: "", gogc: "100" }
+          - { name: main-gogc1000, ref: main, gogc: "1000" }
     env:
       GOOS: js
       GOARCH: wasm
       GOEXPERIMENT: greenteagc
-      GOGC: "1000"
-      RUNS: "40"
-      RUN_TIMEOUT: "180"
+      GOGC: ${{ matrix.variant.gogc }}
+      RUNS: "60"
+      RUN_TIMEOUT: "120"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ matrix.variant.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -37,47 +43,79 @@ jobs:
           mkdir -p "$RUNNER_TEMP/bin"
           go test -c -o "$RUNNER_TEMP/bin/scope.wasm" ./semantics/internal/analysis/scope
           go test -c -o "$RUNNER_TEMP/bin/lscmd.wasm" ./ls/cmd
+          node --version
 
       - name: Run test binaries repeatedly
+        shell: bash --noprofile --norc -uo pipefail {0}
         run: |
-          set -uo pipefail
           wasm_exec="$(go env GOROOT)/lib/wasm/go_js_wasm_exec"
           logs="$RUNNER_TEMP/logs"
           mkdir -p "$logs"
           hangs=0
+          failures=0
           for i in $(seq 1 "$RUNS"); do
             for target in scope:semantics/internal/analysis/scope lscmd:ls/cmd; do
               name="${target%%:*}"
               dir="${target#*:}"
               out="$logs/$name-$i.log"
+              reports="$logs/$name-$i-reports"
+              mkdir -p "$reports"
               start=$(date +%s)
-              (cd "$dir" && timeout -s QUIT "$RUN_TIMEOUT" "$wasm_exec" "$RUNNER_TEMP/bin/$name.wasm" -test.timeout 30m) >"$out" 2>&1
+              # go_js_wasm_exec execs node, so $! is the node process.
+              (cd "$dir" && NODE_OPTIONS="--report-on-signal --report-signal=SIGUSR2 --report-directory=$reports" \
+                exec "$wasm_exec" "$RUNNER_TEMP/bin/$name.wasm" -test.timeout 30m) >"$out" 2>&1 &
+              pid=$!
+              hung=0
+              while kill -0 "$pid" 2>/dev/null; do
+                if (( $(date +%s) - start >= RUN_TIMEOUT )); then
+                  hung=1
+                  break
+                fi
+                sleep 0.2
+              done
+              diag=""
+              if (( hung )); then
+                # CPU time growing => node is busy in wasm/JS; flat => idle event loop.
+                cpu1=$(ps -o cputime= -p "$pid"); sleep 5; cpu2=$(ps -o cputime= -p "$pid")
+                threads=$(ps -o nlwp= -p "$pid")
+                stat=$(ps -o stat=,wchan:32= -p "$pid")
+                # Node only writes this report when its event loop is idle.
+                kill -USR2 "$pid"; sleep 10
+                kill -KILL "$pid" 2>/dev/null
+                diag="cputime ${cpu1}->${cpu2} threads=${threads} stat=${stat}"
+              fi
+              wait "$pid"
               rc=$?
               took=$(( $(date +%s) - start ))
-              goroutines=$(grep -c '^goroutine ' "$out" || true)
-              echo "run=$i target=$name rc=$rc seconds=$took goroutines_at_cleanup=$goroutines last=$(tail -n 1 "$out")"
-              if [[ $rc -eq 124 || $rc -gt 128 ]]; then
+              echo "run=$i target=$name rc=$rc seconds=$took last=$(tail -n 1 "$out")"
+              if (( hung )); then
                 hangs=$((hangs + 1))
-                echo "::error::$name run $i did not exit within ${RUN_TIMEOUT}s (rc=$rc)"
-                echo "----- full output of $name run $i -----"
-                cat "$out"
-                echo "----- end of $name run $i -----"
+                echo "::error::$name run $i did not exit within ${RUN_TIMEOUT}s: $diag"
+                echo "----- output of $name run $i -----"
+                tail -n 5 "$out"
+                ls "$reports"
+                for report in "$reports"/*.json; do
+                  [[ -f "$report" ]] || continue
+                  echo "----- node report $report: javascriptStack -----"
+                  jq '.javascriptStack' "$report"
+                  echo "----- node report: libuv handles -----"
+                  jq -c '.libuv[] | {type, is_active, is_referenced}' "$report" | sort | uniq -c
+                done
               elif [[ $rc -ne 0 ]]; then
+                failures=$((failures + 1))
                 echo "::error::$name run $i failed (rc=$rc)"
-                cat "$out"
+                tail -n 30 "$out"
+              else
+                rm -rf "$reports"
               fi
             done
           done
-          echo "Sample goroutine dump from a passing scope run:"
-          sed -n '/WASM-HANG-DIAG goroutines/,/WASM-HANG-DIAG end/p' "$logs/scope-1.log"
-          echo "Sample goroutine dump from a passing ls/cmd run:"
-          sed -n '/WASM-HANG-DIAG goroutines/,/WASM-HANG-DIAG end/p' "$logs/lscmd-1.log"
-          echo "hangs=$hangs"
-          [[ $hangs -eq 0 ]]
+          echo "hangs=$hangs failures=$failures"
+          [[ $hangs -eq 0 && $failures -eq 0 ]]
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: wasm-hang-logs-${{ matrix.shard }}
+          name: wasm-hang-logs-${{ matrix.variant.name }}-${{ matrix.shard }}
           path: ${{ runner.temp }}/logs
