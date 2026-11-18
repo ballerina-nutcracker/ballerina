@@ -1,0 +1,4 @@
+-- stdout --
+Error while initializing IMAP client properties: /no/such/cert.pem (No such file or directory)
+Error while initializing IMAP client properties: Could not parse certificate: /tmp/bal_email_imap_garbage.pem
+-- stderr --

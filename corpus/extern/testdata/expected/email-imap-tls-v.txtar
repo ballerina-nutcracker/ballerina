@@ -1,0 +1,6 @@
+-- stdout --
+ssl: implicit
+starttls-always: starttls
+starttls-auto-unsupported: plain
+starttls-always-unsupported: Error while connecting to the IMAP store: STARTTLS required but not supported by server
+-- stderr --
