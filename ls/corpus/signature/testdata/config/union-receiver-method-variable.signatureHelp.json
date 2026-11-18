@@ -1,0 +1,10 @@
+{
+  "source": "union-receiver-method.bal",
+  "position": {
+    "line": 22,
+    "character": 15
+  },
+  "expected": [
+    null
+  ]
+}
