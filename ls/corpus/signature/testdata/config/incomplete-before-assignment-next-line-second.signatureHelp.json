@@ -1,0 +1,50 @@
+{
+  "source": "incomplete-before-assignment.bal",
+  "position": {
+    "line": 37,
+    "character": 0
+  },
+  "expected": [
+    {
+      "signatures": [
+        {
+          "label": "add(int a, int b, int c)",
+          "parameters": [
+            {
+              "label": [
+                4,
+                9
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` a**"
+              }
+            },
+            {
+              "label": [
+                11,
+                16
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` b**"
+              }
+            },
+            {
+              "label": [
+                18,
+                23
+              ],
+              "documentation": {
+                "kind": "markdown",
+                "value": "**Parameter**  \n**`int` c**"
+              }
+            }
+          ]
+        }
+      ],
+      "activeSignature": 0,
+      "activeParameter": 1
+    }
+  ]
+}
