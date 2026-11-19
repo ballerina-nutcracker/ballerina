@@ -17,6 +17,8 @@
 package scope
 
 import (
+	"slices"
+
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/common"
 	"github.com/ballerina-nutcracker/ballerina/model"
@@ -139,8 +141,8 @@ func (r ruleSet) applyReturnStmt(cx Context, ret *ast.BLangReturn, f Facts, hasE
 func ApplyVarRef(cx Context, ref *ast.BLangVarRef) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyVarRef(cx, ref)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyVarRef(cx, ref)
 	}
 }
 
@@ -149,8 +151,8 @@ func ApplyVarRef(cx Context, ref *ast.BLangVarRef) {
 func ApplyFieldAccess(cx Context, access *ast.BLangFieldBaseAccess, receiver model.SymbolRef) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyFieldAccess(cx, access, receiver)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyFieldAccess(cx, access, receiver)
 	}
 }
 
@@ -158,8 +160,8 @@ func ApplyFieldAccess(cx Context, access *ast.BLangFieldBaseAccess, receiver mod
 func ApplyInvocation(cx Context, inv *ast.BLangInvocation, f Facts) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyInvocation(cx, inv, f)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyInvocation(cx, inv, f)
 	}
 }
 
@@ -167,8 +169,8 @@ func ApplyInvocation(cx Context, inv *ast.BLangInvocation, f Facts) {
 func ApplyRemoteCall(cx Context, call *ast.BLangRemoteMethodCallAction, f Facts) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyRemoteCall(cx, call, f)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyRemoteCall(cx, call, f)
 	}
 }
 
@@ -176,8 +178,8 @@ func ApplyRemoteCall(cx Context, call *ast.BLangRemoteMethodCallAction, f Facts)
 func ApplyResourceAccess(cx Context, call *ast.BLangClientResourceAccessAction, f Facts) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyResourceAccess(cx, call, f)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyResourceAccess(cx, call, f)
 	}
 }
 
@@ -187,8 +189,8 @@ func ApplyStartAction(cx Context, start *ast.BLangStartAction, f Facts) {
 	startOutsideLock(cx, start)
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyStartAction(cx, start, f)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyStartAction(cx, start, f)
 	}
 }
 
@@ -196,8 +198,8 @@ func ApplyStartAction(cx Context, start *ast.BLangStartAction, f Facts) {
 func ApplyNewExpr(cx Context, n *ast.BLangNewExpression) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyNewExpr(cx, n)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyNewExpr(cx, n)
 	}
 }
 
@@ -206,8 +208,8 @@ func ApplyNewExpr(cx Context, n *ast.BLangNewExpression) {
 func ApplyAssignment(cx Context, a ast.AssignmentNode, lhs LValue, rhs Facts) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyAssignment(cx, a, lhs, rhs)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyAssignment(cx, a, lhs, rhs)
 	}
 }
 
@@ -216,8 +218,8 @@ func ApplyAssignment(cx Context, a ast.AssignmentNode, lhs LValue, rhs Facts) {
 func ApplyReturnStmt(cx Context, ret *ast.BLangReturn, f Facts, hasExpr bool) {
 	rules := cx.rules()
 	common.Assert(func() bool { return activationConsistent(cx, rules) })
-	for i := len(rules) - 1; i >= 0; i-- {
-		rules[i].applyReturnStmt(cx, ret, f, hasExpr)
+	for _, rule := range slices.Backward(rules) {
+		rule.applyReturnStmt(cx, ret, f, hasExpr)
 	}
 }
 

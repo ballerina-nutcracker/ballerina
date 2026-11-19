@@ -159,35 +159,35 @@ var (
 
 func NewBLangAssignment(pos Location, variable LExpr, expr BLangActionOrExpression) *BLangAssignment {
 	return &BLangAssignment{
-		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		VarRef:             variable,
-		Expr:               expr,
+		pos:    pos,
+		VarRef: variable,
+		Expr:   expr,
 	}
 }
 
 func NewBLangCompoundAssignment(pos Location, variable LExpr, expr BLangActionOrExpression, opKind model.OperatorKind) *BLangCompoundAssignment {
 	return &BLangCompoundAssignment{
-		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		VarRef:             variable,
-		Expr:               expr,
-		OpKind:             opKind,
+		pos:    pos,
+		VarRef: variable,
+		Expr:   expr,
+		OpKind: opKind,
 	}
 }
 
 func NewBLangIf(pos Location, condition BLangExpression, body *BLangBlockStmt, elseStmt StatementNode) *BLangIf {
 	return &BLangIf{
-		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Expr:               condition,
-		Body:               *body,
-		ElseStmt:           elseStmt,
+		pos:      pos,
+		Expr:     condition,
+		Body:     *body,
+		ElseStmt: elseStmt,
 	}
 }
 
 func NewBLangWhile(pos Location, condition BLangExpression, body *BLangBlockStmt, onFailClause *BLangOnFailClause) *BLangWhile {
 	stmt := &BLangWhile{
-		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Expr:               condition,
-		Body:               *body,
+		pos:  pos,
+		Expr: condition,
+		Body: *body,
 	}
 	if onFailClause != nil {
 		stmt.OnFailClause = *onFailClause
@@ -199,19 +199,19 @@ func NewBLangWhile(pos Location, condition BLangExpression, body *BLangBlockStmt
 
 func NewBLangForeach(pos Location, variableDef *BLangVariableDef, collection BLangActionOrExpression, body *BLangBlockStmt, onFailClause *BLangOnFailClause) *BLangForeach {
 	return &BLangForeach{
-		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		VariableDef:        variableDef,
-		Collection:         collection,
-		Body:               *body,
-		OnFailClause:       onFailClause,
-		IsDeclaredWithVar:  variableDef.Var.IsDeclaredWithVar,
+		pos:               pos,
+		VariableDef:       variableDef,
+		Collection:        collection,
+		Body:              *body,
+		OnFailClause:      onFailClause,
+		IsDeclaredWithVar: variableDef.Var.IsDeclaredWithVar,
 	}
 }
 
 func NewBLangReturn(pos Location, expr BLangActionOrExpression) *BLangReturn {
 	return &BLangReturn{
-		bLangStatementBase: bLangStatementBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Expr:               expr,
+		pos:  pos,
+		Expr: expr,
 	}
 }
 
