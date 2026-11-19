@@ -43,7 +43,7 @@ func deepEqual(v1, v2 BalValue, visited map[refPair]struct{}) bool {
 		return ok && a == b
 	case float64:
 		b, ok := v2.(float64)
-		return ok && FloatDeepEqual(a, b)
+		return ok && floatDeepEqual(a, b)
 	case string:
 		b, ok := v2.(string)
 		return ok && a == b

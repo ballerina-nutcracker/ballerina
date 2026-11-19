@@ -41,6 +41,7 @@ STRICT = ("semtypes", "common", "decimal", "prettyprint", "runtime", "values")
 # Strict modules that keep their existing panic ban on top of the Strict baseline.
 STRICT_NO_PANIC = ("decimal",)
 NO_PANIC = (*FRONTEND_MODULES, *STRICT_NO_PANIC)
+STRICT_AND_ABOVE = (*STRICT, *DATA, *FRONTEND_MODULES)
 
 
 def run_json(arguments: list[str], cwd: Path, **kwargs) -> dict:
@@ -105,7 +106,7 @@ def check_configs(root: Path) -> list[str]:
     errors = []
     enabled_cache = {}
     probe_cache = {}
-    for module in (*FRONTEND_MODULES, *DATA, *STRICT):
+    for module in STRICT_AND_ABOVE:
         directory = root / module
         config = directory / ".golangci.yml"
         if config.is_symlink() and not config.exists():
@@ -142,9 +143,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-modules", action="store_true",
                         help="print modules requiring the node-base visibility check")
+    parser.add_argument("--strict-modules", action="store_true",
+                        help="print modules requiring the function usage check")
     args = parser.parse_args()
     if args.data_modules:
         print(" ".join(DATA))
+        return 0
+    if args.strict_modules:
+        print(" ".join(STRICT_AND_ABOVE))
         return 0
     errors = check_configs(Path(__file__).resolve().parents[2])
     if errors:

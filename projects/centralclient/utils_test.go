@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/common/bfs"
+	"github.com/ballerina-nutcracker/ballerina/test_util/memfs"
 )
 
 func TestGetAsList(t *testing.T) {
@@ -205,7 +206,7 @@ func TestGetPlatformFromBala(t *testing.T) {
 }
 
 func TestCreateBalaFileDirectory(t *testing.T) {
-	fsys := bfs.NewMemFS()
+	fsys := memfs.New()
 	ctx := ClientContext{}
 
 	tests := []struct {
@@ -236,7 +237,7 @@ func TestCreateBalaFileDirectory(t *testing.T) {
 }
 
 func TestCheckHashInternal(t *testing.T) {
-	fsys := bfs.NewMemFS()
+	fsys := memfs.New()
 
 	tests := []struct {
 		name     string
@@ -302,7 +303,7 @@ func TestHandleNightlyBuild(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsys := bfs.NewMemFS()
+			fsys := memfs.New()
 			ctx := ClientContext{}
 			balaCachePath := "bala/org/pkg/1.0.0/any"
 
@@ -347,7 +348,7 @@ func TestHandlePackageDeprecation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsys := bfs.NewMemFS()
+			fsys := memfs.New()
 			ctx := ClientContext{}
 			balaCachePath := "bala/org/pkg/1.0.0/any"
 
@@ -395,7 +396,7 @@ func TestWriteDeprecatedMsg(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsys := bfs.NewMemFS()
+			fsys := memfs.New()
 			ctx := ClientContext{}
 			metaFilePath := "bala/deprecated.txt"
 
@@ -435,7 +436,7 @@ func TestCreateMetaFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fsys := bfs.NewMemFS()
+			fsys := memfs.New()
 			ctx := ClientContext{}
 
 			err := createMetaFile(fsys, tt.filePath, tt.errMsg, ctx)

@@ -18,11 +18,13 @@ package semtypes
 
 type tableSubtype struct{}
 
+//funcusage:test-hook unused until table types are supported; revisit after tables and match patterns
 func newTableSubtype() tableSubtype {
 	this := tableSubtype{}
 	return this
 }
 
+//funcusage:test-hook unused until table types are supported; revisit after tables and match patterns
 func tableContainingKeyConstraint(cx Context, tableConstraint SemType, keyConstraint SemType) SemType {
 	var normalizedKc SemType
 	lat := ToListAtomicType(cx.Env(), keyConstraint)
@@ -42,6 +44,7 @@ func tableContainingKeyConstraint(cx Context, tableConstraint SemType, keyConstr
 	return tableContainingWithEnvSemTypeSemTypeSemType(cx.Env(), tableConstraint, normalizedKc, Val)
 }
 
+//funcusage:test-hook unused until table types are supported; revisit after tables and match patterns
 func tableContainingKeySpecifier(cx Context, tableConstraint SemType, fieldNames []string) SemType {
 	fieldNameSingletons := make([]SemType, len(fieldNames))
 	fieldTypes := make([]SemType, len(fieldNames))

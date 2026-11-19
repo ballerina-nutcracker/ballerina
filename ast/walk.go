@@ -134,7 +134,7 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Name != nil {
 			Walk(v, node.Name)
 		}
-		WalkTypeData(v, &node.typeData)
+		walkTypeData(v, &node.typeData)
 		for i := range node.annAttachments {
 			Walk(v, &node.annAttachments[i])
 		}
@@ -503,7 +503,7 @@ func Walk(v Visitor, node BLangNode) {
 		if node.Expr != nil {
 			Walk(v, node.Expr.(BLangNode))
 		}
-		WalkTypeData(v, &node.TestedType)
+		walkTypeData(v, &node.TestedType)
 
 	case *BLangCommitExpr:
 		panic("unimplemented")
@@ -612,7 +612,7 @@ func Walk(v Visitor, node BLangNode) {
 
 	// Section 8: Type Nodes
 	case *BLangArrayType:
-		WalkTypeData(v, &node.Elemtype)
+		walkTypeData(v, &node.Elemtype)
 		for i := range node.Sizes {
 			if node.Sizes[i] != nil {
 				Walk(v, node.Sizes[i].(BLangNode))
@@ -635,22 +635,22 @@ func Walk(v Visitor, node BLangNode) {
 		}
 
 	case *BLangUnionTypeNode:
-		WalkTypeData(v, &node.lhs)
-		WalkTypeData(v, &node.rhs)
+		walkTypeData(v, &node.lhs)
+		walkTypeData(v, &node.rhs)
 
 	case *BLangIntersectionTypeNode:
-		WalkTypeData(v, &node.lhs)
-		WalkTypeData(v, &node.rhs)
+		walkTypeData(v, &node.lhs)
+		walkTypeData(v, &node.rhs)
 
 	case *BLangErrorTypeNode:
-		WalkTypeData(v, &node.DetailType)
+		walkTypeData(v, &node.DetailType)
 
 	case *BLangConstrainedType:
-		WalkTypeData(v, &node.BaseType)
-		WalkTypeData(v, &node.Constraint)
+		walkTypeData(v, &node.BaseType)
+		walkTypeData(v, &node.Constraint)
 	case *BLangStreamType:
-		WalkTypeData(v, &node.ValueType)
-		WalkTypeData(v, &node.CompletionType)
+		walkTypeData(v, &node.ValueType)
+		walkTypeData(v, &node.CompletionType)
 	case *BLangTupleTypeNode:
 		for i := range node.Members {
 			for j := range node.Members[i].AnnAttachments {
@@ -995,7 +995,7 @@ func Walk(v Visitor, node BLangNode) {
 
 // We need to do this because TypeData is not a ast node but within it there can be ast nodes. Need to think if this is
 // the correct appraoch.
-func WalkTypeData(v Visitor, typeData *TypeData) {
+func walkTypeData(v Visitor, typeData *TypeData) {
 	if w := v.VisitTypeData(typeData); w != nil {
 		v = w
 	}
@@ -1041,7 +1041,7 @@ func walkClassDefnBody(v Visitor, b *classDefnBase) {
 	for _, badNode := range b.BadTopLevelNodes {
 		Walk(v, badNode)
 	}
-	WalkTypeData(v, &b.typeData)
+	walkTypeData(v, &b.typeData)
 }
 
 func walkTypeDescriptor(v Visitor, td TypeDescriptor) {
