@@ -22,7 +22,7 @@ package st
 type {{.Name}} = {{if .Base}}{{if eq .Base "Node"}}NonTerminalNode{{else}}{{.Base}}{{end}}{{else}}NonTerminalNode{{end}}
 {{else}}
 type {{.Name}} struct {
-	{{if .Base}}{{if eq .Base "Node"}}NonTerminalNodeBase{{else}}{{.Base}}{{end}}{{else}}NonTerminalNodeBase{{end}}
+	{{if .Base}}{{if eq .Base "Node"}}nonTerminalNodeBase{{else}}{{.Base}}{{end}}{{else}}nonTerminalNodeBase{{end}}
 }
 {{if .Kind}}
 
