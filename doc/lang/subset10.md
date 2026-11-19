@@ -22,6 +22,8 @@
 - [Class definition](https://ballerina.io/spec/lang/master/#section_8.6)
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
   - Supports `object-field`, `method-defn` and `object-type-inclusion` members
+  - A function call, method call, `new` expression or template expression is an [isolated expression](https://ballerina.io/spec/lang/master/#isolated_expressions) only when its static type is a subtype of `readonly` or `isolated object {}`; a call to `clone` is always isolated
+  - Field initializers of an `isolated` class are not required to be isolated expressions
   - Supports [`remote-method-defn`](https://ballerina.io/spec/lang/master/#remote-method-defn) for client classes and `resource-method-defn` for service classes
 
 ## Statements
