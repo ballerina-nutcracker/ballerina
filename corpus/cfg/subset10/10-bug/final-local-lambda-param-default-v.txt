@@ -1,0 +1,25 @@
+(evaluate
+  (bb0 () ()
+    (return
+      (invocation f ()))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation evaluate ( <default>)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int))))
+    (assignment
+      (simple-var-ref x)
+      (literal 9))
+    (return
+      (simple-var-ref x))
+  )
+)

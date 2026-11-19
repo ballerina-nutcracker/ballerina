@@ -1,0 +1,53 @@
+module $anon.. v 0.0.0;
+class Reader {
+  readValue function() returns int
+
+  init() -> nil{
+    bb0 {
+      %2 = fp $anon/.:$anonFunc$_0
+      %3 = ConstantLoad readValue
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Reader
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    reader = %3;
+    %7 = ConstantLoad readValue
+    %6 = reader[%7];
+    readValue = %6;
+    %9 = readValue() -> bb5;
+  }
+  bb5 {
+    %10 = %9;
+    %11 = println(%10) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %2 = ConstantLoad 9
+    x = %2;
+    %0 = x;
+    return;
+  }
+}

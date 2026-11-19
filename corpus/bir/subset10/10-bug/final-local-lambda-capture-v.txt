@@ -1,0 +1,34 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = closure_fp $anon/.:$anonFunc$_0
+    makeReader = %1;
+    %3 = makeReader() -> bb1;
+  }
+  bb1 {
+    readValue = %3;
+    %5 = readValue() -> bb2;
+  }
+  bb2 {
+    %6 = %5;
+    %7 = println(%6) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$anonFunc$_0() -> function() returns int{
+  bb0 {
+    %2 = ConstantLoad 7
+    x = %2;
+    %3 = closure_fp $anon/.:$anonFunc$_1
+    %0 = %3;
+    return;
+  }
+}
+$anonFunc$_1() -> int{
+  bb0 {
+    %0 = (1, x);
+    return;
+  }
+}
