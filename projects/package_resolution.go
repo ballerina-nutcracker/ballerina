@@ -217,9 +217,15 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 			continue
 		}
 
-		// Get transitive dependencies from the package's manifest
-		for _, dep := range pkg.Manifest().Dependencies() {
-			key := dep.Org().Value() + "/" + dep.Name().Value()
+		// A package whose tests are compiled can import, from its tests,
+		// packages its manifest doesn't declare; resolve those too.
+		depDescs := packageDescriptorsFromDependencies(pkg.Manifest().Dependencies())
+		if !pkg.project.BuildOptions().SkipTests() {
+			depDescs = append(depDescs, r.resolveOwnDirectDependencies(ctx, pkg)...)
+		}
+
+		for _, depDesc := range depDescs {
+			key := depDesc.Org().Value() + "/" + depDesc.Name().Value()
 
 			if visited[key] {
 				// Node was already discovered via another path (e.g. as a direct
@@ -232,8 +238,6 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 			}
 			visited[key] = true
 
-			depDesc := NewPackageDescriptor(dep.Org(), dep.Name(), dep.Version())
-
 			// Track resolved dependency
 			r.resolvedDependencies[key] = &depDesc
 
@@ -245,6 +249,38 @@ func (r *PackageResolution) resolveTransitiveDependencies(
 			queue = append(queue, depDesc)
 		}
 	}
+}
+
+// packageDescriptorsFromDependencies converts a manifest's declared
+// dependencies into PackageDescriptors.
+func packageDescriptorsFromDependencies(deps []Dependency) []PackageDescriptor {
+	descs := make([]PackageDescriptor, len(deps))
+	for i, dep := range deps {
+		descs[i] = NewPackageDescriptor(dep.Org(), dep.Name(), dep.Version())
+	}
+	return descs
+}
+
+// resolveOwnDirectDependencies scans pkg's own modules' imports (source and
+// test) and returns the packages they resolve to — the same computation
+// buildPackageDependencyGraph's own direct-deps pass does for the
+// resolution's root package, applied here to a dependency package instead.
+func (r *PackageResolution) resolveOwnDirectDependencies(ctx context.Context, pkg *Package) []PackageDescriptor {
+	var descs []PackageDescriptor
+	for _, modID := range pkg.packageCtx.moduleIDs {
+		modCtx := pkg.packageCtx.moduleContextMap[modID]
+		if modCtx == nil {
+			continue
+		}
+		requests := modCtx.populateModuleLoadRequests()
+		requests = append(requests, modCtx.populateTestModuleLoadRequests()...)
+		for _, resp := range r.moduleResolver.resolveModuleLoadRequests(ctx, requests) {
+			if resp.resolutionStatus == resolutionStatusResolved && resp.packageDescriptor != nil {
+				descs = append(descs, *resp.packageDescriptor)
+			}
+		}
+	}
+	return descs
 }
 
 // bundledLangLibs lists the lang libraries that are migrated to bala bundles

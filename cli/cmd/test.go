@@ -251,10 +251,21 @@ func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 		return testError("resolve ballerina env path: %w", err)
 	}
 
+	// When testing one specific member, scope SkipTests to it so sibling
+	// members (including dependencies) keep compiling without their tests/
+	// — see ProjectLoadConfig.TestTargetMember.
+	testTargetMember := ""
+	if workspaceRoot != "" && workspaceRoot != absBaseDir {
+		if rel, relErr := filepath.Rel(workspaceRoot, absBaseDir); relErr == nil {
+			testTargetMember = filepath.ToSlash(rel)
+		}
+	}
+
 	fsys := os.DirFS(effectiveBaseDir)
 	result, err := projects.Load(fsys, effectiveLoadPath, projects.ProjectLoadConfig{
-		BallerinaEnvFs: os.DirFS(ballerinaEnvPath),
-		BuildOptions:   &buildOpts,
+		BallerinaEnvFs:   os.DirFS(ballerinaEnvPath),
+		BuildOptions:     &buildOpts,
+		TestTargetMember: testTargetMember,
 	})
 	if err != nil {
 		return testError("failed to load package: %w", err)
@@ -323,8 +334,9 @@ func runTestsForWorkspace(cmd *cobra.Command, opts *testCmdOptions, stderr io.Wr
 		memberDir := filepath.Join(workspaceAbsRoot, bp.SourceRoot())
 
 		memberResult, err := projects.Load(fsys, loadPath, projects.ProjectLoadConfig{
-			BallerinaEnvFs: os.DirFS(ballerinaEnvPath),
-			BuildOptions:   buildOpts,
+			BallerinaEnvFs:   os.DirFS(ballerinaEnvPath),
+			BuildOptions:     buildOpts,
+			TestTargetMember: bp.SourceRoot(),
 		})
 		if err != nil {
 			return testError("failed to load package: %w", err)

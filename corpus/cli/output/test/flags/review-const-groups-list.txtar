@@ -1,0 +1,10 @@
+-- stdout --
+
+Running Tests
+
+	reviewconstgroups
+	Following groups are available :
+	[slow, fast]
+-- stderr --
+-- exitcode --
+0

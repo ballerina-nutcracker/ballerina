@@ -126,7 +126,7 @@ func discover(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) *test
 			}
 			switch identifierValue(att.AnnotationName) {
 			case "Config":
-				test := parseTestConfig(name, att)
+				test := parseTestConfig(compilerCtx, name, att)
 				validateEvaluationConfig(compilerCtx, att, test)
 				p.Tests = append(p.Tests, test)
 			case "BeforeSuite":
@@ -138,9 +138,9 @@ func discover(compilerCtx *context.CompilerContext, pkg *ast.BLangPackage) *test
 			case "AfterEach":
 				p.AfterEach = append(p.AfterEach, testplan.SuiteHook{Name: name})
 			case "BeforeGroups":
-				p.BeforeGroups = append(p.BeforeGroups, parseGroupsHook(name, att, false))
+				p.BeforeGroups = append(p.BeforeGroups, parseGroupsHook(compilerCtx, name, att, false))
 			case "AfterGroups":
-				p.AfterGroups = append(p.AfterGroups, parseGroupsHook(name, att, true))
+				p.AfterGroups = append(p.AfterGroups, parseGroupsHook(compilerCtx, name, att, true))
 			}
 		}
 	}
@@ -183,12 +183,12 @@ func identifierValue(id ast.IdentifierNode) string {
 	return id.GetValue()
 }
 
-func parseTestConfig(fnName string, att ast.BLangAnnotationAttachment) testplan.TestFunction {
+func parseTestConfig(ctx *context.CompilerContext, fnName string, att ast.BLangAnnotationAttachment) testplan.TestFunction {
 	fields := mappingFields(att.Expr)
 	return testplan.TestFunction{
 		Name:            fnName,
 		Enable:          boolField(fields, "enable", true),
-		Groups:          stringArrayField(fields, "groups"),
+		Groups:          stringArrayField(ctx, fields, "groups"),
 		DependsOn:       functionRefArrayField(fields, "dependsOn"),
 		Before:          functionRefField(fields, "before"),
 		After:           functionRefField(fields, "after"),
@@ -207,11 +207,11 @@ func parseAfterSuiteConfig(fnName string, att ast.BLangAnnotationAttachment) tes
 	}
 }
 
-func parseGroupsHook(fnName string, att ast.BLangAnnotationAttachment, isAfter bool) testplan.GroupHook {
+func parseGroupsHook(ctx *context.CompilerContext, fnName string, att ast.BLangAnnotationAttachment, isAfter bool) testplan.GroupHook {
 	fields := mappingFields(att.Expr)
 	hook := testplan.GroupHook{
 		Name:   fnName,
-		Groups: stringArrayField(fields, "value"),
+		Groups: stringArrayField(ctx, fields, "value"),
 	}
 	if isAfter {
 		hook.AlwaysRun = boolField(fields, "alwaysRun", false)
@@ -310,16 +310,20 @@ func intField(fields map[string]ast.BLangExpression, name string, defaultValue i
 	return int(value)
 }
 
-// stringArrayField reads a string-list annotation field, resolving each
-// member via its determined singleton type — see boolField's doc comment.
-func stringArrayField(fields map[string]ast.BLangExpression, name string) []string {
+// stringArrayField reads a string-list annotation field. A literal list
+// resolves each member via its determined singleton type — see boolField's
+// doc comment. A const reference (e.g. `groups: GROUPS` where
+// `const string[] GROUPS = ["slow"]`) has no list-constructor node at the
+// use site at all, so it's read from the referenced constant's own folded
+// value instead.
+func stringArrayField(ctx *context.CompilerContext, fields map[string]ast.BLangExpression, name string) []string {
 	expr, ok := fields[name]
 	if !ok {
 		return nil
 	}
 	list, ok := expr.(*ast.BLangListConstructorExpr)
 	if !ok {
-		return nil
+		return constStringListValue(ctx, expr)
 	}
 	var result []string
 	for _, member := range list.Exprs {
@@ -332,6 +336,31 @@ func stringArrayField(fields map[string]ast.BLangExpression, name string) []stri
 			continue
 		}
 		result = append(result, value)
+	}
+	return result
+}
+
+// constStringListValue reads expr's resolved value as a []string, when expr
+// refers to a module-level constant whose own expression was folded to a
+// list at compile time (model.ConstantValueSymbol).
+func constStringListValue(ctx *context.CompilerContext, expr ast.BLangExpression) []string {
+	withSymbol, ok := expr.(ast.BNodeWithSymbol)
+	if !ok {
+		return nil
+	}
+	sym, ok := ctx.GetSymbol(withSymbol.Symbol()).(*model.ConstantValueSymbol)
+	if !ok {
+		return nil
+	}
+	list, ok := sym.ConstantValue().(*values.List)
+	if !ok {
+		return nil
+	}
+	var result []string
+	for i := 0; i < list.Len(); i++ {
+		if s, ok := list.Get(i).(string); ok {
+			result = append(result, s)
+		}
 	}
 	return result
 }

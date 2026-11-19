@@ -44,6 +44,11 @@ type ProjectLoadConfig struct {
 	// <project-path>/.ballerina for build projects and <file-path-parent>/.ballerina
 	// for single-file projects.
 	BallerinaEnvFs fs.FS
+	// TestTargetMember, a workspace member's path relative to the workspace
+	// root, limits BuildOptions.SkipTests to that member; the other members
+	// use their own manifest's SkipTests. Ignored for non-workspace projects;
+	// the other BuildOptions still apply to every member.
+	TestTargetMember string
 }
 
 // ProjectLoader loads Ballerina projects from the filesystem.
@@ -426,8 +431,18 @@ func (l *ProjectLoader) loadWorkspaceProject(projectPath string, cfg ProjectLoad
 	for _, pkgPath := range workspaceManifest.Packages() {
 		fullPkgPath := path.Join(projectPath, pkgPath)
 
+		// Scope the SkipTests override to the member under test (see
+		// ProjectLoadConfig.TestTargetMember): every other member loads
+		// with its own manifest's SkipTests instead of this config's.
+		memberCfg := cfg
+		if cfg.TestTargetMember != "" && path.Clean(pkgPath) != path.Clean(cfg.TestTargetMember) && cfg.BuildOptions != nil {
+			scoped := *cfg.BuildOptions
+			scoped.skipTests = optionalBoolUnknown
+			memberCfg.BuildOptions = &scoped
+		}
+
 		// Load as build project with shared environment
-		result, err := l.loadBuildProjectInWorkspace(fullPkgPath, cfg, env)
+		result, err := l.loadBuildProjectInWorkspace(fullPkgPath, memberCfg, env)
 		if err != nil {
 			allDiags = append(allDiags, createSimpleDiagnostic(
 				diagnostics.Error,

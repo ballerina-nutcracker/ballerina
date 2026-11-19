@@ -1,0 +1,16 @@
+-- stdout --
+
+Running Tests
+
+	reviewconstgroups
+		[pass] testSlow
+
+
+		1 passing
+		0 failing
+		0 skipped
+
+		Test execution time : <DURATION>s
+-- stderr --
+-- exitcode --
+0
