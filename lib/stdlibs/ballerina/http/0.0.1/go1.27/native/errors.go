@@ -34,13 +34,18 @@ const (
 
 // httpError returns a distinct http error of type t with message and an optional cause.
 func httpError(ctx *extern.Context, t errorType, message string, cause *values.Error) *values.Error {
-	handle, _ := ctx.LookupFunction(orgName, moduleName, "createError")
 	var causeVal values.BalValue
 	if cause != nil {
 		causeVal = cause
 	}
-	result, _ := ctx.InvokeFunction(handle, []values.BalValue{string(t), message, causeVal})
+	result, _ := invokeModuleFunction(ctx, "createError", string(t), message, causeVal)
 	return result.(*values.Error)
+}
+
+// invokeModuleFunction calls the private http function name with args.
+func invokeModuleFunction(ctx *extern.Context, name string, args ...values.BalValue) (values.BalValue, error) {
+	handle, _ := ctx.LookupFunction(orgName, moduleName, name)
+	return ctx.InvokeFunction(handle, args)
 }
 
 // payloadError is the error a Request or Response payload accessor returns when the body cannot
