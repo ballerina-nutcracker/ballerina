@@ -1,0 +1,20 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (user-defined-type Node)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal next)
+            (mapping-constructor-expr
+              (key-value
+                (literal next)
+                (literal <nil>))))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access next
+            (simple-var-ref n))
+          (user-defined-type Node)))))
+  )
+)
