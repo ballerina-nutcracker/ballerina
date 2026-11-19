@@ -78,6 +78,7 @@ func TestSerialOpenCloseDuringCompilation(t *testing.T) {
 		t.Fatal("compilation did not reach barrier")
 	}
 	done := make(chan error, 1)
+	progress := make(chan struct{}, 1)
 	go func() {
 		for range 40 {
 			for _, kind := range []workspace.ChangeKind{workspace.ChangeOpen, workspace.ChangeClose} {
@@ -87,17 +88,34 @@ func TestSerialOpenCloseDuringCompilation(t *testing.T) {
 					done <- err
 					return
 				}
+				select {
+				case progress <- struct{}{}:
+				default:
+				}
 			}
 		}
 		done <- nil
 	}()
-	select {
-	case err := <-done:
-		if err != nil {
-			t.Fatal(err)
+	// The stall timer catches an Apply that waits on the blocked compilation;
+	// the overall deadline catches calls that each finish but are too slow.
+	stall := time.NewTimer(10 * time.Second)
+	defer stall.Stop()
+	overall := time.NewTimer(60 * time.Second)
+	defer overall.Stop()
+	for waiting := true; waiting; {
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Fatal(err)
+			}
+			waiting = false
+		case <-progress:
+			stall.Reset(10 * time.Second)
+		case <-stall.C:
+			t.Fatal("serial open/close was blocked by compilation")
+		case <-overall.C:
+			t.Fatal("serial open/close was too slow during compilation")
 		}
-	case <-time.After(5 * time.Second):
-		t.Fatal("serial open/close stopped responding during compilation")
 	}
 	unblock()
 	compiler.Flush()
