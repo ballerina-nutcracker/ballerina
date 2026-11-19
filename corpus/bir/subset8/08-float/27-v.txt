@@ -20,7 +20,7 @@ main() -> nil{
   }
   bb4 {
     %11 = ConstantLoad 2.3
-    %12 = unknown %11;
+    %12 = - %11;
     %13 = %12;
     %14 = ceiling(%13) -> bb5;
   }
@@ -30,7 +30,7 @@ main() -> nil{
   }
   bb6 {
     %17 = ConstantLoad 2
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = ceiling(%19) -> bb7;
   }
@@ -49,7 +49,7 @@ main() -> nil{
   }
   bb10 {
     %28 = ConstantLoad 0
-    %29 = unknown %28;
+    %29 = - %28;
     %30 = %29;
     %31 = ceiling(%30) -> bb11;
   }
@@ -72,7 +72,7 @@ main() -> nil{
   }
   bb14 {
     %44 = ConstantLoad 1
-    %45 = unknown %44;
+    %45 = - %44;
     %46 = %45;
     %47 = ConstantLoad 0
     %48 = %47;

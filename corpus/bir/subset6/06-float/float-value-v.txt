@@ -13,7 +13,7 @@ testFloatValue() -> nil{
 testNegativeFloatValue() -> nil{
   bb0 {
     %2 = ConstantLoad 10.1
-    %3 = unknown %2;
+    %3 = - %2;
     y = %3;
     %4 = y;
     %5 = println(%4) -> bb1;

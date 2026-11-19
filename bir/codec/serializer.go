@@ -496,6 +496,8 @@ func (bw *birWriter) writeCallSite(buf *bytes.Buffer, call bir.CallSite) {
 			bw.writeOperand(buf, call.FpOperand)
 		case bir.CallKindMethod:
 			bw.writeOperand(buf, call.Receiver)
+		case bir.CallKindFunction,
+			bir.CallKindResource:
 		}
 	case bir.CallKindResource:
 		bw.writeOperand(buf, call.Receiver)

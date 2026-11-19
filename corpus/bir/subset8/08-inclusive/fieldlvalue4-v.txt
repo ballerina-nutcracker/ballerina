@@ -13,7 +13,7 @@ main() -> nil{
     %11 = ConstantLoad y
     %10 = p[%11];
     %12 = %10;
-    %13 = unknown %9 %12;
+    %13 = | %9 %12;
     p[%7] = %13;
     %15 = ConstantLoad x
     %14 = p[%15];
