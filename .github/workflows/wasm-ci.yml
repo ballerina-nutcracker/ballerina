@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # Node 24 can deadlock in process.exit: background V8 compile threads wait
+      # for a main-thread GC while the main thread joins them, so a wasm test
+      # binary that already printed PASS never exits. Node 26 does not.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26.13.1'
+
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
