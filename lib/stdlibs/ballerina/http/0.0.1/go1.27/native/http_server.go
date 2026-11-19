@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -740,8 +741,6 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 		}
 	}
 	if wireContentType != "" {
-		// The body parts were re-encoded, so a Content-Length copied from a backend no longer holds.
-		w.Header().Del("Content-Length")
 		w.Header().Set("Content-Type", wireContentType)
 	}
 	if holder.noCache && w.Header().Get("Cache-Control") == "" {
@@ -752,9 +751,18 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 		w.Header().Set("Connection", "keep-alive")
 	}
 	streamed := holder.source != nil || holder.reader != nil
-	if streamed || holder.wireTaken {
-		// A streamed body, or a taken one that sends only what was not read, no longer has the
-		// length a backend gave it; with nothing left, net/http sends Content-Length: 0.
+	held := !streamed && !holder.wireTaken && holder.stream == nil
+	switch {
+	case held && holder.readErr != nil:
+		// The backend's length stays, so a client sees the part that arrived is short.
+	case held && r.Method == http.MethodHead && len(holder.buf) == 0 && statusCode != http.StatusNoContent &&
+		statusCode != http.StatusNotModified && w.Header().Get("Content-Length") != "":
+		// A bodyless HEAD response keeps the length a GET would send (RFC 9110 §8.6).
+	case held && statusCode != http.StatusNoContent && statusCode != http.StatusNotModified:
+		w.Header().Set("Content-Length", strconv.Itoa(len(holder.buf)))
+	default:
+		// Whatever the service or a backend set, a streamed body is sent without a length, and a
+		// taken one with nothing left gets Content-Length: 0 from net/http.
 		w.Header().Del("Content-Length")
 	}
 	if streamed {
@@ -763,7 +771,7 @@ func writeResponseObject(w http.ResponseWriter, r *http.Request, resp *values.Ob
 		_ = http.NewResponseController(w).EnableFullDuplex()
 	}
 	eventStream := isEventStreamType(contentType)
-	if (streamed || holder.stream != nil) && !bodyAllowed(r.Method, statusCode) {
+	if !bodyAllowed(r.Method, statusCode) {
 		w.WriteHeader(statusCode)
 		// net/http discards the body, so the stream is never read.
 		releaseUnsentBody(holder, eventStream)

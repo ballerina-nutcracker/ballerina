@@ -256,7 +256,8 @@ func TestHttpServiceAnydataReturn(t *testing.T) {
 
 // TestHttpServiceResponseVariants covers the writeResult return-value cases: a
 // () return mapped to 202, an error value mapped to 500, a multi-value response
-// header, and a hop-by-hop header dropped before reaching the client.
+// header, a hop-by-hop header dropped before reaching the client, and a
+// Content-Length the body does not match replaced over HTTP/2 and HTTP/1.1.
 func TestHttpServiceResponseVariants(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()
