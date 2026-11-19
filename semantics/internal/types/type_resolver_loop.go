@@ -176,6 +176,10 @@ func (l *loopTypeResolver) objectMethodTable(atom *semtypes.MappingAtomicType) (
 func (l *loopTypeResolver) currentScope() model.Scope     { return l.parentResolver.currentScope() }
 func (l *loopTypeResolver) setCurrentScope(s model.Scope) { l.parentResolver.setCurrentScope(s) }
 
+func (l *loopTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
+	return l.parentResolver.deferAnnotationSite(site)
+}
+
 func (l *loopTypeResolver) ensureNotEmpty(ty semtypes.SemType, onEmpty func()) bool {
 	return l.parentResolver.ensureNotEmpty(ty, onEmpty)
 }
