@@ -34,6 +34,16 @@ isolated function count(string name) returns int {
     }
 }
 
+isolated function awaitCount(string name, int expected) returns int {
+    foreach int _ in 0 ..< 250 {
+        if count(name) >= expected {
+            break;
+        }
+        runtime:sleep(0.02);
+    }
+    return count(name);
+}
+
 listener task:Listener limited = new (trigger = {interval: 0.05, maxCount: 3});
 
 service "limited" on limited {
@@ -42,7 +52,8 @@ service "limited" on limited {
     }
 }
 
-listener task:Listener terminating = new (trigger = {interval: 0.05, maxCount: 3, taskPolicy: {errorPolicy: task:TERMINATE}});
+// The 1s interval leaves the first failing run time to terminate the job before the next fire is dispatched.
+listener task:Listener terminating = new (trigger = {interval: 1, maxCount: 3, taskPolicy: {errorPolicy: task:TERMINATE}});
 
 service "terminate" on terminating {
     public isolated function execute() returns error? {
@@ -146,7 +157,17 @@ service "slowRetry" on slowRetry {
 
 // testMain runs after the listeners have started.
 public function testMain() {
-    runtime:sleep(0.5);
+    runtime:sleep(1.2);
+    _ = awaitCount("limited", 3);
+    _ = awaitCount("continue", 3);
+    _ = awaitCount("fixedRetry", 3);
+    _ = awaitCount("exponentialRetry", 4);
+    _ = awaitCount("unboundedRetry", 3);
+    _ = awaitCount("recovered", 2);
+    _ = awaitCount("terminate", 1);
+    _ = awaitCount("cappedRetry", 1);
+    _ = awaitCount("slowRetry", 1);
+    runtime:sleep(0.15);
     io:println("limited: ", count("limited")); // @output limited: 3
     io:println("terminate: ", count("terminate")); // @output terminate: 1
     io:println("continue: ", count("continue")); // @output continue: 3

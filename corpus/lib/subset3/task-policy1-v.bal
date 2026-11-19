@@ -42,6 +42,16 @@ isolated function count(string name) returns int {
     }
 }
 
+isolated function awaitCount(string name, int expected) returns int {
+    foreach int _ in 0 ..< 250 {
+        if count(name) >= expected {
+            break;
+        }
+        runtime:sleep(0.02);
+    }
+    return count(name);
+}
+
 isolated function isRunning(task:JobId jobId) returns boolean {
     foreach task:JobId id in task:getRunningJobs() {
         if id == jobId {
@@ -49,6 +59,15 @@ isolated function isRunning(task:JobId jobId) returns boolean {
         }
     }
     return false;
+}
+
+isolated function awaitStopped(task:JobId jobId) {
+    foreach int _ in 0 ..< 250 {
+        if !isRunning(jobId) {
+            return;
+        }
+        runtime:sleep(0.02);
+    }
 }
 
 isolated function inSeconds(decimal seconds) returns time:Civil {
@@ -72,11 +91,16 @@ isolated class FailingJob {
 }
 
 public function main() returns error? {
-    task:JobId terminated = check task:scheduleJobRecurByFrequency(new FailingJob("terminate"), 0.05, maxCount = 5,
+    // The 1s interval leaves the first failing run time to terminate the job before the next fire is dispatched.
+    task:JobId terminated = check task:scheduleJobRecurByFrequency(new FailingJob("terminate"), 1, maxCount = 5,
             taskPolicy = {errorPolicy: task:TERMINATE});
     task:JobId continued = check task:scheduleJobRecurByFrequency(new FailingJob("continue"), 0.05, maxCount = 4,
             taskPolicy = {errorPolicy: task:CONTINUE});
-    runtime:sleep(0.6);
+    awaitStopped(terminated);
+    awaitStopped(continued);
+    // The final run is dispatched after its trigger is removed, so the count is awaited too.
+    _ = awaitCount("continue", 4);
+    runtime:sleep(0.15);
     io:println("terminate: ", count("terminate"), " ", isRunning(terminated)); // @output terminate: 1 false
     io:println("continue: ", count("continue"), " ", isRunning(continued)); // @output continue: 4 false
 }

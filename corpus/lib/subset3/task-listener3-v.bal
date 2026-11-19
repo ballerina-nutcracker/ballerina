@@ -27,6 +27,16 @@ isolated function count(string name) returns int {
     }
 }
 
+isolated function awaitCount(string name, int expected) returns int {
+    foreach int _ in 0 ..< 250 {
+        if count(name) >= expected {
+            break;
+        }
+        runtime:sleep(0.02);
+    }
+    return count(name);
+}
+
 isolated service class Counter {
     *task:Service;
     private final string name;
@@ -64,7 +74,9 @@ public function main() returns error? {
     e = other.'start();
     io:println(e is task:Error ? e.message() : "started"); // @output Unable to store Job : 'DEFAULT.a', because one already exists with this identification.
 
-    runtime:sleep(0.3);
+    _ = awaitCount("a", 2);
+    _ = awaitCount("b", 2);
+    runtime:sleep(0.15);
     io:println("a: ", count("a"), " b: ", count("b"), " x: ", count("x")); // @output a: 2 b: 2 x: 0
     Counter late = new ("late");
     check l.attach(late, "late");
@@ -78,14 +90,16 @@ public function main() returns error? {
     task:Listener unnamed = check new (trigger = {interval: 0.05, maxCount: 1});
     check unnamed.attach(new Counter("unnamed"));
     check unnamed.'start();
-    runtime:sleep(0.2);
+    _ = awaitCount("unnamed", 1);
+    runtime:sleep(0.15);
     io:println("unnamed: ", count("unnamed")); // @output unnamed: 1
     io:println(unnamed.immediateStop() is ()); // @output true
 
     task:Listener rootPath = check new (trigger = {interval: 0.05, maxCount: 1});
     check rootPath.attach(new Counter("root"), []);
     check rootPath.'start();
-    runtime:sleep(0.2);
+    _ = awaitCount("root", 1);
+    runtime:sleep(0.15);
     io:println("empty name: ", count("root")); // @output empty name: 1
     io:println(rootPath.immediateStop() is ()); // @output true
 

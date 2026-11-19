@@ -7,7 +7,7 @@ forever wait fired all: true
 forever ignore skipped: true
 pauseAll: true 0 true
 resumeAll: true true
-before reconfigure: 3
-after reconfigure: 8 false
+before reconfigure: true
+after reconfigure: 5 false
 0
 -- stderr --

@@ -31,7 +31,14 @@ isolated class CountJob {
 
     public isolated function execute() {
         lock {
-            counts[self.name] = (counts[self.name] ?: 0) + 1;
+            int n = (counts[self.name] ?: 0) + 1;
+            counts[self.name] = n;
+            // Snapshots the catch-up race at the run where wait reaches 8 or ignore reaches 5, whichever is first.
+            if !counts.hasKey("caughtUp") && ((self.name == "wait" && n >= 8) || (self.name == "ignore" && n >= 5)) {
+                counts["caughtUp"] = 1;
+                counts["caughtUpWait"] = counts["wait"] ?: 0;
+                counts["caughtUpIgnore"] = counts["ignore"] ?: 0;
+            }
         }
     }
 }
@@ -42,6 +49,16 @@ isolated function count(string name) returns int {
     }
 }
 
+isolated function awaitCount(string name, int expected) returns int {
+    foreach int _ in 0 ..< 250 {
+        if count(name) >= expected {
+            break;
+        }
+        runtime:sleep(0.02);
+    }
+    return count(name);
+}
+
 isolated function isRunning(task:JobId jobId) returns boolean {
     foreach task:JobId id in task:getRunningJobs() {
         if id == jobId {
@@ -49,6 +66,15 @@ isolated function isRunning(task:JobId jobId) returns boolean {
         }
     }
     return false;
+}
+
+isolated function awaitStopped(task:JobId jobId) {
+    foreach int _ in 0 ..< 250 {
+        if !isRunning(jobId) {
+            return;
+        }
+        runtime:sleep(0.02);
+    }
 }
 
 isolated function inSeconds(decimal seconds) returns time:Civil {
@@ -78,14 +104,25 @@ public function main() returns error? {
     check task:resumeJob(ignore);
     check task:resumeJob(waitForever);
     check task:resumeJob(ignoreForever);
-    runtime:sleep(0.03);
-    io:println("wait catches up: ", count("wait") >= 8); // @output wait catches up: true
-    io:println("ignore skips missed: ", count("ignore") < 5); // @output ignore skips missed: true
-    runtime:sleep(1.2);
+    // ignore resumed together with wait at the same interval, so it is the clock that wait's replay must beat.
+    _ = awaitCount("caughtUp", 1);
+    io:println("wait catches up: ", count("caughtUpWait") >= 8); // @output wait catches up: true
+    io:println("ignore skips missed: ", count("caughtUpIgnore") < 5); // @output ignore skips missed: true
+    awaitStopped(waitJob);
+    awaitStopped(ignore);
+    awaitStopped(waitForever);
+    awaitStopped(ignoreForever);
+    // A job's final run is dispatched after its trigger is removed, so the asserted counts are awaited too.
+    _ = awaitCount("wait", 12);
+    _ = awaitCount("ignore", 12);
+    _ = awaitCount("waitForever", 18);
+    runtime:sleep(0.15);
     io:println("final: ", count("wait"), " ", count("ignore")); // @output final: 12 12
     io:println("forever wait fired all: ", count("waitForever") >= 18); // @output forever wait fired all: true
     io:println("forever ignore skipped: ", count("ignoreForever") < 14); // @output forever ignore skipped: true
 
+    // A wide misfire threshold stops the LOG_AND_IGNORE jobs below from logging misfires on a loaded machine.
+    check task:configureWorkerPool(5, 5);
     task:JobId before = check task:scheduleJobRecurByFrequency(new CountJob("before"), 0.05);
     task:JobId logged = check task:scheduleJobRecurByFrequency(new CountJob("logged"), 0.05,
             taskPolicy = {waitingPolicy: task:LOG_AND_IGNORE});
@@ -97,19 +134,28 @@ public function main() returns error? {
     task:JobId otherGroup = check task:scheduleJobRecurByFrequency(new CountJob("otherGroup"), 0.05,
             taskPolicy = {waitingPolicy: task:LOG_AND_IGNORE});
     runtime:sleep(0.3);
-    io:println("pauseAll: ", count("before") == pausedAt, " ", count("after"), " ", count("otherGroup") > 0); // @output pauseAll: true 0 true
+    int otherGroupRuns = awaitCount("otherGroup", 1);
+    io:println("pauseAll: ", count("before") == pausedAt, " ", count("after"), " ", otherGroupRuns > 0); // @output pauseAll: true 0 true
     check task:resumeAllJobs();
-    runtime:sleep(0.2);
-    io:println("resumeAll: ", count("before") > pausedAt, " ", count("after") > 0); // @output resumeAll: true true
+    int beforeResumed = awaitCount("before", pausedAt + 1);
+    int afterResumed = awaitCount("after", 1);
+    io:println("resumeAll: ", beforeResumed > pausedAt, " ", afterResumed > 0); // @output resumeAll: true true
     check task:unscheduleJob(before);
     check task:unscheduleJob(after);
     check task:unscheduleJob(otherGroup);
 
-    task:JobId restarted = check task:scheduleJobRecurByFrequency(new CountJob("restarted"), 0.2, maxCount = 5);
-    runtime:sleep(0.5);
-    io:println("before reconfigure: ", count("restarted")); // @output before reconfigure: 3
+    task:JobId restarted = check task:scheduleJobRecurByFrequency(new CountJob("restarted"), 0.5, maxCount = 5);
+    _ = awaitCount("restarted", 1);
+    // Pausing stops further original runs and the settle lets one already dispatched finish.
+    // Reconfiguring reschedules the job from its original, unpaused schedule.
+    check task:pauseJob(restarted);
+    runtime:sleep(0.15);
+    int beforeReconfigure = count("restarted");
+    io:println("before reconfigure: ", beforeReconfigure > 0); // @output before reconfigure: true
     check task:configureWorkerPool(5, 5);
-    runtime:sleep(0.8);
-    io:println("after reconfigure: ", count("restarted"), " ", isRunning(restarted)); // @output after reconfigure: 8 false
+    awaitStopped(restarted);
+    _ = awaitCount("restarted", beforeReconfigure + 5);
+    runtime:sleep(0.15);
+    io:println("after reconfigure: ", count("restarted") - beforeReconfigure, " ", isRunning(restarted)); // @output after reconfigure: 5 false
     io:println(task:getRunningJobs().length()); // @output 0
 }
