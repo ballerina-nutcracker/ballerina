@@ -416,9 +416,8 @@ func decodeXMLBody(ctx *extern.Context, body []byte, source string, payloadSet b
 
 func decodeJSONBody(ctx *extern.Context, types *httpTypes, body []byte) (values.BalValue, *values.Error) {
 	dec := json.NewDecoder(bytes.NewReader(body))
-	dec.UseNumber()
-	var v interface{}
-	if err := dec.Decode(&v); err != nil {
+	var raw json.RawMessage
+	if err := dec.Decode(&raw); err != nil {
 		return nil, values.NewErrorWithMessage("failed to parse JSON payload: " + err.Error())
 	}
 	// Decode only consumes the first JSON value; without this check, trailing data after a
@@ -430,5 +429,54 @@ func decodeJSONBody(ctx *extern.Context, types *httpTypes, body []byte) (values.
 		}
 		return nil, values.NewErrorWithMessage("failed to parse JSON payload: " + message)
 	}
-	return values.GoToBalValue(ctx.TypeCtx(), v, types.jsonListTy, types.jsonMapTy), nil
+	valueDec := json.NewDecoder(bytes.NewReader(raw))
+	valueDec.UseNumber()
+	v, err := decodeOrderedJSON(ctx.TypeCtx(), types, valueDec)
+	if err != nil {
+		return nil, values.NewErrorWithMessage("failed to parse JSON payload: " + err.Error())
+	}
+	return v, nil
+}
+
+// decodeOrderedJSON decodes the next value of an already validated JSON document, keeping
+// object members in source order.
+func decodeOrderedJSON(tc semtypes.Context, types *httpTypes, dec *json.Decoder) (values.BalValue, error) {
+	tok, err := dec.Token()
+	if err != nil {
+		return nil, err
+	}
+	delim, ok := tok.(json.Delim)
+	if !ok {
+		return values.GoToBalValue(tc, tok, types.jsonListTy, types.jsonMapTy), nil
+	}
+	if delim == '[' {
+		items := make([]values.BalValue, 0)
+		for dec.More() {
+			item, err := decodeOrderedJSON(tc, types, dec)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, item)
+		}
+		if _, err := dec.Token(); err != nil {
+			return nil, err
+		}
+		return values.NewList(types.jsonListTy, semtypes.ToListAtomicType(tc.Env(), types.jsonListTy), false, nil, 0, items), nil
+	}
+	m := values.NewMap(types.jsonMapTy, semtypes.ToMappingAtomicType(tc, types.jsonMapTy), false, nil)
+	for dec.More() {
+		key, err := dec.Token()
+		if err != nil {
+			return nil, err
+		}
+		member, err := decodeOrderedJSON(tc, types, dec)
+		if err != nil {
+			return nil, err
+		}
+		m.Put(tc, key.(string), member)
+	}
+	if _, err := dec.Token(); err != nil {
+		return nil, err
+	}
+	return m, nil
 }

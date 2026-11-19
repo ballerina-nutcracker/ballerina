@@ -689,6 +689,14 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 				"unexpected return type from resource method")
 			return
 		}
+		statusCodeVal, _ := v.Get("statusCode")
+		statusCode := statusCodeVal.(int64)
+		if !isFinalStatusCode(statusCode) {
+			holder.discard()
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError,
+				fmt.Sprintf("invalid status code for a response: %d", statusCode))
+			return
+		}
 		wireContentType := ""
 		if holder.parts != nil {
 			data, ct, err := encodeMultipartBody(ctx, holder.parts, responseContentType(v))
@@ -699,10 +707,46 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 			holder = &responseBodyHolder{buf: data}
 			wireContentType = ct
 		}
-		writeResponseObject(w, v, holder, wireContentType)
+		writeResponseObject(w, v, int(statusCode), holder, wireContentType)
+	case *values.Map:
+		var resp *values.Object
+		var err error
+		// An anydata mapping cannot hold the status object every status code record carries.
+		if status, _ := v.Get("status"); status != nil {
+			if _, isObject := status.(*values.Object); isObject {
+				resp, err = statusCodeResponse(ctx, v)
+			}
+		}
+		switch {
+		case err != nil:
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError, panicMessage(err))
+		case resp != nil:
+			writeResult(rt, ctx, types, w, r, accessor, resp)
+		default:
+			writeAnydataResult(rt, ctx, types, w, r, accessor, v)
+		}
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
+}
+
+// isFinalStatusCode reports whether code can end a response: a three-digit code other than an
+// informational 1xx, which net/http would send as an interim response followed by a 200.
+// 101 Switching Protocols is final.
+func isFinalStatusCode(code int64) bool {
+	return code == http.StatusSwitchingProtocols || (code >= 200 && code <= 999)
+}
+
+// statusCodeResponse converts a returned status code record into the http:Response it is sent
+// as; the result is nil for any other mapping value.
+func statusCodeResponse(ctx *extern.Context, v *values.Map) (*values.Object, error) {
+	handle, _ := ctx.LookupFunction(orgName, moduleName, "toStatusCodeResponse")
+	result, err := ctx.InvokeFunction(handle, []values.BalValue{v})
+	if err != nil {
+		return nil, err
+	}
+	resp, _ := result.(*values.Object)
+	return resp, nil
 }
 
 // An http:Response is identified by its internal body slot rather than by its type, which the
@@ -740,15 +784,7 @@ func writeAnydataResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTyp
 
 // wireContentType, when non-empty, replaces the Content-Type header, carrying the boundary a
 // multipart body was encoded with.
-func writeResponseObject(w http.ResponseWriter, resp *values.Object, holder *responseBodyHolder, wireContentType string) {
-	statusCodeVal, _ := resp.Get("statusCode")
-	statusCode := http.StatusOK
-	// Go's WriteHeader panics outside [100, 999]; fall back to 200 for an
-	// out-of-range value rather than crashing the handler.
-	if sc, ok := statusCodeVal.(int64); ok && sc >= 100 && sc <= 999 {
-		statusCode = int(sc)
-	}
-
+func writeResponseObject(w http.ResponseWriter, resp *values.Object, statusCode int, holder *responseBodyHolder, wireContentType string) {
 	// Forwarding hop-by-hop headers (e.g. Transfer-Encoding, Connection) from a
 	// backend response to the downstream client violates RFC 7230 §6.1 and can
 	// cause framing errors in HTTP/1.1 keep-alive connections. Headers the
@@ -797,6 +833,17 @@ var copyBufPool = sync.Pool{New: func() any { b := make([]byte, 32*1024); return
 // per-call allocation. Output is identical — the ResponseWriter's Write already
 // handles chunked/content-length framing.
 type onlyWriter struct{ io.Writer }
+
+// discard closes a body stream that will not be written, releasing its connection.
+func (h *responseBodyHolder) discard() {
+	h.once.Do(func() {
+		if h.stream != nil {
+			_ = h.stream.Close()
+			h.stream = nil
+			h.buf = []byte{}
+		}
+	})
+}
 
 // writeStream writes the body to w via io.CopyBuffer (streaming, pooled buffer)
 // or w.Write (buffered), then closes the stream. After this call the holder is

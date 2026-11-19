@@ -1,0 +1,11 @@
+-- stdout --
+200 true true
+201 made text/plain {"x-id":7}
+204
+404 Lost true
+418 true
+511
+Ok NotFound Default other
+200 404 511
+500
+-- stderr --

@@ -13,7 +13,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 27 | 15 | 35 | 35% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 27 | 16 | 34 | 35% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -29,7 +29,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **289** | **39** | **72** | **72%** |
+| **Total**                                                                     | **289** | **40** | **71** | **72%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -64,6 +64,10 @@ Consolidated from each package's README. Only permanent divergences are listed h
 ### http
 
 - **Transport-owned request headers are not sent.** jBallerina sends the `Upgrade`, `Keep-Alive`, `Proxy-Connection`, `Transfer-Encoding` and `TE` headers of an outbound request, such as an inbound `http:Request` passed through to a client, and replaces `Connection` with its own value; the Go-native version drops these, except a single `TE: trailers` header, because Go's transport sets them and its HTTP/2 transport rejects a request that carries them.
+- **A status that cannot end a response gives a 500.** jBallerina sends a returned `http:Continue`, `http:Processing` or `http:EarlyHints` as an interim response and never completes it, so the client waits until it times out, and writes a malformed status line for a `DefaultStatus` code outside 100–999; the Go-native version answers 500 (`invalid status code for a response: <code>`) for a code outside 100–999 or an informational 1xx other than 101, whether it comes from a status code record or an `http:Response` (<https://github.com/ballerina-platform/ballerina-library/issues/9812>, <https://github.com/ballerina-platform/ballerina-library/issues/9813>).
+- **A `NaN` or infinite float in a JSON body gives a 500.** jBallerina writes it as a bare `NaN` token, sending an `application/json` body that is not JSON; the Go-native version fails the body's JSON conversion, so a resource returning it answers 500 and `setJsonPayload` panics (<https://github.com/ballerina-platform/ballerina-library/issues/9814>).
+- **A form `mediaType` is matched ignoring case and parameters.** jBallerina url-encodes a status code record's `body` only for the exact `mediaType` `application/x-www-form-urlencoded`, so `Application/X-WWW-Form-Urlencoded` or `application/x-www-form-urlencoded; charset=UTF-8` sends the body as JSON under a form Content-Type; the Go-native version url-encodes it for any spelling of that media type (<https://github.com/ballerina-platform/ballerina-library/issues/9911>).
+- **JSON bodies are written without spaces.** jBallerina writes a JSON body with its `toString` form, which puts a space after each `,` between members (`{"title":"Blue Train", "year":1957}`); the Go-native version writes compact JSON (`{"title":"Blue Train","year":1957}`) for `setJsonPayload`, `anydata` resource returns, and status code response bodies. Both are the same JSON value. A record's fields are written in the order the value was constructed rather than jBallerina's declaration order ([#1381](https://github.com/ballerina-nutcracker/ballerina/issues/1381)).
 - **HTTP/1.0 falls back to HTTP/1.1 at runtime.** `HTTP_1_0` is present in the `HttpVersion` enum for jBallerina contract compatibility. When used, the Go runtime prints a warning to stderr and transparently upgrades the connection to HTTP/1.1, because Go's HTTP client cannot send HTTP/1.0 requests.
 - **Trailing headers are not modelled.** The `TRAILING` header position constant is accepted at compile time for API compatibility, but all header operations (`getHeader`, `getHeaders`, `hasHeader`, `getHeaderNames`) act on transport (leading) headers at runtime. HTTP trailers sent by the server are silently discarded.
 - **TLS protocol name has no effect.** The `protocol.name` field accepts `"SSL"`, `"TLS"`, and `"DTLS"` at compile time, but only TLS is supported at runtime. `"SSL"` and `"DTLS"` values are ignored because Go's standard TLS stack does not expose separate SSL or DTLS stacks.
