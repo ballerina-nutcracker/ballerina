@@ -33,8 +33,9 @@ import (
 
 // fakeImapServer serves an in-memory mailbox for bob/secret and records the client's commands.
 type fakeImapServer struct {
-	ln   net.Listener
-	user *imapmemserver.User
+	ln     net.Listener
+	user   *imapmemserver.User
+	server *imapserver.Server
 
 	mu  sync.Mutex
 	log bytes.Buffer
@@ -107,9 +108,9 @@ func newFakeImapServer(t *testing.T, tlsConfig *tls.Config, implicitTLS bool, ma
 	if implicitTLS {
 		ln = tls.NewListener(ln, tlsConfig)
 	}
-	server := imapserver.New(options)
-	go func() { _ = server.Serve(ln) }()
-	t.Cleanup(func() { _ = server.Close() })
+	s.server = imapserver.New(options)
+	go func() { _ = s.server.Serve(ln) }()
+	t.Cleanup(s.stop)
 	return s
 }
 
@@ -119,6 +120,11 @@ func (s *fakeImapServer) add(t *testing.T, mailbox string, m imapMessage) {
 	if _, err := s.user.Append(mailbox, literal{strings.NewReader(data)}, &imap.AppendOptions{Flags: m.flags}); err != nil {
 		t.Fatalf("appending to %s: %v", mailbox, err)
 	}
+}
+
+// stop closes the listener and every open connection.
+func (s *fakeImapServer) stop() {
+	_ = s.server.Close()
 }
 
 func (s *fakeImapServer) port() string {

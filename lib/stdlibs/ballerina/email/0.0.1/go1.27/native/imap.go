@@ -109,7 +109,9 @@ func imapReadExtern(rt *runtime.Runtime, strArrTy semtypes.SemType) extern.Nativ
 			return data, func(received bool) {
 				if received {
 					// A failed STORE leaves the message unseen, so the next read returns it again.
-					_ = session.Store(uid, &imap.StoreFlags{Op: imap.StoreFlagsAdd, Silent: true, Flags: []imap.Flag{imap.FlagSeen}}, nil).Close()
+					if err := session.Store(uid, &imap.StoreFlags{Op: imap.StoreFlagsAdd, Silent: true, Flags: []imap.Flag{imap.FlagSeen}}, nil).Close(); err != nil {
+						client.kept.Store(true)
+					}
 				}
 			}, nil
 		})
