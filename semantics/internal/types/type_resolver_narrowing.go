@@ -536,9 +536,57 @@ func varRefExpInner(expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
 		return expr.Symbol(), true
 	case *ast.BLangConstRef:
 		return expr.Symbol(), true
-	default:
+	case *ast.BLangAlternateWaitAction,
+		*ast.BLangAlternateWorkerReceive,
+		*ast.BLangAnnotAccessExpr,
+		*ast.BLangArrowFunction,
+		*ast.BLangBadExprOrAction,
+		*ast.BLangBinaryExpr,
+		*ast.BLangCheckPanickedExpr,
+		*ast.BLangCheckedExpr,
+		*ast.BLangClientResourceAccessAction,
+		*ast.BLangCommitExpr,
+		*ast.BLangDefaultArg,
+		*ast.BLangErrorConstructorExpr,
+		*ast.BLangFieldBaseAccess,
+		*ast.BLangGroupExpr,
+		*ast.BLangIndexBasedAccess,
+		*ast.BLangInferredTypedescDefault,
+		*ast.BLangInvocation,
+		*ast.BLangLambdaFunction,
+		*ast.BLangListConstructorExpr,
+		*ast.BLangLiteral,
+		*ast.BLangMappingConstructorExpr,
+		*ast.BLangMultipleWaitAction,
+		*ast.BLangNamedArgsExpression,
+		*ast.BLangNewExpression,
+		*ast.BLangNilConditionalExpr,
+		*ast.BLangNumericLiteral,
+		*ast.BLangQueryExpr,
+		*ast.BLangRemoteMethodCallAction,
+		*ast.BLangSingleWaitAction,
+		*ast.BLangStartAction,
+		*ast.BLangTemplateExpr,
+		*ast.BLangTernaryExpr,
+		*ast.BLangTrapExpr,
+		*ast.BLangTypeConversionExpr,
+		*ast.BLangTypeTestExpr,
+		*ast.BLangTypedescExpr,
+		*ast.BLangUnaryExpr,
+		*ast.BLangWildCardBindingPattern,
+		*ast.BLangWorkerReceive,
+		*ast.BLangXMLCommentLiteral,
+		*ast.BLangXMLElementLiteral,
+		*ast.BLangXMLFilterExpression,
+		*ast.BLangXMLPILiteral,
+		*ast.BLangXMLSequenceLiteral,
+		*ast.BLangXMLStepExpression,
+		*ast.BLangXMLTemplateExpr,
+		*ast.BLangXMLTextLiteral,
+		*ast.AbstractExpression:
 		return model.SymbolRef{}, false
 	}
+	panic("unreachable: unhandled expression in varRefExpInner") //nolint:forbidigo // Every expression variant is handled above; nil is handled before the switch.
 }
 
 // withSingletonEffect replaces the effect of a result whose type is a boolean singleton: the branch that cannot be
