@@ -36,8 +36,8 @@ public type HeaderValue record {|
 #
 # + headerValue - The header value
 # + return - An array of `http:HeaderValue` typed records containing the value and its parameter map,
-#            or an `error` if the header parsing fails
-public isolated function parseHeader(string headerValue) returns HeaderValue[]|error = external;
+#            or an `http:ClientError` if the header parsing fails
+public isolated function parseHeader(string headerValue) returns HeaderValue[]|ClientError = external;
 
 // ── TLS / secure-socket types ─────────────────────────────────────────────────
 
@@ -336,24 +336,24 @@ public class Response {
 
     # Returns the response body as a plain string.
     #
-    # + return - The response body as a `string`, or an `error` if extraction fails
-    public isolated function getTextPayload() returns string|error = external;
+    # + return - The response body as a `string`, or an `http:ClientError` if extraction fails
+    public isolated function getTextPayload() returns string|ClientError = external;
 
     # Parses the response body as JSON.
     #
-    # + return - The parsed `json` value, or an `error` if the body is not valid JSON
-    public isolated function getJsonPayload() returns json|error = external;
+    # + return - The parsed `json` value, or an `http:ClientError` if the body is not valid JSON
+    public isolated function getJsonPayload() returns json|ClientError = external;
 
     # Parses the response body as XML.
     #
-    # + return - The parsed `xml` value, or an `error` if the body is empty or is not
+    # + return - The parsed `xml` value, or an `http:ClientError` if the body is empty or is not
     #            well-formed XML
-    public isolated function getXmlPayload() returns xml|error = external;
+    public isolated function getXmlPayload() returns xml|ClientError = external;
 
     # Returns the response body as a byte array.
     #
-    # + return - The response body as `byte[]`, or an `error` if extraction fails
-    public isolated function getBinaryPayload() returns byte[]|error = external;
+    # + return - The response body as `byte[]`, or an `http:ClientError` if extraction fails
+    public isolated function getBinaryPayload() returns byte[]|ClientError = external;
 
     # Checks whether the specified header is present in the response.
     #
@@ -368,16 +368,16 @@ public class Response {
     # + headerName - The header name (case-insensitive)
     # + position - Header position (`LEADING` or `TRAILING`). `TRAILING` is accepted
     #              but all lookups operate on transport headers
-    # + return - The first header value, or an `error` if the header is not found
-    public isolated function getHeader(string headerName, HeaderPosition position = LEADING) returns string|error = external;
+    # + return - The first header value, or an `http:HeaderNotFoundError` if the header is not found
+    public isolated function getHeader(string headerName, HeaderPosition position = LEADING) returns string|HeaderNotFoundError = external;
 
     # Returns all values for the specified header.
     #
     # + headerName - The header name (case-insensitive)
     # + position - Header position (`LEADING` or `TRAILING`). `TRAILING` is accepted
     #              but all lookups operate on transport headers
-    # + return - A `string[]` of all values for the header, or an `error` if the header is not found
-    public isolated function getHeaders(string headerName, HeaderPosition position = LEADING) returns string[]|error = external;
+    # + return - A `string[]` of all values for the header, or an `http:HeaderNotFoundError` if the header is not found
+    public isolated function getHeaders(string headerName, HeaderPosition position = LEADING) returns string[]|HeaderNotFoundError = external;
 
     # Returns the names of all response headers.
     #
@@ -395,9 +395,9 @@ public class Response {
 
     # Extracts the response body as multipart body parts.
     #
-    # + return - The body parts, or an `error` if the response body is not a composite
+    # + return - The body parts, or an `http:ClientError` if the response body is not a composite
     #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
-    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+    public isolated function getBodyParts() returns mime:Entity[]|ClientError = external;
 
     # Sets the response body, dispatching to the specific setter based on the runtime type of `payload`.
     #
@@ -511,36 +511,36 @@ public class Request {
 
     # Returns the request body as a plain string.
     #
-    # + return - The request body as a `string`, or an `error` if extraction fails
-    public isolated function getTextPayload() returns string|error = external;
+    # + return - The request body as a `string`, or an `http:ClientError` if extraction fails
+    public isolated function getTextPayload() returns string|ClientError = external;
 
     # Parses the request body as JSON.
     #
-    # + return - The parsed `json` value, or an `error` if the body is not valid JSON
-    public isolated function getJsonPayload() returns json|error = external;
+    # + return - The parsed `json` value, or an `http:ClientError` if the body is not valid JSON
+    public isolated function getJsonPayload() returns json|ClientError = external;
 
     # Parses the request body as XML.
     #
-    # + return - The parsed `xml` value, or an `error` if the body is empty or is not
+    # + return - The parsed `xml` value, or an `http:ClientError` if the body is empty or is not
     #            well-formed XML
-    public isolated function getXmlPayload() returns xml|error = external;
+    public isolated function getXmlPayload() returns xml|ClientError = external;
 
     # Returns the request body as a byte array.
     #
-    # + return - The request body as `byte[]`, or an `error` if extraction fails
-    public isolated function getBinaryPayload() returns byte[]|error = external;
+    # + return - The request body as `byte[]`, or an `http:ClientError` if extraction fails
+    public isolated function getBinaryPayload() returns byte[]|ClientError = external;
 
     # Returns the first value for the specified request header.
     #
     # + headerName - The header name (case-insensitive)
-    # + return - The first header value, or an `error` if the header is not found
-    public isolated function getHeader(string headerName) returns string|error = external;
+    # + return - The first header value, or an `http:HeaderNotFoundError` if the header is not found
+    public isolated function getHeader(string headerName) returns string|HeaderNotFoundError = external;
 
     # Returns all values for the specified request header.
     #
     # + headerName - The header name (case-insensitive)
-    # + return - A `string[]` of all values for the header, or an `error` if not found
-    public isolated function getHeaders(string headerName) returns string[]|error = external;
+    # + return - A `string[]` of all values for the header, or an `http:HeaderNotFoundError` if not found
+    public isolated function getHeaders(string headerName) returns string[]|HeaderNotFoundError = external;
 
     # Checks whether the specified header is present in the request.
     #
@@ -574,9 +574,9 @@ public class Request {
 
     # Extracts the request body as multipart body parts.
     #
-    # + return - The body parts, or an `error` if the request body is not a composite
+    # + return - The body parts, or an `http:ClientError` if the request body is not a composite
     #            (`multipart/*` or `message/*`) media type, or the body cannot be decoded
-    public isolated function getBodyParts() returns mime:Entity[]|error = external;
+    public isolated function getBodyParts() returns mime:Entity[]|ClientError = external;
 
     # Sets the request body, dispatching to the specific setter based on the runtime type of `payload`.
     #
@@ -599,26 +599,26 @@ public class Request {
     # Extracts and decodes the form parameters from a request body of
     # `Content-Type: application/x-www-form-urlencoded`.
     #
-    # + return - A `map<string>` of decoded form parameter names to values, or an `error` if the
+    # + return - A `map<string>` of decoded form parameter names to values, or an `http:ClientError` if the
     #            `Content-Type` header is missing, invalid, not `application/x-www-form-urlencoded`,
     #            or the body cannot be decoded
-    public isolated function getFormParams() returns map<string>|error {
+    public isolated function getFormParams() returns map<string>|ClientError {
         string message = "Error occurred while retrieving form parameters from the request";
         string|error contentTypeValue = self.getHeader(mime:CONTENT_TYPE);
         if contentTypeValue is error {
-            return error(message, error("Content-Type header is not available"));
+            return error GenericClientError(message, error("Content-Type header is not available"));
         }
         mime:MediaType|mime:InvalidContentTypeError mediaType = mime:getMediaType(contentTypeValue);
         if mediaType is mime:InvalidContentTypeError {
-            return error(message, mediaType);
+            return error GenericClientError(message, mediaType);
         }
         string baseType = mediaType.primaryType + "/" + mediaType.subType;
         if !baseType.equalsIgnoreCaseAscii(mime:APPLICATION_FORM_URLENCODED) {
-            return error(message, error("Invalid content type : expected 'application/x-www-form-urlencoded'"));
+            return error GenericClientError(message, error("Invalid content type : expected 'application/x-www-form-urlencoded'"));
         }
         string|error formData = self.getTextPayload();
         if formData is error {
-            return error(message, formData);
+            return error GenericClientError(message, formData);
         }
         return parseFormData(formData);
     }
@@ -629,14 +629,14 @@ public class Request {
 // `%26` or `%3D` acts as a delimiter there too. A single pass over the UTF-8 bytes tracks the
 // codepoint offset `substring` expects; `&` (38) and `=` (61) never occur inside a multi-byte
 // codepoint.
-isolated function parseFormData(string formData) returns map<string>|error {
+isolated function parseFormData(string formData) returns map<string>|ClientError {
     map<string> parameters = {};
     if formData.length() == 0 {
         return parameters;
     }
     string|error decodedValue = url:decode(formData, "UTF-8");
     if decodedValue is error {
-        return error("form data decode failure", decodedValue);
+        return error ClientError("form data decode failure", decodedValue);
     }
     int entryStart = 0;
     int equalsIndex = -1;
@@ -656,7 +656,7 @@ isolated function parseFormData(string formData) returns map<string>|error {
         }
     }
     if !hasEquals {
-        return error("Datasource does not contain form data");
+        return error ClientError("Datasource does not contain form data");
     }
     addFormParam(parameters, decodedValue, entryStart, equalsIndex, charIndex);
     return parameters;
@@ -752,12 +752,12 @@ public isolated class Listener {
     #
     # + port - The TCP port to listen on
     # + config - Optional listener configuration (host, timeout, TLS)
-    # + return - `()` on success, or an `error` if initialisation fails
-    public isolated function init(int port, ListenerConfiguration? config = ()) returns error? {
+    # + return - `()` on success, or an `http:ListenerError` if initialisation fails
+    public isolated function init(int port, ListenerConfiguration? config = ()) returns ListenerError? {
         return self.initNative(port, config);
     }
 
-    private isolated function initNative(int port, ListenerConfiguration? config) returns error? = external;
+    private isolated function initNative(int port, ListenerConfiguration? config) returns ListenerError? = external;
 
     # Attaches a service to this listener.
     #
@@ -821,11 +821,10 @@ public isolated class Listener {
 # (for example when assigning to
 # `var`), pass the target explicitly: `c->get("/path", targetType = http:Response)`.
 #
-# **Error types:** Errors are plain `error` values. The upstream distinct error types
-# (`http:ClientError`, `http:HeaderNotFoundError`, etc.) are not declared. When data
-# binding is active, a 4xx or 5xx response produces an `error` whose message is the
-# reason phrase, mirroring jBallerina's `http:ClientRequestError` and
-# `http:RemoteServerError`.
+# **Error types:** The remote methods return plain `error` values rather than the
+# `http:ClientError` subtypes. When data binding is active, a 4xx or 5xx response produces
+# an `error` whose message is the reason phrase, mirroring jBallerina's
+# `http:ClientRequestError` and `http:RemoteServerError`.
 public isolated client class Client {
 
     # Gets invoked to initialize the `client`. During initialization, the configurations

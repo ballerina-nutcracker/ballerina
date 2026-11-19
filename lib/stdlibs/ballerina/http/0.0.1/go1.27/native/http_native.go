@@ -22,7 +22,6 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -137,6 +136,9 @@ const eagerBufferThreshold = 8192
 // materialized — the body has been read into buf.
 type requestBodyHolder struct {
 	bodyPartsBase
+	// payloadSet marks a byte payload set through a set*Payload method, so an empty one reads
+	// back as "" or empty xml rather than as no content. Body parts do not set it.
+	payloadSet    bool
 	once          sync.Once
 	stream        io.ReadCloser
 	buf           []byte
@@ -180,10 +182,12 @@ func (h *requestBodyHolder) takeStream() io.ReadCloser {
 // materialized — the body has been read into buf.
 type responseBodyHolder struct {
 	bodyPartsBase
-	once    sync.Once
-	stream  io.ReadCloser
-	buf     []byte
-	readErr error // set if the stream returned an error during materialization
+	// payloadSet: see requestBodyHolder.
+	payloadSet bool
+	once       sync.Once
+	stream     io.ReadCloser
+	buf        []byte
+	readErr    error // set if the stream returned an error during materialization
 }
 
 func (h *responseBodyHolder) materialize() ([]byte, error) {
@@ -564,7 +568,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			}
 			result, err := parseHeader(ctx.TypeCtx(), input)
 			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
+				return httpError(ctx, genericClientError, "failed to parse: "+err.Error(), nil), nil
 			}
 			return result, nil
 		})
@@ -1005,7 +1009,7 @@ func initHttpModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.setTextPayload",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
-			self.Put("body", &responseBodyHolder{buf: []byte(args[1].(string))})
+			self.Put("body", &responseBodyHolder{payloadSet: true, buf: []byte(args[1].(string))})
 			ct := payloadContentType(responseContentType(self), optionalArg(args, 2), "text/plain")
 			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{ct}))
 			return nil, nil
@@ -1018,7 +1022,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if err != nil {
 				return values.NewErrorWithMessage("setJsonPayload: " + err.Error()), nil
 			}
-			self.Put("body", &responseBodyHolder{buf: b})
+			self.Put("body", &responseBodyHolder{payloadSet: true, buf: b})
 			ct := payloadContentType(responseContentType(self), optionalArg(args, 2), "application/json")
 			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{ct}))
 			return nil, nil
@@ -1031,7 +1035,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if payload, ok := args[1].(values.XMLValue); ok {
 				body = payload.XMLString()
 			}
-			self.Put("body", &responseBodyHolder{buf: []byte(body)})
+			self.Put("body", &responseBodyHolder{payloadSet: true, buf: []byte(body)})
 			ct := payloadContentType(responseContentType(self), optionalArg(args, 2), "application/xml")
 			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{ct}))
 			return nil, nil
@@ -1045,7 +1049,7 @@ func initHttpModule(rt *runtime.Runtime) {
 				return values.NewErrorWithMessage("setBinaryPayload: expected byte[]"), nil
 			}
 			b := list.ToByteSlice()
-			self.Put("body", &responseBodyHolder{buf: b})
+			self.Put("body", &responseBodyHolder{payloadSet: true, buf: b})
 			ct := payloadContentType(responseContentType(self), optionalArg(args, 2), "application/octet-stream")
 			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{ct}))
 			return nil, nil
@@ -1073,7 +1077,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			}
 			raw, err := holder.materialize()
 			if err != nil {
-				return bodyPartsError("response", err), nil
+				return bodyPartsError(ctx, "response", err), nil
 			}
 			result := getMultipartBodyParts(ctx, raw, responseContentType(self), "response")
 			holder.cacheDecodedParts(raw, result)
@@ -1146,7 +1150,10 @@ func initHttpModule(rt *runtime.Runtime) {
 			if holder, ok := bodyVal.(*responseBodyHolder); ok {
 				buf, err := holder.materialize()
 				if err != nil {
-					return values.NewErrorWithMessage(err.Error()), nil
+					return payloadError(ctx, "text", "response", errorCause(err)), nil
+				}
+				if len(buf) == 0 && !holder.payloadSet {
+					return noContent(ctx, "text"), nil
 				}
 				return string(buf), nil
 			}
@@ -1166,18 +1173,12 @@ func initHttpModule(rt *runtime.Runtime) {
 				var err error
 				body, err = holder.materialize()
 				if err != nil {
-					return values.NewErrorWithMessage(err.Error()), nil
+					return payloadError(ctx, "json", "response", errorCause(err)), nil
 				}
 			} else if s, ok := bodyVal.(string); ok {
 				body = []byte(s)
 			}
-			// Shared with client data binding, so the same body decodes to the same value and
-			// trailing data after a well-formed JSON value is rejected here too.
-			payload, jsonErr := decodeJSONBody(ctx, &types, body)
-			if jsonErr != nil {
-				return jsonErr, nil
-			}
-			return payload, nil
+			return jsonPayload(ctx, &types, body, "response"), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.getXmlPayload",
@@ -1187,9 +1188,9 @@ func initHttpModule(rt *runtime.Runtime) {
 			holder := bodyVal.(*responseBodyHolder)
 			body, err := holder.materialize()
 			if err != nil {
-				return values.NewErrorWithMessage(err.Error()), nil
+				return payloadError(ctx, "xml", "response", errorCause(err)), nil
 			}
-			payload, xmlErr := decodeXMLBody(ctx, body, "response")
+			payload, xmlErr := decodeXMLBody(ctx, body, "response", holder.payloadSet)
 			if xmlErr != nil {
 				return xmlErr, nil
 			}
@@ -1205,7 +1206,7 @@ func initHttpModule(rt *runtime.Runtime) {
 				var err error
 				raw, err = holder.materialize()
 				if err != nil {
-					return values.NewErrorWithMessage(err.Error()), nil
+					return payloadError(ctx, "binary", "response", errorCause(err)), nil
 				}
 			} else if s, ok := bodyVal.(string); ok {
 				raw = []byte(s)
@@ -1232,11 +1233,11 @@ func initHttpModule(rt *runtime.Runtime) {
 			name := strings.ToLower(args[1].(string))
 			v, ok := responseHeaders(self).Get(name)
 			if !ok {
-				return values.NewErrorWithMessage("header not found: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			list := v.(*values.List)
 			if list.Len() == 0 {
-				return values.NewErrorWithMessage("header has no values: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			return list.Get(0), nil
 		})
@@ -1247,7 +1248,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			name := strings.ToLower(args[1].(string))
 			v, ok := responseHeaders(self).Get(name)
 			if !ok {
-				return values.NewErrorWithMessage("header not found: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			return v.(*values.List), nil
 		})
@@ -1294,7 +1295,7 @@ func initHttpModule(rt *runtime.Runtime) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			payload, _ := args[1].(string)
-			self.Put("$body", &requestBodyHolder{buf: []byte(payload)})
+			self.Put("$body", &requestBodyHolder{payloadSet: true, buf: []byte(payload)})
 			tc := ctx.TypeCtx()
 			ct := payloadContentType(requestContentType(tc, self), optionalArg(args, 2), "text/plain")
 			setRequestHeader(self, "content-type", ct, tc)
@@ -1308,7 +1309,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if err != nil {
 				return values.NewErrorWithMessage("setJsonPayload: " + err.Error()), nil
 			}
-			self.Put("$body", &requestBodyHolder{buf: b})
+			self.Put("$body", &requestBodyHolder{payloadSet: true, buf: b})
 			tc := ctx.TypeCtx()
 			ct := payloadContentType(requestContentType(tc, self), optionalArg(args, 2), "application/json")
 			setRequestHeader(self, "content-type", ct, tc)
@@ -1322,7 +1323,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if payload, ok := args[1].(values.XMLValue); ok {
 				body = payload.XMLString()
 			}
-			self.Put("$body", &requestBodyHolder{buf: []byte(body)})
+			self.Put("$body", &requestBodyHolder{payloadSet: true, buf: []byte(body)})
 			tc := ctx.TypeCtx()
 			ct := payloadContentType(requestContentType(tc, self), optionalArg(args, 2), "application/xml")
 			setRequestHeader(self, "content-type", ct, tc)
@@ -1342,7 +1343,7 @@ func initHttpModule(rt *runtime.Runtime) {
 					raw[i] = byte(b)
 				}
 			}
-			self.Put("$body", &requestBodyHolder{buf: raw})
+			self.Put("$body", &requestBodyHolder{payloadSet: true, buf: raw})
 			tc := ctx.TypeCtx()
 			ct := payloadContentType(requestContentType(tc, self), optionalArg(args, 2), "application/octet-stream")
 			setRequestHeader(self, "content-type", ct, tc)
@@ -1372,7 +1373,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			}
 			raw := holder.materialize()
 			if holder.readErr != nil {
-				return bodyPartsError("request", holder.readErr), nil
+				return bodyPartsError(ctx, "request", holder.readErr), nil
 			}
 			result := getMultipartBodyParts(ctx, raw, requestContentType(ctx.TypeCtx(), self), "request")
 			holder.cacheDecodedParts(raw, result)
@@ -1463,11 +1464,14 @@ func initHttpModule(rt *runtime.Runtime) {
 			bodyVal, _ := self.Get("$body")
 			holder, _ := bodyVal.(*requestBodyHolder)
 			if holder == nil {
-				return "", nil
+				return noContent(ctx, "text"), nil
 			}
 			buf := holder.materialize()
 			if holder.readErr != nil {
-				return values.NewErrorWithMessage("failed to read request body: " + holder.readErr.Error()), nil
+				return payloadError(ctx, "text", "request", errorCause(holder.readErr)), nil
+			}
+			if len(buf) == 0 && !holder.payloadSet {
+				return noContent(ctx, "text"), nil
 			}
 			return string(buf), nil
 		})
@@ -1482,16 +1486,10 @@ func initHttpModule(rt *runtime.Runtime) {
 			if holder != nil {
 				body = holder.materialize()
 				if holder.readErr != nil {
-					return values.NewErrorWithMessage("failed to read request body: " + holder.readErr.Error()), nil
+					return payloadError(ctx, "json", "request", errorCause(holder.readErr)), nil
 				}
 			}
-			dec := json.NewDecoder(bytes.NewReader(body))
-			dec.UseNumber()
-			var v interface{}
-			if err := dec.Decode(&v); err != nil {
-				return values.NewErrorWithMessage("getJsonPayload: " + err.Error()), nil
-			}
-			return values.GoToBalValue(ctx.TypeCtx(), v, types.jsonListTy, types.jsonMapTy), nil
+			return jsonPayload(ctx, &types, body, "request"), nil
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Request.getXmlPayload",
@@ -1503,10 +1501,10 @@ func initHttpModule(rt *runtime.Runtime) {
 			if holder != nil {
 				body = holder.materialize()
 				if holder.readErr != nil {
-					return values.NewErrorWithMessage("failed to read request body: " + holder.readErr.Error()), nil
+					return payloadError(ctx, "xml", "request", errorCause(holder.readErr)), nil
 				}
 			}
-			payload, xmlErr := decodeXMLBody(ctx, body, "request")
+			payload, xmlErr := decodeXMLBody(ctx, body, "request", holder != nil && holder.payloadSet)
 			if xmlErr != nil {
 				return xmlErr, nil
 			}
@@ -1523,7 +1521,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if holder != nil {
 				raw = holder.materialize()
 				if holder.readErr != nil {
-					return values.NewErrorWithMessage("failed to read request body: " + holder.readErr.Error()), nil
+					return payloadError(ctx, "binary", "request", errorCause(holder.readErr)), nil
 				}
 			}
 			items := make([]values.BalValue, len(raw))
@@ -1539,15 +1537,15 @@ func initHttpModule(rt *runtime.Runtime) {
 			name := strings.ToLower(args[1].(string))
 			hdrs, ok := requestHeadersMap(ctx.TypeCtx(), self)
 			if !ok {
-				return values.NewErrorWithMessage("header not found: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			v, ok := hdrs.Get(name)
 			if !ok {
-				return values.NewErrorWithMessage("header not found: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			list := v.(*values.List)
 			if list.Len() == 0 {
-				return values.NewErrorWithMessage("header has no values: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			return list.Get(0), nil
 		})
@@ -1558,11 +1556,11 @@ func initHttpModule(rt *runtime.Runtime) {
 			name := strings.ToLower(args[1].(string))
 			hdrs, ok := requestHeadersMap(ctx.TypeCtx(), self)
 			if !ok {
-				return values.NewErrorWithMessage("header not found: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			v, ok := hdrs.Get(name)
 			if !ok {
-				return values.NewErrorWithMessage("header not found: " + name), nil
+				return httpError(ctx, headerNotFoundError, "Http header does not exist", nil), nil
 			}
 			return v.(*values.List), nil
 		})
@@ -1666,7 +1664,7 @@ func parseHeader(tc semtypes.Context, input string) (*values.List, error) {
 		parts := splitOutsideQuotes(seg, ';')
 		headerVal := strings.TrimSpace(parts[0])
 		if headerVal == "" {
-			return nil, fmt.Errorf("invalid header value: missing value before parameters")
+			return nil, fmt.Errorf("error InvalidHeaderValueError (\"invalid header value: %s\")", seg)
 		}
 		params := newMappingValue()
 		for _, param := range parts[1:] {
@@ -2077,26 +2075,28 @@ func encodeMultipartBody(ctx *extern.Context, list *values.List, contentType str
 
 // bodyPartsError mirrors jBallerina, which keeps the mime error as the cause and, for a
 // response only, also appends its message. kind is "request" or "response".
-func bodyPartsError(kind string, cause error) *values.Error {
+func bodyPartsError(ctx *extern.Context, kind string, cause error) *values.Error {
 	msg := "Error occurred while retrieving body parts from the " + kind
 	if kind == "response" {
 		msg += ": " + cause.Error()
 	}
-	return values.NewError(semtypes.Error, msg, values.NewErrorWithMessage(cause.Error()), "", nil)
+	return httpError(ctx, genericClientError, msg, errorCause(cause))
 }
 
 // getMultipartBodyParts decodes a raw request/response body into mime:Entity[] body parts.
 func getMultipartBodyParts(ctx *extern.Context, raw []byte, contentType, kind string) values.BalValue {
 	baseType, boundary, isComposite := mimenative.MultipartBoundary(contentType)
 	if !isComposite {
+		// jBallerina prints a missing content type as Java's null.
+		received := cmp.Or(baseType, "null")
 		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
-		return bodyPartsError(kind, fmt.Errorf("Entity body is not a type of composite media type. "+
-			"Received content-type : %s", baseType))
+		return bodyPartsError(ctx, kind, fmt.Errorf("Entity body is not a type of composite media type. "+
+			"Received content-type : %s", received))
 	}
 	parts, err := mimenative.DecodeMultipart(ctx, raw, boundary)
 	if err != nil {
 		//nolint:staticcheck // error text mirrors jBallerina's runtime message verbatim
-		return bodyPartsError(kind, fmt.Errorf("Error occurred while extracting body parts from entity: %w", err))
+		return bodyPartsError(ctx, kind, fmt.Errorf("Error occurred while extracting body parts from entity: %w", err))
 	}
 	return parts
 }
