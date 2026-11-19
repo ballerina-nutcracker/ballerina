@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for g
+  --> var-cycle-inferred-mixed1-e.bal:22:5
+   |
+22 | A|B g = {x: s}; // @error
+   |     ^
