@@ -1,0 +1,17 @@
+-- stdout --
+close without read: true
+first: once
+second: none
+late: late
+sub-second: none
+other folder: error: folder is not INBOX
+lowercase inbox: none
+after close: error: Not connected
+backoff: none
+close while waiting: error: Not connected
+rejected retrieve: error: message locked
+rejected delete: kept
+rejected delete again: kept
+Error while connecting to the POP3 store: [AUTH] Authentication failed
+Error while connecting to the POP3 store: Couldn't connect to host true
+-- stderr --

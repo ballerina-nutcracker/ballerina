@@ -18,6 +18,7 @@
 package native
 
 import (
+	"math"
 	"net"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/values"
@@ -33,6 +35,7 @@ import (
 // TestSmtpTimeouts shortens the RFC 5321 timeouts, which are minutes long and so cannot be
 // exercised from Ballerina corpus tests, and checks that a stalled server fails the send.
 func TestSmtpTimeouts(t *testing.T) {
+	// Not parallel: overrides the package-level SMTP timeouts.
 	saved := map[*time.Duration]time.Duration{}
 	for _, d := range []*time.Duration{&smtpGreetingTimeout, &smtpCommandTimeout} {
 		saved[d] = *d
@@ -139,4 +142,48 @@ func errorMessage(err *values.Error) string {
 		return "<nil>"
 	}
 	return err.Message
+}
+
+// TestPopTimeouts checks that a stalled POP3 server fails the connection instead of blocking it.
+func TestPopTimeouts(t *testing.T) {
+	// Not parallel: overrides the package-level popTimeout.
+	saved := popTimeout
+	popTimeout = 200 * time.Millisecond
+	t.Cleanup(func() { popTimeout = saved })
+	platform := pal.Platform{
+		Net:  pal.Net{Dial: palnative.Dial, UpgradeTLS: palnative.UpgradeTLS},
+		Time: pal.Time{Now: time.Now},
+	}
+	for _, greeting := range []string{"", "+OK ready\r\n"} {
+		port, _ := stalledServer(t, greeting)
+		client := &popClient{host: "127.0.0.1", port: port, security: "START_TLS_NEVER"}
+		start := time.Now()
+		_, err := client.connect(platform)
+		if err == nil || err.Message != "Connect failed" {
+			t.Fatalf("greeting %q: connect error = %v, want Connect failed", greeting, errorMessage(err))
+		}
+		if elapsed := time.Since(start); elapsed > 5*time.Second {
+			t.Errorf("greeting %q: connect took %v, want it bounded by the timeout", greeting, elapsed)
+		}
+	}
+}
+
+func TestSecondsDuration(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		seconds string
+		want    time.Duration
+	}{
+		{"1.5", 1500 * time.Millisecond},
+		{"-1", 0},
+		{"10000000000", math.MaxInt64},
+	} {
+		seconds, _ := decimal.FromString(tc.seconds)
+		if got := secondsDuration(seconds); got != tc.want {
+			t.Errorf("secondsDuration(%s) = %v, want %v", tc.seconds, got, tc.want)
+		}
+	}
+	if got := saturatingAdd(time.Hour, math.MaxInt64); got != math.MaxInt64 {
+		t.Errorf("saturatingAdd overflowed to %v", got)
+	}
 }

@@ -57,13 +57,18 @@ var (
 // smtpClient is the connection configuration stored on an email:SmtpClient. Like jBallerina, the
 // client connects per send, so it holds no connection and needs no locking.
 type smtpClient struct {
+	mailServer
+	auth bool
+}
+
+// mailServer is the connection configuration shared by the mail clients.
+type mailServer struct {
 	host     string
 	port     int64
 	security string
 	tls      *pal.TLSConfig
 	username string
 	password string
-	auth     bool
 }
 
 func initSmtpClientExtern(rt *runtime.Runtime, withAuth bool) extern.NativeFunc {
@@ -205,7 +210,7 @@ func (s *smtpSession) hello() error {
 	return nil
 }
 
-func (c *smtpClient) address() string {
+func (c *mailServer) address() string {
 	return net.JoinHostPort(c.host, strconv.FormatInt(c.port, 10))
 }
 
