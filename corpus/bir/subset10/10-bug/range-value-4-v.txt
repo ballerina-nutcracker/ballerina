@@ -1,0 +1,186 @@
+module $anon.. v 0.0.0;
+range  object&object { public function iterator() returns object { public function next() returns nil|error|{| value: nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |} } };
+class Holder {
+  r object&object { public function iterator() returns object { public function next() returns nil|error|{| value: nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |} } }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = %2;
+      %4 = ConstantLoad 2
+      %5 = %4;
+      %6 = ConstantLoad true
+      %7 = %6;
+      %8 = createIntRange(%3,%5,%7) -> bb1;
+    }
+    bb1 {
+      %9 = ConstantLoad r
+      self[%9] = %8;
+      return;
+    }
+  }
+
+  reset() -> nil{
+    bb0 {
+      lock-start "$anon/.:Holder.r" GOTO bb1;
+    }
+    bb1 {
+      PushScopeFrame 8
+      %0 = ConstantLoad 4
+      %1 = %0;
+      %2 = ConstantLoad 5
+      %3 = %2;
+      %4 = ConstantLoad true
+      %5 = %4;
+      %6 = createIntRange(%1,%3,%5) -> bb2;
+    }
+    bb2 {
+      %7 = ConstantLoad r
+      (1, self)[%7] = %6;
+      PopScopeFrame
+      lock-end "$anon/.:Holder.r" GOTO bb3;
+    }
+    bb3 {
+      return;
+    }
+  }
+}
+sum(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 1
+    %3 = %2;
+    %4 = n;
+    %5 = ConstantLoad true
+    %6 = %5;
+    %7 = createIntRange(%3,%4,%6) -> bb1;
+  }
+  bb1 {
+    r = %7;
+    %9 = r.iterator() -> bb2;
+  }
+  bb2 {
+    it = %9;
+    %11 = ConstantLoad 0
+    total = %11;
+    %13 = it.next() -> bb3;
+  }
+  bb3 {
+    next = %13;
+    GOTO bb4;
+  }
+  bb4 {
+    %15 = next !is nil
+    %15 ? bb5 : bb6;
+  }
+  bb5 {
+    PushScopeFrame 6
+    %1 = (1, total);
+    %3 = ConstantLoad value
+    %2 = (1, next)[%3];
+    %4 = %2;
+    %0 = + %1 %4;
+    (1, total) = %0;
+    %5 = (1, it).next() -> bb7;
+  }
+  bb6 {
+    %0 = total;
+    return;
+  }
+  bb7 {
+    (1, next) = %5;
+    PopScopeFrame
+    GOTO bb4;
+  }
+}
+count(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 0
+    c = %2;
+    %4 = ConstantLoad 0
+    $desugar$0 = %4;
+    $desugar$1 = n;
+    GOTO bb1;
+  }
+  bb1 {
+    %8 = $desugar$0;
+    %9 = $desugar$1;
+    %7 = < %8 %9;
+    %7 ? bb2 : bb3;
+  }
+  bb2 {
+    PushScopeFrame 9
+    _ = (1, $desugar$0);
+    %2 = (1, c);
+    %3 = ConstantLoad 1
+    %4 = %3;
+    %1 = + %2 %4;
+    (1, c) = %1;
+    %6 = (1, $desugar$0);
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %5 = + %6 %8;
+    (1, $desugar$0) = %5;
+    PopScopeFrame
+    GOTO bb1;
+  }
+  bb3 {
+    %0 = c;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 4
+    %2 = %1;
+    %3 = sum(%2) -> bb1;
+  }
+  bb1 {
+    %4 = %3;
+    %5 = println(%4) -> bb2;
+  }
+  bb2 {
+    %6 = ConstantLoad 3
+    %7 = %6;
+    %8 = count(%7) -> bb3;
+  }
+  bb3 {
+    %9 = %8;
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    lock-start "$anon/.:range" GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 3
+    %0 = range is object&object { public function iterator() returns object { public function next() returns nil|error|{| value: nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|future|stream|list|mapping|table|xml|object, never... |} } }
+    %1 = %0;
+    %2 = println(%1) -> bb6;
+  }
+  bb6 {
+    PopScopeFrame
+    lock-end "$anon/.:range" GOTO bb7;
+  }
+  bb7 {
+    %11 = newObject $anon/.:Holder
+    %12 = %11.init() -> bb8;
+  }
+  bb8 {
+    %14 = %12 is nil
+    %14 ? bb9 : bb10;
+  }
+  bb9 {
+    %13 = %11;
+    GOTO bb11;
+  }
+  bb10 {
+    %13 = %12;
+    GOTO bb11;
+  }
+  bb11 {
+    h = %13;
+    %16 = h.reset() -> bb12;
+  }
+  bb12 {
+    return;
+  }
+}

@@ -55,6 +55,17 @@ func FactsOfType(cx Context, e ast.BLangActionOrExpression) Facts {
 	return NoFacts
 }
 
+// IsolatedFacts holds Isolated and IsolatedTransferred, or NoFacts where no
+// consumer demands facts. It is for an expression that is isolated whatever
+// its type, such as a range expression (spec §6.26: "A range-expr is always
+// isolated"), whose value is a new object that nothing else refers to.
+func IsolatedFacts(cx Context) Facts {
+	if !cx.factsNeeded() {
+		return NoFacts
+	}
+	return Facts{bits: factIsolated | factIsolatedTransferred}
+}
+
 // IsolatedWhateverOperands reports whether e is an isolated expression
 // whatever its subexpressions: its type is a subtype of Isolated, or it is a
 // call to lang.value:clone.

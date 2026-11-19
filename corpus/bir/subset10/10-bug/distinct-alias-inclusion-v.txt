@@ -1,0 +1,111 @@
+module $anon.. v 0.0.0;
+class Square {
+
+  area() -> int{
+    bb0 {
+      %2 = ConstantLoad 4
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+class Lookalike {
+
+  area() -> int{
+    bb0 {
+      %2 = ConstantLoad 4
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Square
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    s = %3;
+    %6 = s.area() -> bb5;
+  }
+  bb5 {
+    %7 = %6;
+    %8 = println(%7) -> bb6;
+  }
+  bb6 {
+    %9 = newObject $anon/.:Square
+    %10 = %9.init() -> bb7;
+  }
+  bb7 {
+    %12 = %10 is nil
+    %12 ? bb8 : bb9;
+  }
+  bb8 {
+    %11 = %9;
+    GOTO bb10;
+  }
+  bb9 {
+    %11 = %10;
+    GOTO bb10;
+  }
+  bb10 {
+    a = %11;
+    %14 = a is object&object { public function area() returns int }
+    %15 = %14;
+    %16 = println(%15) -> bb11;
+  }
+  bb11 {
+    %17 = a is object&object { public function area() returns int }
+    %18 = %17;
+    %19 = println(%18) -> bb12;
+  }
+  bb12 {
+    %20 = newObject $anon/.:Lookalike
+    %21 = %20.init() -> bb13;
+  }
+  bb13 {
+    %23 = %21 is nil
+    %23 ? bb14 : bb15;
+  }
+  bb14 {
+    %22 = %20;
+    GOTO bb16;
+  }
+  bb15 {
+    %22 = %21;
+    GOTO bb16;
+  }
+  bb16 {
+    b = %22;
+    %25 = b is object&object { public function area() returns int }
+    %26 = %25;
+    %27 = println(%26) -> bb17;
+  }
+  bb17 {
+    return;
+  }
+}

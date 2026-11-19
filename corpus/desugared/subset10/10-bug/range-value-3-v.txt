@@ -1,0 +1,153 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (expr
+          (invocation lang.__internal createIntRange (
+            (literal 1)
+            (literal 2)
+            (literal true))))))
+      (var-def
+        (variable it (expr
+          (invocation iterator expr:
+            (simple-var-ref r) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (simple-var-ref it) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (simple-var-ref it) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref it) ())
+            (value-type null)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (simple-var-ref it) ())
+            (value-type null)))))
+      (var-def
+        (variable empty (expr
+          (invocation lang.__internal createIntRange (
+            (literal 3)
+            (literal 3)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (invocation iterator expr:
+                (simple-var-ref empty) ()) ())
+            (value-type null)))))
+      (var-def
+        (variable reversed (expr
+          (invocation lang.__internal createIntRange (
+            (literal 3)
+            (literal 2)
+            (literal true))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (invocation iterator expr:
+                (simple-var-ref reversed) ()) ())
+            (value-type null)))))
+      (var-def
+        (variable bottom (expr
+          (invocation lang.__internal createIntRange (
+            (binary-expr -
+              (unary-expr -
+                (literal 9223372036854775807))
+              (literal 1))
+            (unary-expr -
+              (literal 9223372036854775807))
+            (literal false))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref bottom))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$0) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$4 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$2) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$4))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$4)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (var-def
+        (variable bottomEmpty (expr
+          (invocation lang.__internal createIntRange (
+            (binary-expr -
+              (unary-expr -
+                (literal 9223372036854775807))
+              (literal 1))
+            (binary-expr -
+              (unary-expr -
+                (literal 9223372036854775807))
+              (literal 1))
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation next expr:
+              (invocation iterator expr:
+                (simple-var-ref bottomEmpty) ()) ())
+            (value-type null)))))
+      (var-def
+        (variable top (expr
+          (invocation lang.__internal createIntRange (
+            (literal 9223372036854775806)
+            (literal 9223372036854775807)
+            (literal true))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref top))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$5) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$9 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$7) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$9))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$9)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i)))))))))

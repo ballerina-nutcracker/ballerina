@@ -1,0 +1,38 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (expr
+          (invocation lang.__internal createIntRange (
+            (literal 1)
+            (literal 3)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref r)
+            (user-defined-type object Iterable)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (group-expr
+              (invocation lang.__internal createIntRange (
+                (literal 1)
+                (literal 3)
+                (literal true))))
+            (user-defined-type object Iterable)))))
+      (var-def
+        (variable a (type
+          (value-type any)) (expr
+          (invocation lang.__internal createIntRange (
+            (literal 1)
+            (literal 2)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref a)
+            (user-defined-type object Iterable))))))))
