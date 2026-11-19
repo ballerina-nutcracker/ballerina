@@ -15,3 +15,4 @@ true
 500
 failed to serialize resource return value: failed to encode multipart body: member 0 is not a mime:Entity
 -- stderr --
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error GenericClientError ("Error occurred while retrieving body parts from the request",error("Error occurred while extracting body parts from entity: Missing start boundary")) path="/multiparts/count" method="POST"

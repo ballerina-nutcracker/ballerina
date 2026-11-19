@@ -460,3 +460,11 @@ func TestHttpServiceStatusCodeResponse(t *testing.T) {
 	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-status-code-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
+
+// TestHttpServiceErrorResponse returns errors from resources and checks the status, headers
+// and body each is sent with, and the error responses for unmatched requests.
+func TestHttpServiceErrorResponse(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-error-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}

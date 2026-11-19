@@ -1,0 +1,86 @@
+-- stdout --
+500 application/json
+true true
+500 | Internal Server Error | plain failure | /errors/plain?x=1 | GET
+404 application/json
+true true
+404 | Not Found | no album | /errors/notFound | GET
+409 application/json
+{"code":"C1","detail":"taken"}
+t1 ["a","b"]
+400 text/plain
+bad input
+403 application/json
+true true
+403 | Forbidden | forbidden | /errors/headersOnly | GET
+policy
+418 application/json
+true true
+418 | Client Error (418) | teapot | /errors/teapot | GET
+410 application/json
+true true
+410 | Gone | wrapped | /errors/viaCause | GET
+500 application/json
+true true
+500 | Internal Server Error | no code | /errors/noCode | GET
+451 application/json
+true true
+451 | Unavailable For Legal Reasons | legal | /errors/legal | GET
+414 application/json
+true true
+414 | Request-URI Too Long | long | /errors/tooLong | GET
+500 application/json
+true true
+500 | Internal Server Error | client side | /errors/httpError | GET
+410 text/plain
+bye
+u1
+503 application/json
+true true
+503 | Service Unavailable | upstream down | /errors/appErrorNoBody | GET
+409 ["application/problem+json"] {"title":"taken"}
+409 ["application/problem+json"] conflict
+500 application/json
+true true
+500 | Internal Server Error | wrapped | /errors/appErrorCause | GET
+425 application/json
+true true
+425 | Unordered Collection | early | /errors/tooEarly | GET
+599 application/json
+true true
+599 | Server Error (599) | odd | /errors/server599 | GET
+650 application/json
+true true
+650 | Internal Server Error | big | /errors/code650 | GET
+404 application/json
+true true
+404 | Not Found | no matching resource found for path : /errors/nope?x=1 , method : GET | /errors/nope?x=1 | GET
+404 application/json
+true true
+404 | Not Found | no matching service found for path: /other | /other | GET
+405 application/json
+true true
+405 | Method Not Allowed | Method not allowed | /errors/onlyGet | POST
+-- stderr --
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("plain failure") path="/errors/plain?x=1" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error NotFoundError ("no album") path="/errors/notFound" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ConflictError ("conflict",body={"code":"C1","detail":"taken"},headers={"x-trace":"t1","x-multi":["a","b"]}) path="/errors/withBody" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ConflictError ("conflict",body={"code":"C1","detail":"taken"},headers={"x-trace":"t1","x-multi":["a","b"]}) path="/errors/withBody" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error BadRequestError ("bad",body="bad input") path="/errors/textBody" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ForbiddenError ("forbidden",headers={"x-reason":"policy"}) path="/errors/headersOnly" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ForbiddenError ("forbidden",headers={"x-reason":"policy"}) path="/errors/headersOnly" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("teapot",statusCode=418) path="/errors/teapot" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("wrapped",error GoneError ("gone")) path="/errors/viaCause" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("no code") path="/errors/noCode" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error UnavailableDueToLegalReasonsError ("legal") path="/errors/legal" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error URITooLongError ("long") path="/errors/tooLong" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error GenericClientError ("client side") path="/errors/httpError" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ClientRequestError ("gone upstream",statusCode=410,headers={"x-upstream":["u1"]},body="bye") path="/errors/appError" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ClientRequestError ("gone upstream",statusCode=410,headers={"x-upstream":["u1"]},body="bye") path="/errors/appError" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error RemoteServerError ("upstream down",statusCode=503,headers={},body=null) path="/errors/appErrorNoBody" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ConflictError ("conflict",body={"title":"taken"},headers={"Content-Type":["application/problem+json"]}) path="/errors/problem" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ConflictError ("conflict",headers={"Content-Type":["application/problem+json"]}) path="/errors/problemNoBody" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("wrapped",error ClientRequestError ("rejected",statusCode=422,headers={},body=null)) path="/errors/appErrorCause" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("early",statusCode=425) path="/errors/tooEarly" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("odd",statusCode=599) path="/errors/server599" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error DefaultStatusCodeError ("big",statusCode=650) path="/errors/code650" method="GET"
