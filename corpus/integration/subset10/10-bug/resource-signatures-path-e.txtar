@@ -1,0 +1,17 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: resource methods are only allowed in client or service object types
+  --> resource-signatures-path-e.bal:21:17
+   |
+21 | type NotNetwork object { // @error
+   |                 ^^^^^^^^^^^^^^^^^^
+22 |     resource function get name() returns string;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 | };
+   | ^
+
+error[SEMANTIC_ERROR]: resource path parameter type must be a subtype of anydata
+  --> resource-signatures-path-e.bal:18:33
+   |
+18 |     resource function get items/[function () id]() returns string; // @error
+   |                                 ^^^^^^^^^^^^^^^^

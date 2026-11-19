@@ -16,9 +16,27 @@
 
 package model
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const remoteMethodPrefix = "$remote$"
+
+// ResourceMethodName returns the internal storage key for a resource declaration.
+//
+//shallow:allow shared naming keeps resource declaration and definition keys consistent
+func ResourceMethodName(accessor string, index int) string {
+	return fmt.Sprintf("$resource$%s$%d", accessor, index)
+}
+
+// DisplayMemberName removes compiler-generated method naming from diagnostics.
+func DisplayMemberName(name string) string {
+	if strings.HasPrefix(name, "$resource$") {
+		return name[len("$resource$"):strings.LastIndex(name, "$")]
+	}
+	return StripRemotePrefix(name)
+}
 
 func RemoteMethodName(name string) string {
 	return remoteMethodPrefix + name
