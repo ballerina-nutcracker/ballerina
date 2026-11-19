@@ -1304,7 +1304,7 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 	for _, gv := range common.DeclaredNodes(pkg.GlobalVars) {
 		resolveGlobalVarInit(t, gv)
 	}
-	detectGlobalVarInitCycles(t, common.DeclaredNodes(pkg.GlobalVars))
+	t.detectGlobalVarInitCycles(common.DeclaredNodes(pkg.GlobalVars))
 	attachPointBound := common.ListenerAttachPointBound(t.typeContext())
 	validateListenerVars(t, pkg, attachPointBound)
 	for i := range pkg.Services {
@@ -3751,21 +3751,26 @@ func resolveVariableDefStmt(t typeResolver, chain *binding, s *ast.BLangVariable
 }
 
 // detectGlobalVarInitCycles flags cycles in the dependency graph induced by
-// module-level variable initializer expressions. Constants get cycle detection
-// for free via packageTypeResolver.ensureResolved while types are being
-// resolved; module vars don't go through that path, so we do a dedicated pass here.
-// Cross-module references are leaves — imported modules' inits are guaranteed
-// to have run already by the time this module's init runs.
-func detectGlobalVarInitCycles(t typeResolver, globalVars []*ast.BLangVariable) {
+// module-level variable initializer expressions. Cross-module references are
+// leaves — imported modules' inits are guaranteed to have run already by the
+// time this module's init runs.
+//
+// ensureResolved reports a cycle made only of inferred-type globals, because
+// inferring their types recurses through the cycle, and every member of such a
+// cycle fails resolution. It cannot see a typed global, whose type is known
+// before any initializer is resolved, so every other cycle is reported here.
+// Globals that failed resolution are left out: their errors are already
+// reported, and a cycle ensureResolved reported is not reported again.
+func (t *packageTypeResolver) detectGlobalVarInitCycles(globalVars []*ast.BLangVariable) {
 	if len(globalVars) == 0 {
 		return
 	}
-	// Inferred-type globals are cycle-checked via ensureResolved during the
-	// init-expression pass (the in-progress nil-marker pattern that constants
-	// also use). Skip them here to avoid duplicate diagnostics.
+	inGraph := func(gv *ast.BLangVariable) bool {
+		return t.lazyResolutionStatus[gv.Symbol()] != resolutionFailed
+	}
 	nodeSet := make(map[model.SymbolRef]int, len(globalVars))
 	for i := range globalVars {
-		if globalVars[i].TypeNode() == nil {
+		if !inGraph(globalVars[i]) {
 			continue
 		}
 		nodeSet[globalVars[i].Symbol()] = i
@@ -3774,7 +3779,7 @@ func detectGlobalVarInitCycles(t typeResolver, globalVars []*ast.BLangVariable) 
 	deps := make([][]int, len(globalVars))
 	for i := range globalVars {
 		gv := globalVars[i]
-		if gv.Expr == nil || gv.TypeNode() == nil {
+		if gv.Expr == nil || !inGraph(gv) {
 			continue
 		}
 		deps[i] = symbolDeps(t, nodeSet, gv.Expr)
@@ -3812,7 +3817,7 @@ func detectGlobalVarInitCycles(t typeResolver, globalVars []*ast.BLangVariable) 
 	}
 
 	for i := range globalVars {
-		if globalVars[i].TypeNode() == nil {
+		if !inGraph(globalVars[i]) {
 			continue
 		}
 		if !visit(i) {
