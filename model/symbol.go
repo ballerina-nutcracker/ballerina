@@ -634,6 +634,19 @@ func (sig UntypedFunctionSignature) FixedParamCount() int {
 	return len(sig.ParamNames)
 }
 
+// DefaultClosureParams returns the indices of the parameters that the default closure of the
+// parameter at index takes: the named parameters before it. A parameter of a function type
+// descriptor may be unnamed; it cannot be referred to, so it is not passed to the closure.
+func (sig UntypedFunctionSignature) DefaultClosureParams(index int) []int {
+	params := make([]int, 0, index)
+	for i, name := range sig.ParamNames[:index] {
+		if name != "" {
+			params = append(params, i)
+		}
+	}
+	return params
+}
+
 func (sig UntypedFunctionSignature) IsIsolatedParam(index int) bool {
 	if index < 0 || index >= len(sig.ParamFlags) {
 		return false
