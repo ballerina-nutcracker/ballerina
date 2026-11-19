@@ -54,8 +54,8 @@ func TestBuildRequestFromHTTPBodyReadError(t *testing.T) {
 }
 
 // TestBufferedRelayBodyReadError covers a relayed body short enough to be buffered whose backend
-// fails mid-body: the read error fails the response, before or after its headers are sent. In
-// jBallerina no module service backend makes such a relay fail, so it is not a corpus test.
+// fails mid-body: the read error fails the response, before or after its headers are sent. A
+// module service never sends a body shorter than its Content-Length, so it is not a corpus test.
 func TestBufferedRelayBodyReadError(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
