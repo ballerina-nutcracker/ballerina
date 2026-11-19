@@ -98,7 +98,7 @@ public function testMain() returns error? {
 
     http:Response r = check c->post("/multiparts/decode", [textPart, jsonPart]);
     io:println(r.statusCode); // @output 200
-    io:println(check r.getTextPayload()); // @output {"count":2,"disposition":"form-data;name=\"field1\"","text":"hello world","x":42}
+    io:println(check r.getTextPayload()); // @output {"count":2,"text":"hello world","disposition":"form-data;name=\"field1\"","x":42}
 
     r = check c->post("/multiparts/relay", [textPart]);
     io:println(r.statusCode); // @output 201
