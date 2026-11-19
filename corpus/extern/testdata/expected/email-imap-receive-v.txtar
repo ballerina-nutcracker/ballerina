@@ -1,0 +1,16 @@
+-- stdout --
+1: one
+2: two
+odd encoding: to=bob@localhost cc=[] bcc=[] replyTo=alice@localhost from=alice@localhost sender= contentType=multipart/mixed; boundary=B
+> body=hello htmlBody=<none>
+> attachment application/octet-stream = [100,97,116,97]
+4: none
+lowercase inbox: none
+archive: archived
+missing: error: NoSuchFolder not found
+wildcard: error: Arch* not found
+read-only: error: Cannot open in desired mode
+after close: error: Not connected
+close without read: true
+Error while connecting to the IMAP store: [AUTHENTICATIONFAILED] Authentication failed
+-- stderr --

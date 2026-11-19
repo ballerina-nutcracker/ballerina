@@ -1,0 +1,6 @@
+-- stdout --
+late: late
+concurrent reads return the message once: true
+close while waiting: error: Not connected
+Error while connecting to the IMAP store: Couldn't connect to host true
+-- stderr --

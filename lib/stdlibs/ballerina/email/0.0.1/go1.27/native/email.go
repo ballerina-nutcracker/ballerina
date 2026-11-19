@@ -76,7 +76,10 @@ func initEmailModule(rt *runtime.Runtime) {
 	strArrTy := strArrDef.Define(rt.GetTypeEnv(), nil, semtypes.ListRest(semtypes.String))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "initPopClientEndpoint", initPopClientExtern(rt))
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "popRead", popReadExtern(rt, strArrTy))
-	runtime.RegisterExternFunction(rt, orgName, moduleName, "popClose", popCloseExtern)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "popClose", closeExtern(popStateField))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "initImapClientEndpoint", initImapClientExtern(rt))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "imapRead", imapReadExtern(rt, strArrTy))
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "imapClose", closeExtern(imapStateField))
 }
 
 func init() {
