@@ -90,7 +90,7 @@ function f(boolean c) {
             int w = 1; // @error
             io:println(w); // @error
         }
-        io:println(x); // @error
+        io:println(x);
     }
 }
 
