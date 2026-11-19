@@ -24,7 +24,7 @@ type booleanSubtype struct {
 	Value bool
 }
 
-var _ properSubtypeData = &booleanSubtype{}
+var _ subtypeData = &booleanSubtype{}
 
 func newBooleanSubtypeFromBool(value bool) booleanSubtype {
 	this := booleanSubtype{}
@@ -32,6 +32,7 @@ func newBooleanSubtypeFromBool(value bool) booleanSubtype {
 	return this
 }
 
+//shallow:allow semantic subtype factory is kept consistently with the other subtype factories
 func booleanSubtypeFrom(value bool) booleanSubtype {
 	return newBooleanSubtypeFromBool(value)
 }

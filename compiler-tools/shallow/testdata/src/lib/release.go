@@ -10,17 +10,13 @@
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied. See the License for the
+// KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
 
-package parser
+//go:build !debug
 
-import (
-	"github.com/ballerina-nutcracker/ballerina/parser/common"
-	"github.com/ballerina-nutcracker/ballerina/st"
-)
+package lib
 
-func createMissingTokenWithDiagnosticsFromParserRules(expectedKind st.SyntaxKind, currentCtx common.ParserRuleContext) st.STToken {
-	return st.CreateMissingTokenWithDiagnostics(expectedKind, currentCtx.GetErrorCode())
-}
+type s20 struct{ base } // want "struct s20 only embeds base;"
+type s22 struct{ base } // want "struct s22 only embeds base;"

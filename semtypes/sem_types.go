@@ -27,6 +27,7 @@ func ContainsBasicType(t1 SemType, t2 SemType) bool {
 	return ((widenToBasicTypeBits(t1) & t2.all()) != 0)
 }
 
+//shallow:allow public list projection hides the private projection implementation
 func ListProj(context Context, t SemType, key SemType) SemType {
 	return listProjInnerVal(context, t, key)
 }

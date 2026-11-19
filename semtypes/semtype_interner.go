@@ -33,7 +33,7 @@ type complexSemtypeInternKey struct {
 
 type complexSemtypeInternValues struct {
 	base      int32
-	dataLists [][]properSubtypeData
+	dataLists [][]subtypeData
 }
 
 func NewSemtypeInterner() *SemTypeInterner {
@@ -108,7 +108,7 @@ func sameComplexSemType(a, b SemType) bool {
 		sameSubtypeDataList(a.subtypeDataList(), b.subtypeDataList())
 }
 
-func sameSubtypeDataList(a, b []properSubtypeData) bool {
+func sameSubtypeDataList(a, b []subtypeData) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -120,7 +120,7 @@ func sameSubtypeDataList(a, b []properSubtypeData) bool {
 	return true
 }
 
-func sameSubtypeData(a, b properSubtypeData) bool {
+func sameSubtypeData(a, b subtypeData) bool {
 	if a == nil || b == nil {
 		return a == b
 	}

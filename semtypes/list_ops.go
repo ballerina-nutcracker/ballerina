@@ -220,6 +220,7 @@ func listIntersectWith(env Env, members1 fixedLengthArray, rest1 SemType,
 	return fixedLengthArrayFrom(initial, fixedLen), intersectMemberSemTypes(env, rest1, rest2), true
 }
 
+//shallow:allow named copy operation keeps list normalization independent of array representation
 func fixedArrayShallowCopy(array fixedLengthArray) fixedLengthArray {
 	return fixedLengthArrayFrom(array.initial, array.FixedLength)
 }
@@ -316,11 +317,7 @@ func fixedArrayGet(members fixedLengthArray, index int) SemType {
 }
 
 func listAtomicMemberTypeInnerVal(atomic ListAtomicType, key subtypeData) SemType {
-	return Diff(listAtomicMemberTypeInner(atomic, key), Undef)
-}
-
-func listAtomicMemberTypeInner(atomic ListAtomicType, key subtypeData) SemType {
-	return listAtomicMemberTypeAtInner(atomic.members, atomic.rest, key)
+	return Diff(listAtomicMemberTypeAtInner(atomic.members, atomic.rest, key), Undef)
 }
 
 func listAtomicMemberTypeAtInner(fixedArray fixedLengthArray, rest SemType, key subtypeData) SemType {

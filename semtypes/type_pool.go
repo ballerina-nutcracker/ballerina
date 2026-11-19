@@ -87,7 +87,7 @@ func (pool *TypePool) PutObjectDefinition(ty SemType) TypePoolIndex {
 }
 
 func (pool *TypePool) PutErrorDefinition(ty SemType) TypePoolIndex {
-	return pool.Put(stripErrorDistinctAtoms(ty))
+	return pool.Put(stripDistinctAtomsFromSemType(ty, btError, stripDistinctAtomsFromBdd))
 }
 
 // MappingAtomicTypeAt returns the mapping atom reconstructed at a serialized index.
@@ -624,7 +624,7 @@ func fromFloatSubtype(st *floatSubtype) floatSubtypeEntry {
 	return floatSubtypeEntry{allowed: st.Allowed(), nValues: int32(nValues), values: values}
 }
 
-func toFloatSubtype(entry floatSubtypeEntry) properSubtypeData {
+func toFloatSubtype(entry floatSubtypeEntry) subtypeData {
 	values := make([]enumerableType[float64], entry.nValues)
 	for i, v := range entry.values {
 		f := newEnumerableFloatFromFloat64(v)
@@ -672,7 +672,7 @@ func fromDecimalSubtype(st *decimalSubtype) decimalSubtypeEntry {
 	return decimalSubtypeEntry{allowed: st.Allowed(), nValues: int32(len(values)), values: values}
 }
 
-func toDecimalSubtype(entry decimalSubtypeEntry) properSubtypeData {
+func toDecimalSubtype(entry decimalSubtypeEntry) subtypeData {
 	values := make([]enumerableType[decimal.Decimal], len(entry.values))
 	for i, v := range entry.values {
 		r, err := decimal.FromString(v.value)

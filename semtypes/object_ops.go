@@ -34,11 +34,9 @@ func (o *objectOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 }
 
 func objectSubTypeIsEmpty(cx Context, t subtypeData) bool {
-	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), objectBddIsEmpty, t.(bdd))
-}
-
-func objectBddIsEmpty(cx Context, b bdd) bool {
-	return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
+	return memoSubtypeIsEmpty(cx, cx.mappingMemo(), func(cx Context, b bdd) bool {
+		return bddEveryPositive(cx, b, conjunctionNil, conjunctionNil, mappingFormulaIsEmpty)
+	}, t.(bdd))
 }
 
 func (o *objectOps) complement(t subtypeData) subtypeData {

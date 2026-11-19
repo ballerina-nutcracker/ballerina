@@ -22,6 +22,7 @@ import (
 
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
@@ -39,7 +40,9 @@ func initBooleanModule(rt *runtime.Runtime) {
 		case "false", "0":
 			return false, nil
 		default:
-			return values.NewErrorWithMessage(fmt.Sprintf("%q cannot be converted to boolean", s)), nil
+			message := fmt.Sprintf("%q cannot be converted to boolean", s)
+			return values.NewError(semtypes.Error, message, nil, "", nil),
+				nil
 		}
 	})
 }

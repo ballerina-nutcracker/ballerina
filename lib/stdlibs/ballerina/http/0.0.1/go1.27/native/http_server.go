@@ -120,7 +120,8 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 						if ssMap, ok := v.(*values.Map); ok {
 							tlsCfg, err := buildListenerTLSConfig(ssMap, rt.Platform().FS)
 							if err != nil {
-								return values.NewErrorWithMessage("Listener.init secureSocket: " + err.Error()), nil
+								return values.NewError(semtypes.Error, "Listener.init secureSocket: "+err.Error(), nil, "", nil),
+									nil
 							}
 							state.tlsCfg = tlsCfg
 						}
@@ -136,7 +137,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			self := args[0].(*values.Object)
 			svcObj, ok := args[1].(*values.Object)
 			if !ok {
-				return values.NewErrorWithMessage("Listener.attach: expected service object"), nil
+				return values.NewError(semtypes.Error, "Listener.attach: expected service object", nil, "", nil), nil
 			}
 			var attachArg values.BalValue
 			if len(args) > 2 {
@@ -147,7 +148,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			state := stateVal.(*listenerState)
 
 			if msg := validateServiceForHTTP(svcObj); msg != "" {
-				return values.NewErrorWithMessage("Listener.attach: " + msg), nil
+				return values.NewError(semtypes.Error, "Listener.attach: "+msg, nil, "", nil), nil
 			}
 
 			state.mu.Lock()
@@ -156,7 +157,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			// not pick between them deterministically.
 			for _, e := range state.services {
 				if e.basePath == basePath {
-					return values.NewErrorWithMessage("Listener.attach: a service is already attached to base path " + basePath), nil
+					return values.NewError(semtypes.Error, "Listener.attach: a service is already attached to base path "+basePath, nil, "", nil), nil
 				}
 			}
 			entry := &serviceEntry{basePath: basePath, svcObj: svcObj}
@@ -203,7 +204,8 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			}
 			server, err := startHTTPServer(rt, state)
 			if err != nil {
-				return values.NewErrorWithMessage("Listener.start: " + err.Error()), nil
+				return values.NewError(semtypes.Error, "Listener.start: "+err.Error(), nil, "", nil),
+					nil
 			}
 			state.server = server
 			return nil, nil
@@ -233,7 +235,9 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			if err := server.Shutdown(shutdownCtx); err != nil {
-				return values.NewErrorWithMessage("Listener.gracefulStop: " + err.Error()), nil
+				message := "Listener.gracefulStop: " + err.Error()
+				return values.NewError(semtypes.Error, message, nil, "", nil),
+					nil
 			}
 			return nil, nil
 		})

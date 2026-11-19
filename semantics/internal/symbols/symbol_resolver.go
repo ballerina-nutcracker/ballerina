@@ -278,7 +278,7 @@ func newCompilationUnitSymbolResolver(moduleResolver *moduleSymbolResolver, scop
 func newFunctionResolver(parent symbolResolver, node ast.CaptureGroupOwner) *blockSymbolResolver {
 	pkgID := parent.GetPkgID()
 	parentScope := parent.GetScope()
-	scope := parent.GetCtx().NewFunctionScope(parentScope, pkgID)
+	scope := parent.GetCtx().NewBlockScope(parentScope, pkgID)
 	kind := captureRegionNone
 	if isInFunction(parent) {
 		kind = captureRegionClosure
@@ -293,18 +293,23 @@ func newFunctionResolver(parent symbolResolver, node ast.CaptureGroupOwner) *blo
 	}
 }
 
+//shallow:allow named block-scope constructor selects a non-capturing region
 func newBlockSymbolResolverWithBlockScope(parent symbolResolver, node ast.BLangNode) *blockSymbolResolver {
 	return newScopedBlockResolver(parent, node, captureRegionNone, nil)
 }
 
 // newAccumBlockResolver creates a block resolver whose children accumulate their
 // captures into owner's group (a loop or a query).
+//
+//shallow:allow named scope constructor selects an accumulating capture region
 func newAccumBlockResolver(parent symbolResolver, owner ast.CaptureGroupOwner) *blockSymbolResolver {
 	return newScopedBlockResolver(parent, owner, captureRegionAccum, owner)
 }
 
 // newDefaultExprResolver creates the closure resolver for a default expression
 // owned by owner (a parameter or a record field).
+//
+//shallow:allow named scope constructor selects a default-expression closure region
 func newDefaultExprResolver(parent symbolResolver, owner ast.CaptureGroupOwner) *blockSymbolResolver {
 	return newScopedBlockResolver(parent, owner, captureRegionClosure, owner)
 }
@@ -1378,7 +1383,7 @@ func signatureParams(alloc symbolResolver, targetScope, ownerScope model.Scope, 
 				defaultParam = &model.DefaultableParam{
 					Symbol: symRef,
 					Kind:   model.DefaultableParamKindExpr,
-					Scope:  alloc.GetCtx().NewFunctionScope(ownerScope, alloc.GetPkgID()),
+					Scope:  alloc.GetCtx().NewBlockScope(ownerScope, alloc.GetPkgID()),
 				}
 			}
 		}
@@ -1836,7 +1841,7 @@ func allocateRecordDefaultSymbols(resolver symbolResolver, recordType *ast.BLang
 		scope.AddSymbol(name, symbol)
 		symRef, _ := scope.GetSymbol(name)
 		field.Default.FnRef = symRef
-		field.Default.FnScope = resolver.GetCtx().NewFunctionScope(scope, resolver.GetPkgID())
+		field.Default.FnScope = resolver.GetCtx().NewBlockScope(scope, resolver.GetPkgID())
 	}
 }
 
@@ -2157,6 +2162,7 @@ func (ms *compilationUnitSymbolResolver) allocateResourceMethodSymbol(targetScop
 	return symRef, ok
 }
 
+//shallow:allow shared resource naming helper keeps object and service method keys consistent
 func mangledResourceMethodName(methodName string, idx int) string {
 	return fmt.Sprintf("$resource$%s$%d", methodName, idx)
 }
@@ -2338,7 +2344,7 @@ func resolveStmt(r *blockSymbolResolver, stmt ast.StatementNode) bool {
 	case *ast.BLangCompoundAssignment:
 		return resolveCompoundAssignment(r, n)
 	case *ast.BLangExpressionStmt:
-		return resolveExpressionStmt(r, n)
+		return resolveOptionalExpr(r, n.Expr)
 	case *ast.BLangIf:
 		return resolveIf(r, n)
 	case *ast.BLangWhile:
@@ -2354,9 +2360,9 @@ func resolveStmt(r *blockSymbolResolver, stmt ast.StatementNode) bool {
 	case *ast.BLangVariableDef:
 		return resolveVariableDef(r, n)
 	case *ast.BLangReturn:
-		return resolveReturn(r, n)
+		return resolveOptionalExpr(r, n.Expr)
 	case *ast.BLangPanic:
-		return resolvePanic(r, n)
+		return resolveOptionalExpr(r, n.Expr)
 	case *ast.BLangOnFailClause:
 		return resolveOnFailClause(r, n)
 	case *ast.BLangBreak, *ast.BLangContinue:
@@ -2367,7 +2373,7 @@ func resolveStmt(r *blockSymbolResolver, stmt ast.StatementNode) bool {
 }
 
 func resolveLocalXMLNS(r *blockSymbolResolver, n *ast.BLangXMLNS) bool {
-	ok := processBlockXMLNS(r, n)
+	ok := processXMLNSDecl(r, r.scope, n)
 	if uri := n.GetNamespaceURI(); uri != nil {
 		ok = resolveExpr(r, uri) && ok
 	}
@@ -2468,10 +2474,6 @@ func resolveBindingPattern(r *blockSymbolResolver, bp ast.BindingPatternNode) bo
 	}
 }
 
-func resolveExpressionStmt(r *blockSymbolResolver, n *ast.BLangExpressionStmt) bool {
-	return resolveOptionalExpr(r, n.Expr)
-}
-
 func resolveIf(r *blockSymbolResolver, n *ast.BLangIf) bool {
 	resolver := newBlockSymbolResolverWithBlockScope(r, n)
 	n.SetScope(resolver.scope)
@@ -2562,14 +2564,6 @@ func resolveVariableDef(r *blockSymbolResolver, n *ast.BLangVariableDef) bool {
 	variable := n.GetVariable()
 	ok := defineVariable(r, variable, variable.IsFinal())
 	return resolveVariableChildren(r, variable, variable.Symbol()) && ok
-}
-
-func resolveReturn(r *blockSymbolResolver, n *ast.BLangReturn) bool {
-	return resolveOptionalExpr(r, n.Expr)
-}
-
-func resolvePanic(r *blockSymbolResolver, n *ast.BLangPanic) bool {
-	return resolveOptionalExpr(r, n.Expr)
 }
 
 func resolveQueryClause(r *blockSymbolResolver, clause ast.BLangNode) bool {
@@ -2999,6 +2993,7 @@ func resolveTypeDesc(r symbolResolver, td ast.TypeDescriptor) bool {
 	}
 }
 
+//shallow:allow shared type-resolution entry point preserves the resolver terminology at callers
 func resolveUserDefinedType(r symbolResolver, n *ast.BLangUserDefinedType) bool {
 	return referUserDefinedType(r, n)
 }

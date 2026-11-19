@@ -56,7 +56,7 @@ COMPILER_HANDLED = "Handled by the compiler"
 NOT_DECLARED = "Not declared"
 
 PUBLIC_FUNCTION_RE = re.compile(r"^public\s+(?:(?:isolated|transactional)\s+)*function\s+'?(\w+)", re.MULTILINE)
-OPAQUE_FUNCTION_RE = re.compile(r'\bnewOpaqueFunctionSymbol\("(\w+)"')
+OPAQUE_FUNCTION_RE = re.compile(r'\bnewOpaqueFunctionSymbolWithVisibility\("(\w+)", \w+, true\)')
 SECTION_RE = re.compile(r"^## Lang library coverage\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL)
 
 

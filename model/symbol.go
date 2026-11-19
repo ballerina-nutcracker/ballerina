@@ -324,20 +324,10 @@ type (
 		AnnotationSpaces []*SymbolSpace
 	}
 
-	blockScopeBase struct {
+	BlockScope struct {
 		Parent Scope
 		Main   *SymbolSpace
 		Prefix map[string]ExportedSymbolSpace
-	}
-
-	// This is a delimiter to help detect if we need to capture a symbol as a closure
-	// TODO: need to think how to implement closures correctly
-	FunctionScope struct {
-		blockScopeBase
-	}
-
-	BlockScope struct {
-		blockScopeBase
 	}
 
 	SymbolSpace struct {
@@ -391,15 +381,11 @@ type (
 		TypeSymbol
 		memberHolderBase
 		distinctTypeBase
-		resourceMethods []SymbolRef
-	}
-
-	classSymbol struct {
-		classSymbolBase
 	}
 
 	NetworkClassSymbol struct {
 		classSymbolBase
+		resourceMethods []SymbolRef
 	}
 
 	RecordSymbol struct {
@@ -762,21 +748,20 @@ var (
 var (
 	_ Scope                                = &ModuleScope{}
 	_ Scope                                = &PackageScope{}
-	_ Scope                                = &FunctionScope{}
 	_ Scope                                = &BlockScope{}
 	_ Symbol                               = &TypeSymbol{}
 	_ Symbol                               = &AnnotationSymbol{}
-	_ Symbol                               = &classSymbol{}
+	_ Symbol                               = &classSymbolBase{}
 	_ Symbol                               = &NetworkClassSymbol{}
-	_ ClassSymbol                          = &classSymbol{}
+	_ ClassSymbol                          = &classSymbolBase{}
 	_ ClassSymbol                          = &NetworkClassSymbol{}
 	_ Symbol                               = &RecordSymbol{}
 	_ Symbol                               = &ObjectTypeSymbol{}
-	_ MemberCarrier                        = &classSymbol{}
+	_ MemberCarrier                        = &classSymbolBase{}
 	_ MemberCarrier                        = &NetworkClassSymbol{}
 	_ MemberCarrier                        = &RecordSymbol{}
 	_ MemberCarrier                        = &ObjectTypeSymbol{}
-	_ ObjectType                           = &classSymbol{}
+	_ ObjectType                           = &classSymbolBase{}
 	_ ObjectType                           = &NetworkClassSymbol{}
 	_ ObjectType                           = &ObjectTypeSymbol{}
 	_ Symbol                               = &VariableSymbol{}
@@ -1034,7 +1019,7 @@ func (space *ExportedSymbolSpace) GetAnnotationSymbol(name string) (SymbolRef, b
 	return SymbolRef{}, false
 }
 
-func (bs *blockScopeBase) GetSymbol(name string) (SymbolRef, bool) {
+func (bs *BlockScope) GetSymbol(name string) (SymbolRef, bool) {
 	ref, ok := bs.Main.GetSymbol(name)
 	if ok {
 		return ref, true
@@ -1042,7 +1027,7 @@ func (bs *blockScopeBase) GetSymbol(name string) (SymbolRef, bool) {
 	return bs.Parent.GetSymbol(name)
 }
 
-func (bs *blockScopeBase) GetPrefixedSymbol(prefix, name string) (SymbolRef, bool) {
+func (bs *BlockScope) GetPrefixedSymbol(prefix, name string) (SymbolRef, bool) {
 	if bs.Prefix != nil {
 		if exported, ok := bs.Prefix[prefix]; ok {
 			return exported.GetSymbol(name)
@@ -1051,11 +1036,11 @@ func (bs *blockScopeBase) GetPrefixedSymbol(prefix, name string) (SymbolRef, boo
 	return bs.Parent.GetPrefixedSymbol(prefix, name)
 }
 
-func (bs *blockScopeBase) AddSymbol(name string, symbol Symbol) {
+func (bs *BlockScope) AddSymbol(name string, symbol Symbol) {
 	bs.Main.AddSymbol(name, symbol)
 }
 
-func (bs *blockScopeBase) MainSpace() *SymbolSpace {
+func (bs *BlockScope) MainSpace() *SymbolSpace {
 	return bs.Main
 }
 
@@ -1581,9 +1566,8 @@ func NewWorkerSymbol(name string, location diagnostics.Location) Symbol {
 }
 
 func NewClassSymbol(name string, isPublic bool, location diagnostics.Location) ClassSymbol {
-	return &classSymbol{
-		classSymbolBase: newClassSymbolBase(name, isPublic, location),
-	}
+	symbol := newClassSymbolBase(name, isPublic, location)
+	return &symbol
 }
 
 // NewNetworkClassSymbol creates a ClassSymbol for classes representing network
@@ -1603,10 +1587,14 @@ func newClassSymbolBase(name string, isPublic bool, location diagnostics.Locatio
 }
 
 func (c *classSymbolBase) ResourceMethods() []SymbolRef {
+	return nil
+}
+
+func (c *NetworkClassSymbol) ResourceMethods() []SymbolRef {
 	return c.resourceMethods
 }
 
-func (c *classSymbolBase) AddResourceMethod(ref SymbolRef) {
+func (c *NetworkClassSymbol) AddResourceMethod(ref SymbolRef) {
 	c.resourceMethods = append(c.resourceMethods, ref)
 }
 
