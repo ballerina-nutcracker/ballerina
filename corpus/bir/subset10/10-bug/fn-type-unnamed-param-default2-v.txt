@@ -1,0 +1,52 @@
+module $anon.. v 0.0.0;
+add(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %2 = fp $anon/.:$default$0
+    $desugar$0 = %2;
+    %3 = fp $anon/.:add
+    f = %3;
+    %5 = ConstantLoad 1
+    %6 = %5;
+    %7 = ConstantLoad 1
+    %8 = %7;
+    %9 = f(%6,%8) -> bb1;
+  }
+  bb1 {
+    %10 = %9;
+    %11 = println(%10) -> bb2;
+  }
+  bb2 {
+    %12 = ConstantLoad 1
+    $desugar$1 = %12;
+    %14 = $desugar$0() -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %14;
+    %16 = $desugar$1;
+    %17 = $desugar$2;
+    %18 = f(%16,%17) -> bb4;
+  }
+  bb4 {
+    %19 = %18;
+    %20 = println(%19) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}

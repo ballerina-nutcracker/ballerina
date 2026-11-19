@@ -660,7 +660,11 @@ func hoistAndAddDefaultInvocations(cx *functionContext, args []ast.BLangExpressi
 			}
 			defaultCall := &ast.BLangInvocation{}
 			defaultCall.Name = newIdentifier(cx.pkgCtx.compilerCtx.SymbolName(defaultCallSym))
-			defaultCall.ArgExprs = append([]ast.BLangExpression(nil), hoistedArgs[:i]...)
+			closureParams := fnSig.DefaultClosureParams(i)
+			defaultCall.ArgExprs = make([]ast.BLangExpression, len(closureParams))
+			for j, paramIndex := range closureParams {
+				defaultCall.ArgExprs[j] = hoistedArgs[paramIndex]
+			}
 			defaultCall.SetSymbol(defaultCallSym)
 			defaultCall.Ty = cx.getSymbol(defaultClosureSym).(model.FunctionSymbol).TypedSignature().ReturnType
 			setPositionIfMissing(defaultCall, pos)

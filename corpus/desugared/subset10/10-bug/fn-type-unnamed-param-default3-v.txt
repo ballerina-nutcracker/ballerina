@@ -1,0 +1,267 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition UnnamedDefaultBeforeNamed
+    (function-type (
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition UnnamedBeforeUnnamedDefault
+    (function-type (
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition AllUnnamedDefaults
+    (function-type (
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition UnnamedWithRest
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (function-type-param r
+      (value-type int))) (
+      (value-type int))))
+  (type-definition UnnamedInMiddle
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition DefaultUsesNamedAfterUnnamed
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition TwoUnnamedBeforeDefault
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (function add (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y))))
+  (function digits (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)))
+    (variable z (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (binary-expr +
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 100))
+          (binary-expr *
+            (simple-var-ref y)
+            (literal 10)))
+        (simple-var-ref z))))
+  (function addRest (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref x)
+          (simple-var-ref y))
+        (invocation lang.array length (
+          (simple-var-ref r))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f1 (type
+          (user-defined-type UnnamedDefaultBeforeNamed)) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$1 ()))))
+          (invocation f1 (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$2 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$3 (expr
+              (invocation $default$1 ()))))
+          (invocation f1 (
+            (simple-var-ref $desugar$2)
+            (simple-var-ref $desugar$3)))))))
+      (var-def
+        (variable f2 (type
+          (user-defined-type UnnamedBeforeUnnamedDefault)) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$4 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$5 (expr
+              (invocation $default$2 ()))))
+          (invocation f2 (
+            (simple-var-ref $desugar$4)
+            (simple-var-ref $desugar$5)))))))
+      (var-def
+        (variable f3 (type
+          (user-defined-type AllUnnamedDefaults)) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$6 (expr
+              (invocation $default$3 ()))))
+          (var-def
+            (variable $desugar$7 (expr
+              (invocation $default$4 ()))))
+          (invocation f3 (
+            (simple-var-ref $desugar$6)
+            (simple-var-ref $desugar$7)))))))
+      (var-def
+        (variable f4 (type
+          (user-defined-type UnnamedWithRest)) (expr
+          (simple-var-ref addRest))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$8 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$9 (expr
+              (invocation $default$5 ()))))
+          (invocation f4 (
+            (simple-var-ref $desugar$8)
+            (simple-var-ref $desugar$9)))))))
+      (var-def
+        (variable f5 (type
+          (user-defined-type UnnamedInMiddle)) (expr
+          (simple-var-ref digits))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$10 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$11 (expr
+              (literal 2))))
+          (var-def
+            (variable $desugar$12 (expr
+              (invocation $default$6 (
+                (simple-var-ref $desugar$10))))))
+          (invocation f5 (
+            (simple-var-ref $desugar$10)
+            (simple-var-ref $desugar$11)
+            (simple-var-ref $desugar$12)))))))
+      (var-def
+        (variable f6 (type
+          (user-defined-type DefaultUsesNamedAfterUnnamed)) (expr
+          (simple-var-ref digits))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$13 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$14 (expr
+              (literal 2))))
+          (var-def
+            (variable $desugar$15 (expr
+              (invocation $default$7 (
+                (simple-var-ref $desugar$14))))))
+          (invocation f6 (
+            (simple-var-ref $desugar$13)
+            (simple-var-ref $desugar$14)
+            (simple-var-ref $desugar$15)))))))
+      (var-def
+        (variable f7 (type
+          (user-defined-type TwoUnnamedBeforeDefault)) (expr
+          (simple-var-ref digits))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$16 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$17 (expr
+              (literal 2))))
+          (var-def
+            (variable $desugar$18 (expr
+              (invocation $default$8 ()))))
+          (invocation f7 (
+            (simple-var-ref $desugar$16)
+            (simple-var-ref $desugar$17)
+            (simple-var-ref $desugar$18)))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 3))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 4))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 3))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal 3))))
+  (function $default$4 () ()
+    (block-function-body
+      (return
+        (literal 4))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
+        (literal 3))))
+  (function $default$6 (
+    (variable a (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 3))))
+  (function $default$7 (
+    (variable a (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref a)
+          (literal 1)))))
+  (function $default$8 () ()
+    (block-function-body
+      (return
+        (literal 5)))))
