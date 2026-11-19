@@ -1,0 +1,15 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: dependsOn function 'helper' is not a @test:Config function
+ --> tests/main_test.bal:7:1
+  |
+7 | function testA() {
+  | ^^^^^^^^^^^^^^^^^^
+8 |     test:assertTrue(true);
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+9 | }
+  | ^
+
+ballerina: compilation contains errors
+-- exitcode --
+1

@@ -10,7 +10,7 @@ service / on new http:Listener(9090) {
     resource function get greeting(http:Request req) returns string|error {
         string? name = req.getQueryParamValue("name");
         // Send a response back to the caller.
-        if name is () || name.length() == 0 {
+        if name is () || name.trim().length() == 0 {
             return error("name should not be empty!");
         }
         return string `Hello, ${name}`;

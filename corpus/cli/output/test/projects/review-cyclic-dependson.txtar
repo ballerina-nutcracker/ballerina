@@ -1,0 +1,10 @@
+-- stdout --
+
+Running Tests
+
+	reviewcyclicdependson
+cyclic test dependencies detected: testA -> testB -> testA
+-- stderr --
+ballerina: there are test failures
+-- exitcode --
+1

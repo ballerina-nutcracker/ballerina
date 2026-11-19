@@ -375,6 +375,10 @@ var balTestFlagCases = []balTestFlagCase{
 	{"grouping-multiple-group-exclusion", "grouping", []string{"--disable-groups", "g1,g5,g6"}, nil},
 	{"grouping-non-existing-group-inclusion", "grouping", []string{"--groups", "g10"}, nil},
 	{"grouping-non-existing-group-exclusion", "grouping", []string{"--disable-groups", "g10"}, nil},
+	// --groups is a union: g4 and g5 share no test, so both testFunc3 (g4)
+	// and testFunc4 (g5) must run even though no single test belongs to
+	// both groups.
+	{"review-grouping-union-disjoint", "grouping", []string{"--groups", "g4,g5"}, nil},
 	{"grouping-listing-of-test-groups", "grouping-listing", []string{"--list-groups"}, nil},
 	{"grouping-after-groups-with-disabled-test", "grouping-after-groups-disabled", []string{"--groups", "g1"}, nil},
 	{"rejects-graalvm", "rejects-unsupported-flags", []string{"--graalvm"}, nil},
@@ -385,6 +389,24 @@ var balTestFlagCases = []balTestFlagCase{
 	// default module only; testShared also exists in .submod but must not
 	// run there too.
 	{"review-module-filter-default-qualified", "review-module-filter", []string{"--tests", "reviewmodfilter:testShared"}, nil},
+	// "--tests pkg.mod:*" selects only that module's tests.
+	{"review-module-filter-module-wildcard", "review-module-filter", []string{"--tests", "reviewmodfilter.submod:*"}, nil},
+	// Regression: testing one workspace member (app) must not fail just
+	// because a sibling dependency member's (liba's) own tests import a
+	// module app's own sources never touch.
+	{"review-ws-member-deps-app", "review-ws-member-deps/app", nil, nil},
+	// Regression: testing app must not compile (and thus run the
+	// module-init side effects of) a sibling dependency member's (liba's)
+	// own tests/ — only the package under test gets its tests compiled.
+	{"review-ws-member-test-init-app", "review-ws-member-test-init/app", nil, nil},
+	// Regression: TestTargetMember must compare cleaned paths — a
+	// workspace.packages entry written as "./app" must still match the
+	// member actually under test, or that member's own tests get skipped.
+	{"review-ws-member-deps-relpath-app", "review-ws-member-deps-relpath/app", nil, nil},
+	// Regression: `groups: GROUPS` (a const string[] reference) must be
+	// read the same way as a literal `groups: ["slow"]` list.
+	{"review-const-groups-run", "review-const-groups", []string{"--groups", "slow"}, nil},
+	{"review-const-groups-list", "review-const-groups", []string{"--list-groups"}, nil},
 	{"selected-function-non-existing", "selected-function", []string{"--tests", "nonExistingFunc"}, nil},
 	{"selected-function-dependent-disabled", "selected-function", []string{"--tests", "testDependentDisabledFunc"}, nil},
 	{"selected-function-single", "selected-function", []string{"--tests", "testFunc"}, nil},

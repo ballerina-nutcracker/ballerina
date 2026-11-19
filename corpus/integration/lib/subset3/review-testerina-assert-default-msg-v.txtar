@@ -1,0 +1,5 @@
+-- stdout --
+assertTrue: Assertion Failed!
+assertFalse: Assertion Failed!
+assertFail: Test Failed!
+-- stderr --
