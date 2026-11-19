@@ -1,0 +1,148 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition UnnamedDefaultBeforeNamed
+    (function-type (
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition UnnamedBeforeUnnamedDefault
+    (function-type (
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition AllUnnamedDefaults
+    (function-type (
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition UnnamedWithRest
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (function-type-param r
+      (value-type int))) (
+      (value-type int))))
+  (type-definition UnnamedInMiddle
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition DefaultUsesNamedAfterUnnamed
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (type-definition TwoUnnamedBeforeDefault
+    (function-type (
+      (value-type int)
+      (value-type int)
+      (value-type int)) (
+      (value-type int))))
+  (function add (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y))))
+  (function digits (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)))
+    (variable z (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (binary-expr +
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 100))
+          (binary-expr *
+            (simple-var-ref y)
+            (literal 10)))
+        (simple-var-ref z))))
+  (function addRest (
+    (variable x (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)))) (
+    (value-type int))
+    (expr-function-body
+      (binary-expr +
+        (binary-expr +
+          (simple-var-ref x)
+          (simple-var-ref y))
+        (invocation length expr:
+          (simple-var-ref r) ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable f1 (type
+          (user-defined-type UnnamedDefaultBeforeNamed)) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f1 ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f1 (
+            (literal 1))))))
+      (var-def
+        (variable f2 (type
+          (user-defined-type UnnamedBeforeUnnamedDefault)) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f2 (
+            (literal 1))))))
+      (var-def
+        (variable f3 (type
+          (user-defined-type AllUnnamedDefaults)) (expr
+          (simple-var-ref add))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f3 ()))))
+      (var-def
+        (variable f4 (type
+          (user-defined-type UnnamedWithRest)) (expr
+          (simple-var-ref addRest))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f4 (
+            (literal 1))))))
+      (var-def
+        (variable f5 (type
+          (user-defined-type UnnamedInMiddle)) (expr
+          (simple-var-ref digits))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f5 (
+            (literal 1)
+            (literal 2))))))
+      (var-def
+        (variable f6 (type
+          (user-defined-type DefaultUsesNamedAfterUnnamed)) (expr
+          (simple-var-ref digits))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f6 (
+            (literal 1)
+            (literal 2))))))
+      (var-def
+        (variable f7 (type
+          (user-defined-type TwoUnnamedBeforeDefault)) (expr
+          (simple-var-ref digits))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f7 (
+            (literal 1)
+            (literal 2)))))))))

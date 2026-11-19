@@ -1,0 +1,95 @@
+(add
+  (bb0 () ()
+    (binary-expr +
+      (simple-var-ref x)
+      (simple-var-ref y))
+  )
+)
+(addRest
+  (bb0 () ()
+    (binary-expr +
+      (binary-expr +
+        (simple-var-ref x)
+        (simple-var-ref y))
+      (invocation lang.array length (
+        (simple-var-ref r))))
+  )
+)
+(digits
+  (bb0 () ()
+    (binary-expr +
+      (binary-expr +
+        (binary-expr *
+          (simple-var-ref x)
+          (literal 100))
+        (binary-expr *
+          (simple-var-ref y)
+          (literal 10)))
+      (simple-var-ref z))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable f1 (type
+        (user-defined-type UnnamedDefaultBeforeNamed)) (expr
+        (simple-var-ref add))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f1 ( <default> <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f1 (
+          (literal 1) <default>)))))
+    (var-def
+      (variable f2 (type
+        (user-defined-type UnnamedBeforeUnnamedDefault)) (expr
+        (simple-var-ref add))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f2 (
+          (literal 1) <default>)))))
+    (var-def
+      (variable f3 (type
+        (user-defined-type AllUnnamedDefaults)) (expr
+        (simple-var-ref add))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f3 ( <default> <default>)))))
+    (var-def
+      (variable f4 (type
+        (user-defined-type UnnamedWithRest)) (expr
+        (simple-var-ref addRest))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f4 (
+          (literal 1) <default>)))))
+    (var-def
+      (variable f5 (type
+        (user-defined-type UnnamedInMiddle)) (expr
+        (simple-var-ref digits))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f5 (
+          (literal 1)
+          (literal 2) <default>)))))
+    (var-def
+      (variable f6 (type
+        (user-defined-type DefaultUsesNamedAfterUnnamed)) (expr
+        (simple-var-ref digits))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f6 (
+          (literal 1)
+          (literal 2) <default>)))))
+    (var-def
+      (variable f7 (type
+        (user-defined-type TwoUnnamedBeforeDefault)) (expr
+        (simple-var-ref digits))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f7 (
+          (literal 1)
+          (literal 2) <default>)))))
+  )
+)

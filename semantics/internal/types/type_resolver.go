@@ -2426,7 +2426,8 @@ func resolveDependentlyTypedFunctionSignature(t typeResolver, chain *binding, fn
 }
 
 // setDefaultableParamFnSignatures populates the signature of each non-typedesc
-// default-provider function. The signature is (paramTypes[:i]) -> paramTypes[i].
+// default-provider function. The signature takes the named parameters before i
+// (sig.DefaultClosureParams(i)) and returns paramTypes[i].
 func setDefaultableParamFnSignatures(t typeResolver, sig model.UntypedFunctionSignature, paramTypes []semtypes.SemType, loc diagnostics.Location) {
 	for i := range paramTypes {
 		dp, ok := sig.DefaultableParam(i)
@@ -2436,8 +2437,13 @@ func setDefaultableParamFnSignatures(t typeResolver, sig model.UntypedFunctionSi
 		if dp.Kind == model.DefaultableParamKindInferredTypedesc {
 			continue
 		}
+		closureParams := sig.DefaultClosureParams(i)
+		closureParamTypes := make([]semtypes.SemType, len(closureParams))
+		for j, paramIndex := range closureParams {
+			closureParamTypes[j] = paramTypes[paramIndex]
+		}
 		defaultSig := model.TypedFunctionSignature{
-			ParamTypes: paramTypes[:i],
+			ParamTypes: closureParamTypes,
 			ReturnType: paramTypes[i],
 		}
 		t.getSymbol(dp.Symbol).(model.FunctionSymbol).SetTypedSignature(defaultSig)
@@ -2445,9 +2451,9 @@ func setDefaultableParamFnSignatures(t typeResolver, sig model.UntypedFunctionSi
 		if _, ok := t.functionSignatureRef(dp.Symbol); ok {
 			continue
 		}
-		params := make([]model.Param, i)
-		for j := range params {
-			params[j] = model.Param{Name: sig.ParamNames[j], Flag: sig.ParamFlags[j]}
+		params := make([]model.Param, len(closureParams))
+		for j, paramIndex := range closureParams {
+			params[j] = model.Param{Name: sig.ParamNames[paramIndex], Flag: sig.ParamFlags[paramIndex]}
 		}
 		ref := t.allocateFunctionSignature(params, false)
 		if !t.associateFunctionSignature(dp.Symbol, ref) {

@@ -1,0 +1,265 @@
+module $anon.. v 0.0.0;
+add(int,int) -> int{
+  bb0 {
+    %4 = x;
+    %5 = y;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+digits(int,int,int) -> int{
+  bb0 {
+    %7 = x;
+    %8 = ConstantLoad 100
+    %9 = %8;
+    %6 = * %7 %9;
+    %10 = %6;
+    %12 = y;
+    %13 = ConstantLoad 10
+    %14 = %13;
+    %11 = * %12 %14;
+    %15 = %11;
+    %5 = + %10 %15;
+    %16 = %5;
+    %17 = z;
+    %4 = + %16 %17;
+    %0 = %4;
+    return;
+  }
+}
+addRest(int,int,[int...]...) -> int{
+  bb0 {
+    %6 = x;
+    %7 = y;
+    %5 = + %6 %7;
+    %8 = %5;
+    %9 = length(r) -> bb1;
+  }
+  bb1 {
+    %10 = %9;
+    %4 = + %8 %10;
+    %0 = %4;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = fp $anon/.:add
+    f1 = %1;
+    %3 = $default$0() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %3;
+    %5 = $default$1() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %5;
+    %7 = $desugar$0;
+    %8 = $desugar$1;
+    %9 = f1(%7,%8) -> bb3;
+  }
+  bb3 {
+    %10 = %9;
+    %11 = println(%10) -> bb4;
+  }
+  bb4 {
+    %12 = ConstantLoad 1
+    $desugar$2 = %12;
+    %14 = $default$1() -> bb5;
+  }
+  bb5 {
+    $desugar$3 = %14;
+    %16 = $desugar$2;
+    %17 = $desugar$3;
+    %18 = f1(%16,%17) -> bb6;
+  }
+  bb6 {
+    %19 = %18;
+    %20 = println(%19) -> bb7;
+  }
+  bb7 {
+    %21 = fp $anon/.:add
+    f2 = %21;
+    %23 = ConstantLoad 1
+    $desugar$4 = %23;
+    %25 = $default$2() -> bb8;
+  }
+  bb8 {
+    $desugar$5 = %25;
+    %27 = $desugar$4;
+    %28 = $desugar$5;
+    %29 = f2(%27,%28) -> bb9;
+  }
+  bb9 {
+    %30 = %29;
+    %31 = println(%30) -> bb10;
+  }
+  bb10 {
+    %32 = fp $anon/.:add
+    f3 = %32;
+    %34 = $default$3() -> bb11;
+  }
+  bb11 {
+    $desugar$6 = %34;
+    %36 = $default$4() -> bb12;
+  }
+  bb12 {
+    $desugar$7 = %36;
+    %38 = $desugar$6;
+    %39 = $desugar$7;
+    %40 = f3(%38,%39) -> bb13;
+  }
+  bb13 {
+    %41 = %40;
+    %42 = println(%41) -> bb14;
+  }
+  bb14 {
+    %43 = fp $anon/.:addRest
+    f4 = %43;
+    %45 = ConstantLoad 1
+    $desugar$8 = %45;
+    %47 = $default$5() -> bb15;
+  }
+  bb15 {
+    $desugar$9 = %47;
+    %49 = $desugar$8;
+    %50 = $desugar$9;
+    %51 = f4(%49,%50) -> bb16;
+  }
+  bb16 {
+    %52 = %51;
+    %53 = println(%52) -> bb17;
+  }
+  bb17 {
+    %54 = fp $anon/.:digits
+    f5 = %54;
+    %56 = ConstantLoad 1
+    $desugar$10 = %56;
+    %58 = ConstantLoad 2
+    $desugar$11 = %58;
+    %60 = $desugar$10;
+    %61 = $default$6(%60) -> bb18;
+  }
+  bb18 {
+    $desugar$12 = %61;
+    %63 = $desugar$10;
+    %64 = $desugar$11;
+    %65 = $desugar$12;
+    %66 = f5(%63,%64,%65) -> bb19;
+  }
+  bb19 {
+    %67 = %66;
+    %68 = println(%67) -> bb20;
+  }
+  bb20 {
+    %69 = fp $anon/.:digits
+    f6 = %69;
+    %71 = ConstantLoad 1
+    $desugar$13 = %71;
+    %73 = ConstantLoad 2
+    $desugar$14 = %73;
+    %75 = $desugar$14;
+    %76 = $default$7(%75) -> bb21;
+  }
+  bb21 {
+    $desugar$15 = %76;
+    %78 = $desugar$13;
+    %79 = $desugar$14;
+    %80 = $desugar$15;
+    %81 = f6(%78,%79,%80) -> bb22;
+  }
+  bb22 {
+    %82 = %81;
+    %83 = println(%82) -> bb23;
+  }
+  bb23 {
+    %84 = fp $anon/.:digits
+    f7 = %84;
+    %86 = ConstantLoad 1
+    $desugar$16 = %86;
+    %88 = ConstantLoad 2
+    $desugar$17 = %88;
+    %90 = $default$8() -> bb24;
+  }
+  bb24 {
+    $desugar$18 = %90;
+    %92 = $desugar$16;
+    %93 = $desugar$17;
+    %94 = $desugar$18;
+    %95 = f7(%92,%93,%94) -> bb25;
+  }
+  bb25 {
+    %96 = %95;
+    %97 = println(%96) -> bb26;
+  }
+  bb26 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 4
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> int{
+  bb0 {
+    %1 = ConstantLoad 4
+    %0 = %1;
+    return;
+  }
+}
+$default$5() -> int{
+  bb0 {
+    %1 = ConstantLoad 3
+    %0 = %1;
+    return;
+  }
+}
+$default$6(int) -> int{
+  bb0 {
+    %2 = ConstantLoad 3
+    %0 = %2;
+    return;
+  }
+}
+$default$7(int) -> int{
+  bb0 {
+    %3 = a;
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$default$8() -> int{
+  bb0 {
+    %1 = ConstantLoad 5
+    %0 = %1;
+    return;
+  }
+}
