@@ -1,0 +1,38 @@
+-- stdout --
+200 application/json
+{"title":"Blue Train","year":1957}
+201 text/plain
+created
+a 3 true
+["1","2"] ["4","5"]
+404 -
+[]
+202 application/vnd.album+json
+{"title":"Kind of Blue","year":1959}
+200 text/csv
+a,b
+200 application/x-www-form-urlencoded
+name=John%20Coltrane&instrument=sax%26flute
+200 text/plain
+{"year":1957,"title":"Blue Train","notes":"<note>Blue Note</note>"}
+{"year":1957,"title":"Blue Train","notes":"<note>Blue Note</note>"}
+500
+500
+500
+500
+418 text/plain
+short and stout
+200 application/octet-stream
+[1,2,3]
+200 application/xml
+<album>Giant Steps</album>
+200 application/json
+{"title":"Giant Steps","year":1960}
+204 -
+none
+200 text/plain
+404 text/plain
+no album 2
+-- stderr --
+error [ballerina/http]: panic while handling GET /records/notANumber: anydata to json conversion error: unsupported float value: NaN
+error [ballerina/http]: panic while handling GET /records/badForm: unsupported content for application/x-www-form-urlencoded media type

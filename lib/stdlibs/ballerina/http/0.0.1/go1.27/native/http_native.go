@@ -1004,16 +1004,30 @@ func initHttpModule(rt *runtime.Runtime) {
 			return nil, nil
 		})
 
+	// setResponseJSONPayload sets the response body to payload serialised as JSON, with
+	// contentType overriding the existing or default Content-Type.
+	setResponseJSONPayload := func(ctx *extern.Context, self *values.Object, payload, contentType values.BalValue) error {
+		b, err := toJSONBytes(payload)
+		if err != nil {
+			return err
+		}
+		self.Put("body", &responseBodyHolder{payloadSet: true, buf: b})
+		ct := payloadContentType(responseContentType(self), contentType, "application/json")
+		responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{ct}))
+		return nil
+	}
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.setJsonPayload",
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
-			self := args[0].(*values.Object)
-			b, err := toJSONBytes(args[1])
-			if err != nil {
-				return values.NewErrorWithMessage("setJsonPayload: " + err.Error()), nil
+			if err := setResponseJSONPayload(ctx, args[0].(*values.Object), args[1], optionalArg(args, 2)); err != nil {
+				return nil, fmt.Errorf("setJsonPayload: %w", err)
 			}
-			self.Put("body", &responseBodyHolder{payloadSet: true, buf: b})
-			ct := payloadContentType(responseContentType(self), optionalArg(args, 2), "application/json")
-			responseHeaders(self).Put(ctx.TypeCtx(), "content-type", newListValue([]values.BalValue{ct}))
+			return nil, nil
+		})
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "Response.setAnydataPayload",
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
+			if err := setResponseJSONPayload(ctx, args[0].(*values.Object), args[1], nil); err != nil {
+				return values.NewErrorWithMessage(err.Error()), nil
+			}
 			return nil, nil
 		})
 
@@ -1296,7 +1310,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			self := args[0].(*values.Object)
 			b, err := toJSONBytes(args[1])
 			if err != nil {
-				return values.NewErrorWithMessage("setJsonPayload: " + err.Error()), nil
+				return nil, fmt.Errorf("setJsonPayload: %w", err)
 			}
 			self.Put("$body", &requestBodyHolder{payloadSet: true, buf: b})
 			tc := ctx.TypeCtx()
@@ -1879,11 +1893,6 @@ func headerListValues(hdrs *values.Map, name string) []string {
 		out[i], _ = list.Get(i).(string)
 	}
 	return out
-}
-
-// toJSONBytes serializes a Ballerina value to JSON bytes.
-func toJSONBytes(v values.BalValue) ([]byte, error) {
-	return values.ToJSONByteArray(v)
 }
 
 // clientResourceAccessors lists the resource methods on the `Client` class in http.bal declaration

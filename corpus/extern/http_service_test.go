@@ -421,3 +421,11 @@ public function testMain() returns error? {
 	}
 	runExtern(t, tc, newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
+
+// TestHttpServiceStatusCodeResponse returns status code response records from resources and
+// checks the status, headers, media type and body each is sent with.
+func TestHttpServiceStatusCodeResponse(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-status-code-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
