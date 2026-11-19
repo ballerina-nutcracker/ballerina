@@ -233,7 +233,11 @@ public function testMain() returns error? {
     http:Response trailingResp = check c->get("/db/trailingJson");
     json|error trailingJson = trailingResp.getJsonPayload();
     if trailingJson is error {
-        io:println(trailingJson.message()); // @output failed to parse JSON payload: invalid character 'a' in literal true (expecting 'u')
+        io:println(trailingJson.message()); // @output Error occurred while retrieving the json payload from the response
+        error? cause = trailingJson.cause();
+        if cause is error {
+            io:println(cause.message()); // @output failed to parse JSON payload: invalid character 'a' in literal true (expecting 'u')
+        }
     }
 
     // A text/plain response cannot bind to a record.

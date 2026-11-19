@@ -19,8 +19,10 @@ package native
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"net/http"
 	"sort"
 	"strings"
@@ -84,7 +86,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 		func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) { return nil, nil })
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.initNative",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			port := int(args[1].(int64))
 			state := &listenerState{
@@ -119,8 +121,11 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 					if v, ok := cfg.Get("secureSocket"); ok {
 						if ssMap, ok := v.(*values.Map); ok {
 							tlsCfg, err := buildListenerTLSConfig(ssMap, rt.Platform().FS)
+							if errors.Is(err, errKeyFilesNotFound) {
+								return httpError(ctx, genericListenerError, err.Error(), nil), nil
+							}
 							if err != nil {
-								return values.NewErrorWithMessage("Listener.init secureSocket: " + err.Error()), nil
+								return httpError(ctx, genericListenerError, "Listener.init secureSocket: "+err.Error(), nil), nil
 							}
 							state.tlsCfg = tlsCfg
 						}
@@ -132,11 +137,11 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 		})
 
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.attach",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			svcObj, ok := args[1].(*values.Object)
 			if !ok {
-				return values.NewErrorWithMessage("Listener.attach: expected service object"), nil
+				return httpError(ctx, genericListenerError, "Listener.attach: expected service object", nil), nil
 			}
 			var attachArg values.BalValue
 			if len(args) > 2 {
@@ -147,7 +152,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			state := stateVal.(*listenerState)
 
 			if msg := validateServiceForHTTP(svcObj); msg != "" {
-				return values.NewErrorWithMessage("Listener.attach: " + msg), nil
+				return httpError(ctx, genericListenerError, "Listener.attach: "+msg, nil), nil
 			}
 
 			state.mu.Lock()
@@ -156,7 +161,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			// not pick between them deterministically.
 			for _, e := range state.services {
 				if e.basePath == basePath {
-					return values.NewErrorWithMessage("Listener.attach: a service is already attached to base path " + basePath), nil
+					return httpError(ctx, genericListenerError, "Listener.attach: a service is already attached to base path "+basePath, nil), nil
 				}
 			}
 			entry := &serviceEntry{basePath: basePath, svcObj: svcObj}
@@ -188,7 +193,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 	// Listener.start creates and starts the HTTP server. It is invoked by the
 	// module's $start lifecycle hook after all services have been attached.
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.start",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
@@ -203,7 +208,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			}
 			server, err := startHTTPServer(rt, state)
 			if err != nil {
-				return values.NewErrorWithMessage("Listener.start: " + err.Error()), nil
+				return httpError(ctx, genericListenerError, "Listener.start: "+err.Error(), nil), nil
 			}
 			state.server = server
 			return nil, nil
@@ -218,7 +223,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 	// the handler returns, but the handler is blocked on the drain) — caller error,
 	// not a case to special-case.
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "Listener.gracefulStop",
-		func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
@@ -233,7 +238,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			if err := server.Shutdown(shutdownCtx); err != nil {
-				return values.NewErrorWithMessage("Listener.gracefulStop: " + err.Error()), nil
+				return httpError(ctx, genericListenerError, "Listener.gracefulStop: "+err.Error(), nil), nil
 			}
 			return nil, nil
 		})
@@ -284,6 +289,9 @@ func extractAttachPath(v values.BalValue) string {
 	return "/"
 }
 
+// errKeyFilesNotFound carries jBallerina's message for a missing server certificate or key file.
+var errKeyFilesNotFound = errors.New("Key file or server certificates file not found") //nolint:staticcheck // jBallerina's message verbatim
+
 // buildListenerTLSConfig builds a pal.ServerTLSConfig from a ListenerSecureSocket
 // map, reading all PEM material via fs. The concrete *tls.Config is assembled by
 // the platform (palnative), keeping this code free of crypto/tls so it stays
@@ -303,13 +311,16 @@ func buildListenerTLSConfig(ssMap *values.Map, fs pal.FS) (*pal.ServerTLSConfig,
 	certFilePath, _ := certFileVal.(string)
 	keyFilePath, _ := keyFileVal.(string)
 
-	certPEM, err := fs.ReadFile(certFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("key.certFile: %w", err)
+	certPEM, certErr := fs.ReadFile(certFilePath)
+	keyPEM, keyErr := fs.ReadFile(keyFilePath)
+	if errors.Is(certErr, iofs.ErrNotExist) || errors.Is(keyErr, iofs.ErrNotExist) {
+		return nil, errKeyFilesNotFound
 	}
-	keyPEM, err := fs.ReadFile(keyFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("key.keyFile: %w", err)
+	if certErr != nil {
+		return nil, fmt.Errorf("key.certFile: %w", certErr)
+	}
+	if keyErr != nil {
+		return nil, fmt.Errorf("key.keyFile: %w", keyErr)
 	}
 
 	cfg := &pal.ServerTLSConfig{CertPEM: certPEM, KeyPEM: keyPEM}
