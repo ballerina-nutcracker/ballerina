@@ -1,0 +1,6 @@
+-- stdout --
+400 400
+true true
+0
+20000 0 20000 0
+-- stderr --

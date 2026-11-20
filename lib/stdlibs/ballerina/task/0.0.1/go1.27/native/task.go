@@ -190,12 +190,7 @@ func toMillis(seconds *decimal.Decimal) int64 {
 }
 
 func truncate(d *decimal.Decimal) int64 {
-	var whole *decimal.Decimal
-	if d.Cmp(decimal.FromInt64(0)) < 0 {
-		whole, _ = d.Ceiling()
-	} else {
-		whole, _ = d.Floor()
-	}
+	whole, _ := d.Truncate()
 	n, _, _ := whole.Int64()
 	return n
 }
