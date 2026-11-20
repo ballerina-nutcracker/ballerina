@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: annotation 'Marker' does not allow a value
+  --> local-var-annotation-e.bal:39:5
+   |
+39 |     @Marker {} // @error
+   |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on var
+  --> local-var-annotation-e.bal:30:5
+   |
+30 |     @OnType // @error
+   |     ^^^^^^^
+
+error[SEMANTIC_ERROR]: annotation 'OnType' is not allowed on var
+  --> local-var-annotation-e.bal:49:9
+   |
+49 |         @OnType // @error
+   |         ^^^^^^^
+
+error[SEMANTIC_ERROR]: const annotation value must be a constant expression
+  --> local-var-annotation-e.bal:44:11
+   |
+44 |     @Info {name: local} // @error
+   |           ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: duplicate annotation 'Marker' on var
+  --> local-var-annotation-e.bal:35:5
+   |
+35 |     @Marker // @error
+   |     ^^^^^^^

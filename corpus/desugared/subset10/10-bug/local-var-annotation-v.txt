@@ -1,0 +1,120 @@
+(package
+  (import-package ballerina io (as io))
+  (annotation Marker const
+    (attach-point source var))
+  (annotation Info const
+    (user-defined-type Meta)
+    (attach-point source var))
+  (annotation Infos const
+    (array-type
+      (user-defined-type Meta) dimensions: 1 ([]))
+    (attach-point source var))
+  (type-definition Meta
+    (record-type
+      (field name
+        (value-type string))))
+  (class-definition Counter
+    (function init () ()
+      (block-function-body))
+    (function next () (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable n (type
+            (value-type int)) (expr
+            (literal 7))))
+        (return
+          (simple-var-ref n)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable w (type
+          (value-type int)) (expr
+          (literal 2))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref w))))
+      (var-def
+        (variable noInit (type
+          (value-type int))))
+      (assignment
+        (simple-var-ref noInit)
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref noInit))))
+      (var-def
+        (variable f (type
+          (value-type int)) (expr
+          (literal 4))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref f))))
+      (var-def
+        (variable inferred (expr
+          (literal 5))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref inferred))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal a))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s))))
+      (var-def
+        (variable c (type
+          (value-type string)) (expr
+          (literal b))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref c))))
+      (var-def
+        (variable r (type
+          (value-type string)) (expr
+          (literal c))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (var-def
+        (variable m (type
+          (value-type string)) (expr
+          (literal d))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (if
+        (binary-expr ==
+          (simple-var-ref w)
+          (literal 2))
+        (block-stmt
+          (var-def
+            (variable nested (type
+              (value-type int)) (expr
+              (literal 6))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref nested))))) ())
+      (block-stmt
+        (expression-stmt
+          (invocation io println (
+            (invocation next expr:
+              (new
+                (user-defined-type Counter) ()) ()))))
+        (var-def
+          (variable fn (expr
+            (lambda
+              (function $anonFunc$_0 () (
+                (value-type int))
+                (block-function-body
+                  (var-def
+                    (variable inLambda (type
+                      (value-type int)) (expr
+                      (literal 8))))
+                  (return
+                    (simple-var-ref inLambda))))))))
+        (expression-stmt
+          (invocation io println (
+            (invocation fn ()))))))))
