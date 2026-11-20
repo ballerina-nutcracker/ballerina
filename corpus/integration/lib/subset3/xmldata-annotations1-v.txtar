@@ -1,0 +1,36 @@
+-- stdout --
+{"id":"1","kind":"pen","price":2.50,"name":"P"}
+{"id":"1","kind":"pen","price":2.50,"name":"P"}
+{"id":"1","kind":"pen","note":"n","price":2.50,"name":"P"}
+{"id":"1","kind":"pen","note":"n","price":2.50,"name":"P"}
+E: record type name 'item' mismatch with given XML name 'thing'
+E: record type name 'item' mismatch with given XML name 'thing'
+E: required attribute 'id' not present in XML
+E: required attribute 'id' not present in XML
+E: undefined field 'extra'
+E: undefined field 'extra'
+{"author":"A","title":"T"}
+{"author":"A","title":"T"}
+E: namespace mismatched
+E: namespace mismatched
+E: namespace mismatched
+E: namespace mismatched
+E: namespace mismatched
+E: namespace mismatched
+{"title":"T"}
+{"title":"T"}
+E: namespace mismatched
+E: namespace mismatched
+{"id":"y"}
+{"id":"y"}
+{"id":"x"}
+{"id":"x"}
+{"id":"x"}
+{"id":"x"}
+{"fromA":"1","fromB":"2"}
+{"fromA":"1","fromB":"2"}
+{"attr_lang":"si","body":"t"}
+{"attr_lang":"si","body":"t"}
+{"lang":"si","text":"hello"}
+{"lang":"si","text":"hello"}
+-- stderr --
