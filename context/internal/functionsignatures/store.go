@@ -117,7 +117,7 @@ func (s *Store) GetByRef(ref model.FunctionSignatureRef) model.UntypedFunctionSi
 
 func signatureIndex(ref model.FunctionSignatureRef) int {
 	if ref == 0 {
-		panic("function signature reference is unset")
+		panic("function signature reference is unset") //nolint:forbidigo // Signature references must be initialized before use.
 	}
 	return int(ref) - 1
 }
