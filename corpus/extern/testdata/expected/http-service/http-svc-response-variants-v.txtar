@@ -4,3 +4,4 @@
 2
 false
 -- stderr --
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("boom") path="/resp/failing" method="GET"

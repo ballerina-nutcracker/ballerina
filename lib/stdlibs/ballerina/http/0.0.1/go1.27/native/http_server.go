@@ -18,7 +18,6 @@ package native
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -456,7 +455,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 	state.mu.RUnlock()
 
 	if found == nil {
-		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path")
+		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching service found for path: "+r.URL.EscapedPath())
 		return
 	}
 
@@ -513,11 +512,11 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 			continue
 		}
 		if _, _, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessor, segments); ok {
-			writeErrorJSON(rt, w, r, http.StatusMethodNotAllowed, "method not allowed for path")
+			writeErrorJSON(rt, w, r, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 	}
-	writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path")
+	writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path : "+r.RequestURI+" , method : "+r.Method)
 }
 
 // matchBasePath reports whether path is under the attach point basePath,
@@ -601,25 +600,9 @@ func buildRequest(method, rawPath, httpVersion string, headers map[string][]stri
 	)
 }
 
-// writeErrorJSON writes a JSON error response in the standard Ballerina HTTP error format.
+// writeErrorJSON writes an ErrorPayload error response for the request.
 func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request, status int, message string) {
-	type errorPayload struct {
-		Timestamp string `json:"timestamp"`
-		Status    int    `json:"status"`
-		Reason    string `json:"reason"`
-		Message   string `json:"message"`
-		Path      string `json:"path"`
-		Method    string `json:"method"`
-	}
-	payload := errorPayload{
-		Timestamp: rt.Platform().Time.Now().Format("2006-01-02T15:04:05.000Z07:00"),
-		Status:    status,
-		Reason:    http.StatusText(status),
-		Message:   message,
-		Path:      r.URL.Path,
-		Method:    r.Method,
-	}
-	body, _ := json.Marshal(payload)
+	body := errorPayload(rt.Platform().Time.Now(), status, message, r.RequestURI, r.Method)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, _ = w.Write(body)
@@ -633,7 +616,12 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 	case nil:
 		w.WriteHeader(http.StatusAccepted)
 	case *values.Error:
-		writeErrorJSON(rt, w, r, http.StatusInternalServerError, v.Message)
+		resp, err := errorResponse(ctx, v, r)
+		if err != nil {
+			writeErrorJSON(rt, w, r, http.StatusInternalServerError, panicMessage(err))
+			return
+		}
+		writeResult(rt, ctx, types, w, r, accessor, resp)
 	case *values.Object:
 		holder, ok := responseBodyOf(v)
 		if !ok {
@@ -681,6 +669,15 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 	}
 }
 
+// errorResponse converts an error a resource returned into the http:Response it is sent as.
+func errorResponse(ctx *extern.Context, err *values.Error, r *http.Request) (*values.Object, error) {
+	result, invokeErr := invokeModuleFunction(ctx, "toErrorResponse", err, r.RequestURI, r.Method)
+	if invokeErr != nil {
+		return nil, invokeErr
+	}
+	return result.(*values.Object), nil
+}
+
 // isFinalStatusCode reports whether code can end a response: a three-digit code other than an
 // informational 1xx, which net/http would send as an interim response followed by a 200.
 // 101 Switching Protocols is final.
@@ -691,8 +688,7 @@ func isFinalStatusCode(code int64) bool {
 // statusCodeResponse converts a returned status code record into the http:Response it is sent
 // as; the result is nil for any other mapping value.
 func statusCodeResponse(ctx *extern.Context, v *values.Map) (*values.Object, error) {
-	handle, _ := ctx.LookupFunction(orgName, moduleName, "toStatusCodeResponse")
-	result, err := ctx.InvokeFunction(handle, []values.BalValue{v})
+	result, err := invokeModuleFunction(ctx, "toStatusCodeResponse", v)
 	if err != nil {
 		return nil, err
 	}
