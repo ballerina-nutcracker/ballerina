@@ -116,7 +116,9 @@ func StartFacts(call Facts) Facts {
 
 // invocationFacts holds Isolated and IsolatedTransferred iff inv is isolated
 // whatever its operands, plus whether its operands (the fold of its receiver
-// and arguments) are isolated and its callee is an isolated function.
+// and arguments) are isolated and its callee is an isolated function. An
+// isolated call with isolated operands is not yet isolated by itself (#1627,
+// #1429).
 func invocationFacts(cx Context, inv *ast.BLangInvocation, operands Facts) Facts {
 	var f Facts
 	if IsolatedWhateverOperands(cx, inv) {
