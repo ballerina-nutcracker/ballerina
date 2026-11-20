@@ -19,6 +19,7 @@ package st
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -152,13 +153,9 @@ func (n *STLiteralValueToken) ChildInBucket(bucket int) STNode {
 
 func (n *STLiteralValueToken) CreateFacade(position int, parent NonTerminalNode) Node {
 	return &LiteralValueToken{
-		TokenBase: TokenBase{
-			NodeBase: NodeBase{
-				internalNode: n,
-				position:     position,
-				parent:       parent,
-			},
-		},
+		internalNode: n,
+		position:     position,
+		parent:       parent,
 	}
 }
 
@@ -240,74 +237,60 @@ func (t *STTokenBase) ModifyWith(leadingMinutiae STNode, trailingMinutiae STNode
 
 func (t *STMissingToken) ModifyWith(leadingMinutiae STNode, trailingMinutiae STNode) STToken {
 	return createNodeAndAddChildren(&STMissingToken{
-		STTokenBase: STTokenBase{
-			kind:             t.kind,
-			width:            t.width,
-			diagnostics:      t.diagnostics,
-			flags:            t.flags,
-			leadingMinutiae:  leadingMinutiae,
-			trailingMinutiae: trailingMinutiae,
-		},
+		kind:             t.kind,
+		width:            t.width,
+		diagnostics:      t.diagnostics,
+		flags:            t.flags,
+		leadingMinutiae:  leadingMinutiae,
+		trailingMinutiae: trailingMinutiae,
 	}, leadingMinutiae, trailingMinutiae).(*STMissingToken)
 }
 
 func (t *STMissingToken) CreateFacade(position int, parent NonTerminalNode) Node {
 	if t.kind == IDENTIFIER_TOKEN {
 		return &IdentifierToken{
-			TokenBase: TokenBase{
-				NodeBase: NodeBase{
-					internalNode: t,
-					position:     position,
-					parent:       parent,
-				},
-			},
+			internalNode: t,
+			position:     position,
+			parent:       parent,
 		}
 	} else {
 		return &TokenBase{
-			NodeBase: NodeBase{
-				internalNode: t,
-				position:     position,
-				parent:       parent,
-			},
+			internalNode: t,
+			position:     position,
+			parent:       parent,
 		}
 	}
 }
 
 func (t *STLiteralValueToken) ModifyWith(leadingMinutiae STNode, trailingMinutiae STNode) STToken {
 	return createNodeAndAddChildren(&STLiteralValueToken{
-		STTokenBase: STTokenBase{
-			kind:             t.kind,
-			width:            t.width,
-			diagnostics:      t.diagnostics,
-			flags:            t.flags,
-			leadingMinutiae:  leadingMinutiae,
-			trailingMinutiae: trailingMinutiae,
-		},
-		text: t.text,
+		kind:             t.kind,
+		width:            t.width,
+		diagnostics:      t.diagnostics,
+		flags:            t.flags,
+		leadingMinutiae:  leadingMinutiae,
+		trailingMinutiae: trailingMinutiae,
+		text:             t.text,
 	}, leadingMinutiae, trailingMinutiae).(*STLiteralValueToken)
 }
 
 func (t *STInvalidToken) ModifyWith(leadingMinutiae STNode, trailingMinutiae STNode) STToken {
 	return createNodeAndAddChildren(&STInvalidToken{
-		STTokenBase: STTokenBase{
-			kind:             t.kind,
-			width:            t.width,
-			diagnostics:      t.diagnostics,
-			flags:            t.flags,
-			leadingMinutiae:  leadingMinutiae,
-			trailingMinutiae: trailingMinutiae,
-		},
-		tokenText: t.tokenText,
+		kind:             t.kind,
+		width:            t.width,
+		diagnostics:      t.diagnostics,
+		flags:            t.flags,
+		leadingMinutiae:  leadingMinutiae,
+		trailingMinutiae: trailingMinutiae,
+		tokenText:        t.tokenText,
 	}, leadingMinutiae, trailingMinutiae).(*STInvalidToken)
 }
 
 func (t *STInvalidToken) CreateFacade(position int, parent NonTerminalNode) Node {
 	return &TokenBase{
-		NodeBase: NodeBase{
-			internalNode: t,
-			position:     position,
-			parent:       parent,
-		},
+		internalNode: t,
+		position:     position,
+		parent:       parent,
 	}
 }
 
@@ -315,15 +298,13 @@ func (t *STIdentifierToken) ModifyWith(leadingMinutiae STNode, trailingMinutiae 
 	// STIdentifierToken embeds STToken interface, need to extract the base
 	base := t.STTokenBase
 	return createNodeAndAddChildren(&STIdentifierToken{
-		STTokenBase: STTokenBase{
-			kind:             base.kind,
-			width:            base.width,
-			diagnostics:      base.diagnostics,
-			flags:            base.flags,
-			leadingMinutiae:  leadingMinutiae,
-			trailingMinutiae: trailingMinutiae,
-		},
-		text: t.text,
+		kind:             base.kind,
+		width:            base.width,
+		diagnostics:      base.diagnostics,
+		flags:            base.flags,
+		leadingMinutiae:  leadingMinutiae,
+		trailingMinutiae: trailingMinutiae,
+		text:             t.text,
 	}, leadingMinutiae, trailingMinutiae).(*STIdentifierToken)
 }
 
@@ -341,32 +322,24 @@ func (s *STNodeList) ChildInBucket(bucket int) STNode {
 
 func (s *STNodeList) CreateFacade(position int, parent NonTerminalNode) Node {
 	return &ExternalTreeNodeList{
-		NonTerminalNodeBase: NonTerminalNodeBase{
-			NodeBase: NodeBase{
-				internalNode: s,
-				position:     position,
-				parent:       parent,
-			},
-			childBuckets: make([]Node, s.BucketCount()),
-		},
+		internalNode: s,
+		position:     position,
+		parent:       parent,
+		childBuckets: make([]Node, s.BucketCount()),
 	}
 }
 
 // Shared common nodes
 var (
 	emptyNodeList = &STNodeList{
-		STNodeBase: STNodeBase{
-			kind: LIST,
-		},
+		kind: LIST,
 	}
 )
 
 // Methods for creating STNodes
 func CreateInvalidTokenMinutiaeNode(token STToken) *STInvalidTokenMinutiaeNode {
 	return createNodeAndAddChildren(&STInvalidTokenMinutiaeNode{
-		STNodeBase: STNodeBase{
-			kind: INVALID_TOKEN_MINUTIAE_NODE,
-		},
+		kind:  INVALID_TOKEN_MINUTIAE_NODE,
 		token: token,
 	}, token).(*STInvalidTokenMinutiaeNode)
 }
@@ -386,14 +359,12 @@ func CreateLiteralValueTokenWithDiagnostics(kind SyntaxKind,
 	diagnostics []STNodeDiagnostic,
 ) STToken {
 	return createNodeAndAddChildren(&STLiteralValueToken{
-		STTokenBase: STTokenBase{
-			kind:             kind,
-			width:            uint16(len(text)),
-			leadingMinutiae:  leadingTrivia,
-			trailingMinutiae: trailingTrivia,
-			diagnostics:      diagnostics,
-		},
-		text: text,
+		kind:             kind,
+		width:            uint16(len(text)),
+		leadingMinutiae:  leadingTrivia,
+		trailingMinutiae: trailingTrivia,
+		diagnostics:      diagnostics,
+		text:             text,
 	}, leadingTrivia, trailingTrivia).(*STLiteralValueToken)
 }
 
@@ -430,9 +401,7 @@ func CreateNodeList(nodes ...STNode) STNode {
 		return emptyNodeList
 	}
 	return createNodeAndAddChildren(&STNodeList{
-		STNodeBase: STNodeBase{
-			kind: LIST,
-		},
+		kind:     LIST,
 		children: nodes,
 	}, nodes...)
 }
@@ -443,47 +412,37 @@ func CreateEmptyNodeList() STNode {
 
 func CreateMinutiae(kind SyntaxKind, text string) *STMinutiae {
 	return &STMinutiae{
-		STNodeBase: STNodeBase{
-			kind: kind,
-		},
+		kind: kind,
 		text: text,
 	}
 }
 
 func CreateInvalidToken(tokenText string) *STInvalidToken {
 	return &STInvalidToken{
-		STTokenBase: STTokenBase{
-			kind:             INVALID_TOKEN,
-			width:            uint16(len(tokenText)),
-			leadingMinutiae:  CreateEmptyNodeList(),
-			trailingMinutiae: CreateEmptyNodeList(),
-		},
-		tokenText: tokenText,
+		kind:             INVALID_TOKEN,
+		width:            uint16(len(tokenText)),
+		leadingMinutiae:  CreateEmptyNodeList(),
+		trailingMinutiae: CreateEmptyNodeList(),
+		tokenText:        tokenText,
 	}
 }
 
 func CreateInvalidNodeMinutiae(invalidToken STToken) STNode {
 	invalidNode := CreateInvalidTokenMinutiaeNode(invalidToken)
 	return createNodeAndAddChildren(&STInvalidNodeMinutiae{
-		STMinutiae: STMinutiae{
-			STNodeBase: STNodeBase{
-				kind: INVALID_NODE_MINUTIAE,
-			},
-			text: ToSourceCode(invalidNode),
-		},
+		kind:        INVALID_NODE_MINUTIAE,
+		text:        ToSourceCode(invalidNode),
 		invalidNode: invalidNode,
 	}, invalidNode).(*STInvalidNodeMinutiae)
 }
 
 func CreateIdentifierToken(text string, leadingTrivia STNode, trailingTrivia STNode) STToken {
 	return createNodeAndAddChildren(&STIdentifierToken{
-		STTokenBase: STTokenBase{
-			kind:             IDENTIFIER_TOKEN,
-			width:            uint16(len(text)),
-			leadingMinutiae:  leadingTrivia,
-			trailingMinutiae: trailingTrivia,
-		},
-		text: text,
+		kind:             IDENTIFIER_TOKEN,
+		width:            uint16(len(text)),
+		leadingMinutiae:  leadingTrivia,
+		trailingMinutiae: trailingTrivia,
+		text:             text,
 	}, leadingTrivia, trailingTrivia).(*STIdentifierToken)
 }
 
@@ -753,8 +712,8 @@ func (n STNodeBase) getFirstChildIndex(children []STNode) int {
 }
 
 func (n STNodeBase) getLastChildIndex(children []STNode) int {
-	for i := len(children) - 1; i >= 0; i-- {
-		if IsSTNodePresent(children[i]) && children[i].WidthWithMinutiae() != 0 {
+	for i, c := range slices.Backward(children) {
+		if IsSTNodePresent(c) && c.WidthWithMinutiae() != 0 {
 			return i
 		}
 	}
@@ -857,11 +816,9 @@ func (t *STTokenBase) Text() string {
 
 func (t *STTokenBase) CreateFacade(position int, parent NonTerminalNode) Node {
 	return &TokenBase{
-		NodeBase: NodeBase{
-			internalNode: t,
-			position:     position,
-			parent:       parent,
-		},
+		internalNode: t,
+		position:     position,
+		parent:       parent,
 	}
 }
 
@@ -871,13 +828,9 @@ func (t *STIdentifierToken) Text() string {
 
 func (t *STIdentifierToken) CreateFacade(position int, parent NonTerminalNode) Node {
 	return &IdentifierToken{
-		TokenBase: TokenBase{
-			NodeBase: NodeBase{
-				internalNode: t,
-				position:     position,
-				parent:       parent,
-			},
-		},
+		internalNode: t,
+		position:     position,
+		parent:       parent,
 	}
 }
 
@@ -1235,13 +1188,11 @@ func CreateMissingToken(expectedKind SyntaxKind, diagnosticList []STNodeDiagnost
 	}
 	flags = flags | isMissingFlag
 	return &STMissingToken{
-		STTokenBase: STTokenBase{
-			kind:             expectedKind,
-			leadingMinutiae:  CreateEmptyNodeList(),
-			trailingMinutiae: CreateEmptyNodeList(),
-			flags:            flags,
-			diagnostics:      diagnosticList,
-		},
+		kind:             expectedKind,
+		leadingMinutiae:  CreateEmptyNodeList(),
+		trailingMinutiae: CreateEmptyNodeList(),
+		flags:            flags,
+		diagnostics:      diagnosticList,
 	}
 }
 
@@ -1436,9 +1387,7 @@ func CreateAmbiguousCollectionNode(kind SyntaxKind, collectionStartToken STNode,
 	children = append(children, members...)
 	children = append(children, collectionEndToken)
 	return createNodeAndAddChildren(&STAmbiguousCollectionNode{
-		STNodeBase: STNodeBase{
-			kind: kind,
-		},
+		kind:                 kind,
 		CollectionStartToken: collectionStartToken,
 		CollectionEndToken:   collectionEndToken,
 		Members:              members,

@@ -436,8 +436,8 @@ type bLangRecoveredNodeBase struct {
 
 func newBLangRecoveredNodeBase(pos Location, tokens []RecoveredToken) bLangRecoveredNodeBase {
 	return bLangRecoveredNodeBase{
-		bLangBadNodeBase: bLangBadNodeBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		badNodeTokens:    badNodeTokens{recoveredTokens: tokens},
+		pos:             pos,
+		recoveredTokens: tokens,
 	}
 }
 
@@ -482,9 +482,9 @@ type BLangBadTypeNode struct {
 
 func NewBLangBadTypeNode(pos Location, kind BadTypeKind, tokens []RecoveredToken) *BLangBadTypeNode {
 	return &BLangBadTypeNode{
-		bLangTypeBase: bLangTypeBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		badNodeTokens: badNodeTokens{recoveredTokens: tokens},
-		recoveredKind: kind,
+		pos:             pos,
+		recoveredTokens: tokens,
+		recoveredKind:   kind,
 	}
 }
 
@@ -512,10 +512,10 @@ func (*BLangBadTypeNode) badNode() {}
 
 func NewBLangBadIdentifier(pos Location, value, originalValue string, isLiteral bool) *BLangBadIdentifier {
 	return &BLangBadIdentifier{
-		bLangBadNodeBase: bLangBadNodeBase{bLangNodeBase: bLangNodeBase{pos: pos}},
-		Value:            value,
-		OriginalValue:    originalValue,
-		isLiteral:        isLiteral,
+		pos:           pos,
+		Value:         value,
+		OriginalValue: originalValue,
+		isLiteral:     isLiteral,
 	}
 }
 

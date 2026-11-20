@@ -1847,10 +1847,8 @@ func appendQueryIntermediateClauseStmts(
 
 func createIntLiteral(value int64) *ast.BLangNumericLiteral {
 	lit := &ast.BLangNumericLiteral{
-		BLangLiteral: ast.BLangLiteral{
-			Value:         value,
-			OriginalValue: fmt.Sprintf("%d", value),
-		},
+		Value:         value,
+		OriginalValue: fmt.Sprintf("%d", value),
 	}
 	lit.Ty = semtypes.Int
 	return lit
