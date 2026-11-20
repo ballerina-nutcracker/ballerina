@@ -15,4 +15,5 @@ x/y [] []
 a/b [text] []
 c/d [] []
 application/json [] []
+echo-server
 -- stderr --
