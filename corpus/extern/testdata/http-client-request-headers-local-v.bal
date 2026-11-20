@@ -123,4 +123,8 @@ public function main() returns error? {
     arrReq.setTextPayload("hi");
     string reqArr = check c->post("/echo", arrReq, {"Content-Type": ["application/json"]});
     io:println(reqArr); // @output application/json [] []
+
+    // The response's Server header sets its server field.
+    http:Response resp = check c->get("/echo");
+    io:println(resp.server); // @output echo-server
 }
