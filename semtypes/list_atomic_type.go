@@ -53,3 +53,12 @@ func (atomic *ListAtomicType) MemberAt(index int) SemType {
 func (atomic *ListAtomicType) Rest() SemType {
 	return CellInnerVal(atomic.rest)
 }
+
+// DeclaredElementInnerVal returns the element type a closed array was defined with, or never for a list
+// defined without members. Unlike MemberAtInnerVal, it also returns it for an array of length 0.
+func (atomic *ListAtomicType) DeclaredElementInnerVal() SemType {
+	if len(atomic.members.initial) == 0 {
+		return Never
+	}
+	return CellInnerVal(atomic.members.initial[0])
+}
