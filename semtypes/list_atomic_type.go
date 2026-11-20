@@ -16,6 +16,8 @@
 
 package semtypes
 
+import "slices"
+
 type ListAtomicType struct {
 	members fixedLengthArray
 	rest    SemType
@@ -52,4 +54,10 @@ func (atomic *ListAtomicType) MemberAt(index int) SemType {
 
 func (atomic *ListAtomicType) Rest() SemType {
 	return CellInnerVal(atomic.rest)
+}
+
+// InitialMembers returns a copy of the member cells the list was defined with. It reads the atom's data, not
+// the type: R[0] and T[0] denote the same empty set, yet each keeps the member it was written with.
+func (atomic *ListAtomicType) InitialMembers() []SemType {
+	return slices.Clone(atomic.members.initial)
 }
