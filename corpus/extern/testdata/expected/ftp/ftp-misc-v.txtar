@@ -1,0 +1,25 @@
+-- stdout --
+{"id":3,"nickname":null}
+[{"id":1,"nickname":null},{"id":2,"nickname":"b"}]
+true
+8192
+Error occurred while reading the file: the stream was closed by a later get on the same client
+true
+true
+true
+true
+true
+true
+true
+true
+true
+true false
+true
+true
+true true
+true 0
+attached
+true
+true
+-- stderr --
+time=<TIME> level=ERROR module="" message="Error while executing poll function" error=error Error ("FTP listener is not initialized. Attach a service before polling.")
