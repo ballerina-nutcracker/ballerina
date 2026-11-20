@@ -1,0 +1,9 @@
+-- stdout --
+TypeConversionError: Type conversion failed due to typedesc and value mismatch.
+TypeConversionError: Type conversion failed due to typedesc and value mismatch.
+ok: 5.0
+ValidationError: Validation failed for '$:minValue' constraint(s).
+TypeConversionError: Type conversion failed due to typedesc and value mismatch.
+TypeConversionError: Type conversion failed due to typedesc and value mismatch.
+ValidationError: Validation failed for '$.quantity:minValue' constraint(s).
+-- stderr --
