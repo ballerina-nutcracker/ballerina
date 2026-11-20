@@ -100,8 +100,8 @@ func init() {
 	runtime.RegisterModuleInitializer(initHttpModule)
 }
 
-// httpTypes holds the semtypes used by the http runtime. They are built once
-// in initHttpModule (single-threaded) and captured by the handler closures.
+// httpTypes holds the semtypes used by the http runtime. They are built once in initHttpModule and
+// captured by the handler closures; responseTy is filled lazily on the first client call.
 type httpTypes struct {
 	byteArrTy   semtypes.SemType
 	strArrTy    semtypes.SemType
@@ -109,6 +109,23 @@ type httpTypes struct {
 	jsonMapTy   semtypes.SemType
 	mapStringTy semtypes.SemType
 	anydataTy   semtypes.SemType
+
+	responseTyOnce sync.Once
+	responseTy     semtypes.SemType
+}
+
+// responseType returns the http:Response class type. A native cannot look up a class type by
+// name, so it is read off the declared Response|error return type of the client's head method.
+func (t *httpTypes) responseType(tc semtypes.Context, client *values.Object) semtypes.SemType {
+	t.responseTyOnce.Do(func() {
+		headTy := semtypes.ObjectMemberType(tc, semtypes.StringConst(model.RemoteMethodName("head")), client.Type)
+		retTy := semtypes.FunctionReturnType(tc, headTy, semtypes.FunctionParamListType(tc, headTy))
+		t.responseTy = semtypes.Intersect(retTy, semtypes.Object)
+		if semtypes.IsEmpty(tc, t.responseTy) {
+			t.responseTy = semtypes.Object
+		}
+	})
+	return t.responseTy
 }
 
 // 8 KB matches Netty's HttpObjectDecoder.maxChunkSize used by jBallerina's transport.
@@ -468,7 +485,7 @@ func initHttpModule(rt *runtime.Runtime) {
 		if err != nil {
 			return nil, values.NewErrorWithMessage(err.Error())
 		}
-		return buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream), nil
+		return buildResponse(ctx.TypeCtx(), types.responseType(ctx.TypeCtx(), self), statusCode, respHeaders, respBodyStream), nil
 	}
 
 	// execBody serves the remote post, put, patch and delete methods, whose parameter lists
@@ -934,7 +951,7 @@ func initHttpModule(rt *runtime.Runtime) {
 			if err != nil {
 				return values.NewErrorWithMessage(err.Error()), nil
 			}
-			resp := buildResponse(ctx.TypeCtx(), statusCode, respHeaders, respBodyStream)
+			resp := buildResponse(ctx.TypeCtx(), types.responseType(ctx.TypeCtx(), self), statusCode, respHeaders, respBodyStream)
 			return bindResponse(ctx, &types, resp, args[3]), nil
 		})
 
@@ -1863,10 +1880,14 @@ func responseMethodKeys() map[string]string { return responseMethodKeyCache }
 // All header values are stored as *values.List under the internal "$headers" key.
 // Content-Encoding (gzip/deflate) is transparently decoded, mirroring jBallerina's
 // Netty pipeline behaviour; the Content-Encoding header is removed from the response.
-func buildResponse(tc semtypes.Context, statusCode int, respHeaders map[string][]string, bodyStream io.ReadCloser) *values.Object {
+func buildResponse(tc semtypes.Context, responseTy semtypes.SemType, statusCode int, respHeaders map[string][]string, bodyStream io.ReadCloser) *values.Object {
 	bodyStream = decompressResponseBody(respHeaders, bodyStream)
 	headersMap := newMappingValue()
+	server := ""
 	for k, vals := range respHeaders {
+		if server == "" && len(vals) > 0 && strings.EqualFold(k, "server") {
+			server = vals[0]
+		}
 		items := make([]values.BalValue, len(vals))
 		for i, v := range vals {
 			items[i] = v
@@ -1875,11 +1896,14 @@ func buildResponse(tc semtypes.Context, statusCode int, respHeaders map[string][
 	}
 	holder := eagerBufferResponse(respHeaders, bodyStream)
 	return values.NewObject(
-		semtypes.Object,
+		responseTy,
 		map[string]values.BalValue{
-			"statusCode": int64(statusCode),
-			"$headers":   headersMap,
-			"body":       holder,
+			"statusCode":           int64(statusCode),
+			"reasonPhrase":         reasonPhrase(statusCode),
+			"server":               server,
+			"resolvedRequestedURI": "",
+			"$headers":             headersMap,
+			"body":                 holder,
 		},
 		responseMethodKeys(),
 		nil,

@@ -329,6 +329,7 @@ func TestHttpClientRequestMessageHeadersLocal(t *testing.T) {
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Server", "echo-server")
 		_, _ = fmt.Fprintf(w, "%s %v %v", r.Header.Get("Content-Type"), r.Header.Values("X-Test"), r.Header.Values("X-Multi"))
 	}))
 	defer server.Close()
