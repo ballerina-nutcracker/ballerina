@@ -1,0 +1,33 @@
+-- stdout --
+processed recover, ack a1 true
+ack b1 true
+ack c1 false
+ack d1 true
+toDeadLetter
+dead store failed, ack e1 false
+processed trapped, ack f1 true
+processed retryPanics, ack i1 true
+ack j1 true
+alwaysPanics
+processed ackFails, ack g1 true
+ack k1 false
+1
+h retrieve failed
+-- stderr --
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("failed recover attempt 1") msgId="a1"
+time=<TIME> level=ERROR module="" message="error processing message on retry" error=error("failed recover attempt 2") retryAttempt=1 msgId="a1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("failed noRetry attempt 1") msgId="b1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("failed exhausted attempt 1") msgId="c1"
+time=<TIME> level=ERROR module="" message="error processing message on retry" error=error("failed exhausted attempt 2") retryAttempt=1 msgId="c1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("failed toDeadLetter attempt 1") msgId="d1"
+time=<TIME> level=ERROR module="" message="error processing message on retry" error=error("failed toDeadLetter attempt 2") retryAttempt=1 msgId="d1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("failed deadLetterFails attempt 1") msgId="e1"
+time=<TIME> level=ERROR module="" message="failed to store message in dead letter store" error=error("store failed") msgId="e1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("panicked on trapped attempt 1") msgId="f1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("panicked on retryPanics attempt 1") msgId="i1"
+time=<TIME> level=ERROR module="" message="error processing message on retry" error=error("panicked on retryPanics attempt 2") retryAttempt=1 msgId="i1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("panicked on alwaysPanics attempt 1") msgId="j1"
+time=<TIME> level=ERROR module="" message="error processing message on retry" error=error("panicked on alwaysPanics attempt 2") retryAttempt=1 msgId="j1"
+time=<TIME> level=ERROR module="" message="failed to acknowledge message" error=error("ack failed") msgId="g1"
+time=<TIME> level=ERROR module="" message="error occurred while processing message" error=error("failed stoppedMidRetry attempt 1") msgId="k1"
+time=<TIME> level=ERROR module="" message="error occurred while polling for the message" error=error("retrieve failed")

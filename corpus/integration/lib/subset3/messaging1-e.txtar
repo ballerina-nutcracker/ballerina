@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot mutate readonly field 'id'
+  --> messaging1-e.bal:44:5
+   |
+44 |     msg.id = "2"; // @error
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible arguments for function call
+  --> messaging1-e.bal:40:12
+   |
+40 |     return new (new PartialStore()); // @error
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'nil', got '"/orders"'
+  --> messaging1-e.bal:36:25
+   |
+36 |     check l.attach(svc, "/orders"); // @error
+   |                         ^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'object&isolated service object { public isolated remote function $remote$onMessage(anydata) returns nil|error }', got 'isolated service object { public function init() returns nil; isolated function onMessage(anydata) returns nil|error }'
+  --> messaging1-e.bal:32:20
+   |
+32 |     check l.attach(new NoRemote()); // @error
+   |                    ^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string', got '1'
+  --> messaging1-e.bal:48:30
+   |
+48 |     check store->acknowledge(1); // @error
+   |                              ^
+
+error[SEMANTIC_ERROR]: no included record parameter accepts named argument 'batchSize'
+  --> messaging1-e.bal:52:24
+   |
+52 |     return new (store, batchSize = 10); // @error
+   |                        ^^^^^^^^^^^^^^
