@@ -1,10 +1,5 @@
 -- stdout --
 -- stderr --
-ballerina: --cloud is not supported
-
-USAGE:
-    test [<source-file.bal> | <package-dir>]
-
-For more information try 'bal test --help'
+ballerina: unknown flag: --cloud
 -- exitcode --
 1
