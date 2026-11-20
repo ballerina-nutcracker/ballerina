@@ -119,6 +119,7 @@ var builtinStdlibs = []stdlibEntry{
 	flatEntry("crypto", "0.0.1", "go1.27"),
 	flatEntry("avro", "0.0.1", "go1.27"),
 	flatEntry("file", "0.0.1", "go1.27"),
+	flatEntry("zip", "0.0.1", "go1.27"),
 	flatEntry("uuid", "0.0.1", "go1.27"),
 	flatEntry("task", "0.0.1", "go1.27"),
 	flatEntry("mqtt", "0.0.1", "go1.27"),

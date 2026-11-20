@@ -48,4 +48,5 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/udp/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/url/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/uuid/0.0.1/go1.27/native"
+	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/zip/0.0.1/go1.27/native"
 )

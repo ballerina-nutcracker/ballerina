@@ -1,0 +1,52 @@
+-- stdout --
+FileSystemError: cannot add file '<dir>/src/missing.txt': no file exists at that path
+FileSystemError: cannot add file '<dir>/src': it is a directory; use 'addDirectory' instead
+Error: cannot add entry 'dir/': a name ending in '/' denotes a directory and cannot hold file content
+UnsafePathError: invalid entry name: the name is empty
+UnsafePathError: invalid entry name 'a\b': a name cannot contain '\'
+UnsafePathError: invalid entry name 'nul<NUL>': a name cannot contain a zero byte
+FileSystemError: cannot add directory '<dir>/src/z.txt': no directory exists at that path
+UnsafePathError: invalid entry name '../up': a name cannot contain a '..' segment
+Error: cannot add entry 'full/': a name ending in '/' denotes a directory, which holds no content
+Error: cannot add entry 'full/': a name ending in '/' denotes a directory, which holds no content
+Error: cannot add entry 'bad-read.txt': the content stream could not be read
+Error: cannot add entry 'bad-first.txt': the content stream could not be read
+Error: cannot add entry 'bad-dir/': the content stream could not be read
+Error: cannot add entry 'bad-close.txt': the content stream could not be closed
+UnsupportedEntryError: cannot copy entry 'enc.txt': encrypted entries cannot be written into another archive
+EntryNotFoundError: the source archive contains no entry named 'missing.txt'
+UnsafePathError: invalid entry name '../x': a name cannot contain a '..' segment
+InvalidArchiveError: cannot copy entry 'bzip.txt': the source archive is closed
+InvalidArchiveError: cannot write to the archive: it is closed
+InvalidArchiveError: cannot write to the archive: it is closed
+InvalidArchiveError: cannot write to the archive: it is closed
+["z.txt","renamed/z.txt","b/","b/deep/","b/deep/two.txt","b/one.txt","top/","top/deep/","top/deep/two.txt","top/one.txt","hollow/","bytes.txt","empty.txt","folder/","streamed.txt","streamed-folder/","bad-read.txt","bad-close.txt","bzip.txt","café.txt"]
+z.txt=zed
+top/deep/two.txt=two two
+bytes.txt=bytes
+empty.txt=
+streamed.txt=abcd
+bad-read.txt=x
+bad-close.txt=y
+true STORE true
+DEFLATE 5 2979611598
+OTHER note
+true
+[1600000000,0] cp437
+z.txt STORE 3
+s.txt STORE 6
+FASTEST level level level
+DEFAULT level level level
+BEST level level level
+FileSystemError: cannot create the archive '<dir>/built.zip': a file already exists there; set 'overwrite' to replace it
+FileSystemError: cannot create the archive '<dir>/src': a directory already exists at that path
+FileSystemError: cannot create the archive '<dir>/missing/x.zip': the file could not be created
+FileSystemError: invalid path '<dir>/bad<NUL>.zip': the platform cannot represent it
+["z.txt"]
+["a/","b/","b/deep/","b/deep/two.txt","b/one.txt","z.txt"]
+FileSystemError: cannot create the archive '<dir>/src/inside.zip': it is inside the source directory '<dir>/src'
+FileSystemError: cannot create the archive '<dir>/src/z.txt': it is the same file as the source '<dir>/src/z.txt'
+FileSystemError: cannot resolve the path '<dir>/nothing'
+FileSystemError: cannot resolve the path '<dir>/nowhere'
+zed
+-- stderr --
