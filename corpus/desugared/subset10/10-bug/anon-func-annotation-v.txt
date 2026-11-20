@@ -91,6 +91,15 @@
           (invocation required (
             (literal 1))))))
       (var-def
+        (variable $desugar$0))
+      (assignment
+        (simple-var-ref $desugar$0)
+        (lambda
+          (function $default$2 () ()
+            (block-function-body
+              (return
+                (literal 2))))))
+      (var-def
         (variable defaultable (expr
           (lambda
             (function $anonFunc$_4 (
@@ -105,10 +114,10 @@
         (invocation io println (
           (expression-thunk
           (var-def
-            (variable $desugar$0 (expr
-              (invocation $default$2 ()))))
+            (variable $desugar$1 (expr
+              (invocation $desugar$0 ()))))
           (invocation defaultable (
-            (simple-var-ref $desugar$0)))))))
+            (simple-var-ref $desugar$1)))))))
       (var-def
         (variable rest (expr
           (lambda
@@ -229,10 +238,10 @@
         (invocation io println (
           (expression-thunk
           (var-def
-            (variable $desugar$1 (expr
+            (variable $desugar$2 (expr
               (invocation $default$1 ()))))
           (invocation apply (
-            (simple-var-ref $desugar$1)))))))))
+            (simple-var-ref $desugar$2)))))))))
   (function $default$0 () ()
     (block-function-body
       (return
@@ -258,8 +267,4 @@
             (expr-function-body
               (binary-expr +
                 (simple-var-ref x)
-                (literal 3))))))))
-  (function $default$2 () ()
-    (block-function-body
-      (return
-        (literal 2)))))
+                (literal 3)))))))))

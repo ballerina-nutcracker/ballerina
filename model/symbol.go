@@ -334,8 +334,10 @@ type (
 		mu          sync.RWMutex
 		Pkg         PackageIdentifier
 		lookupTable map[string]int
-		symbols     []Symbol
-		index       int
+		// aliases binds names to symbols owned by another space.
+		aliases map[string]SymbolRef
+		symbols []Symbol
+		index   int
 	}
 
 	symbolBase struct {
@@ -790,14 +792,40 @@ func (space *SymbolSpace) AddSymbol(name string, symbol Symbol) {
 	space.mu.Unlock()
 }
 
+// AddAlias binds name in this space to ref, a symbol owned by another space.
+func (space *SymbolSpace) AddAlias(name string, ref SymbolRef) {
+	space.mu.Lock()
+	if space.aliases == nil {
+		space.aliases = make(map[string]SymbolRef)
+	}
+	space.aliases[name] = ref
+	space.mu.Unlock()
+}
+
+// Binds reports whether ref is owned by this space or bound in it by AddAlias.
+func (space *SymbolSpace) Binds(ref SymbolRef) bool {
+	if ref.SpaceIndex == space.SpaceIndex() {
+		return true
+	}
+	space.mu.RLock()
+	defer space.mu.RUnlock()
+	for _, alias := range space.aliases {
+		if alias == ref {
+			return true
+		}
+	}
+	return false
+}
+
 func (space *SymbolSpace) GetSymbol(name string) (SymbolRef, bool) {
 	space.mu.RLock()
 	index, ok := space.lookupTable[name]
+	alias, aliased := space.aliases[name]
 	space.mu.RUnlock()
-	if !ok {
-		return SymbolRef{}, false
+	if ok {
+		return SymbolRef{Index: index, SpaceIndex: space.SpaceIndex()}, true
 	}
-	return SymbolRef{Index: index, SpaceIndex: space.SpaceIndex()}, true
+	return alias, aliased
 }
 
 // AppendSymbol appends a symbol to the space and returns its index. Thread-safe.

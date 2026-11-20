@@ -1,0 +1,75 @@
+(package
+  (import-package ballerina io (as io))
+  (variable base (type
+    (value-type int)))
+  (class-definition P
+    (variable base (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal base))
+          (literal 3))))
+    (function get () (
+      (value-type int))
+      (expr-function-body
+        (simple-var-ref base)))
+    (function getField () (
+      (value-type int))
+      (expr-function-body
+        (index-based-access
+          (simple-var-ref self)
+          (literal base))))
+    (function sum (
+      (variable a (type
+        (value-type int)))
+      (variable b (type
+        (value-type int)) (expr
+        (simple-var-ref base)))) (
+      (value-type int))
+      (expr-function-body
+        (binary-expr +
+          (simple-var-ref a)
+          (simple-var-ref b)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref base)
+        (literal 7))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type P)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (literal 1))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (invocation sum expr:
+            (simple-var-ref p) (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref p) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation getField expr:
+            (simple-var-ref p) ()))))))
+  (function $default$0 (
+    (variable a (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (simple-var-ref base)))))
