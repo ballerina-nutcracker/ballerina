@@ -22,15 +22,11 @@ import "github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
 
 // IntValueNode holds an integer value (decimal, hex, octal, or binary).
 type IntValueNode struct {
-	value int64
-	loc   diagnostics.Location
+	scalarValueNode[int64]
 }
 
 func NewIntValueNode(value int64, loc diagnostics.Location) *IntValueNode {
-	return &IntValueNode{value: value, loc: loc}
+	return &IntValueNode{scalarValueNode[int64]{value: value, loc: loc}}
 }
 
-func (n *IntValueNode) Kind() TomlType            { return TypeInteger }
-func (n *IntValueNode) Loc() diagnostics.Location { return n.loc }
-func (n *IntValueNode) Value() int64              { return n.value }
-func (n *IntValueNode) NativeValue() any          { return n.value }
+func (n *IntValueNode) Kind() TomlType { return TypeInteger }

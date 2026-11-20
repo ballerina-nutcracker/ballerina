@@ -744,7 +744,7 @@ func fromEnumerableStringSubtype(es enumerableSubtype[string]) enumerableStringD
 func toEnumerableStrings(data enumerableStringData) (bool, []enumerableType[string]) {
 	values := make([]enumerableType[string], len(data.values))
 	for i, v := range data.values {
-		values[i] = enumerableCharStringFrom(string(v.values))
+		values[i] = enumerableStringFrom(string(v.values))
 	}
 	return data.allowed, values
 }

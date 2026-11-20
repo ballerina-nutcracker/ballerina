@@ -43,8 +43,14 @@ const (
 )
 
 func (sw *symbolWriter) writeAnnotationValues(buf *bytes.Buffer, annotations values.AnnotationValues) error {
-	keys := make([]string, 0, len(annotations))
-	for key := range annotations {
+	return writeSortedEntries(sw, buf, annotations, sw.writeAnnotationValue)
+}
+
+// writeSortedEntries writes the entries of m with keys in sorted order so that
+// serialization is deterministic.
+func writeSortedEntries[V any](sw *symbolWriter, buf *bytes.Buffer, m map[string]V, writeValue func(*bytes.Buffer, V) error) error {
+	keys := make([]string, 0, len(m))
+	for key := range m {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
@@ -56,7 +62,7 @@ func (sw *symbolWriter) writeAnnotationValues(buf *bytes.Buffer, annotations val
 		if err := sw.writeStringCP(buf, key); err != nil {
 			return err
 		}
-		if err := sw.writeAnnotationValue(buf, annotations[key]); err != nil {
+		if err := writeValue(buf, m[key]); err != nil {
 			return err
 		}
 	}
@@ -286,23 +292,7 @@ func (sr *symbolReader) readAnnotationValue() values.AnnotationValue {
 // writeFieldAnnotationValues writes per-record-field annotation maps with field
 // names in sorted order so that serialization is deterministic.
 func (sw *symbolWriter) writeFieldAnnotationValues(buf *bytes.Buffer, fieldAnnotations values.FieldAnnotationValues) error {
-	fields := make([]string, 0, len(fieldAnnotations))
-	for field := range fieldAnnotations {
-		fields = append(fields, field)
-	}
-	sort.Strings(fields)
-	if err := binary.Write(buf, binary.BigEndian, int64(len(fields))); err != nil {
-		return err
-	}
-	for _, field := range fields {
-		if err := sw.writeStringCP(buf, field); err != nil {
-			return err
-		}
-		if err := sw.writeAnnotationValues(buf, fieldAnnotations[field]); err != nil {
-			return err
-		}
-	}
-	return nil
+	return writeSortedEntries(sw, buf, fieldAnnotations, sw.writeAnnotationValues)
 }
 
 // readFieldAnnotationValues reads the map written by writeFieldAnnotationValues.

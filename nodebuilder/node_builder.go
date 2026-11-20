@@ -3622,23 +3622,33 @@ func (n *nodeBuilder) transformMethodCallExpression(methodCallExpression *st.Met
 	return bLInvocation, true
 }
 
-func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorExpression *st.MappingConstructorExpressionNode) (*ast.BLangMappingConstructorExpr, bool) {
-	if !n.expectNode(mappingConstructorExpression) || !n.expectToken(mappingConstructorExpression.OpenBrace()) {
-		return nil, false
+// buildDelimitedSeparatedList checks node, its delimiters and its separators, adds each element with addElement
+// and sets the position of target to that of node.
+func (n *nodeBuilder) buildDelimitedSeparatedList(target ast.BLangNode, node st.NonTerminalNode, openToken st.Token, elements st.NodeList[st.Node], closeToken st.Token, addElement func(st.Node) bool) bool {
+	if !n.expectNode(node) || !n.expectToken(openToken) {
+		return false
 	}
+	for element, separator := range elements.SeparatedElements() {
+		if !addElement(element) || !n.expectOptionalToken(separator) {
+			return false
+		}
+	}
+	if !n.expectToken(closeToken) {
+		return false
+	}
+	target.SetPosition(n.getPosition(node))
+	return true
+}
+
+func (n *nodeBuilder) transformMappingConstructorExpression(mappingConstructorExpression *st.MappingConstructorExpressionNode) (*ast.BLangMappingConstructorExpr, bool) {
 	mappingConstructor := &ast.BLangMappingConstructorExpr{
 		Fields: make([]ast.MappingField, 0),
 	}
-	fields := mappingConstructorExpression.FieldNodes()
-	for field, separator := range fields.SeparatedElements() {
-		if !n.addMappingField(mappingConstructor, field) || !n.expectOptionalToken(separator) {
-			return nil, false
-		}
-	}
-	if !n.expectToken(mappingConstructorExpression.CloseBrace()) {
+	addField := func(field st.Node) bool { return n.addMappingField(mappingConstructor, field) }
+	if !n.buildDelimitedSeparatedList(mappingConstructor, mappingConstructorExpression, mappingConstructorExpression.OpenBrace(),
+		mappingConstructorExpression.FieldNodes(), mappingConstructorExpression.CloseBrace(), addField) {
 		return nil, false
 	}
-	mappingConstructor.SetPosition(n.getPosition(mappingConstructorExpression))
 	return mappingConstructor, true
 }
 
@@ -6839,22 +6849,14 @@ func (n *nodeBuilder) createFunctionTypeParam(param st.Node) (*ast.BLangFunction
 }
 
 func (n *nodeBuilder) transformTupleTypeDescriptor(tupleTypeDescriptorNode *st.TupleTypeDescriptorNode) (*ast.BLangTupleTypeNode, bool) {
-	if !n.expectNode(tupleTypeDescriptorNode) || !n.expectToken(tupleTypeDescriptorNode.OpenBracketToken()) {
-		return nil, false
-	}
 	tupleTypeNode := &ast.BLangTupleTypeNode{
 		Members: make([]ast.BLangMemberTypeDesc, 0),
 	}
-	types := tupleTypeDescriptorNode.MemberTypeDesc()
-	for node, separator := range types.SeparatedElements() {
-		if !n.addTupleMember(tupleTypeNode, node) || !n.expectOptionalToken(separator) {
-			return nil, false
-		}
-	}
-	if !n.expectToken(tupleTypeDescriptorNode.CloseBracketToken()) {
+	addMember := func(member st.Node) bool { return n.addTupleMember(tupleTypeNode, member) }
+	if !n.buildDelimitedSeparatedList(tupleTypeNode, tupleTypeDescriptorNode, tupleTypeDescriptorNode.OpenBracketToken(),
+		tupleTypeDescriptorNode.MemberTypeDesc(), tupleTypeDescriptorNode.CloseBracketToken(), addMember) {
 		return nil, false
 	}
-	tupleTypeNode.SetPosition(n.getPosition(tupleTypeDescriptorNode))
 	return tupleTypeNode, true
 }
 
