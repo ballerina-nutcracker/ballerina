@@ -1,0 +1,8 @@
+-- stdout --
+onBytes hello
+onClose
+true
+stopped
+true
+-- stderr --
+error: Socket connection already closed.
