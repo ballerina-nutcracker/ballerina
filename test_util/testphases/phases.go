@@ -104,10 +104,11 @@ func subModuleEntry(pkg, subModuleDir, version, platform string) stdlibEntry {
 // builtinStdlibs is the ordered list of standard-library modules baked into the
 // binary that are still seeded manually for hand-rolled compile drivers.
 // Order matters: a module must appear after all modules it imports
-// (e.g. io before os, time before crypto; a package's root module before its
-// sub-modules).
+// (e.g. io before os, time before crypto, protobuf before protobuf.types.any,
+// http.httpscerr before http).
 var builtinStdlibs = []stdlibEntry{
 	flatEntry("io", "0.0.1", "go1.27"),
+	subModuleEntry("http", "httpscerr", "0.0.1", "go1.27"),
 	flatEntry("http", "0.0.1", "go1.27"),
 	flatEntry("log", "0.0.1", "go1.27"),
 	flatEntry("math.vector", "0.0.1", "go1.27"),
