@@ -41,7 +41,7 @@ type birWriter struct {
 
 func Marshal(tyEnv semtypes.Env, pkg *bir.BIRPackage) ([]byte, error) {
 	writer := &birWriter{
-		cp:  NewConstantPool(),
+		cp:  newConstantPool(),
 		tp:  semtypes.NewTypePool(),
 		env: tyEnv,
 	}

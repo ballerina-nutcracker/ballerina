@@ -16,11 +16,7 @@
 
 package semtypes
 
-import (
-	"slices"
-
-	"github.com/ballerina-nutcracker/ballerina/common"
-)
+import "github.com/ballerina-nutcracker/ballerina/common"
 
 type floatSubtype struct {
 	allowed bool
@@ -63,17 +59,6 @@ func floatSubtypeSingleValue(d subtypeData) common.Optional[float64] {
 		return common.OptionalEmpty[float64]()
 	}
 	return common.OptionalOf(v.values[0].value)
-}
-
-func floatSubtypeContains(d subtypeData, f enumerableFloat) bool {
-	if allOrNothingSubtype, ok := d.(allOrNothingSubtype); ok {
-		return allOrNothingSubtype.IsAllSubtype()
-	}
-	v := d.(floatSubtype)
-	if slices.Contains(v.values, f) {
-		return v.allowed
-	}
-	return (!v.allowed)
 }
 
 func createFloatSubtype(allowed bool, values []enumerableType[float64]) properSubtypeData {

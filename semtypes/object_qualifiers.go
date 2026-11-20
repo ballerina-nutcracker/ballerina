@@ -69,16 +69,8 @@ func IsIsolatedObject(ctx Context, ty SemType) bool {
 	return IsSubtype(ctx, isolatedTy, BooleanConst(true))
 }
 
-func IsNetworkInteractionObject(ctx Context, ty SemType) bool {
-	return IsClientObject(ctx, ty) || IsServiceObject(ctx, ty)
-}
-
 func IsClientObject(ctx Context, ty SemType) bool {
 	return objectHasNetworkQualifier(ctx, ty, networkQualifierClientTag)
-}
-
-func IsServiceObject(ctx Context, ty SemType) bool {
-	return objectHasNetworkQualifier(ctx, ty, networkQualifierServiceTag)
 }
 
 func objectHasNetworkQualifier(ctx Context, ty SemType, qualifierTag SemType) bool {

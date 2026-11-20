@@ -69,14 +69,6 @@ func validIntWidth(signed bool, bits int64) {
 	}
 }
 
-func validIntWidthSigned(bits int) {
-	validIntWidth(true, int64(bits))
-}
-
-func validIntWidthUnsigned(bits int) {
-	validIntWidth(false, int64(bits))
-}
-
 func intWidthSigned(bits int64) SemType {
 	validIntWidth(true, bits)
 	if bits == 64 {
@@ -90,26 +82,6 @@ func intWidthUnsigned(bits int) SemType {
 	validIntWidth(false, int64(bits))
 	t := createSingleRangeSubtype(int64(0), ((int64(1) << bits) - int64(1)))
 	return getBasicSubtype(btInt, t)
-}
-
-func intSubtypeWidenUnsigned(d subtypeData) subtypeData {
-	if _, ok := d.(allOrNothingSubtype); ok {
-		return d
-	}
-	v := d.(intSubtype)
-	if v.Ranges[0].Min < int64(0) {
-		return createAll()
-	}
-	r := v.Ranges[len(v.Ranges)-1]
-	i := int64(8)
-	for i <= int64(32) {
-		if r.Max < (int64(1) << i) {
-			w := createSingleRangeSubtype(int64(0), ((int64(1) << i) - 1))
-			return w
-		}
-		i = (i * 2)
-	}
-	return createAll()
 }
 
 func intSubtypeSingleValue(d subtypeData) common.Optional[int64] {

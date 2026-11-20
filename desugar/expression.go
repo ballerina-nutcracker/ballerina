@@ -676,35 +676,6 @@ func hoistAndAddDefaultInvocations(cx *functionContext, args []ast.BLangExpressi
 	return hoistInit, hoistedArgs
 }
 
-func invocationSymbol(cx *functionContext, expr invocable) (model.SymbolRef, bool) {
-	switch e := expr.(type) {
-	case *ast.BLangInvocation:
-		if e.RawSymbol == nil {
-			return model.SymbolRef{}, false
-		}
-		return e.ResolvedSymbol(), true
-	case *ast.BLangRemoteMethodCallAction:
-		if e.RawSymbol == nil {
-			return model.SymbolRef{}, false
-		}
-		return e.ResolvedSymbol(), true
-	default:
-		cx.internalError(fmt.Sprintf("unexpected invocation type: %T", expr), expr.GetPosition())
-		return model.SymbolRef{}, false
-	}
-}
-
-// synthesizeInferredTypedescArg builds the typedesc expression that fills a
-// `typedesc param = <>` slot. The monomorphized signature's param type is
-// typedesc<T>; we unwrap it to recover T as the constraint.
-func synthesizeInferredTypedescArg(cx *functionContext, tdTy semtypes.SemType, pos diagnostics.Location) *ast.BLangTypedescExpr {
-	tyCtx := cx.typeCtx()
-	tdExpr := &ast.BLangTypedescExpr{Constraint: semtypes.TypedescConstraint(tyCtx, tdTy)}
-	tdExpr.SetPosition(pos)
-	tdExpr.Ty = tdTy
-	return tdExpr
-}
-
 func assignToLocal(cx *functionContext, initExpr ast.BLangExpression, pos diagnostics.Location) (ast.StatementNode, *ast.BLangVarRef) {
 	ty := initExpr.Type()
 	tempName, tempSymRef := cx.addDesugardSymbol(ty, model.SymbolKindVariable, pos)
