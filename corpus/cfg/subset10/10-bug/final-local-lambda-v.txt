@@ -1,0 +1,33 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable f (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable x (type
+                  (value-type int))))
+              (assignment
+                (simple-var-ref x)
+                (literal 1))
+              (return
+                (simple-var-ref x))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f ()))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type int))))
+    (assignment
+      (simple-var-ref x)
+      (literal 1))
+    (return
+      (simple-var-ref x))
+  )
+)
