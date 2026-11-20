@@ -54,9 +54,6 @@ type testCmdOptions struct {
 	testReport    bool
 	rerunFailed   bool
 	codeCoverage  bool
-	graalvm       bool
-	graalvmOpts   string
-	cloud         string
 	parallel      bool
 	offline       bool
 	sticky        bool
@@ -99,9 +96,6 @@ func createTestCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&opts.testReport, "test-report", false, "Enable test report generation")
 	cmd.Flags().BoolVar(&opts.rerunFailed, "rerun-failed", false, "Rerun failed tests")
 	cmd.Flags().BoolVar(&opts.codeCoverage, "code-coverage", false, "Enable code coverage (not supported)")
-	cmd.Flags().BoolVar(&opts.graalvm, "graalvm", false, "Run test suite against native image (not supported)")
-	cmd.Flags().StringVar(&opts.graalvmOpts, "graalvm-build-options", "", "Native image build options (not supported)")
-	cmd.Flags().StringVar(&opts.cloud, "cloud", "", "Enable cloud artifact generation (not supported)")
 	cmd.Flags().BoolVar(&opts.parallel, "parallel", false, "Enable parallel execution of tests (not supported, falls back to serial)")
 	cmd.Flags().BoolVar(&opts.offline, "offline", false, "Resolve dependencies offline")
 	cmd.Flags().BoolVar(&opts.sticky, "sticky", false, "Stick to exact versions locked (if exists)")
@@ -137,14 +131,6 @@ func testTargetDir(project projects.Project, projectDir string) string {
 func runTest(cmd *cobra.Command, args []string, opts *testCmdOptions) error {
 	stderr := cmd.ErrOrStderr()
 
-	// Unsupported-scope flags: fail clearly rather than silently misbehaving
-	// or crashing.
-	if opts.graalvm || opts.graalvmOpts != "" {
-		return testError("--graalvm is not supported: this interpreter has no separate native-image step")
-	}
-	if opts.cloud != "" {
-		return testError("--cloud is not supported")
-	}
 	if opts.codeCoverage {
 		_, _ = fmt.Fprintln(stderr, "warning: --code-coverage is not supported yet; running without coverage")
 	}

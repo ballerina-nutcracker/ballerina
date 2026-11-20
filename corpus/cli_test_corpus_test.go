@@ -381,6 +381,8 @@ var balTestFlagCases = []balTestFlagCase{
 	{"review-grouping-union-disjoint", "grouping", []string{"--groups", "g4,g5"}, nil},
 	{"grouping-listing-of-test-groups", "grouping-listing", []string{"--list-groups"}, nil},
 	{"grouping-after-groups-with-disabled-test", "grouping-after-groups-disabled", []string{"--groups", "g1"}, nil},
+	// --graalvm/--graalvm-build-options/--cloud were removed outright (never
+	// supported); cobra's own "unknown flag" error is now what rejects them.
 	{"rejects-graalvm", "rejects-unsupported-flags", []string{"--graalvm"}, nil},
 	{"rejects-cloud", "rejects-unsupported-flags", []string{"--cloud", "docker"}, nil},
 	{"module-qualified-tests-filter-bare", "module-qualified-tests-filter", []string{"--tests", "testInSubmod"}, nil},
