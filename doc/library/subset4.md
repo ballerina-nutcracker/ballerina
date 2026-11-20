@@ -70,3 +70,28 @@ resource function get albums/[string id]() returns Album|error {
 
 Each returned error is logged as `unhandled error returned from the service`. A request that matches no service or resource answers 404, and one whose method matches no resource answers 405, with the same `http:ErrorPayload` body. An `OPTIONS` request also answers 405 when no `options` or `default` resource matches it.
 
+## Responding through a caller
+
+A resource can take an `http:Caller` parameter and send its response with `respond`, instead of returning it.
+
+```ballerina
+import ballerina/http;
+
+service /albums on new http:Listener(9090) {
+    resource function post .(http:Caller caller, @http:Payload json album) returns error? {
+        check caller->respond({id: 1, album});
+    }
+}
+```
+
+| Case | Behaviour |
+|---|---|
+| `respond(message)` | Sent like a returned value of the same type: an `http:Response` as is, a status code record with its status, an `error` with its status code error response, `string`/`xml`/`byte[]`/`mime:Entity[]` with their content type and any other `anydata` as JSON; a payload from a `post` resource answers 201 |
+| A second `respond`, or one after the resource returned | Returns `http:GenericListenerError` `illegal respond: response has already been sent` |
+| The resource returns `()` without responding | 500 with no body |
+| The resource returns an error without responding | The error's response, as for a returned error |
+| The resource returns an error after responding | Nothing more is sent; stderr gets `illegal return: response has already been sent` |
+| `redirect(response, code, locations)` | Sends `response` with `code` and a `Location` header joining `locations` with `,` |
+| `'continue()` | Sends an interim 100 Continue; the exchange stays open for `respond` |
+
+A resource with an `http:Caller` parameter may only return `error` or nil, and may declare one `http:Caller` parameter; the compiler plugin reports anything else.

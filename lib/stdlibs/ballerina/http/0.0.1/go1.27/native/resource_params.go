@@ -37,6 +37,7 @@ type paramKind uint8
 
 const (
 	requestParam paramKind = iota
+	callerParam
 	headersParam
 	queryParam
 	headerParam
@@ -93,19 +94,25 @@ func invalidSignature(message string) *bindingError {
 // resourceArgs binds the non-path parameters of the resource behind handle from r. The
 // request body is consumed or closed before it returns.
 func resourceArgs(ctx *extern.Context, state *listenerState, handle extern.MethodHandle,
-	accessor string, r *http.Request) ([]values.BalValue, *bindingError) {
+	conn *callerConn) ([]values.BalValue, bool, *bindingError) {
+	r := conn.r
 	signature, sigOK := ctx.MethodSignature(handle)
 	metadata, metaOK := ctx.MethodMetadata(handle)
 	if !sigOK || !metaOK {
 		closeBody(r)
-		return nil, invalidSignature("resource method signature is unavailable")
+		return nil, false, invalidSignature("resource method signature is unavailable")
 	}
-	params, bindErr := classifyParams(ctx.TypeCtx(), state, signature.Params, metadata.Params, accessor)
+	params, bindErr := classifyParams(ctx.TypeCtx(), state, signature.Params, metadata.Params, conn.accessor)
 	if bindErr != nil {
 		closeBody(r)
-		return nil, bindErr
+		return nil, false, bindErr
 	}
-	return bindParams(ctx, state, params, r)
+	args, bindErr := bindParams(ctx, state, params, conn)
+	hasCaller := false
+	for _, p := range params {
+		hasCaller = hasCaller || p.kind == callerParam
+	}
+	return args, hasCaller, bindErr
 }
 
 // A server request's body is never nil.
@@ -117,7 +124,7 @@ func classifyParams(tc semtypes.Context, state *listenerState, sigParams []exter
 	metaParams []extern.ParameterMetadata, accessor string) ([]resourceParam, *bindingError) {
 	params := make([]resourceParam, len(sigParams))
 	var unannotated []int
-	hasRequest, hasHeaders, hasPayload := false, false, false
+	hasRequest, hasHeaders, hasPayload, hasCaller := false, false, false, false
 	for i, p := range sigParams {
 		label := unescapeIdentifier(p.Name)
 		annotations := metaParams[i].Annotations
@@ -133,6 +140,12 @@ func classifyParams(tc semtypes.Context, state *listenerState, sigParams []exter
 		}
 		params[i] = resourceParam{kind: queryParam, name: encodeParamName(label), label: label, ty: p.Type}
 		switch {
+		case isExactType(tc, state.callerTy, p.Type):
+			if hasCaller {
+				return nil, invalidSignature("invalid multiple 'http:Caller' parameter: '" + label + "'")
+			}
+			hasCaller = true
+			params[i].kind = callerParam
 		case isExactType(tc, state.requestTy, p.Type):
 			if hasRequest {
 				return nil, invalidSignature("invalid multiple http:Request parameter: " + label)
@@ -379,7 +392,8 @@ func isValidHeaderType(tc semtypes.Context, ty semtypes.SemType) bool {
 // The body is read up front when a payload parameter needs it, so a Request parameter can
 // still read it afterwards; otherwise a Request parameter takes over the body as is. A Headers
 // parameter wraps the same Request object, built without a body when nothing else needs one.
-func bindParams(ctx *extern.Context, state *listenerState, params []resourceParam, r *http.Request) ([]values.BalValue, *bindingError) {
+func bindParams(ctx *extern.Context, state *listenerState, params []resourceParam, conn *callerConn) ([]values.BalValue, *bindingError) {
+	r := conn.r
 	types := state.types
 	hasPayload, hasRequest, hasHeaders := false, false, false
 	for _, p := range params {
@@ -389,6 +403,9 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 	}
 	var body []byte
 	var req *values.Object
+	if hasPayload || hasRequest {
+		conn.bindBody()
+	}
 	switch {
 	case hasPayload:
 		data, err := readBody(r)
@@ -418,6 +435,12 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 		switch p.kind {
 		case requestParam:
 			args[i] = req
+		case callerParam:
+			caller, err := newCaller(ctx, state, conn)
+			if err != nil {
+				return nil, invalidSignature(err.Error())
+			}
+			args[i] = caller
 		case headersParam:
 			headers, err := ctx.InvokeFunction(state.createHeaders, []values.BalValue{req})
 			if err != nil {

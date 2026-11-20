@@ -43,6 +43,34 @@ service /invalid on new http:Listener(19222) {
     }
 }
 
+service /caller on new http:Listener(19227) {
+    resource function get twoCallers(http:Caller first, http:Caller second) { // @error
+        var _ = first;
+        var _ = second;
+    }
+
+    resource function get callerString(http:Caller caller) returns string { // @error
+        var _ = caller;
+        return "x";
+    }
+
+    resource function get callerUnion(http:Caller caller) returns string|error? { // @error
+        var _ = caller;
+        return "x";
+    }
+
+    resource function post callerTwoRequests(http:Caller caller, http:Request first, http:Request second) returns string { // @error
+        var _ = caller;
+        var _ = first;
+        var _ = second;
+        return "x";
+    }
+
+    resource function get callerError(http:Caller caller) returns error? {
+        var _ = caller;
+    }
+}
+
 service /custom on new CustomListener() {
     resource function get ignored(int value) {
         var _ = value;
