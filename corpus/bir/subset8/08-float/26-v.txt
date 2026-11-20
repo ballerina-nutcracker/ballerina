@@ -11,7 +11,7 @@ main() -> nil{
   }
   bb2 {
     %6 = ConstantLoad 3.5
-    %7 = unknown %6;
+    %7 = - %6;
     %8 = %7;
     %9 = abs(%8) -> bb3;
   }
@@ -30,7 +30,7 @@ main() -> nil{
   }
   bb6 {
     %17 = ConstantLoad 0
-    %18 = unknown %17;
+    %18 = - %17;
     %19 = %18;
     %20 = abs(%19) -> bb7;
   }
@@ -53,7 +53,7 @@ main() -> nil{
   }
   bb10 {
     %33 = ConstantLoad 1
-    %34 = unknown %33;
+    %34 = - %33;
     %35 = %34;
     %36 = ConstantLoad 0
     %37 = %36;

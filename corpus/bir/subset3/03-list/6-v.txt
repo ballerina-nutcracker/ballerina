@@ -19,7 +19,7 @@ main() -> nil{
   }
   bb3 {
     %12 = ConstantLoad 17
-    %13 = unknown %12;
+    %13 = - %12;
     %14 = ConstantLoad 1
     %15 = newArray list[%14]{%13}
     %16 = println(%15) -> bb4;

@@ -72,7 +72,7 @@ bddAtom(int) -> {| atom: int, left: boolean|..., middle: boolean|..., right: boo
 }
 bddUnion(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
   bb0 {
-    %3 = unknown b1 b2;
+    %3 = === b1 b2;
     %3 ? bb1 : bb2;
   }
   bb1 {
@@ -255,7 +255,7 @@ bddUnion(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: bo
 }
 bddIntersect(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
   bb0 {
-    %3 = unknown b1 b2;
+    %3 = === b1 b2;
     %3 ? bb1 : bb2;
   }
   bb1 {
@@ -465,7 +465,7 @@ bddIntersect(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right
 }
 bddDiff(boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |},boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}) -> boolean|{| atom: int, left: boolean|..., middle: boolean|..., right: boolean|..., never... |}{
   bb0 {
-    %3 = unknown b1 b2;
+    %3 = === b1 b2;
     %3 ? bb1 : bb2;
   }
   bb1 {
@@ -694,7 +694,7 @@ bddComplement(boolean|{| atom: int, left: boolean|..., middle: boolean|..., righ
     %1 = (1, b)[%2];
     %3 = ConstantLoad false
     %4 = %3;
-    %0 = unknown %1 %4;
+    %0 = === %1 %4;
     %0 ? bb3 : bb8;
   }
   bb3 {
@@ -732,7 +732,7 @@ bddComplement(boolean|{| atom: int, left: boolean|..., middle: boolean|..., righ
     %6 = (1, b)[%7];
     %8 = ConstantLoad false
     %9 = %8;
-    %5 = unknown %6 %9;
+    %5 = === %6 %9;
     %5 ? bb9 : bb14;
   }
   bb9 {
@@ -770,7 +770,7 @@ bddComplement(boolean|{| atom: int, left: boolean|..., middle: boolean|..., righ
     %11 = (1, b)[%12];
     %13 = ConstantLoad false
     %14 = %13;
-    %10 = unknown %11 %14;
+    %10 = === %11 %14;
     %10 ? bb15 : bb21;
   }
   bb15 {

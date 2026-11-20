@@ -32,7 +32,7 @@ main() -> nil{
     %15 = items[%16];
     %18 = ConstantLoad 1
     %17 = items[%18];
-    %14 = unknown %15 %17;
+    %14 = === %15 %17;
     %19 = %14;
     %20 = println(%19) -> bb10;
   }
@@ -60,7 +60,7 @@ main() -> nil{
   bb10 {
     %23 = ConstantLoad 0
     %22 = items[%23];
-    %21 = unknown %22 element;
+    %21 = === %22 element;
     %24 = %21;
     %25 = println(%24) -> bb11;
   }
