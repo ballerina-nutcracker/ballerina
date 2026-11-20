@@ -244,7 +244,10 @@ func validateBinaryExpr(cx scope.Context, e *ast.BLangBinaryExpr, expected semty
 	case model.OperatorKind_BITWISE_AND, model.OperatorKind_BITWISE_OR, model.OperatorKind_BITWISE_XOR:
 		ok = validateBinaryOperands(cx, e, semtypes.Union(semtypes.Int, semtypes.Nil))
 	case model.OperatorKind_CLOSED_RANGE, model.OperatorKind_HALF_OPEN_RANGE:
-		ok = validateBinaryOperands(cx, e, semtypes.Int)
+		if !validateBinaryOperands(cx, e, semtypes.Int) {
+			return scope.NoFacts, false
+		}
+		return scope.IsolatedFacts(cx), validateResolvedType(cx, e, expected)
 	case model.OperatorKind_AND, model.OperatorKind_OR:
 		ok = validateBinaryOperands(cx, e, semtypes.Boolean)
 	default:

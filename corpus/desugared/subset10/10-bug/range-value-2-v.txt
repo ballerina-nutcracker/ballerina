@@ -1,0 +1,143 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable R (type
+    (user-defined-type object Iterable)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref R)
+        (invocation lang.__internal createIntRange (
+          (literal 1)
+          (literal 2)
+          (literal true))))))
+  (function upTo (
+    (variable n (type
+      (value-type int)))) (
+    (user-defined-type object Iterable))
+    (block-function-body
+      (return
+        (invocation lang.__internal createIntRange (
+          (literal 0)
+          (simple-var-ref n)
+          (literal false))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (expr
+          (invocation lang.__internal createIntRange (
+            (literal 7)
+            (literal 8)
+            (literal true))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (simple-var-ref r))))
+      (var-def
+        (variable $desugar$2 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$0) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$4 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$2) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$4))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$4)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (var-def
+        (variable $desugar$5 (expr
+          (simple-var-ref r))))
+      (var-def
+        (variable $desugar$7 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$5) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$9 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$7) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$9))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$9)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (var-def
+        (variable $desugar$10 (expr
+          (group-expr
+            (invocation lang.__internal createIntRange (
+              (literal 5)
+              (literal 6)
+              (literal false)))))))
+      (var-def
+        (variable $desugar$12 (expr
+          (invocation iterator expr:
+            (simple-var-ref $desugar$10) ()))))
+      (while
+        (literal true)
+        (block-stmt
+          (var-def
+            (variable $desugar$14 (expr
+              (invocation next expr:
+                (simple-var-ref $desugar$12) ()))))
+          (if
+            (type-test-expr is
+              (simple-var-ref $desugar$14))
+            (block-stmt
+              (break)) ())
+          (var-def
+            (variable i (type
+              (value-type int)) (expr
+              (index-based-access
+                (simple-var-ref $desugar$14)
+                (literal value)))))
+          (expression-stmt
+            (invocation io println (
+              (simple-var-ref i))))))
+      (var-def
+        (variable it (type
+          (user-defined-type object Iterable)) (expr
+          (invocation lang.__internal createIntRange (
+            (literal 1)
+            (literal 3)
+            (literal false))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref it)
+            (user-defined-type object Iterable)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref R)
+            (user-defined-type object Iterable)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (invocation upTo (
+              (literal 2)))
+            (user-defined-type object Iterable))))))))
