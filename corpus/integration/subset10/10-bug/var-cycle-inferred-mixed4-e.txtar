@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for a
+  --> var-cycle-inferred-mixed4-e.bal:17:5
+   |
+17 | int a = b; // @error
+   |     ^
