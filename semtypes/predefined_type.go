@@ -157,13 +157,14 @@ var (
 	listAtomicRo                      = predefTypeEnv.listAtomicRO()
 )
 
+//shallow:allow shared basic-type constructor hides conversion from the private bitset representation
 func basicTypeUnion(bitset basicTypeBitSet) SemType {
 	return bitset.semType()
 }
 
-func getBasicSubtype(code basicTypeCode, data properSubtypeData) SemType {
+func getBasicSubtype(code basicTypeCode, data subtypeData) SemType {
 	if code == btCell {
-		return createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(0, Cell.all(), []properSubtypeData{data})
+		return createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(0, Cell.all(), []subtypeData{data})
 	}
-	return createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(0, 1<<code.Code(), []properSubtypeData{data})
+	return createComplexSemTypeWithAllBitSetSomeBitSetSubtypeDataList(0, 1<<code.Code(), []subtypeData{data})
 }

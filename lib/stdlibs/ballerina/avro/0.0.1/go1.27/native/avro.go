@@ -95,7 +95,8 @@ func newAvroError(message string, cause values.BalValue) *values.Error {
 // avroErrorFrom mirrors jBallerina's Utils.createError: a fixed outer message
 // with the underlying failure attached as the cause.
 func avroErrorFrom(message string, err error) *values.Error {
-	return newAvroError(message, values.NewErrorWithMessage(err.Error()))
+	cause := values.NewError(semtypes.Error, err.Error(), nil, "", nil)
+	return newAvroError(message, cause)
 }
 
 // schemaOf recovers the schema stored by generateSchema. A miss means the

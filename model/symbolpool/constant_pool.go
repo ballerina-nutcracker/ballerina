@@ -47,12 +47,12 @@ func (cp *constantPool) addString(value string) int32 {
 
 func (cp *constantPool) serialize() ([]byte, error) {
 	buf := &bytes.Buffer{}
-	if err := write(buf, int64(len(cp.entries))); err != nil {
+	if err := binary.Write(buf, binary.BigEndian, int64(len(cp.entries))); err != nil {
 		return nil, err
 	}
 	for _, entry := range cp.entries {
 		strBytes := []byte(entry)
-		if err := write(buf, int64(len(strBytes))); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, int64(len(strBytes))); err != nil {
 			return nil, err
 		}
 		if _, err := buf.Write(strBytes); err != nil {
@@ -77,10 +77,6 @@ func deserializeConstantPool(r *bytes.Reader) []string {
 		entries[i] = string(strBytes)
 	}
 	return entries
-}
-
-func write(buf *bytes.Buffer, data any) error {
-	return binary.Write(buf, binary.BigEndian, data)
 }
 
 func read(r *bytes.Reader, v any) {

@@ -87,7 +87,7 @@ func (f *Future) Claim() bool {
 // until future is ready.
 func (f *Future) Get() BalValue {
 	if !f.Claim() {
-		return NewErrorWithMessage("multiple waits on the same future is not allowed")
+		return NewError(semtypes.Error, "multiple waits on the same future is not allowed", nil, "", nil)
 	}
 	return f.GetClaimed()
 }

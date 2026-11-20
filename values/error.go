@@ -17,10 +17,11 @@
 package values
 
 import (
-	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 // Error represents a Ballerina error value at runtime.
@@ -43,10 +44,6 @@ func NewError(t semtypes.SemType, message string, cause BalValue, typeName strin
 		Detail:   detail,
 		TypeName: typeName,
 	}
-}
-
-func NewErrorWithMessage(message string) *Error {
-	return NewError(semtypes.Error, message, nil, "", nil)
 }
 
 // String returns the Ballerina string representation of the error.

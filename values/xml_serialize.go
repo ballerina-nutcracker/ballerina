@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/ballerina-nutcracker/ballerina/semtypes"
 )
 
 type xmlNamespaceBinding struct {
@@ -128,7 +130,8 @@ func (e *XMLElement) splitXMLAttributes() ([]serializedXMLNamespace, []MapEntry)
 		value, _ := e.Attributes.Get(key)
 		uri, local, err := ParseExpandedXMLName(key)
 		if err != nil {
-			panic(NewErrorWithMessage(err.Error()))
+			message := err.Error()
+			panic(NewError(semtypes.Error, message, nil, "", nil))
 		}
 		if uri == XMLNSNamespaceURI {
 			declared = append(declared, serializedXMLNamespace{xmlNamespaceDeclarationPrefix(local), value.(string)})
@@ -242,7 +245,7 @@ func (e *XMLElement) writeXMLString(b *strings.Builder, state *xmlNamespaceState
 		}
 	} else if binding, ok := state.active[""]; ok && binding.uri != "" {
 		if hasLocalDefault {
-			panic(NewErrorWithMessage("unnamespaced XML element has a conflicting local default namespace"))
+			panic(NewError(semtypes.Error, "unnamespaced XML element has a conflicting local default namespace", nil, "", nil))
 		}
 		synthesize("", "")
 	}
