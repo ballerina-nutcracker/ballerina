@@ -1633,6 +1633,7 @@ func initHttpModule(rt *runtime.Runtime) {
 
 	// Server-side: register the http:Listener class and its native methods.
 	registerListenerExterns(rt, &types)
+	registerCallerExterns(rt)
 	registerErrorResponseExterns(rt)
 }
 

@@ -117,3 +117,9 @@ func ListenPacket(network, address string) (net.PacketConn, error) {
 func ResolvePacketAddr(network, address string) (net.Addr, error) {
 	return net.ResolveUDPAddr(network, address)
 }
+
+// LookupAddr is the pal.Net.LookupAddr factory for the native-CLI platform. It
+// performs a reverse lookup of addr via the OS resolver.
+func LookupAddr(ctx context.Context, addr string) ([]string, error) {
+	return net.DefaultResolver.LookupAddr(ctx, addr)
+}

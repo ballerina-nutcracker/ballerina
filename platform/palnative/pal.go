@@ -179,6 +179,7 @@ func NewPlatform() (pal.Platform, func()) {
 			DialPacket:        DialPacket,
 			ListenPacket:      ListenPacket,
 			ResolvePacketAddr: ResolvePacketAddr,
+			LookupAddr:        LookupAddr,
 		},
 		Signals: signals,
 	}, cleanupSignals

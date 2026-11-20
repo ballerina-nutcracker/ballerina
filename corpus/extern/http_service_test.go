@@ -17,12 +17,15 @@
 package extern_test
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
 	"testing"
 
+	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
 )
@@ -436,6 +439,28 @@ func TestHttpServiceErrorResponse(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-error-response-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
+// TestHttpServiceCaller responds to requests through an http:Caller.
+func TestHttpServiceCaller(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-caller-v"), callerPal{newHTTPPal(palnative.NewHTTPClient)}, nil)
+}
+
+// callerPal stubs the reverse lookup so the caller's remote host name does not depend on the
+// machine's resolver.
+type callerPal struct{ *httpPal }
+
+func (p callerPal) Platform() pal.Platform {
+	base := p.httpPal.Platform()
+	base.Net.LookupAddr = func(_ context.Context, addr string) ([]string, error) {
+		if addr == "127.0.0.1" {
+			return []string{"localhost."}, nil
+		}
+		return nil, errors.New("no name for " + addr)
+	}
+	return base
 }
 
 // TestHttpServiceQueryParams exercises query parameter binding: scalar, array, nilable,

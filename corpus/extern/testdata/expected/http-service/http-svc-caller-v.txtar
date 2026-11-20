@@ -1,0 +1,66 @@
+-- stdout --
+200 text/plain
+first
+200 text/plain
+illegal respond: response has already been sent
+200 text/plain
+ok
+200 text/plain
+early
+200 text/plain
+released
+200 text/plain
+released
+500 application/json
+500 | invalid status code for a response: 103 | /c/earlyHints
+200 text/plain
+invalid status code for a response: 103
+200 text/plain
+a
+200 text/plain
+illegal respond: response has already been sent
+302 - []
+<empty>
+500 -
+<empty>
+500 application/json
+500 | boom | /c/err
+200 text/plain
+done
+201 application/json
+{"a":1}
+200 text/plain
+as is
+200 text/plain
+any
+200 text/plain
+any
+404 text/plain
+nf
+500 application/json
+500 | plain | /c/respondError
+409 text/plain
+x
+502 application/json
+502 | upstream: refused | /c/respondConnectorError
+302 - [/a,/b]
+<empty>
+127.0.0.1 127.0.0.1 true 127.0.0.1 19237 http localhost
+200 text/plain
+info
+200 text/plain
+after continue
+500 -
+<empty>
+200 text/plain
+illegal respond: response has already been sent
+200 text/plain
+GET n
+-- stderr --
+error [ballerina/http]: panic while handling GET /c/respondThenPanic: boom
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("boom") path="/c/err" method="GET"
+error: illegal return: response has already been sent
+warning: [ballerina/http] illegal return: response has already been sent
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("plain") path="/c/respondError" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error ClientRequestError ("cre",statusCode=409,headers={},body="x") path="/c/respondAppError" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error BadGatewayError ("upstream: refused") path="/c/respondConnectorError" method="GET"
