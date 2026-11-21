@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got int|string
+  --> capture-logical-singleton-and-e.bal:32:17
+   |
+32 |         int y = x; // @error x may be reassigned by the captured closure
+   |                 ^

@@ -1,0 +1,33 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation visit (
+        (literal 1))))
+    (expression-stmt
+      (invocation visit (
+        (literal reached))))
+  )
+)
+(visit
+  (bb0 () (bb1 bb3)
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2)
+    (literal true)
+  )
+  (bb2 (bb1) ()
+    (return
+      (literal <nil>))
+  )
+  (bb3 (bb0) ()
+    (var-def
+      (variable s (type
+        (value-type string)) (expr
+        (simple-var-ref x))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref s))))
+  )
+)

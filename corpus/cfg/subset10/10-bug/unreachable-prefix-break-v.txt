@@ -1,0 +1,43 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation visit (
+        (literal true))))
+  )
+)
+(visit
+  (bb0 () (bb1 bb8)
+    (var-def
+      (variable x (type
+        (union-type
+          (value-type int)
+          (value-type string))) (expr
+        (literal 1))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (value-type int))
+  )
+  (bb1 (bb0) (bb2))
+  (bb2 (bb1 bb7) (bb3)
+    (literal true)
+  )
+  (bb3 (bb2) (bb5 bb7)
+    (simple-var-ref stop)
+  )
+  (bb4 (bb6) (bb8))
+  (bb5 (bb3) (bb6)
+    (assignment
+      (simple-var-ref x)
+      (literal changed))
+    (literal true)
+  )
+  (bb6 (bb5) (bb4)
+    (break)
+  )
+  (bb7 (bb3) (bb2))
+  (bb8 (bb4 bb0) ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref x))))
+  )
+)
