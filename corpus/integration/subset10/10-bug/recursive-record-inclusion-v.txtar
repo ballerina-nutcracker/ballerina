@@ -1,0 +1,9 @@
+-- stdout --
+{"value":2,"next":null}
+1
+{"s":"a","left":null,"n":5}
+3
+7
+4
+8
+-- stderr --

@@ -178,6 +178,23 @@ func (c *CompilerContext) CaptureGroupContains(group model.CaptureGroupRef, ref 
 	return c.env.captureGroupContains(group, ref)
 }
 
+// SymbolTypeRef returns the named type the type definition at symbol refers to, looking through
+// arrays, optional types and `readonly &`, or the zero symbol if there is none.
+func (c *CompilerContext) SymbolTypeRef(symbol model.SymbolRef) model.SymbolRef {
+	if ts, ok := c.env.GetSymbol(symbol).(*model.TypeSymbol); ok {
+		return ts.TypeRef
+	}
+	return model.SymbolRef{}
+}
+
+// SetSymbolTypeRef records typeRef as the named type the type definition at symbol refers to. It
+// has no effect unless symbol is a plain type symbol.
+func (c *CompilerContext) SetSymbolTypeRef(symbol, typeRef model.SymbolRef) {
+	if ts, ok := c.env.GetSymbol(symbol).(*model.TypeSymbol); ok {
+		ts.TypeRef = typeRef
+	}
+}
+
 func (c *CompilerContext) SetSymbolType(symbol model.SymbolRef, ty semtypes.SemType) {
 	c.GetSymbol(symbol).SetType(ty)
 }

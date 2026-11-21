@@ -1,0 +1,183 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang array (as lang.array))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null)))))
+  (type-definition TaggedNode
+    (record-type
+      (field tag
+        (value-type string))))
+  (type-definition Tree
+    (record-type
+      (field children
+        (array-type
+          (user-defined-type Tree) dimensions: 1 ([])))))
+  (type-definition NamedTree
+    (record-type
+      (field name
+        (value-type string))))
+  (type-definition DefaultTree
+    (record-type
+      (field left
+        (union-type
+          (user-defined-type DefaultTree)
+          (value-type null))
+        (literal <nil>))
+      (field n
+        (value-type int)
+        (literal 5))))
+  (type-definition Ext
+    (record-type
+      (field s
+        (value-type string))))
+  (type-definition Opts
+    (record-type
+      (field v
+        (value-type int)
+        (literal 7))
+      (field next
+        (union-type
+          (user-defined-type Alias)
+          (value-type null))
+        (literal <nil>))))
+  (type-definition Alias
+    (user-defined-type Opts))
+  (type-definition ChainedOpts
+    (record-type
+      (field w
+        (value-type int)
+        (literal 8))
+      (field next
+        (union-type
+          (user-defined-type OuterAlias)
+          (value-type null))
+        (literal <nil>))))
+  (type-definition OuterAlias
+    (user-defined-type InnerAlias))
+  (type-definition InnerAlias
+    (user-defined-type ChainedOpts))
+  (function optsValue (
+    (variable opts (type
+      (user-defined-type Alias)))) (
+    (value-type int))
+    (expr-function-body
+      (index-based-access
+        (simple-var-ref opts)
+        (literal v))))
+  (function chainedValue (
+    (variable opts (type
+      (user-defined-type OuterAlias)))) (
+    (value-type int))
+    (expr-function-body
+      (index-based-access
+        (simple-var-ref opts)
+        (literal w))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable n (type
+          (user-defined-type TaggedNode)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal value)
+              (literal 1))
+            (key-value
+              (literal next)
+              (mapping-constructor-expr
+                (key-value
+                  (literal value)
+                  (literal 2))
+                (key-value
+                  (literal next)
+                  (literal <nil>))))
+            (key-value
+              (literal tag)
+              (literal t))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref n)
+            (literal next)))))
+      (var-def
+        (variable t (type
+          (user-defined-type NamedTree)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal children)
+              (list-constructor-expr
+                (mapping-constructor-expr
+                  (key-value
+                    (literal children)
+                    (list-constructor-expr)))))
+            (key-value
+              (literal name)
+              (literal root))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation lang.array length (
+            (index-based-access
+              (simple-var-ref t)
+              (literal children)))))))
+      (var-def
+        (variable e (type
+          (user-defined-type Ext)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal s)
+              (literal a))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e))))
+      (expression-stmt
+        (invocation io println (
+          (invocation optsValue (
+            (mapping-constructor-expr
+              (key-value
+                (literal v)
+                (literal 3))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation optsValue (
+            (mapping-constructor-expr))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation chainedValue (
+            (mapping-constructor-expr
+              (key-value
+                (literal w)
+                (literal 4))))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation chainedValue (
+            (mapping-constructor-expr))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 7))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $default$4 () ()
+    (block-function-body
+      (return
+        (literal 8))))
+  (function $default$5 () ()
+    (block-function-body
+      (return
+        (literal <nil>)))))
