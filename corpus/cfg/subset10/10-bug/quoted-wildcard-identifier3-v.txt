@@ -1,0 +1,12 @@
+('_
+  (bb0 () ()
+    (literal 9)
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation '_ ()))))
+  )
+)

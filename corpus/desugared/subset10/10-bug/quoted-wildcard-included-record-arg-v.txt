@@ -1,0 +1,101 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field _
+        (value-type int))
+      (field x
+        (value-type int))))
+  (type-definition Rest
+    (record-type
+      (field x
+        (value-type int))
+      (rest
+        (value-type int))))
+  (class-definition C
+    (function init (
+      (variable r (type
+        (user-defined-type R)))) (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation io println (
+            (simple-var-ref r)))))))
+  (function f (
+    (variable r (type
+      (user-defined-type R)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function h (
+    (variable r (type
+      (user-defined-type Rest)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))))
+  (function g (
+    (variable '_ (type
+      (value-type int)))
+    (variable y (type
+      (value-type int)) (expr
+      (literal 2)))) (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (binary-expr +
+            (simple-var-ref '_)
+            (simple-var-ref y)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation f (
+          (mapping-constructor-expr
+            (key-value
+              (literal _)
+              (literal 1))
+            (key-value
+              (literal x)
+              (literal 2))))))
+      (assignment
+        (wildcard-binding-pattern)
+        (new
+          (user-defined-type C) (
+          (mapping-constructor-expr
+            (key-value
+              (literal _)
+              (literal 7))
+            (key-value
+              (literal x)
+              (literal 8))))))
+      (expression-stmt
+        (invocation h (
+          (mapping-constructor-expr
+            (key-value
+              (literal x)
+              (literal 3))
+            (key-value
+              (literal _)
+              (literal 4))))))
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 1))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (expression-stmt
+        (invocation g (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))))))
+  (function $default$0 (
+    (variable '_ (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal 2)))))

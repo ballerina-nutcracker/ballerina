@@ -272,7 +272,7 @@ func walkFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAccess) de
 		return desugaredNode[ast.BLangActionOrExpression]{replacementNode: expr}
 	}
 
-	indexAccess := createFieldIndexAccess(expr.Expr, expr.Field.GetValue(), expr.Type(), expr.GetPosition())
+	indexAccess := createFieldIndexAccess(expr.Expr, expr.FieldName(expr.Expr.Type()), expr.Type(), expr.GetPosition())
 
 	return desugaredNode[ast.BLangActionOrExpression]{replacementNode: indexAccess}
 }
@@ -326,7 +326,7 @@ func walkLaxFieldBaseAccess(cx *functionContext, expr *ast.BLangFieldBaseAccess)
 	mappingTy := semtypes.Intersect(baseTy, semtypes.Mapping)
 	mapRef := createVarRef(receiverName, receiverSymbol, mappingTy)
 	setPositionIfMissing(mapRef, pos)
-	keyExpr := createStringLiteral(expr.Field.GetValue(), pos)
+	keyExpr := createStringLiteral(expr.FieldName(baseTy), pos)
 	getInvocation := createLangMapGetInvocation(cx, mapRef, keyExpr, memberTy, pos)
 	lookupTy := semtypes.Union(memberTy, semtypes.Error)
 	trapExpr := &ast.BLangTrapExpr{Expr: getInvocation}

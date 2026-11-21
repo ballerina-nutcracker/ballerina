@@ -1,0 +1,23 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const A enum-member (
+    (value-type string)) (
+    (literal A)))
+  (const '_ enum-member (
+    (value-type string)) (
+    (literal _)))
+  (type-definition E enum
+    (union-type
+      (user-defined-type A)
+      (user-defined-type '_)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (user-defined-type E)) (expr
+          (simple-var-ref '_))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e)))))))

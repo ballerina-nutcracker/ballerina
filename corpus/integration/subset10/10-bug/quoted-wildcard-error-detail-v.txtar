@@ -1,0 +1,3 @@
+-- stdout --
+error("m",_=1)
+-- stderr --
