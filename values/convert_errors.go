@@ -57,8 +57,7 @@ func incompatibleConversion(tc semtypes.Context, value BalValue, targetType semt
 		semtypes.ToString(tc, sourceTy), semtypes.ToString(tc, targetType)))
 }
 
-// missingRequiredField reports a required field absent from source. Fires regardless of a
-// declared default in targetType, since default-value injection isn't implemented yet.
+// missingRequiredField reports a required field absent from source that declares no default.
 func missingRequiredField(tc semtypes.Context, value BalValue, targetType semtypes.SemType, fieldName string) *conversionFailure {
 	sourceTy := SemTypeForValue(value)
 	return newConversionFailure(fmt.Sprintf("'%s' value cannot be converted to '%s': field '%s' not present in value",

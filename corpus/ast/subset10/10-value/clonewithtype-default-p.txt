@@ -1,0 +1,27 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function failingDefault () (
+    (value-type int))
+    (block-function-body
+      (panic
+        (error-constructor-expr (
+          (literal default failed))))))
+  (type-definition Counter
+    (record-type
+      (field count
+        (value-type int)
+        (invocation failingDefault ()))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable counter (type
+          (user-defined-type Counter)) (expr
+          (checked-expr
+            (invocation cloneWithType expr:
+              (mapping-constructor-expr) ())))))
+      (assignment
+        (wildcard-binding-pattern)
+        (simple-var-ref counter)))))

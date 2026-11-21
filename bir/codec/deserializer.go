@@ -83,14 +83,16 @@ func (br *birReader) readPackage() (pkg *bir.BIRPackage, err error) {
 	}
 
 	functions := br.readFunctions()
+	recordDefaults := br.readRecordDefaults()
 
 	pkg = &bir.BIRPackage{
-		PackageID:    pkgID,
-		GlobalVars:   globalVars,
-		ClassDefs:    classDefs,
-		Functions:    functions,
-		InitFunction: initFunction,
-		MainFunction: mainFunction,
+		PackageID:      pkgID,
+		GlobalVars:     globalVars,
+		ClassDefs:      classDefs,
+		Functions:      functions,
+		InitFunction:   initFunction,
+		MainFunction:   mainFunction,
+		RecordDefaults: recordDefaults,
 	}
 	rebindLifecycleFunctions(pkg)
 	return pkg, nil
@@ -230,6 +232,28 @@ func (br *birReader) readGlobalVars(pkgID *model.PackageID) map[string]bir.BIRGl
 		variables[lookupKey] = gv
 	}
 	return variables
+}
+
+func (br *birReader) readRecordDefaults() map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry {
+	count := br.readLength()
+	recordDefaults := make(map[*semtypes.MappingAtomicType][]bir.MappingConstructorDefaultEntry, count)
+	for range count {
+		var atomIndex int32
+		br.read(&atomIndex)
+		atom, ok := br.tp.MappingAtomicTypeAt(atomIndex)
+		if !ok {
+			panic(fmt.Sprintf("invalid record defaults atom index: %d", atomIndex))
+		}
+		fields := make([]bir.MappingConstructorDefaultEntry, br.readLength())
+		for i := range fields {
+			fields[i] = bir.MappingConstructorDefaultEntry{
+				FieldName:         string(br.readStringCPEntry()),
+				FunctionLookupKey: string(br.readStringCPEntry()),
+			}
+		}
+		recordDefaults[atom] = fields
+	}
+	return recordDefaults
 }
 
 func (br *birReader) readClassDefs() []bir.BIRClassDef {

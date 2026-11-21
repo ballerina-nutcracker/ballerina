@@ -10,7 +10,7 @@ main() -> nil{
   bb0 {
     %1 = ConstantLoad s
     %2 = ConstantLoad <nil>
-    %3 = newMap {| s: nil|stream<int|{| s: nil|..., never... |}>, never... |}{%1=%2}
+    %3 = newMap {| s: nil|stream<int|...>, never... |}{%1=%2}
     r = %3;
     %6 = ConstantLoad s
     %5 = r[%6];
