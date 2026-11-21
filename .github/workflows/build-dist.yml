@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    name: Build the Ballerina CLI for all platforms
+    name: Build the Ballerina distribution for all platforms
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,7 +33,7 @@ jobs:
         with:
           go-version: '1.27.1'
 
-      - name: Build the Ballerina CLI for all platforms
+      - name: Build the Ballerina CLI and language server for all platforms
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -50,6 +50,11 @@ jobs:
               -ldflags="-s -w -X main.Version=$VERSION" \
               -o "${output_dir}/bal${ext}" \
               ./cli/cmd
+            # bal start-language-server launches this sibling binary.
+            CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build \
+              -ldflags="-s -w" \
+              -o "${output_dir}/bal-language-server${ext}" \
+              ./ls/cmd
           done
 
       - name: Build balrt for all supported platforms
@@ -89,6 +94,7 @@ jobs:
             artifact_dir="artifacts/ballerina-nutcracker-${GOOS}-${GOARCH}/ballerina-${VERSION}"
             mkdir -p "$artifact_dir"
             cp "$src_dir/bal${ext}" "$artifact_dir/bal${ext}"
+            cp "$src_dir/bal-language-server${ext}" "$artifact_dir/bal-language-server${ext}"
 
             for rt_platform in "${platforms[@]}"; do
               RGOOS="${rt_platform%/*}"
