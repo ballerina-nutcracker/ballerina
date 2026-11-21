@@ -2596,6 +2596,7 @@ func transformClassDefinition(
 		return nil
 	}
 	birClassDef.Annotations = ctx.CompilerContext.SymbolAnnotationValues(class.Symbol())
+	birClassDef.IsReadonly = class.IsReadonly()
 	return birClassDef
 }
 

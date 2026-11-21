@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected readonly&[int...], got [int...]
+  --> readonly-class4-e.bal:25:22
+   |
+25 |         self.items = items; // @error mutable value assigned to included field of readonly class
+   |                      ^^^^^
