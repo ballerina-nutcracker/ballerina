@@ -1,0 +1,62 @@
+module $anon.. v 0.0.0;
+class Point {
+  coords readonly&[int...]
+  name string
+  dim int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad p
+      %3 = ConstantLoad name
+      self[%3] = %2;
+      %4 = ConstantLoad 2
+      %5 = ConstantLoad dim
+      self[%5] = %4;
+      %6 = ConstantLoad 1
+      %7 = ConstantLoad 2
+      %8 = ConstantLoad 2
+      %9 = newArray [int...][%8]{%6, %7}
+      %10 = ConstantLoad coords
+      self[%10] = %9;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Point
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    p = %3;
+    %7 = ConstantLoad coords
+    %6 = p[%7];
+    %8 = println(%6) -> bb5;
+  }
+  bb5 {
+    %10 = ConstantLoad name
+    %9 = p[%10];
+    %11 = println(%9) -> bb6;
+  }
+  bb6 {
+    %13 = ConstantLoad dim
+    %12 = p[%13];
+    %14 = %12;
+    %15 = println(%14) -> bb7;
+  }
+  bb7 {
+    return;
+  }
+}

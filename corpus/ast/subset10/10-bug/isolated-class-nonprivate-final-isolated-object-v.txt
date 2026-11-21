@@ -1,0 +1,70 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Counter
+    (object-type isolated
+      (method-decl next () (
+        (value-type int)))))
+  (class-definition SimpleCounter
+    (variable n (type
+      (value-type int)) (expr
+      (literal 0)))
+    (function next () (
+      (value-type int))
+      (block-function-body
+        (lock
+          (block-stmt
+            (compound-assignment +
+              (field-based-access n
+                (simple-var-ref self))
+              (literal 1))
+            (return
+              (field-based-access n
+                (simple-var-ref self))))))))
+  (class-definition Worker
+    (variable counter (type
+      (user-defined-type Counter)) (expr
+      (new
+        (user-defined-type SimpleCounter) ())))
+    (variable other (type
+      (user-defined-type SimpleCounter)) (expr
+      (new ())))
+    (variable mixed (type
+      (union-type
+        (user-defined-type Counter)
+        (intersection-type
+          (value-type readonly)
+          (array-type
+            (value-type int) dimensions: 1 ([]))))) (expr
+      (list-constructor-expr
+        (literal 1)
+        (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable w (type
+          (user-defined-type Worker)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (field-based-access counter
+              (simple-var-ref w)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (field-based-access counter
+              (simple-var-ref w)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation next expr:
+            (field-based-access other
+              (simple-var-ref w)) ()))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access mixed
+              (simple-var-ref w))
+            (array-type
+              (value-type int) dimensions: 1 ([])))))))))
