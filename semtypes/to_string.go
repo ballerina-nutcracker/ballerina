@@ -89,7 +89,7 @@ func basicTypeToString(ty basicTypeBitSet) string {
 
 func basicTypeBitSetToString(bits basicTypeBitSet) string {
 	var parts []string
-	for i := 0; i < int(valueTypeCount); i++ {
+	for i := range int(valueTypeCount) {
 		if bits&(1<<i) != 0 {
 			code := basicTypeCodeFrom(i)
 			name := strings.TrimPrefix(code.String(), "BT_")
