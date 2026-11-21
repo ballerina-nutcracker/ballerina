@@ -1,0 +1,95 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const L (
+    (array-type
+      (record-type
+        (field y
+          (value-type int)
+          (literal 2))) dimensions: 1 ([]))) (
+    (list-constructor-expr
+      (mapping-constructor-expr))))
+  (const M (
+    (constrained-type
+      (builtin-ref-type map)
+      (record-type
+        (field y
+          (value-type int)
+          (literal 2))))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (mapping-constructor-expr)))))
+  (const T (
+    (tuple-type
+      (record-type
+        (field y
+          (value-type int)
+          (literal 2))) (rest
+        (record-type
+          (field y
+            (value-type int)
+            (literal 3)))))) (
+    (list-constructor-expr
+      (mapping-constructor-expr)
+      (mapping-constructor-expr))))
+  (const U (
+    (union-type
+      (record-type
+        (field y
+          (value-type int)
+          (literal 2)))
+      (value-type int))) (
+    (mapping-constructor-expr)))
+  (const D (
+    (record-type
+      (field r
+        (array-type
+          (record-type
+            (field q
+              (record-type
+                (field z
+                  (value-type int)
+                  (literal 3))))) dimensions: 1 ([]))))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal r)
+        (list-constructor-expr
+          (mapping-constructor-expr
+            (key-value
+              (literal q)
+              (mapping-constructor-expr))))))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (expr-function-body
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type readonly))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref L))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref M))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref T))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref U))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (field-based-access q
+              (index-based-access
+                (field-based-access r
+                  (simple-var-ref D))
+                (literal 0)))))))))))

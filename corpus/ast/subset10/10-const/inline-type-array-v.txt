@@ -1,0 +1,65 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const SIZE (
+    (value-type int)) (
+    (literal 3)))
+  (const A (
+    (array-type
+      (value-type int) dimensions: 1 ([
+      (literal 3)]))) (
+    (list-constructor-expr
+      (literal 1))))
+  (const B (
+    (array-type
+      (value-type int) dimensions: 1 ([
+      (literal 3)]))) (
+    (list-constructor-expr
+      (literal 1)
+      (literal 2)
+      (literal 3))))
+  (const C (
+    (array-type
+      (value-type int) dimensions: 1 ([
+      (simple-var-ref SIZE)]))) (
+    (list-constructor-expr
+      (literal 7))))
+  (const D (
+    (array-type
+      (value-type int) dimensions: 2 ([
+      (literal 2)][
+      (literal 3)]))) (
+    (list-constructor-expr
+      (list-constructor-expr
+        (literal 1)))))
+  (function isReadonly (
+    (variable v (type
+      (value-type any)))) (
+    (value-type boolean))
+    (expr-function-body
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type readonly))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref A))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (invocation isReadonly (
+            (simple-var-ref D)))))))))

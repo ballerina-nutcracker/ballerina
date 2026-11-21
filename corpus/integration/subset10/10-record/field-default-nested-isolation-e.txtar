@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> field-default-nested-isolation-e.bal:23:23
+   |
+23 |     record {| int y = counter; |} r; // @error nested default reads a mutable module variable
+   |                       ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> field-default-nested-isolation-e.bal:24:23
+   |
+24 |     record {| int y = counter; |}[] arr; // @error default nested in an array reads a mutable module variable
+   |                       ^^^^^^^
+
+error[SEMANTIC_ERROR]: access of mutable variable
+  --> field-default-nested-isolation-e.bal:27:23
+   |
+27 |     record {| int y = counter; |}...; // @error default nested in a rest type reads a mutable module variable
+   |                       ^^^^^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> field-default-nested-isolation-e.bal:25:27
+   |
+25 |     map<record {| int y = f(); |}> m; // @error default nested in a map calls a non-isolated function
+   |                           ^^^
+
+error[SEMANTIC_ERROR]: invocation of a non-isolated function
+  --> field-default-nested-isolation-e.bal:26:24
+   |
+26 |     [record {| int y = f(); |}] tup; // @error default nested in a tuple calls a non-isolated function
+   |                        ^^^
