@@ -22,72 +22,9 @@ type OperatorExpression interface {
 	GetOperatorKind() model.OperatorKind
 }
 
-func IsEqualityExpr(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_EQUAL, model.OperatorKind_EQUALS, model.OperatorKind_NOT_EQUAL, model.OperatorKind_REF_EQUAL, model.OperatorKind_REF_NOT_EQUAL:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsMultiplicativeExpr(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_MUL, model.OperatorKind_DIV, model.OperatorKind_MOD:
-		return true
-	default:
-		return false
-	}
-}
-
 func IsRangeExpr(expr OperatorExpression) bool {
 	switch expr.GetOperatorKind() {
 	case model.OperatorKind_CLOSED_RANGE, model.OperatorKind_HALF_OPEN_RANGE:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsBitWiseExpr(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_BITWISE_AND, model.OperatorKind_BITWISE_OR, model.OperatorKind_BITWISE_XOR:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsShiftExpr(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_BITWISE_LEFT_SHIFT, model.OperatorKind_BITWISE_RIGHT_SHIFT, model.OperatorKind_BITWISE_UNSIGNED_RIGHT_SHIFT:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsRelationalExpr(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_LESS_THAN, model.OperatorKind_LESS_EQUAL, model.OperatorKind_GREATER_THAN, model.OperatorKind_GREATER_EQUAL:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsAdditiveExpr(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_ADD, model.OperatorKind_SUB:
-		return true
-	default:
-		return false
-	}
-}
-
-func IsLogicalExpression(expr OperatorExpression) bool {
-	switch expr.GetOperatorKind() {
-	case model.OperatorKind_AND, model.OperatorKind_OR:
 		return true
 	default:
 		return false
