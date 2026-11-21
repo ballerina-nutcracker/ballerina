@@ -8,7 +8,7 @@ main() -> nil{
   bb1 {
     %5 = ConstantLoad 2
     %6 = %5;
-    %1 = unknown %4 %6;
+    %1 = === %4 %6;
     %7 = %1;
     %8 = println(%7) -> bb2;
   }
@@ -20,7 +20,7 @@ main() -> nil{
     %14 = mkInt(%13) -> bb3;
   }
   bb3 {
-    %9 = unknown %11 %14;
+    %9 = !== %11 %14;
     %15 = %9;
     %16 = println(%15) -> bb4;
   }
@@ -32,7 +32,7 @@ main() -> nil{
   bb5 {
     %21 = ConstantLoad true
     %22 = %21;
-    %17 = unknown %20 %22;
+    %17 = === %20 %22;
     %23 = %17;
     %24 = println(%23) -> bb6;
   }
@@ -44,7 +44,7 @@ main() -> nil{
     %30 = mkBoolean(%29) -> bb7;
   }
   bb7 {
-    %25 = unknown %27 %30;
+    %25 = !== %27 %30;
     %31 = %25;
     %32 = println(%31) -> bb8;
   }

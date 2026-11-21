@@ -16,7 +16,7 @@ main() -> nil{
   }
   bb2 {
     %10 = ConstantLoad 1
-    %11 = unknown %10;
+    %11 = - %10;
     d = %11;
     %12 = <int>(d)
     %13 = %12;
@@ -45,7 +45,7 @@ main() -> nil{
   }
   bb6 {
     %27 = ConstantLoad 0.5
-    %28 = unknown %27;
+    %28 = - %27;
     d = %28;
     %29 = <int>(d)
     %30 = %29;
@@ -53,7 +53,7 @@ main() -> nil{
   }
   bb7 {
     %32 = ConstantLoad 1.5
-    %33 = unknown %32;
+    %33 = - %32;
     d = %33;
     %34 = <int>(d)
     %35 = %34;
@@ -61,7 +61,7 @@ main() -> nil{
   }
   bb8 {
     %37 = ConstantLoad 2.5
-    %38 = unknown %37;
+    %38 = - %37;
     d = %38;
     %39 = <int>(d)
     %40 = %39;
@@ -83,7 +83,7 @@ main() -> nil{
   }
   bb11 {
     %50 = ConstantLoad 1.5E+2
-    %51 = unknown %50;
+    %51 = - %50;
     d = %51;
     %52 = <int>(d)
     %53 = %52;
@@ -154,7 +154,7 @@ main() -> nil{
   }
   bb21 {
     %91 = ConstantLoad 1E-6143
-    %92 = unknown %91;
+    %92 = - %91;
     d = %92;
     %93 = <int>(d)
     %94 = %93;

@@ -26,7 +26,7 @@ main() -> nil{
     %19 = println(%18) -> bb3;
   }
   bb3 {
-    %20 = unknown elementClone element;
+    %20 = === elementClone element;
     %21 = %20;
     %22 = println(%21) -> bb4;
   }
@@ -37,7 +37,7 @@ main() -> nil{
     %25 = nestedComment(element) -> bb6;
   }
   bb6 {
-    %23 = unknown %24 %25;
+    %23 = === %24 %25;
     %26 = %23;
     %27 = println(%26) -> bb7;
   }
@@ -60,7 +60,7 @@ main() -> nil{
     %39 = println(%38) -> bb10;
   }
   bb10 {
-    %40 = unknown sequenceClone sequence;
+    %40 = === sequenceClone sequence;
     %41 = %40;
     %42 = println(%41) -> bb11;
   }
@@ -101,12 +101,12 @@ main() -> nil{
     %4 = ConstantLoad value
     %3 = $desugar$3[%4];
     item = %3;
-    %6 = unknown item (1, first);
+    %6 = === item (1, first);
     %7 = %6;
     %8 = println(%7) -> bb19;
   }
   bb19 {
-    %9 = unknown item (1, second);
+    %9 = === item (1, second);
     %10 = %9;
     %11 = println(%10) -> bb20;
   }
@@ -123,7 +123,7 @@ main() -> nil{
     %55 = clone(comment) -> bb23;
   }
   bb23 {
-    %54 = unknown %55 comment;
+    %54 = === %55 comment;
     %56 = %54;
     %57 = println(%56) -> bb24;
   }
@@ -143,7 +143,7 @@ main() -> nil{
     %67 = clone(instruction) -> bb27;
   }
   bb27 {
-    %66 = unknown %67 instruction;
+    %66 = === %67 instruction;
     %68 = %66;
     %69 = println(%68) -> bb28;
   }
@@ -154,7 +154,7 @@ main() -> nil{
     %74 = clone(text) -> bb29;
   }
   bb29 {
-    %73 = unknown %74 text;
+    %73 = === %74 text;
     %75 = %73;
     %76 = println(%75) -> bb30;
   }
