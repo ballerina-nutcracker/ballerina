@@ -113,7 +113,10 @@ These are the packages whose tests compare against golden output and register th
 go test -run='^$' -bench=. -benchtime=1x -timeout 2h ./corpus
 ```
 
-Pull requests get automatic time and memory benchmark comparisons against `main`.
+Time, memory, and HTTP revision comparisons run nightly on the default branch in
+the [Nightly Performance workflow](../../.github/workflows/nightly-performance.yml).
+See [statistical coordination and recovery](../../compiler-tools/benchmark-stats/README.md)
+for the comparison policy and manual recovery instructions.
 
 ### WASM
 

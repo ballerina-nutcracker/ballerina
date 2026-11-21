@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -49,12 +50,20 @@ func (b *benchmark) run() error {
 		return err
 	}
 
-	pruneWorktrees()
-
 	target, err := resolveTarget(b.target)
 	if err != nil {
 		return fmt.Errorf("failed to resolve benchmark target: %w", err)
 	}
+
+	ids := make([]string, len(target.paths))
+	for i, path := range target.paths {
+		ids[i] = benchmarkCaseID(target, path)
+	}
+	counts, err := loadRunCounts(b.runsPath, ids, b.runs)
+	if err != nil {
+		return err
+	}
+	pruneWorktrees()
 
 	// Each resource registers its teardown as it is created, so an interrupt
 	// tears down exactly what exists at that moment.
@@ -97,7 +106,7 @@ func (b *benchmark) run() error {
 	}
 	c.add(func() { _ = os.RemoveAll(exportDir) })
 
-	results, err := b.runBenchmarks(baseWorktree, headWorktree, target, interpreterBin, exportDir)
+	results, err := b.runBenchmarks(baseWorktree, headWorktree, target, interpreterBin, exportDir, ids, counts)
 	if err != nil {
 		return err
 	}
@@ -128,27 +137,79 @@ func writeReports(rep *report, exportPath, summaryPath string) error {
 	return nil
 }
 
-func (b *benchmark) runBenchmarks(baseWorktree, headWorktree string, target *benchmarkTarget, interpreterBin, exportDir string) ([]runResult, error) {
-	results := make([]runResult, 0, len(target.paths))
-	for _, path := range target.paths {
-		var export *benchExport
-		var err error
+func (b *benchmark) runBenchmarks(baseWorktree, headWorktree string, target *benchmarkTarget, interpreterBin, exportDir string, ids []string, counts map[string]int) ([]runResult, error) {
+	var err error
+	var writer *sampleWriter
+	if b.samplesPath != "" {
+		base, err := resolveSampleSHA(baseWorktree)
+		if err != nil {
+			return nil, err
+		}
+		head, err := resolveSampleSHA(headWorktree)
+		if err != nil {
+			return nil, err
+		}
+		metadataIDs := append([]string{}, ids...)
+		sort.Strings(metadataIDs)
+		unit := "s"
 		if b.mode == memoryMode {
-			export, err = b.runMemoryBenchmark(baseWorktree, headWorktree, path, interpreterBin)
+			unit = "MiB"
+		}
+		writer, err = newSampleWriter(b.samplesPath, sampleMetadata{Type: "metadata", Version: 1, BaseSHA: base, HeadSHA: head, Suite: string(b.mode), Phase: b.phase, Cases: metadataIDs, Counts: counts, Unit: unit})
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = writer.close(false) }()
+	}
+	results := make([]runResult, 0, len(target.paths))
+	for i, path := range target.paths {
+		id := ids[i]
+		var export *benchExport
+		if b.mode == memoryMode {
+			export, err = b.runMemoryBenchmark(baseWorktree, headWorktree, path, interpreterBin, counts[id], id, writer)
 		} else {
 			cmds := b.benchmarkCmdPair(baseWorktree, headWorktree, target.root, path, target.mode, interpreterBin)
-			exportPath := filepath.Join(exportDir, fmt.Sprintf("%s.json", sanitize(path)))
-			export, err = b.runHyperfine(cmds, exportPath)
+			export, err = b.runTimeBenchmark(cmds, counts[id], exportDir, id, writer)
 		}
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, runResult{
-			label:  benchmarkResultLabel(target, path),
-			export: *export,
-		})
+		if writer != nil {
+			if err := writer.completeCase(id); err != nil {
+				return nil, err
+			}
+		}
+		results = append(results, runResult{label: benchmarkResultLabel(target, path), export: *export})
+	}
+	if writer != nil {
+		if err := writer.close(true); err != nil {
+			return nil, err
+		}
 	}
 	return results, nil
+}
+
+func (b *benchmark) runTimeBenchmark(cmds []string, runs int, exportDir, caseID string, writer *sampleWriter) (*benchExport, error) {
+	commands := []string{cmds[2], cmds[5]}
+	return b.acquirePairs(commands, runs, caseID, "s", writer, func(role int) (float64, error) {
+		f, err := os.CreateTemp(exportDir, "sample-*.json")
+		if err != nil {
+			return 0, err
+		}
+		path := f.Name()
+		if err := f.Close(); err != nil {
+			return 0, err
+		}
+		defer func() { _ = os.Remove(path) }()
+		export, err := b.runHyperfine(cmds[role*3:role*3+3], path)
+		if err != nil {
+			return 0, err
+		}
+		if len(export.Results) != 1 || len(export.Results[0].Times) != 1 {
+			return 0, fmt.Errorf("expected exactly one hyperfine time")
+		}
+		return export.Results[0].Times[0], nil
+	})
 }
 
 func (b *benchmark) checkoutWorktree(ref string) (string, error) {
@@ -184,17 +245,15 @@ func (b *benchmark) buildInterpreter(worktreePath, ref, output string) error {
 	return nil
 }
 
-func (b *benchmark) hyperfineFlags() []string {
+func (b *benchmark) hyperfineFlags(runs, warmup int) []string {
 	args := []string{"--show-output"}
-	if b.warmup > 0 {
-		args = append(args, "--warmup", strconv.Itoa(b.warmup))
-	}
-	args = append(args, "--runs", strconv.Itoa(b.runs))
+	args = append(args, "--warmup", strconv.Itoa(warmup))
+	args = append(args, "--runs", strconv.Itoa(runs))
 	return args
 }
 
 func (b *benchmark) runHyperfine(cmds []string, jsonExportPath string) (*benchExport, error) {
-	args := b.hyperfineFlags()
+	args := b.hyperfineFlags(1, 0)
 	args = append(args, "--export-json", jsonExportPath)
 	args = append(args, cmds...)
 	if err := runCmd(".", "hyperfine", args...); err != nil {
