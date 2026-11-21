@@ -1,0 +1,25 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Name
+    (value-type string))
+  (class-definition Person
+    (variable Name (type
+      (value-type string)) (expr
+      (literal x)))
+    (variable n (type
+      (user-defined-type Name)) (expr
+      (literal y))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Person)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access n
+            (simple-var-ref p))
+          (field-based-access Name
+            (simple-var-ref p))))))))

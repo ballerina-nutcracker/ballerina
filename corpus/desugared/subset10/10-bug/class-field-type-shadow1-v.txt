@@ -1,0 +1,36 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Name
+    (value-type string))
+  (class-definition Person
+    (variable Name (type
+      (value-type string)))
+    (variable n (type
+      (user-defined-type Name)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal Name))
+          (literal x))
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal n))
+          (literal y)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Person)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref p)
+            (literal n))
+          (index-based-access
+            (simple-var-ref p)
+            (literal Name))))))))

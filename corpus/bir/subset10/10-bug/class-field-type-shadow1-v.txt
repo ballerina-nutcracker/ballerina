@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+class Person {
+  Name string
+  n string
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad x
+      %3 = ConstantLoad Name
+      self[%3] = %2;
+      %4 = ConstantLoad y
+      %5 = ConstantLoad n
+      self[%5] = %4;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Person
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    p = %3;
+    %7 = ConstantLoad n
+    %6 = p[%7];
+    %9 = ConstantLoad Name
+    %8 = p[%9];
+    %10 = println(%6,%8) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+}
