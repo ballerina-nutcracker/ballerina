@@ -52,13 +52,15 @@ func applyChanges(text string, changes []protocol.TextDocumentContentChangeEvent
 	return text, true
 }
 
+// utf16Offset converts an LSP UTF-16 position to a byte offset in text.
+// Positions beyond the last line clamp to len(text).
 func utf16Offset(text string, position protocol.Position) (int, bool) {
 	lineStart := 0
 	line := uint32(0)
 	for line < position.Line {
 		nextLineStart, ok := nextLineStart(text, lineStart)
 		if !ok {
-			return 0, false
+			return len(text), true
 		}
 		lineStart = nextLineStart
 		line++
@@ -92,7 +94,7 @@ func utf16Offset(text string, position protocol.Position) (int, bool) {
 
 func nextLineStart(text string, start int) (int, bool) {
 	if start >= len(text) {
-		return start, true
+		return start, false
 	}
 	for offset := start; offset < len(text); {
 		switch text[offset] {
