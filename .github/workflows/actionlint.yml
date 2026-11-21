@@ -1,0 +1,28 @@
+name: Actionlint
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/**'
+  merge_group:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.1'
+      - name: Check shellcheck is available
+        run: shellcheck --version
+      - name: Install actionlint
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+      - name: Run actionlint
+        run: '"$(go env GOPATH)/bin/actionlint"'

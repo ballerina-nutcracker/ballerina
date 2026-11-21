@@ -5,9 +5,13 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
+import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Lock
 from typing import NamedTuple
 
 MAX_PARALLEL = 3
@@ -131,6 +135,7 @@ def run_tests_for_module(
     go_parallel: str,
     race: bool,
     workspace_packages: str,
+    output_lock: Lock | None,
 ) -> None:
     module = info.module
     cmd = [
@@ -166,7 +171,19 @@ def run_tests_for_module(
         )
 
     cmd.append("./...")
-    subprocess.run(cmd, cwd=info.cwd, check=True, env=env)
+    if output_lock is None:
+        subprocess.run(cmd, cwd=info.cwd, check=True, env=env)
+    else:
+        # Publish a complete module log without serializing test execution.
+        with tempfile.TemporaryFile() as output:
+            try:
+                subprocess.run(cmd, cwd=info.cwd, check=True, env=env,
+                               stdout=output, stderr=subprocess.STDOUT)
+            finally:
+                output.seek(0)
+                with output_lock:
+                    shutil.copyfileobj(output, sys.stdout.buffer)
+                    sys.stdout.buffer.flush()
 
     if with_coverage:
         if any(coverage_dir.iterdir()):
@@ -225,8 +242,10 @@ def run_modules_in_parallel(
     go_parallel: str,
     race: bool,
     workspace_packages: str,
+    group_output: bool,
 ) -> bool:
     failed = False
+    output_lock = Lock() if group_output else None
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
         future_to_module = {}
         for info in modules:
@@ -238,6 +257,7 @@ def run_modules_in_parallel(
                 go_parallel,
                 race,
                 workspace_packages,
+                output_lock,
             )
             future_to_module[future] = info.module
 
@@ -265,6 +285,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--with-coverage", action="store_true")
     parser.add_argument("--race", action="store_true", help="Run root module tests with the race detector")
+    parser.add_argument("--group-output", action="store_true",
+                        help="Print each parallel module's test output as one block after it finishes")
     args = parser.parse_args()
     repo_root = Path(__file__).resolve().parents[2]
     os.chdir(repo_root)
@@ -276,13 +298,14 @@ def main() -> int:
     if args.race:
         details.append("race detector")
     suffix = f" with {' and '.join(details)}" if details else ""
-    print(f"Running tests{suffix}")
+    print(f"Running tests{suffix}", flush=args.group_output)
 
     workspace_packages = (
         discover_all_workspace_packages(repo_root, modules) if args.with_coverage else ""
     )
     if run_modules_in_parallel(
-        repo_root, modules, args.with_coverage, go_parallel, args.race, workspace_packages
+        repo_root, modules, args.with_coverage, go_parallel, args.race, workspace_packages,
+        args.group_output,
     ):
         return 1
     if run_debug_tagged_tests(modules, go_parallel, args.race):
