@@ -1,0 +1,52 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: {| a1: {| a2: nil|{| b: nil|..., q: int, never... |}, p: int, never... |}, a2: {| b: nil|..., q: int, never... |}, never... |}|{| a1: {| a2: nil|{| b: nil|..., q: int, never... |}, p: int, never... |}, a2: {| b: nil|..., q: int, never... |}, s: string, never... |}, never... |}{} defaults{f=$anon/.:$default$4}
+    b = %1;
+    %4 = ConstantLoad f
+    %3 = b[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> nil|{| b: nil|{| f: {| a1: {| a2: nil|..., p: int, never... |}, a2: ..., never... |}|{| a1: {| a2: nil|..., p: int, never... |}, a2: ..., s: string, never... |}, never... |}, q: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> nil|{| f: {| a1: {| a2: nil|{| b: nil|..., q: int, never... |}, p: int, never... |}, a2: {| b: nil|..., q: int, never... |}, never... |}|{| a1: {| a2: nil|{| b: nil|..., q: int, never... |}, p: int, never... |}, a2: {| b: nil|..., q: int, never... |}, s: string, never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$default$4() -> {| a1: {| a2: nil|{| b: nil|{| f: ...|{| a1: ..., a2: ..., s: string, never... |}, never... |}, q: int, never... |}, p: int, never... |}, a2: {| b: nil|{| f: ...|{| a1: {| a2: nil|..., p: int, never... |}, a2: ..., s: string, never... |}, never... |}, q: int, never... |}, never... |}|{| a1: {| a2: nil|{| b: nil|{| f: {| a1: ..., a2: ..., never... |}|..., never... |}, q: int, never... |}, p: int, never... |}, a2: {| b: nil|{| f: {| a1: {| a2: nil|..., p: int, never... |}, a2: ..., never... |}|..., never... |}, q: int, never... |}, s: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad a1
+    %2 = newMap {| a2: nil|{| b: nil|{| f: {| a1: {| a2: nil|..., p: int, never... |}, a2: ..., never... |}|{| a1: {| a2: nil|..., p: int, never... |}, a2: ..., s: string, never... |}, never... |}, q: int, never... |}, p: int, never... |}{} defaults{a2=$anon/.:$default$0, p=$anon/.:$default$1}
+    %3 = ConstantLoad a2
+    %4 = newMap {| b: nil|{| f: {| a1: {| a2: nil|{| b: nil|..., q: int, never... |}, p: int, never... |}, a2: {| b: nil|..., q: int, never... |}, never... |}|{| a1: {| a2: nil|{| b: nil|..., q: int, never... |}, p: int, never... |}, a2: {| b: nil|..., q: int, never... |}, s: string, never... |}, never... |}, q: int, never... |}{} defaults{b=$anon/.:$default$2, q=$anon/.:$default$3}
+    %5 = newMap {| a1: {| a2: nil|{| b: nil|{| f: ...|{| a1: ..., a2: ..., s: string, never... |}, never... |}, q: int, never... |}, p: int, never... |}, a2: {| b: nil|{| f: ...|{| a1: {| a2: nil|..., p: int, never... |}, a2: ..., s: string, never... |}, never... |}, q: int, never... |}, never... |}{%1=%2, %3=%4}
+    %0 = %5;
+    return;
+  }
+}

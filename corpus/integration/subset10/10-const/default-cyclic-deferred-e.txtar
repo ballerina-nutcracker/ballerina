@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-cyclic-deferred-e.bal:23:13
+   |
+23 |     X|Y f = {a: {}}; // @error selected constructor requires a cyclic default
+   |             ^^^^^^^

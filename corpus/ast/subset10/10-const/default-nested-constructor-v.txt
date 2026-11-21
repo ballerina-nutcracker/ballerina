@@ -1,0 +1,98 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int)
+        (invocation next ()))
+      (field y
+        (value-type int)
+        (literal 1))))
+  (type-definition Supplied
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))))
+      (field k
+        (value-type int)
+        (literal 0))))
+  (type-definition Omitted
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr
+          (key-value
+            (literal y)
+            (literal 2))))
+      (field k
+        (value-type int)
+        (literal 0))))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int)
+        (literal 1))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null))
+        (literal <nil>))))
+  (type-definition Holder
+    (record-type
+      (field node
+        (user-defined-type Node)
+        (mapping-constructor-expr))
+      (field other
+        (user-defined-type Node)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 3))))))
+  (const A (
+    (user-defined-type Supplied)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type Omitted)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal inner)
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 7)))))))
+  (const C (
+    (user-defined-type Holder)) (
+    (mapping-constructor-expr)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (value-type readonly)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (var-def
+        (variable o (type
+          (user-defined-type Omitted)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C)))))))

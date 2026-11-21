@@ -1,0 +1,61 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Inner
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field s
+        (value-type string)
+        (literal i))))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (simple-var-ref I))
+      (field list
+        (array-type
+          (user-defined-type Inner) dimensions: 1 ([]))
+        (list-constructor-expr
+          (literal {"x":2,"s":"i"})
+          (mapping-constructor-expr)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"inner":{"x":2,"s":"i"},"list":[{"x":2,"s":"i"},{"x":1,"s":"i"}]}))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (index-based-access
+              (literal {"inner":{"x":2,"s":"i"},"list":[{"x":2,"s":"i"},{"x":1,"s":"i"}]})
+              (literal inner))
+            (literal {"x":2,"s":"i"})))))
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (simple-var-ref o)
+            (literal {"inner":{"x":2,"s":"i"},"list":[{"x":2,"s":"i"},{"x":1,"s":"i"}]})))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal i))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal {"x":2,"s":"i"}))))
+  (function $default$3 () ()
+    (block-function-body
+      (return
+        (list-constructor-expr
+          (literal {"x":2,"s":"i"})
+          (mapping-constructor-expr))))))

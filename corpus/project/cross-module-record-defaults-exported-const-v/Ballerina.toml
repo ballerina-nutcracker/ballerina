@@ -1,0 +1,4 @@
+[package]
+org = "testorg"
+name = "crossmodulerecorddefaultsexportedconst"
+version = "0.1.0"

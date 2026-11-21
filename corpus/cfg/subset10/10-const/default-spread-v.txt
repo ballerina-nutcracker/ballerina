@@ -1,0 +1,38 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref B))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref D))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref E))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref B)
+          (intersection-type
+            (value-type readonly)
+            (record-type
+              (field x
+                (finite-type
+                  (literal 1)))
+              (field y
+                (finite-type
+                  (literal 9)))))))))
+  )
+)
+(next
+  (bb0 () ()
+    (return
+      (literal 42))
+  )
+)

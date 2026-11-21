@@ -1,0 +1,16 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (field-based-access andGuard
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access orGuard
+          (simple-var-ref A)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access ternary
+          (simple-var-ref A)))))
+  )
+)

@@ -1,0 +1,4 @@
+-- stdout --
+{"x":5,"y":0,"next":{"y":2}}
+true
+-- stderr --

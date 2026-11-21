@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref O))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (field-based-access inner
+            (simple-var-ref O))
+          (simple-var-ref I)))))
+    (var-def
+      (variable o (type
+        (user-defined-type Outer)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (simple-var-ref o)
+          (simple-var-ref O)))))
+  )
+)

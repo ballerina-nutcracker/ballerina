@@ -1,0 +1,13 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref A))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr ==
+          (field-based-access c
+            (simple-var-ref A))
+          (simple-var-ref GREEN)))))
+  )
+)

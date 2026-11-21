@@ -1,0 +1,61 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field x
+        (value-type int)
+        (literal 1))
+      (field f
+        (function-type () (
+          (union-type
+            (user-defined-type R)
+            (value-type null))))
+        (lambda
+          (function $anonFunc$_0 () (
+            (union-type
+              (user-defined-type R)
+              (value-type null)))
+            (block-function-body
+              (foreach
+                (var-def
+                  (variable _ (type
+                    (value-type int))))
+                (binary-expr ..<
+                  (literal 0)
+                  (literal 1))
+                (block-stmt
+                  (return
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal x)
+                        (literal 2))))))
+              (return
+                (literal <nil>))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable g (expr
+          (field-based-access f
+            (simple-var-ref r)))))
+      (var-def
+        (variable s (type
+          (union-type
+            (user-defined-type R)
+            (value-type null))) (expr
+          (invocation g ()))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref s)
+              (user-defined-type R))
+            (field-based-access x
+              (simple-var-ref s))
+            (unary-expr -
+              (literal 1)))))))))

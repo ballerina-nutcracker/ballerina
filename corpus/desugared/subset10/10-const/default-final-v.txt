@@ -1,0 +1,177 @@
+(package
+  (import-package ballerina io (as io))
+  (variable SEED (type
+    (value-type int)))
+  (type-definition FromFinal
+    (record-type
+      (field x
+        (value-type int)
+        (simple-var-ref SEED))
+      (field y
+        (value-type int)
+        (literal 1))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref SEED)
+        (literal 4))))
+  (function build (
+    (variable p (type
+      (value-type int)))) (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (lambda
+            (function $default$2 () ()
+              (block-function-body
+                (return
+                  (simple-var-ref p))))))))
+      (var-def
+        (variable $desugar$1 (expr
+          (lambda
+            (function $default$3 () ()
+              (block-function-body
+                (return
+                  (literal 3))))))))
+      (var-def
+        (variable r (type
+          (record-type
+            (field z
+              (value-type int)
+              (simple-var-ref p))
+            (field w
+              (value-type int)
+              (literal 3)))) (expr
+          (mapping-constructor-expr))))
+      (return
+        (binary-expr +
+          (index-based-access
+            (simple-var-ref r)
+            (literal z))
+          (index-based-access
+            (simple-var-ref r)
+            (literal w))))))
+  (function sumInLoop () (
+    (value-type int))
+    (block-function-body
+      (var-def
+        (variable total (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable i (type
+          (value-type int)) (expr
+          (literal 0))))
+      (while
+        (binary-expr <
+          (simple-var-ref i)
+          (literal 2))
+        (block-stmt
+          (var-def
+            (variable $desugar$0 (expr
+              (lambda
+                (function $default$4 () ()
+                  (block-function-body
+                    (return
+                      (literal 2))))))))
+          (var-def
+            (variable $desugar$1 (expr
+              (lambda
+                (function $default$5 () ()
+                  (block-function-body
+                    (return
+                      (literal 1))))))))
+          (var-def
+            (variable r (type
+              (record-type
+                (field z
+                  (value-type int)
+                  (literal 2))
+                (field w
+                  (value-type int)
+                  (literal 1)))) (expr
+              (mapping-constructor-expr))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref r)
+                (literal z))
+              (index-based-access
+                (simple-var-ref r)
+                (literal w))))
+          (compound-assignment +
+            (simple-var-ref i)
+            (literal 1))))
+      (var-def
+        (variable $desugar$2 (expr
+          (literal 0))))
+      (var-def
+        (variable $desugar$3 (expr
+          (literal 2))))
+      (while
+        (binary-expr <
+          (simple-var-ref $desugar$2)
+          (simple-var-ref $desugar$3))
+        (block-stmt
+          (var-def
+            (variable j (type
+              (value-type int)) (expr
+              (simple-var-ref $desugar$2))))
+          (var-def
+            (variable $desugar$4 (expr
+              (lambda
+                (function $default$6 () ()
+                  (block-function-body
+                    (return
+                      (literal 10))))))))
+          (var-def
+            (variable r (type
+              (record-type
+                (field z
+                  (value-type int)
+                  (literal 10)))) (expr
+              (mapping-constructor-expr))))
+          (compound-assignment +
+            (simple-var-ref total)
+            (binary-expr +
+              (index-based-access
+                (simple-var-ref r)
+                (literal z))
+              (simple-var-ref j)))
+          (assignment
+            (simple-var-ref $desugar$2)
+            (binary-expr +
+              (simple-var-ref $desugar$2)
+              (numeric-literal 1)))))
+      (return
+        (simple-var-ref total))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (invocation sumInLoop ()))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":2,"y":1}))))
+      (var-def
+        (variable r (type
+          (user-defined-type FromFinal)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (expression-stmt
+        (invocation io println (
+          (invocation build (
+            (literal 5))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (simple-var-ref SEED))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 1)))))

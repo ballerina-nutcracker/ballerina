@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cyclic dependency in record field default
+  --> default-body-reentry-e.bal:16:28
+   |
+16 | type R record {| R? next = L; |}; // @error default body reentry requests an unavailable constant
+   |                            ^

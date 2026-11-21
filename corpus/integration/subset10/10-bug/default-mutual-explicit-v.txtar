@@ -1,0 +1,6 @@
+-- stdout --
+{"b":{"a":null}}
+{"a":{"b":null}}
+true
+true
+-- stderr --

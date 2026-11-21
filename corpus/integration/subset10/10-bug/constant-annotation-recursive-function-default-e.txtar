@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot declare a constant with type '{| nil|{| f: function(int) returns nil, r: nil|..., never... |}... |}', expected a subtype of 'anydata' that is not 'never'
+  --> constant-annotation-recursive-function-default-e.bal:17:17
+   |
+17 | const map<Rec?> C = {a: ()}; // @error a function-typed field is not anydata
+   |                 ^

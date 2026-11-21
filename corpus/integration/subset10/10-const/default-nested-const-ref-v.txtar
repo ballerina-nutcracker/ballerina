@@ -1,0 +1,3 @@
+-- stdout --
+{"inner":{"port":8080}}
+-- stderr --

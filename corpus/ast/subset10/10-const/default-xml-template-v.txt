@@ -1,0 +1,25 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const NAME () (
+    (literal x)))
+  (type-definition Doc
+    (record-type
+      (field value
+        (value-type xml)
+        (xml-template-literal
+          (template-string "<a>")
+          (xml-template-content-insertion
+            (simple-var-ref NAME))
+          (template-string "</a>")))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable d (type
+          (user-defined-type Doc)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access value
+            (simple-var-ref d))))))))

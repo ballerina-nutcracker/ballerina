@@ -1,0 +1,30 @@
+(isQ
+  (bb0 () ()
+    (return
+      (type-test-expr is
+        (simple-var-ref v)
+        (user-defined-type Q)))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type P)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal x)
+            (literal 5))
+          (key-value
+            (literal y)
+            (literal 0))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref p))))
+    (expression-stmt
+      (invocation io println (
+        (invocation isQ (
+          (field-based-access next
+            (simple-var-ref p)))))))
+  )
+)

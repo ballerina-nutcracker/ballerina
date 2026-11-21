@@ -1,0 +1,60 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Outer
+    (record-type
+      (field inner
+        (user-defined-type Inner)
+        (mapping-constructor-expr))))
+  (type-definition Inner
+    (record-type
+      (field port
+        (value-type int)
+        (field-based-access port
+          (literal {"host":"h","port":8080})))))
+  (type-definition Config
+    (record-type
+      (field host
+        (value-type string))
+      (field port
+        (value-type int)
+        (literal 8080))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable o (type
+          (user-defined-type Outer)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref o))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (literal {"host":"h","port":8080})
+            (literal port)))))
+      (expression-stmt
+        (invocation io println (
+          (binary-expr ==
+            (literal {"host":"h","port":8080})
+            (mapping-constructor-expr
+              (key-value
+                (literal host)
+                (literal h))
+              (key-value
+                (literal port)
+                (literal 8080)))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (index-based-access
+          (literal {"host":"h","port":8080})
+          (literal port)))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (literal 8080)))))

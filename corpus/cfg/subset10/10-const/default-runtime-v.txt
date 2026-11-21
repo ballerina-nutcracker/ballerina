@@ -1,0 +1,64 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable first (type
+        (user-defined-type Traced)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref first))))
+    (var-def
+      (variable second (type
+        (user-defined-type Traced)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal a)
+            (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref second))))
+    (var-def
+      (variable one (type
+        (user-defined-type Containers)) (expr
+        (mapping-constructor-expr))))
+    (var-def
+      (variable two (type
+        (user-defined-type Containers)) (expr
+        (mapping-constructor-expr))))
+    (assignment
+      (index-based-access
+        (field-based-access m
+          (simple-var-ref one))
+        (literal k))
+      (literal 1))
+    (expression-stmt
+      (invocation lang.array push (
+        (field-based-access l
+          (simple-var-ref one))
+        (literal 9))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref one))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref two))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref C))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref C)
+          (value-type readonly)))))
+  )
+)
+(trace
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (literal default )
+        (simple-var-ref name))))
+    (return
+      (literal 1))
+  )
+)

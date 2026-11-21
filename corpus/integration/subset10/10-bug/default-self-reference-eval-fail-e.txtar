@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> default-self-reference-eval-fail-e.bal:21:16
+   |
+21 |     R? next = (1 / 0 == 0) ? () : {}; // @error division by zero in a default that is never used
+   |                ^^^^^

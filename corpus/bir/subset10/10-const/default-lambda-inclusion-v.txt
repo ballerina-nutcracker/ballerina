@@ -1,0 +1,70 @@
+module $anon.. v 0.0.0;
+sum({| f: isolated function() returns int, x: int, y: int, never... |}) -> int{
+  bb0 {
+    %4 = ConstantLoad x
+    %3 = b[%4];
+    %5 = %3;
+    %7 = ConstantLoad y
+    %6 = b[%7];
+    %8 = %6;
+    %2 = + %5 %8;
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: isolated function() returns int, x: int, never... |}{} defaults{x=$anon/.:$default$1, f=$anon/.:$default$2}
+    a = %1;
+    %4 = ConstantLoad f
+    %3 = a[%4];
+    g = %3;
+    %6 = g() -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %9 = newMap {| f: isolated function() returns int, x: int, y: int, never... |}{} defaults{y=$anon/.:$default$0, x=$anon/.:$default$1, f=$anon/.:$default$2}
+    b = %9;
+    %12 = ConstantLoad x
+    %11 = b[%12];
+    %13 = %11;
+    %14 = println(%13) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %1 = newMap {| f: isolated function() returns int, x: int, y: int, never... |}{} defaults{y=$anon/.:$default$0, x=$anon/.:$default$1, f=$anon/.:$default$2}
+    %2 = sum(%1) -> bb1;
+  }
+  bb1 {
+    %0 = %2;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> isolated function() returns int{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    %0 = %1;
+    return;
+  }
+}

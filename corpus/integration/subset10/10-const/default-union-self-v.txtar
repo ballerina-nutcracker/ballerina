@@ -1,0 +1,4 @@
+-- stdout --
+{"x":1,"next":{"s":"a","n":3}}
+true
+-- stderr --

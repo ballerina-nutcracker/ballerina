@@ -1,0 +1,115 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (type-definition Const
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (literal 5))))
+  (type-definition Runtime
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition Open
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition MaybeY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (const X (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1)))))
+  (const XY (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1))
+      (key-value
+        (literal y)
+        (literal 9)))))
+  (const A (
+    (user-defined-type Const)) (
+    (mapping-constructor-expr
+      (mapping-spread-field
+        (simple-var-ref X)))))
+  (const B (
+    (user-defined-type Const)) (
+    (mapping-constructor-expr
+      (mapping-spread-field
+        (simple-var-ref XY)))))
+  (const C (
+    (user-defined-type Runtime)) (
+    (mapping-constructor-expr
+      (mapping-spread-field
+        (simple-var-ref XY)))))
+  (const D (
+    (user-defined-type Runtime)) (
+    (mapping-constructor-expr
+      (mapping-spread-field
+        (simple-var-ref X))
+      (key-value
+        (literal y)
+        (literal 3)))))
+  (const E (
+    (user-defined-type Open)) (
+    (mapping-constructor-expr
+      (mapping-spread-field
+        (type-conversion-expr
+          (simple-var-ref XY)
+          (user-defined-type MaybeY))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref C))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref D))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref E))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref B)
+            (intersection-type
+              (value-type readonly)
+              (record-type
+                (field x
+                  (finite-type
+                    (literal 1)))
+                (field y
+                  (finite-type
+                    (literal 9))))))))))))
