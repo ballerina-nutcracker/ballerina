@@ -137,10 +137,7 @@ type DiagnosticInfo struct {
 type DiagnosticSeverity uint8
 
 const (
-	Internal DiagnosticSeverity = iota
-	Hint
-	Info
-	Warning
+	Warning DiagnosticSeverity = iota
 	Error
 )
 
