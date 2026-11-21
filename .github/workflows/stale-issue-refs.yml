@@ -1,0 +1,34 @@
+name: Stale Issue References
+
+on:
+  schedule:
+    # 02:30 UTC every day
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Print the issues instead of creating them
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  stale-refs:
+    name: Report references to closed issues
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test stale reference checker
+        run: python3 .github/scripts/test_stale_issue_refs.py
+      - name: Report stale issue references
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/stale_issue_refs.py ${{ inputs.dry-run && '--dry-run' || '' }}
