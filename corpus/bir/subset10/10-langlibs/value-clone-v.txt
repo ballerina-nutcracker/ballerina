@@ -28,7 +28,7 @@ main() -> nil{
     %12 = println(%11) -> bb3;
   }
   bb3 {
-    %13 = unknown p q;
+    %13 = === p q;
     %14 = %13;
     %15 = println(%14) -> bb4;
   }
@@ -94,7 +94,7 @@ main() -> nil{
     %54 = teamClone[%55];
     %57 = ConstantLoad lead
     %56 = team[%57];
-    %53 = unknown %54 %56;
+    %53 = === %54 %56;
     %58 = %53;
     %59 = println(%58) -> bb15;
   }
@@ -189,7 +189,7 @@ main() -> nil{
     %116 = clone(e) -> bb32;
   }
   bb32 {
-    %115 = unknown %116 e;
+    %115 = === %116 e;
     %117 = %115;
     %118 = println(%117) -> bb33;
   }
