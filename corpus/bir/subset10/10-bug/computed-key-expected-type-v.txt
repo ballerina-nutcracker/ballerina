@@ -1,0 +1,52 @@
+module $anon.. v 0.0.0;
+main() -> nil|error{
+  bb0 {
+    %1 = ConstantLoad k
+    j = %1;
+    %4 = ConstantLoad typedesc
+    %5 = cloneWithType(j,%4) -> bb1;
+  }
+  bb1 {
+    %6 = %5 is error
+    %6 ? bb2 : bb3;
+  }
+  bb2 {
+    %0 = %5;
+    return;
+  }
+  bb3 {
+    %3 = %5;
+    GOTO bb4;
+  }
+  bb4 {
+    %7 = ConstantLoad 1
+    %8 = newMap {| int... |}{[%3]=%7}
+    m = %8;
+    %10 = println(m) -> bb5;
+  }
+  bb5 {
+    %12 = ConstantLoad typedesc
+    %13 = cloneWithType(j,%12) -> bb6;
+  }
+  bb6 {
+    %14 = %13 is error
+    %14 ? bb7 : bb8;
+  }
+  bb7 {
+    %0 = %13;
+    return;
+  }
+  bb8 {
+    %11 = %13;
+    GOTO bb9;
+  }
+  bb9 {
+    %15 = ConstantLoad 2
+    %16 = newMap {| int... |}{[%11]=%15}
+    v = %16;
+    %18 = println(v) -> bb10;
+  }
+  bb10 {
+    return;
+  }
+}

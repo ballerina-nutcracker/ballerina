@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: ambiguous inherent type for mapping constructor
+  --> computed-key-ambiguous-e.bal:29:15
+   |
+29 |     R1|R2 r = {a: 1, [k]: "x"}; // @error
+   |               ^^^^^^^^^^^^^^^^

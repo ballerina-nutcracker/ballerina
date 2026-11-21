@@ -1,0 +1,3 @@
+-- stdout --
+true{"a":1,"c":"x"}
+-- stderr --

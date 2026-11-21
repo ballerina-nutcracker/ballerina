@@ -22,7 +22,7 @@
           (key-value
             (literal id)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 2))))))
     (expression-stmt
@@ -42,7 +42,7 @@
       (variable inherentField (type
         (user-defined-type FrozenField)) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 4))
           (key-value
@@ -71,7 +71,7 @@
           (key-value
             (literal id)
             (literal 5))
-          (key-value
+          (computed-key-value
             (simple-var-ref key)
             (literal 6))))))
     (expression-stmt

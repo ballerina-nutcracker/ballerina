@@ -1,0 +1,51 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad 0
+    %3 = ConstantLoad q
+    %4 = ConstantLoad 1
+    %5 = newArray [string, never...][%4]{%3}
+    $desugar$0 = %5;
+    %7 = length($desugar$0) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %7;
+    %9 = ConstantLoad 0
+    %10 = newArray list[%9]{}
+    $desugar$2 = %10;
+    %13 = ConstantLoad 0
+    $desugar$3 = %13;
+    GOTO bb2;
+  }
+  bb2 {
+    %16 = $desugar$3;
+    %17 = $desugar$1;
+    %15 = < %16 %17;
+    %15 ? bb3 : bb4;
+  }
+  bb3 {
+    PushScopeFrame 6
+    %0 = (1, $desugar$0)[(1, $desugar$3)];
+    (1, x) = %0;
+    %1 = push((1, $desugar$2),(1, x)) -> bb5;
+  }
+  bb4 {
+    %1 = $desugar$2[%2];
+    %18 = ConstantLoad 1
+    %19 = newMap {| int... |}{[%1]=%18}
+    q = %19;
+    %21 = println(q) -> bb6;
+  }
+  bb5 {
+    %3 = (1, $desugar$3);
+    %4 = ConstantLoad 1
+    %5 = %4;
+    %2 = + %3 %5;
+    (1, $desugar$3) = %2;
+    PopScopeFrame
+    GOTO bb2;
+  }
+  bb6 {
+    return;
+  }
+}
