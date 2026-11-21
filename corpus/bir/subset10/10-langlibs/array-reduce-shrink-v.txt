@@ -1,0 +1,50 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad 2
+    %4 = newArray [int...][%3]{%1, %2}
+    values = %4;
+    GOTO bb1;
+  }
+  bb1 {
+    %7 = closure_fp $anon/.:$anonFunc$_0
+    %8 = ConstantLoad 0
+    %9 = %8;
+    %10 = reduce(values,%7,%9) -> bb2;
+  }
+  bb2 {
+    %6 = %10;
+    GOTO bb3;
+  }
+  bb3 {
+    result = %6;
+    %12 = result is error
+    %13 = %12;
+    %14 = println(%13) -> bb4;
+  }
+  bb4 {
+    %15 = ConstantLoad continued after trap
+    %16 = println(%15) -> bb5;
+  }
+  bb5 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %6
+  }
+}
+$anonFunc$_0(int,int) -> int{
+  bb0 {
+    %3 = removeAll((1, values)) -> bb1;
+  }
+  bb1 {
+    %5 = acc;
+    %6 = n;
+    %4 = + %5 %6;
+    %0 = %4;
+    return;
+  }
+}

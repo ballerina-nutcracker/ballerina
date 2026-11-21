@@ -7,7 +7,7 @@ main() -> nil{
     iv = %3;
     ij = iv;
     j = ij;
-    %7 = j is [nil|boolean|int|string|[nil|boolean|int|string|...|......]|{| nil|boolean|int|string|...|...... |}...]
+    %7 = j is [nil|boolean|int|string|[nil|boolean|int|string|...|{| nil|boolean|int|string|...|...... |}...]|{| nil|boolean|int|string|[nil|boolean|int|string|...|......]|...... |}...]
     %7 ? bb1 : bb3;
   }
   bb1 {
