@@ -122,10 +122,16 @@ func validateActionOrExprInner(cx scope.Context, e ast.BLangActionOrExpression, 
 		return validateXMLFilter(cx, e, expected)
 	case *ast.BLangXMLStepExpression:
 		return validateXMLStep(cx, e, expected)
-	default:
+	case *ast.BLangAlternateWorkerReceive,
+		*ast.BLangArrowFunction,
+		*ast.BLangBadExprOrAction,
+		*ast.BLangCommitExpr,
+		*ast.BLangWorkerReceive,
+		*ast.AbstractExpression:
 		cx.InternalErr("unexpected expression", e.GetPosition())
 		return scope.NoFacts, false
 	}
+	panic("unreachable: unhandled expression in semantic analysis") //nolint:forbidigo // Every supported and rejected expression variant is handled above.
 }
 
 // validateResolvedType checks e's determined type against expected.
