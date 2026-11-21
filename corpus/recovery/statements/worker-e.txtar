@@ -29,7 +29,7 @@ function malformedBodyStatement() {
     worker w {
         int x = ; // @error missing initializer
     }
-    int later = "wrong"; // @error independent semantic analysis
+    int later = "wrong"; // @warn unused surviving sibling
 }
 -- ast --
 (package
@@ -64,22 +64,6 @@ error[SEMANTIC_ERROR]: Unknown symbol:
   --> worker-e.bal:29:17
    |
 29 |         int x = ; // @error missing initializer
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'later'
-  --> worker-e.bal:31:1
-   |
-31 |     int later = "wrong"; // @error independent semantic analysis
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-32 | }
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'x'
-  --> worker-e.bal:29:1
-   |
-29 |         int x = ; // @error missing initializer
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-30 |     }
    |
 
 error[SYNTAX_ERROR]: missing identifier

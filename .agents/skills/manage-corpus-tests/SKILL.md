@@ -33,6 +33,8 @@ Use no leading zeros in numeric filename parts: `1-e.bal`, `call2-v.bal`, or `di
 - `@output <expected output>`: expected stdout, collected in source order. Place it next to the corresponding print call where practical.
 - `@error`: an expected frontend diagnostic must cover the marked line. One marker within a multi-line diagnostic's range is sufficient. Marker text does not validate diagnostic wording.
 - `@panic`: the expected first runtime stack frame's file and line. Marker text does not validate panic wording.
+- `@warn`: an expected warning after the front-end pass; place the marker on the warning’s start line in the fixture’s own file. Supported in `-v`, `-p`, and `-e` tests and in recovery fixtures. `TestSemanticAnalysis` and `TestSemanticAnalysisErrors` require an exact match of warning lines, while `TestRecovery` only requires that marked lines have warnings. Marker text does not validate warning wording.
+- Multiple markers can share a line if each starts with `//` (for example, `// @output 3 // @warn`). An `@output` value ends at the next marker.
 
 ## Updating corpus tests
 

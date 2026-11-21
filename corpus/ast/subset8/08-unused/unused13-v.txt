@@ -1,0 +1,15 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable _ (expr
+          (lambda
+            (function $anonFunc$_0 (
+              (variable x (type
+                (value-type int)))) (
+              (value-type int))
+              (block-function-body
+                (return
+                  (literal 1)))))))))))

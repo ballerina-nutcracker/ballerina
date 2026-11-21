@@ -948,6 +948,12 @@
       "id": 5,
       "result": [
         {
+          "label": "COUNT",
+          "kind": 21,
+          "detail": "1",
+          "insertText": "COUNT"
+        },
+        {
           "label": "annotation",
           "kind": 15,
           "detail": "Snippet",
@@ -1183,8 +1189,8 @@
                 "character": 16
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'COUNT'"
           }

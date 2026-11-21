@@ -1,0 +1,11 @@
+-- stdout --
+-- stderr --
+error: divide by zero
+        at div(unused2-p.bal:23)
+           main(unused2-p.bal:19)
+
+warning[WARNING]: unused variable 'x'
+  --> unused2-p.bal:23:5
+   |
+23 |     int x = a / b; // @panic // @warn
+   |     ^^^^^^^^^^^^^^
