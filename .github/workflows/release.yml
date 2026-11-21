@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Release tag to publish (vX.Y.Z); its module tags must already exist'
+        required: true
+        type: string
 
 jobs:
   version:
@@ -12,30 +18,47 @@ jobs:
     permissions:
       contents: read
     outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      sha: ${{ steps.version.outputs.sha }}
       version: ${{ steps.version.outputs.version }}
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.tag || github.ref }}
           lfs: false
           fetch-depth: 0
           persist-credentials: false
 
       - name: Get version
         id: version
+        env:
+          # github.ref is the caller's ref when this workflow is called.
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          version="${GITHUB_REF#refs/tags/v}"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          # Any -suffix (e.g. -rc.1) means prerelease.
-          if [[ "$version" == *-* ]]; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          if ! sha="$(git rev-parse --verify --quiet "refs/tags/$TAG^{commit}")"; then
+            echo "tag $TAG does not exist" >&2
+            exit 1
           fi
+          version="${TAG#v}"
+          # Any -suffix (e.g. -rc.1) means prerelease.
+          is_prerelease=false
+          if [[ "$version" == *-* ]]; then
+            is_prerelease=true
+          fi
+          {
+            echo "tag=$TAG"
+            echo "sha=$sha"
+            echo "version=$version"
+            echo "is_prerelease=$is_prerelease"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Validate matching module tags
-        run: bash .github/scripts/release_dist.sh --check-tags "$GITHUB_REF_NAME" "$GITHUB_SHA"
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          SHA: ${{ steps.version.outputs.sha }}
+        run: bash .github/scripts/release_dist.sh --check-tags "$TAG" "$SHA"
 
   build:
     name: Build distribution
@@ -43,7 +66,7 @@ jobs:
     uses: ./.github/workflows/build-dist.yml
     with:
       version: ${{ needs.version.outputs.version }}
-      ref: ${{ github.sha }}
+      ref: ${{ needs.version.outputs.sha }}
     permissions:
       contents: read
 
@@ -51,7 +74,6 @@ jobs:
     name: Create Release
     needs: [version, build]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
 
@@ -59,6 +81,8 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
+          # A calling workflow's run may hold other artifacts.
+          pattern: ballerina-nutcracker-*
           path: dist
 
       - name: Prepare release files
@@ -78,6 +102,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.version.outputs.tag }}
           files: release/*.zip
           generate_release_notes: true
           prerelease: ${{ needs.version.outputs.is_prerelease }}
+          make_latest: ${{ needs.version.outputs.is_prerelease == 'false' }}
