@@ -17,6 +17,7 @@
 package native
 
 import (
+	"bytes"
 	"context"
 	"crypto/x509"
 	"encoding/pem"
@@ -27,7 +28,9 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -48,26 +51,37 @@ import (
 // services. The program stays alive while the runtime is in its listening
 // state — the runtime lifecycle owns signal handling and shutdown.
 type listenerState struct {
-	types         *httpTypes
-	requestTy     semtypes.SemType
-	headersTy     semtypes.SemType
-	createHeaders extern.FunctionHandle
-	callerTy      semtypes.SemType
-	createCaller  extern.FunctionHandle
-	host          string
-	port          int
-	timeout       time.Duration
-	httpVersion   string
-	tlsCfg        *pal.ServerTLSConfig
-	mu            sync.RWMutex
-	services      []*serviceEntry
-	server        pal.ServerHandle
+	types            *httpTypes
+	requestTy        semtypes.SemType
+	headersTy        semtypes.SemType
+	createHeaders    extern.FunctionHandle
+	callerTy         semtypes.SemType
+	createCaller     extern.FunctionHandle
+	interceptorTypes interceptorTypes
+	host             string
+	port             int
+	timeout          time.Duration
+	httpVersion      string
+	tlsCfg           *pal.ServerTLSConfig
+	mu               sync.RWMutex
+	// lifecycle serialises attach and start, which call into Ballerina without holding mu.
+	lifecycle sync.Mutex
+	services  []*serviceEntry
+	server    pal.ServerHandle
+	// starting is set while start creates interceptors; a stop meanwhile sets stopRequested, so
+	// start does not then serve.
+	starting      bool
+	stopRequested bool
 }
 
 type serviceEntry struct {
 	basePath string
 	svcObj   *values.Object
 	config   serviceConfig
+	// interceptors are the request interceptors of the service, created when the listener
+	// starts, or on attach once it has started.
+	interceptors []*values.Object
+	created      bool
 }
 
 // registerListenerExterns registers the Listener class definition and its
@@ -106,17 +120,22 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			if err != nil {
 				return nil, err
 			}
+			interceptorTypes, err := resolveInterceptorTypes(ctx)
+			if err != nil {
+				return nil, err
+			}
 			state := &listenerState{
-				types:         types,
-				requestTy:     signature.Params[0].Type,
-				headersTy:     signature.ReturnType,
-				createHeaders: createHeaders,
-				callerTy:      callerSignature.ReturnType,
-				createCaller:  createCaller,
-				host:          "0.0.0.0",
-				port:          port,
-				timeout:       60 * time.Second,
-				httpVersion:   "2.0",
+				types:            types,
+				requestTy:        signature.Params[0].Type,
+				headersTy:        signature.ReturnType,
+				createHeaders:    createHeaders,
+				callerTy:         callerSignature.ReturnType,
+				createCaller:     createCaller,
+				interceptorTypes: interceptorTypes,
+				host:             "0.0.0.0",
+				port:             port,
+				timeout:          60 * time.Second,
+				httpVersion:      "2.0",
 			}
 			if len(args) > 2 {
 				if cfg, ok := args[2].(*values.Map); ok {
@@ -179,20 +198,37 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			}
 
 			config := readServiceConfig(ctx, svcObj)
-			state.mu.Lock()
-			defer state.mu.Unlock()
+			// Attach and start are serialised, so a service is attached either before the
+			// listener creates the interceptors of its services or after it has started.
+			state.lifecycle.Lock()
+			defer state.lifecycle.Unlock()
+			state.mu.RLock()
+			started := state.server != nil
 			// Two services on one host cannot share a base path: service-level dispatch could
 			// not pick between them deterministically.
-			for _, e := range state.services {
-				if e.basePath == basePath && e.config.host == config.host {
-					message := "Listener.attach: a service is already attached to base path " + basePath
-					if config.host != "" {
-						message += " under host name " + config.host
-					}
-					return httpError(ctx, genericListenerError, message, nil), nil
+			duplicate := slices.ContainsFunc(state.services, func(e *serviceEntry) bool {
+				return e.basePath == basePath && e.config.host == config.host
+			})
+			state.mu.RUnlock()
+			if duplicate {
+				message := "Listener.attach: a service is already attached to base path " + basePath
+				if config.host != "" {
+					message += " under host name " + config.host
+				}
+				return httpError(ctx, genericListenerError, message, nil), nil
+			}
+			// Unlike jBallerina, a service attached to a started listener gets its interceptors (#9585).
+			var interceptors []*values.Object
+			if started {
+				var err error
+				if interceptors, err = createInterceptors(ctx, state.interceptorTypes, svcObj); err != nil {
+					return httpError(ctx, genericListenerError, registrationError+err.Error(), nil), nil
 				}
 			}
-			entry := &serviceEntry{basePath: basePath, svcObj: svcObj, config: config}
+			state.mu.Lock()
+			defer state.mu.Unlock()
+			entry := &serviceEntry{basePath: basePath, svcObj: svcObj, config: config, interceptors: interceptors,
+				created: started}
 			state.services = append(state.services, entry)
 			// Longest base path first so the most specific service wins routing.
 			sort.Slice(state.services, func(i, j int) bool {
@@ -225,13 +261,22 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
-			// Held for the whole operation (not just the check) so a concurrent
-			// start cannot race past this check before the first sets state.server,
-			// and gracefulStop/immediateStop (which take state.mu.RLock) cannot
-			// observe a nil server while a start is still in flight.
+			state.lifecycle.Lock()
+			defer state.lifecycle.Unlock()
+			state.mu.Lock()
+			state.starting, state.stopRequested = true, false
+			state.mu.Unlock()
+			err := createServiceInterceptors(ctx, state)
+			// Held for the rest of the operation so a stop cannot observe a nil server
+			// while the server is being published.
 			state.mu.Lock()
 			defer state.mu.Unlock()
-			if state.server != nil {
+			stopped := state.stopRequested
+			state.starting, state.stopRequested = false, false
+			if err != nil {
+				return httpError(ctx, genericListenerError, registrationError+err.Error(), nil), nil
+			}
+			if state.server != nil || stopped {
 				return nil, nil
 			}
 			server, err := startHTTPServer(rt, state)
@@ -255,10 +300,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
-			state.mu.RLock()
-			server := state.server
-			timeout := state.timeout
-			state.mu.RUnlock()
+			server, timeout := state.takeForStop()
 			if server == nil {
 				return nil, nil
 			}
@@ -277,14 +319,45 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
-			state.mu.RLock()
-			server := state.server
-			state.mu.RUnlock()
-			if server != nil {
+			if server, _ := state.takeForStop(); server != nil {
 				_ = server.Close()
 			}
 			return nil, nil
 		})
+}
+
+// takeForStop returns the server a stop acts on and its timeout. Before the server is published,
+// it makes a start in progress end without serving.
+func (state *listenerState) takeForStop() (pal.ServerHandle, time.Duration) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	if state.server == nil && state.starting {
+		state.stopRequested = true
+	}
+	return state.server, state.timeout
+}
+
+// createServiceInterceptors creates the interceptors of the services attached before the
+// listener starts. It calls into Ballerina, so it holds no lock while doing so.
+func createServiceInterceptors(ctx *extern.Context, state *listenerState) error {
+	state.mu.RLock()
+	var pending []*serviceEntry
+	for _, e := range state.services {
+		if !e.created {
+			pending = append(pending, e)
+		}
+	}
+	state.mu.RUnlock()
+	for _, e := range pending {
+		interceptors, err := createInterceptors(ctx, state.interceptorTypes, e.svcObj)
+		if err != nil {
+			return err
+		}
+		state.mu.Lock()
+		e.interceptors, e.created = interceptors, true
+		state.mu.Unlock()
+	}
+	return nil
 }
 
 // resolveSignatureTypes looks up createHeaders, whose signature gives the http:Request and
@@ -550,17 +623,19 @@ func panicMessage(r any) string {
 	}
 }
 
-// dispatchRequest routes an incoming HTTP request to the matching service and
-// resource method.
+// dispatchRequest routes an incoming HTTP request to the matching service, through the request
+// interceptors of the service, and on to the matching resource method.
 func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncoder, r *http.Request) {
 	state.mu.RLock()
 	services := hostServices(state.services, r.Host)
 	var found *serviceEntry
 	var subPath string
+	var interceptors []*values.Object
 	for _, e := range services {
 		if rest, ok := matchBasePath(r.URL.Path, e.basePath); ok {
 			found = e
 			subPath = rest
+			interceptors = e.interceptors
 			break
 		}
 	}
@@ -575,24 +650,219 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncod
 		return
 	}
 
-	segments := splitURLPath(subPath)
-	ctx := rt.AcquirePooledContext()
-	httpMethod := strings.ToLower(r.Method)
+	var body []byte
+	if interceptors != nil {
+		// Every stage reads the body afresh, and stages after a response read a copy of the
+		// request, since net/http ends the request with the handler.
+		read, err := io.ReadAll(r.Body)
+		closeBody(r)
+		if err != nil {
+			writeErrorJSON(rt, w, r, http.StatusBadRequest, "failed to read request body: "+err.Error())
+			return
+		}
+		body, r = read, r.Clone(r.Context())
+		// Unlike jBallerina, responses from the interceptors of a service follow its configuration (#9887).
+		w.useService(found.config)
+	}
+	conn := newCallerConn(rt, state.types, w, r, found.config)
+	conn.pipeline = &requestPipeline{interceptors: interceptors, target: found.svcObj}
+	x := &exchange{state: state, w: w, r: r, service: found, segments: splitURLPath(subPath),
+		method: strings.ToLower(r.Method), conn: conn, body: body}
+	x.runFrom(0)
+}
 
+// exchange is a request on its way through the request interceptors of its service to the
+// service itself. Each stage runs once the one before it has returned.
+type exchange struct {
+	state    *listenerState
+	w        *responseEncoder
+	r        *http.Request
+	service  *serviceEntry
+	segments []string
+	method   string
+	conn     *callerConn
+	// body is the request body each stage reads when the service has interceptors.
+	body []byte
+}
+
+// runFrom runs the first request interceptor from position from whose resource matches the
+// request, or else the service. An interceptor that does not serve the request is skipped.
+func (x *exchange) runFrom(from int) {
+	rt := x.conn.rt
+	interceptors := x.conn.pipeline.interceptors
+	for i := from; i < len(interceptors); i++ {
+		ctx := rt.AcquirePooledContext()
+		for _, accessorKey := range []string{x.method, "default"} {
+			handle, extraArgs, ok := ctx.LookupResourceMethodByPath(interceptors[i], accessorKey, x.segments)
+			if ok {
+				x.conn.accessor = accessorKey
+				x.conn.pipeline.enter(i)
+				x.rewind()
+				x.runInterceptor(ctx, i, handle, extraArgs)
+				return
+			}
+		}
+		rt.ReleasePooledContext(ctx)
+	}
+	x.rewind()
+	x.dispatchService()
+}
+
+// rewind gives the next stage the body from its start.
+func (x *exchange) rewind() {
+	if x.body != nil {
+		x.r.Body = io.NopCloser(bytes.NewReader(x.body))
+		x.r.ContentLength = int64(len(x.body))
+	}
+}
+
+// runInterceptor runs the interceptor at position index and continues the exchange as its
+// result directs. It owns ctx. An interceptor with an http:Caller parameter runs on its own
+// goroutine, as a resource does, and the exchange continues there once it returns.
+func (x *exchange) runInterceptor(ctx *extern.Context, index int, handle extern.MethodHandle, extraArgs int) {
+	args, hasCaller, req, ok := bindResource(ctx, x.state, x.conn, handle, extraArgs)
+	if !ok {
+		return
+	}
+	if !hasCaller {
+		x.completeInterceptor(ctx, index, handle, args, req, false)
+		return
+	}
+	go func() {
+		defer x.conn.markSent()
+		defer func() {
+			if rec := recover(); rec != nil {
+				x.conn.failPanic(logPanic(x.conn.rt, x.r, rec))
+			}
+		}()
+		x.completeInterceptor(ctx, index, handle, args, req, true)
+	}()
+	<-x.conn.sent
+}
+
+func (x *exchange) completeInterceptor(ctx *extern.Context, index int, handle extern.MethodHandle,
+	args []values.BalValue, req *values.Object, hasCaller bool) {
+	result, failure, failed := invokeStage(ctx, x.conn.rt, x.r, handle, args)
+	from, proceed := 0, false
+	if failed {
+		x.conn.failPanic(failure)
+	} else {
+		from, proceed = x.afterInterceptor(ctx, index, result, hasCaller)
+	}
+	if proceed {
+		if err := x.syncRequest(ctx, req); err != nil {
+			x.conn.fail(http.StatusInternalServerError, err.Error())
+			proceed = false
+		}
+	}
+	x.conn.rt.ReleasePooledContext(ctx)
+	if proceed {
+		x.runFrom(from)
+	}
+}
+
+// invokeStage calls the resource behind handle and reports a panic as the message of the 500
+// response it gets.
+func invokeStage(ctx *extern.Context, rt *runtime.Runtime, r *http.Request, handle extern.MethodHandle,
+	args []values.BalValue) (result values.BalValue, failure string, failed bool) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			ctx.ReleaseAllHeldLocks()
+			result, failure, failed = nil, logPanic(rt, r, rec), true
+		}
+	}()
+	result, err := ctx.InvokeMethod(handle, args)
+	if err != nil {
+		return nil, err.Error(), true
+	}
+	return result, "", false
+}
+
+// afterInterceptor acts on what the interceptor at position index returned and reports where
+// the exchange continues, if it does. A returned service must be the stage ctx.next() reached,
+// or the one after the interceptor; any other value is the response. Once a response was sent,
+// the exchange continues only if the interceptor called ctx.next(), as in jBallerina.
+func (x *exchange) afterInterceptor(ctx *extern.Context, index int, result values.BalValue,
+	hasCaller bool) (int, bool) {
+	pipeline := x.conn.pipeline
+	from, nextCalled := pipeline.leave(index)
+	if obj, isObject := result.(*values.Object); isObject && isOfType(ctx.TypeCtx(), obj, x.state.interceptorTypes.nextService) {
+		if obj == pipeline.stageAt(from) {
+			return from, nextCalled || !x.conn.responded()
+		}
+		message := nextMismatch
+		if from >= len(pipeline.interceptors) {
+			message = targetMismatch
+		}
+		result = httpError(ctx, internalInterceptorReturnError, message, nil)
+	}
+	// Unlike jBallerina, a () return ends the exchange even after ctx.next() (#9884).
+	x.conn.complete(ctx, result, hasCaller)
+	return 0, false
+}
+
+// syncRequest carries the headers and payload an interceptor set on its http:Request over to
+// the stages after it.
+func (x *exchange) syncRequest(ctx *extern.Context, req *values.Object) error {
+	if req == nil {
+		return nil
+	}
+	header := http.Header{}
+	for name, values := range rawRequestHeaders(req) {
+		header[http.CanonicalHeaderKey(name)] = values
+	}
+	x.r.Header = header
+	holder, _ := req.Get("$body")
+	h, ok := holder.(*requestBodyHolder)
+	switch {
+	case !ok:
+	case h.parts != nil:
+		data, wireContentType, err := encodeMultipartBody(ctx, h.parts, header.Get("Content-Type"))
+		if err != nil {
+			return err
+		}
+		header.Set("Content-Type", wireContentType)
+		x.replaceBody(data)
+	case h.payloadSet:
+		x.replaceBody(h.buf)
+		x.conn.payloadSet = true
+	}
+	return nil
+}
+
+func (x *exchange) replaceBody(body []byte) {
+	x.body = body
+	x.r.Header.Set("Content-Length", strconv.Itoa(len(body)))
+	x.r.Header.Del("Transfer-Encoding")
+}
+
+// dispatchService dispatches the exchange to the resource of the service that matches it.
+func (x *exchange) dispatchService() {
+	rt, r, w, found := x.conn.rt, x.r, x.w, x.service
+	ctx := rt.AcquirePooledContext()
+	httpMethod := x.method
 	// Resource-level dispatch is delegated to the language runtime: it coerces
 	// the raw path segments to each resource's declared parameter types and
 	// selects the unique matching resource (the same dispatch used by
 	// client->/path access). HTTP only owns service-level (base-path) routing.
 	for _, accessorKey := range []string{httpMethod, "default"} {
-		handle, extraArgs, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessorKey, segments)
+		handle, extraArgs, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessorKey, x.segments)
 		if !ok {
 			continue
 		}
-		w.useService(found.config)
-		invokeResource(rt, state, found.config, ctx, w, r, handle, accessorKey, extraArgs)
+		x.conn.accessor = accessorKey
+		if x.conn.pipeline.interceptors == nil {
+			w.useService(found.config)
+		}
+		invokeResource(ctx, x.state, x.conn, handle, extraArgs)
 		return
 	}
 	defer rt.ReleasePooledContext(ctx)
+	if !x.conn.claim() {
+		return
+	}
+	defer x.conn.markSent()
+	w.useService(defaultServiceConfig())
 	// The path matched a service but no resource under the requested method. If
 	// the same path resolves under a different method it is a 405; otherwise 404.
 	var served []string
@@ -600,7 +870,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncod
 		if accessor == httpMethod || accessor == "default" {
 			continue
 		}
-		if _, _, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessor, segments); ok {
+		if _, _, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessor, x.segments); ok {
 			served = append(served, accessor)
 			if httpMethod != "options" {
 				break
@@ -645,39 +915,46 @@ func answerOptions(rt *runtime.Runtime, w *responseEncoder, r *http.Request, fou
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// bindResource binds the arguments of the resource behind handle and returns them with the
+// http:Request it binds, if any. When binding fails it sends the error response, returns ctx to
+// the pool and reports false.
+func bindResource(ctx *extern.Context, state *listenerState, conn *callerConn, handle extern.MethodHandle,
+	extraArgs int) ([]values.BalValue, bool, *values.Object, bool) {
+	if extraArgs == 0 {
+		closeBody(conn.r)
+		return nil, false, nil, true
+	}
+	args, hasCaller, req, bindErr := resourceArgs(ctx, state, handle, conn)
+	if bindErr != nil {
+		conn.rt.ReleasePooledContext(ctx)
+		conn.fail(bindErr.status, bindErr.message)
+		return nil, false, nil, false
+	}
+	return args, hasCaller, req, true
+}
+
 // invokeResource binds the arguments of the resource behind handle, calls it and sends its
 // response. It owns ctx and returns it to the pool once the resource has finished.
-func invokeResource(rt *runtime.Runtime, state *listenerState, config serviceConfig, ctx *extern.Context,
-	w http.ResponseWriter, r *http.Request, handle extern.MethodHandle, accessorKey string, extraArgs int) {
-	conn := &callerConn{rt: rt, types: state.types, w: w, r: r, accessor: accessorKey, config: config}
-	var args []values.BalValue
-	hasCaller := false
-	if extraArgs > 0 {
-		bound, caller, bindErr := resourceArgs(ctx, state, handle, conn)
-		if bindErr != nil {
-			rt.ReleasePooledContext(ctx)
-			writeErrorJSON(rt, w, r, bindErr.status, bindErr.message)
-			return
-		}
-		args, hasCaller = bound, caller
-	} else {
-		closeBody(r)
+func invokeResource(ctx *extern.Context, state *listenerState, conn *callerConn, handle extern.MethodHandle,
+	extraArgs int) {
+	args, hasCaller, _, ok := bindResource(ctx, state, conn, handle, extraArgs)
+	if !ok {
+		return
 	}
 	if hasCaller {
 		// The handler returns once a response is sent, which ends the exchange (an HTTP/2
 		// stream ends only then), while the resource carries on.
-		conn.sent = make(chan struct{})
 		go runCallerResource(ctx, conn, handle, args)
 		<-conn.sent
 		return
 	}
-	defer rt.ReleasePooledContext(ctx)
-	result, err := ctx.InvokeMethod(handle, args)
-	if err != nil {
-		writePanicResponse(w, panicMessage(err))
+	defer conn.rt.ReleasePooledContext(ctx)
+	result, failure, failed := invokeStage(ctx, conn.rt, conn.r, handle, args)
+	if failed {
+		conn.failPanic(failure)
 		return
 	}
-	writeResult(rt, ctx, state.types, w, r, accessorKey, result)
+	conn.complete(ctx, result, false)
 }
 
 // runCallerResource runs a resource that has an http:Caller parameter.

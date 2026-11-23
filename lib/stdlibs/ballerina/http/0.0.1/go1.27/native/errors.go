@@ -30,6 +30,8 @@ const (
 	noContentError       errorType = "NoContentError"
 	headerNotFoundError  errorType = "HeaderNotFoundError"
 	genericListenerError errorType = "GenericListenerError"
+	// internalInterceptorReturnError is a 500 that error handling does not log.
+	internalInterceptorReturnError errorType = "InternalInterceptorReturnError"
 )
 
 // httpError returns a distinct http error of type t with message and an optional cause.

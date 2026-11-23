@@ -1,5 +1,15 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: RequestInterceptor must have a resource method
+   --> http-svc-signature-e.bal:118:1
+    |
+118 | service class NoResource { // @error
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+119 |     *http:RequestInterceptor;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+120 | }
+    | ^
+
 error[SEMANTIC_ERROR]: configuring base path in the 'http:ServiceConfig' annotation is not allowed for non service contract types
   --> http-svc-signature-e.bal:89:5
    |
@@ -24,6 +34,18 @@ error[SEMANTIC_ERROR]: http resource method must have at most one http:Request p
 81 |     resource function patch checked(http:Request first, http:Request second) { // @error
    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: invalid annotation 'http:ResourceConfig': annotations are not supported for interceptor resource functions
+   --> http-svc-signature-e.bal:142:5
+    |
+142 |     @http:ResourceConfig {} // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid interceptor resource method return type: expected 'anydata|http:Response|http:StatusCodeResponse|http:NextService|error?', but found 'typedesc<int>'
+   --> http-svc-signature-e.bal:149:39
+    |
+149 |     resource function get a() returns typedesc<int> => int; // @error
+    |                                       ^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: invalid media-type subtype 'vnd/a'
   --> http-svc-signature-e.bal:96:5
    |
@@ -42,6 +64,30 @@ error[SEMANTIC_ERROR]: invalid multiple 'http:Caller' parameter: 'second'
 47 |     resource function get twoCallers(http:Caller first, http:Caller second) { // @error
    |                                                                     ^^^^^^
 
+error[SEMANTIC_ERROR]: invalid multiple 'http:RequestContext' parameter: 'second'
+   --> http-svc-signature-e.bal:161:76
+    |
+161 |     resource function get a(http:RequestContext first, http:RequestContext second) returns http:NextService|error? { // @error
+    |                                                                            ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple 'http:RequestContext' parameter: 'second'
+   --> http-svc-signature-e.bal:168:76
+    |
+168 |     resource function get a(http:RequestContext first, http:RequestContext second) { // @error
+    |                                                                            ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple interceptor resource functions
+   --> http-svc-signature-e.bal:136:5
+    |
+136 |     resource function get b() returns string => "b"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple interceptor type reference: 'http:ResponseInterceptor'
+   --> http-svc-signature-e.bal:113:6
+    |
+113 |     *http:ResponseInterceptor; // @error
+    |      ^^^^^^^^^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Caller' and return 'nil|string|error' from a resource : expected 'error' or nil
   --> http-svc-signature-e.bal:57:67
    |
@@ -59,3 +105,17 @@ error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Ca
    |
 62 |     resource function post callerTwoRequests(http:Caller caller, http:Request first, http:Request second) returns string { // @error
    |                                                                                                                   ^^^^^^
+
+error[SEMANTIC_ERROR]: remote function is not allowed in RequestInterceptor
+   --> http-svc-signature-e.bal:127:5
+    |
+127 |     remote function r() { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |     }
+    |     ^
+
+error[SEMANTIC_ERROR]: return type annotation is not supported in interceptor service
+   --> http-svc-signature-e.bal:155:39
+    |
+155 |     resource function get a() returns @http:Payload string => "a"; // @error
+    |                                       ^^^^^^^^^^^^^

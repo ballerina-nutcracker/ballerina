@@ -43,6 +43,7 @@ const (
 	queryParam
 	headerParam
 	payloadParam
+	requestContextParam
 )
 
 type resourceParam struct {
@@ -95,25 +96,25 @@ func invalidSignature(message string) *bindingError {
 // resourceArgs binds the non-path parameters of the resource behind handle from r. The
 // request body is consumed or closed before it returns.
 func resourceArgs(ctx *extern.Context, state *listenerState, handle extern.MethodHandle,
-	conn *callerConn) ([]values.BalValue, bool, *bindingError) {
+	conn *callerConn) ([]values.BalValue, bool, *values.Object, *bindingError) {
 	r := conn.r
 	signature, sigOK := ctx.MethodSignature(handle)
 	metadata, metaOK := ctx.MethodMetadata(handle)
 	if !sigOK || !metaOK {
 		closeBody(r)
-		return nil, false, invalidSignature("resource method signature is unavailable")
+		return nil, false, nil, invalidSignature("resource method signature is unavailable")
 	}
 	params, bindErr := classifyParams(ctx.TypeCtx(), state, signature.Params, metadata.Params, conn.accessor)
 	if bindErr != nil {
 		closeBody(r)
-		return nil, false, bindErr
+		return nil, false, nil, bindErr
 	}
-	args, bindErr := bindParams(ctx, state, params, conn)
+	args, req, bindErr := bindParams(ctx, state, params, conn)
 	hasCaller := false
 	for _, p := range params {
 		hasCaller = hasCaller || p.kind == callerParam
 	}
-	return args, hasCaller, bindErr
+	return args, hasCaller, req, bindErr
 }
 
 // A server request's body is never nil.
@@ -125,7 +126,7 @@ func classifyParams(tc semtypes.Context, state *listenerState, sigParams []exter
 	metaParams []extern.ParameterMetadata, accessor string) ([]resourceParam, *bindingError) {
 	params := make([]resourceParam, len(sigParams))
 	var unannotated []int
-	hasRequest, hasHeaders, hasPayload, hasCaller := false, false, false, false
+	hasRequest, hasHeaders, hasPayload, hasCaller, hasContext := false, false, false, false, false
 	for i, p := range sigParams {
 		label := unescapeIdentifier(p.Name)
 		annotations := metaParams[i].Annotations
@@ -153,6 +154,12 @@ func classifyParams(tc semtypes.Context, state *listenerState, sigParams []exter
 			}
 			hasRequest = true
 			params[i].kind = requestParam
+		case isExactType(tc, state.interceptorTypes.requestContext, p.Type):
+			if hasContext {
+				return nil, invalidSignature("invalid multiple 'http:RequestContext' parameter: '" + label + "'")
+			}
+			hasContext = true
+			params[i].kind = requestContextParam
 		case isExactType(tc, state.headersTy, p.Type):
 			if hasHeaders {
 				return nil, invalidSignature("invalid multiple http:Headers parameter: " + label)
@@ -393,7 +400,9 @@ func isValidHeaderType(tc semtypes.Context, ty semtypes.SemType) bool {
 // The body is read up front when a payload parameter needs it, so a Request parameter can
 // still read it afterwards; otherwise a Request parameter takes over the body as is. A Headers
 // parameter wraps the same Request object, built without a body when nothing else needs one.
-func bindParams(ctx *extern.Context, state *listenerState, params []resourceParam, conn *callerConn) ([]values.BalValue, *bindingError) {
+// bindParams binds params and returns them with the http:Request a parameter receives, if any.
+func bindParams(ctx *extern.Context, state *listenerState, params []resourceParam,
+	conn *callerConn) ([]values.BalValue, *values.Object, *bindingError) {
 	r := conn.r
 	types := state.types
 	hasPayload, hasRequest, hasHeaders := false, false, false
@@ -411,7 +420,7 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 	case hasPayload:
 		data, err := readBody(r)
 		if err != nil {
-			return nil, badRequest("failed to read request body: " + err.Error())
+			return nil, nil, badRequest("failed to read request body: " + err.Error())
 		}
 		body = data
 		if hasRequest || hasHeaders {
@@ -420,7 +429,7 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 	case hasRequest:
 		built, err := buildRequestFromHTTP(r)
 		if err != nil {
-			return nil, badRequest("failed to read request body: " + err.Error())
+			return nil, nil, badRequest("failed to read request body: " + err.Error())
 		}
 		req = built
 	default:
@@ -428,6 +437,10 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 		if hasHeaders {
 			req = buildRequest(r.Method, r.RequestURI, r.Proto, r.Header, nil, 0, r.URL.RawQuery, nil)
 		}
+	}
+	if req != nil && conn.payloadSet {
+		holder, _ := req.Get("$body")
+		holder.(*requestBodyHolder).payloadSet = true
 	}
 	args := make([]values.BalValue, len(params))
 	var query map[string][]string
@@ -439,20 +452,26 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 		case callerParam:
 			caller, err := newCaller(ctx, state, conn)
 			if err != nil {
-				return nil, invalidSignature(err.Error())
+				return nil, nil, invalidSignature(err.Error())
 			}
 			args[i] = caller
+		case requestContextParam:
+			requestCtx, err := conn.requestContext(ctx, state.interceptorTypes.createRequestContext)
+			if err != nil {
+				return nil, nil, invalidSignature(err.Error())
+			}
+			args[i] = requestCtx
 		case headersParam:
 			headers, err := ctx.InvokeFunction(state.createHeaders, []values.BalValue{req})
 			if err != nil {
-				return nil, invalidSignature(err.Error())
+				return nil, nil, invalidSignature(err.Error())
 			}
 			args[i] = headers
 		case queryParam:
 			if query == nil {
 				parsed, err := parseQueryParams(r.URL.RawQuery)
 				if err != nil {
-					return nil, &bindingError{status: http.StatusInternalServerError, message: err.Error()}
+					return nil, nil, &bindingError{status: http.StatusInternalServerError, message: err.Error()}
 				}
 				query = parsed
 			}
@@ -464,10 +483,10 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 				conn.config.laxDataBinding)
 		}
 		if bindErr != nil {
-			return nil, bindErr
+			return nil, nil, bindErr
 		}
 	}
-	return args, nil
+	return args, req, nil
 }
 
 func readBody(r *http.Request) ([]byte, error) {

@@ -1,0 +1,88 @@
+-- stdout --
+1 true ["k"]
+false request context object does not contain the configured interceptors
+[1]
+interceptor a /a
+interceptor b /a
+service /x/a
+200 application/json {"seen":["a","b"]}
+interceptor a /next
+interceptor b /next
+200 text/plain no next service to be returned
+interceptor a /members
+interceptor b /members
+200 text/plain no member found for key: nope; type conversion failed for value of key: seen
+interceptor a /missing
+interceptor b /missing
+404 application/json {"status":404,"reason":"Not Found","message":"no matching resource found for path : /x/missing , method : GET","path":"/x/missing","method":"GET"}
+interceptor a /a
+interceptor b /a
+405 application/json {"status":405,"reason":"Method Not Allowed","message":"Method not allowed","path":"/x/a","method":"PUT"}
+interceptor a /echo
+interceptor b /echo
+201 text/plain hi
+interceptor a /a
+interceptor b /a
+201 text/plain posted
+interceptor a /a
+interceptor b /a
+202
+interceptor a /a
+interceptor b /a
+202
+interceptor a /a
+interceptor b /a
+500 application/json {"status":500,"reason":"Internal Server Error","message":"boom from b","path":"/x/a","method":"GET"}
+interceptor a /a
+service /x/a
+200 application/json {"seen":["a"]}
+interceptor a /a
+500 application/json {"status":500,"reason":"Internal Server Error","message":"next interceptor service did not match with the configuration","path":"/x/a","method":"GET"}
+interceptor a /a
+500 application/json {"status":500,"reason":"Internal Server Error","message":"target service did not match with the configuration","path":"/x/a","method":"GET"}
+interceptor a /a
+interceptor b /a
+500 text/plain missing map key 'missing'
+200 text/plain from interceptor
+200 text/plain other
+201 text/plain yes:hello
+201 text/plain yes:hello:5
+200 text/plain yes
+interceptor read hello
+201 text/plain yes:hello
+interceptor read hello
+201 text/plain yes:hello:5
+201 text/plain yes:replaced
+201 text/plain yes:replaced:8
+201 text/plain yes::0
+201 text/plain part one
+500 text/plain invalid array index: 1
+200 application/json {"a":1}
+299 text/plain response
+201 text/plain created
+200 text/plain via caller
+200 text/plain via caller only
+200 text/plain via caller, then nil
+200 text/plain via caller
+200 text/plain via caller
+200 text/plain 65536 at once
+not served
+400 application/vnd.test+json {"status":400,"reason":"Bad Request","message":"no query param value found for 'q'","path":"/q/a","method":"GET"}
+query 1
+200 access-control-allow-origin=[http://a.com] application/vnd.test+json {"a":1}
+204 allow=[GET, PUT, OPTIONS]
+204 access-control-allow-origin=[http://a.com] access-control-allow-methods=[PUT]
+200 text/plain no next service to be returned
+interceptor late /a
+200 application/json {"seen":["late"]}
+interceptor service registration failed: response and error interceptors are not yet supported
+-- stderr --
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("boom from b") path="/x/a" method="GET"
+error [ballerina/http]: panic while handling GET /x/a: missing map key 'missing'
+error [ballerina/http]: panic while handling GET /m/crash: invalid array index: 1
+error: illegal return: response has already been sent
+warning: [ballerina/http] illegal return: response has already been sent
+error: illegal return: response has already been sent
+warning: [ballerina/http] illegal return: response has already been sent
+error: illegal return: response has already been sent
+warning: [ballerina/http] illegal return: response has already been sent

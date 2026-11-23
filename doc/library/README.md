@@ -13,7 +13,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 23 | 27 | 37% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 25 | 26 | 36% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -29,7 +29,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **291** | **47** | **64** | **72%** |
+| **Total**                                                                     | **291** | **49** | **63** | **72%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -83,6 +83,12 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **A resource's Allow header is kept.** jBallerina removes the `Allow` header from every resource response it adds CORS headers to, including a 405 the resource returns; the Go-native version keeps it and leaves `Allow` out only of preflight responses (<https://github.com/ballerina-platform/ballerina-library/issues/9883>).
 - **Preflight request headers may have spaces after commas.** jBallerina splits `Access-Control-Request-Headers` on commas without trimming, so `X-A, X-C` fails the preflight while `X-A,X-C` passes; the Go-native version trims each name (<https://github.com/ballerina-platform/ballerina-library/issues/9566>).
 - **Access-Control-Max-Age is sent only when maxAge is set.** jBallerina sends `Access-Control-Max-Age: -1` on a preflight response when `maxAge` is not configured; the Go-native version leaves the header out (<https://github.com/ballerina-platform/ballerina-library/issues/9565>).
+- **Responses from request interceptors follow the service configuration.** jBallerina sends a response from a request interceptor without the CORS headers and the media-type subtype prefix of its service's `@http:ServiceConfig`; the Go-native version applies them, as to the service's own responses (<https://github.com/ballerina-platform/ballerina-library/issues/9887>).
+- **A request interceptor that returns `()` ends the request.** jBallerina answers 202 for `()` returned after `ctx.next()` and still runs the next stage, whose response is then rejected; the Go-native version answers 202 and runs nothing more (<https://github.com/ballerina-platform/ballerina-library/issues/9884>).
+- **A binding failure in a request interceptor is answered.** jBallerina logs a parameter of an interceptor resource it cannot bind and never answers the request; the Go-native version answers with the binding error, as for a service resource, for example 400 for a missing query parameter (<https://github.com/ballerina-platform/ballerina-library/issues/9885>).
+- **Request interceptors leave OPTIONS requests to the service.** jBallerina answers an OPTIONS request with the `Allow` header of a request interceptor whose resource serves another method, and fails a CORS preflight with a `ClassCastException`; the Go-native version skips such an interceptor, so the service answers both (<https://github.com/ballerina-platform/ballerina-library/issues/9886>).
+- **A service attached to a started listener gets its interceptors.** jBallerina calls `createInterceptors` only when the listener starts, so a service attached afterwards runs without its interceptors; the Go-native version calls it on attach (<https://github.com/ballerina-platform/ballerina-library/issues/9585>).
+- **getWithType returns a copy of the member.** jBallerina's `RequestContext.getWithType` returns the stored member itself, so changing a list or map it returns changes the member without `set`; the Go-native version returns a copy, as `get` does, since it reads the member under the lock of the isolated `RequestContext` (<https://github.com/ballerina-platform/ballerina-library/issues/9915>).
 - **redirect with no locations sends an empty Location header.** jBallerina's `Caller->redirect` panics with `invalid substring range` when `locations` is empty, answers 500 and ends the program; the Go-native version joins the locations with `,` and sends the redirect with an empty `Location` header (<https://github.com/ballerina-platform/ballerina-library/issues/9853>).
 - **HTTP/1.0 falls back to HTTP/1.1 at runtime.** `HTTP_1_0` is present in the `HttpVersion` enum for jBallerina contract compatibility. When used, the Go runtime prints a warning to stderr and transparently upgrades the connection to HTTP/1.1, because Go's HTTP client cannot send HTTP/1.0 requests.
 - **Trailing headers are not modelled.** The `TRAILING` header position constant is accepted at compile time for API compatibility, but all header operations (`getHeader`, `getHeaders`, `hasHeader`, `getHeaderNames`) act on transport (leading) headers at runtime. HTTP trailers sent by the server are silently discarded.

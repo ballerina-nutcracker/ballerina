@@ -191,3 +191,44 @@ service /albums on new http:Listener(9090) {
 | Any other `OPTIONS` that no resource serves | 204 with `Allow` listing the methods the path serves, or every method of the service at its base path; 404 when the path serves none |
 
 `@http:ResourceConfig {cors}` is not supported yet.
+
+## Request interceptors
+
+An `http:InterceptableService` runs the `http:RequestInterceptor` services its `createInterceptors` method returns before its own resources. An interceptor runs when its single resource matches the request path and method, and passes the request on by returning `ctx.next()`. The interceptors and the resource share one `http:RequestContext`.
+
+```ballerina
+import ballerina/http;
+
+service class TenantReader {
+    *http:RequestInterceptor;
+
+    resource function 'default [string... path](http:RequestContext ctx, @http:Header string? x\-tenant)
+            returns http:BadRequest|http:NextService|error? {
+        if x\-tenant is () {
+            http:BadRequest badRequest = {body: "missing tenant"};
+            return badRequest;
+        }
+        ctx.set("tenant", x\-tenant);
+        return ctx.next();
+    }
+}
+
+service http:InterceptableService /albums on new http:Listener(9090) {
+    public function createInterceptors() returns http:Interceptor[] => [new TenantReader()];
+
+    resource function get .(http:RequestContext ctx) returns string|error {
+        string tenant = check ctx.getWithType("tenant");
+        return "albums for " + tenant;
+    }
+}
+```
+
+| Interceptor result | Response |
+|---|---|
+| The stage `ctx.next()` returned | The request goes on to the next matching interceptor, then to the resource; a 404 or 405 for the resource comes after the interceptors |
+| Another service | 500 `next interceptor service did not match with the configuration`, or `target service did not match with the configuration` past the last interceptor |
+| `()` from an interceptor without an `http:Caller` parameter | 202, and the request goes no further |
+| `()` from an interceptor with an `http:Caller` parameter | 500 if it sent no response, and the request goes no further |
+| Any other value, `http:Response`, status code response or error | That response, with the `@http:ServiceConfig` of the service applied |
+
+`ctx.next()` returns an error from the resource itself or once it has passed the service. Response interceptors, error interceptors and the `JWT_INFORMATION` member are not supported yet.
