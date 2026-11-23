@@ -69,7 +69,7 @@ jobs:
           exit "$code"
       - name: Upload test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sniff-${{ runner.os }}-${{ matrix.copy }}
           path: |
@@ -88,7 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download test output
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sniff-*
           path: artifacts
