@@ -24,7 +24,9 @@ import (
 	"fmt"
 	"io"
 	iofs "io/fs"
+	"maps"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -593,16 +595,54 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncod
 	defer rt.ReleasePooledContext(ctx)
 	// The path matched a service but no resource under the requested method. If
 	// the same path resolves under a different method it is a 405; otherwise 404.
+	var served []string
 	for _, accessor := range found.svcObj.AllResourceMethodNames() {
 		if accessor == httpMethod || accessor == "default" {
 			continue
 		}
 		if _, _, ok := ctx.LookupResourceMethodByPath(found.svcObj, accessor, segments); ok {
-			writeErrorJSON(rt, w, r, http.StatusMethodNotAllowed, "Method not allowed")
-			return
+			served = append(served, accessor)
+			if httpMethod != "options" {
+				break
+			}
 		}
 	}
-	writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path : "+r.RequestURI+" , method : "+r.Method)
+	switch {
+	case httpMethod == "options":
+		// As jBallerina, only the base path itself, ignoring trailing slashes and without a query, lists the whole service.
+		basePath := (&url.URL{Path: found.basePath}).EscapedPath()
+		requestPath := r.URL.EscapedPath()
+		if trimmed := strings.TrimRight(requestPath, "/"); trimmed != "" {
+			requestPath = trimmed
+		}
+		answerOptions(rt, w, r, found, served, requestPath == basePath && r.URL.RawQuery == "")
+	case served != nil:
+		writeErrorJSON(rt, w, r, http.StatusMethodNotAllowed, "Method not allowed")
+	default:
+		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path : "+r.RequestURI+" , method : "+r.Method)
+	}
+}
+
+// answerOptions answers an OPTIONS request no resource serves: a CORS preflight, or 204 with an
+// Allow header listing the methods the path serves, or those of the whole service at its base path.
+func answerOptions(rt *runtime.Runtime, w *responseEncoder, r *http.Request, found *serviceEntry, served []string,
+	basePath bool) {
+	methods := allowedMethods(served)
+	if methods != nil {
+		if preflight := found.config.cors.preflightHeaders(r, methods[:len(methods)-1]); preflight != nil {
+			maps.Copy(w.Header(), preflight)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	} else if basePath {
+		methods = allowedMethods(found.svcObj.AllResourceMethodNames())
+	}
+	if methods == nil {
+		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path : "+r.RequestURI+" , method : OPTIONS")
+		return
+	}
+	w.Header().Set("Allow", strings.Join(methods, ", "))
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // invokeResource binds the arguments of the resource behind handle, calls it and sends its
