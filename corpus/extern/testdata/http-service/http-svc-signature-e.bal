@@ -83,3 +83,27 @@ service /mixed on new CustomListener(), new http:Listener(19223) {
         var _ = second;
     }
 }
+
+@http:ServiceConfig {
+    mediaTypeSubtypePrefix: "vnd.a+json", // @error
+    basePath: "/contract" // @error
+}
+service /prefixSuffix on new http:Listener(19224) {
+    resource function get .() returns string => "x";
+}
+
+@http:ServiceConfig {
+    mediaTypeSubtypePrefix: "vnd/a" // @error
+}
+service /prefixInvalid on new http:Listener(19225) {
+    resource function get .() returns string => "x";
+}
+
+const PREFIX = "vnd/a";
+
+@http:ServiceConfig {
+    mediaTypeSubtypePrefix: PREFIX
+}
+service /prefixConstant on new http:Listener(19226) {
+    resource function get .() returns string => "x";
+}

@@ -1,0 +1,60 @@
+-- stdout --
+200 text/plain
+named host
+200 text/plain
+default host
+404 application/json
+no matching service found for path: /p
+404 application/json
+no matching service found for path: /p
+200 text/plain
+host and port
+400 application/vnd.test+json
+no query param value found for 'a'
+200 text/vnd.test+plain
+nil
+200 text/vnd.test+plain
+[]
+400 application/vnd.test+json
+no header value found for 'x'
+200 text/vnd.test+plain
+nil
+200 text/vnd.test+plain
+nil
+200 text/vnd.test+plain
+nil field
+400 application/vnd.test+json
+no header value found for 'a'
+200 application/vnd.test+json
+{"a":1}
+500 application/vnd.test+json
+bad
+404 text/vnd.test+plain
+nf
+202 -
+<empty>
+200 text/vnd.test+plain
+caller
+200 text/vnd.test+plain
+p
+application/vnd.test+json; charset=utf-8
+200 multipart/form-data
+404 application/json
+no matching resource found for path : /t/missing , method : GET
+201 text/plain
+name=n age=nil nick=false inner=1 items=1
+201 text/plain
+name=n age=nil nick=false inner=- items=-
+201 application/json
+1
+400 application/json
+400 application/json
+400 application/json
+400 application/json
+400 application/json
+404 application/json
+no service has registered for listener : /127.0.0.1:19239
+200 text/plain
+exact port
+-- stderr --
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("bad") path="/t/e" method="GET"

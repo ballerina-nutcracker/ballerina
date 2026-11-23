@@ -478,6 +478,14 @@ func TestHttpServiceCaller(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-caller-v"), callerPal{newHTTPPal(palnative.NewHTTPClient)}, nil)
 }
 
+// TestHttpServiceAnnotationConfig applies @http:ServiceConfig: host-based dispatch, nilable
+// parameters that are not optional, a media-type subtype prefix and lax data binding.
+func TestHttpServiceAnnotationConfig(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-service-config-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // callerPal stubs the reverse lookup so the caller's remote host name does not depend on the
 // machine's resolver.
 type callerPal struct{ *httpPal }

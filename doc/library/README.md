@@ -13,7 +13,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 21 | 30 | 35% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 28 | 22 | 29 | 35% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -29,7 +29,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **290** | **45** | **67** | **72%** |
+| **Total**                                                                     | **290** | **46** | **66** | **72%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -70,6 +70,8 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **A form `mediaType` is matched ignoring case and parameters.** jBallerina url-encodes a status code record's `body` only for the exact `mediaType` `application/x-www-form-urlencoded`, so `Application/X-WWW-Form-Urlencoded` or `application/x-www-form-urlencoded; charset=UTF-8` sends the body as JSON under a form Content-Type; the Go-native version url-encodes it for any spelling of that media type (<https://github.com/ballerina-platform/ballerina-library/issues/9911>).
 - **JSON bodies are written without spaces.** jBallerina writes a JSON body with its `toString` form, which puts a space after each `,` between members (`{"title":"Blue Train", "year":1957}`); the Go-native version writes compact JSON (`{"title":"Blue Train","year":1957}`) for `setJsonPayload`, `anydata` resource returns, status code response bodies, and `http:ErrorPayload` error bodies. Both are the same JSON value. A record's fields are written in the order the value was constructed rather than jBallerina's declaration order ([#1381](https://github.com/ballerina-nutcracker/ballerina/issues/1381)).
 - **'continue() returns without an Expect header.** jBallerina's `Caller->'continue()` never returns when the request has no `Expect: 100-continue` header, so the resource never responds and the client gets no response; the Go-native version sends the interim `100 Continue` and returns, and the resource's `respond` then completes the request (<https://github.com/ballerina-platform/ballerina-library/issues/9852>).
+- **Service host matching ignores the port and letter case.** jBallerina compares `@http:ServiceConfig {host}` with the whole `Host` header, so `host: "localhost"` never matches a request to `localhost:9090` and `Host: LOCALHOST:9090` does not match `host: "localhost:9090"`; the Go-native version compares host names case-insensitively, and a configured host without a port matches any port (<https://github.com/ballerina-platform/ballerina-library/issues/9867>).
+- **The media-type subtype prefix is added once and not to multipart types.** jBallerina adds a service's `mediaTypeSubtypePrefix` to every response `Content-Type`, so `application/vnd.test+json` is sent as `application/vnd.test+vnd.test+json` and a multipart body as `multipart/vnd.test+form-data`, which clients no longer read as multipart; the Go-native version leaves a `Content-Type` unchanged when its subtype already starts with the prefix or its type is `multipart` (<https://github.com/ballerina-platform/ballerina-library/issues/9868>).
 - **redirect with no locations sends an empty Location header.** jBallerina's `Caller->redirect` panics with `invalid substring range` when `locations` is empty, answers 500 and ends the program; the Go-native version joins the locations with `,` and sends the redirect with an empty `Location` header (<https://github.com/ballerina-platform/ballerina-library/issues/9853>).
 - **HTTP/1.0 falls back to HTTP/1.1 at runtime.** `HTTP_1_0` is present in the `HttpVersion` enum for jBallerina contract compatibility. When used, the Go runtime prints a warning to stderr and transparently upgrades the connection to HTTP/1.1, because Go's HTTP client cannot send HTTP/1.0 requests.
 - **Trailing headers are not modelled.** The `TRAILING` header position constant is accepted at compile time for API compatibility, but all header operations (`getHeader`, `getHeaders`, `hasHeader`, `getHeaderNames`) act on transport (leading) headers at runtime. HTTP trailers sent by the server are silently discarded.

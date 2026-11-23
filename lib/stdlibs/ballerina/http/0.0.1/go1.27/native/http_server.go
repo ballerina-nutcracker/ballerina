@@ -65,6 +65,7 @@ type listenerState struct {
 type serviceEntry struct {
 	basePath string
 	svcObj   *values.Object
+	config   serviceConfig
 }
 
 // registerListenerExterns registers the Listener class definition and its
@@ -175,16 +176,21 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 				return httpError(ctx, genericListenerError, "Listener.attach: "+msg, nil), nil
 			}
 
+			config := readServiceConfig(ctx, svcObj)
 			state.mu.Lock()
 			defer state.mu.Unlock()
-			// Two services cannot share a base path: service-level dispatch could
+			// Two services on one host cannot share a base path: service-level dispatch could
 			// not pick between them deterministically.
 			for _, e := range state.services {
-				if e.basePath == basePath {
-					return httpError(ctx, genericListenerError, "Listener.attach: a service is already attached to base path "+basePath, nil), nil
+				if e.basePath == basePath && e.config.host == config.host {
+					message := "Listener.attach: a service is already attached to base path " + basePath
+					if config.host != "" {
+						message += " under host name " + config.host
+					}
+					return httpError(ctx, genericListenerError, message, nil), nil
 				}
 			}
-			entry := &serviceEntry{basePath: basePath, svcObj: svcObj}
+			entry := &serviceEntry{basePath: basePath, svcObj: svcObj, config: config}
 			state.services = append(state.services, entry)
 			// Longest base path first so the most specific service wins routing.
 			sort.Slice(state.services, func(i, j int) bool {
@@ -534,9 +540,10 @@ func panicMessage(r any) string {
 // resource method.
 func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseWriter, r *http.Request) {
 	state.mu.RLock()
+	services := hostServices(state.services, r.Host)
 	var found *serviceEntry
 	var subPath string
-	for _, e := range state.services {
+	for _, e := range services {
 		if rest, ok := matchBasePath(r.URL.Path, e.basePath); ok {
 			found = e
 			subPath = rest
@@ -545,6 +552,10 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 	}
 	state.mu.RUnlock()
 
+	if services == nil {
+		writeErrorJSON(rt, w, r, http.StatusNotFound, "no service has registered for listener : "+javaSocketAddress(r))
+		return
+	}
 	if found == nil {
 		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching service found for path: "+r.URL.EscapedPath())
 		return
@@ -563,7 +574,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 		if !ok {
 			continue
 		}
-		invokeResource(rt, state, ctx, w, r, handle, accessorKey, extraArgs)
+		invokeResource(rt, state, found.config, ctx, w, r, handle, accessorKey, extraArgs)
 		return
 	}
 	defer rt.ReleasePooledContext(ctx)
@@ -583,9 +594,12 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 
 // invokeResource binds the arguments of the resource behind handle, calls it and sends its
 // response. It owns ctx and returns it to the pool once the resource has finished.
-func invokeResource(rt *runtime.Runtime, state *listenerState, ctx *extern.Context, w http.ResponseWriter,
-	r *http.Request, handle extern.MethodHandle, accessorKey string, extraArgs int) {
-	conn := &callerConn{rt: rt, types: state.types, w: w, r: r, accessor: accessorKey}
+func invokeResource(rt *runtime.Runtime, state *listenerState, config serviceConfig, ctx *extern.Context,
+	w http.ResponseWriter, r *http.Request, handle extern.MethodHandle, accessorKey string, extraArgs int) {
+	if config.mediaTypeSubtypePrefix != "" {
+		w = &subtypePrefixWriter{ResponseWriter: w, prefix: config.mediaTypeSubtypePrefix}
+	}
+	conn := &callerConn{rt: rt, types: state.types, w: w, r: r, accessor: accessorKey, config: config}
 	var args []values.BalValue
 	hasCaller := false
 	if extraArgs > 0 {

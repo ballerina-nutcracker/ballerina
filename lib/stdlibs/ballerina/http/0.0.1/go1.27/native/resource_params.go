@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -455,11 +456,12 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 				}
 				query = parsed
 			}
-			args[i], bindErr = bindQueryParam(ctx, types, p, query)
+			args[i], bindErr = bindQueryParam(ctx, types, p, query, conn.config.treatNilableAsOptional)
 		case headerParam:
-			args[i], bindErr = bindHeaderParam(ctx, types, p, r.Header)
+			args[i], bindErr = bindHeaderParam(ctx, types, p, r.Header, conn.config.treatNilableAsOptional)
 		case payloadParam:
-			args[i], bindErr = bindPayloadParam(ctx, types, p.ty, r.Header.Get("Content-Type"), body)
+			args[i], bindErr = bindPayloadParam(ctx, types, p.ty, r.Header.Get("Content-Type"), body,
+				conn.config.laxDataBinding)
 		}
 		if bindErr != nil {
 			return nil, bindErr
@@ -508,14 +510,15 @@ func parseQueryParams(rawQuery string) (map[string][]string, error) {
 	return params, nil
 }
 
-// Missing and value-less parameters both bind to () for a nilable type, matching jBallerina's
-// default treatNilableAsOptional. Defaultable parameters cannot be honoured: the runtime does
+// A value-less parameter binds to () for a nilable type, and so does a missing one when
+// nilable parameters are optional. Defaultable parameters cannot be honoured: the runtime does
 // not expose a parameter's default value to native code.
-func bindQueryParam(ctx *extern.Context, types *httpTypes, p resourceParam, query map[string][]string) (values.BalValue, *bindingError) {
+func bindQueryParam(ctx *extern.Context, types *httpTypes, p resourceParam, query map[string][]string,
+	nilableOptional bool) (values.BalValue, *bindingError) {
 	tc := ctx.TypeCtx()
-	vals := query[p.name]
+	vals, present := query[p.name]
 	if vals == nil {
-		if admits(tc, p.ty, semtypes.Nil) {
+		if admits(tc, p.ty, semtypes.Nil) && (nilableOptional || present) {
 			return nil, nil
 		}
 		return nil, badRequest("no query param value found for '" + p.name + "'")
@@ -591,14 +594,15 @@ func parseJavaDouble(s string) (values.BalValue, bool) {
 	return f, err == nil
 }
 
-func bindHeaderParam(ctx *extern.Context, types *httpTypes, p resourceParam, header http.Header) (values.BalValue, *bindingError) {
+func bindHeaderParam(ctx *extern.Context, types *httpTypes, p resourceParam, header http.Header,
+	nilableOptional bool) (values.BalValue, *bindingError) {
 	tc := ctx.TypeCtx()
 	if record := headerRecordType(tc, p.ty); record != nil {
-		return bindHeaderRecord(ctx, types, p, record, header)
+		return bindHeaderRecord(ctx, types, p, record, header, nilableOptional)
 	}
 	vals := header.Values(p.name)
 	if len(vals) == 0 || (len(vals) == 1 && vals[0] == "") {
-		if admits(tc, p.ty, semtypes.Nil) {
+		if admits(tc, p.ty, semtypes.Nil) && (nilableOptional || len(vals) == 1) {
 			return nil, nil
 		}
 		return nil, badRequest("no header value found for '" + p.name + "'")
@@ -619,7 +623,7 @@ func bindHeaderParam(ctx *extern.Context, types *httpTypes, p resourceParam, hea
 // @http:Header {name} on a field, but field annotations are not reachable from a parameter's
 // type here.
 func bindHeaderRecord(ctx *extern.Context, types *httpTypes, p resourceParam, record *semtypes.MappingAtomicType,
-	header http.Header) (values.BalValue, *bindingError) {
+	header http.Header, nilableOptional bool) (values.BalValue, *bindingError) {
 	tc := ctx.TypeCtx()
 	fields := newMappingValue()
 	for _, field := range record.FieldNames() {
@@ -628,7 +632,7 @@ func bindHeaderRecord(ctx *extern.Context, types *httpTypes, p resourceParam, re
 		vals := header.Values(key)
 		if len(vals) == 0 || (len(vals) == 1 && vals[0] == "") {
 			switch {
-			case admits(tc, fieldTy, semtypes.Nil):
+			case admits(tc, fieldTy, semtypes.Nil) && (nilableOptional || len(vals) == 1):
 				fields.Put(tc, field, nil)
 				continue
 			case admits(tc, p.ty, semtypes.Nil):
@@ -654,7 +658,7 @@ func bindHeaderRecord(ctx *extern.Context, types *httpTypes, p resourceParam, re
 // AbstractPayloadBuilder.getBuilder does, falling back to the parameter type when the media
 // type is absent or unknown.
 func bindPayloadParam(ctx *extern.Context, types *httpTypes, ty semtypes.SemType, rawContentType string,
-	body []byte) (values.BalValue, *bindingError) {
+	body []byte, lax bool) (values.BalValue, *bindingError) {
 	tc := ctx.TypeCtx()
 	if len(body) == 0 && admits(tc, ty, semtypes.Nil) {
 		return nil, nil
@@ -669,7 +673,7 @@ func bindPayloadParam(ctx *extern.Context, types *httpTypes, ty semtypes.SemType
 	)
 	switch {
 	case contentType == "":
-		value, msg = payloadFromType(ctx, types, ty, body)
+		value, msg = payloadFromType(ctx, types, ty, body, lax)
 	case xmlContentType.MatchString(contentType):
 		value, msg = xmlPayload(ctx, ty, body)
 	case textContentType.MatchString(contentType), urlEncodedContentType.MatchString(contentType):
@@ -677,9 +681,9 @@ func bindPayloadParam(ctx *extern.Context, types *httpTypes, ty semtypes.SemType
 	case octetStreamContentType.MatchString(contentType):
 		value, msg = binaryPayload(ctx, types, ty, body)
 	case jsonContentType.MatchString(contentType):
-		value, msg = jsonParamPayload(ctx, types, ty, body)
+		value, msg = jsonParamPayload(ctx, types, ty, body, lax)
 	default:
-		value, msg = payloadFromType(ctx, types, ty, body)
+		value, msg = payloadFromType(ctx, types, ty, body, lax)
 	}
 	if msg != "" {
 		return nil, badRequest("data binding failed: " + msg)
@@ -687,7 +691,8 @@ func bindPayloadParam(ctx *extern.Context, types *httpTypes, ty semtypes.SemType
 	return value, nil
 }
 
-func payloadFromType(ctx *extern.Context, types *httpTypes, ty semtypes.SemType, body []byte) (values.BalValue, string) {
+func payloadFromType(ctx *extern.Context, types *httpTypes, ty semtypes.SemType, body []byte,
+	lax bool) (values.BalValue, string) {
 	tc := ctx.TypeCtx()
 	switch {
 	case semtypes.IsSubtype(tc, ty, semtypes.String):
@@ -697,7 +702,7 @@ func payloadFromType(ctx *extern.Context, types *httpTypes, ty semtypes.SemType,
 	case semtypes.IsSubtype(tc, ty, types.byteArrTy):
 		return binaryPayload(ctx, types, ty, body)
 	default:
-		return jsonParamPayload(ctx, types, ty, body)
+		return jsonParamPayload(ctx, types, ty, body, lax)
 	}
 }
 
@@ -769,7 +774,8 @@ func binaryPayload(ctx *extern.Context, types *httpTypes, ty semtypes.SemType, b
 	return convertPayload(tc, byteArrayValue(ctx, types, body), types.byteArrTy, ty)
 }
 
-func jsonParamPayload(ctx *extern.Context, types *httpTypes, ty semtypes.SemType, body []byte) (values.BalValue, string) {
+func jsonParamPayload(ctx *extern.Context, types *httpTypes, ty semtypes.SemType, body []byte,
+	lax bool) (values.BalValue, string) {
 	tc := ctx.TypeCtx()
 	if len(body) == 0 {
 		return nil, "empty JSON document"
@@ -777,6 +783,12 @@ func jsonParamPayload(ctx *extern.Context, types *httpTypes, ty semtypes.SemType
 	payload, jsonErr := decodeJSONBody(ctx, types, body)
 	if jsonErr != nil {
 		return nil, jsonErr.Message
+	}
+	if object, ok := payload.(*values.Map); ok && lax && semtypes.IsSubtype(tc, ty, semtypes.Mapping) {
+		// A map parameter, a mapping without fields that is open, is bound strictly.
+		if record := recordType(tc, ty); record != nil && (len(record.FieldNames()) > 0 || semtypes.IsNever(record.Rest())) {
+			projectRecord(tc, object, record)
+		}
 	}
 	bound, convErr := values.CloneWithType(tc, payload, ty)
 	if convErr != nil {
@@ -797,4 +809,63 @@ func convertPayload(tc semtypes.Context, value values.BalValue, builderTy, ty se
 		return nil, err.Message
 	}
 	return bound, ""
+}
+
+// recordType returns the record a payload of type ty binds into, or nil when ty has no single
+// record member.
+func recordType(tc semtypes.Context, ty semtypes.SemType) *semtypes.MappingAtomicType {
+	mapping := semtypes.Intersect(ty, semtypes.Mapping)
+	if semtypes.IsEmpty(tc, mapping) {
+		return nil
+	}
+	return semtypes.ToMappingAtomicType(tc, mapping)
+}
+
+// projectRecord reshapes a JSON object for lax data binding as jBallerina's data.jsondata
+// projection does: a field a closed record lacks is dropped, a null on an optional field that
+// does not admit () removes the field, and an absent required nilable field becomes (). Field
+// and rest values are projected in turn, so records inside maps and arrays are reshaped too.
+func projectRecord(tc semtypes.Context, object *values.Map, record *semtypes.MappingAtomicType) {
+	fields := record.FieldNames()
+	closed := semtypes.IsNever(record.Rest())
+	for _, key := range object.Keys() {
+		if !slices.Contains(fields, key) {
+			if closed {
+				object.Delete(tc, key)
+			} else if value, _ := object.Get(key); value != nil {
+				projectValue(tc, value, record.Rest())
+			}
+			continue
+		}
+		fieldTy := record.FieldInnerVal(key)
+		value, _ := object.Get(key)
+		if value == nil {
+			if record.IsOptional(tc, key) && !admits(tc, fieldTy, semtypes.Nil) {
+				object.Delete(tc, key)
+			}
+			continue
+		}
+		projectValue(tc, value, fieldTy)
+	}
+	for _, field := range fields {
+		if _, present := object.Get(field); !present && !record.IsOptional(tc, field) &&
+			admits(tc, record.FieldInnerVal(field), semtypes.Nil) {
+			object.Put(tc, field, nil)
+		}
+	}
+}
+
+func projectValue(tc semtypes.Context, value values.BalValue, ty semtypes.SemType) {
+	switch value := value.(type) {
+	case *values.Map:
+		if record := recordType(tc, ty); record != nil {
+			projectRecord(tc, value, record)
+		}
+	case *values.List:
+		if elemTy, ok := elementType(tc, ty); ok {
+			for i := range value.Len() {
+				projectValue(tc, value.Get(i), elemTy)
+			}
+		}
+	}
 }
