@@ -28,7 +28,7 @@ jobs:
       # for a main-thread GC while the main thread joins them, so a wasm test
       # binary that already printed PASS never exits. Node 26 does not.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '26.13.1'
 
