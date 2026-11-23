@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, status code responses and error responses, the first steps in completing the `http` service and listener surface.
+Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, status code responses, error responses and resource signature parameter binding, the first steps in completing the `http` service and listener surface.
 
 ## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
 
@@ -71,3 +71,32 @@ resource function get albums/[string id]() returns Album|error {
 
 Each returned error is logged as `unhandled error returned from the service`. A request that matches no service or resource answers 404, and one whose method matches no resource answers 405, with the same `http:ErrorPayload` body. An `OPTIONS` request also answers 405 when no `options` or `default` resource matches it.
 
+### Resource signature parameters
+
+Resource functions may now declare query, header, and payload parameters alongside path parameters and an `http:Request` parameter, in any order. A binding failure is answered with 400 and a JSON error envelope whose message follows jBallerina (`no query param value found for 'id'`, `header binding failed for parameter: 'x-num'`, `data binding failed: ...`).
+
+| Parameter | Notes |
+|---|---|
+| Query parameter | Any unannotated parameter that is not the payload, or one annotated `@http:Query {name?}`. Types: `string`, `int`, `float`, `decimal`, `boolean`, `map<anydata>` and records (sent as JSON), arrays of these, and nilable forms. Values are split on commas and the first value binds to a non-array parameter. A missing parameter binds to `()` when nilable; a defaultable parameter does not receive its default and yields 400 instead |
+| `@http:Header {name?}` | Types: `string`, `int`, `float`, `decimal`, `boolean`, arrays of these, nilable forms, and closed records whose field names are the header names. An absent or empty header binds to `()` when nilable |
+| `@http:Payload {mediaType?}` | Any `anydata` type, deserialised by the builder the `Content-Type` selects (JSON, XML, text, form-urlencoded, octet-stream) or by the parameter type when the media type is absent or unknown. An empty body binds to `()` when nilable. `mediaType` is accepted but not enforced, as in jBallerina |
+| Default payload parameter | In a resource other than `get`, `head`, and `options`, the single unannotated structured parameter (a record, map, table, tuple, structured array, `byte[]`, or `xml`) is the payload |
+
+Signatures jBallerina's compiler plugin rejects — an ambiguous default payload, an unsupported parameter type, or two `http:Request` parameters — are reported per request with 500 instead.
+
+```ballerina
+type Album record {|
+    string title;
+    int year;
+|};
+
+service /albums on new http:Listener(9090) {
+    resource function get search(string artist, int? count, @http:Header {name: "X-Trace"} string? trace) returns string {
+        return string `${artist} ${count.toString()} ${trace ?: "-"}`;
+    }
+
+    resource function post .(Album album) returns Album {
+        return album;
+    }
+}
+```
