@@ -30,6 +30,18 @@ public function main() returns error? {
     http:Response df = check c->get("/deflate");
     io:println(check df.getTextPayload()); // @output hello deflated world
 
+    // The deflate coding is a zlib stream (RFC 9110); its Content-Length is the encoded size, so it is dropped.
+    http:Response zl = check c->get("/zlib");
+    io:println(check zl.getTextPayload()); // @output hello zlib world
+    io:println(zl.hasHeader("content-length")); // @output false
+
+    http:Response ed = check c->get("/emptydeflate");
+    string|error edp = ed.getTextPayload();
+    io:println(edp is error ? edp.message() : edp); // @output No content
+
+    http:Response zi = check c->get("/zlibish");
+    io:println(check zi.getTextPayload()); // @output AAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
     // A response advertising gzip but carrying a malformed body must surface a
     // read error rather than silently returning the raw compressed bytes.
     http:Response bad = check c->get("/badgzip");

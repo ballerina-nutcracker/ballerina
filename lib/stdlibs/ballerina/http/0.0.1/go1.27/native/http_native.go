@@ -17,10 +17,12 @@
 package native
 
 import (
+	"bufio"
 	"bytes"
 	"cmp"
 	"compress/flate"
 	"compress/gzip"
+	"compress/zlib"
 	"context"
 	"fmt"
 	"io"
@@ -208,18 +210,9 @@ func (h *responseBodyHolder) materialize() ([]byte, error) {
 
 // eagerBufferResponse pre-buffers the response when Content-Length fits within
 // eagerBufferThreshold; otherwise stores the stream lazily.
-func eagerBufferResponse(respHeaders map[string][]string, bodyStream io.ReadCloser) *responseBodyHolder {
+func eagerBufferResponse(cl int64, bodyStream io.ReadCloser) *responseBodyHolder {
 	if bodyStream == nil {
 		return &responseBodyHolder{buf: []byte{}}
-	}
-	var cl int64 = -1
-	for k, vals := range respHeaders {
-		if strings.EqualFold(k, "content-length") && len(vals) > 0 {
-			if n, err := strconv.ParseInt(strings.TrimSpace(vals[0]), 10, 64); err == nil {
-				cl = n
-			}
-			break
-		}
 	}
 	if cl >= 0 && cl <= eagerBufferThreshold {
 		data, readErr := io.ReadAll(bodyStream)
@@ -1723,27 +1716,45 @@ func applyCompressionHeaders(mode string, headers map[string][]string) map[strin
 	return headers
 }
 
-// decompressResponseBody wraps body with a gzip or deflate reader when the server
-// returns a Content-Encoding header. The Content-Encoding entry is deleted from
-// headers so callers see the decoded body without an encoding marker, matching the
-// transparent decompression behaviour of jBallerina's Netty pipeline.
+// contentLength returns the Content-Length in headers, or -1 when there is none.
+func contentLength(headers map[string][]string) int64 {
+	for k, vals := range headers {
+		if strings.EqualFold(k, "content-length") && len(vals) > 0 {
+			if n, err := strconv.ParseInt(strings.TrimSpace(vals[0]), 10, 64); err == nil {
+				return n
+			}
+			break
+		}
+	}
+	return -1
+}
+
+// decompressResponseBody decodes a gzip or deflate body as jBallerina's Netty pipeline does,
+// removing the Content-Encoding and encoded Content-Length from headers.
 func decompressResponseBody(headers map[string][]string, body io.ReadCloser) io.ReadCloser {
 	for k, vals := range headers {
 		if !strings.EqualFold(k, "content-encoding") || len(vals) == 0 {
 			continue
 		}
-		enc := strings.ToLower(strings.TrimSpace(vals[0]))
-		switch enc {
+		switch strings.ToLower(strings.TrimSpace(vals[0])) {
 		case "gzip":
-			delete(headers, k)
+			deleteEncodingHeaders(headers)
 			return &gzipReadCloser{underlying: body}
 		case "deflate":
-			delete(headers, k)
-			return &deflateReadCloser{reader: flate.NewReader(body), underlying: body}
+			deleteEncodingHeaders(headers)
+			return &deflateReadCloser{underlying: body}
 		}
-		break
+		return body
 	}
 	return body
+}
+
+func deleteEncodingHeaders(headers map[string][]string) {
+	for name := range headers {
+		if strings.EqualFold(name, "content-encoding") || strings.EqualFold(name, "content-length") {
+			delete(headers, name)
+		}
+	}
 }
 
 // gzipReadCloser lazily creates the gzip reader on first Read. Deferring
@@ -1781,14 +1792,44 @@ func (g *gzipReadCloser) Close() error {
 	return g.underlying.Close()
 }
 
+// deflateReadCloser decodes a zlib stream (RFC 9110's deflate) or, failing its header check on
+// the first Read, a raw deflate stream, as Netty's ZLIB_OR_NONE decoder does.
 type deflateReadCloser struct {
 	reader     io.ReadCloser
 	underlying io.ReadCloser
+	initErr    error
 }
 
-func (d *deflateReadCloser) Read(p []byte) (int, error) { return d.reader.Read(p) }
+func (d *deflateReadCloser) Read(p []byte) (int, error) {
+	if d.initErr != nil {
+		return 0, d.initErr
+	}
+	if d.reader == nil {
+		buffered := bufio.NewReader(d.underlying)
+		header, err := buffered.Peek(2)
+		switch {
+		case len(header) == 0 && err == io.EOF:
+			return 0, io.EOF
+		// RFC 1950: the deflate method, a window of at most 32 KiB, and a checksum that makes the
+		// first two bytes a multiple of 31.
+		case err == nil && header[0]&0x0f == 8 && header[0]>>4 <= 7 && (uint16(header[0])<<8|uint16(header[1]))%31 == 0:
+			reader, err := zlib.NewReader(buffered)
+			if err != nil {
+				d.initErr = err
+				return 0, err
+			}
+			d.reader = reader
+		default:
+			d.reader = flate.NewReader(buffered)
+		}
+	}
+	return d.reader.Read(p)
+}
+
 func (d *deflateReadCloser) Close() error {
-	_ = d.reader.Close()
+	if d.reader != nil {
+		_ = d.reader.Close()
+	}
 	return d.underlying.Close()
 }
 
@@ -1878,6 +1919,8 @@ func responseMethodKeys() map[string]string { return responseMethodKeyCache }
 // Content-Encoding (gzip/deflate) is transparently decoded, mirroring jBallerina's
 // Netty pipeline behaviour; the Content-Encoding header is removed from the response.
 func buildResponse(tc semtypes.Context, responseTy semtypes.SemType, statusCode int, respHeaders map[string][]string, bodyStream io.ReadCloser) *values.Object {
+	// The length on the wire decides eager buffering; decoding drops the header.
+	wireLength := contentLength(respHeaders)
 	bodyStream = decompressResponseBody(respHeaders, bodyStream)
 	headersMap := newMappingValue()
 	server := ""
@@ -1891,7 +1934,7 @@ func buildResponse(tc semtypes.Context, responseTy semtypes.SemType, statusCode 
 		}
 		headersMap.Put(tc, strings.ToLower(k), newListValue(items))
 	}
-	holder := eagerBufferResponse(respHeaders, bodyStream)
+	holder := eagerBufferResponse(wireLength, bodyStream)
 	return values.NewObject(
 		responseTy,
 		map[string]values.BalValue{
