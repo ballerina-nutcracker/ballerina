@@ -1,0 +1,24 @@
+-- stdout --
+ok: {"year":1970,"month":1,"day":1}
+ValidationError: Validation failed for '$:pastDate' constraint(s).
+ok: {"year":1970,"month":1,"day":1}
+ValidationError: Validation failed for '$:pastOrPresentDate' constraint(s).
+ok: {"year":2999,"month":1,"day":1}
+ValidationError: Validation failed for '$:futureDate' constraint(s).
+ValidationError: invalid date.
+ok: {"year":2999,"month":1,"day":1}
+ValidationError: Validation failed for '$:futureOrPresentDate' constraint(s).
+ok: {"year":2024,"month":2,"day":29}
+ValidationError: Validation failed for '$.day:validDate' constraint(s).
+ValidationError: Validation failed for '$.day:validDate' constraint(s).
+ok: {"year":2000,"month":2,"day":29}
+ValidationError: Validation failed for '$.day:validDate' constraint(s).
+ValidationError: Validation failed for '$.month:validDate' constraint(s).
+ValidationError: Validation failed for '$.day:validDate','$.month:validDate' constraint(s).
+ValidationError: Validation failed for '$.year:validDate' constraint(s).
+ok: {"year":-999999999,"month":1,"day":1}
+ok: {"year":0,"month":1,"day":1}
+ValidationError: birthday must be in the past.
+ValidationError: birthday is not a valid date.
+ok: {"year":1990,"month":5,"day":17}
+-- stderr --
