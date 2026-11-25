@@ -1,0 +1,29 @@
+(package
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":1}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"a":1,"ab":2,"ca":3}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":{"y":[1,2]}}))))
+      (var-def
+        (variable a (type
+          (finite-type
+            (literal 1))) (expr
+          (index-based-access
+            (literal {"a":1})
+            (literal a)))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref a))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":{"y":[1,2]}})
+            (value-type readonly))))))))

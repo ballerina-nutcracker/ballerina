@@ -1,7 +1,0 @@
--- stdout --
--- stderr --
-fatal[UNIMPLEMENTED_ERROR]: constant computed mapping key not implemented
-  --> computed-key-fv.bal:20:22
-   |
-20 | const map<int> M = {[K]: 1}; // @error
-   |                      ^

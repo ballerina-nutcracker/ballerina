@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> computed-key-eval-error-e.bal:20:29
+   |
+20 | const map<int> M1 = {["a"]: 1 / Z}; // @error
+   |                             ^^^^^
+
+error[SEMANTIC_ERROR]: division by zero
+  --> computed-key-eval-error-e.bal:22:24
+   |
+22 | const M2 = {[string `${1 / Z}`]: 1}; // @error
+   |                        ^^^^^

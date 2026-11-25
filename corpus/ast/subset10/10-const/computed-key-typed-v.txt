@@ -1,0 +1,69 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const S () (
+    (literal s)))
+  (type-definition R
+    (record-type
+      (field a
+        (value-type int))
+      (rest
+        (value-type string))))
+  (type-definition A
+    (record-type
+      (field a
+        (value-type int))))
+  (type-definition B
+    (record-type
+      (field b
+        (value-type int))
+      (rest
+        (value-type int))))
+  (type-definition AB
+    (union-type
+      (user-defined-type A)
+      (user-defined-type B)))
+  (type-definition D
+    (record-type
+      (field a
+        (value-type int)
+        (literal 5))
+      (field b
+        (value-type int)
+        (literal 6))))
+  (const X (
+    (user-defined-type R)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal 1))
+      (key-value
+        (simple-var-ref S)
+        (literal t)))))
+  (const Y (
+    (user-defined-type D)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal a)
+        (literal 1)))))
+  (const Z (
+    (user-defined-type AB)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal b)
+        (literal 1))
+      (key-value
+        (literal a)
+        (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref X))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref Y))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref Z)))))))

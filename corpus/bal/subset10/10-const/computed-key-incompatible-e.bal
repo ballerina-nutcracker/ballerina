@@ -14,11 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
+type R record {|
+    int a;
+|};
 
-const string K = "a";
-const map<int> M = {[K]: 1}; // @error
+// The value does not fit the member type the key selects.
+const map<int> M = {["a"]: "x"}; // @error
+// The key is not a field of the closed record.
+const R X = {a: 1, ["b"]: 2}; // @error
 
 public function main() {
-    io:println(M);
+    _ = M;
+    _ = X;
 }

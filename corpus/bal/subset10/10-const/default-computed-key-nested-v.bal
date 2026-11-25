@@ -23,7 +23,7 @@ type Inner record {|
 |};
 
 type Outer record {|
-    // The computed key cannot be folded yet, so inner is evaluated at runtime.
+    // The computed key is a constant expression, so inner's default is folded.
     Inner inner = {[K]: 9};
 |};
 
