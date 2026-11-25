@@ -14,8 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
-public type T object {
-    function init();
-    public int y;
+type Named object {
+    function init(int x); // @error
+    function get() returns int;
 };
+
+function make() returns object { function init(); }? { // @error
+    return ();
+}
+
+public function main() {
+}

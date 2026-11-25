@@ -17,7 +17,7 @@
 
 import ballerina/io;
 
-import testorg/inclusioncrossmoduleinit.foo;
+import testorg/inclusioncrossmoduleiniterr.foo;
 
 class C {
     *foo:T;
@@ -30,5 +30,5 @@ class C {
 
 public function main() {
     C c = new;
-    io:println(c.y); // @output 5
+    io:println(c.y);
 }

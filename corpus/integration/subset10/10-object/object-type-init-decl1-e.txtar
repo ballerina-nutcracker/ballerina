@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: method name 'init' is not allowed in an object type descriptor
+  --> object-type-init-decl1-e.bal:18:5
+   |
+18 |     function init(int x); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: method name 'init' is not allowed in an object type descriptor
+  --> object-type-init-decl1-e.bal:22:34
+   |
+22 | function make() returns object { function init(); }? { // @error
+   |                                  ^^^^^^^^^^^^^^^^

@@ -3076,6 +3076,10 @@ func objectTypeMembers(t typeResolver, td *ast.BLangObjectType) []model.Inclusio
 			fd := objectFieldDescriptor(member)
 			members = append(members, &fd)
 		case *ast.BMethodDecl:
+			// An init method-decl is rejected when the object type is resolved, so it is never included.
+			if member.MemberKind() == ast.ObjectMemberKindMethod && member.Name() == "init" {
+				continue
+			}
 			if semtypes.IsZero(member.Type()) {
 				continue
 			}
@@ -9346,6 +9350,10 @@ func resolveObjectType(t typeResolver, chain *binding, ty *ast.BLangObjectType, 
 	var directMembers []directMember
 	var resourceMethods []model.ResourceMethodSymbol
 	for m := range ty.Members() {
+		if m.MemberKind() == ast.ObjectMemberKindMethod && m.Name() == "init" {
+			t.semanticError("method name 'init' is not allowed in an object type descriptor", m.(ast.BLangNode).GetPosition())
+			continue
+		}
 		switch m.MemberKind() {
 		case ast.ObjectMemberKindRemoteMethod:
 			if ty.NetworkQuals != ast.ObjectNetworkQualsClient && ty.NetworkQuals != ast.ObjectNetworkQualsService {
@@ -9963,15 +9971,14 @@ func privateOwner(isPrivate bool, owner string) string {
 }
 
 // isPublicObjectTypeMember reports whether an object type descriptor member is in the public region. Remote
-// methods, resource methods and init are always public.
+// methods and resource methods are always public.
 func isPublicObjectTypeMember(m ast.ObjectMember) bool {
 	kind := m.MemberKind()
-	return m.IsPublic() || kind == ast.ObjectMemberKindRemoteMethod || kind == ast.ObjectMemberKindResourceMethod ||
-		(kind == ast.ObjectMemberKindMethod && m.Name() == "init")
+	return m.IsPublic() || kind == ast.ObjectMemberKindRemoteMethod || kind == ast.ObjectMemberKindResourceMethod
 }
 
-// isPublicInclusionMember reports whether an included member is in the public region. Remote methods, resource
-// methods and init are always public.
+// isPublicInclusionMember reports whether an included member is in the public region. Remote methods and resource
+// methods are always public.
 func isPublicInclusionMember(m model.InclusionMember) bool {
 	switch member := m.(type) {
 	case *model.FieldDescriptor:
@@ -9979,7 +9986,7 @@ func isPublicInclusionMember(m model.InclusionMember) bool {
 	case *model.MethodDescriptor:
 		kind := member.MemberKind()
 		return member.IsPublic() || kind == model.InclusionMemberKindRemoteMethod ||
-			kind == model.InclusionMemberKindResourceMethod || member.MemberName() == "init"
+			kind == model.InclusionMemberKindResourceMethod
 	default:
 		return true
 	}
