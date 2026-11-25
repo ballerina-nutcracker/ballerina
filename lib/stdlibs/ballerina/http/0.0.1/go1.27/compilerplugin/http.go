@@ -118,17 +118,31 @@ func isHTTPService(typeCtx semtypes.Context, listenerType semtypes.SemType, serv
 	return false
 }
 
+// validateResource checks the parameters of resource and reports whether it has an error
+// parameter.
 func validateResource(
 	compilerCtx *context.CompilerContext,
 	typeCtx semtypes.Context,
 	types paramTypes,
 	resource *ast.BLangResourceMethod,
-) {
+) bool {
 	requestParamCount := 0
-	hasCaller, hasContext := false, false
+	hasCaller, hasContext, hasError := false, false, false
 	for i := range resource.RequiredParams {
 		param := &resource.RequiredParams[i]
 		paramType := compilerCtx.SymbolType(param.Symbol())
+		if semtypes.IsSubtype(typeCtx, paramType, semtypes.Error) {
+			if !isErrorTypeDescriptor(param) {
+				compilerCtx.SemanticError(fmt.Sprintf("invalid resource parameter type: '%s'",
+					semtypes.ToString(typeCtx, paramType)), param.Name.GetPosition())
+				continue
+			}
+			if hasError {
+				compilerCtx.SemanticError(fmt.Sprintf("invalid multiple 'error' parameter: '%s'", param.Name.GetValue()),
+					param.Name.GetPosition())
+			}
+			hasError = true
+		}
 		if semtypes.IsSubtype(typeCtx, paramType, types.request) {
 			requestParamCount++
 		}
@@ -153,6 +167,14 @@ func validateResource(
 	if resource.RestParam != nil {
 		compilerCtx.Unimplemented("http resource method rest parameters", resource.RestParam.GetPosition())
 	}
+	return hasError
+}
+
+// isErrorTypeDescriptor reports whether param is declared with an error type descriptor, the only
+// form jBallerina binds an error to; a named error type is a type reference.
+func isErrorTypeDescriptor(param *ast.BLangVariable) bool {
+	_, ok := param.TypeNode().(*ast.BLangErrorTypeNode)
+	return ok
 }
 
 // validateCallerReturnType rejects a resource that responds through an http:Caller and can

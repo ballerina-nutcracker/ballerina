@@ -65,6 +65,35 @@ isolated function toErrorResponse(error err, string path, string method) returns
     return response;
 }
 
+// getErrorResponse is the response an error interceptor receives with the error, as jBallerina's
+// getErrorResponse builds it: the status the error maps to and its message or body as the payload.
+isolated function getErrorResponse(error err) returns Response {
+    Response response = new;
+    map<anydata> detail = errorDetail(err);
+    if err is ApplicationResponseError {
+        response.statusCode = <int>detail.get("statusCode");
+        anydata body = detail["body"];
+        if body !is () {
+            setStatusCodePayload(body, response, ());
+        }
+    } else {
+        response.statusCode = getStatusCode(err);
+        if err !is httpscerr:StatusCodeError {
+            response.setTextPayload(err.message());
+            return response;
+        }
+        if err !is NoContentError {
+            anydata body = detail["body"];
+            setStatusCodePayload(body is () ? err.message() : body, response, ());
+        }
+    }
+    anydata headers = detail["headers"];
+    if headers is map<string|string[]> {
+        setStatusCodeHeaders(headers, response);
+    }
+    return response;
+}
+
 // Each test casts err so it is not narrowed, which keeps compile time linear (#1745).
 isolated function getStatusCode(error err) returns int {
     if (<error>err) is httpscerr:BadRequestError {

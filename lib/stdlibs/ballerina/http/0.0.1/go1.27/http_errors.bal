@@ -383,6 +383,24 @@ isolated function createError(string errorType, string message, error? cause) re
         "InternalInterceptorReturnError" => {
             return error InternalInterceptorReturnError(message, cause);
         }
+        "InternalQueryParameterBindingError" => {
+            return error InternalQueryParameterBindingError(message, cause);
+        }
+        "InternalHeaderBindingListenerError" => {
+            return error InternalHeaderBindingListenerError(message, cause);
+        }
+        "InternalPayloadBindingListenerError" => {
+            return error InternalPayloadBindingListenerError(message, cause);
+        }
+        "InternalResourceNotFoundError" => {
+            return error InternalResourceNotFoundError(message, cause);
+        }
+        "InternalResourceMethodNotAllowedError" => {
+            return error InternalResourceMethodNotAllowedError(message, cause);
+        }
+        "InternalResourceDispatchingServerError" => {
+            return error InternalResourceDispatchingServerError(message, cause);
+        }
     }
     panic error("unknown http error type: " + errorType);
 }

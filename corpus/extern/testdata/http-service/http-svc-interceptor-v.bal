@@ -286,22 +286,6 @@ service class LateService {
     }
 }
 
-service class Echo {
-    *http:ResponseInterceptor;
-
-    remote function interceptResponse(http:RequestContext ctx) returns http:NextService|error? {
-        return ctx.next();
-    }
-}
-
-service class WithResponseInterceptor {
-    *http:InterceptableService;
-
-    public function createInterceptors() returns http:Interceptor => new Echo();
-
-    resource function get a() returns string => "a";
-}
-
 function show(http:Client c, string method, string path, map<string> headers = {}, string? body = ())
         returns error? {
     http:Response response = check c->execute(method, path, body, headers);
@@ -474,7 +458,4 @@ public function testMain() returns error? {
     check show(c, "GET", "/late/a");
     // @output interceptor late /a
     // @output 200 application/json {"seen":["late"]}
-    error? attached = ep.attach(new WithResponseInterceptor(), "/response");
-    io:println(attached is error ? attached.message() : "attached");
-    // @output interceptor service registration failed: response and error interceptors are not yet supported
 }

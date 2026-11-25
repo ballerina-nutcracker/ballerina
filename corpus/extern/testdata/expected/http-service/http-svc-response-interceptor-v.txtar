@@ -1,0 +1,50 @@
+-- stdout --
+200 [last,mid,outer] text/plain hello
+200 [last,mid,outer] text/plain via caller
+201 [last,mid,outer] application/json 5
+200 [last,mid,tagged,outer] text/plain hello
+202 [outer]
+200 [outer] text/plain replaced
+202 [outer] text/plain accepted
+202 [outer]
+202 [outer]
+200 [last,mid] text/plain hello
+500 [reserr,outer] text/plain reserr: next interceptor service did not match with the configuration
+200 [outer] text/plain via mid caller
+500 text/plain invalid array index: 1
+200 [last,mid,outer] text/plain after continue
+500 [reserr,outer] text/plain reserr: resource failed
+500 [reserr,outer] text/plain reserr: mid failed
+404 [reserr,outer] text/plain reserr: no matching resource found for path : /r/missing , method : GET
+405 [reserr,outer] text/plain reserr: Method not allowed
+400 [reserr,outer] text/plain reserr: data binding failed: failed to parse JSON payload: invalid character 'x' looking for beginning of value
+500 [reserr,outer] text/plain resource failed
+409 [reserr,outer] application/json {"code":"C1"}
+202 [outer]
+500 application/json {"status":500,"reason":"Internal Server Error","message":"reserr failed: resource failed","path":"/r/hello","method":"GET"}
+reqerr req failed false
+200 [last,mid,outer] text/plain hello
+reqerr error in casting query param : 'n' true
+200 [last,mid,outer] text/plain hello
+reqerr error in casting query param : 'n' true
+200 [mid,outer] text/plain from reqerr
+200 [outer] text/plain from reqtag
+200 [outer] text/plain a
+500 application/json {"status":500,"reason":"Internal Server Error","message":"req failed","path":"/d/a","method":"GET"}
+404 application/json {"status":404,"reason":"Not Found","message":"no matching resource found for path : /d/missing , method : GET","path":"/d/missing","method":"GET"}
+500 [callerreserr,outer] text/plain after exhaust
+200 [outer] text/plain handled by caller: caller boom
+reqlog req failed
+200 [exhaust,outer] text/plain resource error: new error
+["reqlog req failed"]
+200 [outer] text/plain early
+["next ok","service illegal respond: response has already been sent"]
+200 [outer] text/plain early
+200 [exhaust,outer] text/plain a
+["service sent"]
+-- stderr --
+error [ballerina/http]: panic while handling GET /r/hello: invalid array index: 1
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("reserr failed: resource failed") path="/r/hello" method="GET"
+time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("req failed") path="/d/a" method="GET"
+error: illegal return: response has already been sent
+warning: [ballerina/http] illegal return: response has already been sent

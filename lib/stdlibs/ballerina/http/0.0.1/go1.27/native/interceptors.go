@@ -17,7 +17,6 @@
 package native
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 
@@ -33,16 +32,31 @@ const (
 	targetMismatch    = "target service did not match with the configuration"
 	noPipeline        = "request context object does not contain the configured interceptors"
 	pipelineSlot      = "$pipeline"
-	unsupportedKind   = "response and error interceptors are not yet supported"
 	registrationError = "interceptor service registration failed: "
 )
 
-// interceptorTypes are the types the dispatcher checks services, interceptors and resource
-// parameters against.
+// interceptorKind is the interceptor service type an interceptor includes.
+type interceptorKind uint8
+
+const (
+	requestKind interceptorKind = iota
+	responseKind
+	requestErrorKind
+	responseErrorKind
+	// defaultErrorKind is the default error interceptor, which has no object: the dispatcher
+	// answers an error that reaches it with the error's response.
+	defaultErrorKind
+)
+
+// remoteMethods are the remote methods the response-side kinds are invoked through.
+var remoteMethods = map[interceptorKind]string{responseKind: "interceptResponse", responseErrorKind: "interceptResponseError"}
+
+// interceptorTypes are the types the dispatcher checks services, interceptors and parameters against.
 type interceptorTypes struct {
 	interceptable        semtypes.SemType
-	requestInterceptor   semtypes.SemType
+	kinds                [defaultErrorKind]semtypes.SemType
 	nextService          semtypes.SemType
+	response             semtypes.SemType
 	requestContext       semtypes.SemType
 	createRequestContext extern.FunctionHandle
 }
@@ -50,17 +64,19 @@ type interceptorTypes struct {
 func resolveInterceptorTypes(ctx *extern.Context) (interceptorTypes, error) {
 	handle, found := ctx.LookupFunction(orgName, moduleName, "interceptorTypes")
 	signature, ok := ctx.FunctionSignature(handle)
-	if !found || !ok || len(signature.Params) != 3 {
+	if !found || !ok || len(signature.Params) != 7 {
 		return interceptorTypes{}, fmt.Errorf("http: cannot resolve the interceptor types from 'interceptorTypes'")
 	}
 	createContext, contextSignature, err := resolveFactory(ctx, "createRequestContext")
 	if err != nil {
 		return interceptorTypes{}, err
 	}
+	params := signature.Params
 	return interceptorTypes{
-		interceptable:        signature.Params[0].Type,
-		requestInterceptor:   signature.Params[1].Type,
-		nextService:          signature.Params[2].Type,
+		interceptable:        params[0].Type,
+		kinds:                [...]semtypes.SemType{params[1].Type, params[2].Type, params[3].Type, params[4].Type},
+		nextService:          params[5].Type,
+		response:             params[6].Type,
 		requestContext:       contextSignature.ReturnType,
 		createRequestContext: createContext,
 	}, nil
@@ -70,9 +86,15 @@ func isOfType(tc semtypes.Context, v values.BalValue, ty semtypes.SemType) bool 
 	return semtypes.IsSubtype(tc, values.SemTypeForValue(v), ty)
 }
 
-// createInterceptors returns the request interceptors svcObj engages: those its
-// createInterceptors method returns when it is an http:InterceptableService.
-func createInterceptors(ctx *extern.Context, types interceptorTypes, svcObj *values.Object) ([]*values.Object, error) {
+// interceptor is a stage of the interceptor pipeline of a service.
+type interceptor struct {
+	obj  *values.Object
+	kind interceptorKind
+}
+
+// createInterceptors returns the interceptor pipeline of svcObj, the default error interceptor
+// followed by what its createInterceptors method returns, or nil when it engages no interceptor.
+func createInterceptors(ctx *extern.Context, types interceptorTypes, svcObj *values.Object) ([]interceptor, error) {
 	tc := ctx.TypeCtx()
 	if !isOfType(tc, svcObj, types.interceptable) {
 		return nil, nil
@@ -92,37 +114,55 @@ func createInterceptors(ctx *extern.Context, types interceptorTypes, svcObj *val
 			elements[i] = list.Get(i)
 		}
 	}
-	interceptors := make([]*values.Object, len(elements))
-	for i, element := range elements {
-		if !isOfType(tc, element, types.requestInterceptor) {
-			return nil, errors.New(unsupportedKind)
-		}
-		interceptors[i] = element.(*values.Object)
+	if len(elements) == 0 {
+		return nil, nil
 	}
-	return interceptors, nil
+	stages := make([]interceptor, 1, len(elements)+1)
+	stages[0] = interceptor{kind: defaultErrorKind}
+	for _, element := range elements {
+		for kind, ty := range types.kinds {
+			if isOfType(tc, element, ty) {
+				stages = append(stages, interceptor{obj: element.(*values.Object), kind: interceptorKind(kind)})
+				break
+			}
+		}
+	}
+	return stages, nil
 }
 
 // requestPipeline is the native state of the http:RequestContext of a dispatched request: the
-// request interceptors of its service, in order, followed by the service itself.
+// stages of its service and how far the request and response walks over them have come.
 type requestPipeline struct {
-	mu           sync.Mutex
-	interceptors []*values.Object
-	target       *values.Object
-	// index is the position of the running interceptor, advanced by each ctx.next() call.
+	mu     sync.Mutex
+	stages []interceptor
+	target *values.Object
+	// current is the position of the running request-side interceptor.
+	current int
+	// index is the request-side position ctx.next() reached.
 	index int
 	state pipelineState
+	// walk is the state of the running response-side interceptor, kept apart from the request
+	// side since a request interceptor's caller->respond runs the response walk inside it.
+	walk responseWalk
 }
 
 type pipelineState uint8
 
 const (
-	// stageInterceptor marks an interceptor as running, rather than the service.
-	stageInterceptor pipelineState = 1 << iota
+	// stageRequest marks a request-side interceptor as running.
+	stageRequest pipelineState = 1 << iota
 	// stageNextCalled marks that the running interceptor called ctx.next().
 	stageNextCalled
 )
 
 func (s pipelineState) has(flag pipelineState) bool { return s&flag != 0 }
+
+type responseWalk struct {
+	running bool
+	current int
+	// response is the position ctx.next() reached; -1 once it passed the first stage.
+	response int
+}
 
 func pipelineOf(requestCtx *values.Object) (*requestPipeline, bool) {
 	p, ok := requestCtx.Get(pipelineSlot)
@@ -135,11 +175,11 @@ func pipelineOf(requestCtx *values.Object) (*requestPipeline, bool) {
 func (p *requestPipeline) enter(index int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.index, p.state = index, stageInterceptor
+	p.current, p.index, p.state = index, index, stageRequest
 }
 
-// leave ends the interceptor at index and returns the position the pipeline continues from and
-// whether the interceptor called ctx.next().
+// leave ends the request-side interceptor at index and returns the position the pipeline
+// continues from and whether the interceptor called ctx.next().
 func (p *requestPipeline) leave(index int) (int, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -148,26 +188,70 @@ func (p *requestPipeline) leave(index int) (int, bool) {
 	return max(p.index, index+1), nextCalled
 }
 
-// next returns the stage after the one ctx.next() last reached, as jBallerina's
-// ExternRequestContext.next does: each call advances, and only one call may pass the service.
+// enterResponse starts the response-side interceptor at index and returns the walk state it
+// replaces, which leaveResponse restores.
+func (p *requestPipeline) enterResponse(index int) responseWalk {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	outer := p.walk
+	p.walk = responseWalk{running: true, current: index, response: index}
+	return outer
+}
+
+// leaveResponse ends the response-side interceptor at index and returns the position the
+// response continues from, as jBallerina computes it, and whether ctx.next() passed the first stage.
+func (p *requestPipeline) leaveResponse(index int, outer responseWalk) (int, bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	response := p.walk.response
+	p.walk = outer
+	return min(response, index-1), response < 0
+}
+
+// responseStart is where the walk of a response sent now starts: at the running request
+// interceptor, below the running response interceptor, or else at the last stage.
+func (p *requestPipeline) responseStart() int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	switch {
+	case p.walk.running:
+		return p.walk.current - 1
+	case p.state.has(stageRequest):
+		return p.current
+	}
+	return len(p.stages) - 1
+}
+
+// next returns the stage after the one ctx.next() last reached, on the side of the running
+// interceptor.
 func (p *requestPipeline) next(ctx *extern.Context) values.BalValue {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if !p.state.has(stageInterceptor) || p.index >= len(p.interceptors) {
-		return httpError(ctx, internalInterceptorReturnError, noNextService, nil)
+	switch {
+	case p.walk.running:
+		for p.walk.response--; p.walk.response >= 0; p.walk.response-- {
+			if p.stages[p.walk.response].kind == responseKind {
+				return p.stages[p.walk.response].obj
+			}
+		}
+		p.walk.response = -1
+		return nil
+	case p.state.has(stageRequest) && p.index < len(p.stages):
+		p.state |= stageNextCalled
+		for p.index++; p.index < len(p.stages); p.index++ {
+			if p.stages[p.index].kind == requestKind {
+				return p.stages[p.index].obj
+			}
+		}
+		return p.target
 	}
-	p.state |= stageNextCalled
-	p.index++
-	if p.index < len(p.interceptors) {
-		return p.interceptors[p.index]
-	}
-	return p.target
+	return httpError(ctx, internalInterceptorReturnError, noNextService, nil)
 }
 
-// stageAt is the stage the pipeline continues with at index.
+// stageAt is the stage the request continues with at index.
 func (p *requestPipeline) stageAt(index int) *values.Object {
-	if index < len(p.interceptors) {
-		return p.interceptors[index]
+	if index < len(p.stages) {
+		return p.stages[index].obj
 	}
 	return p.target
 }
