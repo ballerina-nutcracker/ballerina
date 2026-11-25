@@ -456,9 +456,9 @@ func TestProjectSerializationRoundtrip(t *testing.T) {
 
 		t.Run(dirName, func(t *testing.T) {
 			t.Parallel()
-			// Roundtrip test reuses the integration project skip list because any project
+			// Roundtrip test reuses the integration project skip checks because any project
 			// skipped at the integration level has no usable expected fixture.
-			if isProjectTestSkipped(dirName) {
+			if isProjectTestSkipped(dirName) || isSkipKey("project/"+dirName) {
 				t.Skipf("Skipping project serialization roundtrip for %s", dirName)
 			}
 			testProjectSerializationRoundtrip(t, dirName, projDir, txtarPath)
