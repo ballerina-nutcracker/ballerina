@@ -8737,6 +8737,12 @@ func resolveFixedArraySize(t typeResolver, lenExp ast.BLangExpression) (int, boo
 		t.semanticError("fixed-length array size must be a singleton int", lenExp.GetPosition())
 		return 0, false
 	}
+	// array-length is an int literal or a constant reference (spec §5.4.1.1); a
+	// variable with a singleton int type is not a constant.
+	if !isValidConstPatternExpr(t, lenExp) {
+		t.semanticError(notConstantExpressionMessage, lenExp.GetPosition())
+		return 0, false
+	}
 	sizeResult, ok := resolveActionOrExpression(t, nil, actionOrExpr, semtypes.Int)
 	if !ok {
 		return 0, false
