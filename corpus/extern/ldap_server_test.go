@@ -51,6 +51,8 @@ type fakeLdapServer struct {
 	bindDN  string
 	bindPW  string
 	ln      net.Listener
+	// stallSearch leaves search requests unanswered, to exercise client read timeouts.
+	stallSearch bool
 }
 
 func newFakeLdapServer(t interface{ Fatalf(string, ...any) }, bindDN, bindPW string, tlsConfig *tls.Config) *fakeLdapServer {
@@ -68,6 +70,17 @@ func newFakeLdapServer(t interface{ Fatalf(string, ...any) }, bindDN, bindPW str
 
 func (s *fakeLdapServer) addr() string {
 	return s.ln.Addr().String()
+}
+
+// addEntry seeds the directory; attribute names are lowercased as the request handlers expect.
+func (s *fakeLdapServer) addEntry(dn string, attrs map[string][]string) {
+	lowered := make(map[string][]string, len(attrs))
+	for k, v := range attrs {
+		lowered[strings.ToLower(k)] = v
+	}
+	s.mu.Lock()
+	s.entries = append(s.entries, &fakeLdapEntry{dn: dn, attrs: lowered})
+	s.mu.Unlock()
 }
 
 func (s *fakeLdapServer) close() {
@@ -175,6 +188,11 @@ func (s *fakeLdapServer) handleBind(conn net.Conn, messageID int64, op *ber.Pack
 
 	s.mu.Lock()
 	ok := strings.EqualFold(name, s.bindDN) && password == s.bindPW
+	if !ok && password != "" {
+		if e := s.findEntry(name); e != nil {
+			ok = slices.Contains(e.attrs["userpassword"], password)
+		}
+	}
 	s.mu.Unlock()
 
 	code := uint16(goldap.LDAPResultInvalidCredentials)
@@ -344,6 +362,12 @@ func evalFilter(pkt *ber.Packet, attrs map[string][]string) bool {
 }
 
 func (s *fakeLdapServer) handleSearch(conn net.Conn, messageID int64, op *ber.Packet) {
+	s.mu.Lock()
+	stall := s.stallSearch
+	s.mu.Unlock()
+	if stall {
+		return
+	}
 	baseDN := packetString(op.Children[0])
 	scope, _ := op.Children[1].Value.(int64)
 	filterPkt := op.Children[6]

@@ -1,0 +1,23 @@
+-- stdout --
+alice ["admin","dev"]
+carol no scopes
+Failed to authenticate username 'alice' with LDAP user store. | [LDAP: error code 49 - Invalid Credentials]
+Failed to authenticate username 'dave' with LDAP user store. | Username cannot be found in the directory.
+Failed to authenticate username 'a*' with LDAP user store. | Username cannot be found in the directory.
+Credential cannot be empty. | no cause
+Incorrect credential format. Format should be username:password | no cause
+bob\ ["dev"]
+alice ["admin","dev"]
+carol ["staff"]
+* no scopes
+st*r ["stars"]
+foo\\* ["escaped"]
+sp ["escaped"]
+carol ["staff"]
+alice ["admin","dev"]
+Failed to get groups for the username 'alice' from LDAP user store. | Membership attribute is not set in configurations.
+[LDAP: error code 49 - Invalid Credentials]
+Not an LDAP URL: http://localhost:389
+crypto:TrustStore is not yet supported for secureSocket.cert; use a certificate file path instead
+true
+-- stderr --

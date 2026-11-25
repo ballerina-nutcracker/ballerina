@@ -31,6 +31,7 @@ import (
 	_ "github.com/ballerina-nutcracker/ballerina/lib/langlibs/go/lang.xml"
 
 	// standard libraries
+	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/auth/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/avro/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/crypto/0.0.1/go1.27/native"
 	_ "github.com/ballerina-nutcracker/ballerina/lib/stdlibs/ballerina/file/0.0.1/go1.27/native"
