@@ -35,9 +35,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ballerina-nutcracker/ballerina/bir"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
-	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -84,24 +82,9 @@ type serviceEntry struct {
 	created      bool
 }
 
-// registerListenerExterns registers the Listener class definition and its
-// extern methods. Called from initHttpModule.
+// registerListenerExterns registers the extern methods of the Listener class.
+// Called from initHttpModule.
 func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
-	listenerClassDef := &bir.BIRClassDef{
-		Name:      model.Name("Listener"),
-		LookupKey: "ballerina/http:Listener",
-		Fields:    []bir.ObjectField{},
-		VTable: map[string]*bir.BIRFunction{
-			"initNative":    {FunctionLookupKey: "ballerina/http:Listener.initNative"},
-			"attach":        {FunctionLookupKey: "ballerina/http:Listener.attach"},
-			"detach":        {FunctionLookupKey: "ballerina/http:Listener.detach"},
-			"start":         {FunctionLookupKey: "ballerina/http:Listener.start"},
-			"gracefulStop":  {FunctionLookupKey: "ballerina/http:Listener.gracefulStop"},
-			"immediateStop": {FunctionLookupKey: "ballerina/http:Listener.immediateStop"},
-		},
-	}
-	runtime.RegisterExternClassDef(rt, listenerClassDef)
-
 	// Default lambdas for the optional config/name parameters (both default to ()).
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "$Listener.init$default$1",
 		func(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) { return nil, nil })

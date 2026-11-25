@@ -301,4 +301,4 @@ service /artists on albums {
 }
 ```
 
-Both services are served on port 9090, and a `listener` declaration in another module that calls `http:getDefaultListener()` gets the same listener. A service cannot attach to `http:getDefaultListener()` directly, since it may return an error; jBallerina rejects that, but the Go-native compiler does not yet ([#1811](https://github.com/ballerina-nutcracker/ballerina/issues/1811)). `defaultListenerPort` and `defaultListenerConfig` keep jBallerina's defaults, since `Config.toml` cannot set them until configurable variables are supported.
+Both services are served on port 9090, which `albums.getPort()` returns, and a `listener` declaration in another module that calls `http:getDefaultListener()` gets the same listener. A service cannot attach to `http:getDefaultListener()` directly, since it may return an error; jBallerina rejects that, but the Go-native compiler does not yet ([#1811](https://github.com/ballerina-nutcracker/ballerina/issues/1811)). `defaultListenerPort` and `defaultListenerConfig` keep jBallerina's defaults, since `Config.toml` cannot set them until configurable variables are supported.

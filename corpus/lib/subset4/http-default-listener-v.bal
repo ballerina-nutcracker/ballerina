@@ -27,6 +27,7 @@ public function main() returns error? {
     http:Listener first = check http:getDefaultListener();
     http:Listener second = check http:getDefaultListener();
     io:println(first === second); // @output true
+    io:println(first.getPort()); // @output 9090
 
     io:println(http:defaultListenerPort); // @output 9090
     io:println(http:defaultListenerConfig.host); // @output 0.0.0.0
@@ -36,4 +37,7 @@ public function main() returns error? {
     // Never started, so the test does not bind port 9090.
     check first.attach(new Greeter(), "/greeter");
     io:println("attached"); // @output attached
+
+    http:Listener explicit = check new (19580);
+    io:println(explicit.getPort()); // @output 19580
 }
