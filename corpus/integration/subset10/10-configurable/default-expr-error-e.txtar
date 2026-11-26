@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: both operands must belong to same basic type
+  --> default-expr-error-e.bal:19:25
+   |
+19 | configurable int port = 1 + "a"; // @error
+   |                         ^^^^^^^
+
+error[SEMANTIC_ERROR]: mapping type not found in expected type
+  --> default-expr-error-e.bal:21:26
+   |
+21 | configurable int count = {a: 1}; // @error
+   |                          ^^^^^^

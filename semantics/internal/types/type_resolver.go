@@ -3848,10 +3848,35 @@ func resolveGlobalVarType(t typeResolver, node *ast.BLangVariable) bool {
 		updateSymbolType(t, node, semtypes.Never)
 		return false
 	}
+	if node.IsConfigurable() {
+		return resolveConfigurableVarType(t, node, semType)
+	}
 	updateSymbolType(t, node, semType)
 	if fnType, ok := typeNode.(*ast.BLangFunctionType); ok {
 		return finalizeResolvedFunctionSignature(t, fnType)
 	}
+	return true
+}
+
+// resolveConfigurableVarType checks that the declared type of a configurable variable is a
+// subtype of anydata with a non-empty readonly intersection, and makes that intersection the
+// variable's type.
+func resolveConfigurableVarType(t typeResolver, node *ast.BLangVariable, declaredType semtypes.SemType) bool {
+	typePos := node.TypeNode().GetPosition()
+	if !ensureSubtype(t, declaredType, semtypes.CreateAnydata(t.typeContext()), func() {
+		t.semanticError("configurable variable type must be a subtype of 'anydata'", typePos)
+	}) {
+		updateSymbolType(t, node, semtypes.Never)
+		return false
+	}
+	readonlyType := semtypes.Intersect(declaredType, semtypes.ValReadonly)
+	if !ensureNotEmpty(t, readonlyType, func() {
+		t.semanticError("configurable variable type has no readonly values: intersection with readonly is empty", typePos)
+	}) {
+		updateSymbolType(t, node, semtypes.Never)
+		return false
+	}
+	updateSymbolType(t, node, readonlyType)
 	return true
 }
 
@@ -4118,6 +4143,8 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 			*ast.BLangErrorConstructorExpr,
 			*ast.BLangIndexBasedAccess,
 			*ast.BLangInferredTypedescDefault,
+			*ast.BLangRequiredDefaultValueExpr,
+			*ast.BLangConfigurableDefaultExpr,
 			*ast.BLangListConstructorExpr,
 			*ast.BLangLiteral,
 			*ast.BLangMappingConstructorExpr,
@@ -4248,6 +4275,16 @@ func resolveExpressionInner(t typeResolver, chain *binding, expr ast.BLangAction
 		return resolved(resolveMultipleWaitAction(t, chain, e, expectedType))
 	case *ast.BLangInferredTypedescDefault:
 		return resolved(resolveInferredTypedescDefault(t, chain, e, expectedType))
+	case *ast.BLangRequiredDefaultValueExpr:
+		setNodeType(t, e, expectedType)
+		return expressionResult{ty: expectedType, effect: defaultExpressionEffect(chain)}, true
+	case *ast.BLangConfigurableDefaultExpr:
+		result, ok := resolveActionOrExpression(t, chain, e.Expr, expectedType)
+		if !ok {
+			return expressionResult{}, false
+		}
+		setNodeType(t, e, result.ty)
+		return result, true
 	case *ast.BLangDefaultArg:
 		defaultFn := t.getSymbol(e.DefaultClosure).(model.FunctionSymbol)
 		returnType := defaultFn.TypedSignature().ReturnType

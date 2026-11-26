@@ -173,6 +173,8 @@ func walkExpressionInner(cx *functionContext, node ast.BLangActionOrExpression) 
 		*ast.BLangCommitExpr,
 		*ast.BLangDefaultArg,
 		*ast.BLangInferredTypedescDefault,
+		*ast.BLangRequiredDefaultValueExpr,
+		*ast.BLangConfigurableDefaultExpr,
 		*ast.BLangWorkerReceive,
 		*ast.AbstractExpression:
 		cx.internalError(fmt.Sprintf("unexpected expression type: %T", node), node.GetPosition())

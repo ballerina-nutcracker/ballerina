@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "80"
+  --> default-type-e.bal:21:25
+   |
+21 | configurable int port = "80"; // @error
+   |                         ^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected readonly&[int...], got [int...]
+  --> default-type-e.bal:23:28
+   |
+23 | configurable int[] ports = mutablePorts; // @error
+   |                            ^^^^^^^^^^^^

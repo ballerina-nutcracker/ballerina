@@ -130,6 +130,10 @@ func (p *PrettyPrinter) PrintInner(node BLangNode) {
 		p.PrintString("<default>")
 	case *BLangInferredTypedescDefault:
 		p.printLeafNode("inferred-typedesc-default")
+	case *BLangRequiredDefaultValueExpr:
+		p.printLeafNode("required-default-value")
+	case *BLangConfigurableDefaultExpr:
+		p.printConfigurableDefaultExpr(t)
 	case *BLangValueType:
 		p.printValueType(t)
 	case *BLangBuiltInRefTypeNode:
@@ -1299,6 +1303,15 @@ func (p *PrettyPrinter) printVariableDef(node *BLangVariableDef) {
 	p.PrintString("var-def")
 	p.indentLevel++
 	p.PrintInner(node.Var)
+	p.indentLevel--
+	p.EndNode()
+}
+
+func (p *PrettyPrinter) printConfigurableDefaultExpr(node *BLangConfigurableDefaultExpr) {
+	p.StartNode()
+	p.PrintString("configurable-default")
+	p.indentLevel++
+	p.PrintInner(node.Expr.(BLangNode))
 	p.indentLevel--
 	p.EndNode()
 }

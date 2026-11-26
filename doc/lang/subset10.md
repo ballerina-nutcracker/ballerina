@@ -17,6 +17,7 @@
   - Supports attachments on local variable declarations, on the parameters and return type of anonymous functions, and on the fields of record and object type descriptors wherever they appear
   - Currently annotations on a let variable declaration, a type-cast expression, a start action and the parameters of a function type descriptor are not supported, and annotations on an anonymous function expression itself and on tuple member type descriptors are not checked
 - [Module variable declarations](https://ballerina.io/spec/lang/master/#module-var-decl)
+  - The runtime does not support configurable variables yet: initializing a configurable variable panics
   - Currently references to a variable declared without an initializer are not checked for definite assignment in functions that `init` calls ([#1637](https://github.com/ballerina-nutcracker/ballerina/issues/1637)) or in other module variables' initializers ([#1636](https://github.com/ballerina-nutcracker/ballerina/issues/1636))
 - [Module listener declarations](https://ballerina.io/spec/lang/master/#section_8.3.1)
 - [Service declarations](https://ballerina.io/spec/lang/master/#section_8.3.2)
@@ -72,7 +73,7 @@
     - When the detail type is an intersection of record types, only one of them may supply defaults for the omitted fields. The specification does not define how defaults combine across an intersection.
     - A default is not applied to a field whose type another intersected record narrows, even when the default value belongs to the narrowed type.
 - [Checking expression](https://ballerina.io/spec/lang/master/#checking-expr) (`check` and `checkpanic`)
-  - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param) or [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor), even when the operand cannot produce an error.
+  - Currently `check` is not supported in [defaultable parameter expressions](https://ballerina.io/spec/lang/master/#defaultable-param), [record field default expressions](https://ballerina.io/spec/lang/master/#record-type-descriptor) or the default values of [configurable variables](https://ballerina.io/spec/lang/master/#module-var-decl), even when the operand cannot produce an error.
 - [Trap expression](https://ballerina.io/spec/lang/master/#trap-expr)
 - [Type cast expression](https://ballerina.io/spec/lang/master/#type-cast-expr)
 - [New expression](https://ballerina.io/spec/lang/master/#section_6.8.2)

@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-context-e.bal:24:5
+   |
+24 | int[n] a = [1, 2, 3]; // @error
+   |     ^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-context-e.bal:27:9
+   |
+27 |     A = uri // @error
+   |         ^^^
+
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> const-context-e.bal:30:7
+   |
+30 | xmlns uri as ns; // @error
+   |       ^^^
+
+error[SEMANTIC_ERROR]: list type not found in expected type
+  --> const-context-e.bal:24:12
+   |
+24 | int[n] a = [1, 2, 3]; // @error
+   |            ^^^^^^^^^

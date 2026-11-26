@@ -552,6 +552,8 @@ func varRefExpInner(expr ast.BLangActionOrExpression) (model.SymbolRef, bool) {
 		*ast.BLangGroupExpr,
 		*ast.BLangIndexBasedAccess,
 		*ast.BLangInferredTypedescDefault,
+		*ast.BLangRequiredDefaultValueExpr,
+		*ast.BLangConfigurableDefaultExpr,
 		*ast.BLangInvocation,
 		*ast.BLangLambdaFunction,
 		*ast.BLangListConstructorExpr,

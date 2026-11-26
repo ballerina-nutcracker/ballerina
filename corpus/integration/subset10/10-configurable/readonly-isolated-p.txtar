@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: configurable variables are not supported yet
+        at init(readonly-isolated-p.bal:23)

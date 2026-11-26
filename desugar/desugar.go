@@ -133,6 +133,8 @@ func inferredLambda(expr ast.BLangActionOrExpression) *ast.BLangLambdaFunction {
 		*ast.BLangFieldBaseAccess,
 		*ast.BLangIndexBasedAccess,
 		*ast.BLangInferredTypedescDefault,
+		*ast.BLangRequiredDefaultValueExpr,
+		*ast.BLangConfigurableDefaultExpr,
 		*ast.BLangInvocation,
 		*ast.BLangListConstructorExpr,
 		*ast.BLangLiteral,
@@ -629,6 +631,41 @@ func buildInitAssignment(compilerCtx *context.CompilerContext, node moduleInitNo
 	return assignment
 }
 
+// createConfigurableValueInvocation builds the call that initializes a configurable variable:
+//
+//	lang.__internal:configurableValue("<org>", "<module>", "<name>", <default>, <typedesc of R>)
+//
+// where R is the variable's type and <default> is `()` for a required variable (`?`), or a
+// closure returning the default value otherwise.
+func createConfigurableValueInvocation(pkgCtx *packageContext, pkgID *model.PackageID, node moduleInitNode) *ast.BLangInvocation {
+	pos := node.expr.GetPosition()
+	ty := pkgCtx.symbolType(node.sym)
+	env := pkgCtx.typeEnv()
+	var defaultValue ast.BLangExpression
+	if configurableDefault, ok := node.expr.(*ast.BLangConfigurableDefaultExpr); ok {
+		// Not walked here: desugarFunction walks the lambda when it desugars the init function.
+		fn := createDefaultClosureFunction(pkgCtx, configurableDefault.FnRef, configurableDefault.FnScope, configurableDefault.Expr, ty, pos)
+		lambda := &ast.BLangLambdaFunction{Function: fn}
+		lambda.Ty = recordFieldDefaultFnType(env, ty)
+		setPositionIfMissing(lambda, pos)
+		defaultValue = lambda
+	} else {
+		// A required variable (`?`) has no default.
+		defaultValue = createNilLiteral(pos)
+	}
+	typedesc := &ast.BLangTypedescExpr{Constraint: ty}
+	typedesc.Ty = semtypes.TypedescContaining(env, ty)
+	typedesc.SetPosition(pos)
+	args := []ast.BLangExpression{
+		createStringLiteral(pkgID.OrgName.Value(), pos),
+		createStringLiteral(pkgID.PkgName.Value(), pos),
+		createStringLiteral(node.name.GetValue(), pos),
+		defaultValue,
+		typedesc,
+	}
+	return createLangInternalInvocation(pkgCtx, "configurableValue", ty, args, pos)
+}
+
 // wrapInCheck wraps an expression with a check (check <expr>).
 func wrapInCheck(expr ast.BLangExpression) ast.BLangExpression {
 	exprTy := expr.Type()
@@ -719,11 +756,15 @@ func desugarInitFn(
 		if node.expr == nil {
 			continue
 		}
-		if vs, ok := compilerCtx.GetSymbol(node.sym).(*model.VariableSymbol); ok && vs.IsListener() {
+		vs, isVar := compilerCtx.GetSymbol(node.sym).(*model.VariableSymbol)
+		if isVar && vs.IsListener() {
 			initStmts = append(initStmts, buildListnerInit(pkgCtx, node, moduleListenersRef)...)
-		} else {
-			initStmts = append(initStmts, buildInitAssignment(compilerCtx, node))
+			continue
 		}
+		if isVar && vs.IsConfigurable() {
+			node.expr = createConfigurableValueInvocation(pkgCtx, pkg.PackageID, node)
+		}
+		initStmts = append(initStmts, buildInitAssignment(compilerCtx, node))
 	}
 	clearModuleInitExprs(pkg)
 
@@ -1406,6 +1447,16 @@ func setRecordDefaultFnSignature(ctx *packageContext, fnRef model.SymbolRef, fie
 	}
 }
 
+// createDefaultClosureFunction builds the function evaluating a default value allocated by symbol
+// resolution: a record field default or the default value of a configurable variable.
+func createDefaultClosureFunction(ctx *packageContext, fnRef model.SymbolRef, fnScope model.Scope, expr ast.BLangExpression, ty semtypes.SemType, loc diagnostics.Location) *ast.BLangFunction {
+	setRecordDefaultFnSignature(ctx, fnRef, ty, loc)
+	fn := createDefaultValueFunction(ctx.getSymbol(fnRef).Name(), expr, nil)
+	fn.SetSymbol(fnRef)
+	fn.SetScope(fnScope)
+	return fn
+}
+
 func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, parentScope model.Scope) desugaredTypeDescResult {
 	var result desugaredTypeDescResult
 	for _, field := range recType.FieldPtrs() {
@@ -1415,11 +1466,8 @@ func desugarRecordTypeDesc(ctx desugarContext, recType *ast.BLangRecordType, par
 		}
 		symRef := field.Default.FnRef
 		fieldTy := field.Type.Type()
-		setRecordDefaultFnSignature(ctx.packageContext(), symRef, fieldTy, field.GetPosition())
 		// Not walked here: desugarFunction desugars the generated function exactly once, and walkReturn hoists its setup statements.
-		fn := createDefaultValueFunction(ctx.getSymbol(symRef).Name(), field.Default.Expr, nil)
-		fn.SetSymbol(symRef)
-		fn.SetScope(field.Default.FnScope)
+		fn := createDefaultClosureFunction(ctx.packageContext(), symRef, field.Default.FnScope, field.Default.Expr, fieldTy, field.GetPosition())
 		result.recordFields = append(result.recordFields, desugaredRecordFieldResult{fn: fn, symRef: symRef, fieldTy: fieldTy})
 	}
 	if recType.RestType != nil {

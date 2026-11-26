@@ -503,6 +503,25 @@ type (
 		DefaultClosure model.SymbolRef
 	}
 
+	// BLangRequiredDefaultValueExpr is the `?` initializer of a configurable module
+	// variable: the value must be supplied by the configuration. Its type is the
+	// contextually expected type, the variable's declared type intersected with readonly.
+	//shallow:allow marker struct
+	BLangRequiredDefaultValueExpr struct {
+		bLangExpressionBase
+	}
+
+	// BLangConfigurableDefaultExpr is the initializer of a configurable module
+	// variable that has a default value. Expr is the default value; FnRef and FnScope
+	// are the symbol and scope of the closure desugar generates to evaluate it,
+	// allocated by symbol resolution. Its type is the type of Expr.
+	BLangConfigurableDefaultExpr struct {
+		bLangExpressionBase
+		Expr    BLangExpression
+		FnRef   model.SymbolRef
+		FnScope model.Scope
+	}
+
 	BLangUnaryExpr struct {
 		bLangExpressionBase
 		Expr     BLangExpression
@@ -761,6 +780,10 @@ var (
 	_ BLangExpression = &BLangInferredTypedescDefault{}
 	_ BLangNode       = &BLangDefaultArg{}
 	_ BLangExpression = &BLangDefaultArg{}
+	_ BLangNode       = &BLangRequiredDefaultValueExpr{}
+	_ BLangExpression = &BLangRequiredDefaultValueExpr{}
+	_ BLangNode       = &BLangConfigurableDefaultExpr{}
+	_ BLangExpression = &BLangConfigurableDefaultExpr{}
 	_ BLangNode       = &BLangIndexBasedAccess{}
 	_ BLangNode       = &BLangListConstructorExpr{}
 	_ BLangNode       = &BLangTypeConversionExpr{}

@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown type: n
+  --> type-ref-e.bal:22:8
+   |
+22 | type T n; // @error
+   |        ^

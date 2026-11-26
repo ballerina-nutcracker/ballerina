@@ -491,6 +491,12 @@ func Walk(v Visitor, node BLangNode) {
 	case *BLangDefaultArg:
 		// leaf — no children
 
+	case *BLangRequiredDefaultValueExpr:
+		// leaf — no children
+
+	case *BLangConfigurableDefaultExpr:
+		Walk(v, node.Expr.(BLangNode))
+
 	case *BLangTypeConversionExpr:
 		if node.Expression != nil {
 			Walk(v, node.Expression.(BLangNode))

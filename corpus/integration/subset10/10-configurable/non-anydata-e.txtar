@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: configurable variable type must be a subtype of 'anydata'
+  --> non-anydata-e.bal:19:14
+   |
+19 | configurable function () returns int f = ?; // @error
+   |              ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: configurable variable type must be a subtype of 'anydata'
+  --> non-anydata-e.bal:21:14
+   |
+21 | configurable error e = ?; // @error
+   |              ^^^^^

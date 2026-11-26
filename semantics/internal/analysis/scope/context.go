@@ -58,6 +58,7 @@ type ClosureKind uint8
 const (
 	DefaultParam ClosureKind = iota
 	RecordFieldDefault
+	ConfigurableDefault
 )
 
 type functionKind uint8
@@ -292,7 +293,8 @@ func finishFunctionContext(fc *functionContext, node invokableSignatureNode) Con
 }
 
 // NewExpressionClosure pushes the closure of a default-parameter expression
-// (parent is the owning invokable's context) or of a record-field default.
+// (parent is the owning invokable's context), of a record-field default or of
+// a configurable variable's default.
 func NewExpressionClosure(parent Context, kind ClosureKind) Context {
 	enclosing, hasEnclosing := EnclosingFunction(parent)
 	fc := &functionContext{
@@ -310,6 +312,8 @@ func NewExpressionClosure(parent Context, kind ClosureKind) Context {
 		fc.isolated = hasEnclosing && enclosing.IsIsolated()
 	case RecordFieldDefault:
 		fc.isolated = true
+	case ConfigurableDefault:
+		fc.isolated = false
 	}
 	fc.active = closureRules(fc.isolated)
 	return fc
