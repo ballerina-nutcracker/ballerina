@@ -37,22 +37,7 @@ class CustomListener {
 }
 
 service /unsupported on new http:Listener(19224) {
-    resource function get query(int value) returns string { // @error
-        return value.toString();
-    }
-
-    resource function post withRequest(http:Request req, string name) { // @error
-        var _ = req;
-        var _ = name;
-    }
-
     resource function put rest(http:Request... requests) { // @error
         var _ = requests;
-    }
-}
-
-service /mixed on new CustomListener(), new http:Listener(19225) {
-    resource function patch checked(string value) { // @error
-        var _ = value;
     }
 }

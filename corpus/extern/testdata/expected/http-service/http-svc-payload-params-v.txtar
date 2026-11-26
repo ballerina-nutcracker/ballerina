@@ -1,0 +1,60 @@
+-- stdout --
+201 a 1
+400 data binding failed: 'true' value cannot be converted to 'never'
+400 data binding failed: '{| json... |}' value cannot be converted to '{| age: int, name: string, never... |}': field 'age' not present in value
+400 data binding failed: incompatible type found: '{| age: int, name: string, never... |}'
+400 data binding failed: incompatible type found: '{| age: int, name: string, never... |}'
+400 data binding failed: incompatible type found: '{| age: int, name: string, never... |}'
+400 data binding failed: failed to parse JSON payload: invalid character 'b' looking for beginning of object key string
+400 data binding failed: failed to parse xml: unexpected end of XML content
+400 data binding failed: invalid URL escape "%zz"
+400 data binding failed: '"BLUE"' value cannot be converted to '"GREEN"|"RED"'
+201 b 2
+201 a 1
+201 [hello]
+201 [plain]
+201 [hi]
+201 [x]
+201 [raw]
+400 data binding failed: String payload is null
+201 nil
+201 nil
+201 nil
+201 nil
+201 nil
+400 data binding failed: empty JSON document
+400 data binding failed: empty JSON document
+201 a 1
+400 data binding failed: Empty xml payload
+201 <a/>
+201 0
+400 data binding failed: String payload is null
+201 <a/>
+201 2 x y
+201 1 -
+201 7
+201 4
+201 2
+201 3
+400 data binding failed: incompatible type found: 'int'
+201 5
+201 xml <a>1</a>
+201 json {"a":1}
+201 <b/>
+201 2
+201 a z
+201 [1,2]
+201 3
+201 true
+201 RED
+200 a 1
+200 {"k":true}
+200 gone
+200 d
+200 q
+500 ambiguous types for parameter a and b. Use annotations to avoid ambiguity
+500 invalid union type for default payload param: p. Use basic structured anydata types
+500 invalid type of query param p: expected one of the string, int, float, boolean, decimal, map<anydata> types or the array types of them
+500 invalid multiple 'http:Payload' annotation usage
+500 invalid usage of payload annotation for a non entity body resource : get. Use an accessor that supports entity body
+-- stderr --
