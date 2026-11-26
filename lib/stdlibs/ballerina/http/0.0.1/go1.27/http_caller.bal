@@ -81,6 +81,24 @@ public isolated client class Caller {
         return nativeRespond(self, response);
     }
 
+    # Pushes a promise to the caller.
+    #
+    # + promise - Push promise message
+    # + return - An `http:ListenerError` in case of failures
+    remote isolated function promise(PushPromise promise) returns ListenerError? {
+        return externPromise(self, promise);
+    }
+
+    # Sends a promised push response to the caller.
+    #
+    # + promise - Push promise message
+    # + response - The outbound response
+    # + return - An `http:ListenerError` in case of failures while responding with the promised response
+    remote isolated function pushPromisedResponse(PushPromise promise, Response response)
+                                                                returns ListenerError? {
+        return externPushPromisedResponse(self, promise, response);
+    }
+
     # Sends a `100-continue` response to the caller.
     #
     # + return - An `http:ListenerError` if failed to send the `100-continue` response or else `()`
@@ -185,6 +203,10 @@ isolated function nativeRespond(Caller caller, Response response) returns Listen
 isolated function nativeRespondError(Caller caller, error err) returns ListenerError? = external;
 
 isolated function nativeGetRemoteHostName(Caller caller) returns string? = external;
+
+isolated function externPromise(Caller caller, PushPromise promise) returns ListenerError? = external;
+
+isolated function externPushPromisedResponse(Caller caller, PushPromise promise, Response response) returns ListenerError? = external;
 
 # Defines the HTTP redirect codes as a type.
 public type RedirectCode REDIRECT_MULTIPLE_CHOICES_300|REDIRECT_MOVED_PERMANENTLY_301|REDIRECT_FOUND_302|REDIRECT_SEE_OTHER_303|

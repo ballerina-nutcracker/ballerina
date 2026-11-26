@@ -28,6 +28,7 @@ require (
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667
 	github.com/go-ldap/ldap/v3 v3.4.13
 	github.com/mochi-mqtt/server/v2 v2.7.9
+	golang.org/x/net v0.54.0
 	golang.org/x/tools v0.44.0
 )
 

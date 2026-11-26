@@ -1,0 +1,34 @@
+-- stdout --
+promise :authority=127.0.0.1:19234 :method=GET :path=/styles.css :scheme=http x-promise=one
+response :status=200 content-type=text/plain body=main
+pushed :status=200 content-type=text/plain x-pushed=yes body=pushed styles
+promise :authority=127.0.0.1:19234 :method=GET :path=/data?page=1 :scheme=http
+response :status=200 content-type=text/plain body=early
+pushed :status=200 content-type=application/json body={"page":1}
+promise :authority=127.0.0.1:19234 :method=GET :path=/never :scheme=http
+response :status=200 content-type=text/plain body=unfulfilled
+pushed reset
+promise :authority=127.0.0.1:19234 :method=HEAD :path=/missing :scheme=http
+response :status=200 content-type=text/plain body=head
+pushed :status=404 content-type=text/plain body=
+promise :authority=127.0.0.1:19234 :method=GET :path=/twice :scheme=http
+promise :authority=127.0.0.1:19234 :method=GET :path=/twice :scheme=http
+response :status=200 content-type=text/plain body=Promised stream is already rejected or stream is no longer valid
+pushed :status=200 content-type=text/plain body=first
+pushed :status=200 content-type=text/plain body=second
+response :status=200 content-type=text/plain body=invalid push promise path: 'relative': expected an absolute path; invalid push promise method: 'POST': expected 'GET' or 'HEAD'; invalid push promise path: '/%zz': invalid URL escape "%zz"; promised request headers cannot include "Content-Length"
+response :status=200 content-type=text/plain body=Server push not allowed to opposite endpoint
+response :status=200 content-type=text/plain body=Promised stream is already rejected or stream is no longer valid
+promise :authority=127.0.0.1:19234 :method=GET :path=/gated/styles.css :scheme=http
+response :status=200 content-type=text/plain body=gated
+pushed :status=200 content-type=text/plain body=gated styles
+promise :authority=127.0.0.1:19234 :method=GET :path=/promising/never :scheme=http
+response :status=200 content-type=text/plain body=promising
+pushed reset
+response :status=500 content-type=text/plain body=invalid push promise
+response :status=200 content-type=text/plain body=late
+late promise: ok
+late push: Promised stream is already rejected or stream is no longer valid
+http/1.1: Sending a PUSH_PROMISE is not supported for HTTP/1.x connections
+-- stderr --
+error [ballerina/http]: panic while handling GET /unpromised: invalid push promise

@@ -13,7 +13,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
-| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 29 | 27 | 24 | 36% |
+| [http](../../lib/stdlibs/ballerina/http/0.0.1/go1.27/README.md)               | 30 | 27 | 23 | 38% |
 | [io](../../lib/stdlibs/ballerina/io/0.0.1/go1.27/README.md)                   | 19 | 4 | 4 | 70% |
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
@@ -29,7 +29,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **291** | **51** | **61** | **72%** |
+| **Total**                                                                     | **292** | **51** | **60** | **72%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -111,6 +111,9 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **A multipart body set on an outbound message is decoded.** jBallerina's `getBodyParts()` decodes only an inbound body, so on a `Request` or `Response` whose body was set with `setTextPayload` or `setBinaryPayload` it returns an empty `mime:Entity[]`. The Go-native version decodes such a body too, so a well-formed one yields its parts and one holding no part returns an error, as an inbound body does.
 - **Malformed percent-encoding in a form body returns an error.** jBallerina's `getFormParams()` panics with a Java `IllegalArgumentException` (`URLDecoder: Illegal hex characters in escape (%) pattern`) on a body such as `a=%ZZ`. The Go-native version returns the `form data decode failure` error that jBallerina's `getFormParams()` declares for a decode failure, with the decoding error as its cause.
 - **A listener whose private key does not match its certificate fails `start`.** jBallerina accepts a valid certificate file paired with a valid private key from a different key pair at both `init` and `start`, and the listener then fails every incoming TLS handshake, so clients see only `SSL connection failed` errors. The Go-native version returns a `GenericListenerError` from `start` (`Listener.start: X509KeyPair: tls: private key does not match public key`) and serves nothing (<https://github.com/ballerina-platform/ballerina-library/issues/9908>).
+- **A client that disabled server push gets no push promise.** jBallerina sends a `PUSH_PROMISE` even when the client sent `SETTINGS_ENABLE_PUSH = 0`, which the client treats as a connection error, while `promise` returns `()`; the Go-native version sends nothing and `promise` returns an `http:ListenerError` (`Server push not allowed to opposite endpoint`), so the resource can still respond (<https://github.com/ballerina-platform/ballerina-library/issues/9919>).
+- **A push promise that never gets a response is reset.** jBallerina leaves the promised stream open, so the client waits for it indefinitely; the Go-native version resets it with `RST_STREAM` once the resource returns (<https://github.com/ballerina-platform/ballerina-library/issues/9920>).
+- **Invalid push promises are rejected.** jBallerina sends a promise with a relative or malformed path, a method other than `GET` or `HEAD`, or a `Content-Length` header, sends a pushed `HEAD` response with its body, drops the port from a promise's `:authority`, and writes a response pushed for a `PushPromise` that was never promised on stream 0, and the client rejects each as a protocol error; the Go-native version's `promise` returns an `http:ListenerError` for the first three, a pushed `HEAD` response is sent without its body, a promise keeps the `:authority` of its request, and `pushPromisedResponse` returns an `http:ListenerError` for a promise never sent (<https://github.com/ballerina-platform/ballerina-library/issues/9921>).
 
 ### io
 
