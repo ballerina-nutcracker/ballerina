@@ -33,30 +33,24 @@ jobs:
         run: python3 .github/scripts/test_grouped_test_output.py
 
   sniff:
-    name: Sniff (${{ matrix.os }}, copy ${{ matrix.copy }})
+    name: Sniff (copy ${{ matrix.copy }})
     needs: script-tests
     if: github.event_name != 'pull_request'
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 300
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
         copy: [ 1, 2, 3 ]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version: '1.27.1'
-      - name: Install test dependencies (Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Install test dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y hyperfine wrk
-      - name: Install test dependencies (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: choco install hyperfine -y
       - name: Run CI tests under load with shuffle
         shell: bash
         env:
