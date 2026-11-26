@@ -1,0 +1,38 @@
+-- stdout --
+true
+true
+Invalid XML found: 'validating XML against an XSD file is not supported'
+duplicate field 'b'
+duplicate field 'b'
+field 'a' cannot be converted into the type '(int|string)'
+<a/>
+<a><b>1</b></a>
+<a>t</a>
+<a xmlns="urn:d"><p:b xmlns:p="urn:p">1 &amp; 2</p:b></a>
+[<a>1</a>,<a><b/></a>]
+failed to parse xml: XML syntax error on line 1: invalid UTF-8
+failed to parse xml: XML syntax error on line 1: invalid UTF-8
+failed to parse xml: XML syntax error on line 1: invalid UTF-8
+failed to parse xml: XML syntax error on line 1: invalid UTF-8
+'string' value '4294967297' cannot be converted to 'byte'
+array size is not compatible with the expected size
+array size is not compatible with the expected size
+{"p":[{"name":"x"},{"name":"y"}]}
+{"title":"t"}
+{"title":"t"}
+required field 'p' not present in XML
+required field 'p' not present in XML
+{"a":5}
+{"a":5}
+{"a":[5,6]}
+field 'a' cannot be converted into the type 'int'
+field 'a' cannot be converted into the type 'int'
+field 'a' cannot be converted into the type 'int'
+{"x":1,"y":[]}
+array size is not compatible with the expected size
+{"i":{"a":"1"},"z":9}
+field 'a' cannot be converted into the type '[]?'
+'string' value '5' cannot be converted to '[]?'
+{"a":5}
+stream failure
+-- stderr --

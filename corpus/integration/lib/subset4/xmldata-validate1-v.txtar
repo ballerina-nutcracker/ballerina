@@ -1,0 +1,9 @@
+-- stdout --
+
+
+Invalid XML found: 'required attribute 'code' not present in XML'
+Invalid XML found: 'record type name 'item' mismatch with given XML name 'thing''
+Invalid XML found: ''string' value 'x' cannot be converted to 'int''
+
+Invalid XML found: 'xml root element is missing'
+-- stderr --
