@@ -285,6 +285,9 @@ public class Response {
     #                 is not already set
     public isolated function setJsonPayload(json payload, string? contentType = ()) = external;
 
+    // Serialises an anydata value as JSON, the way a returned status code record's body is sent.
+    isolated function setAnydataPayload(anydata payload) returns error? = external;
+
     # Sets the response body to an XML value, defaulting Content-Type to `application/xml`.
     #
     # + payload     - The XML payload

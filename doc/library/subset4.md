@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, the first step in completing the `http` service and listener surface.
+Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy and status code responses, the first steps in completing the `http` service and listener surface.
 
 ## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
 
@@ -24,3 +24,27 @@ import ballerina/http.httpscerr;
 | `Listener` `attach`, `detach`, `'start`, `gracefulStop`, `immediateStop` | `error` | Declared `error?` as in jBallerina; a failure is an `http:GenericListenerError` |
 
 The `Client` remote and resource methods still return plain `error` values; the client error subtypes are tracked with the rest of the client completion.
+
+### Status code responses
+
+A resource can return a status code response record, including a record type that includes one:
+
+```ballerina
+type AlbumNotFound record {|
+    *http:NotFound;
+    Album body;
+|};
+
+resource function get albums/[string id]() returns http:Ok|AlbumNotFound {
+    // ...
+}
+```
+
+| Surface | Notes |
+|---|---|
+| `http:StatusCodeResponse` record types (`http:Ok`, `http:Created`, `http:NotFound`, and the other 58) and `http:DefaultStatusCodeResponse` | Each record defaults `status` to its `Status` object, so `http:Ok ok = {body: "done"};` needs no status |
+| `http:Status`, the `Status<Name>` classes, `http:DefaultStatus` | `new http:DefaultStatus(418)` gives a status for any code |
+| `STATUS_*` constants | The 61 status code integers, for example `http:STATUS_NOT_FOUND` |
+| Returning a record from a resource | Sent with `status.code`, its `headers` (one header per element of an array value), and its `body`: `xml`, `string`, `byte[]` as themselves, a `map<string>` url-encoded when `mediaType` is `application/x-www-form-urlencoded`, anything else as JSON. The `mediaType` field overrides a `Content-Type` in `headers`, which overrides the body's default. A JSON body keeps its members' order and writes nested `xml` as a string. A body that cannot be encoded, or a status that cannot end a response (outside 100–999, or a 1xx other than 101), gives a 500 |
+
+Not yet supported: the `readonly &` response constants (`http:OK`, `http:NOT_FOUND`, ...), the `@http:Payload` return media type, and `@http:Header` renaming of `headers` fields.
