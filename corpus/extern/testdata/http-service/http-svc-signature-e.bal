@@ -303,3 +303,25 @@ service class RequestErrorNamedError {
         return;
     }
 }
+
+service /returnAnnotations on new http:Listener(19233) {
+    resource function get cacheError() returns @http:Cache error { // @error
+        return error("cache");
+    }
+
+    resource function get payloadError() returns @http:Payload {mediaType: "text/plain"} error { // @error
+        return error("payload");
+    }
+
+    resource function get both(http:Caller caller) returns @http:Payload {mediaType: "text/plain"} @http:Cache error? { // @error
+        var _ = caller;
+    }
+
+    resource function get namedError() returns @http:Cache http:ListenerError { // @error
+        return error http:GenericListenerError("named");
+    }
+
+    resource function get cacheUnion() returns @http:Cache string|error => "union";
+
+    resource function get cacheNotFound() returns @http:Cache http:NotFound => {};
+}

@@ -1,0 +1,4 @@
+-- stdout --
+{"mustRevalidate":true,"noCache":false,"noStore":false,"noTransform":false,"isPrivate":false,"proxyRevalidate":false,"maxAge":3600,"sMaxAge":-1,"noCacheFields":[],"privateFields":[],"setETag":true,"setLastModified":true}
+attached
+-- stderr --

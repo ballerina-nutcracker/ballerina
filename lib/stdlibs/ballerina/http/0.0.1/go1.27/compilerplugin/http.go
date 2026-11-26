@@ -51,9 +51,17 @@ func ValidateService(
 	if err != nil {
 		return nil, err
 	}
-	serviceConfig, ok := exported.GetAnnotationSymbol("ServiceConfig")
-	if !ok {
-		return nil, fmt.Errorf("ballerina/http compiler plugin: exported annotation ServiceConfig not found")
+	serviceConfig, err := exportedAnnotation(exported, "ServiceConfig")
+	if err != nil {
+		return nil, err
+	}
+	payload, err := exportedAnnotation(exported, "Payload")
+	if err != nil {
+		return nil, err
+	}
+	cache, err := exportedAnnotation(exported, "Cache")
+	if err != nil {
+		return nil, err
 	}
 	typeCtx := semtypes.ContextFrom(compilerCtx.GetTypeEnv())
 	params := paramTypes{request: requestType, caller: callerType, context: contextType}
@@ -68,6 +76,7 @@ func ValidateService(
 		}
 		for _, resource := range service.ResourceMethods {
 			validateResource(compilerCtx, typeCtx, params, resource)
+			validateReturnAnnotations(compilerCtx, typeCtx, resource, payload, cache)
 			if params.hasCaller(compilerCtx, typeCtx, resource) {
 				validateCallerReturnType(compilerCtx, typeCtx, resource)
 			}
@@ -103,6 +112,14 @@ func exportedType(compilerCtx *context.CompilerContext, exported model.ExportedS
 		return semtypes.SemType{}, fmt.Errorf("ballerina/http compiler plugin: exported type %s not found", name)
 	}
 	return compilerCtx.SymbolType(ref), nil
+}
+
+func exportedAnnotation(exported model.ExportedSymbolSpace, name string) (model.SymbolRef, error) {
+	ref, ok := exported.GetAnnotationSymbol(name)
+	if !ok {
+		return model.SymbolRef{}, fmt.Errorf("ballerina/http compiler plugin: exported annotation %s not found", name)
+	}
+	return ref, nil
 }
 
 func isHTTPService(typeCtx semtypes.Context, listenerType semtypes.SemType, service *ast.BLangService) bool {
@@ -190,6 +207,37 @@ func validateCallerReturnType(compilerCtx *context.CompilerContext, typeCtx semt
 	}
 	compilerCtx.SemanticError(fmt.Sprintf("invalid resource method return type: can not use 'http:Caller' and return "+
 		"'%s' from a resource : expected 'error' or nil", semtypes.ToString(typeCtx, ty)), returnType.TypeDescriptor.GetPosition())
+}
+
+// validateReturnAnnotations rejects @http:Payload and @http:Cache on a resource that can only return
+// an error or nil, as jBallerina's HttpResourceValidator does.
+func validateReturnAnnotations(compilerCtx *context.CompilerContext, typeCtx semtypes.Context,
+	resource *ast.BLangResourceMethod, payload, cache model.SymbolRef) {
+	returnType := resource.GetReturnTypeDescriptor()
+	if returnType == nil || returnType.TypeDescriptor == nil {
+		return
+	}
+	ty := returnType.TypeDescriptor.Type()
+	if !semtypes.IsSubtype(typeCtx, ty, semtypes.Union(semtypes.Error, semtypes.Nil)) {
+		return
+	}
+	hasPayload, hasCache := false, false
+	for i := range returnType.AnnAttachments {
+		switch returnType.AnnAttachments[i].Symbol() {
+		case payload:
+			hasPayload = true
+		case cache:
+			hasCache = true
+		}
+	}
+	pos, typeName := returnType.TypeDescriptor.GetPosition(), semtypes.ToString(typeCtx, ty)
+	if hasPayload {
+		compilerCtx.SemanticError(fmt.Sprintf("invalid usage of payload annotation with return type : '%s'", typeName), pos)
+	}
+	if hasCache {
+		compilerCtx.SemanticError(fmt.Sprintf("invalid usage of cache annotation with return type : '%s'. "+
+			"Cache annotation only supports return types of anydata and SuccessStatusCodeResponse", typeName), pos)
+	}
 }
 
 // mediaTypeSubtypePrefix is jBallerina's MEDIA_TYPE_SUBTYPE_REGEX, matched against the whole prefix.
