@@ -1,0 +1,49 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as value))
+  (type-definition Leaf
+    (record-type
+      (field v
+        (value-type string)
+        (literal y))
+      (field next
+        (union-type
+          (user-defined-type Leaf)
+          (value-type null))
+        (check-panicked-expr
+          (invocation value cloneWithType (
+            (mapping-constructor-expr
+              (key-value
+                (literal v)
+                (literal z))
+              (key-value
+                (literal next)
+                (literal <nil>)))
+            (typedesc-expr)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable l (type
+          (user-defined-type Leaf)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref l))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal y))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (check-panicked-expr
+          (invocation value cloneWithType (
+            (mapping-constructor-expr
+              (key-value
+                (literal v)
+                (literal z))
+              (key-value
+                (literal next)
+                (literal <nil>)))
+            (typedesc-expr))))))))

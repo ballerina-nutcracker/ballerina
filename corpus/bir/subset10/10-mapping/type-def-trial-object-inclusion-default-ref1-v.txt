@@ -1,0 +1,81 @@
+module $anon.. v 0.0.0;
+v  nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly;
+class K {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  run({| x: boolean, never... |}|{| x: string, never... |}) -> {| x: boolean, never... |}|{| x: string, never... |}{
+    bb0 {
+      %0 = p;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: {| x: boolean, never... |}|{| x: string, never... |}, never... |}{} defaults{f=$anon/.:$default$0}
+    r = %1;
+    %3 = println(r) -> bb1;
+  }
+  bb1 {
+    %4 = newObject $anon/.:K
+    %5 = %4.init() -> bb2;
+  }
+  bb2 {
+    %7 = %5 is nil
+    %7 ? bb3 : bb4;
+  }
+  bb3 {
+    %6 = %4;
+    GOTO bb5;
+  }
+  bb4 {
+    %6 = %5;
+    GOTO bb5;
+  }
+  bb5 {
+    o = %6;
+    %9 = $default$1() -> bb6;
+  }
+  bb6 {
+    $desugar$0 = %9;
+    %11 = o.run($desugar$0) -> bb7;
+  }
+  bb7 {
+    %12 = println(%11) -> bb8;
+  }
+  bb8 {
+    return;
+  }
+}
+$default$0() -> {| x: boolean, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = v is object { function run({| x: boolean, never... |}|{| x: string, never... |}) returns {| x: boolean, never... |}|{| x: string, never... |} }
+    %3 = newMap {| x: boolean, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> {| x: boolean, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = v is {| f: {| x: boolean, never... |}|{| x: string, never... |}, never... |}
+    %3 = newMap {| x: boolean, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$2() -> {| x: boolean, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad k
+    %3 = newMap {| x: string, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}

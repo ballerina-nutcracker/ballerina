@@ -1,0 +1,28 @@
+(K
+  (run
+    (bb0 () ()
+      (return
+        (simple-var-ref p))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable r (type
+        (user-defined-type R)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (var-def
+      (variable o (type
+        (user-defined-type O)) (expr
+        (new
+          (user-defined-type K) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation run expr:
+          (simple-var-ref o) ( <default>)))))
+  )
+)

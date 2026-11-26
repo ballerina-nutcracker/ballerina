@@ -1,0 +1,81 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| a: int, f: isolated function() returns {| a: int, f: ..., next: nil|..., never... |}, next: nil|{| a: int, f: isolated function() returns ..., next: nil|..., never... |}, never... |}{} defaults{a=$anon/.:$default$0, next=$anon/.:$default$1, f=$anon/.:$default$2}
+    r = %1;
+    %4 = ConstantLoad f
+    %3 = r[%4];
+    f = %3;
+    %6 = f() -> bb1;
+  }
+  bb1 {
+    s = %6;
+    %9 = ConstantLoad a
+    %8 = s[%9];
+    %10 = %8;
+    %11 = println(%10) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad next
+    %12 = s[%13];
+    %14 = %12 is nil
+    %15 = %14;
+    %16 = println(%15) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$anonFunc$_0() -> {| a: int, f: isolated function() returns ..., next: nil|..., never... |}{
+  bb0 {
+    %2 = fp $anon/.:$default$3
+    $desugar$0 = %2;
+    %3 = fp $anon/.:$anonFunc$_1
+    g = %3;
+    %5 = $desugar$0() -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %5;
+    %7 = g($desugar$1) -> bb2;
+  }
+  bb2 {
+    %0 = %7;
+    return;
+  }
+}
+$anonFunc$_1({| a: int, f: isolated function() returns ..., next: nil|..., never... |}) -> {| a: int, f: isolated function() returns ..., next: nil|..., never... |}{
+  bb0 {
+    %0 = r;
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> nil|{| a: int, f: isolated function() returns ..., next: nil|..., never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> isolated function() returns {| a: int, f: ..., next: nil|..., never... |}{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    %0 = %1;
+    return;
+  }
+}
+$default$3() -> {| a: int, f: isolated function() returns ..., next: nil|..., never... |}{
+  bb0 {
+    %1 = ConstantLoad a
+    %2 = ConstantLoad 3
+    %3 = newMap {| a: int, f: isolated function() returns {| a: int, f: ..., next: nil|..., never... |}, next: nil|{| a: int, f: isolated function() returns ..., next: nil|..., never... |}, never... |}{%1=%2} defaults{a=$anon/.:$default$0, next=$anon/.:$default$1, f=$anon/.:$default$2}
+    %0 = %3;
+    return;
+  }
+}

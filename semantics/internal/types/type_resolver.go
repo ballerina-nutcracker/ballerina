@@ -537,8 +537,13 @@ func (f *functionTypeResolver) deferDefault(resolve func()) {
 }
 
 // drainPendingDefaults runs the queued defaults in order until the queue is empty, including defaults queued
-// while draining.
+// while draining. It reports an internal error and drops the queue if the type env is not ready.
 func (f *functionTypeResolver) drainPendingDefaults() {
+	if !f.typeEnv().IsReady() {
+		f.internalError("type env not ready when draining default expressions", diagnostics.Location{})
+		f.pendingDefaults = nil
+		return
+	}
 	drainDefaults(&f.pendingDefaults)
 }
 
@@ -9288,7 +9293,6 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 
 		seen := make(map[string]bool)
 		resolvedFields := make(map[string]bool)
-		resolvedDefaults := make(map[string]bool)
 		var fields []semtypes.Field
 		// TODO: need to think of a way to unify this with objects
 		for name, field := range ty.FieldPtrs() {
@@ -9317,12 +9321,11 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			}
 			if field.Default != nil {
 				restoreContext := setIsolatedXMLStepContext(t, true)
-				defaultResult, ok := resolveDefaultExpressionNow(t, chain, field, field.Default.Expr, fieldTy)
+				defaultResult, ok := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy)
 				restoreContext()
 				// The field's type does not depend on its default, so the field is kept even if the default fails.
 				if ok {
 					chain = sequentialChain(t, defaultResult.effect)
-					resolvedDefaults[name] = true
 				}
 			}
 			ro := field.IsReadonly()
@@ -9363,7 +9366,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		}
 		semType := d.Define(t.typeEnv(), fields, rest)
 		mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-		t.setMappingDefaults(mat, recordFieldDefaults(t, ty, resolvedFields, resolvedDefaults))
+		t.setMappingDefaults(mat, recordFieldDefaults(t, ty, resolvedFields))
 		return semType, chain, true
 	case *ast.BLangFunctionType:
 		if ty.IsAnyFunction() {
@@ -9387,12 +9390,15 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			if !ty.RequiredParams[i].SymbolRef.IsEmpty() {
 				t.setSymbolType(ty.RequiredParams[i].SymbolRef, paramTy)
 			}
-			if ty.RequiredParams[i].InitExpr != nil {
-				defaultResult, ok := resolveDefaultExpressionNow(t, chain, ty.RequiredParams[i], ty.RequiredParams[i].InitExpr, paramTy)
-				if !ok {
-					return semtypes.SemType{}, chain, false
+			if param := ty.RequiredParams[i]; param.InitExpr != nil {
+				// The function's type does not depend on its defaults, so it is kept even if a default fails.
+				if _, inferred := param.InitExpr.(*ast.BLangInferredTypedescDefault); inferred {
+					// `<>` computes no value: it only checks the parameter's typedesc type, so it resolves now.
+					resolveActionOrExpression(t, chain, param.InitExpr, paramTy)
+					chain = sequentialChain(t, defaultExpressionEffect(addCaptureGroup(chain, param.CaptureGroup())))
+				} else if defaultResult, ok := resolveDefaultExpression(t, chain, param, param.InitExpr, paramTy); ok {
+					chain = sequentialChain(t, defaultResult.effect)
 				}
-				chain = sequentialChain(t, defaultResult.effect)
 			}
 		}
 		restTy := semtypes.Never
@@ -9701,13 +9707,15 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 	return members, true
 }
 
-func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields, resolvedDefaults map[string]bool) []model.FieldDefault {
+// recordFieldDefaults returns the defaults of recordTy's fields whose types resolved, followed by the defaults it
+// inherits from its inclusions for fields that have no resolved declaration of their own.
+func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields map[string]bool) []model.FieldDefault {
 	var defaults []model.FieldDefault
 	for name, field := range recordTy.FieldPtrs() {
 		if !resolvedFields[name] {
 			continue
 		}
-		if field.Default != nil && resolvedDefaults[name] {
+		if field.Default != nil {
 			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef})
 		}
 	}

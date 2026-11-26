@@ -13,23 +13,15 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-type A record {|
-    boolean x;
-|};
+
+import ballerina/io;
 
 type B record {|
-    string x;
+    int x = 1;
+    boolean y = (<anydata>3) is B;
 |};
-
-final readonly v = 1;
-
-type R record {| // @error invalid cycle detected
-    A|B f = {x: v is object { *O; }};
-|};
-
-type O object {
-    function run(A|B p = {x: v is R});
-};
 
 public function main() {
+    B b = {};
+    io:println(b); // @output {"x":1,"y":false}
 }
