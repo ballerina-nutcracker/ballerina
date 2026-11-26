@@ -50,6 +50,8 @@ type listenerState struct {
 	requestTy     semtypes.SemType
 	headersTy     semtypes.SemType
 	createHeaders extern.FunctionHandle
+	callerTy      semtypes.SemType
+	createCaller  extern.FunctionHandle
 	host          string
 	port          int
 	timeout       time.Duration
@@ -97,11 +99,17 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			if err != nil {
 				return nil, err
 			}
+			createCaller, callerSignature, err := resolveFactory(ctx, "createCaller")
+			if err != nil {
+				return nil, err
+			}
 			state := &listenerState{
 				types:         types,
 				requestTy:     signature.Params[0].Type,
 				headersTy:     signature.ReturnType,
 				createHeaders: createHeaders,
+				callerTy:      callerSignature.ReturnType,
+				createCaller:  createCaller,
 				host:          "0.0.0.0",
 				port:          port,
 				timeout:       60 * time.Second,
@@ -274,10 +282,19 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 // resolveSignatureTypes looks up createHeaders, whose signature gives the http:Request and
 // http:Headers types, since stdlib natives cannot name a Ballerina type directly.
 func resolveSignatureTypes(ctx *extern.Context) (extern.FunctionHandle, extern.FunctionSignature, error) {
-	fn, found := ctx.LookupFunction(orgName, moduleName, "createHeaders")
-	signature, ok := ctx.FunctionSignature(fn)
-	if !found || !ok || len(signature.Params) != 1 {
+	fn, signature, err := resolveFactory(ctx, "createHeaders")
+	if err != nil || len(signature.Params) != 1 {
 		return fn, signature, fmt.Errorf("http: cannot resolve the Request and Headers types from 'createHeaders'")
+	}
+	return fn, signature, nil
+}
+
+// resolveFactory looks up the private factory name, whose return type is the type it builds.
+func resolveFactory(ctx *extern.Context, name string) (extern.FunctionHandle, extern.FunctionSignature, error) {
+	fn, found := ctx.LookupFunction(orgName, moduleName, name)
+	signature, ok := ctx.FunctionSignature(fn)
+	if !found || !ok {
+		return fn, signature, fmt.Errorf("http: cannot resolve the type built by '%s'", name)
 	}
 	return fn, signature, nil
 }
@@ -474,10 +491,7 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
-				msg := panicMessage(rec)
-				logMsg := fmt.Sprintf("error [ballerina/http]: panic while handling %s %s: %s\n", r.Method, r.URL.Path, msg)
-				_, _ = rt.Platform().IO.Stderr([]byte(logMsg))
-				writeErrorJSON(rt, w, r, http.StatusInternalServerError, msg)
+				writePanicResponse(w, logPanic(rt, r, rec))
 			}
 		}()
 		dispatchRequest(rt, state, w, r)
@@ -490,6 +504,14 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 		TLS:          state.tlsCfg,
 	}
 	return rt.Platform().HTTP.Listen(cfg, handler)
+}
+
+// logPanic reports a panic raised while handling r on stderr and returns its message.
+func logPanic(rt *runtime.Runtime, r *http.Request, rec any) string {
+	msg := panicMessage(rec)
+	logMsg := fmt.Sprintf("error [ballerina/http]: panic while handling %s %s: %s\n", r.Method, r.URL.Path, msg)
+	_, _ = rt.Platform().IO.Stderr([]byte(logMsg))
+	return msg
 }
 
 // panicMessage extracts a human-readable message from a recovered panic value,
@@ -530,11 +552,6 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 
 	segments := splitURLPath(subPath)
 	ctx := rt.AcquirePooledContext()
-	// Recycle the context once the request is fully served. The resource runs
-	// synchronously on this strand within dispatchRequest and the response is
-	// written before we return; any async work it starts gets its own context
-	// (see runStrand), so releasing here cannot race with a started strand.
-	defer rt.ReleasePooledContext(ctx)
 	httpMethod := strings.ToLower(r.Method)
 
 	// Resource-level dispatch is delegated to the language runtime: it coerces
@@ -546,25 +563,10 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 		if !ok {
 			continue
 		}
-		var invocationArgs []values.BalValue
-		if extraArgs > 0 {
-			args, bindErr := resourceArgs(ctx, state, handle, accessorKey, r)
-			if bindErr != nil {
-				writeErrorJSON(rt, w, r, bindErr.status, bindErr.message)
-				return
-			}
-			invocationArgs = args
-		} else {
-			closeBody(r)
-		}
-		result, err := ctx.InvokeMethod(handle, invocationArgs)
-		if err != nil {
-			writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
-			return
-		}
-		writeResult(rt, ctx, state.types, w, r, accessorKey, result)
+		invokeResource(rt, state, ctx, w, r, handle, accessorKey, extraArgs)
 		return
 	}
+	defer rt.ReleasePooledContext(ctx)
 	// The path matched a service but no resource under the requested method. If
 	// the same path resolves under a different method it is a 405; otherwise 404.
 	for _, accessor := range found.svcObj.AllResourceMethodNames() {
@@ -577,6 +579,65 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 		}
 	}
 	writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path : "+r.RequestURI+" , method : "+r.Method)
+}
+
+// invokeResource binds the arguments of the resource behind handle, calls it and sends its
+// response. It owns ctx and returns it to the pool once the resource has finished.
+func invokeResource(rt *runtime.Runtime, state *listenerState, ctx *extern.Context, w http.ResponseWriter,
+	r *http.Request, handle extern.MethodHandle, accessorKey string, extraArgs int) {
+	conn := &callerConn{rt: rt, types: state.types, w: w, r: r, accessor: accessorKey}
+	var args []values.BalValue
+	hasCaller := false
+	if extraArgs > 0 {
+		bound, caller, bindErr := resourceArgs(ctx, state, handle, conn)
+		if bindErr != nil {
+			rt.ReleasePooledContext(ctx)
+			writeErrorJSON(rt, w, r, bindErr.status, bindErr.message)
+			return
+		}
+		args, hasCaller = bound, caller
+	} else {
+		closeBody(r)
+	}
+	if hasCaller {
+		// The handler returns once a response is sent, which ends the exchange (an HTTP/2
+		// stream ends only then), while the resource carries on.
+		conn.sent = make(chan struct{})
+		go runCallerResource(ctx, conn, handle, args)
+		<-conn.sent
+		return
+	}
+	defer rt.ReleasePooledContext(ctx)
+	result, err := ctx.InvokeMethod(handle, args)
+	if err != nil {
+		writePanicResponse(w, panicMessage(err))
+		return
+	}
+	writeResult(rt, ctx, state.types, w, r, accessorKey, result)
+}
+
+// runCallerResource runs a resource that has an http:Caller parameter.
+func runCallerResource(ctx *extern.Context, conn *callerConn, handle extern.MethodHandle, args []values.BalValue) {
+	rt := conn.rt
+	defer rt.ReleasePooledContext(ctx)
+	defer conn.markSent()
+	defer func() {
+		if rec := recover(); rec != nil {
+			ctx.ReleaseAllHeldLocks()
+			message := logPanic(rt, conn.r, rec)
+			if !conn.close() {
+				writePanicResponse(conn.w, message)
+			}
+		}
+	}()
+	result, err := ctx.InvokeMethod(handle, args)
+	if err != nil {
+		if !conn.close() {
+			writePanicResponse(conn.w, panicMessage(err))
+		}
+		return
+	}
+	conn.finish(ctx, result)
 }
 
 // matchBasePath reports whether path is under the attach point basePath,
@@ -660,6 +721,13 @@ func buildRequest(method, rawPath, httpVersion string, headers map[string][]stri
 	)
 }
 
+// writePanicResponse answers a request whose resource panicked: a 500 with the panic message as text.
+func writePanicResponse(w http.ResponseWriter, message string) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, _ = io.WriteString(w, message)
+}
+
 // writeErrorJSON writes an ErrorPayload error response for the request.
 func writeErrorJSON(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request, status int, message string) {
 	body := errorPayload(rt.Platform().Time.Now(), status, message, r.RequestURI, r.Method)
@@ -683,31 +751,7 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 		}
 		writeResult(rt, ctx, types, w, r, accessor, resp)
 	case *values.Object:
-		holder, ok := responseBodyOf(v)
-		if !ok {
-			writeErrorJSON(rt, w, r, http.StatusInternalServerError,
-				"unexpected return type from resource method")
-			return
-		}
-		statusCodeVal, _ := v.Get("statusCode")
-		statusCode := statusCodeVal.(int64)
-		if !isFinalStatusCode(statusCode) {
-			holder.discard()
-			writeErrorJSON(rt, w, r, http.StatusInternalServerError,
-				fmt.Sprintf("invalid status code for a response: %d", statusCode))
-			return
-		}
-		wireContentType := ""
-		if holder.parts != nil {
-			data, ct, err := encodeMultipartBody(ctx, holder.parts, responseContentType(v))
-			if err != nil {
-				writeErrorJSON(rt, w, r, http.StatusInternalServerError, err.Error())
-				return
-			}
-			holder = &responseBodyHolder{buf: data}
-			wireContentType = ct
-		}
-		writeResponseObject(w, v, int(statusCode), holder, wireContentType)
+		_ = writeResponse(rt, ctx, w, r, v)
 	case *values.Map:
 		var resp *values.Object
 		var err error
@@ -728,6 +772,38 @@ func writeResult(rt *runtime.Runtime, ctx *extern.Context, types *httpTypes,
 	default:
 		writeAnydataResult(rt, ctx, types, w, r, accessor, v)
 	}
+}
+
+// writeResponse writes resp. When resp cannot be sent as given it writes a 500 instead and
+// returns the reason.
+func writeResponse(rt *runtime.Runtime, ctx *extern.Context, w http.ResponseWriter, r *http.Request, resp *values.Object) error {
+	holder, ok := responseBodyOf(resp)
+	if !ok {
+		return writeErrorResponse(rt, w, r, "unexpected return type from resource method")
+	}
+	statusCodeVal, _ := resp.Get("statusCode")
+	statusCode := statusCodeVal.(int64)
+	if !isFinalStatusCode(statusCode) {
+		holder.discard()
+		return writeErrorResponse(rt, w, r, fmt.Sprintf("invalid status code for a response: %d", statusCode))
+	}
+	wireContentType := ""
+	if holder.parts != nil {
+		data, ct, err := encodeMultipartBody(ctx, holder.parts, responseContentType(resp))
+		if err != nil {
+			return writeErrorResponse(rt, w, r, err.Error())
+		}
+		holder = &responseBodyHolder{buf: data}
+		wireContentType = ct
+	}
+	writeResponseObject(w, resp, int(statusCode), holder, wireContentType)
+	return nil
+}
+
+// writeErrorResponse writes a 500 ErrorPayload with message and returns message as an error.
+func writeErrorResponse(rt *runtime.Runtime, w http.ResponseWriter, r *http.Request, message string) error {
+	writeErrorJSON(rt, w, r, http.StatusInternalServerError, message)
+	return errors.New(message)
 }
 
 // errorResponse converts an error a resource returned into the http:Response it is sent as.

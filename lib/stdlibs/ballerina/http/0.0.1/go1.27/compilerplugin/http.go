@@ -40,13 +40,17 @@ func ValidateService(
 	if err != nil {
 		return nil, err
 	}
+	callerType, err := exportedType(compilerCtx, exported, "Caller")
+	if err != nil {
+		return nil, err
+	}
 	typeCtx := semtypes.ContextFrom(compilerCtx.GetTypeEnv())
 	for _, service := range pkg.Services {
 		if !isHTTPService(typeCtx, listenerType, service) {
 			continue
 		}
 		for _, resource := range service.ResourceMethods {
-			validateResource(compilerCtx, typeCtx, requestType, resource)
+			validateResource(compilerCtx, typeCtx, requestType, callerType, resource)
 		}
 	}
 	return pkg, nil
@@ -77,20 +81,47 @@ func validateResource(
 	compilerCtx *context.CompilerContext,
 	typeCtx semtypes.Context,
 	requestType semtypes.SemType,
+	callerType semtypes.SemType,
 	resource *ast.BLangResourceMethod,
 ) {
 	requestParamCount := 0
+	hasCaller := false
 	for i := range resource.RequiredParams {
 		param := &resource.RequiredParams[i]
-		if semtypes.IsSubtype(typeCtx, compilerCtx.SymbolType(param.Symbol()), requestType) {
+		paramType := compilerCtx.SymbolType(param.Symbol())
+		if semtypes.IsSubtype(typeCtx, paramType, requestType) {
 			requestParamCount++
+		}
+		if semtypes.IsSubtype(typeCtx, paramType, callerType) {
+			if hasCaller {
+				compilerCtx.SemanticError(fmt.Sprintf("invalid multiple 'http:Caller' parameter: '%s'", param.Name.GetValue()),
+					param.Name.GetPosition())
+			}
+			hasCaller = true
 		}
 	}
 	if requestParamCount > 1 {
 		compilerCtx.SemanticError("http resource method must have at most one http:Request parameter", resource.ParamListPos)
-		return
+	}
+	if hasCaller {
+		validateCallerReturnType(compilerCtx, typeCtx, resource)
 	}
 	if resource.RestParam != nil {
 		compilerCtx.Unimplemented("http resource method rest parameters", resource.RestParam.GetPosition())
 	}
+}
+
+// validateCallerReturnType rejects a resource that responds through an http:Caller and can
+// also return a value other than an error or nil.
+func validateCallerReturnType(compilerCtx *context.CompilerContext, typeCtx semtypes.Context, resource *ast.BLangResourceMethod) {
+	returnType := resource.GetReturnTypeDescriptor()
+	if returnType == nil || returnType.TypeDescriptor == nil {
+		return
+	}
+	ty := returnType.TypeDescriptor.Type()
+	if semtypes.IsSubtype(typeCtx, ty, semtypes.Union(semtypes.Error, semtypes.Nil)) {
+		return
+	}
+	compilerCtx.SemanticError(fmt.Sprintf("invalid resource method return type: can not use 'http:Caller' and return "+
+		"'%s' from a resource : expected 'error' or nil", semtypes.ToString(typeCtx, ty)), returnType.TypeDescriptor.GetPosition())
 }

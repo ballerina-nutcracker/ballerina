@@ -7,7 +7,37 @@ error[SEMANTIC_ERROR]: http resource method must have at most one http:Request p
    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: http resource method must have at most one http:Request parameter
-  --> http-svc-signature-e.bal:53:36
+  --> http-svc-signature-e.bal:62:45
    |
-53 |     resource function patch checked(http:Request first, http:Request second) { // @error
+62 |     resource function post callerTwoRequests(http:Caller caller, http:Request first, http:Request second) returns string { // @error
+   |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: http resource method must have at most one http:Request parameter
+  --> http-svc-signature-e.bal:81:36
+   |
+81 |     resource function patch checked(http:Request first, http:Request second) { // @error
    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple 'http:Caller' parameter: 'second'
+  --> http-svc-signature-e.bal:47:69
+   |
+47 |     resource function get twoCallers(http:Caller first, http:Caller second) { // @error
+   |                                                                     ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Caller' and return 'nil|string|error' from a resource : expected 'error' or nil
+  --> http-svc-signature-e.bal:57:67
+   |
+57 |     resource function get callerUnion(http:Caller caller) returns string|error? { // @error
+   |                                                                   ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Caller' and return 'string' from a resource : expected 'error' or nil
+  --> http-svc-signature-e.bal:52:68
+   |
+52 |     resource function get callerString(http:Caller caller) returns string { // @error
+   |                                                                    ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Caller' and return 'string' from a resource : expected 'error' or nil
+  --> http-svc-signature-e.bal:62:115
+   |
+62 |     resource function post callerTwoRequests(http:Caller caller, http:Request first, http:Request second) returns string { // @error
+   |                                                                                                                   ^^^^^^

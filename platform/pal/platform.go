@@ -128,6 +128,9 @@ type (
 		// ResolvePacketAddr resolves a "host:port" address (performing a name
 		// lookup if needed) into a peer address usable with PacketConn.WriteTo.
 		ResolvePacketAddr func(network, address string) (net.Addr, error)
+		// LookupAddr performs a reverse lookup for the IP address addr and returns the
+		// names mapping to it. A nil LookupAddr means the platform cannot resolve names.
+		LookupAddr func(ctx context.Context, addr string) ([]string, error)
 	}
 	HTTP struct {
 		// NewClient builds an outbound HTTP client (native: net/http; WASM: fetch).
