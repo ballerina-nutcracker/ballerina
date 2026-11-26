@@ -62,7 +62,7 @@ class $service$0 {
     }
   }
 }
-makeListener(string) -> error|object { public function attach(service object, nil) returns nil|error; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; string n; public function start() returns nil|error }{
+makeListener(string) -> error|object { public function attach(service object, nil) returns nil|error; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; string n; public function start() returns nil|error }{
   bb0 {
     %2 = ConstantLoad make 
     %3 = println(%2,n) -> bb1;

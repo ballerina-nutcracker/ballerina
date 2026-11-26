@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected object { function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }, got object { transactional function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }
+error[SEMANTIC_ERROR]: incompatible type: expected object { function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }, got object { transactional function get(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }
   --> dependent-fn-transactional-method-e.bal:26:16
    |
 26 |     Getter g = new TxGetter(); // @error

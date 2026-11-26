@@ -1,0 +1,5 @@
+-- stdout --
+ByInt:5
+ByString:s
+ByString:t
+-- stderr --

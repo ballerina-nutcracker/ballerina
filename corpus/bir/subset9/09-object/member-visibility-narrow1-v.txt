@@ -61,7 +61,7 @@ main() -> nil{
     GOTO bb12;
   }
   bb7 {
-    %7 = a is object { public function init() returns nil; function sum() returns int; int x; private int y }
+    %7 = a is object { function sum() returns int; int x; private int y }
     %7 ? bb8 : bb11;
   }
   bb8 {

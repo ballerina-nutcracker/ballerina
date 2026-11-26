@@ -24,7 +24,7 @@ class Baz {
     }
   }
 
-  qux(client object { public function init() returns nil }) -> int{
+  qux(client object) -> int{
     bb0 {
       %3 = ConstantLoad count
       %4 = f->[%3].get() -> bb1;
@@ -35,7 +35,7 @@ class Baz {
     }
   }
 }
-bar(client object { public function init() returns nil }) -> int{
+bar(client object) -> int{
   bb0 {
     %2 = ConstantLoad count
     %3 = f->[%2].get() -> bb1;

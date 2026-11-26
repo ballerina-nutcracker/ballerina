@@ -37,7 +37,7 @@ class Naturals {
     }
   }
 
-  iterator() -> object { public function init() returns nil; int n; public isolated function next() returns {| value: int, never... |} }{
+  iterator() -> object { int n; public isolated function next() returns {| value: int, never... |} }{
     bb0 {
       %2 = newObject $anon/.:Counter
       %3 = %2.init() -> bb1;

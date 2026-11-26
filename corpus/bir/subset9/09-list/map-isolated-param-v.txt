@@ -109,7 +109,7 @@ mapWithFunctionReference([int...]) -> [int...]{
     return;
   }
 }
-createFactory() -> function() returns object { public function init() returns nil }{
+createFactory() -> function() returns object{
   bb0 {
     %1 = fp $anon/.:$anonFunc$_4
     factory = %1;
@@ -401,7 +401,7 @@ $anonFunc$_3(int) -> int{
     return;
   }
 }
-$anonFunc$_4() -> object { public function init() returns nil }{
+$anonFunc$_4() -> object{
   bb0 {
     %1 = newObject $anon/.:NonIsolatedInit
     %2 = %1.init() -> bb1;

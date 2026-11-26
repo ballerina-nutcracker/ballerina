@@ -118,7 +118,7 @@ main() -> nil{
   }
   bb16 {
     childClass = %31;
-    %34 = childClass is object { public function init() returns nil }
+    %34 = childClass is object
     %35 = %34;
     %36 = println(%35) -> bb17;
   }
@@ -140,7 +140,7 @@ main() -> nil{
   }
   bb21 {
     parentClass = %39;
-    %42 = parentClass is object&object { public function init() returns nil }
+    %42 = parentClass is object&object
     %43 = %42;
     %44 = println(%43) -> bb22;
   }

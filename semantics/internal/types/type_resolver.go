@@ -3391,12 +3391,10 @@ func buildObjectDirectMembers(t typeResolver, owner string, fields []*ast.BLangV
 		})
 	}
 
-	if initFn == nil || hasResolvedSignature(t, initFn) {
-		initMember, ok := initDirectMember(t, initFn)
-		if !ok {
+	if initFn != nil && hasResolvedSignature(t, initFn) {
+		if !validateInitReturnType(t, initFn) {
 			return nil, false
 		}
-		directMembers = append(directMembers, initMember)
 	}
 
 	for name, method := range resolvedMethods(t, methods) {
@@ -3457,38 +3455,16 @@ func hasResolvedSignature(t typeResolver, fn *ast.BLangFunction) bool {
 	return semtypes.IsZero(ty) || !semtypes.IsNever(ty)
 }
 
-// initDirectMember returns the init function member (explicit or implicit).
-func initDirectMember(t typeResolver, initFn *ast.BLangFunction) (directMember, bool) {
-	if initFn != nil {
-		initFnSymbol := t.getSymbol(initFn.Symbol()).(model.FunctionSymbol)
-		sig := initFnSymbol.TypedSignature()
-		tyCtx := t.typeContext()
-		if !semtypes.IsSubtype(tyCtx, sig.ReturnType, semtypes.Union(semtypes.Error, semtypes.Nil)) {
-			t.semanticError("invalid return type for init function", initFn.GetPosition())
-			return directMember{}, false
-		}
-		return directMember{
-			name:       "init",
-			valueTy:    t.symbolType(initFn.Symbol()),
-			kind:       semtypes.MemberKindMethod,
-			visibility: semtypes.VisibilityPublic,
-			immutable:  true,
-			pos:        initFn.GetPosition(),
-		}, true
+// validateInitReturnType reports "invalid return type for init function" and returns false when the declared return
+// type of initFn is not a subtype of error|().
+func validateInitReturnType(t typeResolver, initFn *ast.BLangFunction) bool {
+	initFnSymbol := t.getSymbol(initFn.Symbol()).(model.FunctionSymbol)
+	sig := initFnSymbol.TypedSignature()
+	if !semtypes.IsSubtype(t.typeContext(), sig.ReturnType, semtypes.Union(semtypes.Error, semtypes.Nil)) {
+		t.semanticError("invalid return type for init function", initFn.GetPosition())
+		return false
 	}
-	paramListDefn := semtypes.NewListDefinition()
-	paramListTy := paramListDefn.Define(t.typeEnv(), nil,
-		semtypes.ListMutability(semtypes.CellMutabilityNone))
-	functionDefn := semtypes.NewFunctionDefinition()
-	initFnType := functionDefn.Define(t.typeEnv(), paramListTy, semtypes.Nil,
-		semtypes.FunctionQualifiersFrom(t.typeEnv(), false, false))
-	return directMember{
-		name:       "init",
-		valueTy:    initFnType,
-		kind:       semtypes.MemberKindMethod,
-		visibility: semtypes.VisibilityPublic,
-		immutable:  true,
-	}, true
+	return true
 }
 
 // defineObjectSemType finalises the object semtype using the class/service
@@ -4593,8 +4569,8 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 	if len(candidates) == 1 {
 		return finishObjectNew(t, chain, e, determinedTy, candidates[0])
 	}
-	selected, outcome := selectCandidate(t, candidates, func(candidate constructibleAlternative) bool {
-		_, _, _, ok := resolveObjectInitArgs(t, chain, e, candidate.alternative, candidate.table)
+	selected, outcome := selectCandidate(t, candidates, func(table model.MethodTable) bool {
+		_, _, _, ok := resolveObjectInitArgs(t, chain, e, table)
 		return ok
 	})
 	switch outcome {
@@ -4609,22 +4585,18 @@ func resolveObjectNewExpr(t typeResolver, chain *binding, e *ast.BLangNewExpress
 	return semtypes.SemType{}, expressionEffect{}, false
 }
 
-type constructibleAlternative struct {
-	alternative semtypes.ObjectAlternative
-	table       model.MethodTable
-}
-
-func constructibleAlternatives(t typeResolver, e *ast.BLangNewExpression, determinedTy semtypes.SemType) ([]constructibleAlternative, bool) {
+// constructibleAlternatives returns the method tables of the alternatives of determinedTy that a class defines.
+func constructibleAlternatives(t typeResolver, e *ast.BLangNewExpression, determinedTy semtypes.SemType) ([]model.MethodTable, bool) {
 	alternatives := semtypes.ObjectAlternatives(t.typeContext(), determinedTy)
 	if len(alternatives) == 0 {
 		t.semanticError("failed to find a suitable object type", e.GetPosition())
 		return nil, false
 	}
-	var candidates []constructibleAlternative
+	var candidates []model.MethodTable
 	for _, alternative := range alternatives {
 		table, ok := methodTableForAlternative(t, alternative)
 		if ok && constructibleMethodTable(t, table) {
-			candidates = append(candidates, constructibleAlternative{alternative: alternative, table: table})
+			candidates = append(candidates, table)
 		}
 	}
 	if len(candidates) == 0 {
@@ -4634,17 +4606,14 @@ func constructibleAlternatives(t typeResolver, e *ast.BLangNewExpression, determ
 	return candidates, true
 }
 
-func finishObjectNew(t typeResolver, chain *binding, e *ast.BLangNewExpression, determinedTy semtypes.SemType, candidate constructibleAlternative) (semtypes.SemType, expressionEffect, bool) {
-	args, returnType, argsChain, ok := resolveObjectInitArgs(t, chain, e, candidate.alternative, candidate.table)
+func finishObjectNew(t typeResolver, chain *binding, e *ast.BLangNewExpression, determinedTy semtypes.SemType, table model.MethodTable) (semtypes.SemType, expressionEffect, bool) {
+	args, returnType, argsChain, ok := resolveObjectInitArgs(t, chain, e, table)
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	resultObjType := candidate.alternative.Type()
-	if semtypes.IsSubtype(t.typeContext(), determinedTy, resultObjType) {
-		resultObjType = determinedTy
-	}
+	resultObjType := semtypes.Intersect(determinedTy, t.symbolType(table.Owner))
 	resultType := semtypes.Union(resultObjType, semtypes.Diff(returnType, semtypes.Nil))
-	setNewExpressionResult(t, e, args, candidate.table.Owner)
+	setNewExpressionResult(t, e, args, table.Owner)
 	setNodeType(t, e, resultType)
 	return resultType, defaultExpressionEffect(argsChain), true
 }
@@ -4661,8 +4630,8 @@ func constructibleMethodTable(t typeResolver, table model.MethodTable) bool {
 	return ok
 }
 
-func methodTableForAlternative(t typeResolver, alternative semtypes.ObjectAlternative) (model.MethodTable, bool) {
-	atom, ok := semtypes.ObjectPositiveAtom(t.typeContext(), alternative.Type())
+func methodTableForAlternative(t typeResolver, alternative semtypes.SemType) (model.MethodTable, bool) {
+	atom, ok := semtypes.ObjectPositiveAtom(t.typeContext(), alternative)
 	if !ok {
 		return model.MethodTable{}, false
 	}
@@ -4682,9 +4651,7 @@ func initSignature(t typeResolver, table model.MethodTable, pos diagnostics.Loca
 	return signature, initRef, true
 }
 
-func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpression, alternative semtypes.ObjectAlternative,
-	table model.MethodTable,
-) ([]ast.BLangExpression, semtypes.SemType, *binding, bool) {
+func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpression, table model.MethodTable) ([]ast.BLangExpression, semtypes.SemType, *binding, bool) {
 	signature, initRef, ok := initSignature(t, table, e.GetPosition())
 	if !ok {
 		return nil, semtypes.SemType{}, chain, false
@@ -4697,8 +4664,9 @@ func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpres
 	if initRef.IsEmpty() {
 		return args, semtypes.Nil, chain, true
 	}
+	initTy := t.symbolType(initRef)
 	cx := t.typeContext()
-	paramListTy := semtypes.FunctionParamListType(cx, alternative.InitFunctionType())
+	paramListTy := semtypes.FunctionParamListType(cx, initTy)
 	argTys, chain, ok := resolveArgs(t, args, chain, func(i int) semtypes.SemType {
 		return semtypes.ListMemberTypeInnerVal(cx, paramListTy, semtypes.IntConst(int64(i)))
 	})
@@ -4712,7 +4680,7 @@ func resolveObjectInitArgs(t typeResolver, chain *binding, e *ast.BLangNewExpres
 		t.semanticError("incompatible arguments for function call", e.GetPosition())
 		return nil, semtypes.SemType{}, chain, false
 	}
-	return args, semtypes.FunctionReturnType(cx, alternative.InitFunctionType(), argList), chain, true
+	return args, semtypes.FunctionReturnType(cx, initTy, argList), chain, true
 }
 
 func resolveTrialDependencies(t typeResolver, roots []ast.BLangExpression) bool {

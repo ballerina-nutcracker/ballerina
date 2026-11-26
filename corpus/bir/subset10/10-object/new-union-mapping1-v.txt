@@ -70,7 +70,7 @@ main() -> nil{
   }
   bb4 {
     m = %7;
-    %10 = m is object { public function init({| decimal... |}, int) returns nil; {| decimal... |} values }
+    %10 = m is object { {| decimal... |} values }
     %10 ? bb5 : bb7;
   }
   bb5 {
@@ -110,7 +110,7 @@ main() -> nil{
   }
   bb11 {
     p = %7;
-    %10 = p is object { public function init({| x: decimal, y: decimal, never... |}, int) returns nil; {| x: decimal, y: decimal, never... |} point }
+    %10 = p is object { {| x: decimal, y: decimal, never... |} point }
     %10 ? bb12 : bb14;
   }
   bb12 {

@@ -1,0 +1,5 @@
+-- stdout --
+named n
+true
+local 9
+-- stderr --

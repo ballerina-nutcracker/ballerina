@@ -136,7 +136,7 @@ These are intentional departures from the [language specification](https://balle
 ## Matching jBallerina
 
 - [Implicit `new` expressions](https://ballerina.io/spec/lang/master/#section_6.8.2) accept an applicable contextually expected type that is a union of object types.
-  - For each member of the union, we check whether that member's `init` method accepts the passed-in arguments.
+  - For each member of the union, we check whether the `init` method of that member's class accepts the passed-in arguments.
   - If exactly one member does, that member is selected as the contextually expected type.
   - The following argument expressions are currently unsupported when the applicable contextually expected type is a union of class types:
     - Calls to dependently-typed functions, including nested calls

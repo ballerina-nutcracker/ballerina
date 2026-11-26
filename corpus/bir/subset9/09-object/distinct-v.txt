@@ -63,7 +63,7 @@ main() -> nil{
   }
   bb4 {
     person = %4;
-    %7 = person is object&object { public function init(string) returns nil; public string name }
+    %7 = person is object&object { public string name }
     %8 = %7;
     %9 = println(%8) -> bb5;
   }
@@ -86,7 +86,7 @@ main() -> nil{
   }
   bb9 {
     distinctPerson = %13;
-    %16 = distinctPerson is object { public function init(string) returns nil; public string name }
+    %16 = distinctPerson is object { public string name }
     %17 = %16;
     %18 = println(%17) -> bb10;
   }
@@ -109,12 +109,12 @@ main() -> nil{
   }
   bb14 {
     someWhatDistinctPerson = %22;
-    %25 = someWhatDistinctPerson is object&object { public function init(string) returns nil; public string name }
+    %25 = someWhatDistinctPerson is object&object { public string name }
     %26 = %25;
     %27 = println(%26) -> bb15;
   }
   bb15 {
-    %28 = distinctPerson is object&object { public function init(string) returns nil; public string name }
+    %28 = distinctPerson is object&object { public string name }
     %29 = %28;
     %30 = println(%29) -> bb16;
   }
@@ -137,12 +137,12 @@ main() -> nil{
   }
   bb20 {
     evenMoreDistinctPerson = %34;
-    %37 = evenMoreDistinctPerson is object&object { public function init(string) returns nil; public string name }
+    %37 = evenMoreDistinctPerson is object&object { public string name }
     %38 = %37;
     %39 = println(%38) -> bb21;
   }
   bb21 {
-    %40 = distinctPerson is object&object&object { public function init(string) returns nil; public string name }
+    %40 = distinctPerson is object&object&object { public string name }
     %41 = %40;
     %42 = println(%41) -> bb22;
   }

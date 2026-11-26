@@ -14,7 +14,7 @@ class Other {
 class C {
   x int
 
-  init(object { public function init() returns nil; int x }) -> nil{
+  init(object { int x }) -> nil{
     bb0 {
       %3 = ConstantLoad 1
       %4 = ConstantLoad x

@@ -1,0 +1,126 @@
+module $anon.. v 0.0.0;
+class ByInt {
+  tag string
+
+  init(int) -> nil{
+    bb0 {
+      %3 = n;
+      %4 = toString(%3) -> bb1;
+    }
+    bb1 {
+      %5 = ConstantLoad tag
+      self[%5] = %4;
+      return;
+    }
+  }
+
+  name() -> string{
+    bb0 {
+      %3 = ConstantLoad ByInt:
+      %5 = ConstantLoad tag
+      %4 = self[%5];
+      %2 = + %3 %4;
+      %0 = %2;
+      return;
+    }
+  }
+}
+class ByString {
+  tag string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad tag
+      self[%3] = s;
+      return;
+    }
+  }
+
+  name() -> string{
+    bb0 {
+      %3 = ConstantLoad ByString:
+      %5 = ConstantLoad tag
+      %4 = self[%5];
+      %2 = + %3 %4;
+      %0 = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:ByInt
+    %2 = ConstantLoad 5
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    a = %4;
+    %7 = a.name() -> bb5;
+  }
+  bb5 {
+    %8 = println(%7) -> bb6;
+  }
+  bb6 {
+    %9 = newObject $anon/.:ByString
+    %10 = ConstantLoad s
+    %11 = %9.init(%10) -> bb7;
+  }
+  bb7 {
+    %13 = %11 is nil
+    %13 ? bb8 : bb9;
+  }
+  bb8 {
+    %12 = %9;
+    GOTO bb10;
+  }
+  bb9 {
+    %12 = %11;
+    GOTO bb10;
+  }
+  bb10 {
+    b = %12;
+    %15 = b.name() -> bb11;
+  }
+  bb11 {
+    %16 = println(%15) -> bb12;
+  }
+  bb12 {
+    %17 = newObject $anon/.:ByString
+    %18 = ConstantLoad t
+    %19 = %17.init(%18) -> bb13;
+  }
+  bb13 {
+    %21 = %19 is nil
+    %21 ? bb14 : bb15;
+  }
+  bb14 {
+    %20 = %17;
+    GOTO bb16;
+  }
+  bb15 {
+    %20 = %19;
+    GOTO bb16;
+  }
+  bb16 {
+    c = %20;
+    %23 = c.name() -> bb17;
+  }
+  bb17 {
+    %24 = println(%23) -> bb18;
+  }
+  bb18 {
+    return;
+  }
+}

@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation make ()))))
+  )
+)
+(make
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (return
+      (field-based-access count
+        (simple-var-ref c)))
+  )
+)

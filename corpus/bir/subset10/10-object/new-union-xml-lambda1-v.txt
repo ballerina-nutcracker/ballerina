@@ -23,7 +23,7 @@ class IntFn {
 }
 kind(any) -> string{
   bb0 {
-    %3 = v is object { function(xml) returns xml f; public function init(function(xml) returns xml) returns nil }
+    %3 = v is object { function(xml) returns xml f }
     %3 ? bb1 : bb2;
   }
   bb1 {
@@ -32,7 +32,7 @@ kind(any) -> string{
     GOTO bb3;
   }
   bb2 {
-    %6 = v is object { function(int) returns xml f; public function init(function(int) returns xml) returns nil }
+    %6 = v is object { function(int) returns xml f }
     %6 ? bb4 : bb5;
   }
   bb3 {
@@ -89,7 +89,7 @@ main() -> nil{
     %17 = println(%16) -> bb6;
   }
   bb6 {
-    %18 = c is object { function(xml) returns xml f; public function init(function(xml) returns xml) returns nil }
+    %18 = c is object { function(xml) returns xml f }
     %18 ? bb7 : bb10;
   }
   bb7 {

@@ -17,9 +17,9 @@ class StringValue {
     }
   }
 }
-selected(object { public function init(int) returns nil }|object { public function init(string) returns nil }) -> boolean{
+selected(object|object) -> boolean{
   bb0 {
-    %2 = value is object { public function init(int) returns nil }
+    %2 = value is object
     %0 = %2;
     return;
   }
@@ -40,7 +40,7 @@ main() -> nil{
     return;
   }
 }
-$default$0() -> object { public function init(int) returns nil }|object { public function init(string) returns nil }{
+$default$0() -> object|object{
   bb0 {
     %1 = newObject $anon/.:IntValue
     %2 = ConstantLoad 1

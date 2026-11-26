@@ -31,7 +31,7 @@ class Counter {
     }
   }
 }
-read(isolated object { isolated function get() returns int; public function init() returns nil; private int n }) -> int{
+read(isolated object { isolated function get() returns int; private int n }) -> int{
   bb0 {
     %2 = createLatch() -> bb1;
   }

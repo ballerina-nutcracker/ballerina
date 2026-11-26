@@ -29,7 +29,7 @@ class Client {
     }
   }
 }
-receiver(client object { public function init() returns nil }) -> client object { public function init() returns nil }{
+receiver(client object) -> client object{
   bb0 {
     %2 = ConstantLoad 0
     %3 = %2;

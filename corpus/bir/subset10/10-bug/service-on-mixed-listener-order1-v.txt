@@ -1,6 +1,6 @@
 module $anon.. v 0.0.0;
 $moduleListeners  [object { public function attach(never, [string...]) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, string) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }|object { public function attach(never, nil) returns nil|error; public function detach(never) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }...];
-declared  object { public function attach(service object, nil) returns nil|error; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; string n; public function start() returns nil|error };
+declared  object { public function attach(service object, nil) returns nil|error; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; string n; public function start() returns nil|error };
 trace  [string...];
 class L {
   n string
@@ -70,7 +70,7 @@ class $service$0 {
     }
   }
 }
-makeListener(string) -> object { public function attach(service object, nil) returns nil|error; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init(string) returns nil; string n; public function start() returns nil|error }{
+makeListener(string) -> object { public function attach(service object, nil) returns nil|error; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; string n; public function start() returns nil|error }{
   bb0 {
     %3 = ConstantLoad make 
     %2 = + %3 n;

@@ -38,7 +38,7 @@ main() -> nil{
   }
   bb4 {
     fromConst = %4;
-    %7 = fromConst is object { public function init(int) returns nil }
+    %7 = fromConst is object
     %8 = %7;
     %9 = println(%8) -> bb5;
   }
@@ -60,7 +60,7 @@ main() -> nil{
   }
   bb9 {
     fromGlobal = %12;
-    %15 = fromGlobal is object { public function init(string) returns nil }
+    %15 = fromGlobal is object
     %16 = %15;
     %17 = println(%16) -> bb10;
   }

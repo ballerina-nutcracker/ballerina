@@ -24,7 +24,7 @@ class Client {
   resource get items/[int] Client.$resource$get$0(){
   }
 }
-useStore(object { function get(string, typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }) -> nil|error{
+useStore(object { function get(string, typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }) -> nil|error{
   bb0 {
     %3 = ConstantLoad key
     %4 = ConstantLoad typedesc
@@ -47,7 +47,7 @@ useStore(object { function get(string, typedesc<anydata>) returns nil|boolean|in
     return;
   }
 }
-useClient(client object { public remote function $remote$fetch(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table; public function init() returns nil }) -> nil|error{
+useClient(client object { public remote function $remote$fetch(typedesc<anydata>) returns nil|boolean|int|float|decimal|string|error|regexp|xml|[anydata...]|{| anydata... |}|table }) -> nil|error{
   bb0 {
     %3 = ConstantLoad items
     %4 = ConstantLoad 1

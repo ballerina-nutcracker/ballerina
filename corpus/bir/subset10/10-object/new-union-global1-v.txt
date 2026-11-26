@@ -1,5 +1,5 @@
 module $anon.. v 0.0.0;
-box  object { public function init(int, int) returns nil; int value }|object { public function init(string, int) returns nil; string value };
+box  object { int value }|object { string value };
 later  int;
 class IntBox {
   value int
@@ -29,7 +29,7 @@ class StringBox {
 }
 main() -> nil{
   bb0 {
-    %1 = box is object { public function init(int, int) returns nil; int value }
+    %1 = box is object { int value }
     %1 ? bb1 : bb3;
   }
   bb1 {

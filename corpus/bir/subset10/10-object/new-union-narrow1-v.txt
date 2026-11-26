@@ -78,7 +78,7 @@ main() -> nil{
   }
   bb9 {
     a = %18;
-    %21 = a is object { boolean flag; public function init(int, boolean) returns nil; int value }
+    %21 = a is object { boolean flag; int value }
     %21 ? bb10 : bb12;
   }
   bb10 {
@@ -136,7 +136,7 @@ main() -> nil{
   }
   bb21 {
     o = %6;
-    %9 = o is object { boolean flag; public function init(string, boolean) returns nil; string value }
+    %9 = o is object { boolean flag; string value }
     %9 ? bb22 : bb24;
   }
   bb22 {
@@ -224,7 +224,7 @@ main() -> nil{
   }
   bb38 {
     t = %14;
-    %17 = t is object { boolean flag; public function init(string, boolean) returns nil; string value }
+    %17 = t is object { boolean flag; string value }
     %17 ? bb39 : bb41;
   }
   bb39 {
@@ -279,7 +279,7 @@ main() -> nil{
   }
   bb49 {
     m = %9;
-    %12 = m is object { boolean flag; public function init(string, boolean) returns nil; string value }
+    %12 = m is object { boolean flag; string value }
     %12 ? bb50 : bb52;
   }
   bb50 {
@@ -336,7 +336,7 @@ main() -> nil{
   }
   bb59 {
     w = %6;
-    %9 = w is object { boolean flag; public function init(int, boolean) returns nil; int value }
+    %9 = w is object { boolean flag; int value }
     %10 = %9;
     %11 = println(%10) -> bb60;
   }
@@ -383,7 +383,7 @@ $anonFunc$_0() -> boolean{
   }
   bb7 {
     inner = %7;
-    %10 = inner is object { boolean flag; public function init(int, boolean) returns nil; int value }
+    %10 = inner is object { boolean flag; int value }
     %0 = %10;
     return;
   }

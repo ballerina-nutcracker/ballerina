@@ -111,6 +111,8 @@ type CompilerEnvironment struct {
 	langLibDistinctTypeSymbols langLibDistinctTypeRegistry
 	mappingDefaults            sync.Map // *semtypes.MappingAtomicType -> []model.FieldDefault
 	objectMethodTables         sync.Map // *semtypes.MappingAtomicType -> model.MethodTable
+	defaultInitOnce            sync.Once
+	defaultInitFnTy            semtypes.SemType
 	// symbolAnnotations holds annotation values keyed by symbol ref, instead of
 	// a field on each symbol — most symbols carry no annotations, so this avoids
 	// a per-symbol word and keeps lookup keyed by reference. Values are written
@@ -511,6 +513,21 @@ func NewCompilerEnvironment(typeEnv semtypes.Env, traceMode TraceMode) *Compiler
 // GetTypeEnv returns the type environment for this context
 func (c *CompilerEnvironment) GetTypeEnv() semtypes.Env {
 	return c.typeEnv
+}
+
+// defaultInitFunctionType returns the type of the init method of a class that
+// declares none: `isolated function () returns ()` (§6.8.1.5). Built once per
+// environment on first use.
+func (c *CompilerEnvironment) defaultInitFunctionType() semtypes.SemType {
+	c.defaultInitOnce.Do(func() {
+		env := c.typeEnv
+		paramListDefn := semtypes.NewListDefinition()
+		paramListTy := paramListDefn.Define(env, nil, semtypes.ListMutability(semtypes.CellMutabilityNone))
+		functionDefn := semtypes.NewFunctionDefinition()
+		c.defaultInitFnTy = functionDefn.Define(env, paramListTy, semtypes.Nil,
+			semtypes.FunctionQualifiersFrom(env, true, false))
+	})
+	return c.defaultInitFnTy
 }
 
 const (

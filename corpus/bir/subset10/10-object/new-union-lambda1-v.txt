@@ -59,12 +59,12 @@ main() -> nil{
   }
   bb8 {
     inferredFloat = %12;
-    %15 = inferredInt is object { public function init(function() returns float, string) returns nil }
+    %15 = inferredInt is object
     %16 = %15;
     %17 = println(%16) -> bb9;
   }
   bb9 {
-    %18 = inferredFloat is object { public function init(function() returns float, string) returns nil }
+    %18 = inferredFloat is object
     %19 = %18;
     %20 = println(%19) -> bb10;
   }

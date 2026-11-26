@@ -1,0 +1,128 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang string (as lang.string))
+  (class-definition Plain
+    (variable x (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 1))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))))))
+  (class-definition WithArgs
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable x (type
+        (value-type int)))
+      (variable label (type
+        (value-type string)) (expr
+        (literal l)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (binary-expr -
+            (binary-expr +
+              (simple-var-ref x)
+              (invocation lang.string length (
+                (simple-var-ref label))))
+            (literal 1)))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (index-based-access
+              (simple-var-ref self)
+              (literal x))
+            (literal 10))))))
+  (class-definition Fallible
+    (variable x (type
+      (value-type int)))
+    (function init () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (literal 3))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (index-based-access
+              (simple-var-ref self)
+              (literal x))
+            (literal 100))))))
+  (function total (
+    (variable p (type
+      (user-defined-type Plain)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation get expr:
+          (simple-var-ref p) ()))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable $desugar$0 (expr
+          (literal 2))))
+      (var-def
+        (variable $desugar$1 (expr
+          (invocation $default$0 (
+            (simple-var-ref $desugar$0))))))
+      (var-def
+        (variable p (type
+          (user-defined-type Plain)) (expr
+          (new
+            (user-defined-type WithArgs) (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref p) ()))))
+      (var-def
+        (variable w (type
+          (user-defined-type WithArgs)) (expr
+          (new
+            (user-defined-type Plain) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref w) ()))))
+      (var-def
+        (variable f (type
+          (user-defined-type Fallible)) (expr
+          (checked-expr
+            (new
+              (user-defined-type Fallible) ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation total (
+            (simple-var-ref f))))))))
+  (function $default$0 (
+    (variable x (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (literal l)))))

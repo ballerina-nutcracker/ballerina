@@ -41,7 +41,7 @@ main() -> nil{
   }
   bb4 {
     person = %4;
-    %7 = person is object&object&object { public function init(string) returns nil; public string name }
+    %7 = person is object&object&object { public string name }
     %8 = %7;
     %9 = println(%8) -> bb5;
   }
@@ -64,13 +64,13 @@ main() -> nil{
   }
   bb9 {
     employee = %13;
-    %16 = employee is object&object { public function init(string) returns nil; public string name }
+    %16 = employee is object&object { public string name }
     %17 = %16;
     %18 = println(%17) -> bb10;
   }
   bb10 {
     employeeAsPerson = employee;
-    %20 = employeeAsPerson is object&object&object { public function init(string) returns nil; public string name }
+    %20 = employeeAsPerson is object&object&object { public string name }
     %21 = %20;
     %22 = println(%21) -> bb11;
   }

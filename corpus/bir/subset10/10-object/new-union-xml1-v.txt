@@ -29,12 +29,12 @@ class StringArg {
 }
 show(any) -> nil{
   bb0 {
-    %2 = v is object { public function init(xml, int) returns nil; int marker; xml value }
+    %2 = v is object { int marker; xml value }
     %3 = %2;
     %4 = println(%3) -> bb1;
   }
   bb1 {
-    %5 = v is object { public function init(xml, string) returns nil; string marker; xml value }
+    %5 = v is object { string marker; xml value }
     %6 = %5;
     %7 = println(%6) -> bb2;
   }
@@ -79,7 +79,7 @@ main() -> nil{
     %17 = show(s) -> bb7;
   }
   bb7 {
-    %18 = s is object { public function init(xml, int) returns nil; int marker; xml value }
+    %18 = s is object { int marker; xml value }
     %18 ? bb8 : bb11;
   }
   bb8 {

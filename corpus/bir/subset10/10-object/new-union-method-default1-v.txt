@@ -32,6 +32,14 @@ class First {
       return;
     }
   }
+
+  kind() -> string{
+    bb0 {
+      %2 = ConstantLoad First
+      %0 = %2;
+      return;
+    }
+  }
 }
 class Second {
   result int
@@ -47,6 +55,14 @@ class Second {
     bb2 {
       %7 = ConstantLoad result
       self[%7] = %6;
+      return;
+    }
+  }
+
+  kind() -> string{
+    bb0 {
+      %2 = ConstantLoad Second
+      %0 = %2;
       return;
     }
   }
@@ -108,52 +124,30 @@ main() -> nil{
   }
   bb12 {
     b = %17;
-    %21 = a is object { public function init(object { function run(int) returns int }, int) returns nil; int result }
-    %21 ? bb13 : bb14;
+    %20 = a.kind() -> bb13;
   }
   bb13 {
-    %22 = ConstantLoad First
-    %20 = %22;
-    GOTO bb15;
+    %21 = println(%20) -> bb14;
   }
   bb14 {
-    %23 = ConstantLoad Second
-    %20 = %23;
-    GOTO bb15;
+    %23 = ConstantLoad result
+    %22 = a[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb15;
   }
   bb15 {
-    %24 = println(%20) -> bb16;
+    %26 = b.kind() -> bb16;
   }
   bb16 {
-    %26 = ConstantLoad result
-    %25 = a[%26];
-    %27 = %25;
-    %28 = println(%27) -> bb17;
+    %27 = println(%26) -> bb17;
   }
   bb17 {
-    %30 = b is object { public function init(object { function run(int) returns int }, int) returns nil; int result }
-    %30 ? bb18 : bb19;
+    %29 = ConstantLoad result
+    %28 = b[%29];
+    %30 = %28;
+    %31 = println(%30) -> bb18;
   }
   bb18 {
-    %31 = ConstantLoad First
-    %29 = %31;
-    GOTO bb20;
-  }
-  bb19 {
-    %32 = ConstantLoad Second
-    %29 = %32;
-    GOTO bb20;
-  }
-  bb20 {
-    %33 = println(%29) -> bb21;
-  }
-  bb21 {
-    %35 = ConstantLoad result
-    %34 = b[%35];
-    %36 = %34;
-    %37 = println(%36) -> bb22;
-  }
-  bb22 {
     return;
   }
 }

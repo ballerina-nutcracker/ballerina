@@ -57,7 +57,7 @@ main() -> nil{
   }
   bb4 {
     a = %7;
-    %10 = a is object { int area; public function init(int, {| height: int, width: int, never... |}) returns nil }
+    %10 = a is object { int area }
     %10 ? bb5 : bb7;
   }
   bb5 {
@@ -94,7 +94,7 @@ main() -> nil{
   }
   bb11 {
     b = %6;
-    %9 = b is object { public function init(int, {| label: string, never... |}) returns nil; string label }
+    %9 = b is object { string label }
     %9 ? bb12 : bb14;
   }
   bb12 {

@@ -106,7 +106,7 @@ class Summary {
 class Isolatable {
   frozen readonly&[int...]
   fresh [int...]
-  summary isolated object { private int first; isolated function get() returns int; public isolated function init([int...], {| int... |}, [int...]) returns nil; private int total }
+  summary isolated object { private int first; isolated function get() returns int; private int total }
 
   get() -> int{
     bb0 {
@@ -137,7 +137,7 @@ class Isolatable {
     }
   }
 
-  init(readonly&[int...],int,isolated object { private int first; isolated function get() returns int; public isolated function init([int...], {| int... |}, [int...]) returns nil; private int total }) -> nil{
+  init(readonly&[int...],int,isolated object { private int first; isolated function get() returns int; private int total }) -> nil{
     bb0 {
       %5 = ConstantLoad frozen
       self[%5] = frozen;

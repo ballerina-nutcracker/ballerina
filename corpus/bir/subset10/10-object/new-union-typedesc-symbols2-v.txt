@@ -39,7 +39,7 @@ main() -> nil{
   }
   bb4 {
     a = %6;
-    %10 = a is object { public function init(boolean) returns nil }
+    %10 = a is object
     %10 ? bb5 : bb6;
   }
   bb5 {
