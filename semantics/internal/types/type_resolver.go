@@ -4067,10 +4067,7 @@ func resolveSimpleVariableInner(t typeResolver, chain *binding, node *ast.BLangV
 				}
 				defaultResult = expressionResult{effect: defaultExpressionEffect(addCaptureGroup(chain, node.CaptureGroup()))}
 			} else {
-				var ok bool
-				if defaultResult, ok = resolveDefaultExpression(t, chain, node, node.Expr, semType); !ok {
-					return chain, false
-				}
+				defaultResult = resolveDefaultExpression(t, chain, node, node.Expr, semType)
 			}
 			chain = sequentialChain(t, defaultResult.effect)
 		} else {
@@ -4091,22 +4088,25 @@ func isParameterDeclaration(t typeResolver, node *ast.BLangVariable) bool {
 	return ok && metadata.Parameter
 }
 
+// unsupportedTrialDefault is the message reported for an inline type descriptor that declares a default
+// expression while a candidate trial runs.
+const unsupportedTrialDefault = "inline type declarations with default expressions not supported in contexts " +
+	"that require to select a single atomic type from a union of candidates"
+
 // resolveDefaultExpression queues the check of a deferred default provider's body
 // behind a function boundary, and returns at once with only the effects of
 // constructing that provider. Checking the body is not executing it, so the
 // body's own effects do not reach the enclosing chain. The body is checked on
 // its own resolver, created here so that it keeps the scope and resolver context
-// flags in effect here, when t drains its queue (see deferDefault).
+// flags in effect here, when t drains its queue (see deferDefault). The body's
+// diagnostics are reported when it is checked.
 func resolveDefaultExpression(
 	t typeResolver,
 	chain *binding,
 	owner ast.CaptureGroupOwner,
 	expr ast.BLangActionOrExpression,
 	expectedType semtypes.SemType,
-) (expressionResult, bool) {
-	if t.isEphemeral() {
-		return resolveDefaultExpressionNow(t, chain, owner, expr, expectedType)
-	}
+) expressionResult {
 	constructionChain := addCaptureGroup(chain, owner.CaptureGroup())
 	bodyChain := &binding{flags: bindingFlagFunctionBoundary, prev: constructionChain}
 	defaultResolver := newDefaultTypeResolver(t)
@@ -4115,26 +4115,7 @@ func resolveDefaultExpression(
 			resolveActionOrExpression(t, bodyChain, expr, expectedType)
 		})
 	})
-	return expressionResult{effect: defaultExpressionEffect(constructionChain)}, true
-}
-
-// resolveDefaultExpressionNow checks a default provider's body at once, behind a
-// function boundary, and returns only the effects of constructing that provider.
-func resolveDefaultExpressionNow(
-	t typeResolver,
-	chain *binding,
-	owner ast.CaptureGroupOwner,
-	expr ast.BLangActionOrExpression,
-	expectedType semtypes.SemType,
-) (expressionResult, bool) {
-	constructionChain := addCaptureGroup(chain, owner.CaptureGroup())
-	bodyChain := &binding{flags: bindingFlagFunctionBoundary, prev: constructionChain}
-	result, ok := resolveActionOrExpression(t, bodyChain, expr, expectedType)
-	if !ok {
-		return expressionResult{}, false
-	}
-	result.effect = defaultExpressionEffect(constructionChain)
-	return result, true
+	return expressionResult{effect: defaultExpressionEffect(constructionChain)}
 }
 
 // resolveActionOrExpression resolves expr against expectedType. An expression that fails to resolve has type never.
@@ -9320,13 +9301,15 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				delete(result.includedFields, name)
 			}
 			if field.Default != nil {
-				restoreContext := setIsolatedXMLStepContext(t, true)
-				defaultResult, ok := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy)
-				restoreContext()
-				// The field's type does not depend on its default, so the field is kept even if the default fails.
-				if ok {
-					chain = sequentialChain(t, defaultResult.effect)
+				if t.isEphemeral() {
+					// A trial cannot queue the default, and its type may not be ready to resolve it now.
+					t.unimplemented(unsupportedTrialDefault, field.Default.Expr.GetPosition())
+					return semtypes.SemType{}, chain, false
 				}
+				restoreContext := setIsolatedXMLStepContext(t, true)
+				defaultResult := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy)
+				restoreContext()
+				chain = sequentialChain(t, defaultResult.effect)
 			}
 			ro := field.IsReadonly()
 			opt := field.IsOptional()
@@ -9396,7 +9379,12 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 					// `<>` computes no value: it only checks the parameter's typedesc type, so it resolves now.
 					resolveActionOrExpression(t, chain, param.InitExpr, paramTy)
 					chain = sequentialChain(t, defaultExpressionEffect(addCaptureGroup(chain, param.CaptureGroup())))
-				} else if defaultResult, ok := resolveDefaultExpression(t, chain, param, param.InitExpr, paramTy); ok {
+				} else if t.isEphemeral() {
+					// A trial cannot queue the default, and its type may not be ready to resolve it now.
+					t.unimplemented(unsupportedTrialDefault, param.InitExpr.GetPosition())
+					return semtypes.SemType{}, chain, false
+				} else {
+					defaultResult := resolveDefaultExpression(t, chain, param, param.InitExpr, paramTy)
 					chain = sequentialChain(t, defaultResult.effect)
 				}
 			}

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> trial-inline-fn-type-default1-fv.bal:24:40
+   |
+24 |     C|D f = {x: y is function (int p = 1), m: 1}; // @error function type with a parameter default in a trial
+   |                                        ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> trial-inline-fn-type-default1-fv.bal:24:40
+   |
+24 |     C|D f = {x: y is function (int p = 1), m: 1}; // @error function type with a parameter default in a trial
+   |                                        ^

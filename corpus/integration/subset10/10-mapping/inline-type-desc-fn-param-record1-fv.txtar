@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-fn-param-record1-fv.bal:32:46
+   |
+32 |     A|B x = {f: <function (record {| int a = 1; int b; |} r = {b: 2}) returns int>h, m: 1}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                              ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-fn-param-record1-fv.bal:32:46
+   |
+32 |     A|B x = {f: <function (record {| int a = 1; int b; |} r = {b: 2}) returns int>h, m: 1}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                              ^

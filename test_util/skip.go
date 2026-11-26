@@ -60,9 +60,6 @@ var WASMUnsupportedTests = []string{
 // "recovery/statements/foo.txtar"). They are matched as suffixes against
 // either a relative test name or an absolute path.
 var UnsupportedTests = []string{
-	// A failing function type default no longer rules a trial candidate out. Until trials reject inline types
-	// with defaults, the candidate this test expects to be ruled out makes the constructor ambiguous.
-	"subset10/10-mapping/inline-type-desc-lambda-param-default1-v.bal",
 	// https://github.com/ballerina-nutcracker/ballerina/issues/1457
 	// relational and ==/!= on singleton operands are not singleton-typed, so the
 	// always-false branch is not reported as unreachable.

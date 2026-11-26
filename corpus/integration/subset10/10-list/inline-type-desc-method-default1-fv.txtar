@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:31:72
+   |
+31 |     [Run, int]|[Run, string] objects = [<object { function run(int p = 3) returns int; }>v, 1]; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                                        ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:31:72
+   |
+31 |     [Run, int]|[Run, string] objects = [<object { function run(int p = 3) returns int; }>v, 1]; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                                        ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:32:82
+   |
+32 |     [boolean, int]|[boolean, string] functions = [fn is function (int a, int b = 2) returns int, "s"]; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                                                  ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:32:82
+   |
+32 |     [boolean, int]|[boolean, string] functions = [fn is function (int a, int b = 2) returns int, "s"]; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                                                  ^

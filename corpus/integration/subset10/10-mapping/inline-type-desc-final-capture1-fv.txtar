@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-final-capture1-fv.bal:30:45
+   |
+30 |     A|B tested = {x: v is record {| int a = k; |}}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                             ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-final-capture1-fv.bal:30:45
+   |
+30 |     A|B tested = {x: v is record {| int a = k; |}}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                             ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-final-capture1-fv.bal:31:40
+   |
+31 |     A|B cast = {x: (<record {| int a = k; |}>v).a == 2}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                        ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-final-capture1-fv.bal:31:40
+   |
+31 |     A|B cast = {x: (<record {| int a = k; |}>v).a == 2}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                        ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-final-capture1-fv.bal:32:44
+   |
+32 |     A|B param = {x: v is function (int p = k)}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                            ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-final-capture1-fv.bal:32:44
+   |
+32 |     A|B param = {x: v is function (int p = k)}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                            ^

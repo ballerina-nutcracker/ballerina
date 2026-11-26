@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-nested-trial1-fv.bal:37:40
+   |
+37 |     A|B r = {x: v is record {| C|D c = {y: 1}; [int, int]|[int, string] l = [1, "s"]; |}}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                        ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-nested-trial1-fv.bal:37:40
+   |
+37 |     A|B r = {x: v is record {| C|D c = {y: 1}; [int, int]|[int, string] l = [1, "s"]; |}}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                        ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-nested-trial1-fv.bal:38:40
+   |
+38 |     A|B p = {x: v is function (C|D c = {y: 1}, [int, int]|[int, string] l = [1, "s"])}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                        ^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-nested-trial1-fv.bal:38:40
+   |
+38 |     A|B p = {x: v is function (C|D c = {y: 1}, [int, int]|[int, string] l = [1, "s"])}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                        ^^^^^^

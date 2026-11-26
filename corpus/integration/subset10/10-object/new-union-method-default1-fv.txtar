@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> new-union-method-default1-fv.bal:54:58
+   |
+54 |     First|Second a = new (<object { function run(int p = 3) returns int; }>v, 4); // @error inline type with a default in a candidate trial is unimplemented
+   |                                                          ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> new-union-method-default1-fv.bal:54:58
+   |
+54 |     First|Second a = new (<object { function run(int p = 3) returns int; }>v, 4); // @error inline type with a default in a candidate trial is unimplemented
+   |                                                          ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> new-union-method-default1-fv.bal:55:58
+   |
+55 |     First|Second b = new (<object { function run(int p = 3) returns int; }>v, "ab"); // @error inline type with a default in a candidate trial is unimplemented
+   |                                                          ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> new-union-method-default1-fv.bal:55:58
+   |
+55 |     First|Second b = new (<object { function run(int p = 3) returns int; }>v, "ab"); // @error inline type with a default in a candidate trial is unimplemented
+   |                                                          ^

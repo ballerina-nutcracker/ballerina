@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-fn-rest1-fv.bal:36:53
+   |
+36 |     A|B tested = {x: fn is function (int a, int b = 2, int... rest) returns int}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                     ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-fn-rest1-fv.bal:36:53
+   |
+36 |     A|B tested = {x: fn is function (int a, int b = 2, int... rest) returns int}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                     ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-fn-rest1-fv.bal:37:46
+   |
+37 |     A|B cast = {x: <function (int a, int b = 2, int... rest) returns int>fn}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                              ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-fn-rest1-fv.bal:37:46
+   |
+37 |     A|B cast = {x: <function (int a, int b = 2, int... rest) returns int>fn}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                              ^

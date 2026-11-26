@@ -1,4 +1,0 @@
--- stdout --
-true
-{"m":"s","v":{"a":3,"b":4}}
--- stderr --
