@@ -108,9 +108,9 @@ func subModuleEntry(pkg, subModuleDir, version, platform string) stdlibEntry {
 // http.httpscerr before http).
 var builtinStdlibs = []stdlibEntry{
 	flatEntry("io", "0.0.1", "go1.27"),
+	flatEntry("log", "0.0.1", "go1.27"),
 	subModuleEntry("http", "httpscerr", "0.0.1", "go1.27"),
 	flatEntry("http", "0.0.1", "go1.27"),
-	flatEntry("log", "0.0.1", "go1.27"),
 	flatEntry("math.vector", "0.0.1", "go1.27"),
 	flatEntry("mime", "0.0.1", "go1.27"),
 	flatEntry("os", "0.0.1", "go1.27"),
