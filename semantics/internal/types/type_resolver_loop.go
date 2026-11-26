@@ -180,6 +180,8 @@ func (l *loopTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
 	return l.parentResolver.deferAnnotationSite(site)
 }
 
+func (l *loopTypeResolver) deferDefault(resolve func()) { l.parentResolver.deferDefault(resolve) }
+
 func (l *loopTypeResolver) ensureTypeCheck(check func(cx semtypes.Context) bool, onFail func()) bool {
 	return l.parentResolver.ensureTypeCheck(check, onFail)
 }

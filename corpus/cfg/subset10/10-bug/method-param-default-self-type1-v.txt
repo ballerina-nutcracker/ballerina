@@ -1,0 +1,30 @@
+(C
+  (f
+    (bb0 () ()
+      (return
+        (simple-var-ref b))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable w (type
+        (user-defined-type W)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal c)
+            (new ()))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f expr:
+          (field-based-access c
+            (simple-var-ref w)) ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f expr:
+          (field-based-access c
+            (simple-var-ref w)) (
+          (literal true))))))
+  )
+)
