@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> method-param-default-self2-e.bal:20:26
+   |
+20 |     function get(int y = self) returns int { // @error
+   |                          ^^^^

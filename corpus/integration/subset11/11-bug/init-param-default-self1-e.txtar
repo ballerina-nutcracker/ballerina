@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: Unknown symbol: self
+  --> init-param-default-self1-e.bal:20:27
+   |
+20 |     function init(int x = self) { // @error
+   |                           ^^^^

@@ -1,0 +1,50 @@
+(package
+  (import-package ballerina io (as io))
+  (variable self (type
+    (user-defined-type Rec)))
+  (type-definition Rec
+    (record-type
+      (field value
+        (value-type int))))
+  (class-definition C
+    (function init () ()
+      (block-function-body))
+    (function f (
+      (variable y (type
+        (value-type int)) (expr
+        (field-based-access value
+          (simple-var-ref self))))) (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref y)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref self)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 4))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new ()))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (invocation f expr:
+            (simple-var-ref c) (
+            (simple-var-ref $desugar$0)))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (index-based-access
+          (simple-var-ref self)
+          (literal value))))))
