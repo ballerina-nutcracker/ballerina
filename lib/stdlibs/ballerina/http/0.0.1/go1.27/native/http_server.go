@@ -95,6 +95,9 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 		func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			self := args[0].(*values.Object)
 			port := int(args[1].(int64))
+			if port == 0 {
+				return httpError(ctx, genericListenerError, "Listener port is not defined!", nil), nil
+			}
 			createHeaders, signature, err := resolveSignatureTypes(ctx)
 			if err != nil {
 				return nil, err
