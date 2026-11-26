@@ -5,6 +5,11 @@ ARTIFACTS_DIR holds one directory per sniff job, each with the job's merged
 `go test` output in `test-output.log` and its exit code in `exit-code`. The
 body lists failing packages and leaf tests with their shuffle seeds and
 reproduction commands, omitting excess rows to fit GitHub's body limit.
+Packages that only hit the `go test -timeout` deadline are left out, as are
+the tests that were still running when it fired. Without -v, go test holds a
+failed subtest's `--- FAIL` line until its top-level test ends, so a subtest
+that failed under a parent still running at the deadline is dropped as well.
+When nothing else failed, the body is empty and the caller reports nothing.
 
 Usage: collect_failures.py ARTIFACTS_DIR --run-url URL --sha SHA --output PATH
 """
@@ -22,7 +27,6 @@ from run_native_tests import SKIP_PATTERN, TIMEOUT
 
 SEED_LINE = re.compile(r"^-test\.shuffle (\d+)$")
 FAIL_TEST_LINE = re.compile(r"^\s*--- FAIL: (\S+) \(")
-RUNNING_TEST_LINE = re.compile(r"^\s+(\S+) \([\d.hmsµu]+\)$")
 FAIL_PACKAGE_LINE = re.compile(r"^FAIL\t(\S+)(.*)$")
 OK_PACKAGE_LINE = re.compile(r"^ok\s+\S+")
 NO_TEST_FILES_LINE = re.compile(r"^\?\s+\S+\s+\[no test files\]")
@@ -30,6 +34,8 @@ DEBUG_FAILURE_LINE = re.compile(
     r"^Failed: .+ \(debug tag\): Command '?(\[.+\])'? returned non-zero exit status \d+\.$"
 )
 REGEX_METACHARACTERS = re.compile(r"([\\.+*?()|\[\]{}^$])")
+
+TIMED_OUT = "timed out"
 
 LOG_FILE = "test-output.log"
 EXIT_CODE_FILE = "exit-code"
@@ -65,7 +71,7 @@ def _package_reason(rest: str, saw_timeout: bool, saw_panic: bool) -> str:
     if "[setup failed]" in rest:
         return "setup failed"
     if saw_timeout:
-        return "timed out"
+        return TIMED_OUT
     if saw_panic:
         return "panic"
     return "no test-level failure line"
@@ -76,17 +82,8 @@ def parse_go_test_output(text: str) -> list[PackageFailure]:
     seed: str | None = None
     names: list[str] = []
     saw_timeout = saw_panic = False
-    reading_running_tests = False
     debug_packages: set[str] = set()
     for line in text.splitlines():
-        if reading_running_tests:
-            if match := RUNNING_TEST_LINE.match(line):
-                names.append(match.group(1))
-                continue
-            reading_running_tests = False
-        if saw_timeout and line.strip() == "running tests:":
-            reading_running_tests = True
-            continue
         if match := DEBUG_FAILURE_LINE.match(line):
             try:
                 command = ast.literal_eval(match.group(1))
@@ -177,6 +174,8 @@ def _rows(results: list[JobResult]) -> list[list[str]]:
     rows = []
     for result in results:
         for failure in result.failures:
+            if failure.reason == TIMED_OUT:
+                continue
             seed = failure.seed or "-"
             package = _code_span(failure.package)
             if failure.tests:
@@ -198,6 +197,8 @@ def _rows(results: list[JobResult]) -> list[list[str]]:
 def render_markdown(results: list[JobResult], run_url: str, sha: str) -> str:
     rows = _rows(results)
     short_sha = sha[:7]
+    if not rows and any(result.failures for result in results):
+        return ""
     if not rows:
         return (
             f"The nightly flake sniffer failed on `{short_sha}`, "

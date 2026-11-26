@@ -148,27 +148,32 @@ class ParseGoTestOutputTest(unittest.TestCase):
         )
         self.assertIn(f"go test -count=1 -tags debug -timeout 2h {BIR}", body)
 
-    def test_timeout_reports_running_leaf_tests_and_stops_at_stack_trace(self):
+    def test_timeout_ignores_tests_still_running_at_the_deadline(self):
         text = (
-            "-test.shuffle 3\r\npanic: test timed out after 3s\r\n"
-            "\trunning tests:\r\n"
-            "\t\tTestHang (3s)\r\n"
-            "\t\tTestHang/child (2s)\r\n"
-            "\t\tTestOther (1s)\r\n\r\n"
-            "goroutine 1 [chan receive]:\r\n"
-            "\tTestNotRunning (1s)\r\n"
-            f"FAIL\t{CORPUS}\t3.1s\r\n"
+            "-test.shuffle 3\npanic: test timed out after 3s\n"
+            "\trunning tests:\n"
+            "\t\tTestHang (3s)\n"
+            "\t\tTestHang/child (2s)\n\n"
+            "goroutine 1 [chan receive]:\n"
+            f"FAIL\t{CORPUS}\t3.1s\n"
         )
-        failures = collect_failures.parse_go_test_output(text)
         self.assertEqual(
-            failures,
-            [PackageFailure(CORPUS, ("TestHang/child", "TestOther"), "3", None)],
+            collect_failures.parse_go_test_output(text),
+            [PackageFailure(CORPUS, (), "3", "timed out")],
         )
-        body = collect_failures.render_markdown(
-            [JobResult("sniff-Windows-1", 1, tuple(failures))], "https://x/runs/1", "abcdef0"
+
+    def test_timeout_keeps_tests_that_failed_before_the_deadline(self):
+        text = (
+            "-test.shuffle 3\n--- FAIL: TestBroken (0.10s)\n"
+            "panic: test timed out after 3s\n"
+            "\trunning tests:\n"
+            "\t\tTestHang (3s)\n\n"
+            f"FAIL\t{CORPUS}\t3.1s\n"
         )
-        self.assertIn("-shuffle=3 -run '^TestHang$/^child$'", body)
-        self.assertIn("-shuffle=3 -run '^TestOther$'", body)
+        self.assertEqual(
+            collect_failures.parse_go_test_output(text),
+            [PackageFailure(CORPUS, ("TestBroken",), "3", None)],
+        )
 
     def test_timed_out_package_keeps_its_seed(self):
         text = f"-test.shuffle 3\npanic: test timed out after 2h0m0s\nFAIL\t{CORPUS}\t7200.1s\n"
@@ -270,18 +275,36 @@ class RenderMarkdownTest(unittest.TestCase):
             JobResult(
                 name="sniff-Linux-2",
                 exit_code=1,
-                failures=(PackageFailure(package=CORPUS, tests=(), seed="3", reason="timed out"),),
+                failures=(PackageFailure(package=CORPUS, tests=(), seed="3", reason="panic"),),
             ),
-            JobResult(name="sniff-Windows-3", exit_code=None, failures=()),
+            JobResult(name="sniff-Linux-3", exit_code=None, failures=()),
         ]
         body = collect_failures.render_markdown(results, self.RUN_URL, self.SHA)
         self.assertIn(
-            f"| sniff-Linux-2 | `{CORPUS}` | (timed out) | 3 | "
+            f"| sniff-Linux-2 | `{CORPUS}` | (panic) | 3 | "
             "`go test -count=1 -shuffle=3 -timeout 2h "
             f"-skip 'TestParseCorpusFiles\\|TestJBalUnitTests\\|TestJBalUnitBIRTests' {CORPUS}` |\n",
             body,
         )
-        self.assertIn("| sniff-Windows-3 | - | (no failing test found in the log) | - | - |\n", body)
+        self.assertIn("| sniff-Linux-3 | - | (no failing test found in the log) | - | - |\n", body)
+
+    def test_timed_out_package_has_no_row(self):
+        timed_out = PackageFailure(package=LS, tests=(), seed="3", reason="timed out")
+        failed = PackageFailure(package=CORPUS, tests=("TestA",), seed="4", reason=None)
+        results = [
+            JobResult(name="sniff-Linux-1", exit_code=1, failures=(timed_out,)),
+            JobResult(name="sniff-Linux-2", exit_code=1, failures=(timed_out, failed)),
+        ]
+        body = collect_failures.render_markdown(results, self.RUN_URL, self.SHA)
+        self.assertIn(f"| sniff-Linux-2 | `{CORPUS}` | `TestA` | 4 | ", body)
+        self.assertNotIn("sniff-Linux-1", body)
+        self.assertNotIn(LS, body)
+        self.assertNotIn("timed out", body)
+
+    def test_only_timed_out_packages_give_an_empty_body(self):
+        timed_out = PackageFailure(package=CORPUS, tests=(), seed="3", reason="timed out")
+        results = [JobResult(name="sniff-Linux-1", exit_code=1, failures=(timed_out,))]
+        self.assertEqual(collect_failures.render_markdown(results, self.RUN_URL, self.SHA), "")
 
     def test_pipe_in_a_cell_is_escaped(self):
         results = [

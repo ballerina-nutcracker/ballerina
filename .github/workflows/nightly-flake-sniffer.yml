@@ -99,6 +99,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
+          if [[ ! -s body.md ]]; then
+            echo "Only go test deadline timeouts failed; nothing to report."
+            exit 0
+          fi
           label=nightly-flake-sniffer-failure
           issue=$(gh issue list --state open --label "$label" --limit 1 --json number --jq '.[0].number // empty')
           if [[ -n "$issue" ]]; then
