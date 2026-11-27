@@ -1460,24 +1460,28 @@ func desugarTopLevelTypeDescs(cx *packageContext, pkg *ast.BLangPackage) {
 func createDefaultClosures(ctx desugarContext, sig model.UntypedFunctionSignature,
 	paramTypeSupplier func(int) semtypes.SemType, paramExprSupplier func(int) ast.BLangExpression, paramSymbolSupplier func(int) model.SymbolRef,
 ) []*ast.BLangFunction {
-	var prevParamNames []string
-	var prevParamTypes []semtypes.SemType
-	var prevParamSymbol []model.SymbolRef
 	var defaultClosures []*ast.BLangFunction
 	for i := range sig.FixedParamCount() {
 		def := sig.Default[i]
-		if def != nil && def.Kind != model.DefaultableParamKindInferredTypedesc {
-			expr := paramExprSupplier(i)
-			if expr == nil {
-				ctx.internalError("missing expression for defaultable param", ctx.getSymbol(def.Symbol).Location())
-				return nil
-			}
-			defaultClosure := createDefaultClosure(ctx, def, expr, prevParamNames, prevParamTypes, prevParamSymbol)
-			defaultClosures = append(defaultClosures, defaultClosure)
+		if def == nil || def.Kind == model.DefaultableParamKindInferredTypedesc {
+			continue
 		}
-		prevParamNames = append(prevParamNames, sig.ParamNames[i])
-		prevParamTypes = append(prevParamTypes, paramTypeSupplier(i))
-		prevParamSymbol = append(prevParamSymbol, paramSymbolSupplier(i))
+		expr := paramExprSupplier(i)
+		if expr == nil {
+			ctx.internalError("missing expression for defaultable param", ctx.getSymbol(def.Symbol).Location())
+			return nil
+		}
+		closureParams := sig.DefaultClosureParams(i)
+		prevParamNames := make([]string, len(closureParams))
+		prevParamTypes := make([]semtypes.SemType, len(closureParams))
+		prevParamSymbol := make([]model.SymbolRef, len(closureParams))
+		for j, paramIndex := range closureParams {
+			prevParamNames[j] = sig.ParamNames[paramIndex]
+			prevParamTypes[j] = paramTypeSupplier(paramIndex)
+			prevParamSymbol[j] = paramSymbolSupplier(paramIndex)
+		}
+		defaultClosure := createDefaultClosure(ctx, def, expr, prevParamNames, prevParamTypes, prevParamSymbol)
+		defaultClosures = append(defaultClosures, defaultClosure)
 	}
 	return defaultClosures
 }
