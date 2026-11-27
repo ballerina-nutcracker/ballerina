@@ -224,6 +224,9 @@ func contentTypeCharset(obj *values.Object) string {
 	if err != nil {
 		return ""
 	}
+	if charset, ok := mt.extendedParam("charset"); ok && charset != "" {
+		return charset
+	}
 	return mt.param("charset")
 }
 

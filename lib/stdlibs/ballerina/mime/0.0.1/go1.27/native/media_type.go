@@ -19,7 +19,10 @@ package native
 
 import (
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 const tspecials = `()<>@,;:\"/[]?=`
@@ -51,12 +54,125 @@ func (e mediaTypeError) Error() string {
 }
 
 func (mt mediaType) param(name string) string {
+	v, _ := mt.lookup(name)
+	return v
+}
+
+func (mt mediaType) lookup(name string) (string, bool) {
 	for _, p := range mt.params {
 		if p.name == name {
-			return p.value
+			return p.value, true
 		}
 	}
-	return ""
+	return "", false
+}
+
+// extendedParam returns the RFC 2231 form of a parameter (`name*`, or the continuations
+// `name*0`, `name*1*`, ...) decoded; ok is false when it is absent or malformed.
+func (mt mediaType) extendedParam(name string) (string, bool) {
+	if v, ok := mt.lookup(name + "*"); ok {
+		return decode2231(v, true)
+	}
+	var b strings.Builder
+	for n := 0; ; n++ {
+		key := name + "*" + strconv.Itoa(n)
+		if v, ok := mt.lookup(key); ok {
+			if !isASCII(v) {
+				return "", false
+			}
+			b.WriteString(v)
+			continue
+		}
+		v, ok := mt.lookup(key + "*")
+		if !ok {
+			return b.String(), n > 0 && !mt.hasSegmentAfter(name, n)
+		}
+		part, ok := decode2231(v, n == 0)
+		if !ok {
+			return "", false
+		}
+		b.WriteString(part)
+	}
+}
+
+// hasSegmentAfter reports whether a continuation of name is numbered above the missing index n.
+func (mt mediaType) hasSegmentAfter(name string, n int) bool {
+	prefix := name + "*"
+	for _, p := range mt.params {
+		index, ok := strings.CutPrefix(p.name, prefix)
+		if !ok {
+			continue
+		}
+		if m, err := strconv.Atoi(strings.TrimSuffix(index, "*")); err == nil && m > n {
+			return true
+		}
+	}
+	return false
+}
+
+// decode2231 percent-decodes an RFC 2231 value, first dropping its `charset'language'`
+// prefix when it has one. Only attribute-chars and escapes, decoding to ASCII, are accepted.
+func decode2231(v string, prefixed bool) (string, bool) {
+	if prefixed {
+		parts := strings.SplitN(v, "'", 3)
+		if len(parts) != 3 || !isAttributeChars(parts[0]) || !isLanguageTag(parts[1]) {
+			return "", false
+		}
+		v = parts[2]
+	}
+	for i := range len(v) {
+		if c := v[i]; c != '%' && !isAttributeChar(c) {
+			return "", false
+		}
+	}
+	decoded, err := url.PathUnescape(v)
+	if err != nil {
+		return "", false
+	}
+	if !isASCII(decoded) {
+		return "", false
+	}
+	return decoded, true
+}
+
+func isAttributeChar(c byte) bool {
+	return isTokenChar(c) && c != '*' && c != '\'' && c != '%'
+}
+
+func isAttributeChars(s string) bool {
+	for i := range len(s) {
+		if !isAttributeChar(s[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// isLanguageTag accepts an empty tag or alphanumeric subtags joined by hyphens, as RFC 2231's language field allows.
+func isLanguageTag(s string) bool {
+	if s == "" {
+		return true
+	}
+	for sub := range strings.SplitSeq(s, "-") {
+		if sub == "" || len(sub) > 8 {
+			return false
+		}
+		for i := range len(sub) {
+			if c := sub[i]; !('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9') {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= utf8.RuneSelf {
+			return false
+		}
+	}
+	return true
 }
 
 // parseMediaType follows javax.activation.MimeType, which jBallerina uses: type and
