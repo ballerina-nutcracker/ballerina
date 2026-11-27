@@ -142,8 +142,30 @@ func (p *Parser) looksLikeTableHeader() bool {
 			return false
 		case lexer.TokenCloseBracket:
 			return true
+		case lexer.TokenOpenBracket,
+			lexer.TokenOpenBrace,
+			lexer.TokenCloseBrace,
+			lexer.TokenDot,
+			lexer.TokenComma,
+			lexer.TokenPlus,
+			lexer.TokenMinus,
+			lexer.TokenDoubleQuote,
+			lexer.TokenTripleDoubleQuote,
+			lexer.TokenSingleQuote,
+			lexer.TokenTripleSingleQuote,
+			lexer.TokenIdentifier,
+			lexer.TokenDecimalInt,
+			lexer.TokenDecimalFloat,
+			lexer.TokenHexInt,
+			lexer.TokenOctInt,
+			lexer.TokenBinaryInt,
+			lexer.TokenTrue,
+			lexer.TokenFalse,
+			lexer.TokenInf,
+			lexer.TokenNan,
+			lexer.TokenInvalid:
+			k++
 		}
-		k++
 	}
 }
 
@@ -160,8 +182,30 @@ func (p *Parser) lookAheadForCloseBracket() bool {
 			// Check if two consecutive ]]
 			next := p.reader.peekK(k + 1)
 			return next.Kind == lexer.TokenCloseBracket
+		case lexer.TokenOpenBracket,
+			lexer.TokenOpenBrace,
+			lexer.TokenCloseBrace,
+			lexer.TokenDot,
+			lexer.TokenComma,
+			lexer.TokenPlus,
+			lexer.TokenMinus,
+			lexer.TokenDoubleQuote,
+			lexer.TokenTripleDoubleQuote,
+			lexer.TokenSingleQuote,
+			lexer.TokenTripleSingleQuote,
+			lexer.TokenIdentifier,
+			lexer.TokenDecimalInt,
+			lexer.TokenDecimalFloat,
+			lexer.TokenHexInt,
+			lexer.TokenOctInt,
+			lexer.TokenBinaryInt,
+			lexer.TokenTrue,
+			lexer.TokenFalse,
+			lexer.TokenInf,
+			lexer.TokenNan,
+			lexer.TokenInvalid:
+			k++
 		}
-		k++
 	}
 }
 
@@ -388,8 +432,28 @@ func (p *Parser) parseSingleKeySegment() (string, bool) {
 		return p.parseBasicStringKey(), true
 	case lexer.TokenSingleQuote:
 		return p.parseLiteralStringKey(), true
+	case lexer.TokenEOF,
+		lexer.TokenNewline,
+		lexer.TokenOpenBracket,
+		lexer.TokenCloseBracket,
+		lexer.TokenOpenBrace,
+		lexer.TokenCloseBrace,
+		lexer.TokenEqual,
+		lexer.TokenDot,
+		lexer.TokenComma,
+		lexer.TokenPlus,
+		lexer.TokenMinus,
+		lexer.TokenTripleDoubleQuote,
+		lexer.TokenTripleSingleQuote,
+		lexer.TokenHexInt,
+		lexer.TokenOctInt,
+		lexer.TokenBinaryInt,
+		lexer.TokenInf,
+		lexer.TokenNan,
+		lexer.TokenInvalid:
+		return "", false
 	}
-	return "", false
+	panic("unreachable: unhandled token in parseSingleKeySegment") // Every lexer token kind is handled above.
 }
 
 // parseBasicStringKey reads "quoted key" and returns the unquoted string.
