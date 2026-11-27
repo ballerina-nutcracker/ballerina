@@ -1,0 +1,79 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition ByInt
+    (variable tag (type
+      (value-type string)))
+    (function init (
+      (variable n (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access tag
+            (simple-var-ref self))
+          (invocation toString expr:
+            (simple-var-ref n) ()))))
+    (function name () (
+      (value-type string))
+      (block-function-body
+        (return
+          (binary-expr +
+            (literal ByInt:)
+            (field-based-access tag
+              (simple-var-ref self)))))))
+  (class-definition ByString
+    (variable tag (type
+      (value-type string)))
+    (function init (
+      (variable s (type
+        (value-type string)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access tag
+            (simple-var-ref self))
+          (simple-var-ref s))))
+    (function name () (
+      (value-type string))
+      (block-function-body
+        (return
+          (binary-expr +
+            (literal ByString:)
+            (field-based-access tag
+              (simple-var-ref self)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable a (type
+          (union-type
+            (user-defined-type ByInt)
+            (user-defined-type ByString))) (expr
+          (new (
+            (literal 5))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation name expr:
+            (simple-var-ref a) ()))))
+      (var-def
+        (variable b (type
+          (union-type
+            (user-defined-type ByInt)
+            (user-defined-type ByString))) (expr
+          (new (
+            (literal s))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation name expr:
+            (simple-var-ref b) ()))))
+      (var-def
+        (variable c (type
+          (user-defined-type ByInt)) (expr
+          (new
+            (user-defined-type ByString) (
+            (literal t))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation name expr:
+            (simple-var-ref c) ())))))))

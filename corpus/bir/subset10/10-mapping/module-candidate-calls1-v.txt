@@ -2,7 +2,7 @@ module $anon.. v 0.0.0;
 g1  {| x: int, never... |}|{| x: string, never... |};
 g2  {| x: int, never... |}|{| x: string, never... |};
 g3  {| x: function() returns int, never... |}|{| x: function() returns string, never... |};
-g4  {| x: string, never... |}|{| x: object { public function init() returns nil; int n }, never... |};
+g4  {| x: string, never... |}|{| x: object { int n }, never... |};
 class Counter {
   n int
 
@@ -39,7 +39,7 @@ main() -> nil{
     %9 = println(%8) -> bb3;
   }
   bb3 {
-    %10 = g4 is {| x: object { public function init() returns nil; int n }, never... |}
+    %10 = g4 is {| x: object { int n }, never... |}
     %11 = %10;
     %12 = println(%11) -> bb4;
   }

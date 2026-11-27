@@ -59,12 +59,12 @@ main() -> nil{
   }
   bb8 {
     repeated = %12;
-    %15 = sum is object { public function init(function(int, int) returns int, int) returns nil }
+    %15 = sum is object
     %16 = %15;
     %17 = println(%16) -> bb9;
   }
   bb9 {
-    %18 = repeated is object { public function init(function(string, int) returns string, int) returns nil }
+    %18 = repeated is object
     %19 = %18;
     %20 = println(%19) -> bb10;
   }

@@ -21,7 +21,7 @@ class FloatFn {
 }
 class Outer {
 
-  init(object { public function init(function(int) returns int, int) returns nil }|object { public function init(function(float) returns float, string) returns nil },int) -> nil{
+  init(object|object,int) -> nil{
     bb0 {
       _ = inner;
       _ = marker;
@@ -31,7 +31,7 @@ class Outer {
 }
 class OtherOuter {
 
-  init(object { public function init(function(int) returns int, int) returns nil }|object { public function init(function(float) returns float, string) returns nil },string) -> nil{
+  init(object|object,string) -> nil{
     bb0 {
       _ = inner;
       _ = marker;
@@ -96,12 +96,12 @@ main() -> nil{
   }
   bb12 {
     o = %17;
-    %20 = f is object { public function init(function(int) returns int, int) returns nil }
+    %20 = f is object
     %21 = %20;
     %22 = println(%21) -> bb13;
   }
   bb13 {
-    %23 = o is object { public function init(object { public function init(function(int) returns int, int) returns nil }|object { public function init(function(float) returns float, string) returns nil }, int) returns nil }
+    %23 = o is object
     %24 = %23;
     %25 = println(%24) -> bb14;
   }

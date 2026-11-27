@@ -40,7 +40,7 @@ main() -> nil{
   }
   bb4 {
     f = %5;
-    %8 = f is object { public function init(function(int) returns 0|1, int) returns nil }
+    %8 = f is object
     %9 = %8;
     %10 = println(%9) -> bb5;
   }

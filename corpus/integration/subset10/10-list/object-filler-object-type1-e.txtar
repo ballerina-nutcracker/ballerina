@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing required member at index 0: type 'object { int sides }' has no filler value
+  --> object-filler-object-type1-e.bal:24:23
+   |
+24 |     Shape[2] shapes = []; // @error
+   |                       ^^

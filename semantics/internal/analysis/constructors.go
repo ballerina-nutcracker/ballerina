@@ -59,7 +59,8 @@ func validateListConstructor(cx scope.Context, e *ast.BLangListConstructorExpr, 
 	tyCtx := cx.TyCtx()
 	for i := memberIndex; i < lat.FixedLength(); i++ {
 		memberTy := lat.MemberAtInnerVal(i)
-		if _, ok := semtypes.FillerValue(tyCtx, memberTy); !ok {
+		filler, ok := semtypes.FillerValue(tyCtx, memberTy)
+		if !ok || !fillerAvailable(cx, filler) {
 			cx.SemanticErr(semcommon.FormatMissingFillerMessage(tyCtx, i, memberTy), e.GetPosition())
 			return f, false
 		}
@@ -68,6 +69,44 @@ func validateListConstructor(cx scope.Context, e *ast.BLangListConstructorExpr, 
 		return f, false
 	}
 	return f, true
+}
+
+// fillerAvailable reports whether every object filler within f can be built by
+// `new T()` (§5.9.1): ClassInitFunctionType is ok, its parameter list accepts the
+// empty argument list, and its return type for that list contains no error.
+// It recurses through ListFiller.Members; other fillers are available.
+func fillerAvailable(cx scope.Context, f semtypes.Filler) bool {
+	switch f := f.(type) {
+	case semtypes.ObjectFiller:
+		tyCtx := cx.TyCtx()
+		initFnTy, ok := cx.CompilerCtx().ClassInitFunctionType(tyCtx, f.Type)
+		return ok && initAcceptsNoArgs(tyCtx, cx.CompilerCtx().GetTypeEnv(), initFnTy)
+	case semtypes.ListFiller:
+		for _, member := range f.Members {
+			if !fillerAvailable(cx, member) {
+				return false
+			}
+		}
+		return true
+	default:
+		return true
+	}
+}
+
+// initAcceptsNoArgs reports whether an init method of type initFnTy accepts the
+// empty argument list and its return type for that list contains no error.
+func initAcceptsNoArgs(tyCtx semtypes.Context, env semtypes.Env, initFnTy semtypes.SemType) bool {
+	ld := semtypes.NewListDefinition()
+	emptyArgList := ld.Define(env, nil)
+	paramListTy := semtypes.FunctionParamListType(tyCtx, initFnTy)
+	if semtypes.IsZero(paramListTy) || !semtypes.IsSubtype(tyCtx, emptyArgList, paramListTy) {
+		return false
+	}
+	retTy := semtypes.FunctionReturnType(tyCtx, initFnTy, emptyArgList)
+	if semtypes.IsZero(retTy) {
+		return false
+	}
+	return !semtypes.ContainsBasicType(retTy, semtypes.Error)
 }
 
 // validateMappingConstructor validates field values against the inherent

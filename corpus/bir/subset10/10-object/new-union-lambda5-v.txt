@@ -59,12 +59,12 @@ main() -> nil{
   }
   bb8 {
     g = %12;
-    %15 = f is object { public function init(function(int) returns int, int) returns nil }
+    %15 = f is object
     %16 = %15;
     %17 = println(%16) -> bb9;
   }
   bb9 {
-    %18 = g is object { public function init(function(string) returns string, int) returns nil }
+    %18 = g is object
     %19 = %18;
     %20 = println(%19) -> bb10;
   }

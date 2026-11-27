@@ -84,12 +84,12 @@ main() -> nil{
   }
   bb8 {
     e = %10;
-    %14 = d is object { public function init(decimal) returns nil; decimal value }
+    %14 = d is object { decimal value }
     %13 = %14;
     %14 ? bb9 : bb10;
   }
   bb9 {
-    %15 = e is object { public function init(decimal) returns nil; decimal value }
+    %15 = e is object { decimal value }
     %13 = %15;
     GOTO bb10;
   }
@@ -151,12 +151,12 @@ main() -> nil{
   }
   bb21 {
     g = %11;
-    %15 = f is object { public function init(float, int) returns nil; float value }
+    %15 = f is object { float value }
     %14 = %15;
     %15 ? bb22 : bb23;
   }
   bb22 {
-    %16 = g is object { public function init(float, int) returns nil; float value }
+    %16 = g is object { float value }
     %14 = %16;
     GOTO bb23;
   }
@@ -218,12 +218,12 @@ main() -> nil{
   }
   bb34 {
     i = %11;
-    %15 = h is object { public function init(float, string) returns nil; float value }
+    %15 = h is object { float value }
     %14 = %15;
     %15 ? bb35 : bb36;
   }
   bb35 {
-    %16 = i is object { public function init(decimal, int) returns nil; decimal value }
+    %16 = i is object { decimal value }
     %14 = %16;
     GOTO bb36;
   }

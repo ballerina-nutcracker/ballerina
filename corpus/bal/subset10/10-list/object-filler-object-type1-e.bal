@@ -14,21 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 import ballerina/io;
 
-import testorg/inclusioncrossmoduleinit.foo;
-
-class C {
-    *foo:T;
-    public int y = 0;
-
-    function init() {
-        self.y = 5;
-    }
-}
+type Shape object {
+    int sides;
+};
 
 public function main() {
-    C c = new;
-    io:println(c.y); // @output 5
+    Shape[2] shapes = []; // @error
+    io:println(shapes.length());
 }

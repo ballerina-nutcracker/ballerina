@@ -60,7 +60,7 @@ main() -> nil{
   }
   bb4 {
     c = %10;
-    %14 = c is object { int a; public function init({| a: int, never... |}, int) returns nil }
+    %14 = c is object { int a }
     %14 ? bb5 : bb6;
   }
   bb5 {

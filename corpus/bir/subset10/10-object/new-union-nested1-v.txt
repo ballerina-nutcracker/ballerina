@@ -22,9 +22,9 @@ class StringBox {
   }
 }
 class IntOuter {
-  inner object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }
+  inner object { int value }|object { string value }
 
-  init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value },int) -> nil{
+  init(object { int value }|object { string value },int) -> nil{
     bb0 {
       %4 = ConstantLoad inner
       self[%4] = inner;
@@ -34,9 +34,9 @@ class IntOuter {
   }
 }
 class StringOuter {
-  inner object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }
+  inner object { int value }|object { string value }
 
-  init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value },string) -> nil{
+  init(object { int value }|object { string value },string) -> nil{
     bb0 {
       %4 = ConstantLoad inner
       self[%4] = inner;
@@ -82,14 +82,14 @@ main() -> nil{
   }
   bb8 {
     o = %9;
-    %12 = o is object { public function init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }, int) returns nil; object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value } inner }
+    %12 = o is object { object { int value }|object { string value } inner }
     %12 ? bb9 : bb11;
   }
   bb9 {
     PushScopeFrame 5
     %1 = ConstantLoad inner
     %0 = (1, o)[%1];
-    %2 = %0 is object { public function init(int) returns nil; int value }
+    %2 = %0 is object { int value }
     %3 = %2;
     %4 = println(%3) -> bb10;
   }
@@ -134,14 +134,14 @@ main() -> nil{
   }
   bb19 {
     s = %8;
-    %11 = s is object { public function init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value }, string) returns nil; object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value } inner }
+    %11 = s is object { object { int value }|object { string value } inner }
     %11 ? bb20 : bb22;
   }
   bb20 {
     PushScopeFrame 5
     %1 = ConstantLoad inner
     %0 = (1, s)[%1];
-    %2 = %0 is object { public function init(string) returns nil; string value }
+    %2 = %0 is object { string value }
     %3 = %2;
     %4 = println(%3) -> bb21;
   }

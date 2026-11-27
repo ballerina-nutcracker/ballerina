@@ -1,0 +1,92 @@
+(Fallible
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (literal 3))
+    )
+  )
+  (get
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 100)))
+    )
+  )
+)
+(Plain
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access x
+          (simple-var-ref self)))
+    )
+  )
+)
+(WithArgs
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (binary-expr -
+          (binary-expr +
+            (simple-var-ref x)
+            (invocation lang.string length (
+              (simple-var-ref label))))
+          (literal 1)))
+    )
+  )
+  (get
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 10)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (user-defined-type Plain)) (expr
+        (new
+          (user-defined-type WithArgs) (
+          (literal 2) <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref p) ()))))
+    (var-def
+      (variable w (type
+        (user-defined-type WithArgs)) (expr
+        (new
+          (user-defined-type Plain) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (simple-var-ref w) ()))))
+    (var-def
+      (variable f (type
+        (user-defined-type Fallible)) (expr
+        (checked-expr
+          (new
+            (user-defined-type Fallible) ())))))
+    (expression-stmt
+      (invocation io println (
+        (invocation total (
+          (simple-var-ref f))))))
+  )
+)
+(total
+  (bb0 () ()
+    (return
+      (invocation get expr:
+        (simple-var-ref p) ()))
+  )
+)

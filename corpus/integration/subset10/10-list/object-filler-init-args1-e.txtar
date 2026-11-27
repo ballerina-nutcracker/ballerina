@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: missing required member at index 0: type 'object { int x }' has no filler value
+  --> object-filler-init-args1-e.bal:28:25
+   |
+28 |     NeedsArg[2] items = []; // @error
+   |                         ^^

@@ -1,3 +1,5 @@
 -- stdout --
-5
+named n
+true
+local 9
 -- stderr --

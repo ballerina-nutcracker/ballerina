@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: method name 'init' is not allowed in an object type descriptor
+  --> modules/foo/foo.bal:19:5
+   |
+19 |     function init(); // @error
+   |     ^^^^^^^^^^^^^^^^

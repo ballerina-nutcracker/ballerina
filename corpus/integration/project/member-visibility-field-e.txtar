@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected object { int x }, got object { public function init() returns nil; int x }
+error[SEMANTIC_ERROR]: incompatible type: expected object { int x }, got object { int x }
   --> main.bal:25:15
    |
 25 |     foo:T _ = new C(); // @error

@@ -93,7 +93,7 @@ class InnerB {
 }
 class OuterA {
 
-  init(object { public function init() returns nil },int) -> nil{
+  init(object,int) -> nil{
     bb0 {
       _ = value;
       _ = marker;
@@ -103,7 +103,7 @@ class OuterA {
 }
 class OuterB {
 
-  init(object { public function init() returns nil },string) -> nil{
+  init(object,string) -> nil{
     bb0 {
       _ = value;
       _ = marker;
@@ -136,7 +136,7 @@ main() -> nil{
   }
   bb5 {
     named = %7;
-    %10 = named is object { public function init(string, int) returns nil }
+    %10 = named is object
     %11 = %10;
     %12 = println(%11) -> bb6;
   }
@@ -162,7 +162,7 @@ main() -> nil{
   }
   bb11 {
     defaulted = %17;
-    %20 = defaulted is object { public function init(string) returns nil }
+    %20 = defaulted is object
     %21 = %20;
     %22 = println(%21) -> bb12;
   }
@@ -187,7 +187,7 @@ main() -> nil{
   }
   bb16 {
     configured = %28;
-    %31 = configured is object { public function init({| path: string, recursive: boolean, never... |}) returns nil }
+    %31 = configured is object
     %32 = %31;
     %33 = println(%32) -> bb17;
   }
@@ -211,7 +211,7 @@ main() -> nil{
   }
   bb21 {
     literal = %38;
-    %41 = literal is object { public function init(float, string) returns nil }
+    %41 = literal is object
     %42 = %41;
     %43 = println(%42) -> bb22;
   }
@@ -250,7 +250,7 @@ main() -> nil{
   }
   bb30 {
     nested = %51;
-    %54 = nested is object { public function init(object { public function init() returns nil }, string) returns nil }
+    %54 = nested is object
     %55 = %54;
     %56 = println(%55) -> bb31;
   }
@@ -278,7 +278,7 @@ main() -> nil{
   }
   bb36 {
     explicit = %63;
-    %66 = explicit is object { public function init(string, int) returns nil }
+    %66 = explicit is object
     %67 = %66;
     %68 = println(%67) -> bb37;
   }
@@ -307,7 +307,7 @@ main() -> nil{
   }
   bb42 {
     positional = %76;
-    %79 = positional is object { public function init(int, string) returns nil }
+    %79 = positional is object
     %80 = %79;
     %81 = println(%80) -> bb43;
   }

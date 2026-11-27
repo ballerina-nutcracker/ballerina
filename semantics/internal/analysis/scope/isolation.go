@@ -99,8 +99,8 @@ func isolationNewExpr(cx Context, n *ast.BLangNewExpression) {
 	}
 	tyCtx := cx.TyCtx()
 	classTy := cx.CompilerCtx().SymbolType(n.ClassSymbol)
-	initTy := semtypes.ObjectMemberType(tyCtx, semtypes.StringConst("init"), classTy)
-	if semtypes.IsZero(initTy) || !semtypes.IsSubtype(tyCtx, initTy, semtypes.CreateIsolatedFn(tyCtx)) {
+	initTy, ok := cx.CompilerCtx().ClassInitFunctionType(tyCtx, classTy)
+	if !ok || !semtypes.IsSubtype(tyCtx, initTy, semtypes.CreateIsolatedFn(tyCtx)) {
 		cx.SemanticErr("non isolated initialization", n.GetPosition())
 	}
 }

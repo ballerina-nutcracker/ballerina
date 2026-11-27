@@ -70,7 +70,7 @@ main() -> nil{
   }
   bb4 {
     l = %7;
-    %10 = l is object { public function init([decimal...], int) returns nil; [decimal...] values }
+    %10 = l is object { [decimal...] values }
     %10 ? bb5 : bb7;
   }
   bb5 {
@@ -110,7 +110,7 @@ main() -> nil{
   }
   bb11 {
     p = %7;
-    %10 = p is object { public function init([decimal, string, never...], int) returns nil; [decimal, string, never...] pair }
+    %10 = p is object { [decimal, string, never...] pair }
     %11 = %10;
     %12 = println(%11) -> bb12;
   }
@@ -177,7 +177,7 @@ main() -> nil{
   }
   bb22 {
     s = %35;
-    %38 = s is object { public function init([decimal...], int) returns nil; [decimal...] values }
+    %38 = s is object { [decimal...] values }
     %38 ? bb23 : bb26;
   }
   bb23 {

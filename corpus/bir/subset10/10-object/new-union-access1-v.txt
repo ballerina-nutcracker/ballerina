@@ -259,7 +259,7 @@ main() -> nil|error{
   }
   bb41 {
     a = %46;
-    %49 = a is object { nil|{| name: string, never... |} ann; xml filtered; public function init(nil|{| value: int, never... |}, json, nil|{| name: string, never... |}, xml, int) returns nil; json lax; nil|{| value: int, never... |} next }
+    %49 = a is object { nil|{| name: string, never... |} ann; xml filtered; json lax; nil|{| value: int, never... |} next }
     %49 ? bb42 : bb44;
   }
   bb42 {

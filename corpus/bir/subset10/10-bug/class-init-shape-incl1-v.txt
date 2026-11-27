@@ -1,0 +1,72 @@
+module $anon.. v 0.0.0;
+class Base {
+  name string
+
+  describe() -> string{
+    bb0 {
+      %3 = ConstantLoad name
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad base
+      %3 = ConstantLoad name
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class Derived {
+
+  describe() -> string{
+    bb0 {
+      %3 = ConstantLoad derived 
+      %5 = ConstantLoad name
+      %4 = self[%5];
+      %2 = + %3 %4;
+      %0 = %2;
+      return;
+    }
+  }
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad name
+      self[%3] = n;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Derived
+    %2 = ConstantLoad d
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    b = %4;
+    %7 = b.describe() -> bb5;
+  }
+  bb5 {
+    %8 = println(%7) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}

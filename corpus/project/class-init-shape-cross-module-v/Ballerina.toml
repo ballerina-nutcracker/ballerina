@@ -1,4 +1,4 @@
 [package]
 org = "testorg"
-name = "inclusioncrossmoduleinit"
+name = "classinitshapecrossmodule"
 version = "0.1.0"

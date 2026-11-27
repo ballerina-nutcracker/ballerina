@@ -142,24 +142,7 @@ func objectFiller(cx Context, t SemType) (Filler, bool) {
 	if len(alts) != 1 {
 		return nil, false
 	}
-	if !initFnFillerCompatible(cx, alts[0].initFunctionType) {
-		return nil, false
-	}
-	return ObjectFiller{Type: alts[0].objectType}, true
-}
-
-func initFnFillerCompatible(cx Context, initFnTy SemType) bool {
-	ld := NewListDefinition()
-	emptyArgList := ld.Define(cx.Env(), nil)
-	paramListTy := FunctionParamListType(cx, initFnTy)
-	if IsZero(paramListTy) || !IsSubtype(cx, emptyArgList, paramListTy) {
-		return false
-	}
-	retTy := FunctionReturnType(cx, initFnTy, emptyArgList)
-	if IsZero(retTy) {
-		return false
-	}
-	return !ContainsBasicType(retTy, Error)
+	return ObjectFiller{Type: alts[0]}, true
 }
 
 func mappingFiller(cx Context, t SemType) (Filler, bool) {

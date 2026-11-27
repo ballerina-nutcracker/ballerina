@@ -33,7 +33,7 @@ class StringArg {
 }
 kind(any) -> string{
   bb0 {
-    %3 = v is object { public function init(xml, xml, xml, xml, xml, xml, int) returns nil; int marker; [xml...] values }
+    %3 = v is object { int marker; [xml...] values }
     %3 ? bb1 : bb2;
   }
   bb1 {
@@ -42,7 +42,7 @@ kind(any) -> string{
     GOTO bb3;
   }
   bb2 {
-    %6 = v is object { public function init(xml, xml, xml, xml, xml, xml, string) returns nil; string marker; [xml...] values }
+    %6 = v is object { string marker; [xml...] values }
     %6 ? bb4 : bb5;
   }
   bb3 {
@@ -161,7 +161,7 @@ main() -> nil{
     %55 = println(%54) -> bb18;
   }
   bb18 {
-    %56 = o is object { public function init(xml, xml, xml, xml, xml, xml, int) returns nil; int marker; [xml...] values }
+    %56 = o is object { int marker; [xml...] values }
     %56 ? bb19 : bb21;
   }
   bb19 {
@@ -254,7 +254,7 @@ main() -> nil{
     %37 = println(%36) -> bb39;
   }
   bb39 {
-    %38 = p is object { public function init(xml, xml, xml, xml, xml, xml, string) returns nil; string marker; [xml...] values }
+    %38 = p is object { string marker; [xml...] values }
     %38 ? bb40 : bb42;
   }
   bb40 {

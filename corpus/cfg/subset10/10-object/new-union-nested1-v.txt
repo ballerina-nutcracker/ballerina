@@ -45,7 +45,7 @@
   )
 )
 (main
-  (bb0 () (bb1 bb2)
+  (bb0 () (bb1)
     (var-def
       (variable o (type
         (union-type
@@ -67,7 +67,7 @@
             (simple-var-ref o))
           (user-defined-type IntBox)))))
   )
-  (bb2 (bb1 bb0) (bb3 bb4)
+  (bb2 (bb1) (bb3)
     (var-def
       (variable s (type
         (union-type
@@ -89,5 +89,5 @@
             (simple-var-ref s))
           (user-defined-type StringBox)))))
   )
-  (bb4 (bb3 bb2) ())
+  (bb4 (bb3) ())
 )

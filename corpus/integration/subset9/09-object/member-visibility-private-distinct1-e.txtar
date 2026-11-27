@@ -1,6 +1,6 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: incompatible type: expected object { public function init() returns nil; private int x }, got object { public function init() returns nil; private int x }
+error[SEMANTIC_ERROR]: incompatible type: expected object { private int x }, got object { private int x }
   --> member-visibility-private-distinct1-e.bal:27:11
    |
 27 |     A _ = new B(); // @error

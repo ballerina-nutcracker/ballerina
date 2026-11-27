@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition HasX
+    (object-type
+      (field x
+        (value-type int))))
+  (class-definition distinct Counter
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable x (type
+        (value-type int)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal x))
+          (simple-var-ref x)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable u (type
+          (union-type
+            (user-defined-type Counter)
+            (user-defined-type HasX))) (expr
+          (new (
+            (literal 7))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref u)
+            (user-defined-type Counter)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref u)
+            (literal x))))))))

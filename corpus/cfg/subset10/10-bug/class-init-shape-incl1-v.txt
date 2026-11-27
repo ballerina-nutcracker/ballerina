@@ -1,0 +1,42 @@
+(Base
+  (describe
+    (bb0 () ()
+      (return
+        (field-based-access name
+          (simple-var-ref self)))
+    )
+  )
+)
+(Derived
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access name
+          (simple-var-ref self))
+        (simple-var-ref n))
+    )
+  )
+  (describe
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (literal derived )
+          (field-based-access name
+            (simple-var-ref self))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable b (type
+        (user-defined-type Base)) (expr
+        (new
+          (user-defined-type Derived) (
+          (literal d))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation describe expr:
+          (simple-var-ref b) ()))))
+  )
+)

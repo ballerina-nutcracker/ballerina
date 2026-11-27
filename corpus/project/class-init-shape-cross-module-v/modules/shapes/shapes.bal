@@ -14,8 +14,22 @@
 // specific language governing permissions and limitations
 // under the License.
 
+public class Base {
+    public string name = "base";
 
-public type T object {
-    function init();
-    public int y;
-};
+    public function describe() returns string {
+        return self.name;
+    }
+}
+
+public class Named {
+    public string name;
+
+    public function init(string name) {
+        self.name = name;
+    }
+
+    public function describe() returns string {
+        return "named " + self.name;
+    }
+}

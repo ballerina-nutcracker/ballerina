@@ -33,7 +33,12 @@
             (simple-var-ref self))
           (invocation run expr:
             (simple-var-ref runner) (
-            (simple-var-ref marker)))))))
+            (simple-var-ref marker))))))
+    (function kind () (
+      (value-type string))
+      (block-function-body
+        (return
+          (literal First)))))
   (class-definition Second
     (variable result (type
       (value-type int)))
@@ -50,7 +55,12 @@
           (invocation run expr:
             (simple-var-ref runner) (
             (invocation length expr:
-              (simple-var-ref marker) ())))))))
+              (simple-var-ref marker) ()))))))
+    (function kind () (
+      (value-type string))
+      (block-function-body
+        (return
+          (literal Second)))))
   (function main () (
     (value-type null))
     (block-function-body
@@ -89,24 +99,16 @@
             (literal ab))))))
       (expression-stmt
         (invocation io println (
-          (ternary-expr
-            (type-test-expr is
-              (simple-var-ref a)
-              (user-defined-type First))
-            (literal First)
-            (literal Second)))))
+          (invocation kind expr:
+            (simple-var-ref a) ()))))
       (expression-stmt
         (invocation io println (
           (field-based-access result
             (simple-var-ref a)))))
       (expression-stmt
         (invocation io println (
-          (ternary-expr
-            (type-test-expr is
-              (simple-var-ref b)
-              (user-defined-type First))
-            (literal First)
-            (literal Second)))))
+          (invocation kind expr:
+            (simple-var-ref b) ()))))
       (expression-stmt
         (invocation io println (
           (field-based-access result

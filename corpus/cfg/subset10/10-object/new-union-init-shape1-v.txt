@@ -1,0 +1,75 @@
+(ByInt
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access tag
+          (simple-var-ref self))
+        (invocation lang.value toString (
+          (simple-var-ref n))))
+    )
+  )
+  (name
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (literal ByInt:)
+          (field-based-access tag
+            (simple-var-ref self))))
+    )
+  )
+)
+(ByString
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access tag
+          (simple-var-ref self))
+        (simple-var-ref s))
+    )
+  )
+  (name
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (literal ByString:)
+          (field-based-access tag
+            (simple-var-ref self))))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (union-type
+          (user-defined-type ByInt)
+          (user-defined-type ByString))) (expr
+        (new (
+          (literal 5))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation name expr:
+          (simple-var-ref a) ()))))
+    (var-def
+      (variable b (type
+        (union-type
+          (user-defined-type ByInt)
+          (user-defined-type ByString))) (expr
+        (new (
+          (literal s))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation name expr:
+          (simple-var-ref b) ()))))
+    (var-def
+      (variable c (type
+        (user-defined-type ByInt)) (expr
+        (new
+          (user-defined-type ByString) (
+          (literal t))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation name expr:
+          (simple-var-ref c) ()))))
+  )
+)

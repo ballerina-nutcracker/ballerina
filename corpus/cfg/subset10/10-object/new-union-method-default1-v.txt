@@ -9,6 +9,12 @@
           (simple-var-ref marker))))
     )
   )
+  (kind
+    (bb0 () ()
+      (return
+        (literal First))
+    )
+  )
 )
 (Runner
   (run
@@ -30,6 +36,12 @@
           (simple-var-ref runner) (
           (invocation lang.string length (
             (simple-var-ref marker))))))
+    )
+  )
+  (kind
+    (bb0 () ()
+      (return
+        (literal Second))
     )
   )
 )
@@ -70,24 +82,16 @@
           (literal ab))))))
     (expression-stmt
       (invocation io println (
-        (ternary-expr
-          (type-test-expr is
-            (simple-var-ref a)
-            (user-defined-type First))
-          (literal First)
-          (literal Second)))))
+        (invocation kind expr:
+          (simple-var-ref a) ()))))
     (expression-stmt
       (invocation io println (
         (field-based-access result
           (simple-var-ref a)))))
     (expression-stmt
       (invocation io println (
-        (ternary-expr
-          (type-test-expr is
-            (simple-var-ref b)
-            (user-defined-type First))
-          (literal First)
-          (literal Second)))))
+        (invocation kind expr:
+          (simple-var-ref b) ()))))
     (expression-stmt
       (invocation io println (
         (field-based-access result

@@ -53,7 +53,7 @@ class $service$0 {
     }
   }
 }
-makeListener() -> object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function init() returns nil; public function start() returns nil|error }{
+makeListener() -> object { public function attach(service object, nil) returns nil; public function detach(service object) returns nil|error; public function gracefulStop() returns nil|error; public function immediateStop() returns nil|error; public function start() returns nil|error }{
   bb0 {
     %1 = ConstantLoad making listener
     %2 = println(%1) -> bb1;

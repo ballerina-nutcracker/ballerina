@@ -219,6 +219,29 @@ func (c *CompilerContext) ObjectMethodTable(mat *semtypes.MappingAtomicType) (mo
 	return c.env.ObjectMethodTable(mat)
 }
 
+// ClassInitFunctionType returns the type of the init method of the class that
+// defines objectTy: the declared init's type, or `isolated function () returns ()`
+// when the class declares none (§6.8.1.5). ok is false when objectTy has no sole
+// positive object atom (semtypes.ObjectPositiveAtom), when the atom has no method
+// table, or when the table's owner is not a model.ClassSymbol.
+func (c *CompilerContext) ClassInitFunctionType(cx semtypes.Context, objectTy semtypes.SemType) (semtypes.SemType, bool) {
+	atom, ok := semtypes.ObjectPositiveAtom(cx, objectTy)
+	if !ok {
+		return semtypes.SemType{}, false
+	}
+	table, ok := c.ObjectMethodTable(atom)
+	if !ok || table.Owner.IsEmpty() {
+		return semtypes.SemType{}, false
+	}
+	if _, ok := c.GetSymbol(table.Owner).(model.ClassSymbol); !ok {
+		return semtypes.SemType{}, false
+	}
+	if initRef, ok := table.Methods["init"]; ok {
+		return c.SymbolType(initRef), true
+	}
+	return c.env.defaultInitFunctionType(), true
+}
+
 func (c *CompilerContext) DistinctTypeID(symbol model.SymbolRef) int {
 	return c.env.DistinctTypeID(symbol)
 }

@@ -16,19 +16,6 @@
 
 package semtypes
 
-type ObjectAlternative struct {
-	objectType       SemType
-	initFunctionType SemType
-}
-
-func (a ObjectAlternative) Type() SemType {
-	return a.objectType
-}
-
-func (a ObjectAlternative) InitFunctionType() SemType {
-	return a.initFunctionType
-}
-
 // ObjectPositiveAtom returns the sole positive object mapping atom, excluding
 // the readonly constraint.
 func ObjectPositiveAtom(cx Context, t SemType) (*MappingAtomicType, bool) {
@@ -77,21 +64,17 @@ func IsAtomicObjectType(cx Context, t SemType) bool {
 	return IsSubtype(cx, t, Object) && len(ObjectAlternatives(cx, t)) == 1
 }
 
-func ObjectAlternatives(cx Context, t SemType) []ObjectAlternative {
+// ObjectAlternatives returns the object types of t's alternatives that have no
+// negative atoms.
+func ObjectAlternatives(cx Context, t SemType) []SemType {
 	mappingTy := convertObjectToMappingTy(cx, t)
 	mappingAlternatives := MappingAlternatives(cx, mappingTy)
-	var alts []ObjectAlternative
-	initKey := StringConst("init")
+	var alts []SemType
 	for _, each := range mappingAlternatives {
 		if len(each.neg) > 0 {
 			continue
 		}
-		objectTy := convertMappingToObjectTy(cx, each.semType)
-		initTy := ObjectMemberType(cx, initKey, objectTy)
-		alts = append(alts, ObjectAlternative{
-			objectType:       objectTy,
-			initFunctionType: initTy,
-		})
+		alts = append(alts, convertMappingToObjectTy(cx, each.semType))
 	}
 
 	return alts

@@ -31,6 +31,10 @@ class First {
     function init(Run runner, int marker) {
         self.result = runner.run(marker);
     }
+
+    function kind() returns string {
+        return "First";
+    }
 }
 
 class Second {
@@ -39,14 +43,18 @@ class Second {
     function init(Run runner, string marker) {
         self.result = runner.run(marker.length());
     }
+
+    function kind() returns string {
+        return "Second";
+    }
 }
 
 public function main() {
     any v = new Runner();
     First|Second a = new (<object { function run(int p = 3) returns int; }>v, 4);
     First|Second b = new (<object { function run(int p = 3) returns int; }>v, "ab");
-    io:println(a is First ? "First" : "Second"); // @output First
+    io:println(a.kind()); // @output First
     io:println(a.result); // @output 5
-    io:println(b is First ? "First" : "Second"); // @output Second
+    io:println(b.kind()); // @output Second
     io:println(b.result); // @output 3
 }

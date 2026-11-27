@@ -1,6 +1,6 @@
 module $anon.. v 0.0.0;
 class Node {
-  next nil|object { public function init() returns nil; nil|... next }
+  next nil|object { nil|... next }
 
   init() -> nil{
     bb0 {

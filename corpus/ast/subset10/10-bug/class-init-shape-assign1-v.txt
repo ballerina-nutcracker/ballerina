@@ -1,0 +1,103 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition Plain
+    (variable x (type
+      (value-type int)) (expr
+      (literal 1)))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (field-based-access x
+            (simple-var-ref self))))))
+  (class-definition WithArgs
+    (variable x (type
+      (value-type int)))
+    (function init (
+      (variable x (type
+        (value-type int)))
+      (variable label (type
+        (value-type string)) (expr
+        (literal l)))) (
+      (value-type null))
+      (block-function-body
+        (assignment
+          (field-based-access x
+            (simple-var-ref self))
+          (binary-expr -
+            (binary-expr +
+              (simple-var-ref x)
+              (invocation length expr:
+                (simple-var-ref label) ()))
+            (literal 1)))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access x
+              (simple-var-ref self))
+            (literal 10))))))
+  (class-definition Fallible
+    (variable x (type
+      (value-type int)))
+    (function init () (
+      (union-type
+        (error-type)
+        (value-type null)))
+      (block-function-body
+        (assignment
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 3))))
+    (function get () (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (field-based-access x
+              (simple-var-ref self))
+            (literal 100))))))
+  (function total (
+    (variable p (type
+      (user-defined-type Plain)))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation get expr:
+          (simple-var-ref p) ()))))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (user-defined-type Plain)) (expr
+          (new
+            (user-defined-type WithArgs) (
+            (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref p) ()))))
+      (var-def
+        (variable w (type
+          (user-defined-type WithArgs)) (expr
+          (new
+            (user-defined-type Plain) ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation get expr:
+            (simple-var-ref w) ()))))
+      (var-def
+        (variable f (type
+          (user-defined-type Fallible)) (expr
+          (checked-expr
+            (new
+              (user-defined-type Fallible) ())))))
+      (expression-stmt
+        (invocation io println (
+          (invocation total (
+            (simple-var-ref f)))))))))

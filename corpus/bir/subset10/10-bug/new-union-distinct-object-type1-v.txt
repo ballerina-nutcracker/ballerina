@@ -1,0 +1,46 @@
+module $anon.. v 0.0.0;
+class Counter {
+  x int
+
+  init(int) -> nil{
+    bb0 {
+      %3 = ConstantLoad x
+      self[%3] = x;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:Counter
+    %2 = ConstantLoad 7
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    u = %4;
+    %7 = u is object&object { int x }
+    %8 = %7;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %11 = ConstantLoad x
+    %10 = u[%11];
+    %12 = %10;
+    %13 = println(%12) -> bb6;
+  }
+  bb6 {
+    return;
+  }
+}
