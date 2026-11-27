@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+next() -> int{
+  bb0 {
+    %1 = ConstantLoad 42
+    %0 = %1;
+    return;
+  }
+}
+isReadonly(any) -> boolean{
+  bb0 {
+    %2 = v is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"a":{"y":2},"b":{"y":5}}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad a
+    %5 = ConstantLoad {"a":{"y":2},"b":{"y":5}}
+    %3 = %5[%4];
+    %6 = isReadonly(%3) -> bb2;
+  }
+  bb2 {
+    %7 = %6;
+    %8 = println(%7) -> bb3;
+  }
+  bb3 {
+    %9 = ConstantLoad {"a":{"y":1}}
+    %10 = println(%9) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
