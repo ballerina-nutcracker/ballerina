@@ -43,6 +43,7 @@ type serviceConfig struct {
 	mediaTypeSubtypePrefix string
 	compression            compressionConfig
 	chunking               chunkingMode
+	cors                   corsConfig
 }
 
 type compressionConfig struct {
@@ -94,6 +95,9 @@ func readServiceConfig(ctx *extern.Context, svcObj *values.Object) serviceConfig
 	}
 	if prefix, ok := annotation.Get("mediaTypeSubtypePrefix"); ok {
 		config.mediaTypeSubtypePrefix = strings.TrimSpace(prefix.(string))
+	}
+	if cors, ok := annotation.Get("cors"); ok {
+		config.cors = readCorsConfig(cors.(*values.Map))
 	}
 	if compression, ok := annotation.Get("compression"); ok {
 		config.compression = readCompressionConfig(compression.(*values.Map))

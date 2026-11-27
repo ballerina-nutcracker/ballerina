@@ -87,6 +87,7 @@ func (e *responseEncoder) WriteHeader(statusCode int) {
 	e.wroteHeader = true
 	e.status = statusCode
 	header := e.Header()
+	e.config.cors.addSimpleHeaders(e.r, header)
 	if statusCode != http.StatusNoContent && negotiatesCoding(e.config.compression, header) {
 		addVary(header, "Accept-Encoding")
 	}

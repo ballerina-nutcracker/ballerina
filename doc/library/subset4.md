@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, status code responses, error responses, resource signature parameter binding, responding through a caller and service configuration, the first steps in completing the `http` service and listener surface.
+Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, status code responses, error responses, resource signature parameter binding, responding through a caller, service configuration and CORS, the first steps in completing the `http` service and listener surface.
 
 ## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
 
@@ -160,3 +160,34 @@ service /albums on new http:Listener(9090) {
 | `mediaTypeSubtypePrefix` | Every `Content-Type` a resource of the service sends, including its binding and error responses, gets the prefix on its subtype, for example `application/vnd.music+json`; a subtype that already starts with the prefix and a `multipart` type are left unchanged |
 
 The compiler plugin rejects a `mediaTypeSubtypePrefix` that is not a valid subtype or has a `+` suffix, and a `basePath` on a service declaration. `@http:ResourceConfig` is declared but has no effect yet.
+
+## Cross-origin resource sharing
+
+The `cors` of `@http:ServiceConfig` answers browsers' cross-origin requests for every resource of the service, and an `OPTIONS` request that no resource serves is answered with the methods the path serves.
+
+```ballerina
+import ballerina/http;
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["https://music.example.com"],
+        allowCredentials: true,
+        allowHeaders: ["X-Request-Id"],
+        maxAge: 600
+    }
+}
+service /albums on new http:Listener(9090) {
+    resource function get .() returns string[] => ["Blue Train"];
+
+    resource function post .(@http:Payload string title) returns string => title;
+}
+```
+
+| Request | Response |
+|---|---|
+| A request with an allowed `Origin` | The resource's response with `Access-Control-Allow-Origin` (the request's origin), `Vary: Origin`, and `Access-Control-Allow-Credentials` and `Access-Control-Expose-Headers` when `allowCredentials` and `exposeHeaders` are set; credentials are allowed only for origins `allowOrigins` lists |
+| A request with another `Origin` | The resource's response without CORS headers |
+| `OPTIONS` with one allowed `Origin`, an `Access-Control-Request-Method` the path serves and the config allows, and allowed `Access-Control-Request-Headers` | 204 with `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, the requested `Access-Control-Allow-Headers`, and `Access-Control-Allow-Credentials` and `Access-Control-Max-Age` when configured |
+| Any other `OPTIONS` that no resource serves | 204 with `Allow` listing the methods the path serves, or every method of the service at its base path; 404 when the path serves none |
+
+`@http:ResourceConfig {cors}` is not supported yet.
