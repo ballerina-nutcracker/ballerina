@@ -3,4 +3,6 @@
 500
 2
 false
+200 0 | HEAD 200 5 | 200 5 hello | 200 11 hello world | HEAD 200 11 | 204 false | HEAD 204 false | 304 | HEAD 304 false | replaced body | 20000 false
+200 0 | HEAD 200 5 | 200 5 hello | 200 11 hello world | HEAD 200 11 | 204 false | HEAD 204 false | 304 | HEAD 304 false | replaced body | 20000 false
 -- stderr --
