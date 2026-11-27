@@ -697,6 +697,11 @@ func Walk(v Visitor, node BLangNode) {
 		Walk(v, node.Ty.(BLangNode))
 
 	case *BMethodDecl:
+		for i := range node.ResourcePath {
+			if tn := node.ResourcePath[i].ParamType; tn != nil {
+				walkTypeDescriptor(v, tn)
+			}
+		}
 		walkFunctionTypeSignature(v, &node.BLangFunctionType)
 
 	case *BLangFunctionType:

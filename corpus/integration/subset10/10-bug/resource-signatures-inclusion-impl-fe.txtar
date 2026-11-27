@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: implementing included resource declarations in classes
+  --> resource-signatures-inclusion-impl-fe.bal:21:1
+   |
+21 | client class Impl { // @error implementing included resource declarations is not implemented
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |     *ClientObject;
+   |     ^^^^^^^^^^^^^^
+23 | 
+   | 
+24 |     resource function get name() returns string {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 |         return "x";
+   |         ^^^^^^^^^^^
+26 |     }
+   |     ^
+27 | }
+   | ^
