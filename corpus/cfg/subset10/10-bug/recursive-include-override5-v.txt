@@ -1,0 +1,23 @@
+(C
+  (next
+    (bb0 () ()
+      (return
+        (literal <nil>))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable n (type
+        (user-defined-type Node)) (expr
+        (new
+          (user-defined-type C) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation next expr:
+            (simple-var-ref n) ())
+          (value-type null)))))
+  )
+)
