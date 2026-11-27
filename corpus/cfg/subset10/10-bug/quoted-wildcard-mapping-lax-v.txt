@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable value (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal _)
+            (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access '_
+          (simple-var-ref value)))))
+  )
+)

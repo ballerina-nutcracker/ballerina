@@ -17,7 +17,7 @@
 
 function required(int _) {} // @error
 function rest(int... _) {} // @error
-function init(int '_) {} // @error
+function init(int _) {} // @error
 -- ast --
 (package
   (function init (
@@ -37,8 +37,8 @@ function init(int '_) {} // @error
 error[SEMANTIC_ERROR]: 'init' function cannot have parameters
   --> bad-param-names-e.bal:19:1
    |
-19 | function init(int '_) {} // @error
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | function init(int _) {} // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 20 | 
    |
 
@@ -57,5 +57,5 @@ error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> bad-param-names-e.bal:19:19
    |
-19 | function init(int '_) {} // @error
-   |                   ^^
+19 | function init(int _) {} // @error
+   |                   ^

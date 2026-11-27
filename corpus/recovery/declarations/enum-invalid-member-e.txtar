@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-enum Colour { R, '_ } // @error
+enum Colour { R, _ } // @error
 -- ast --
 (package
   (const R enum-member (
@@ -32,13 +32,13 @@ enum Colour { R, '_ } // @error
 error[SEMANTIC_ERROR]: Unknown type: _
   --> enum-invalid-member-e.bal:17:18
    |
-17 | enum Colour { R, '_ } // @error
-   |                  ^^^
+17 | enum Colour { R, _ } // @error
+   |                  ^^
 
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> enum-invalid-member-e.bal:17:18
    |
-17 | enum Colour { R, '_ } // @error
-   |                  ^^^
+17 | enum Colour { R, _ } // @error
+   |                  ^^
 -- diagnostic-counts --
 1 '_' is a keyword, and may not be used as an identifier

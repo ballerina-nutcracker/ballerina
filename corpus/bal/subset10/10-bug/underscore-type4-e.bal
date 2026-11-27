@@ -20,14 +20,6 @@ type Included record {|
     *_; // @error
 |};
 
-type QuotedIncluded record {|
-    *'_; // @error
-|};
-
 type QualifiedIncluded record {|
     *io:_; // @error
-|};
-
-type QuotedQualifiedIncluded record {|
-    *io:'_; // @error
 |};

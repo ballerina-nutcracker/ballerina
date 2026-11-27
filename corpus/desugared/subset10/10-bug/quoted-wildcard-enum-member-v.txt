@@ -1,0 +1,16 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition E enum
+    (union-type
+      (user-defined-type A)
+      (user-defined-type '_)))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable e (type
+          (user-defined-type E)) (expr
+          (literal _))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref e)))))))

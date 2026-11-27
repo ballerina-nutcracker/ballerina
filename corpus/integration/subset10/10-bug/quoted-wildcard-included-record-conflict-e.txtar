@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: parameter '_' conflicts with field of included record parameter 'r'
+  --> quoted-wildcard-included-record-conflict-e.bal:21:35
+   |
+21 | function requiredConflict(int '_, *R r) { // @error
+   |                                   ^^^^
+
+error[SEMANTIC_ERROR]: parameter '_' conflicts with field of included record parameter 'r'
+  --> quoted-wildcard-included-record-conflict-e.bal:26:23
+   |
+26 | function restConflict(*R r, int... '_) { // @error
+   |                       ^^^^

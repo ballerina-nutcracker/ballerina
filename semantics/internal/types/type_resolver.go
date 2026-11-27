@@ -2223,7 +2223,7 @@ func validateIncludedRecordParamMetadata(t typeResolver, ref model.FunctionSigna
 				if j == i {
 					continue
 				}
-				if pname == name {
+				if model.IncludedRecordFieldName(pname) == name {
 					t.semanticError(
 						fmt.Sprintf("parameter '%s' conflicts with field of included record parameter '%s'", name, paramNames[i]),
 						param.pos,
@@ -2231,7 +2231,7 @@ func validateIncludedRecordParamMetadata(t typeResolver, ref model.FunctionSigna
 					return false
 				}
 			}
-			if restName == name {
+			if model.IncludedRecordFieldName(restName) == name {
 				t.semanticError(
 					fmt.Sprintf("parameter '%s' conflicts with field of included record parameter '%s'", name, paramNames[i]),
 					param.pos,
@@ -7265,7 +7265,7 @@ func laxFieldMemberType(t typeResolver, expr *ast.BLangFieldBaseAccess, containe
 		return semtypes.SemType{}, semtypes.SemType{}, false
 	}
 	mappingTy := semtypes.Intersect(containerTy, semtypes.Mapping)
-	rawMemberTy = semtypes.MappingMemberTypeInner(t.typeContext(), mappingTy, semtypes.StringConst(expr.Field.GetValue()))
+	rawMemberTy = semtypes.MappingMemberTypeInner(t.typeContext(), mappingTy, semtypes.StringConst(expr.FieldName(mappingTy)))
 	memberTy = semtypes.Diff(rawMemberTy, semtypes.Undef)
 	return rawMemberTy, memberTy, true
 }
@@ -7280,7 +7280,7 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	if expr.PkgAlias != nil {
 		return resolveXMLAttributeAccess(t, expr, containerExprTy)
 	}
-	key := expr.Field.GetValue()
+	key := expr.FieldName(containerExprTy)
 	if expr.IsOptionalAccess() {
 		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprResult, key)
 	}
@@ -8374,7 +8374,7 @@ func lowerNamedCallArg(sig model.UntypedFunctionSignature, slots []lowerArgSlot,
 				expr.GetPosition(),
 			)
 		}
-		slots[idx].includedFields = append(slots[idx].includedFields, mappingField{name: name, expr: expr.Expr, pos: expr.GetPosition()})
+		slots[idx].includedFields = append(slots[idx].includedFields, mappingField{name: model.IncludedRecordFieldName(name), expr: expr.Expr, pos: expr.GetPosition()})
 		if slots[idx].includedFieldPos == (diagnostics.Location{}) {
 			// This means all the errors related to this mapping constructor is going to be against the first field. Ideally need to do better
 			slots[idx].includedFieldPos = expr.GetPosition()

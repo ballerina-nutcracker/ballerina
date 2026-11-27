@@ -15,16 +15,9 @@
 // under the License.
 
 type _ int; // @error
-type '_ int; // @error
 
 function _() { // @error
 }
 
-function '_() { // @error
-}
-
 function acceptUnderscore(int _) { // @error
-}
-
-function acceptQuotedUnderscore(int '_) { // @error
 }
