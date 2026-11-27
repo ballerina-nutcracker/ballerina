@@ -83,6 +83,7 @@ type (
 
 	bLangFunctionBodyBase struct {
 		bLangNodeBase
+		scope model.Scope // lexical scope of the body, including the receiver binding for methods
 	}
 
 	captureOwnerBase struct {
@@ -124,6 +125,14 @@ var (
 )
 
 func (*bLangFunctionBodyBase) isFunctionBody() {}
+
+func (b *bLangFunctionBodyBase) Scope() model.Scope {
+	return b.scope
+}
+
+func (b *bLangFunctionBodyBase) SetScope(scope model.Scope) {
+	b.scope = scope
+}
 
 type (
 	BLangBlockFunctionBody struct {
