@@ -242,6 +242,36 @@ error[SEMANTIC_ERROR]: invalid resource parameter type: 'error<error>'
 300 |     resource function 'default [string... path](NamedError e) returns http:NextService|error? { // @error
     |                                                            ^
 
+error[SEMANTIC_ERROR]: invalid usage of cache annotation with return type : 'error'. Cache annotation only supports return types of anydata and SuccessStatusCodeResponse
+   --> http-svc-signature-e.bal:308:60
+    |
+308 |     resource function get cacheError() returns @http:Cache error { // @error
+    |                                                            ^^^^^
+
+error[SEMANTIC_ERROR]: invalid usage of cache annotation with return type : 'error<error&error>'. Cache annotation only supports return types of anydata and SuccessStatusCodeResponse
+   --> http-svc-signature-e.bal:320:60
+    |
+320 |     resource function get namedError() returns @http:Cache http:ListenerError { // @error
+    |                                                            ^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid usage of cache annotation with return type : 'nil|error'. Cache annotation only supports return types of anydata and SuccessStatusCodeResponse
+   --> http-svc-signature-e.bal:316:112
+    |
+316 |     resource function get both(http:Caller caller) returns @http:Payload {mediaType: "text/plain"} @http:Cache error? { // @error
+    |                                                                                                                ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid usage of payload annotation with return type : 'error'
+   --> http-svc-signature-e.bal:312:90
+    |
+312 |     resource function get payloadError() returns @http:Payload {mediaType: "text/plain"} error { // @error
+    |                                                                                          ^^^^^
+
+error[SEMANTIC_ERROR]: invalid usage of payload annotation with return type : 'nil|error'
+   --> http-svc-signature-e.bal:316:112
+    |
+316 |     resource function get both(http:Caller caller) returns @http:Payload {mediaType: "text/plain"} @http:Cache error? { // @error
+    |                                                                                                                ^^^^^^
+
 error[SEMANTIC_ERROR]: remote function is not allowed in RequestErrorInterceptor
    --> http-svc-signature-e.bal:282:5
     |

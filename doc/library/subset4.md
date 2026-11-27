@@ -159,7 +159,7 @@ service /albums on new http:Listener(9090) {
 | `chunking` | Over HTTP/1.1, `CHUNKING_AUTO` chunks a body over 8192 bytes, `CHUNKING_ALWAYS` always chunks and `CHUNKING_NEVER` sends a `Content-Length` |
 | `mediaTypeSubtypePrefix` | Every `Content-Type` a resource of the service sends, including its binding and error responses, gets the prefix on its subtype, for example `application/vnd.music+json`; a subtype that already starts with the prefix and a `multipart` type are left unchanged |
 
-The compiler plugin rejects a `mediaTypeSubtypePrefix` that is not a valid subtype or has a `+` suffix, and a `basePath` on a service declaration. `@http:ResourceConfig` is declared but has no effect yet.
+The compiler plugin rejects a `mediaTypeSubtypePrefix` that is not a valid subtype or has a `+` suffix, and a `basePath` on a service declaration. `@http:ResourceConfig` is declared but has no effect yet, and so is `@http:Cache` on a resource's return type, which adds no cache headers until return-type annotations can be read at runtime ([#1355](https://github.com/ballerina-nutcracker/ballerina/issues/1355)). The compiler plugin rejects `@http:Cache` and `@http:Payload` on a return type that can only be an error or nil.
 
 ## Cross-origin resource sharing
 

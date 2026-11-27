@@ -83,6 +83,44 @@ public type HttpResourceConfig record {|
 # The annotation which is used to configure an HTTP resource.
 public annotation HttpResourceConfig ResourceConfig on object function;
 
+# Defines the HTTP response cache configuration. By default the `must-revalidate`, `public` and `max-age=3600`
+# directives are set in the `cache-control` header, and the `etag` and `last-modified` headers are added for cache
+# validation.
+#
+# + mustRevalidate - Sets the `must-revalidate` directive
+# + noCache - Sets the `no-cache` directive
+# + noStore - Sets the `no-store` directive
+# + noTransform - Sets the `no-transform` directive
+# + isPrivate - Sets the `private` and `public` directives
+# + proxyRevalidate - Sets the `proxy-revalidate` directive
+# + maxAge - Sets the `max-age` directive. Default value is 3600 seconds
+# + sMaxAge - Sets the `s-maxage` directive
+# + noCacheFields - Optional fields for the `no-cache` directive. Before sending a listed field in a response, it
+#                   must be validated with the origin server
+# + privateFields - Optional fields for the `private` directive. A cache can omit the fields specified and store
+#                   the rest of the response
+# + setETag - Sets the `etag` header for the given payload
+# + setLastModified - Sets the current time as the `last-modified` header
+public type HttpCacheConfig record {|
+    boolean mustRevalidate = true;
+    boolean noCache = false;
+    boolean noStore = false;
+    boolean noTransform = false;
+    boolean isPrivate = false;
+    boolean proxyRevalidate = false;
+    decimal maxAge = 3600;
+    decimal sMaxAge = -1;
+    string[] noCacheFields = [];
+    string[] privateFields = [];
+    boolean setETag = true;
+    boolean setLastModified = true;
+|};
+
+# The annotation which is used to define the response cache configuration. This annotation only supports `anydata` and
+# Success(2XX) `StatusCodeResponses` return types. Default annotation adds `must-revalidate,public,max-age=3600` as
+# `cache-control` header in addition to `etag` and `last-modified` headers.
+public annotation HttpCacheConfig Cache on return;
+
 # A record for providing configurations for content compression.
 public type CompressionConfig record {|
     # The status of compression
