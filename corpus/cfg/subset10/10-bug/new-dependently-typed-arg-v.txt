@@ -1,0 +1,89 @@
+(Taker
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access got
+          (simple-var-ref self))
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref person)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref person)))
+          (field-based-access name
+            (simple-var-ref person))))
+    )
+  )
+)
+(convert
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable j (type
+        (builtin-ref-type json)) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal name)
+            (literal ann))))))
+    (var-def
+      (variable a (type
+        (user-defined-type Taker)) (expr
+        (new (
+          (invocation value cloneWithType (
+            (simple-var-ref j)
+            (typedesc-expr))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access got
+          (simple-var-ref a)))))
+    (var-def
+      (variable b (type
+        (user-defined-type Taker)) (expr
+        (new (
+          (invocation lang.value cloneWithType (
+            (simple-var-ref j)
+            (typedesc-expr))))))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access got
+          (simple-var-ref b)))))
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access got
+          (field-based-access t
+            (simple-var-ref h))))))
+    (var-def
+      (variable m (type
+        (union-type
+          (user-defined-type A)
+          (user-defined-type B))) (expr
+        (mapping-constructor-expr
+          (key-value
+            (literal p)
+            (invocation value cloneWithType (
+              (simple-var-ref j)
+              (typedesc-expr))))))))
+    (var-def
+      (variable p (type
+        (union-type
+          (user-defined-type Person)
+          (error-type))) (expr
+        (field-based-access p
+          (simple-var-ref m)))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref p)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref p)))
+          (field-based-access name
+            (simple-var-ref p))))))
+  )
+)

@@ -490,6 +490,9 @@ type (
 		// typedesc<T>. BIR lowers the expression to a TypeDesc{Type: Constraint}
 		// constant.
 		Constraint semtypes.SemType
+		// NamedType is the type definition an inferred typedesc argument denotes, so the
+		// runtime typedesc carries its annotations. Empty when no single named type matches.
+		NamedType model.SymbolRef
 	}
 
 	BLangInferredTypedescDefault struct {

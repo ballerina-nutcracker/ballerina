@@ -47,6 +47,9 @@ func (l *loopTypeResolver) typeContext() semtypes.Context { return l.parentResol
 func (l *loopTypeResolver) expectedReturnType() semtypes.SemType {
 	return l.parentResolver.expectedReturnType()
 }
+func (l *loopTypeResolver) expectedReturnNamedTypes() []model.SymbolRef {
+	return l.parentResolver.expectedReturnNamedTypes()
+}
 func (l *loopTypeResolver) parent() typeResolver { return l.parentResolver }
 func (l *loopTypeResolver) traceSpan() context.TraceSpan {
 	return l.parentResolver.traceSpan()
