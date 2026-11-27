@@ -4,6 +4,9 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (binary-expr >
+      (simple-var-ref v)
+      (literal 5))
     (expression-stmt
       (invocation io println (
         (literal big))))
@@ -58,6 +61,13 @@
   )
   (bb1 (bb2 bb0) ())
   (bb2 (bb0) (bb1)
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type int))
+      (binary-expr >
+        (simple-var-ref v)
+        (literal 0)))
     (expression-stmt
       (invocation io println (
         (binary-expr +
@@ -71,11 +81,25 @@
   )
   (bb1 (bb2 bb3 bb4) ())
   (bb2 (bb0) (bb1)
+    (binary-expr &&
+      (type-test-expr is
+        (simple-var-ref v)
+        (value-type int))
+      (binary-expr ==
+        (binary-expr *
+          (simple-var-ref v)
+          (literal 2))
+        (literal 4)))
     (expression-stmt
       (invocation io println (
         (literal two))))
   )
   (bb3 (bb0) (bb1)
+    (binary-expr ==
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1))
+      (literal 4))
     (expression-stmt
       (invocation io println (
         (literal three))))
@@ -92,6 +116,7 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (literal true)
     (expression-stmt
       (invocation io println (
         (literal four))))
@@ -108,6 +133,14 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (binary-expr ||
+      (binary-expr ==
+        (invocation lang.string length (
+          (simple-var-ref v)))
+        (literal 0))
+      (binary-expr ==
+        (simple-var-ref v)
+        (literal a)))
     (expression-stmt
       (invocation io println (
         (literal a))))
@@ -124,6 +157,9 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (type-test-expr is
+      (simple-var-ref w)
+      (value-type int))
     (expression-stmt
       (invocation io println (
         (binary-expr +
@@ -142,16 +178,25 @@
   )
   (bb1 (bb2 bb3 bb4 bb0) ())
   (bb2 (bb0) (bb1)
+    (invocation trace (
+      (literal g1)
+      (literal false)))
     (expression-stmt
       (invocation io println (
         (literal c1))))
   )
   (bb3 (bb0) (bb1)
+    (invocation trace (
+      (literal g2)
+      (literal true)))
     (expression-stmt
       (invocation io println (
         (literal c2))))
   )
   (bb4 (bb0) (bb1)
+    (invocation trace (
+      (literal g3)
+      (literal true)))
     (expression-stmt
       (invocation io println (
         (literal c3))))

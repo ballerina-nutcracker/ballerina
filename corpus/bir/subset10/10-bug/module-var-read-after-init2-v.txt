@@ -1,0 +1,23 @@
+module $anon.. v 0.0.0;
+foreachBody  int;
+inBranch  int;
+n  int;
+whileCond  int;
+whileTrue  int;
+main() -> nil{
+  bb0 {
+    %1 = println(inBranch) -> bb1;
+  }
+  bb1 {
+    %2 = println(whileTrue) -> bb2;
+  }
+  bb2 {
+    %3 = println(whileCond) -> bb3;
+  }
+  bb3 {
+    %4 = println(foreachBody) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}

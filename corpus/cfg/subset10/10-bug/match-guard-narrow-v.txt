@@ -4,6 +4,10 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (binary-expr ==
+      (invocation lang.string length (
+        (simple-var-ref v)))
+      (literal 1))
     (expression-stmt
       (invocation io println (
         (literal a))))
@@ -29,6 +33,11 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (binary-expr ==
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1))
+      (literal 2))
     (expression-stmt
       (invocation io println (
         (literal one))))
@@ -80,6 +89,7 @@
   )
   (bb1 (bb2 bb3) ())
   (bb2 (bb0) (bb1)
+    (invocation guard ())
     (expression-stmt
       (invocation io println (
         (literal one))))
@@ -96,6 +106,9 @@
   )
   (bb1 (bb2 bb0) ())
   (bb2 (bb0) (bb1)
+    (type-test-expr is
+      (simple-var-ref v)
+      (value-type int))
     (expression-stmt
       (invocation io println (
         (binary-expr +
@@ -109,6 +122,11 @@
   )
   (bb1 (bb2 bb0) ())
   (bb2 (bb0) (bb1)
+    (binary-expr ==
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1))
+      (literal 2))
     (expression-stmt
       (invocation io println (
         (literal one))))
@@ -124,6 +142,11 @@
         (literal no match))))
   )
   (bb2 (bb0) ()
+    (binary-expr ==
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1))
+      (literal 2))
     (expression-stmt
       (invocation io println (
         (literal one))))

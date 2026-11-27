@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: variable may not be initialized
+  --> uninit-var-lambda-rest-param-type-e.bal:21:20
+   |
+21 |             return z; // @error variable may not be initialized
+   |                    ^

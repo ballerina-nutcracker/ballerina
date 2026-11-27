@@ -1,0 +1,23 @@
+(apply
+  (bb0 () ()
+    (invocation f ())
+  )
+)
+(foo
+  (bb0 () ()
+    (simple-var-ref xs)
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation foo ( <default>)))))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (return
+      (simple-var-ref n))
+  )
+)
