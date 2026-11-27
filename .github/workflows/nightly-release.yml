@@ -1,0 +1,163 @@
+name: Nightly Release
+
+on:
+  schedule:
+    # 03:00 UTC, after the 02:00 race run
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.plan.outputs.tag }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve next release tag
+        id: plan
+        run: |
+          tag="$(python3 .github/scripts/nightly_release.py "$GITHUB_SHA")"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          if [[ -z "$tag" ]]; then
+            echo "\`$GITHUB_SHA\` is already released; nothing to do" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  test:
+    name: Test (${{ matrix.os }})
+    needs: plan
+    if: needs.plan.outputs.tag != ''
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.1'
+
+      - name: Install test dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine wrk
+
+      - name: Install test dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install hyperfine make -y
+
+      - name: Run all modules
+        shell: bash
+        run: make test
+
+  tag:
+    name: Push release tags
+    needs: [plan, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.1'
+
+      - name: Tag the tested commit
+        env:
+          TAG: ${{ needs.plan.outputs.tag }}
+          SHA: ${{ needs.plan.outputs.sha }}
+        run: bash .github/scripts/release_dist.sh --tag-commit "$TAG" "$SHA"
+
+  release:
+    name: Publish release
+    needs: [plan, tag]
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.plan.outputs.tag }}
+    permissions:
+      contents: write
+
+  notify:
+    name: Notify on failure
+    needs: [plan, test, tag, release]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or comment on the failure issue
+        uses: actions/github-script@v8
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ needs.plan.outputs.sha || github.sha }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        with:
+          script: |
+            const runUrl = process.env.RUN_URL;
+            const sha = process.env.SHA.substring(0, 7);
+            const tag = process.env.TAG;
+            const title = 'Nightly release failing';
+            const body = [
+              tag
+                ? `The nightly release of \`${tag}\` failed on \`${sha}\`.`
+                : `The nightly release workflow failed on \`${sha}\`.`,
+              ``,
+              `Run: ${runUrl}`,
+            ].join('\n');
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-release-failure',
+              per_page: 1,
+            });
+
+            if (existing.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['nightly-release-failure'],
+              });
+            }
