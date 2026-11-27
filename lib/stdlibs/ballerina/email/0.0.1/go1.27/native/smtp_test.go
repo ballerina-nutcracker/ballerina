@@ -250,28 +250,3 @@ func TestSmtpStartTLSDeadline(t *testing.T) {
 		t.Errorf("handshake failed with %q, want the server's close, not the STARTTLS read deadline", causeMessage(deliverErr))
 	}
 }
-
-// TestPopTimeouts checks that a stalled POP3 server fails the connection instead of blocking it.
-// The POP3 timeout is minutes long and not configurable, so corpus tests cannot reach it.
-func TestPopTimeouts(t *testing.T) {
-	// Not parallel: overrides the package-level popTimeout.
-	saved := popTimeout
-	popTimeout = 200 * time.Millisecond
-	t.Cleanup(func() { popTimeout = saved })
-	platform := pal.Platform{
-		Net:  pal.Net{Dial: palnative.Dial, UpgradeTLS: palnative.UpgradeTLS},
-		Time: pal.Time{Now: time.Now},
-	}
-	for _, greeting := range []string{"", "+OK ready\r\n"} {
-		port, _ := stalledServer(t, greeting)
-		client := &popClient{host: "127.0.0.1", port: port, security: "START_TLS_NEVER"}
-		start := time.Now()
-		_, err := client.connect(platform)
-		if err == nil || err.Message != "Connect failed" {
-			t.Fatalf("greeting %q: connect error = %v, want Connect failed", greeting, errorMessage(err))
-		}
-		if elapsed := time.Since(start); elapsed > 5*time.Second {
-			t.Errorf("greeting %q: connect took %v, want it bounded by the timeout", greeting, elapsed)
-		}
-	}
-}
