@@ -1,0 +1,12 @@
+-- stdout --
+connection= connection=
+connection=close closed
+connection=close closed
+connection=keep-alive connection=keep-alive
+connection=close closed
+maxConcurrentStreams=100 initialWindowSize=65535
+maxConcurrentStreams=100 initialWindowSize=65535
+maxConcurrentStreams=9 initialWindowSize=80000
+Listener.gracefulStop: context deadline exceeded true
+slow
+-- stderr --

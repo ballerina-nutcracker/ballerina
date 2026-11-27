@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"slices"
 	"strconv"
@@ -1685,9 +1686,23 @@ func parseHeader(tc semtypes.Context, input string) (*values.List, error) {
 	return list, nil
 }
 
+// decimalToDuration converts seconds to a duration, saturating at the largest one and rounding a
+// positive value below a nanosecond up to one, so that it is not taken for 0.
 func decimalToDuration(d *decimal.Decimal) time.Duration {
-	return time.Duration(d.Float64() * float64(time.Second))
+	nanos := d.Float64() * float64(time.Second)
+	switch {
+	case nanos >= math.MaxInt64:
+		return math.MaxInt64
+	case nanos <= math.MinInt64:
+		return math.MinInt64
+	case nanos < 1 && d.Cmp(decimalZero) > 0:
+		return 1
+	default:
+		return time.Duration(nanos)
+	}
 }
+
+var decimalZero = decimal.FromInt64(0)
 
 // applyCompressionHeaders mutates headers according to the Ballerina compression mode, mirroring
 // jBallerina's AbstractHTTPAction compression logic:

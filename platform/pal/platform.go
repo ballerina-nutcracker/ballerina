@@ -264,8 +264,22 @@ type (
 		Host         string
 		Port         int
 		HTTPVersion  string           // "1.1" or "2.0"
-		WriteTimeout time.Duration    // 0 → platform default
+		WriteTimeout time.Duration    // 0 → no timeout
 		TLS          *ServerTLSConfig // nil = plaintext
+		HTTP2        ServerHTTP2Config
+		Socket       ServerSocketConfig
+	}
+	// ServerHTTP2Config carries the HTTP/2 settings a listener advertises to its clients.
+	ServerHTTP2Config struct {
+		MaxConcurrentStreams int // SETTINGS_MAX_CONCURRENT_STREAMS; 0 → platform default
+		InitialWindowSize    int // SETTINGS_INITIAL_WINDOW_SIZE; 0 → platform default
+	}
+	// ServerSocketConfig carries the socket options applied to each accepted connection.
+	ServerSocketConfig struct {
+		ReceiveBufferSize int  // SO_RCVBUF in bytes; 0 → platform default
+		SendBufferSize    int  // SO_SNDBUF in bytes; 0 → platform default
+		TCPNoDelay        bool // TCP_NODELAY; false turns it off
+		KeepAlive         bool // SO_KEEPALIVE; false turns it off
 	}
 	// ServerHandle is an opaque handle to a started HTTP listener, returned by
 	// HTTP.Listen. It owns the listener lifecycle.

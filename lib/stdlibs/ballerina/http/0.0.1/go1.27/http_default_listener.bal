@@ -21,9 +21,28 @@ isolated Listener? defaultListener = ();
 public final int defaultListenerPort = 9090;
 
 # Default HTTP listener configuration used by the HTTP Default Listener.
-// jBallerina's defaults are written out: a readonly constructor ignores field defaults (#1103), and
-// ListenerConfiguration declares host and timeout without theirs.
-public final ListenerConfiguration & readonly defaultListenerConfig = {host: "0.0.0.0", timeout: 60, httpVersion: HTTP_2_0};
+// The field defaults are written out, since a readonly constructor ignores them (#1103).
+public final ListenerConfiguration & readonly defaultListenerConfig = {
+    host: "0.0.0.0",
+    http1Settings: {keepAlive: KEEPALIVE_AUTO, maxPipelinedRequests: MAX_PIPELINED_REQUESTS},
+    secureSocket: (),
+    httpVersion: HTTP_2_0,
+    timeout: DEFAULT_LISTENER_TIMEOUT,
+    gracefulStopTimeout: DEFAULT_GRACEFULSTOP_TIMEOUT,
+    socketConfig: {
+        connectTimeOut: 15,
+        receiveBufferSize: 1048576,
+        sendBufferSize: 1048576,
+        tcpNoDelay: true,
+        socketReuse: true,
+        keepAlive: false,
+        soBackLog: 100
+    },
+    http2InitialWindowSize: 65535,
+    http2MaxActiveStreams: 100,
+    minIdleTimeInStaleState: 300,
+    timeBetweenStaleEviction: 30
+};
 
 # Returns the default HTTP listener. If the default listener is not already created, a new
 # listener will be created with the port and configuration. An error will be returned if
