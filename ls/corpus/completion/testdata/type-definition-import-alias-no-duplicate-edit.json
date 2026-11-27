@@ -157,6 +157,29 @@
           ]
         },
         {
+          "label": "ballerina/data.csv",
+          "kind": 9,
+          "detail": "Module",
+          "sortText": "076",
+          "filterText": "csv",
+          "insertText": "csv",
+          "additionalTextEdits": [
+            {
+              "range": {
+                "start": {
+                  "line": 3,
+                  "character": 0
+                },
+                "end": {
+                  "line": 3,
+                  "character": 0
+                }
+              },
+              "newText": "import ballerina/data.csv;\n"
+            }
+          ]
+        },
+        {
           "label": "ballerina/file",
           "kind": 9,
           "detail": "Module",

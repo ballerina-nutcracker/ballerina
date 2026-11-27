@@ -1,0 +1,23 @@
+-- stdout --
+[[1],[-1]]
+error Error ("value '1.5' cannot be cast into 'int'")
+[[1,"x"],[2,"y"]]
+[[1,"x"]]
+error Error ("invalid array size for expected tuple type, cannot be greater than '2'")
+[[1,"x","9"]]
+[[1]]
+[[1,""]]
+[[1,2,3],[]]
+[[1,2,3],[]]
+[[1,2],[],[]]
+[{"a":1},{"a":2,"b":3}]
+[["a","b"],["1","x"]]
+[[1,"b"],[1,"x"]]
+error Error ("value 'a' cannot be cast into 'int'")
+[]
+[["a","b"],["2","y"]]
+[["p","q"],["1","x"]]
+[["1","x"]]
+[["1","x"]]
+[[1,true]]
+-- stderr --
