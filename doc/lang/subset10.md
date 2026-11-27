@@ -158,6 +158,13 @@ These are intentional departures from the [language specification](https://balle
     - `remove`
     - `removeAll`
     - `toStream`
+    - `pop`
+    - `shift`
+    - `unshift`
+    - `reduce`
+    - `sort`
+    - `SortDirection` (`ASCENDING` and `DESCENDING`)
+    - `OrderedType`
     - `toBase64`
     - `toBase16`
     - `fromBase64`
@@ -317,6 +324,9 @@ These are intentional departures from the [language specification](https://balle
   - `array:remove`
   - `array:removeAll`
   - `array:toStream`
+  - `array:pop`, `array:shift` and `array:unshift`
+  - `array:reduce`
+  - `array:sort` (with the `array:SortDirection` constants `array:ASCENDING` and `array:DESCENDING`)
   - `array:toBase64`
   - `array:toBase16`
   - `decimal:sum`, `decimal:max`, `decimal:min`, `decimal:abs`, `decimal:round`, `decimal:quantize`, `decimal:floor` and `decimal:ceiling`

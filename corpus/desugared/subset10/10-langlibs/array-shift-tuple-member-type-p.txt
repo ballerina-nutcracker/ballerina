@@ -1,0 +1,18 @@
+(package
+  (import-package ballerina lang array (as lang.array))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (tuple-type
+            (value-type int) (rest
+              (value-type string)))) (expr
+          (list-constructor-expr
+            (literal 1)
+            (literal hello)
+            (literal world)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (invocation lang.array shift (
+          (simple-var-ref t)))))))
