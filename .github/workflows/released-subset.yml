@@ -1,0 +1,26 @@
+name: Released Subset
+
+# No paths filter, so it can be a required check.
+on:
+  pull_request:
+    branches: [ main ]
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check released subsets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      # pull_request.base.sha is the base when the PR was opened and goes stale, so a PR opened before a release would
+      # be checked against the old release. On pull_request the checkout is GitHub's merge of the PR into the current
+      # base, so its first parent is the current base.
+      - run: python3 .github/scripts/check_released_subset.py "${BASE_SHA:-HEAD^1}"
+        env:
+          BASE_SHA: ${{ github.event.merge_group.base_sha }}

@@ -19,7 +19,7 @@ Corpus execution contributes to native Go coverage when the coverage harness ins
 
 ## Fixture naming
 
-Add new language fixtures under the highest numbered `corpus/bal/subset<N>/`, including regressions for features introduced in earlier subsets. Use `<id>-<feature>/` for feature tests and `<id>-bug/` for bug regressions. Keep matching goldens and embedded source paths aligned. Library fixtures use a separate release numbering track under `corpus/lib/subset<N>/`; do not infer their subset from the latest language subset. Choosing a library subset is a release-scoping decision: confirm it with the developer, as described in the [add-stdlib-support skill](../add-stdlib-support/SKILL.md).
+Add new language fixtures, including regressions for features introduced in earlier subsets, under the open subset: the highest numbered `corpus/bal/subset<N>/` if the latest `vX.Y.Z` tag doesn't contain it, otherwise a new `corpus/bal/subset<N+1>/` with its `doc/lang/subset<N+1>.md`. A subset in that tag is released, and the [Released Subset check](../../../.github/workflows/released-subset.yml) fails a new test in it. Use `<id>-<feature>/` for feature tests and `<id>-bug/` for bug regressions. Keep matching goldens and embedded source paths aligned. Library fixtures use a separate release numbering track under `corpus/lib/subset<N>/`; do not infer their subset from the latest language subset. Choosing a library subset is a release-scoping decision: confirm it with the developer, as described in the [add-stdlib-support skill](../add-stdlib-support/SKILL.md).
 
 - `*-v.bal`: valid, runs end to end; expected stdout uses `@output` markers.
 - `*-e.bal`: compilation errors at `@error` markers.
