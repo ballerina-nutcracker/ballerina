@@ -1,5 +1,9 @@
 -- stdout --
 hello gzipped world
 hello deflated world
+hello zlib world
+false
+No content
+AAAAAAAAAAAAAAAAAAAAAAAAAAAA
 true
 -- stderr --

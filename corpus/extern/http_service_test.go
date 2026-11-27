@@ -486,6 +486,14 @@ func TestHttpServiceAnnotationConfig(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-service-config-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceCompression sends responses with the content coding and framing a service's
+// compression and chunking configuration selects.
+func TestHttpServiceCompression(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-compression-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // callerPal stubs the reverse lookup so the caller's remote host name does not depend on the
 // machine's resolver.
 type callerPal struct{ *httpPal }

@@ -41,10 +41,38 @@ type serviceConfig struct {
 	treatNilableAsOptional bool
 	laxDataBinding         bool
 	mediaTypeSubtypePrefix string
+	compression            compressionConfig
+	chunking               chunkingMode
+}
+
+type compressionConfig struct {
+	enable compressionMode
+	// contentTypes are lower-cased; an empty list matches every Content-Type.
+	contentTypes []string
+}
+
+// matches reports whether a response of contentType may be compressed: its Content-Type
+// contains one of the configured content types.
+func (c compressionConfig) matches(contentType string) bool {
+	if len(c.contentTypes) == 0 {
+		return true
+	}
+	contentType = strings.ToLower(contentType)
+	return contentType != "" && slices.ContainsFunc(c.contentTypes, func(t string) bool {
+		return strings.Contains(contentType, t)
+	})
+}
+
+// defaultServiceConfig is the configuration of a service without @http:ServiceConfig, which
+// also applies to the responses the dispatcher sends itself.
+func defaultServiceConfig() serviceConfig {
+	return serviceConfig{
+		treatNilableAsOptional: true,
+	}
 }
 
 func readServiceConfig(ctx *extern.Context, svcObj *values.Object) serviceConfig {
-	config := serviceConfig{treatNilableAsOptional: true}
+	config := defaultServiceConfig()
 	annotations, _ := ctx.ObjectAnnotations(svcObj)
 	annotation, ok := annotations[serviceConfigAnnotation].(*values.Map)
 	if !ok {
@@ -66,6 +94,32 @@ func readServiceConfig(ctx *extern.Context, svcObj *values.Object) serviceConfig
 	}
 	if prefix, ok := annotation.Get("mediaTypeSubtypePrefix"); ok {
 		config.mediaTypeSubtypePrefix = strings.TrimSpace(prefix.(string))
+	}
+	if compression, ok := annotation.Get("compression"); ok {
+		config.compression = readCompressionConfig(compression.(*values.Map))
+	}
+	switch chunking, _ := annotation.Get("chunking"); chunking {
+	case "ALWAYS":
+		config.chunking = chunkAlways
+	case "NEVER":
+		config.chunking = chunkNever
+	}
+	return config
+}
+
+func readCompressionConfig(compression *values.Map) compressionConfig {
+	var config compressionConfig
+	switch enable, _ := compression.Get("enable"); enable {
+	case "ALWAYS":
+		config.enable = compressAlways
+	case "NEVER":
+		config.enable = compressNever
+	}
+	if contentTypes, _ := compression.Get("contentTypes"); contentTypes != nil {
+		list := contentTypes.(*values.List)
+		for i := range list.Len() {
+			config.contentTypes = append(config.contentTypes, strings.ToLower(strings.TrimSpace(list.Get(i).(string))))
+		}
 	}
 	return config
 }
@@ -102,34 +156,6 @@ func hostServices(services []*serviceEntry, requestHost string) []*serviceEntry 
 		return byName
 	}
 	return defaults
-}
-
-// subtypePrefixWriter adds a service's media-type subtype prefix to the Content-Type of the
-// response, unless the subtype already starts with it or the type is multipart.
-type subtypePrefixWriter struct {
-	http.ResponseWriter
-	prefix      string
-	wroteHeader bool
-}
-
-func (w *subtypePrefixWriter) WriteHeader(statusCode int) {
-	if (statusCode >= http.StatusOK || statusCode == http.StatusSwitchingProtocols) && !w.wroteHeader {
-		w.wroteHeader = true
-		header := w.Header()
-		mediaType, subtype, ok := strings.Cut(header.Get("Content-Type"), "/")
-		if ok && mediaType != "" && !strings.EqualFold(strings.TrimSpace(mediaType), "multipart") &&
-			!strings.HasPrefix(strings.ToLower(subtype), strings.ToLower(w.prefix)+"+") {
-			header.Set("Content-Type", mediaType+"/"+w.prefix+"+"+subtype)
-		}
-	}
-	w.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (w *subtypePrefixWriter) Write(b []byte) (int, error) {
-	if !w.wroteHeader {
-		w.WriteHeader(http.StatusOK)
-	}
-	return w.ResponseWriter.Write(b)
 }
 
 // javaSocketAddress writes the local address of r as Java's InetSocketAddress.toString does

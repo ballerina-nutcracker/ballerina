@@ -495,12 +495,24 @@ func validateServiceForHTTP(svcObj *values.Object) string {
 // All request routing and dispatch stays here in the shared handler.
 func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandle, error) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		encoder := newResponseEncoder(w, r)
 		defer func() {
-			if rec := recover(); rec != nil {
-				writePanicResponse(w, logPanic(rt, r, rec))
+			encoder.finish()
+			// Drops the connection, so the client sees the body as incomplete.
+			if encoder.aborted {
+				panic(http.ErrAbortHandler)
 			}
 		}()
-		dispatchRequest(rt, state, w, r)
+		defer func() {
+			if rec := recover(); rec != nil {
+				message := logPanic(rt, r, rec)
+				// A response already under way cannot become a 500.
+				if !encoder.started() {
+					writePanicResponse(encoder, message)
+				}
+			}
+		}()
+		dispatchRequest(rt, state, encoder, r)
 	})
 	cfg := pal.ServerConfig{
 		Host:         state.host,
@@ -538,7 +550,7 @@ func panicMessage(r any) string {
 
 // dispatchRequest routes an incoming HTTP request to the matching service and
 // resource method.
-func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseWriter, r *http.Request) {
+func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncoder, r *http.Request) {
 	state.mu.RLock()
 	services := hostServices(state.services, r.Host)
 	var found *serviceEntry
@@ -574,6 +586,7 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 		if !ok {
 			continue
 		}
+		w.useService(found.config)
 		invokeResource(rt, state, found.config, ctx, w, r, handle, accessorKey, extraArgs)
 		return
 	}
@@ -596,9 +609,6 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w http.ResponseW
 // response. It owns ctx and returns it to the pool once the resource has finished.
 func invokeResource(rt *runtime.Runtime, state *listenerState, config serviceConfig, ctx *extern.Context,
 	w http.ResponseWriter, r *http.Request, handle extern.MethodHandle, accessorKey string, extraArgs int) {
-	if config.mediaTypeSubtypePrefix != "" {
-		w = &subtypePrefixWriter{ResponseWriter: w, prefix: config.mediaTypeSubtypePrefix}
-	}
 	conn := &callerConn{rt: rt, types: state.types, w: w, r: r, accessor: accessorKey, config: config}
 	var args []values.BalValue
 	hasCaller := false
@@ -916,7 +926,11 @@ func writeResponseObject(w http.ResponseWriter, resp *values.Object, statusCode 
 	// start flowing via writeStream, headers are already committed, so a write error here
 	// can't be recovered with a JSON error body.
 	w.WriteHeader(statusCode)
-	_ = holder.writeStream(w)
+	if err := holder.writeStream(w); err != nil {
+		if encoder, ok := w.(*responseEncoder); ok {
+			encoder.abort()
+		}
+	}
 }
 
 // copyBufPool reuses 32 KB buffers for streaming a backend response body to the

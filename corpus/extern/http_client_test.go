@@ -17,8 +17,10 @@
 package extern_test
 
 import (
+	"bytes"
 	"compress/flate"
 	"compress/gzip"
+	"compress/zlib"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -38,6 +40,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -271,6 +274,26 @@ func TestHttpClientCompressionLocal(t *testing.T) {
 			fl, _ := flate.NewWriter(w, flate.DefaultCompression)
 			_, _ = fl.Write([]byte("hello deflated world"))
 			_ = fl.Close()
+		case "/zlib":
+			var body bytes.Buffer
+			zw := zlib.NewWriter(&body)
+			_, _ = zw.Write([]byte("hello zlib world"))
+			_ = zw.Close()
+			w.Header().Set("Content-Encoding", "deflate")
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Content-Length", strconv.Itoa(body.Len()))
+			w.WriteHeader(200)
+			_, _ = w.Write(body.Bytes())
+		case "/emptydeflate":
+			w.Header().Set("Content-Encoding", "deflate")
+			w.WriteHeader(200)
+		case "/zlibish":
+			// Raw deflate whose first bytes pass the zlib checksum with a window size zlib rejects.
+			body := append([]byte{0x88, 0x1c, 0x00, 0xe3, 0xff}, bytes.Repeat([]byte("A"), 28)...)
+			w.Header().Set("Content-Encoding", "deflate")
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(200)
+			_, _ = w.Write(append(body, 0x01, 0x00, 0x00, 0xff, 0xff))
 		case "/badgzip":
 			// Advertise gzip but send a body that is not a valid gzip stream, so
 			// the gzip header parse fails when the payload is read.
