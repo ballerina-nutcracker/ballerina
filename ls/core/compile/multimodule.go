@@ -202,9 +202,8 @@ func (pd *packageDriver) loadResolvedDependency(descriptor projects.PackageDescr
 	}
 	dependencyPackage := responses[0].Package()
 	dependencyDriver := newPackageDriver(dependencyPackage, nil, pd.dependencyPriorState(dependencyPackage), pd.stale)
-	for identifier, symbols := range pd.publicSymbols {
-		dependencyDriver.publicSymbols[identifier] = symbols
-	}
+	dependencyDriver.publicSymbols = pd.publicSymbols
+	dependencyDriver.externalProjections = pd.externalProjections
 	dependencyDriver.externalMaterializing = pd.externalMaterializing
 	dependencyDriver.logger = pd.logger
 	dependencyDriver.loadResolvedDependencySymbols()
