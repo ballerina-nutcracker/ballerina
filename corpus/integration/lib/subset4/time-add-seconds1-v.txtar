@@ -1,0 +1,10 @@
+-- stdout --
+[10000000001,0.25]
+NumberOverflow
+NumberOverflow
+NumberOverflow
+NumberConversionError
+NumberOverflow
+[9,0.99]
+[9223372036854775807,0.25]
+-- stderr --
