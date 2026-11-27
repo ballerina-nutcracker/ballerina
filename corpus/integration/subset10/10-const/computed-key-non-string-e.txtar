@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> computed-key-non-string-e.bal:19:14
+   |
+19 | const M1 = {[K]: 1}; // @error
+   |              ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 1
+  --> computed-key-non-string-e.bal:20:23
+   |
+20 | const map<int> M2 = {[K]: 1}; // @error
+   |                       ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got true
+  --> computed-key-non-string-e.bal:21:14
+   |
+21 | const M3 = {[true]: 1}; // @error
+   |              ^^^^

@@ -1,0 +1,30 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (const K (
+    (value-type string)) (
+    (literal x)))
+  (function seed () (
+    (value-type int))
+    (expr-function-body
+      (literal 1)))
+  (type-definition R
+    (record-type
+      (field x
+        (value-type int)
+        (invocation seed ()))
+      (field y
+        (value-type int)
+        (literal 2))))
+  (const A (
+    (user-defined-type R)) (
+    (mapping-constructor-expr
+      (key-value
+        (simple-var-ref K)
+        (literal 9)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A)))))))

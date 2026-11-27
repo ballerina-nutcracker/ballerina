@@ -1,0 +1,19 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "yes"
+  --> computed-key-widened-e.bal:30:46
+   |
+30 | const S BAD_FIELD = {a: 1, [<string>"flag"]: "yes"}; // @error
+   |                                              ^^^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected never, got 2
+  --> computed-key-widened-e.bal:28:37
+   |
+28 | const R BAD = {a: 1, [<string>"b"]: 2}; // @error
+   |                                     ^
+
+error[SEMANTIC_ERROR]: incompatible type: expected string, got 2
+  --> computed-key-widened-e.bal:32:46
+   |
+32 | const S BAD_REST = {a: 1, [<string>"extra"]: 2}; // @error
+   |                                              ^

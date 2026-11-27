@@ -1,0 +1,33 @@
+module $anon.. v 0.0.0;
+seed() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad {"x":9,"y":2}
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = seed() -> bb1;
+  }
+  bb1 {
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}

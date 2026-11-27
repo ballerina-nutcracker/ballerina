@@ -13,21 +13,15 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/io;
 
-const string K = "x";
+const K = 1;
 
-isolated function seed() returns int => 1;
-
-// x's default is not constant, so only the computed key that supplies it keeps
-// the constructor from being rejected as non-constant.
-type R record {|
-    int x = seed();
-    int y = 2;
-|};
-
-const R A = {[K]: 9}; // @error constant computed mapping key not implemented
+const M1 = {[K]: 1}; // @error
+const map<int> M2 = {[K]: 1}; // @error
+const M3 = {[true]: 1}; // @error
 
 public function main() {
-    io:println(A);
+    _ = M1;
+    _ = M2;
+    _ = M3;
 }

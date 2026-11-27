@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate key 'a' in mapping constructor
+  --> default-computed-key-duplicate-e.bal:22:28
+   |
+22 |     map<int> m = {"a": 1, [K]: 2}; // @error
+   |                            ^
+
+error[SEMANTIC_ERROR]: duplicate key 'a' in mapping constructor
+  --> default-computed-key-duplicate-e.bal:28:16
+   |
+28 | @Ann {"a": 1, ["a"]: 2} // @error
+   |                ^^^

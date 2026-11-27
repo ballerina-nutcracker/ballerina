@@ -389,13 +389,48 @@ func (e *constantExpressionEvaluator) evaluateMappingConstructor(chain *binding,
 		if !ok {
 			return e.internalFailure(fmt.Sprintf("unexpected constant mapping field %T", field), field.GetPosition())
 		}
-		key, ok := e.constantMappingKey(kv)
+		if kv.Key.Kind == ast.MappingKeyComputed {
+			continue
+		}
+		key, ok := e.specificConstantMappingKey(kv)
 		if !ok {
 			return nil, false
 		}
 		value, ok := e.evaluate(chain, kv.ValueExpr)
 		if !ok {
 			return nil, false
+		}
+		entries = append(entries, values.MapEntry{Key: key, Value: value})
+		supplied[key] = true
+	}
+
+	// Computed fields come after the spread and specific fields, in source
+	// order, and before the defaults of the fields they do not supply. A
+	// computed key that names a field already supplied is a duplicate key, as in
+	// jBallerina.
+	for _, field := range expr.Fields {
+		kv, ok := field.(*ast.BLangMappingKeyValueField)
+		if !ok || kv.Key.Kind != ast.MappingKeyComputed {
+			continue
+		}
+		key, ok := e.computedConstantMappingKey(chain, kv)
+		if !ok {
+			return nil, false
+		}
+		if supplied[key] {
+			return e.semanticFailure(strings.Join([]string{"duplicate key '", key, "' in mapping constructor"}, ""),
+				kv.Key.Expr.GetPosition())
+		}
+		value, ok := e.evaluate(chain, kv.ValueExpr)
+		if !ok {
+			return nil, false
+		}
+		// The key's static type may admit other fields with different member types.
+		expectedType := expr.SelectedAtomicType.FieldInnerVal(key)
+		valueType := values.SemTypeForValue(value)
+		cx := e.resolver.typeContext()
+		if !semtypes.IsSubtype(cx, valueType, expectedType) {
+			return e.semanticFailure(common.FormatIncompatibleTypeMessage(cx, expectedType, valueType), kv.ValueExpr.GetPosition())
 		}
 		entries = append(entries, values.MapEntry{Key: key, Value: value})
 		supplied[key] = true
@@ -462,14 +497,16 @@ func readonlyMappingShapeType(t typeResolver, entries []values.MapEntry) (semtyp
 	return ty, atomic, nil
 }
 
-func (e *constantExpressionEvaluator) constantMappingKey(field *ast.BLangMappingKeyValueField) (string, bool) {
+// specificConstantMappingKey returns the name of a specific field's key. A computed
+// key is an internal error: computed fields are folded by computedConstantMappingKey.
+func (e *constantExpressionEvaluator) specificConstantMappingKey(field *ast.BLangMappingKeyValueField) (string, bool) {
 	key := field.Key
 	if key == nil || key.Expr == nil {
 		e.resolver.internalError("constant mapping field has no key", field.GetPosition())
 		return "", false
 	}
 	if key.Kind == ast.MappingKeyComputed {
-		e.unsupportedFailure("constant computed mapping key not implemented", key.GetPosition())
+		e.resolver.internalError("computed key passed to specificConstantMappingKey", key.GetPosition())
 		return "", false
 	}
 	if name, ok := common.StaticMappingKeyName(key); ok {
@@ -477,6 +514,23 @@ func (e *constantExpressionEvaluator) constantMappingKey(field *ast.BLangMapping
 	}
 	e.resolver.internalError(fmt.Sprintf("unexpected constant mapping key expression %T", key.Expr), key.GetPosition())
 	return "", false
+}
+
+// computedConstantMappingKey folds a computed key to its string value, reporting an
+// incompatible-type error at the key expression when the value is not a string.
+func (e *constantExpressionEvaluator) computedConstantMappingKey(chain *binding, field *ast.BLangMappingKeyValueField) (string, bool) {
+	keyExpr := field.Key.Expr
+	value, ok := e.evaluate(chain, keyExpr)
+	if !ok {
+		return "", false
+	}
+	name, ok := value.(string)
+	if !ok {
+		e.semanticFailure(common.FormatIncompatibleTypeMessage(e.resolver.typeContext(), semtypes.String, keyExpr.Type()),
+			keyExpr.GetPosition())
+		return "", false
+	}
+	return name, true
 }
 
 func (e *constantExpressionEvaluator) evaluateListConstructor(chain *binding, expr *ast.BLangListConstructorExpr) (values.BalValue, bool) {
