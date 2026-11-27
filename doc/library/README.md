@@ -10,6 +10,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 
 | Package                                                                       | Supported | Partially Supported | Not Yet Supported | Support % |
 |-------------------------------------------------------------------------------|---|---|---|---|
+| [auth](../../lib/stdlibs/ballerina/auth/0.0.1/go1.27/README.md)               | 5 | 2 | 1 | 62% |
 | [avro](../../lib/stdlibs/ballerina/avro/0.0.1/go1.27/README.md)               | 15 | 1 | 0 | 94% |
 | [crypto](../../lib/stdlibs/ballerina/crypto/0.0.1/go1.27/README.md)           | 26 | 1 | 5 | 81% |
 | [file](../../lib/stdlibs/ballerina/file/0.0.1/go1.27/README.md)               | 21 | 0 | 0 | 100% |
@@ -29,7 +30,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **291** | **36** | **73** | **73%** |
+| **Total**                                                                     | **296** | **38** | **74** | **72%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -183,6 +184,6 @@ Consolidated from each package's README. Only permanent divergences are listed h
 - **`toString` and `toBytes` zero-pad every field of a `Uuid` record to its full width.** jBallerina pads `timeLow` to 8 hex digits and `node` to 12, but `timeMid` and `timeHiAndVersion` to only 2 and the clock-sequence bytes not at all, so `toString({timeLow: 1, timeMid: 2, timeHiAndVersion: 3, clockSeqHiAndReserved: 4, clockSeqLo: 5, node: 6})` returns `00000001-02-03-45-000000000006`, which is not a valid UUID, and `toBytes` on the same record fails with `Invalid UUID string provided`. The Go-native version pads `timeMid` and `timeHiAndVersion` to 4 hex digits and each clock-sequence byte to 2, so `toString` returns `00000001-0002-0003-0405-000000000006` and `toBytes` succeeds.
 - **`createType5AsRecord` error message names type 5.** When `createType5AsString` fails, jBallerina wraps the cause in `Failed to create UUID of type 3` (a copy-paste error); the Go-native version uses `Failed to create UUID of type 5`.
 
-The remaining packages (`math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
+The remaining packages (`auth`, `math.vector`, `url`) have **no** notable behavioural changes compared to the original jBallerina implementation for their currently supported features.
 
 <!-- END stdlib-behavioural-changes -->
