@@ -107,3 +107,66 @@ const PREFIX = "vnd/a";
 service /prefixConstant on new http:Listener(19226) {
     resource function get .() returns string => "x";
 }
+
+service class TwoKinds {
+    *http:RequestInterceptor;
+    *http:ResponseInterceptor; // @error
+
+    resource function get a() returns string => "a";
+}
+
+service class NoResource { // @error
+    *http:RequestInterceptor;
+}
+
+service class Remote {
+    *http:RequestInterceptor;
+
+    resource function get a() returns string => "a";
+
+    remote function r() { // @error
+    }
+}
+
+service class TwoResources {
+    *http:RequestInterceptor;
+
+    resource function get a() returns string => "a";
+
+    resource function get b() returns string => "b"; // @error
+}
+
+service class Annotated {
+    *http:RequestInterceptor;
+
+    @http:ResourceConfig {} // @error
+    resource function get a() returns string => "a";
+}
+
+service class BadReturn {
+    *http:RequestInterceptor;
+
+    resource function get a() returns typedesc<int> => int; // @error
+}
+
+service class ReturnAnnotated {
+    *http:RequestInterceptor;
+
+    resource function get a() returns @http:Payload string => "a"; // @error
+}
+
+service class TwoContexts {
+    *http:RequestInterceptor;
+
+    resource function get a(http:RequestContext first, http:RequestContext second) returns http:NextService|error? { // @error
+        var _ = second;
+        return first.next();
+    }
+}
+
+service /contexts on new http:Listener(19228) {
+    resource function get a(http:RequestContext first, http:RequestContext second) { // @error
+        var _ = first;
+        var _ = second;
+    }
+}

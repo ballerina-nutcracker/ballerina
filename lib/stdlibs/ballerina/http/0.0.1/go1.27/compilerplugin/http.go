@@ -20,6 +20,7 @@ package compilerplugin
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
@@ -46,11 +47,16 @@ func ValidateService(
 	if err != nil {
 		return nil, err
 	}
+	contextType, err := exportedType(compilerCtx, exported, "RequestContext")
+	if err != nil {
+		return nil, err
+	}
 	serviceConfig, ok := exported.GetAnnotationSymbol("ServiceConfig")
 	if !ok {
 		return nil, fmt.Errorf("ballerina/http compiler plugin: exported annotation ServiceConfig not found")
 	}
 	typeCtx := semtypes.ContextFrom(compilerCtx.GetTypeEnv())
+	params := paramTypes{request: requestType, caller: callerType, context: contextType}
 	for _, service := range pkg.Services {
 		if !isHTTPService(typeCtx, listenerType, service) {
 			continue
@@ -61,10 +67,34 @@ func ValidateService(
 			}
 		}
 		for _, resource := range service.ResourceMethods {
-			validateResource(compilerCtx, typeCtx, requestType, callerType, resource)
+			validateResource(compilerCtx, typeCtx, params, resource)
+			if params.hasCaller(compilerCtx, typeCtx, resource) {
+				validateCallerReturnType(compilerCtx, typeCtx, resource)
+			}
 		}
 	}
+	interceptors, err := newInterceptorValidator(compilerCtx, exported, typeCtx, params)
+	if err != nil {
+		return nil, err
+	}
+	for _, class := range pkg.ClassDefinitions {
+		interceptors.validate(class)
+	}
 	return pkg, nil
+}
+
+// paramTypes are the types of the resource parameters the dispatcher binds itself.
+type paramTypes struct {
+	request semtypes.SemType
+	caller  semtypes.SemType
+	context semtypes.SemType
+}
+
+func (p paramTypes) hasCaller(compilerCtx *context.CompilerContext, typeCtx semtypes.Context,
+	resource *ast.BLangResourceMethod) bool {
+	return slices.ContainsFunc(resource.RequiredParams, func(param ast.BLangVariable) bool {
+		return semtypes.IsSubtype(typeCtx, compilerCtx.SymbolType(param.Symbol()), p.caller)
+	})
 }
 
 func exportedType(compilerCtx *context.CompilerContext, exported model.ExportedSymbolSpace, name string) (semtypes.SemType, error) {
@@ -91,31 +121,34 @@ func isHTTPService(typeCtx semtypes.Context, listenerType semtypes.SemType, serv
 func validateResource(
 	compilerCtx *context.CompilerContext,
 	typeCtx semtypes.Context,
-	requestType semtypes.SemType,
-	callerType semtypes.SemType,
+	types paramTypes,
 	resource *ast.BLangResourceMethod,
 ) {
 	requestParamCount := 0
-	hasCaller := false
+	hasCaller, hasContext := false, false
 	for i := range resource.RequiredParams {
 		param := &resource.RequiredParams[i]
 		paramType := compilerCtx.SymbolType(param.Symbol())
-		if semtypes.IsSubtype(typeCtx, paramType, requestType) {
+		if semtypes.IsSubtype(typeCtx, paramType, types.request) {
 			requestParamCount++
 		}
-		if semtypes.IsSubtype(typeCtx, paramType, callerType) {
+		if semtypes.IsSubtype(typeCtx, paramType, types.caller) {
 			if hasCaller {
 				compilerCtx.SemanticError(fmt.Sprintf("invalid multiple 'http:Caller' parameter: '%s'", param.Name.GetValue()),
 					param.Name.GetPosition())
 			}
 			hasCaller = true
 		}
+		if semtypes.IsSubtype(typeCtx, paramType, types.context) {
+			if hasContext {
+				compilerCtx.SemanticError(fmt.Sprintf("invalid multiple 'http:RequestContext' parameter: '%s'",
+					param.Name.GetValue()), param.Name.GetPosition())
+			}
+			hasContext = true
+		}
 	}
 	if requestParamCount > 1 {
 		compilerCtx.SemanticError("http resource method must have at most one http:Request parameter", resource.ParamListPos)
-	}
-	if hasCaller {
-		validateCallerReturnType(compilerCtx, typeCtx, resource)
 	}
 	if resource.RestParam != nil {
 		compilerCtx.Unimplemented("http resource method rest parameters", resource.RestParam.GetPosition())

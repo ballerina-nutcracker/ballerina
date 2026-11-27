@@ -380,6 +380,9 @@ isolated function createError(string errorType, string message, error? cause) re
         "GenericListenerError" => {
             return error GenericListenerError(message, cause);
         }
+        "InternalInterceptorReturnError" => {
+            return error InternalInterceptorReturnError(message, cause);
+        }
     }
     panic error("unknown http error type: " + errorType);
 }

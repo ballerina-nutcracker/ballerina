@@ -51,6 +51,17 @@ type callerConn struct {
 	// written after it is closed.
 	sent     chan struct{}
 	sentOnce sync.Once
+
+	// pipeline is the state the http:RequestContext of the request shares with the dispatcher.
+	pipeline   *requestPipeline
+	requestCtx *values.Object
+	// payloadSet marks a request body an interceptor set, which the stages after it read as set.
+	payloadSet bool
+}
+
+func newCallerConn(rt *runtime.Runtime, types *httpTypes, w http.ResponseWriter, r *http.Request,
+	config serviceConfig) *callerConn {
+	return &callerConn{rt: rt, types: types, w: w, r: r, config: config, sent: make(chan struct{})}
 }
 
 type callerState uint8
@@ -178,9 +189,7 @@ func (c *callerConn) finish(ctx *extern.Context, result values.BalValue) {
 	defer c.mu.Unlock()
 	c.state.set(stateFinished)
 	if c.state.has(stateResponded) {
-		if _, isError := result.(*values.Error); isError {
-			_, _ = c.rt.Platform().IO.Stderr([]byte("error: " + illegalReturn + "\nwarning: [ballerina/http] " + illegalReturn + "\n"))
-		}
+		c.rejectReturn(result)
 		return
 	}
 	c.state.set(stateResponded)
@@ -189,6 +198,80 @@ func (c *callerConn) finish(ctx *extern.Context, result values.BalValue) {
 		return
 	}
 	writeResult(c.rt, ctx, c.types, c.w, c.r, c.accessor, result)
+}
+
+// complete answers with what a resource returned, unless a response was already sent. A
+// resource with an http:Caller parameter answers through finish.
+func (c *callerConn) complete(ctx *extern.Context, result values.BalValue, hasCaller bool) {
+	if hasCaller {
+		c.finish(ctx, result)
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.state.has(stateResponded) {
+		c.rejectReturn(result)
+		return
+	}
+	c.state.set(stateResponded)
+	writeResult(c.rt, ctx, c.types, c.w, c.r, c.accessor, result)
+}
+
+// fail answers with an error response of status, unless a response was already sent.
+func (c *callerConn) fail(status int, message string) {
+	if c.claim() {
+		writeErrorJSON(c.rt, c.w, c.r, status, message)
+	}
+}
+
+// failPanic answers a panicked stage with a 500 carrying the panic message, unless a response was sent.
+func (c *callerConn) failPanic(message string) {
+	if c.claim() {
+		writePanicResponse(c.w, message)
+	}
+}
+
+// claim reserves the response of the exchange and reports whether no response was sent before.
+func (c *callerConn) claim() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.state.has(stateResponded) {
+		return false
+	}
+	c.state.set(stateResponded)
+	return true
+}
+
+// responded reports whether a response was sent.
+func (c *callerConn) responded() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.state.has(stateResponded)
+}
+
+// requestContext returns the http:RequestContext of the request, creating it on first use.
+func (c *callerConn) requestContext(ctx *extern.Context, factory extern.FunctionHandle) (values.BalValue, error) {
+	if c.requestCtx == nil {
+		created, err := ctx.InvokeFunction(factory, nil)
+		if err != nil {
+			return nil, err
+		}
+		c.requestCtx = created.(*values.Object)
+		c.requestCtx.Put(pipelineSlot, c.pipeline)
+	}
+	return c.requestCtx, nil
+}
+
+// rejectReturn reports a returned value that cannot be sent since a response was already sent.
+func (c *callerConn) rejectReturn(result values.BalValue) {
+	if obj, ok := result.(*values.Object); ok {
+		if holder, ok := responseBodyOf(obj); ok {
+			holder.discard()
+		}
+	}
+	if result != nil {
+		_, _ = c.rt.Platform().IO.Stderr([]byte("error: " + illegalReturn + "\nwarning: [ballerina/http] " + illegalReturn + "\n"))
+	}
 }
 
 // isClosed reports whether no response can be sent any more.

@@ -1621,6 +1621,7 @@ func initHttpModule(rt *runtime.Runtime) {
 	registerListenerExterns(rt, &types)
 	registerCallerExterns(rt)
 	registerErrorResponseExterns(rt)
+	registerRequestContextExterns(rt)
 }
 
 // splitOutsideQuotes splits s on every occurrence of sep that is not inside a
