@@ -76,7 +76,7 @@ func initPopClientExtern(rt *runtime.Runtime) extern.NativeFunc {
 			err.Message = popConnectPrefix + err.Message
 			return err, nil
 		}
-		s.quit()
+		_ = s.quit()
 		s.close()
 		args[0].(*values.Object).Put(popStateField, m)
 		return nil, nil
@@ -116,7 +116,7 @@ func (c popClient) retrieveFirst(platform pal.Platform) ([]byte, *values.Error) 
 		return nil, popFailure(popOpenError, cmdErr)
 	}
 	if count, _, _ := strings.Cut(stat, " "); count == "0" {
-		s.quit()
+		_ = s.quit()
 		return nil, nil
 	}
 	if _, cmdErr = s.cmd("RETR 1"); cmdErr != nil {
@@ -126,8 +126,8 @@ func (c popClient) retrieveFirst(platform pal.Platform) ([]byte, *values.Error) 
 	if readErr != nil {
 		return nil, popFailure(popFetchError, readErr)
 	}
-	if _, cmdErr = s.cmd("DELE 1"); cmdErr == nil {
-		s.quit()
+	if _, cmdErr = s.cmd("DELE 1"); cmdErr != nil || s.quit() != nil {
+		c.kept.Store(true)
 	}
 	return data, nil
 }
@@ -208,8 +208,9 @@ func (s *popSession) close() {
 }
 
 // quit ends the session, committing deletions; a failure leaves the messages on the server.
-func (s *popSession) quit() {
-	_, _ = s.cmd("QUIT")
+func (s *popSession) quit() error {
+	_, err := s.cmd("QUIT")
+	return err
 }
 
 func (s *popSession) cmd(format string, args ...any) (string, error) {

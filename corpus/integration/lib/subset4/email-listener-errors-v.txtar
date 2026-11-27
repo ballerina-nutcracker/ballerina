@@ -1,0 +1,4 @@
+-- stdout --
+Error while initializing POP3 client properties: /no/such/cert.pem (No such file or directory)
+Error while initializing IMAP client properties: /no/such/cert.pem (No such file or directory)
+-- stderr --

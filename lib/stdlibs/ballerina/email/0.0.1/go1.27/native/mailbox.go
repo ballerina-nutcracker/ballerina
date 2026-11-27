@@ -54,6 +54,9 @@ var (
 type mailbox struct {
 	mailServer
 	closed atomic.Bool
+	// kept reports that the last message read could not be deleted or marked seen, so it stays
+	// first in the folder.
+	kept atomic.Bool
 	// reading serialises the reads of one client, so they never return the same message.
 	reading sync.Mutex
 }
@@ -116,6 +119,7 @@ func (m *mailbox) next(ctx *extern.Context, strArrTy semtypes.SemType, retrieve 
 		<-ctx.Yield()
 	}
 	defer m.reading.Unlock()
+	m.kept.Store(false)
 	data, finish, err := retrieve()
 	if err != nil {
 		return err, nil

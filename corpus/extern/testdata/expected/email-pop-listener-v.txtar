@@ -1,0 +1,5 @@
+-- stdout --
+m1, m2
+Error while connecting to the POP3 store: [AUTH] Authentication failed
+closed: true
+-- stderr --

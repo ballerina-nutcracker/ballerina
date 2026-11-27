@@ -1,0 +1,6 @@
+-- stdout --
+kept
+0
+-- stderr --
+error: handler failed
+error: message locked
