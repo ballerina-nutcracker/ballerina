@@ -1,0 +1,18 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable m (type
+        (constrained-type
+          (builtin-ref-type map)
+          (array-type
+            (value-type int) dimensions: 1 ([])))) (expr
+        (mapping-constructor-expr))))
+    (compound-assignment +
+      (index-based-access
+        (index-based-access
+          (simple-var-ref m)
+          (literal k))
+        (literal 0))
+      (literal 1))
+  )
+)

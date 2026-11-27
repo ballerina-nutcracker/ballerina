@@ -1,0 +1,4 @@
+-- stdout --
+-- stderr --
+error: invalid array index: 0
+        at main(map-member-list-lvexpr-compound-p.bal:19)

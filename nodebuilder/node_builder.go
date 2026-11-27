@@ -2803,7 +2803,7 @@ func (n *nodeBuilder) transformAssignmentStatement(assignmentStatementNode *st.A
 		return nil, false
 	}
 
-	lhsExpr := ast.NewBLangAssignmentLExpr(n.transformExpr(varRef), false)
+	lhsExpr := n.transformExpr(varRef).(ast.LExpr)
 	if !n.expectToken(assignmentStatementNode.EqualsToken()) {
 		return nil, false
 	}
@@ -2818,7 +2818,7 @@ func (n *nodeBuilder) transformCompoundAssignmentStatement(compoundAssignmentStm
 	if !n.expectNode(compoundAssignmentStmtNode) {
 		return nil, false
 	}
-	lhsExpr := ast.NewBLangAssignmentLExpr(n.transformExpr(compoundAssignmentStmtNode.LhsExpression()), true)
+	lhsExpr := n.transformExpr(compoundAssignmentStmtNode.LhsExpression()).(ast.LExpr)
 	binaryOperator := compoundAssignmentStmtNode.BinaryOperator()
 	if !n.expectSignificantToken(binaryOperator) || !n.expectToken(compoundAssignmentStmtNode.EqualsToken()) {
 		return nil, false

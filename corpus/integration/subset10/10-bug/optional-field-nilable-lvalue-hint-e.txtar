@@ -1,7 +1,7 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: field access cannot be used to access optional field 'i' whose type includes nil
+error[SEMANTIC_ERROR]: invalid assignment target: container of type 'nil|{| x: int, never... |}' may be nil
   --> optional-field-nilable-lvalue-hint-e.bal:22:5
    |
 22 |     r.i.x = 5; // @error
-   |     ^^^
+   |     ^^^^^
