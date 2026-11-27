@@ -844,24 +844,19 @@ func buildListnerInit(pkgCtx *packageContext, node moduleInitNode, moduleListene
 	assign := &ast.BLangAssignment{VarRef: listenerVarRef, Expr: wrapInCheck(node.expr)}
 	assign.SetPosition(pos)
 
-	stmts := []ast.StatementNode{assign}
 	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerVarRef, pos)
-	if registerStmt == nil {
-		return stmts
-	}
-	return append(stmts, registerStmt)
+	return []ast.StatementNode{assign, registerStmt}
 }
 
-// buildListenerRegistration builds the statement that pushes a listener value
-// into `$moduleListeners`.
+// buildListenerRegistration builds the statement that registers a listener
+// value in `$moduleListeners`. Registration is idempotent (spec 8.3.2):
+// `lang.__internal:registerListener` skips an object that is already
+// registered with this or any other module, which can only be decided at
+// runtime.
 func buildListenerRegistration(pkgCtx *packageContext, moduleListenersRef, listenerRef *ast.BLangVarRef, pos diagnostics.Location) ast.StatementNode {
 	mlRef := *moduleListenersRef
-	pushSrc := *listenerRef
-	inv := createArrayPushInvocation(pkgCtx, &mlRef, &pushSrc)
-	if inv == nil {
-		pkgCtx.internalError("failed to create array:push invocation for module listener", pos)
-		return nil
-	}
+	valueRef := *listenerRef
+	inv := createLangInternalInvocation(pkgCtx, "registerListener", semtypes.Nil, []ast.BLangExpression{&mlRef, &valueRef}, pos)
 	return createExpressionStmt(inv, pos)
 }
 
@@ -997,14 +992,16 @@ func buildServiceInitStmts(pkgCtx *packageContext, pkg *ast.BLangPackage, svc *a
 
 // buildServiceListenerInit returns the expression a service attaches to for
 // one expression in its `on` clause, with the statements that must run first.
-// A variable reference is used as is and is not registered here, which is
-// correct only for `listener` variables (registered by their own
-// initializer). Any other expression is evaluated into a synthetic local in
-// the init function and the resulting listener is registered in
-// `$moduleListeners`.
+// A reference to a `listener` variable is used as is: its declaration has
+// already registered the object. Any other expression is evaluated into a
+// synthetic local in the init function and the resulting listener is
+// registered in `$moduleListeners`, which skips an object that is already
+// registered with any module.
 func buildServiceListenerInit(pkgCtx *packageContext, pkg *ast.BLangPackage, listenerExpr ast.BLangExpression, moduleListenersRef *ast.BLangVarRef) (ast.BLangExpression, []ast.StatementNode) {
-	if _, ok := listenerExpr.(*ast.BLangVarRef); ok {
-		return listenerExpr, nil
+	if ref, ok := listenerExpr.(*ast.BLangVarRef); ok {
+		if vs, ok := pkgCtx.getSymbol(ref.Symbol()).(*model.VariableSymbol); ok && vs.IsListener() {
+			return listenerExpr, nil
+		}
 	}
 	pos := listenerExpr.GetPosition()
 	exprTy := listenerExpr.Type()
@@ -1016,9 +1013,6 @@ func buildServiceListenerInit(pkgCtx *packageContext, pkg *ast.BLangPackage, lis
 	varDef, listenerRef := createDesugaredLocal(pkgCtx, pkg.InitFunction.Scope(), listenerTy, wrapInCheck(listenerExpr), pos)
 
 	registerStmt := buildListenerRegistration(pkgCtx, moduleListenersRef, listenerRef, pos)
-	if registerStmt == nil {
-		return nil, nil
-	}
 	return listenerRef, []ast.StatementNode{varDef, registerStmt}
 }
 
