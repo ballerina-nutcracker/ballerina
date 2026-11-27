@@ -1,0 +1,6 @@
+-- stdout --
+-- stderr --
+error: default failed
+        at failingDefault(clonewithtype-default-p.bal:18)
+           main(clonewithtype-default-p.bal:22)
+           main(clonewithtype-default-p.bal:26)

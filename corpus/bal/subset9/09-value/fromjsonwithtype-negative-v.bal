@@ -38,11 +38,6 @@ type PersonNilRequired record {|
     int? age;
 |};
 
-type PersonWithDefault record {|
-    string name;
-    int age = 99;
-|};
-
 type IntOrBoolean int|boolean;
 
 public function main() returns error? {
@@ -102,14 +97,6 @@ public function main() returns error? {
     // required nilable field absent is an error — the field must be present, even if null
     json missingNilableReq = {"name": "Bob"};
     io:println(missingNilableReq.fromJsonWithType(PersonNilRequired) is error); // @output true
-
-    // a declared default does not make a missing field any less required —
-    // default-value injection is not supported yet
-    json missingWithDefault = {"name": "Carol"};
-    PersonWithDefault|error withDefault = missingWithDefault.fromJsonWithType(PersonWithDefault);
-    if withDefault is error {
-        io:println(withDefault.message()); // @output '{| json... |}' value cannot be converted to '{| age: int, name: string, never... |}': field 'age' not present in value
-    }
 
     // a simple (non-structured) value matching no member of a scalar union,
     // not even via numeric coercion

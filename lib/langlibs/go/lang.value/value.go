@@ -48,7 +48,7 @@ func clone(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
 
 func cloneWithType(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	td := args[1].(*values.TypeDesc)
-	result, convErr := values.CloneWithType(ctx.TypeCtx(), args[0], td.Constraint())
+	result, convErr := ctx.CloneWithType(args[0], td.Constraint())
 	if convErr != nil {
 		return convErr, nil
 	}
