@@ -1607,6 +1607,15 @@ func referUserDefinedType(resolver symbolResolver, n *ast.BLangUserDefinedType) 
 		return false
 	}
 	markUnprefixedRefUsed(resolver, name, prefix)
+	// Types share the main symbol space with functions and variables, so the name may denote a value. A type
+	// reference may name a type, a constant (a singleton type) or a parameter; type resolution rejects a parameter
+	// that is not a typedesc.
+	switch resolver.GetCtx().SymbolKind(n.Symbol()) {
+	case model.SymbolKindType, model.SymbolKindConstant, model.SymbolKindParemeter:
+	default:
+		resolver.GetCtx().SemanticError("Unknown type: "+name, n.GetPosition())
+		return false
+	}
 	return true
 }
 
@@ -2064,9 +2073,9 @@ func finishResolveClassDefinition(ms *compilationUnitSymbolResolver, blockRes *b
 		ok = allocateMethodSymbol(ms, initFn, "init", initFn.IsPublic(), methodTargetScope, methodSymbolPrefix) && ok
 	}
 
-	// self is bound only within method bodies, so field initializers are resolved before it is defined.
+	// Field declarations use the enclosing scope, not the object's member names.
 	for _, field := range fields {
-		ok = resolveVariableChildren(blockRes, field, field.Symbol()) && ok
+		ok = resolveVariableChildren(blockRes.parent, field, field.Symbol()) && ok
 	}
 
 	selfSymbol := model.NewVariableSymbol("self", false, false, false, diagnostics.NewBuiltinLocation())
