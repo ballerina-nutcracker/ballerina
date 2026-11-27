@@ -18,9 +18,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -38,7 +42,7 @@ func TestParseConfigValid(t *testing.T) {
 	want := config{
 		repeats: 3, warmup: "5s", duration: "7s", conns: 20, threshold: 15,
 		exportMD: "/tmp/x.md", resultJSON: "/tmp/x.json",
-		baseRef: "base-ref", headRef: "head-ref",
+		baseRef: "base-ref", headRef: "head-ref", phase: "fixed",
 	}
 	if cfg != want {
 		t.Errorf("parseConfig() = %+v, want %+v", cfg, want)
@@ -193,5 +197,61 @@ func TestRunEndToEndSelfComparison(t *testing.T) {
 	}
 	if res.Error {
 		t.Errorf("unexpected error result: %+v", res)
+	}
+}
+
+// A corpus program cannot exercise the benchmark command's revision diagnostics.
+// Not parallel: changes PATH and occupies the fixed benchmark service port.
+func TestRunMeasurementErrorNamesRef(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake build commands use POSIX shell scripts")
+	}
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", servicePort))
+	if err != nil {
+		t.Fatalf("occupying service port: %v", err)
+	}
+	defer func() { _ = listener.Close() }()
+
+	binDir := t.TempDir()
+	commands := map[string]string{
+		"git": "#!/bin/sh\nif [ \"$1\" = worktree ] && [ \"$2\" = add ]; then /bin/mkdir -p \"$4\"; fi\nexit 0\n",
+		"go":  "#!/bin/sh\nexit 0\n",
+	}
+	for name, body := range commands {
+		if err := os.WriteFile(filepath.Join(binDir, name), []byte(body), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", binDir)
+	cfg := config{baseRef: "revision-before", headRef: "revision-after", repeats: 1}
+	err = run(cfg)
+	if err == nil || !strings.Contains(err.Error(), "already in use before launch") {
+		t.Fatalf("expected measurement port failure, got %v", err)
+	}
+	if !strings.Contains(err.Error(), cfg.baseRef) {
+		t.Errorf("measurement error %q does not name failing revision %q", err, cfg.baseRef)
+	}
+}
+
+// This standalone Go benchmark tool is outside the Ballerina corpus pipeline.
+func TestCollectHTTPPairsLargeRepeatsReturnsMeasureError(t *testing.T) {
+	t.Parallel()
+	cfg, err := parseConfig([]string{"--repeats=" + strconv.Itoa(int(^uint(0)>>1)), "base", "head"})
+	if err != nil {
+		t.Fatalf("parseConfig: %v", err)
+	}
+	wantErr := errors.New("measurement failed")
+	calls := 0
+	defer func() {
+		if panicValue := recover(); panicValue != nil {
+			t.Fatalf("collectHTTPPairs panicked before handling measure error (calls=%d): %v", calls, panicValue)
+		}
+	}()
+	_, err = collectHTTPPairs(cfg, nil, func(int) (sample, error) {
+		calls++
+		return sample{}, wantErr
+	})
+	if !errors.Is(err, wantErr) || calls != 1 {
+		t.Fatalf("collectHTTPPairs: calls=%d err=%v, want one call and %v", calls, err, wantErr)
 	}
 }

@@ -19,8 +19,10 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -72,7 +74,7 @@ func TestBenchmarkBinaryRunExportsHTML(t *testing.T) {
 	}
 }
 
-func TestBenchmarkBinaryRunExportsHTMLForDirectoryTarget(t *testing.T) {
+func TestBenchmarkBinaryRunExportsReportsForDirectoryTarget(t *testing.T) {
 	skipUnlessBenchmarkIntegration(t)
 
 	target, err := resolveTarget(integrationDirPath)
@@ -86,9 +88,16 @@ func TestBenchmarkBinaryRunExportsHTMLForDirectoryTarget(t *testing.T) {
 	bin := buildBenchmarkBinary(t)
 	tmp := t.TempDir()
 	htmlPath := filepath.Join(tmp, "output.html")
+	countsPath := filepath.Join(tmp, "counts.json")
+	if err := os.WriteFile(countsPath, []byte(`{"version":1,"counts":{"1-v.bal":1,"2-v.bal":2}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	samplesPath := filepath.Join(tmp, "samples.jsonl")
 	htmlReport := assertBenchmarkBinarySuccessAndReadReport(t, bin, htmlPath,
 		"--warmup", "0",
-		"--runs", "1",
+		"--runs-file", countsPath,
+		"--phase", "final",
+		"--samples-jsonl", samplesPath,
 		"--export-html", htmlPath,
 		baseRef, headRef, integrationDirPath,
 	)
@@ -97,6 +106,60 @@ func TestBenchmarkBinaryRunExportsHTMLForDirectoryTarget(t *testing.T) {
 		if !strings.Contains(text, getRelativeLabel(target.root, path)) {
 			t.Fatalf("expected report to include case label %q", getRelativeLabel(target.root, path))
 		}
+	}
+	assertDirectorySamples(t, samplesPath)
+}
+
+func assertDirectorySamples(t *testing.T, path string) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := json.NewDecoder(bytes.NewReader(data))
+	var metadata sampleMetadata
+	if err := dec.Decode(&metadata); err != nil {
+		t.Fatal(err)
+	}
+	shas, err := exec.Command("git", "rev-parse", baseRef, headRef).Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []string{"1-v.bal", "2-v.bal"}
+	if metadata.Type != "metadata" || metadata.Version != 1 || metadata.Phase != "final" ||
+		metadata.Suite != "time" || metadata.Unit != "s" || !slices.Equal(metadata.Cases, cases) ||
+		!slices.Equal([]string{metadata.BaseSHA, metadata.HeadSHA}, strings.Fields(string(shas))) {
+		t.Fatalf("unexpected sample metadata: %+v", metadata)
+	}
+	for i, id := range cases {
+		count := i + 1
+		if metadata.Counts[id] != count {
+			t.Fatalf("count for %s = %d, want %d", id, metadata.Counts[id], count)
+		}
+		for pair := range count {
+			for position := range 2 {
+				var sample sampleEvent
+				if err := dec.Decode(&sample); err != nil {
+					t.Fatal(err)
+				}
+				role := [2]string{"base", "head"}[(pair+position)%2]
+				if sample.Type != "sample" || sample.CaseID != id || sample.Pair != pair ||
+					sample.Position != position || sample.Role != role || sample.Unit != "s" || sample.Value <= 0 {
+					t.Fatalf("unexpected sample for %s pair %d position %d: %+v", id, pair, position, sample)
+				}
+			}
+		}
+		var event sampleEvent
+		if err := dec.Decode(&event); err != nil || event.Type != "case_complete" || event.CaseID != id {
+			t.Fatalf("missing completion for %s: %+v (%v)", id, event, err)
+		}
+	}
+	var event sampleEvent
+	if err := dec.Decode(&event); err != nil || event.Type != "complete" {
+		t.Fatalf("missing stream completion: %+v (%v)", event, err)
+	}
+	if err := dec.Decode(&event); err != io.EOF {
+		t.Fatalf("expected end of sample stream, got %v", err)
 	}
 }
 
@@ -269,7 +332,7 @@ func TestParseMacOSMaxRSSMiB(t *testing.T) {
 func TestHyperfineFlagsWithPositiveWarmup(t *testing.T) {
 	t.Parallel()
 	b := &benchmark{config: config{warmup: 3, runs: 7}}
-	got := b.hyperfineFlags()
+	got := b.hyperfineFlags(b.runs, b.warmup)
 	want := []string{"--show-output", "--warmup", "3", "--runs", "7"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("hyperfineFlags() = %v, want %v", got, want)
@@ -279,8 +342,8 @@ func TestHyperfineFlagsWithPositiveWarmup(t *testing.T) {
 func TestHyperfineFlagsOmitsWarmupWhenZero(t *testing.T) {
 	t.Parallel()
 	b := &benchmark{config: config{warmup: 0, runs: 2}}
-	got := b.hyperfineFlags()
-	want := []string{"--show-output", "--runs", "2"}
+	got := b.hyperfineFlags(b.runs, b.warmup)
+	want := []string{"--show-output", "--warmup", "0", "--runs", "2"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("hyperfineFlags() = %v, want %v", got, want)
 	}
