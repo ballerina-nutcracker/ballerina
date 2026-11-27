@@ -483,14 +483,18 @@ func newFunctionRoot(ctx *packageContext, definedIn context) *blockContext {
 
 func transformFunctionInner(root *blockContext, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	birFunc := transformFunctionSignature(root, astFunc, selfSymbolRef)
+	return generateFunctionBody(root, birFunc, astFunc.Body, "function body", astFunc.GetPosition())
+}
+
+func generateFunctionBody(root *blockContext, birFunc *bir.BIRFunction, body ast.FunctionBodyNode, bodyKind string, pos diagnostics.Location) *bir.BIRFunction {
 	var generated bool
-	switch body := astFunc.Body.(type) {
+	switch body := body.(type) {
 	case *ast.BLangBlockFunctionBody:
 		generated = handleBlockFunctionBody(root, body)
 	case *ast.BLangExprFunctionBody:
 		generated = handleExprFunctionBody(root, body)
 	default:
-		root.internalError(fmt.Sprintf("unexpected function body type: %T", astFunc.Body), astFunc.GetPosition())
+		root.internalError(fmt.Sprintf("unexpected %s type: %T", bodyKind, body), pos)
 		return nil
 	}
 	if !generated {
@@ -1312,22 +1316,21 @@ func annotAccessExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLan
 	}, true
 }
 
-func xmlTextLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLTextLiteral) (expressionEffect, bool) {
-	pos := ctx.function().loc(expr.GetPosition())
+func xmlSingleStringLiteral[I bir.BIRNonTerminator](ctx context, curBB *bir.BIRBasicBlock, astPos diagnostics.Location, ty semtypes.SemType, body string, newInstr func(lhsOp, bodyOp *bir.BIROperand, pos bir.Location) I) (expressionEffect, bool) {
+	pos := ctx.function().loc(astPos)
 	bodyOp := ctx.addTempVar(semtypes.String)
-	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(bodyOp, expr.Body, pos))
-	resultOp := ctx.addTempVar(expr.Type())
-	curBB.Instructions = append(curBB.Instructions, bir.NewXMLTextInstr(resultOp, bodyOp, pos))
+	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(bodyOp, body, pos))
+	resultOp := ctx.addTempVar(ty)
+	curBB.Instructions = append(curBB.Instructions, newInstr(resultOp, bodyOp, pos))
 	return expressionEffect{result: resultOp, block: curBB}, true
 }
 
+func xmlTextLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLTextLiteral) (expressionEffect, bool) {
+	return xmlSingleStringLiteral(ctx, curBB, expr.GetPosition(), expr.Type(), expr.Body, bir.NewXMLTextInstr)
+}
+
 func xmlCommentLiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLCommentLiteral) (expressionEffect, bool) {
-	pos := ctx.function().loc(expr.GetPosition())
-	bodyOp := ctx.addTempVar(semtypes.String)
-	curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(bodyOp, expr.Body, pos))
-	resultOp := ctx.addTempVar(expr.Type())
-	curBB.Instructions = append(curBB.Instructions, bir.NewXMLCommentInstr(resultOp, bodyOp, pos))
-	return expressionEffect{result: resultOp, block: curBB}, true
+	return xmlSingleStringLiteral(ctx, curBB, expr.GetPosition(), expr.Type(), expr.Body, bir.NewXMLCommentInstr)
 }
 
 func xmlPILiteral(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangXMLPILiteral) (expressionEffect, bool) {
@@ -2759,25 +2762,7 @@ func resourcePathSegmentType(seg *ast.BLangResourcePathSegment) semtypes.SemType
 
 func transformResourceMethodInner(root *blockContext, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	birFunc := transformResourceMethodSignature(root, rm, selfSymbolRef)
-	var generated bool
-	switch body := rm.Body.(type) {
-	case *ast.BLangBlockFunctionBody:
-		generated = handleBlockFunctionBody(root, body)
-	case *ast.BLangExprFunctionBody:
-		generated = handleExprFunctionBody(root, body)
-	default:
-		root.internalError(fmt.Sprintf("unexpected resource function body type: %T", rm.Body), rm.GetPosition())
-		return nil
-	}
-	if !generated {
-		return nil
-	}
-	for _, bbPtr := range root.fn.bbs {
-		birFunc.BasicBlocks = append(birFunc.BasicBlocks, *bbPtr)
-	}
-	setFunctionLocals(root, birFunc)
-	birFunc.ErrorTable = root.fn.errorEntries
-	return birFunc
+	return generateFunctionBody(root, birFunc, rm.Body, "resource function body", rm.GetPosition())
 }
 
 func transformNativeResourceMethod(root *blockContext, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
