@@ -8,6 +8,7 @@ linters:
     - modernize
     - dupl
     - exhaustive
+    - gochecksumtype
     - iface
     - iotamixing
     - reassign
@@ -23,6 +24,8 @@ linters:
         - ".*"
     exhaustive:
       default-signifies-exhaustive: true
+    gochecksumtype:
+      default-signifies-exhaustive: false
     forbidigo:
       forbid:
         - pattern: ^panic$
@@ -132,6 +135,12 @@ linters:
     - unused
   exclusions:
     rules:
+      # Ignore only reports consisting entirely of these private AST bases.
+      # Missing concrete implementations must still fail exhaustiveness checks.
+      - linters: [gochecksumtype]
+        text: >-
+          ^exhaustiveness check failed for sum type "BLangActionOrExpression" \(from [^)]*\): missing cases for
+          bLang(AccessExpression|Action|ValueExpression|VariableReference|WorkerSendExpr|WorkerSendReceiveExpr)Base(, bLang(AccessExpression|Action|ValueExpression|VariableReference|WorkerSendExpr|WorkerSendReceiveExpr)Base)*$
       # The explicit-traversal rule is for symbol resolution only; tests may
       # walk the AST to inspect it.
       - linters:
