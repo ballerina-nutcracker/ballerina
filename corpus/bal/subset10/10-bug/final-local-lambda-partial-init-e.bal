@@ -13,13 +13,13 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/io;
-
 public function main() {
-    var f = function () returns int {
+    var f = function (boolean flag) returns int {
         final int x;
-        x = 1; // @error future: lambda bodies get no final reassignment analysis
-        return x;
+        if flag {
+            x = 7;
+        }
+        return x; // @error variable 'x' may not have been initialized
     };
-    io:println(f()); // @output 1
+    _ = f(false);
 }

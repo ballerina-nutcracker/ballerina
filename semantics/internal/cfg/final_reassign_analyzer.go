@@ -113,6 +113,15 @@ func analyzeFinalReassignments(
 			newPossiblyAssignedAnalyzer(ctx, &fnCfg, tracked, selfFields).analyze()
 		})
 	}
+	for _, lambda := range cfg.lambdaCfgs {
+		wg.Go(func() {
+			tracked := deferredFinalLocals(ctx, lambda.fn)
+			if len(tracked) == 0 {
+				return
+			}
+			newPossiblyAssignedAnalyzer(ctx, &lambda.cfg, tracked, nil).analyze()
+		})
+	}
 	for _, worker := range cfg.workers {
 		wg.Go(func() {
 			tracked := deferredFinalLocals(ctx, worker.decl.Body)

@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition Reader
+    (variable readValue (type
+      (function-type () (
+        (value-type int)))))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal readValue))
+          (lambda
+            (function $anonFunc$_0 () (
+              (value-type int))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (value-type int))))
+                (assignment
+                  (simple-var-ref x)
+                  (literal 9))
+                (return
+                  (simple-var-ref x)))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable reader (type
+          (user-defined-type Reader)) (expr
+          (new ()))))
+      (var-def
+        (variable readValue (expr
+          (index-based-access
+            (simple-var-ref reader)
+            (literal readValue)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readValue ())))))))

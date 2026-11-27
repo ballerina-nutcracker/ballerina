@@ -339,10 +339,6 @@ func validateAssignment(cx scope.Context, a ast.AssignmentNode) {
 				cx.SemanticErr(strings.Join([]string{"cannot assign a value to final variable '", ctx.SymbolName(sym), "'"}, ""), ref.GetPosition())
 				return
 			}
-			if deferredLocal && fn.IsLambda() {
-				cx.UnimplementedErr("deferred initialization of a final variable in a lambda", ref.GetPosition())
-				return
-			}
 		}
 		if msg, notAssignable := common.AssignmentTargetError(ctx.SymbolKind(sym)); notAssignable {
 			cx.SemanticErr(msg, ref.GetPosition())

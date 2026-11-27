@@ -1,0 +1,32 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable makeReader (expr
+          (lambda
+            (function $anonFunc$_0 () (
+              (function-type () (
+                (value-type int))))
+              (block-function-body
+                (var-def
+                  (variable x (type
+                    (value-type int))))
+                (assignment
+                  (simple-var-ref x)
+                  (literal 7))
+                (return
+                  (lambda
+                    (function $anonFunc$_1 () (
+                      (value-type int))
+                      (block-function-body
+                        (return
+                          (simple-var-ref x))))))))))))
+      (var-def
+        (variable readValue (expr
+          (invocation makeReader ()))))
+      (expression-stmt
+        (invocation io println (
+          (invocation readValue ())))))))
