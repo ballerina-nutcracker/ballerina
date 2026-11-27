@@ -1,0 +1,49 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: object member 'dbl' is not visible here
+  --> member-access-private-receiver1-e.bal:52:12
+   |
+52 |     return r.dbl(); // @error private method of a readonly class
+   |            ^^^^^^^
+
+error[SEMANTIC_ERROR]: object member 'dbl' is not visible here
+  --> member-access-private-receiver1-e.bal:60:12
+   |
+60 |     return a.dbl(); // @error private method via a readonly intersection
+   |            ^^^^^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-receiver1-e.bal:48:12
+   |
+48 |     return r.x; // @error private field of a readonly class
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-receiver1-e.bal:56:12
+   |
+56 |     return a.x; // @error private field via a readonly intersection
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-receiver1-e.bal:64:12
+   |
+64 |     return d.x; // @error private field of a distinct class
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-receiver1-e.bal:68:12
+   |
+68 |     return i.x; // @error private field of an isolated class
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-receiver1-e.bal:72:12
+   |
+72 |     return a.x; // @error private field via a type alias
+   |            ^^^
+
+error[SEMANTIC_ERROR]: object member 'x' is not visible here
+  --> member-access-private-receiver1-e.bal:79:12
+   |
+79 |     return a.x; // @error private field after nil narrowing
+   |            ^^^

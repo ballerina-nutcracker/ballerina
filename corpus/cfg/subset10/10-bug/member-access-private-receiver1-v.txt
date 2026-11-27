@@ -1,0 +1,171 @@
+(A
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (simple-var-ref x))
+    )
+  )
+  (dbl
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 2)))
+    )
+  )
+  (mixed
+    (bb0 () ()
+      (return
+        (field-based-access x
+          (simple-var-ref o)))
+    )
+  )
+  (nil
+    (bb0 () (bb1 bb2)
+      (type-test-expr is
+        (simple-var-ref o)
+        (value-type null))
+    )
+    (bb1 (bb0) ()
+      (return
+        (unary-expr -
+          (literal 1)))
+    )
+    (bb2 (bb0) ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref o))
+          (invocation dbl expr:
+            (simple-var-ref o) ())))
+    )
+  )
+  (ro
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref o))
+          (invocation dbl expr:
+            (simple-var-ref o) ())))
+    )
+  )
+  (viaAlias
+    (bb0 () ()
+      (return
+        (field-based-access x
+          (simple-var-ref o)))
+    )
+  )
+)
+(D
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access x
+          (simple-var-ref self)))
+    )
+  )
+  (peer
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref o))
+          (invocation get expr:
+            (simple-var-ref o) ())))
+    )
+  )
+)
+(I
+  (get
+    (bb0 () ()
+      (return
+        (field-based-access x
+          (simple-var-ref self)))
+    )
+  )
+)
+(RO
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access x
+          (simple-var-ref self))
+        (simple-var-ref x))
+    )
+  )
+  (dbl
+    (bb0 () ()
+      (return
+        (binary-expr *
+          (field-based-access x
+            (simple-var-ref self))
+          (literal 2)))
+    )
+  )
+  (peer
+    (bb0 () ()
+      (return
+        (binary-expr +
+          (field-based-access x
+            (simple-var-ref o))
+          (invocation dbl expr:
+            (simple-var-ref o) ())))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable a (type
+        (user-defined-type A)) (expr
+        (new (
+          (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation peer expr:
+          (new
+            (user-defined-type RO) (
+            (literal 2))) (
+          (new
+            (user-defined-type RO) (
+            (literal 3))))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nil expr:
+          (simple-var-ref a) (
+          (simple-var-ref a))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nil expr:
+          (simple-var-ref a) (
+          (literal <nil>))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation viaAlias expr:
+          (simple-var-ref a) (
+          (simple-var-ref a))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation mixed expr:
+          (simple-var-ref a) (
+          (new
+            (user-defined-type M) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation peer expr:
+          (new
+            (user-defined-type D) ()) (
+          (new
+            (user-defined-type D) ()))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation get expr:
+          (new
+            (user-defined-type I) ()) ()))))
+  )
+)
