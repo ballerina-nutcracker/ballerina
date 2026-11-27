@@ -1,0 +1,4 @@
+-- stdout --
+{"retries":8,"labels":{"k":"v"}}
+true
+-- stderr --

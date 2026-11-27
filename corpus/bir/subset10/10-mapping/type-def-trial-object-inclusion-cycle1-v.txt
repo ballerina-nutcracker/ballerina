@@ -1,0 +1,34 @@
+module $anon.. v 0.0.0;
+v  nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: {| x: boolean, never... |}|{| x: string, never... |}, never... |}{} defaults{f=$anon/.:$default$0}
+    r = %1;
+    %4 = ConstantLoad x
+    %6 = ConstantLoad f
+    %5 = r[%6];
+    %3 = %5[%4];
+    %7 = println(%3) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> {| x: boolean, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = v is object { function run({| x: boolean, never... |}|{| x: string, never... |}) returns nil }
+    %3 = newMap {| x: boolean, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> {| x: boolean, never... |}|{| x: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = v is {| f: {| x: boolean, never... |}|{| x: string, never... |}, never... |}
+    %3 = newMap {| x: boolean, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}

@@ -1,0 +1,47 @@
+module $anon.. v 0.0.0;
+isQ(any) -> boolean{
+  bb0 {
+    %2 = v is {| y: int, never... |}
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad x
+    %2 = ConstantLoad 5
+    %3 = ConstantLoad y
+    %4 = ConstantLoad 0
+    %5 = newMap {| next: nil|{| next: nil|...|{| y: int, never... |}, x: int, y: int, never... |}|{| y: int, never... |}, x: int, y: int, never... |}{%1=%2, %3=%4} defaults{next=$anon/.:$default$1}
+    p = %5;
+    %7 = println(p) -> bb1;
+  }
+  bb1 {
+    %9 = ConstantLoad next
+    %8 = p[%9];
+    %10 = isQ(%8) -> bb2;
+  }
+  bb2 {
+    %11 = %10;
+    %12 = println(%11) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> nil|{| next: nil|...|{| y: int, never... |}, x: int, y: int, never... |}|{| y: int, never... |}{
+  bb0 {
+    %1 = ConstantLoad y
+    %2 = ConstantLoad 2
+    %3 = newMap {| y: int, never... |}{%1=%2}
+    %0 = %3;
+    return;
+  }
+}

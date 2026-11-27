@@ -1,0 +1,39 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition Node
+    (record-type
+      (field value
+        (value-type int)
+        (literal 1))
+      (field next
+        (union-type
+          (user-defined-type Node)
+          (value-type null))
+        (literal <nil>))))
+  (const A (
+    (user-defined-type Node)) (
+    (mapping-constructor-expr)))
+  (const B (
+    (user-defined-type Node)) (
+    (mapping-constructor-expr
+      (key-value
+        (literal next)
+        (mapping-constructor-expr
+          (key-value
+            (literal value)
+            (literal 2)))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref A))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref B))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref A)
+            (user-defined-type Node))))))))

@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang map (as lang.map))
+  (type-definition Rec
+    (record-type
+      (field r
+        (union-type
+          (user-defined-type Rec)
+          (value-type null)))
+      (field x
+        (value-type int)
+        (invocation lang.map length (
+          (literal {"a":null,"b":{"r":null,"x":7}}))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type Rec)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal r)
+              (literal <nil>))))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r)
+            (literal x)))))
+      (expression-stmt
+        (invocation io println (
+          (optional-field-based-access x
+            (index-based-access
+              (literal {"a":null,"b":{"r":null,"x":7}})
+              (literal b))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (invocation lang.map length (
+          (literal {"a":null,"b":{"r":null,"x":7}})))))))

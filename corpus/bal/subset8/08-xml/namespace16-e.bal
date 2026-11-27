@@ -15,6 +15,6 @@
 // under the License.
 
 const string FIRST = SECOND; // @error
-const string SECOND = FIRST; // @error
+const string SECOND = FIRST;
 
 xmlns FIRST as cyclic;

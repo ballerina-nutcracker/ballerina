@@ -1,0 +1,89 @@
+module $anon.. v 0.0.0;
+class C {
+  v int
+
+  init({| i: nil|{| h: isolated object { public isolated function init(...) returns nil; int v }|isolated object { public isolated function init(string) returns nil; string s }, never... |}, x: int, never... |}) -> nil{
+    bb0 {
+      %4 = ConstantLoad x
+      %3 = r[%4];
+      %5 = ConstantLoad v
+      self[%5] = %3;
+      return;
+    }
+  }
+}
+class D {
+  s string
+
+  init(string) -> nil{
+    bb0 {
+      %3 = ConstantLoad s
+      self[%3] = s;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newMap {| h: isolated object { public isolated function init({| i: nil|..., x: int, never... |}) returns nil; int v }|isolated object { public isolated function init(string) returns nil; string s }, never... |}{} defaults{h=$anon/.:$default$2}
+    i = %1;
+    %4 = ConstantLoad h
+    %3 = i[%4];
+    h = %3;
+    %6 = h is isolated object { public isolated function init({| i: nil|{| h: ...|isolated object { public isolated function init(string) returns nil; string s }, never... |}, x: int, never... |}) returns nil; int v }
+    %6 ? bb1 : bb3;
+  }
+  bb1 {
+    PushScopeFrame 4
+    %1 = ConstantLoad v
+    %0 = (1, h)[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    PopScopeFrame
+    GOTO bb3;
+  }
+  bb3 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> nil|{| h: isolated object { public isolated function init({| i: nil|..., x: int, never... |}) returns nil; int v }|isolated object { public isolated function init(string) returns nil; string s }, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 7
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> isolated object { public isolated function init({| i: nil|{| h: ...|isolated object { public isolated function init(string) returns nil; string s }, never... |}, x: int, never... |}) returns nil; int v }|isolated object { public isolated function init(string) returns nil; string s }{
+  bb0 {
+    %1 = newObject $anon/.:C
+    %2 = newMap {| i: nil|{| h: isolated object { public isolated function init({| i: nil|..., x: int, never... |}) returns nil; int v }|isolated object { public isolated function init(string) returns nil; string s }, never... |}, x: int, never... |}{} defaults{i=$anon/.:$default$0, x=$anon/.:$default$1}
+    %3 = %1.init(%2) -> bb1;
+  }
+  bb1 {
+    %5 = %3 is nil
+    %5 ? bb2 : bb3;
+  }
+  bb2 {
+    %4 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %4 = %3;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %4;
+    return;
+  }
+}

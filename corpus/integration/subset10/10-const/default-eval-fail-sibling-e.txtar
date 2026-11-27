@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: division by zero
+  --> default-eval-fail-sibling-e.bal:31:21
+   |
+31 |     Runtime r = {x: 1 / 0}; // @error division by zero beside a nonconstant default
+   |                     ^^^^^

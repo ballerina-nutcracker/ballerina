@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: duplicate field name 'x'
+  --> default-duplicate-field-e.bal:22:5
+   |
+22 |     string x; // @error duplicate field name
+   |     ^^^^^^^^^

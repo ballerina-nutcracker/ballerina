@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> default-inclusion-override-runtime-e.bal:31:29
+   |
+31 | const OverrideToRuntime A = {}; // @error x's own default is not constant, the inherited one is replaced
+   |                             ^^

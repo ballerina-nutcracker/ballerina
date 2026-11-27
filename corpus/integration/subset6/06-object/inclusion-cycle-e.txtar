@@ -1,29 +1,5 @@
 -- stdout --
 -- stderr --
-error[SEMANTIC_ERROR]: error resolving type inclusion
-  --> inclusion-cycle-e.bal:17:8
-   |
-17 | type A object { // @error
-   |        ^^^^^^^^^^^^^^^^^^
-18 |     *B;
-   |     ^^^
-19 |     int x;
-   |     ^^^^^^
-20 | };
-   | ^
-
-error[SEMANTIC_ERROR]: error resolving type inclusion
-  --> inclusion-cycle-e.bal:22:8
-   |
-22 | type B object { // @error
-   |        ^^^^^^^^^^^^^^^^^^
-23 |     *A;
-   |     ^^^
-24 |     int y;
-   |     ^^^^^^
-25 | };
-   | ^
-
 error[SEMANTIC_ERROR]: invalid cycle detected for type definition A
   --> inclusion-cycle-e.bal:17:1
    |

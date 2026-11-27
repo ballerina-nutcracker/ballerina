@@ -1,0 +1,56 @@
+module $anon.. v 0.0.0;
+result  {| x: int, y: int, never... |}|{| x: string, never... |};
+choose({| x: int, y: int, never... |}|{| x: string, never... |}) -> {| x: int, y: int, never... |}|{| x: string, never... |}{
+  bb0 {
+    %0 = value;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %2 = ConstantLoad x
+    %1 = result[%2];
+    %3 = println(%1) -> bb1;
+  }
+  bb1 {
+    %4 = result is {| x: int, y: int, never... |}
+    %5 = %4;
+    %6 = println(%5) -> bb2;
+  }
+  bb2 {
+    %7 = result is {| x: int, y: int, never... |}
+    %7 ? bb3 : bb5;
+  }
+  bb3 {
+    PushScopeFrame 4
+    %1 = ConstantLoad y
+    %0 = result[%1];
+    %2 = %0;
+    %3 = println(%2) -> bb4;
+  }
+  bb4 {
+    PopScopeFrame
+    GOTO bb5;
+  }
+  bb5 {
+    PushScopeFrame 0
+    PopScopeFrame
+    return;
+  }
+}
+$default$0() -> nil|{| next: nil|..., never... |}{
+  bb0 {
+    %1 = ConstantLoad next
+    %2 = ConstantLoad <nil>
+    %3 = newMap {| next: nil|{| next: nil|..., never... |}, never... |}{%1=%2} defaults{next=$anon/.:$default$0}
+    %0 = %3;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}

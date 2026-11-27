@@ -1,0 +1,38 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: {| a: {| b: nil|..., x: int, never... |}, never... |}|{| a: {| b: nil|..., x: int, never... |}, s: string, never... |}, never... |}{} defaults{f=$anon/.:$default$2}
+    b = %1;
+    %4 = ConstantLoad f
+    %3 = b[%4];
+    %5 = println(%3) -> bb1;
+  }
+  bb1 {
+    %6 = ConstantLoad {"a":{"b":null,"x":1}}
+    %7 = println(%6) -> bb2;
+  }
+  bb2 {
+    return;
+  }
+}
+$default$0() -> nil|{| f: {| a: {| b: nil|..., x: int, never... |}, never... |}|{| a: {| b: nil|..., x: int, never... |}, s: string, never... |}, never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> int{
+  bb0 {
+    %1 = ConstantLoad 1
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> {| a: {| b: nil|{| f: ...|{| a: ..., s: string, never... |}, never... |}, x: int, never... |}, never... |}|{| a: {| b: nil|{| f: {| a: ..., never... |}|..., never... |}, x: int, never... |}, s: string, never... |}{
+  bb0 {
+    %1 = ConstantLoad {"a":{"b":null,"x":1}}
+    %0 = %1;
+    return;
+  }
+}

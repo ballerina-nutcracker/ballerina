@@ -1,0 +1,77 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition Const
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (literal 5))))
+  (type-definition Runtime
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition Open
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition MaybeY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1,"y":5}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1,"y":9}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1,"y":9}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1,"y":3}))))
+      (expression-stmt
+        (invocation io println (
+          (literal {"x":1,"y":9}))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (literal {"x":1,"y":9})
+            (intersection-type
+              (value-type readonly)
+              (record-type
+                (field x
+                  (finite-type
+                    (literal 1)))
+                (field y
+                  (finite-type
+                    (literal 9)))))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal 5))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (invocation next ()))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (invocation next ())))))

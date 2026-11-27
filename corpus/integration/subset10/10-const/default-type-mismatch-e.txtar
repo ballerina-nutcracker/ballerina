@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected int, got "a"
+  --> default-type-mismatch-e.bal:19:13
+   |
+19 |     int x = "a"; // @error default is not an int
+   |             ^^^

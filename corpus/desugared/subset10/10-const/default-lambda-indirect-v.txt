@@ -1,0 +1,105 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition S
+    (record-type
+      (field r
+        (user-defined-type R)
+        (mapping-constructor-expr))
+      (field k
+        (value-type int)
+        (literal 1))))
+  (type-definition R
+    (record-type
+      (field f
+        (function-type () (
+          (union-type
+            (user-defined-type S)
+            (value-type null))))
+        (lambda
+          (function $anonFunc$_0 () (
+            (union-type
+              (user-defined-type S)
+              (value-type null)))
+            (block-function-body
+              (return
+                (mapping-constructor-expr
+                  (key-value
+                    (literal r)
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal f)
+                        (lambda
+                          (function $anonFunc$_1 () (
+                            (union-type
+                              (user-defined-type S)
+                              (value-type null)))
+                            (expr-function-body
+                              (literal <nil>)))))))
+                  (key-value
+                    (literal k)
+                    (literal 5))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable s (type
+          (user-defined-type S)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable g (expr
+          (index-based-access
+            (index-based-access
+              (simple-var-ref s)
+              (literal r))
+            (literal f)))))
+      (var-def
+        (variable t (type
+          (union-type
+            (user-defined-type S)
+            (value-type null))) (expr
+          (invocation g ()))))
+      (expression-stmt
+        (invocation io println (
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref t)
+              (user-defined-type S))
+            (index-based-access
+              (simple-var-ref t)
+              (literal k))
+            (unary-expr -
+              (literal 1))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (mapping-constructor-expr))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (literal 1))))
+  (function $default$2 () ()
+    (block-function-body
+      (return
+        (lambda
+          (function $anonFunc$_0 () (
+            (union-type
+              (user-defined-type S)
+              (value-type null)))
+            (block-function-body
+              (return
+                (mapping-constructor-expr
+                  (key-value
+                    (literal r)
+                    (mapping-constructor-expr
+                      (key-value
+                        (literal f)
+                        (lambda
+                          (function $anonFunc$_1 () (
+                            (union-type
+                              (user-defined-type S)
+                              (value-type null)))
+                            (expr-function-body
+                              (literal <nil>)))))))
+                  (key-value
+                    (literal k)
+                    (literal 5)))))))))))

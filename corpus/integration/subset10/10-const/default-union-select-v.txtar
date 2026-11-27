@@ -1,0 +1,7 @@
+-- stdout --
+{"x":3,"y":2}
+true
+{"y":4,"x":1}
+{"s":"z","f":true}
+true
+-- stderr --

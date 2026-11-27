@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> default-nested-constant-body-failure-e.bal:18:29
+   |
+18 | type Leaf record {| int x = true + 1; |}; // @error invalid default
+   |                             ^^^^^^^^

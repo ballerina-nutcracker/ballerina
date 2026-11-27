@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> default-cast-body-failure-e.bal:19:32
+   |
+19 |     var r = <record {| int x = true + 1; |}> value; // @error invalid default in the cast type
+   |                                ^^^^^^^^

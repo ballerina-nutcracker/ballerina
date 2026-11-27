@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expect numeric, string, or xml types for +
+  --> default-query-from-body-failure-e.bal:18:39
+   |
+18 |     var rows = from record {| int x = true + 1; |} r in [{x: 1}] // @error invalid default in the from type
+   |                                       ^^^^^^^^

@@ -1,0 +1,50 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function next () (
+    (value-type int))
+    (block-function-body
+      (return
+        (literal 42))))
+  (type-definition Runtime
+    (record-type
+      (field x
+        (value-type int))
+      (field y
+        (value-type int)
+        (invocation next ()))))
+  (type-definition MaybeY
+    (record-type
+      (field x
+        (value-type int))
+      (field y optional
+        (value-type int))))
+  (const X (
+    (constrained-type
+      (builtin-ref-type map)
+      (value-type int))) (
+    (mapping-constructor-expr
+      (key-value
+        (literal x)
+        (literal 1)))))
+  (annotation info
+    (user-defined-type Runtime)
+    (attach-point type))
+  (type-definition T
+    (annotation-attachment info
+      (mapping-constructor-expr
+        (mapping-spread-field
+          (type-conversion-expr
+            (simple-var-ref X)
+            (user-defined-type MaybeY)))))
+    (record-type))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable t (type
+          (user-defined-type T)) (expr
+          (mapping-constructor-expr))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref t)))))))

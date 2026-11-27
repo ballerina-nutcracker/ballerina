@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid cycle detected for K
+  --> constant-declaration-cycle-class-rest-e.bal:18:15
+   |
+18 | const boolean K = true ? true : ((<C?>()) == ()); // @error declaration dependency cycle through class rest
+   |               ^

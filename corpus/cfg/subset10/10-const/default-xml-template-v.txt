@@ -1,0 +1,12 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable d (type
+        (user-defined-type Doc)) (expr
+        (mapping-constructor-expr))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access value
+          (simple-var-ref d)))))
+  )
+)

@@ -1,0 +1,11 @@
+-- stdout --
+default a
+default b
+{"a":1,"b":1}
+default b
+{"a":5,"b":1}
+{"m":{"k":1},"l":[9],"x":1}
+{"m":{},"l":[],"x":1}
+{"m":{},"l":[],"x":1}
+true
+-- stderr --
