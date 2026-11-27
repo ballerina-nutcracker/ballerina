@@ -1,0 +1,8 @@
+-- stdout --
+0.0.0.0 60 0
+{"keepAlive":"AUTO","maxPipelinedRequests":10}
+{"soBackLog":100,"connectTimeOut":15,"receiveBufferSize":1048576,"sendBufferSize":1048576,"tcpNoDelay":true,"socketReuse":true,"keepAlive":false}
+65535 100 300 30
+60 0
+19581
+-- stderr --

@@ -726,22 +726,95 @@ public type ListenerSecureSocket record {|
     boolean shareSession?;
 |};
 
-// Provides a set of configurations for the HTTP listener.
-//
-//   host         - Bind address (default "0.0.0.0").
-//   timeout      - Response write timeout in seconds (default 60). Request headers
-//                  are bounded by a fixed internal timeout; request body reads are
-//                  not time-limited, so slow uploads and proxied streams are not
-//                  aborted mid-transfer.
-//   httpVersion  - Highest HTTP version supported (default HTTP_2_0). HTTP_2_0 enables
-//                  both HTTP/1.1 and HTTP/2; HTTP_1_1 restricts to HTTP/1.1 only.
-//   secureSocket - TLS settings; () disables TLS (plain HTTP).
+# Provides a set of configurations for HTTP service endpoints.
+#
+# + host - The host name/IP of the endpoint
+# + http1Settings - Configurations related to HTTP/1.x protocol
+# + secureSocket - The SSL configurations for the service endpoint. This needs to be configured in order to
+#                  communicate through HTTPS.
+# + httpVersion - Highest HTTP version supported by the endpoint
+# + timeout - Period of time in seconds that a connection waits for a read/write operation. Use value 0 to
+#                   disable timeout
+# + gracefulStopTimeout - Grace period of time in seconds for listener gracefulStop
+# + socketConfig - Provides settings related to server socket configuration
+# + http2InitialWindowSize - Configuration to change the initial window size in HTTP/2
+# + http2MaxActiveStreams - Maximum concurrent HTTP/2 streams per connection advertised to clients.
+#                          Defaults to 100
+# + minIdleTimeInStaleState - Minimum time in seconds for a connection to be kept open which has received a GOAWAY.
+#                             This only applies for HTTP/2. Default value is 5 minutes. If the value is set to -1,
+#                             the connection will be closed after all in-flight streams are completed
+# + timeBetweenStaleEviction - Time between the connection stale eviction runs in seconds. This only applies for HTTP/2.
+#                              Default value is 30 seconds
 public type ListenerConfiguration record {|
-    string host?;
-    decimal timeout?;
+    string host = "0.0.0.0";
+    ListenerHttp1Settings http1Settings = {};
+    ListenerSecureSocket? secureSocket = ();
     HttpVersion httpVersion = HTTP_2_0;
-    ListenerSecureSocket? secureSocket?;
+    decimal timeout = DEFAULT_LISTENER_TIMEOUT;
+    decimal gracefulStopTimeout = DEFAULT_GRACEFULSTOP_TIMEOUT;
+    ServerSocketConfig socketConfig = {};
+    int http2InitialWindowSize = 65535;
+    int http2MaxActiveStreams = 100;
+    decimal minIdleTimeInStaleState = 300;
+    decimal timeBetweenStaleEviction = 30;
 |};
+
+# Constant for the default listener endpoint timeout in seconds
+public const decimal DEFAULT_LISTENER_TIMEOUT = 60;
+
+# Constant for the default listener gracefulStop timeout in seconds
+public const decimal DEFAULT_GRACEFULSTOP_TIMEOUT = 0;
+
+# Maximum number of requests that can be processed at a given time on a single connection.
+const int MAX_PIPELINED_REQUESTS = 10;
+
+# Provides settings related to HTTP/1.x protocol.
+#
+# + keepAlive - Can be set to either `KEEPALIVE_AUTO`, which respects the `connection` header, or `KEEPALIVE_ALWAYS`,
+#               which always keeps the connection alive, or `KEEPALIVE_NEVER`, which always closes the connection
+# + maxPipelinedRequests - Defines the maximum number of requests that can be processed at a given time on a single
+#                          connection. By default 10 requests can be pipelined on a single connection and user can
+#                          change this limit appropriately.
+public type ListenerHttp1Settings record {|
+    KeepAlive keepAlive = KEEPALIVE_AUTO;
+    int maxPipelinedRequests = MAX_PIPELINED_REQUESTS;
+|};
+
+# Provides settings related to server socket configuration.
+#
+# + soBackLog - Requested maximum length of the queue of incoming connections.
+public type ServerSocketConfig record {|
+    *ClientSocketConfig;
+    int soBackLog = 100;
+|};
+
+# Provides settings related to client socket configuration.
+#
+# + connectTimeOut - Connect timeout of the channel in seconds. If the Channel does not support connect operation,
+# this property is not used at all, and therefore will be ignored.
+# + receiveBufferSize - Sets the SO_RCVBUF option to the specified value for this Socket.
+# + sendBufferSize - Sets the SO_SNDBUF option to the specified value for this Socket.
+# + tcpNoDelay - Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
+# + socketReuse - Enable/disable the SO_REUSEADDR socket option.
+# + keepAlive - Enable/disable SO_KEEPALIVE.
+public type ClientSocketConfig record {|
+    decimal connectTimeOut = 15;
+    int receiveBufferSize = 1048576;
+    int sendBufferSize = 1048576;
+    boolean tcpNoDelay = true;
+    boolean socketReuse = true;
+    boolean keepAlive = false;
+|};
+
+# Defines the possible values for the keep-alive configuration in service and client endpoints.
+public type KeepAlive KEEPALIVE_AUTO|KEEPALIVE_ALWAYS|KEEPALIVE_NEVER;
+
+# Decides to keep the connection alive or not based on the `connection` header of the client request
+public const KEEPALIVE_AUTO = "AUTO";
+# Keeps the connection alive irrespective of the `connection` header value
+public const KEEPALIVE_ALWAYS = "ALWAYS";
+# Closes the connection irrespective of the `connection` header value
+public const KEEPALIVE_NEVER = "NEVER";
 
 // Represents the type of service objects that can be attached to an http:Listener.
 public type Service service object {
@@ -853,10 +926,10 @@ public isolated class Listener {
     # + return - `()` on success, or an `http:ListenerError` if initialisation fails
     public isolated function init(int port, ListenerConfiguration? config = ()) returns ListenerError? {
         self.port = port;
-        return self.initNative(port, config);
+        return self.initNative(port, config ?: {});
     }
 
-    private isolated function initNative(int port, ListenerConfiguration? config) returns ListenerError? = external;
+    private isolated function initNative(int port, ListenerConfiguration config) returns ListenerError? = external;
 
     # Attaches a service to this listener.
     #

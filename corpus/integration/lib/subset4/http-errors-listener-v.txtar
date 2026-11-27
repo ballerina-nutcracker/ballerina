@@ -1,4 +1,9 @@
 -- stdout --
 true Key file or server certificates file not found
+true Idle timeout cannot be negative. If you want to disable the timeout please use value 0
+true gracefulStop timeout cannot be negative
+Idle timeout cannot be negative. If you want to disable the timeout please use value 0
+http2MaxActiveStreams must be between 1 and 2147483647: 0
+http2InitialWindowSize must be between 1 and 2147483647: 3000000000
 true Listener port is not defined!
 -- stderr --

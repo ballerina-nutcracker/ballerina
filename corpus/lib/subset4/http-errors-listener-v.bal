@@ -23,6 +23,35 @@ public function main() {
         io:println(missingCert is http:GenericListenerError, " ", missingCert.message()); // @output true Key file or server certificates file not found
     }
 
+    http:Listener|http:ListenerError negativeTimeout = new (9562, {timeout: -1});
+    if negativeTimeout is http:ListenerError {
+        // @output true Idle timeout cannot be negative. If you want to disable the timeout please use value 0
+        io:println(negativeTimeout is http:GenericListenerError, " ", negativeTimeout.message());
+    }
+
+    http:Listener|http:ListenerError negativeGracefulStop = new (9563, {gracefulStopTimeout: -1});
+    if negativeGracefulStop is http:ListenerError {
+        // @output true gracefulStop timeout cannot be negative
+        io:println(negativeGracefulStop is http:GenericListenerError, " ", negativeGracefulStop.message());
+    }
+
+    // Too small for a float, but still negative.
+    http:Listener|http:ListenerError tinyNegativeTimeout = new (9566, {timeout: -1e-400d});
+    if tinyNegativeTimeout is http:ListenerError {
+        io:println(tinyNegativeTimeout.message()); // @output Idle timeout cannot be negative. If you want to disable the timeout please use value 0
+    }
+
+    // Unlike jBallerina, which accepts them, HTTP/2 settings net/http cannot advertise are rejected.
+    http:Listener|http:ListenerError noStreams = new (9564, {http2MaxActiveStreams: 0});
+    if noStreams is http:ListenerError {
+        io:println(noStreams.message()); // @output http2MaxActiveStreams must be between 1 and 2147483647: 0
+    }
+
+    http:Listener|http:ListenerError hugeWindow = new (9565, {http2InitialWindowSize: 3000000000});
+    if hugeWindow is http:ListenerError {
+        io:println(hugeWindow.message()); // @output http2InitialWindowSize must be between 1 and 2147483647: 3000000000
+    }
+
     http:Listener|http:ListenerError noPort = new (0);
     if noPort is http:ListenerError {
         io:println(noPort is http:GenericListenerError, " ", noPort.message()); // @output true Listener port is not defined!

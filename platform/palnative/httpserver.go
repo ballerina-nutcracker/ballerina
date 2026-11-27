@@ -50,11 +50,6 @@ func Listen(cfg pal.ServerConfig, handler http.Handler) (pal.ServerHandle, error
 		}
 	}
 
-	writeTimeout := cfg.WriteTimeout
-	if writeTimeout == 0 {
-		writeTimeout = 60 * time.Second
-	}
-
 	var tlsCfg *tls.Config
 	if cfg.TLS != nil {
 		var err error
@@ -72,26 +67,35 @@ func Listen(cfg pal.ServerConfig, handler http.Handler) (pal.ServerHandle, error
 		// ReadHeaderTimeout guards against slow-loris without aborting request bodies
 		// mid-stream (ReadTimeout would do that and breaks proxies/uploads).
 		ReadHeaderTimeout: 5 * time.Second,
-		WriteTimeout:      writeTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
 		// Evict idle HTTP/1.1 keep-alive connections that haven't been used.
 		IdleTimeout: 300 * time.Second,
 		// 16 KB max header size; the default 1 MB is wasteful for typical REST APIs.
 		MaxHeaderBytes: 1 << 14,
+		HTTP2: &http.HTTP2Config{
+			MaxConcurrentStreams:      cfg.HTTP2.MaxConcurrentStreams,
+			MaxReceiveBufferPerStream: cfg.HTTP2.InitialWindowSize,
+		},
 	}
 
-	ln, err := net.Listen("tcp", addr)
+	keepAlive := time.Duration(-1)
+	if cfg.Socket.KeepAlive {
+		keepAlive = 0
+	}
+	ln, err := (&net.ListenConfig{KeepAlive: keepAlive}).Listen(context.Background(), "tcp", addr)
 	if err != nil {
 		return nil, err
 	}
+	var serveLn net.Listener = &socketListener{Listener: ln, cfg: cfg.Socket}
 	switch {
 	case tlsCfg != nil && cfg.HTTPVersion == "2.0" && carriesHTTP2(tlsCfg):
 		// ServeTLS offers "h2" through ALPN, which a listener wrapped in TLS beforehand would not.
-		go func() { _ = server.ServeTLS(ln, "", "") }()
+		go func() { _ = server.ServeTLS(serveLn, "", "") }()
 	case tlsCfg != nil:
 		// No ALPN, so a client that offers only "h2" still falls back to HTTP/1.1.
-		go func() { _ = server.Serve(tls.NewListener(ln, tlsCfg)) }()
+		go func() { _ = server.Serve(tls.NewListener(serveLn, tlsCfg)) }()
 	default:
-		go func() { _ = server.Serve(ln) }()
+		go func() { _ = server.Serve(serveLn) }()
 	}
 	return &httpServerHandle{server: server}, nil
 }
@@ -108,6 +112,30 @@ func carriesHTTP2(tlsCfg *tls.Config) bool {
 	return slices.ContainsFunc(tlsCfg.CipherSuites, func(id uint16) bool {
 		return id == tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 || id == tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 	})
+}
+
+// socketListener applies the configured socket options to each connection it accepts.
+type socketListener struct {
+	net.Listener
+	cfg pal.ServerSocketConfig
+}
+
+func (l *socketListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+	// Failures are ignored, since http.Server stops serving on an Accept error.
+	if tcp, ok := conn.(*net.TCPConn); ok {
+		if l.cfg.ReceiveBufferSize > 0 {
+			_ = tcp.SetReadBuffer(l.cfg.ReceiveBufferSize)
+		}
+		if l.cfg.SendBufferSize > 0 {
+			_ = tcp.SetWriteBuffer(l.cfg.SendBufferSize)
+		}
+		_ = tcp.SetNoDelay(l.cfg.TCPNoDelay)
+	}
+	return conn, nil
 }
 
 // httpServerHandle adapts *http.Server to pal.ServerHandle.

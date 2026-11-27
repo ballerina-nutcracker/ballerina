@@ -324,3 +324,21 @@ service / on new http:Listener(9090) {
 ```
 
 `promise` returns an `http:ListenerError` over HTTP/1.x, when the client has disabled push, and for a promise with a relative or malformed path or a method other than `GET` or `HEAD`; jBallerina sends such promises, and the client then drops the connection. A promise the resource returns without answering is reset, where jBallerina leaves the client waiting for it.
+
+## Listener configuration
+
+`http:ListenerConfiguration` declares jBallerina's connection settings with their defaults.
+
+```ballerina
+import ballerina/http;
+
+listener http:Listener albums = new (9090, {
+    http1Settings: {keepAlive: http:KEEPALIVE_NEVER},
+    http2MaxActiveStreams: 50,
+    http2InitialWindowSize: 131072,
+    socketConfig: {tcpNoDelay: false, keepAlive: true},
+    gracefulStopTimeout: 10
+});
+```
+
+`KEEPALIVE_NEVER` closes each HTTP/1.x connection after its response, on an HTTP/2 listener too, where jBallerina applies `http1Settings` only to an HTTP/1.1 listener. The HTTP/2 settings are advertised to every HTTP/2 client, over TLS too, where jBallerina ignores `http2InitialWindowSize`. `gracefulStopTimeout` bounds how long `gracefulStop` waits for requests in flight. `KEEPALIVE_ALWAYS` behaves like `KEEPALIVE_AUTO`, following the request's `Connection` header. `maxPipelinedRequests`, `soBackLog`, `socketReuse`, `connectTimeOut` and the stale-eviction settings are accepted but have no effect.

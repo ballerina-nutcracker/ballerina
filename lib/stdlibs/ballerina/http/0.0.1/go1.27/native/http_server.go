@@ -18,7 +18,6 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -33,9 +32,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/platform/pal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -58,7 +55,7 @@ type listenerState struct {
 	interceptorTypes interceptorTypes
 	host             string
 	port             int
-	timeout          time.Duration
+	settings         listenerSettings
 	httpVersion      string
 	tlsCfg           *pal.ServerTLSConfig
 	mu               sync.RWMutex
@@ -122,45 +119,33 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 				pushes:           newPushRegistry(),
 				host:             "0.0.0.0",
 				port:             port,
-				timeout:          60 * time.Second,
-				httpVersion:      "2.0",
 			}
-			if len(args) > 2 {
-				if cfg, ok := args[2].(*values.Map); ok {
-					if v, ok := cfg.Get("host"); ok {
-						if s, ok := v.(string); ok && s != "" {
-							state.host = s
-						}
-					}
-					if v, ok := cfg.Get("timeout"); ok {
-						if d, ok := v.(*decimal.Decimal); ok {
-							state.timeout = decimalToDuration(d)
-						}
-					}
-					if v, ok := cfg.Get("httpVersion"); ok {
-						if s, ok := v.(string); ok && s != "" {
-							state.httpVersion = s
-						}
-					}
-					if state.httpVersion == "1.0" {
-						msg := "warning [ballerina/http]: HTTP/1.0 is not supported by the Go HTTP runtime; falling back to HTTP/1.1\n"
-						_, _ = rt.Platform().IO.Stderr([]byte(msg))
-						state.httpVersion = "1.1"
-					}
-					if v, ok := cfg.Get("secureSocket"); ok {
-						if ssMap, ok := v.(*values.Map); ok {
-							tlsCfg, err := buildListenerTLSConfig(ssMap, rt.Platform().FS)
-							var pemErr *listenerPEMError
-							if errors.Is(err, errKeyFilesNotFound) || errors.As(err, &pemErr) {
-								return httpError(ctx, genericListenerError, err.Error(), nil), nil
-							}
-							if err != nil {
-								return httpError(ctx, genericListenerError, "Listener.init secureSocket: "+err.Error(), nil), nil
-							}
-							state.tlsCfg = tlsCfg
-						}
-					}
+			cfg := args[2].(*values.Map)
+			settings, err := readListenerSettings(cfg)
+			if err != nil {
+				return httpError(ctx, genericListenerError, err.Error(), nil), nil
+			}
+			state.settings = settings
+			if host, _ := cfg.Get("host"); host != "" {
+				state.host = host.(string)
+			}
+			httpVersion, _ := cfg.Get("httpVersion")
+			state.httpVersion = httpVersion.(string)
+			if state.httpVersion == "1.0" {
+				msg := "warning [ballerina/http]: HTTP/1.0 is not supported by the Go HTTP runtime; falling back to HTTP/1.1\n"
+				_, _ = rt.Platform().IO.Stderr([]byte(msg))
+				state.httpVersion = "1.1"
+			}
+			if ssMap, ok := cfg.Get("secureSocket"); ok && ssMap != nil {
+				tlsCfg, err := buildListenerTLSConfig(ssMap.(*values.Map), rt.Platform().FS)
+				var pemErr *listenerPEMError
+				if errors.Is(err, errKeyFilesNotFound) || errors.As(err, &pemErr) {
+					return httpError(ctx, genericListenerError, err.Error(), nil), nil
 				}
+				if err != nil {
+					return httpError(ctx, genericListenerError, "Listener.init secureSocket: "+err.Error(), nil), nil
+				}
+				state.tlsCfg = tlsCfg
 			}
 			self.Put("$state", state)
 			return nil, nil
@@ -288,12 +273,12 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 			self := args[0].(*values.Object)
 			stateVal, _ := self.Get("$state")
 			state := stateVal.(*listenerState)
-			server, timeout := state.takeForStop()
+			server, settings := state.takeForStop()
 			if server == nil {
 				return nil, nil
 			}
 
-			shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+			shutdownCtx, cancel := settings.gracefulStopContext()
 			defer cancel()
 			if err := server.Shutdown(shutdownCtx); err != nil {
 				return httpError(ctx, genericListenerError, "Listener.gracefulStop: "+err.Error(), nil), nil
@@ -314,15 +299,15 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 		})
 }
 
-// takeForStop returns the server a stop acts on and its timeout. Before the server is published,
-// it makes a start in progress end without serving.
-func (state *listenerState) takeForStop() (pal.ServerHandle, time.Duration) {
+// takeForStop returns the server a stop acts on and the listener's settings. Before the server is
+// published, it makes a start in progress end without serving.
+func (state *listenerState) takeForStop() (pal.ServerHandle, listenerSettings) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	if state.server == nil && state.starting {
 		state.stopRequested = true
 	}
-	return state.server, state.timeout
+	return state.server, state.settings
 }
 
 // createServiceInterceptors creates the interceptors of the services attached before the
@@ -575,6 +560,9 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 				}
 			}
 		}()
+		if state.settings.keepAliveNever && r.ProtoMajor == 1 {
+			encoder.Header().Set("Connection", "close")
+		}
 		if !servePush(state, encoder, r) {
 			dispatchRequest(rt, state, encoder, r)
 		}
@@ -583,7 +571,9 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 		Host:         state.host,
 		Port:         state.port,
 		HTTPVersion:  state.httpVersion,
-		WriteTimeout: state.timeout,
+		WriteTimeout: state.settings.timeout,
+		HTTP2:        state.settings.http2,
+		Socket:       state.settings.socket,
 		TLS:          state.tlsCfg,
 	}
 	return rt.Platform().HTTP.Listen(cfg, handler)
