@@ -1,0 +1,9 @@
+-- stdout --
+[]
+[]
+{"a":[]}
+[1,[]]
+array size is not compatible with the expected size
+incompatible expected type '[]' for value '1'
+incompatible value '1' for type '[]' in field 'a'
+-- stderr --
