@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:48:52
+   |
+48 |     A|B r = {x: v is object { function run(int p = 3) returns int; }}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                    ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:48:52
+   |
+48 |     A|B r = {x: v is object { function run(int p = 3) returns int; }}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                    ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:49:48
+   |
+49 |     C|D c = {x: <object { function run(int p = 3) returns int; }>v, m: 1}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-method-default1-fv.bal:49:48
+   |
+49 |     C|D c = {x: <object { function run(int p = 3) returns int; }>v, m: 1}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                                ^

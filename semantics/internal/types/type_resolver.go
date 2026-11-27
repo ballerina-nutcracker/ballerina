@@ -118,6 +118,12 @@ type typeResolver interface {
 	// dependencies it pulls in nest beneath it.
 	traceSpan() context.TraceSpan
 	setTraceSpan(span context.TraceSpan)
+
+	// deferDefault queues resolve, the resolution of one default expression. Package, function and default
+	// resolvers own a queue and drain it when their own scope ends: the end of top-level resolution for a package
+	// resolver, and the end of the body, field initializers or default expression it resolves for the others. A
+	// loop resolver queues on its parent.
+	deferDefault(resolve func())
 }
 
 type resolverContext uint8
@@ -240,6 +246,8 @@ type packageTypeResolver struct {
 	span context.TraceSpan
 
 	deferredTypeChecks []deferredTypeCheck
+	// pendingDefaults holds the default expressions met during top-level resolution, in the order they were met.
+	pendingDefaults []func()
 }
 
 func (t *packageTypeResolver) deferAnnotationSite(site ast.BLangNode) bool {
@@ -296,6 +304,30 @@ func (t *packageTypeResolver) drainDeferredTypeChecks() {
 		}
 	}
 	t.deferredTypeChecks = nil
+}
+
+func (t *packageTypeResolver) deferDefault(resolve func()) {
+	t.pendingDefaults = append(t.pendingDefaults, resolve)
+}
+
+// drainPendingDefaults runs queued defaults in order until the queue is empty, including defaults queued while
+// draining. It reports an internal error and drops the queue if the type env is not ready.
+func (t *packageTypeResolver) drainPendingDefaults() {
+	if !t.typeEnv().IsReady() {
+		t.internalError("type env not ready when draining default expressions", diagnostics.Location{})
+		t.pendingDefaults = nil
+		return
+	}
+	drainDefaults(&t.pendingDefaults)
+}
+
+// drainDefaults pops and runs the first closure of *queue until the queue is empty.
+func drainDefaults(queue *[]func()) {
+	for len(*queue) > 0 {
+		resolve := (*queue)[0]
+		*queue = (*queue)[1:]
+		resolve()
+	}
 }
 
 func (t *packageTypeResolver) typeContext() semtypes.Context        { return t.tyCtx }
@@ -445,6 +477,8 @@ func resolverXMLStepCounters(t typeResolver) map[string]int {
 		return resolver.xmlStepCounters
 	case *loopTypeResolver:
 		return resolverXMLStepCounters(resolver.parentResolver)
+	case *defaultTypeResolver:
+		return resolverXMLStepCounters(resolver.parent())
 	default:
 		// Unreachable: these are the only resolver kinds. The fresh table keeps the caller from writing a nil map.
 		t.internalError(fmt.Sprintf("no xml step counters for resolver %T", t), diagnostics.Location{})
@@ -492,6 +526,25 @@ type functionTypeResolver struct {
 	// span is the body's own span when one was started for it; the zero handle
 	// defers to the enclosing resolver.
 	span context.TraceSpan
+
+	// pendingDefaults holds the default expressions met while resolving this resolver's body, in the order they
+	// were met. They are resolved when the body ends (drainPendingDefaults).
+	pendingDefaults []func()
+}
+
+func (f *functionTypeResolver) deferDefault(resolve func()) {
+	f.pendingDefaults = append(f.pendingDefaults, resolve)
+}
+
+// drainPendingDefaults runs the queued defaults in order until the queue is empty, including defaults queued
+// while draining. It reports an internal error and drops the queue if the type env is not ready.
+func (f *functionTypeResolver) drainPendingDefaults() {
+	if !f.typeEnv().IsReady() {
+		f.internalError("type env not ready when draining default expressions", diagnostics.Location{})
+		f.pendingDefaults = nil
+		return
+	}
+	drainDefaults(&f.pendingDefaults)
 }
 
 func (f *functionTypeResolver) typeContext() semtypes.Context        { return f.tyCtx }
@@ -712,37 +765,43 @@ func isGeneratedXMLStepLambda(expr ast.BLangExpression) bool {
 }
 
 func hasResolverContext(t typeResolver, flag resolverContext) bool {
-	for current := t; current != nil; current = current.parent() {
-		switch resolver := current.(type) {
-		case *functionTypeResolver:
-			return resolver.context&flag != 0
-		case *packageTypeResolver:
-			return resolver.context&flag != 0
-		}
-	}
-	return false
+	return resolverContextFlags(t)&flag != 0
 }
 
 func setResolverContext(t typeResolver, flag resolverContext, enabled bool) func() {
+	contextFlags := nearestResolverContext(t)
+	if contextFlags == nil {
+		return func() {}
+	}
+	previous := *contextFlags
+	if enabled {
+		*contextFlags |= flag
+	} else {
+		*contextFlags &^= flag
+	}
+	return func() { *contextFlags = previous }
+}
+
+// resolverContextFlags returns the context flags of the nearest resolver that holds them.
+func resolverContextFlags(t typeResolver) resolverContext {
+	if contextFlags := nearestResolverContext(t); contextFlags != nil {
+		return *contextFlags
+	}
+	return 0
+}
+
+func nearestResolverContext(t typeResolver) *resolverContext {
 	for current := t; current != nil; current = current.parent() {
-		var contextFlags *resolverContext
 		switch resolver := current.(type) {
 		case *functionTypeResolver:
-			contextFlags = &resolver.context
+			return &resolver.context
 		case *packageTypeResolver:
-			contextFlags = &resolver.context
-		}
-		if contextFlags != nil {
-			previous := *contextFlags
-			if enabled {
-				*contextFlags |= flag
-			} else {
-				*contextFlags &^= flag
-			}
-			return func() { *contextFlags = previous }
+			return &resolver.context
+		case *defaultTypeResolver:
+			return &resolver.context
 		}
 	}
-	return func() {}
+	return nil
 }
 
 func (f *functionTypeResolver) nextXMLStepFnName() string {
@@ -951,6 +1010,7 @@ func ResolvePrivateNodes(
 				resolveActionOrExpression(ft, nil, field.Expr.(ast.BLangExpression), field.TypeNode().Type())
 			}
 		}
+		ft.drainPendingDefaults()
 		maps.Copy(allImports, ft.implicitImports)
 	}
 	for _, c := range common.DeclaredNodes(pkg.ClassDefinitions) {
@@ -1231,6 +1291,7 @@ func resolveFunctionBody(p *packageTypeResolver, fn common.FunctionDecl, span co
 	if !isPolymorphicFnSymbol(fnSym) {
 		ft.retTy = fnSym.TypedSignature().ReturnType
 	}
+	defer ft.drainPendingDefaults()
 	body := fn.GetBody()
 	if body == nil {
 		p.internalError("function body is nil at body-resolution stage", fn.GetPosition())
@@ -1314,6 +1375,7 @@ func (t *packageTypeResolver) resolveTopLevelTypes(pkg *ast.BLangPackage) {
 			resolveServiceType(t, svc, 0, attachPointBound)
 		}
 	}
+	t.drainPendingDefaults()
 	t.drainDeferredTypeChecks()
 }
 
@@ -2609,6 +2671,7 @@ func resolveNamedWorker(
 
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: chain}
 	resolveBlockFunctionBody(ft, boundaryChain, worker.Body)
+	ft.drainPendingDefaults()
 
 }
 
@@ -2652,6 +2715,7 @@ func resolveLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BLangLambd
 		context:           resolverContextForFunction(fnSym.TypedSignature().Flags&model.FuncSymbolFlagIsolated != 0),
 		ephemeralState:    resolverEphemeralState(t),
 	}
+	defer ft.drainPendingDefaults()
 
 	// Constructing the lambda captures its free variables. The body is checked
 	// behind a function boundary with those captures already in effect.
@@ -2749,6 +2813,7 @@ func resolveInferredLambdaFunctionExpr(t typeResolver, chain *binding, e *ast.BL
 		context:           resolverContextForFunction(flags&model.FuncSymbolFlagIsolated != 0),
 		ephemeralState:    resolverEphemeralState(t),
 	}
+	defer ft.drainPendingDefaults()
 	outerChain := addCaptureGroup(chain, e.Function.CaptureGroup())
 	boundaryChain := &binding{flags: bindingFlagFunctionBoundary, prev: outerChain}
 	body := e.Function.Body.(*ast.BLangExprFunctionBody)
@@ -3994,9 +4059,15 @@ func resolveSimpleVariableInner(t typeResolver, chain *binding, node *ast.BLangV
 		if isParameterDeclaration(t, node) {
 			// A parameter's initializer is a deferred default provider, not part of
 			// the enclosing function's flow.
-			defaultResult, ok := resolveDefaultExpression(t, chain, node, node.Expr, semType)
-			if !ok {
-				return chain, false
+			var defaultResult expressionResult
+			if _, inferred := node.Expr.(*ast.BLangInferredTypedescDefault); inferred {
+				// `<>` computes no value: it only checks the parameter's typedesc type, so it resolves now.
+				if _, ok := resolveActionOrExpression(t, chain, node.Expr, semType); !ok {
+					return chain, false
+				}
+				defaultResult = expressionResult{effect: defaultExpressionEffect(addCaptureGroup(chain, node.CaptureGroup()))}
+			} else {
+				defaultResult = resolveDefaultExpression(t, chain, node, node.Expr, semType)
 			}
 			chain = sequentialChain(t, defaultResult.effect)
 		} else {
@@ -4017,25 +4088,34 @@ func isParameterDeclaration(t typeResolver, node *ast.BLangVariable) bool {
 	return ok && metadata.Parameter
 }
 
-// resolveDefaultExpression checks a deferred default provider's body behind a
-// function boundary and returns only the effects of constructing that provider.
-// Checking the body is not executing it, so the body's own effects do not reach
-// the enclosing chain.
+// unsupportedTrialDefault is the message reported for an inline type descriptor that declares a default
+// expression while a candidate trial runs.
+const unsupportedTrialDefault = "inline type declarations with default expressions not supported in contexts " +
+	"that require to select a single atomic type from a union of candidates"
+
+// resolveDefaultExpression queues the check of a deferred default provider's body
+// behind a function boundary, and returns at once with only the effects of
+// constructing that provider. Checking the body is not executing it, so the
+// body's own effects do not reach the enclosing chain. The body is checked on
+// its own resolver, created here so that it keeps the scope and resolver context
+// flags in effect here, when t drains its queue (see deferDefault). The body's
+// diagnostics are reported when it is checked.
 func resolveDefaultExpression(
 	t typeResolver,
 	chain *binding,
 	owner ast.CaptureGroupOwner,
 	expr ast.BLangActionOrExpression,
 	expectedType semtypes.SemType,
-) (expressionResult, bool) {
+) expressionResult {
 	constructionChain := addCaptureGroup(chain, owner.CaptureGroup())
 	bodyChain := &binding{flags: bindingFlagFunctionBoundary, prev: constructionChain}
-	result, ok := resolveActionOrExpression(t, bodyChain, expr, expectedType)
-	if !ok {
-		return expressionResult{}, false
-	}
-	result.effect = defaultExpressionEffect(constructionChain)
-	return result, true
+	defaultResolver := newDefaultTypeResolver(t)
+	t.deferDefault(func() {
+		defaultResolver.resolve(func(t typeResolver) {
+			resolveActionOrExpression(t, bodyChain, expr, expectedType)
+		})
+	})
+	return expressionResult{effect: defaultExpressionEffect(constructionChain)}
 }
 
 // resolveActionOrExpression resolves expr against expectedType. An expression that fails to resolve has type never.
@@ -9194,7 +9274,6 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 
 		seen := make(map[string]bool)
 		resolvedFields := make(map[string]bool)
-		resolvedDefaults := make(map[string]bool)
 		var fields []semtypes.Field
 		// TODO: need to think of a way to unify this with objects
 		for name, field := range ty.FieldPtrs() {
@@ -9222,14 +9301,15 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 				delete(result.includedFields, name)
 			}
 			if field.Default != nil {
-				restoreContext := setIsolatedXMLStepContext(t, true)
-				defaultResult, ok := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy)
-				restoreContext()
-				// The field's type does not depend on its default, so the field is kept even if the default fails.
-				if ok {
-					chain = sequentialChain(t, defaultResult.effect)
-					resolvedDefaults[name] = true
+				if t.isEphemeral() {
+					// A trial cannot queue the default, and its type may not be ready to resolve it now.
+					t.unimplemented(unsupportedTrialDefault, field.Default.Expr.GetPosition())
+					return semtypes.SemType{}, chain, false
 				}
+				restoreContext := setIsolatedXMLStepContext(t, true)
+				defaultResult := resolveDefaultExpression(t, chain, field, field.Default.Expr, fieldTy)
+				restoreContext()
+				chain = sequentialChain(t, defaultResult.effect)
 			}
 			ro := field.IsReadonly()
 			opt := field.IsOptional()
@@ -9269,7 +9349,7 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 		}
 		semType := d.Define(t.typeEnv(), fields, rest)
 		mat := semtypes.ToMappingAtomicType(t.typeContext(), semType)
-		t.setMappingDefaults(mat, recordFieldDefaults(t, ty, resolvedFields, resolvedDefaults))
+		t.setMappingDefaults(mat, recordFieldDefaults(t, ty, resolvedFields))
 		return semType, chain, true
 	case *ast.BLangFunctionType:
 		if ty.IsAnyFunction() {
@@ -9293,12 +9373,20 @@ func resolveBTypeInner(t typeResolver, chain *binding, btype ast.BType, depth in
 			if !ty.RequiredParams[i].SymbolRef.IsEmpty() {
 				t.setSymbolType(ty.RequiredParams[i].SymbolRef, paramTy)
 			}
-			if ty.RequiredParams[i].InitExpr != nil {
-				defaultResult, ok := resolveDefaultExpression(t, chain, ty.RequiredParams[i], ty.RequiredParams[i].InitExpr, paramTy)
-				if !ok {
+			if param := ty.RequiredParams[i]; param.InitExpr != nil {
+				// The function's type does not depend on its defaults, so it is kept even if a default fails.
+				if _, inferred := param.InitExpr.(*ast.BLangInferredTypedescDefault); inferred {
+					// `<>` computes no value: it only checks the parameter's typedesc type, so it resolves now.
+					resolveActionOrExpression(t, chain, param.InitExpr, paramTy)
+					chain = sequentialChain(t, defaultExpressionEffect(addCaptureGroup(chain, param.CaptureGroup())))
+				} else if t.isEphemeral() {
+					// A trial cannot queue the default, and its type may not be ready to resolve it now.
+					t.unimplemented(unsupportedTrialDefault, param.InitExpr.GetPosition())
 					return semtypes.SemType{}, chain, false
+				} else {
+					defaultResult := resolveDefaultExpression(t, chain, param, param.InitExpr, paramTy)
+					chain = sequentialChain(t, defaultResult.effect)
 				}
-				chain = sequentialChain(t, defaultResult.effect)
 			}
 		}
 		restTy := semtypes.Never
@@ -9607,13 +9695,15 @@ func validateOverridesAndMerge(t typeResolver, directMembers []directMember, inc
 	return members, true
 }
 
-func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields, resolvedDefaults map[string]bool) []model.FieldDefault {
+// recordFieldDefaults returns the defaults of recordTy's fields whose types resolved, followed by the defaults it
+// inherits from its inclusions for fields that have no resolved declaration of their own.
+func recordFieldDefaults(t typeResolver, recordTy *ast.BLangRecordType, resolvedFields map[string]bool) []model.FieldDefault {
 	var defaults []model.FieldDefault
 	for name, field := range recordTy.FieldPtrs() {
 		if !resolvedFields[name] {
 			continue
 		}
-		if field.Default != nil && resolvedDefaults[name] {
+		if field.Default != nil {
 			defaults = append(defaults, model.FieldDefault{FieldName: name, FnRef: field.Default.FnRef})
 		}
 	}

@@ -1,0 +1,59 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition W
+    (record-type
+      (field c
+        (user-defined-type C))))
+  (class-definition C
+    (function init () ()
+      (block-function-body))
+    (function f (
+      (variable b (type
+        (value-type boolean)) (expr
+        (type-test-expr is
+          (group-expr
+            (type-conversion-expr
+              (literal 3)
+              (value-type any)))
+          (user-defined-type C))))) (
+      (value-type boolean))
+      (block-function-body
+        (return
+          (simple-var-ref b)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable w (type
+          (user-defined-type W)) (expr
+          (mapping-constructor-expr
+            (key-value
+              (literal c)
+              (new ()))))))
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (invocation $default$0 ()))))
+          (invocation f expr:
+            (index-based-access
+              (simple-var-ref w)
+              (literal c)) (
+            (simple-var-ref $desugar$0)))))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f expr:
+            (index-based-access
+              (simple-var-ref w)
+              (literal c)) (
+            (literal true))))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (type-test-expr is
+          (group-expr
+            (type-conversion-expr
+              (literal 3)
+              (value-type any)))
+          (user-defined-type C))))))

@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| next: nil|{| next: nil|..., v: string, never... |}, v: string, never... |}{} defaults{v=$anon/.:$default$0, next=$anon/.:$default$1}
+    l = %1;
+    %3 = println(l) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> string{
+  bb0 {
+    %1 = ConstantLoad y
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> nil|{| next: nil|..., v: string, never... |}{
+  bb0 {
+    %2 = ConstantLoad v
+    %3 = ConstantLoad z
+    %4 = ConstantLoad next
+    %5 = ConstantLoad <nil>
+    %6 = newMap {| anydata... |}{%2=%3, %4=%5}
+    %7 = ConstantLoad typedesc
+    %8 = cloneWithType(%6,%7) -> bb1;
+  }
+  bb1 {
+    %9 = %8 is error
+    %9 ? bb2 : bb3;
+  }
+  bb2 {
+    panic %8;
+  }
+  bb3 {
+    %1 = %8;
+    GOTO bb4;
+  }
+  bb4 {
+    %0 = %1;
+    return;
+  }
+}

@@ -1,0 +1,70 @@
+(package
+  (import-package ballerina io (as io))
+  (function rec (
+    (variable n (type
+      (value-type int)))
+    (variable d (type
+      (value-type int)) (expr
+      (ternary-expr
+        (binary-expr >
+          (simple-var-ref n)
+          (literal 0))
+        (expression-thunk
+        (var-def
+          (variable $desugar$0 (expr
+            (binary-expr -
+              (simple-var-ref n)
+              (literal 1)))))
+        (var-def
+          (variable $desugar$1 (expr
+            (invocation $default$0 (
+              (simple-var-ref $desugar$0))))))
+        (invocation rec (
+          (simple-var-ref $desugar$0)
+          (simple-var-ref $desugar$1))))
+        (literal 0))))) (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref n)
+          (simple-var-ref d)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (literal 3))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (invocation rec (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1)))))))))
+  (function $default$0 (
+    (variable n (type
+      (value-type )))) ()
+    (block-function-body
+      (return
+        (ternary-expr
+          (binary-expr >
+            (simple-var-ref n)
+            (literal 0))
+          (expression-thunk
+          (var-def
+            (variable $desugar$0 (expr
+              (binary-expr -
+                (simple-var-ref n)
+                (literal 1)))))
+          (var-def
+            (variable $desugar$1 (expr
+              (invocation $default$0 (
+                (simple-var-ref $desugar$0))))))
+          (invocation rec (
+            (simple-var-ref $desugar$0)
+            (simple-var-ref $desugar$1))))
+          (literal 0))))))

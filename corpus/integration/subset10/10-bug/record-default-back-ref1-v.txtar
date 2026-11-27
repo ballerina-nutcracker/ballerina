@@ -1,0 +1,4 @@
+-- stdout --
+1
+{"f":{"x":1,"next":null}}
+-- stderr --

@@ -1,0 +1,80 @@
+module $anon.. v 0.0.0;
+main() -> nil{
+  bb0 {
+    %1 = newMap {| f: isolated function() returns int, next: nil|{| f: isolated function() returns int, next: nil|..., never... |}, never... |}{} defaults{next=$anon/.:$default$0, f=$anon/.:$default$1}
+    r = %1;
+    %4 = ConstantLoad f
+    %3 = r[%4];
+    f = %3;
+    %6 = f() -> bb1;
+  }
+  bb1 {
+    %7 = %6;
+    %8 = println(%7) -> bb2;
+  }
+  bb2 {
+    %10 = ConstantLoad next
+    %9 = r[%10];
+    %11 = println(%9) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$anonFunc$_0() -> int{
+  bb0 {
+    %2 = fp $anon/.:$default$2
+    $desugar$0 = %2;
+    %3 = fp $anon/.:$anonFunc$_1
+    g = %3;
+    %6 = $desugar$0() -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %6;
+    %8 = $desugar$1;
+    %9 = g(%8) -> bb2;
+  }
+  bb2 {
+    %10 = %9;
+    %11 = ConstantLoad 3
+    %12 = %11;
+    %13 = g(%12) -> bb3;
+  }
+  bb3 {
+    %14 = %13;
+    %5 = + %10 %14;
+    %0 = %5;
+    return;
+  }
+}
+$anonFunc$_1(int) -> int{
+  bb0 {
+    %3 = x;
+    %4 = ConstantLoad 10
+    %5 = %4;
+    %2 = * %3 %5;
+    %0 = %2;
+    return;
+  }
+}
+$default$0() -> nil|{| f: isolated function() returns int, next: nil|..., never... |}{
+  bb0 {
+    %1 = ConstantLoad <nil>
+    %0 = %1;
+    return;
+  }
+}
+$default$1() -> isolated function() returns int{
+  bb0 {
+    %1 = fp $anon/.:$anonFunc$_0
+    %0 = %1;
+    return;
+  }
+}
+$default$2() -> int{
+  bb0 {
+    %1 = ConstantLoad 2
+    %0 = %1;
+    return;
+  }
+}

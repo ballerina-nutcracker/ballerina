@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-record-default-cast1-fv.bal:31:42
+   |
+31 |     A|B mapping = {v: <record {| int a = 1; |}>y, m: 1}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                          ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-record-default-cast1-fv.bal:31:42
+   |
+31 |     A|B mapping = {v: <record {| int a = 1; |}>y, m: 1}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                          ^

@@ -1,0 +1,68 @@
+module $anon.. v 0.0.0;
+rec(int,int) -> int{
+  bb0 {
+    %4 = n;
+    %5 = d;
+    %3 = + %4 %5;
+    %0 = %3;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3
+    $desugar$0 = %1;
+    %3 = $desugar$0;
+    %4 = $default$0(%3) -> bb1;
+  }
+  bb1 {
+    $desugar$1 = %4;
+    %6 = $desugar$0;
+    %7 = $desugar$1;
+    %8 = rec(%6,%7) -> bb2;
+  }
+  bb2 {
+    %9 = %8;
+    %10 = println(%9) -> bb3;
+  }
+  bb3 {
+    return;
+  }
+}
+$default$0(int) -> int{
+  bb0 {
+    %4 = n;
+    %5 = ConstantLoad 0
+    %6 = %5;
+    %3 = > %4 %6;
+    %3 ? bb1 : bb2;
+  }
+  bb1 {
+    %8 = n;
+    %9 = ConstantLoad 1
+    %10 = %9;
+    %7 = - %8 %10;
+    $desugar$0 = %7;
+    %12 = $desugar$0;
+    %13 = $default$0(%12) -> bb4;
+  }
+  bb2 {
+    %18 = ConstantLoad 0
+    %2 = %18;
+    GOTO bb3;
+  }
+  bb3 {
+    %0 = %2;
+    return;
+  }
+  bb4 {
+    $desugar$1 = %13;
+    %15 = $desugar$0;
+    %16 = $desugar$1;
+    %17 = rec(%15,%16) -> bb5;
+  }
+  bb5 {
+    %2 = %17;
+    GOTO bb3;
+  }
+}

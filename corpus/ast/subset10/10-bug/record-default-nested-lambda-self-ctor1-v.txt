@@ -1,0 +1,62 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field a
+        (value-type int)
+        (literal 1))
+      (field next
+        (union-type
+          (user-defined-type R)
+          (value-type null))
+        (literal <nil>))
+      (field f
+        (function-type () (
+          (user-defined-type R)))
+        (lambda
+          (function $anonFunc$_0 () (
+            (user-defined-type R))
+            (block-function-body
+              (var-def
+                (variable g (expr
+                  (lambda
+                    (function $anonFunc$_1 (
+                      (variable r (type
+                        (user-defined-type R)) (expr
+                        (mapping-constructor-expr
+                          (key-value
+                            (literal a)
+                            (literal 3)))))) (
+                      (user-defined-type R))
+                      (expr-function-body
+                        (simple-var-ref r)))))))
+              (return
+                (invocation g ()))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable f (type
+          (function-type () (
+            (user-defined-type R)))) (expr
+          (field-based-access f
+            (simple-var-ref r)))))
+      (var-def
+        (variable s (type
+          (user-defined-type R)) (expr
+          (invocation f ()))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref s)))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (field-based-access next
+              (simple-var-ref s))
+            (value-type null))))))))

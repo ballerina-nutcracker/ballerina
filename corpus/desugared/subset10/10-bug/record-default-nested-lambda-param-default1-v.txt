@@ -1,0 +1,111 @@
+(package
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field next
+        (union-type
+          (user-defined-type R)
+          (value-type null))
+        (literal <nil>))
+      (field f
+        (function-type () (
+          (value-type int)))
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable $desugar$0))
+              (assignment
+                (simple-var-ref $desugar$0)
+                (lambda
+                  (function $default$2 () ()
+                    (block-function-body
+                      (return
+                        (literal 2))))))
+              (var-def
+                (variable g (expr
+                  (lambda
+                    (function $anonFunc$_1 (
+                      (variable x (type
+                        (value-type int)) (expr
+                        (literal 2)))) (
+                      (value-type int))
+                      (expr-function-body
+                        (binary-expr *
+                          (simple-var-ref x)
+                          (literal 10))))))))
+              (return
+                (binary-expr +
+                  (expression-thunk
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $desugar$0 ()))))
+                  (invocation g (
+                    (simple-var-ref $desugar$1))))
+                  (invocation g (
+                    (literal 3)))))))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (var-def
+        (variable f (type
+          (function-type () (
+            (value-type int)))) (expr
+          (index-based-access
+            (simple-var-ref r)
+            (literal f)))))
+      (expression-stmt
+        (invocation io println (
+          (invocation f ()))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref r)
+            (literal next)))))))
+  (function $default$0 () ()
+    (block-function-body
+      (return
+        (literal <nil>))))
+  (function $default$1 () ()
+    (block-function-body
+      (return
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (var-def
+                (variable $desugar$0))
+              (assignment
+                (simple-var-ref $desugar$0)
+                (lambda
+                  (function $default$2 () ()
+                    (block-function-body
+                      (return
+                        (literal 2))))))
+              (var-def
+                (variable g (expr
+                  (lambda
+                    (function $anonFunc$_1 (
+                      (variable x (type
+                        (value-type int)) (expr
+                        (literal 2)))) (
+                      (value-type int))
+                      (expr-function-body
+                        (binary-expr *
+                          (simple-var-ref x)
+                          (literal 10))))))))
+              (return
+                (binary-expr +
+                  (expression-thunk
+                  (var-def
+                    (variable $desugar$1 (expr
+                      (invocation $desugar$0 ()))))
+                  (invocation g (
+                    (simple-var-ref $desugar$1))))
+                  (invocation g (
+                    (literal 3))))))))))))

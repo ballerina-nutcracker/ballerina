@@ -1,0 +1,3 @@
+-- stdout --
+{"a":1,"next":{"a":3,"next":null}}
+-- stderr --

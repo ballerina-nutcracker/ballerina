@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-lambda-param-default1-fv.bal:28:45
+   |
+28 |     C|D r = {f: y => v is function (int p = y.length())}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                             ^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> inline-type-desc-lambda-param-default1-fv.bal:28:45
+   |
+28 |     C|D r = {f: y => v is function (int p = y.length())}; // @error inline type with a default in a candidate trial is unimplemented
+   |                                             ^^^^^^^^^^

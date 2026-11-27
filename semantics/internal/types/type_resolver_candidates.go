@@ -57,6 +57,8 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 		return resolver.ephemeralState
 	case *loopTypeResolver:
 		return resolverEphemeralState(resolver.parentResolver)
+	case *defaultTypeResolver:
+		return resolverEphemeralState(resolver.parent())
 	default:
 		return nil
 	}

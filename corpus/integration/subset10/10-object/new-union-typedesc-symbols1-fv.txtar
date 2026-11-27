@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> new-union-typedesc-symbols1-fv.bal:40:46
+   |
+40 |     First|Second c = new (<record {| int a = 1; |}>m, 1); // @error inline type with a default in a candidate trial is unimplemented
+   |                                              ^
+
+fatal[UNIMPLEMENTED_ERROR]: inline type declarations with default expressions not supported in contexts that require to select a single atomic type from a union of candidates
+  --> new-union-typedesc-symbols1-fv.bal:40:46
+   |
+40 |     First|Second c = new (<record {| int a = 1; |}>m, 1); // @error inline type with a default in a candidate trial is unimplemented
+   |                                              ^

@@ -1,0 +1,3 @@
+-- stdout --
+{"v":"y","next":{"v":"z","next":null}}
+-- stderr --
