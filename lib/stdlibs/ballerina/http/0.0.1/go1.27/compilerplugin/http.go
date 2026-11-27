@@ -19,6 +19,8 @@ package compilerplugin
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/ast"
 	"github.com/ballerina-nutcracker/ballerina/context"
@@ -44,10 +46,19 @@ func ValidateService(
 	if err != nil {
 		return nil, err
 	}
+	serviceConfig, ok := exported.GetAnnotationSymbol("ServiceConfig")
+	if !ok {
+		return nil, fmt.Errorf("ballerina/http compiler plugin: exported annotation ServiceConfig not found")
+	}
 	typeCtx := semtypes.ContextFrom(compilerCtx.GetTypeEnv())
 	for _, service := range pkg.Services {
 		if !isHTTPService(typeCtx, listenerType, service) {
 			continue
+		}
+		for i := range service.AnnAttachments {
+			if annotation := &service.AnnAttachments[i]; annotation.Symbol() == serviceConfig {
+				validateServiceConfig(compilerCtx, annotation)
+			}
 		}
 		for _, resource := range service.ResourceMethods {
 			validateResource(compilerCtx, typeCtx, requestType, callerType, resource)
@@ -124,4 +135,54 @@ func validateCallerReturnType(compilerCtx *context.CompilerContext, typeCtx semt
 	}
 	compilerCtx.SemanticError(fmt.Sprintf("invalid resource method return type: can not use 'http:Caller' and return "+
 		"'%s' from a resource : expected 'error' or nil", semtypes.ToString(typeCtx, ty)), returnType.TypeDescriptor.GetPosition())
+}
+
+// mediaTypeSubtypePrefix is jBallerina's MEDIA_TYPE_SUBTYPE_REGEX, matched against the whole prefix.
+var mediaTypeSubtypePrefix = regexp.MustCompile(`^\w+(\s*\.\s*\w+)*(\s*\+\s*\w+)*$`)
+
+// validateServiceConfig checks the @http:ServiceConfig fields jBallerina's compiler plugin
+// validates. A service declaration is never a service contract type, so it cannot set basePath.
+func validateServiceConfig(compilerCtx *context.CompilerContext, annotation *ast.BLangAnnotationAttachment) {
+	mapping, ok := annotation.Expr.(*ast.BLangMappingConstructorExpr)
+	if !ok {
+		return
+	}
+	for _, field := range mapping.Fields {
+		keyValue, ok := field.(*ast.BLangMappingKeyValueField)
+		if !ok {
+			continue
+		}
+		switch fieldName(keyValue.Key) {
+		case "mediaTypeSubtypePrefix":
+			literal, ok := keyValue.ValueExpr.(*ast.BLangLiteral)
+			if !ok {
+				continue
+			}
+			prefix, ok := literal.Value.(string)
+			if !ok {
+				continue
+			}
+			prefix = strings.TrimSpace(prefix)
+			if !mediaTypeSubtypePrefix.MatchString(prefix) {
+				compilerCtx.SemanticError(fmt.Sprintf("invalid media-type subtype '%s'", prefix), keyValue.GetPosition())
+			} else if _, suffix, found := strings.Cut(prefix, "+"); found {
+				compilerCtx.SemanticError(fmt.Sprintf("invalid media-type subtype prefix: subtype prefix should not have suffix '%s'",
+					strings.TrimSpace(suffix)), keyValue.GetPosition())
+			}
+		case "basePath":
+			compilerCtx.SemanticError("configuring base path in the 'http:ServiceConfig' annotation is not allowed for non service contract types",
+				keyValue.GetPosition())
+		}
+	}
+}
+
+func fieldName(key *ast.BLangMappingKey) string {
+	switch expr := key.Expr.(type) {
+	case *ast.BLangLiteral:
+		name, _ := expr.Value.(string)
+		return name
+	case *ast.BLangVarRef:
+		return expr.VariableName.GetValue()
+	}
+	return ""
 }

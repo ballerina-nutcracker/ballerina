@@ -1,6 +1,6 @@
 # Supported ballerina library features
 
-Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, status code responses, error responses and resource signature parameter binding, the first steps in completing the `http` service and listener surface.
+Subset 4 extends the released [subset 3](subset3.md) with the `http` error type hierarchy, status code responses, error responses, resource signature parameter binding, responding through a caller and service configuration, the first steps in completing the `http` service and listener surface.
 
 ## [http](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md)
 
@@ -126,3 +126,35 @@ service /albums on new http:Listener(9090) {
 | `'continue()` | Sends an interim 100 Continue; the exchange stays open for `respond` |
 
 A resource with an `http:Caller` parameter may only return `error` or nil, and may declare one `http:Caller` parameter; the compiler plugin reports anything else.
+
+## Configuring a service
+
+`@http:ServiceConfig` configures how a service is dispatched and how its parameters and responses are handled.
+
+```ballerina
+import ballerina/http;
+
+type Album record {|
+    string title;
+    string? artist;
+|};
+
+@http:ServiceConfig {
+    host: "music.example.com",
+    treatNilableAsOptional: false,
+    laxDataBinding: true,
+    mediaTypeSubtypePrefix: "vnd.music"
+}
+service /albums on new http:Listener(9090) {
+    resource function post .(Album album) returns Album => album;
+}
+```
+
+| Field | Behaviour |
+|---|---|
+| `host` | The service answers only the requests whose `Host` header names that host, compared case-insensitively; without a port it matches any port, and a service for the exact host and port takes precedence. Services without a `host` answer the other requests, and services on different hosts may share a base path |
+| `treatNilableAsOptional: false` | A missing query parameter or header gives 400 even when its type is nilable; a value-less query parameter or an empty header still binds `()`, and a nilable header record parameter binds `()` when one of its headers is missing |
+| `laxDataBinding: true` | A JSON body bound to a record parameter, not a nilable record, a map or an array, drops the fields a closed record lacks, removes a `null` optional field whose type does not admit `()` (a nilable one keeps its `null`), and binds `()` for an absent required nilable field; an absent optional field stays absent. A record with only a rest field, such as `record {\| T...; \|}`, is the same type as `map<T>` and is bound strictly like a map, where jBallerina projects it |
+| `mediaTypeSubtypePrefix` | Every `Content-Type` a resource of the service sends, including its binding and error responses, gets the prefix on its subtype, for example `application/vnd.music+json`; a subtype that already starts with the prefix and a `multipart` type are left unchanged |
+
+The compiler plugin rejects a `mediaTypeSubtypePrefix` that is not a valid subtype or has a `+` suffix, and a `basePath` on a service declaration. `@http:ResourceConfig` is declared but has no effect yet.

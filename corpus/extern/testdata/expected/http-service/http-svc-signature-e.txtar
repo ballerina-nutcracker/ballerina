@@ -1,5 +1,11 @@
 -- stdout --
 -- stderr --
+error[SEMANTIC_ERROR]: configuring base path in the 'http:ServiceConfig' annotation is not allowed for non service contract types
+  --> http-svc-signature-e.bal:89:5
+   |
+89 |     basePath: "/contract" // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: http resource method must have at most one http:Request parameter
   --> http-svc-signature-e.bal:40:35
    |
@@ -17,6 +23,18 @@ error[SEMANTIC_ERROR]: http resource method must have at most one http:Request p
    |
 81 |     resource function patch checked(http:Request first, http:Request second) { // @error
    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid media-type subtype 'vnd/a'
+  --> http-svc-signature-e.bal:96:5
+   |
+96 |     mediaTypeSubtypePrefix: "vnd/a" // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid media-type subtype prefix: subtype prefix should not have suffix 'json'
+  --> http-svc-signature-e.bal:88:5
+   |
+88 |     mediaTypeSubtypePrefix: "vnd.a+json", // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: invalid multiple 'http:Caller' parameter: 'second'
   --> http-svc-signature-e.bal:47:69

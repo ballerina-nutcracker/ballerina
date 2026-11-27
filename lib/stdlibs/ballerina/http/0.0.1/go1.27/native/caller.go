@@ -43,6 +43,7 @@ type callerConn struct {
 	r     *http.Request
 	// accessor is the dispatched resource accessor: a lower-case method or "default".
 	accessor string
+	config   serviceConfig
 
 	mu    sync.Mutex
 	state callerState
