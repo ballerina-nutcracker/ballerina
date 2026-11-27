@@ -508,6 +508,13 @@ func TestHttpServiceInterceptors(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-interceptor-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceResponseInterceptors runs response and error interceptors.
+func TestHttpServiceResponseInterceptors(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-response-interceptor-v"), newHTTPPal(palnative.NewHTTPClient), nil)
+}
+
 // callerPal stubs the reverse lookup so the caller's remote host name does not depend on the
 // machine's resolver.
 type callerPal struct{ *httpPal }

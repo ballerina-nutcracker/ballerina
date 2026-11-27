@@ -78,9 +78,9 @@ type serviceEntry struct {
 	basePath string
 	svcObj   *values.Object
 	config   serviceConfig
-	// interceptors are the request interceptors of the service, created when the listener
+	// interceptors are the interceptor pipeline of the service, created when the listener
 	// starts, or on attach once it has started.
-	interceptors []*values.Object
+	interceptors []interceptor
 	created      bool
 }
 
@@ -218,7 +218,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 				return httpError(ctx, genericListenerError, message, nil), nil
 			}
 			// Unlike jBallerina, a service attached to a started listener gets its interceptors (#9585).
-			var interceptors []*values.Object
+			var interceptors []interceptor
 			if started {
 				var err error
 				if interceptors, err = createInterceptors(ctx, state.interceptorTypes, svcObj); err != nil {
@@ -623,14 +623,14 @@ func panicMessage(r any) string {
 	}
 }
 
-// dispatchRequest routes an incoming HTTP request to the matching service, through the request
+// dispatchRequest routes an incoming HTTP request to the matching service, through the
 // interceptors of the service, and on to the matching resource method.
 func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncoder, r *http.Request) {
 	state.mu.RLock()
 	services := hostServices(state.services, r.Host)
 	var found *serviceEntry
 	var subPath string
-	var interceptors []*values.Object
+	var interceptors []interceptor
 	for _, e := range services {
 		if rest, ok := matchBasePath(r.URL.Path, e.basePath); ok {
 			found = e
@@ -665,14 +665,16 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncod
 		w.useService(found.config)
 	}
 	conn := newCallerConn(rt, state.types, w, r, found.config)
-	conn.pipeline = &requestPipeline{interceptors: interceptors, target: found.svcObj}
+	conn.pipeline = &requestPipeline{stages: interceptors, target: found.svcObj}
 	x := &exchange{state: state, w: w, r: r, service: found, segments: splitURLPath(subPath),
 		method: strings.ToLower(r.Method), conn: conn, body: body}
-	x.runFrom(0)
+	conn.exchange = x
+	x.runFrom(1)
 }
 
-// exchange is a request on its way through the request interceptors of its service to the
-// service itself. Each stage runs once the one before it has returned.
+// exchange is a request on its way through the interceptors of its service to the service
+// itself, and its response on the way back. Each request-side stage runs once the one before it
+// has returned.
 type exchange struct {
 	state    *listenerState
 	w        *responseEncoder
@@ -683,20 +685,42 @@ type exchange struct {
 	conn     *callerConn
 	// body is the request body each stage reads when the service has interceptors.
 	body []byte
+	// err is the error the request carries to the next request error interceptor.
+	err *values.Error
+}
+
+// intercepted reports whether the service of the exchange has interceptors.
+func (x *exchange) intercepted() bool {
+	return len(x.conn.pipeline.stages) > 0
+}
+
+// lastStage is the position the response walk of a response from the service starts from.
+func (x *exchange) lastStage() int {
+	return len(x.conn.pipeline.stages) - 1
 }
 
 // runFrom runs the first request interceptor from position from whose resource matches the
-// request, or else the service. An interceptor that does not serve the request is skipped.
+// request, or else the service. While the request carries an error, it runs the first such
+// request error interceptor instead, or else answers with the error. An interceptor that does
+// not serve the request is skipped.
 func (x *exchange) runFrom(from int) {
 	rt := x.conn.rt
-	interceptors := x.conn.pipeline.interceptors
-	for i := from; i < len(interceptors); i++ {
+	stages := x.conn.pipeline.stages
+	kind := requestKind
+	if x.err != nil {
+		kind = requestErrorKind
+	}
+	for i := from; i < len(stages); i++ {
+		if stages[i].kind != kind {
+			continue
+		}
 		ctx := rt.AcquirePooledContext()
 		for _, accessorKey := range []string{x.method, "default"} {
-			handle, extraArgs, ok := ctx.LookupResourceMethodByPath(interceptors[i], accessorKey, x.segments)
+			handle, extraArgs, ok := ctx.LookupResourceMethodByPath(stages[i].obj, accessorKey, x.segments)
 			if ok {
 				x.conn.accessor = accessorKey
 				x.conn.pipeline.enter(i)
+				x.conn.handledError, x.err = x.err, nil
 				x.rewind()
 				x.runInterceptor(ctx, i, handle, extraArgs)
 				return
@@ -705,6 +729,12 @@ func (x *exchange) runFrom(from int) {
 		rt.ReleasePooledContext(ctx)
 	}
 	x.rewind()
+	x.conn.handledError = nil
+	if err := x.err; err != nil {
+		x.err = nil
+		x.deliver(nil, err, x.lastStage())
+		return
+	}
 	x.dispatchService()
 }
 
@@ -716,12 +746,15 @@ func (x *exchange) rewind() {
 	}
 }
 
-// runInterceptor runs the interceptor at position index and continues the exchange as its
-// result directs. It owns ctx. An interceptor with an http:Caller parameter runs on its own
-// goroutine, as a resource does, and the exchange continues there once it returns.
+// runInterceptor runs the interceptor at position index, which owns ctx, on its own goroutine when
+// it has an http:Caller parameter, as a resource does.
 func (x *exchange) runInterceptor(ctx *extern.Context, index int, handle extern.MethodHandle, extraArgs int) {
-	args, hasCaller, req, ok := bindResource(ctx, x.state, x.conn, handle, extraArgs)
-	if !ok {
+	args, hasCaller, req, bindErr := bindResource(ctx, x.state, x.conn, handle, extraArgs)
+	if bindErr != nil {
+		x.conn.pipeline.leave(index)
+		x.err = bindErr.toError(ctx)
+		x.conn.rt.ReleasePooledContext(ctx)
+		x.runFrom(index + 1)
 		return
 	}
 	if !hasCaller {
@@ -745,6 +778,7 @@ func (x *exchange) completeInterceptor(ctx *extern.Context, index int, handle ex
 	result, failure, failed := invokeStage(ctx, x.conn.rt, x.r, handle, args)
 	from, proceed := 0, false
 	if failed {
+		x.conn.pipeline.leave(index)
 		x.conn.failPanic(failure)
 	} else {
 		from, proceed = x.afterInterceptor(ctx, index, result, hasCaller)
@@ -778,27 +812,41 @@ func invokeStage(ctx *extern.Context, rt *runtime.Runtime, r *http.Request, hand
 	return result, "", false
 }
 
-// afterInterceptor acts on what the interceptor at position index returned and reports where
-// the exchange continues, if it does. A returned service must be the stage ctx.next() reached,
-// or the one after the interceptor; any other value is the response. Once a response was sent,
-// the exchange continues only if the interceptor called ctx.next(), as in jBallerina.
+// afterInterceptor acts on what the request-side interceptor at position index returned, as
+// jBallerina does, and reports where the exchange continues, if it does.
 func (x *exchange) afterInterceptor(ctx *extern.Context, index int, result values.BalValue,
 	hasCaller bool) (int, bool) {
 	pipeline := x.conn.pipeline
 	from, nextCalled := pipeline.leave(index)
-	if obj, isObject := result.(*values.Object); isObject && isOfType(ctx.TypeCtx(), obj, x.state.interceptorTypes.nextService) {
-		if obj == pipeline.stageAt(from) {
-			return from, nextCalled || !x.conn.responded()
-		}
+	// Once a response was sent, the exchange continues only if the interceptor called ctx.next().
+	stopped := x.conn.responded() && !nextCalled
+	resultErr, isError := result.(*values.Error)
+	obj, isObject := result.(*values.Object)
+	nextService := isObject && isOfType(ctx.TypeCtx(), obj, x.state.interceptorTypes.nextService)
+	switch {
+	case isError && stopped:
+		x.conn.rejectReturn(result)
+		return 0, false
+	case isError:
+		x.err = resultErr
+		return index + 1, true
+	case nextService && stopped:
+		return 0, false
+	case nextService && obj == pipeline.stageAt(from):
+		return from, true
+	case nextService:
 		message := nextMismatch
-		if from >= len(pipeline.interceptors) {
+		if from >= len(pipeline.stages) {
 			message = targetMismatch
 		}
-		result = httpError(ctx, internalInterceptorReturnError, message, nil)
+		x.err = httpError(ctx, internalInterceptorReturnError, message, nil)
+		return from, true
+	default:
+		// Unlike jBallerina, a () return ends the exchange even after ctx.next() (#9884). The
+		// response starts below the stage ctx.next() reached, as jBallerina's does.
+		x.answer(ctx, result, hasCaller, from-1)
+		return 0, false
 	}
-	// Unlike jBallerina, a () return ends the exchange even after ctx.next() (#9884).
-	x.conn.complete(ctx, result, hasCaller)
-	return 0, false
 }
 
 // syncRequest carries the headers and payload an interceptor set on its http:Request over to
@@ -851,17 +899,13 @@ func (x *exchange) dispatchService() {
 			continue
 		}
 		x.conn.accessor = accessorKey
-		if x.conn.pipeline.interceptors == nil {
+		if !x.intercepted() {
 			w.useService(found.config)
 		}
-		invokeResource(ctx, x.state, x.conn, handle, extraArgs)
+		x.invokeResource(ctx, handle, extraArgs)
 		return
 	}
 	defer rt.ReleasePooledContext(ctx)
-	if !x.conn.claim() {
-		return
-	}
-	defer x.conn.markSent()
 	w.useService(defaultServiceConfig())
 	// The path matched a service but no resource under the requested method. If
 	// the same path resolves under a different method it is a 405; otherwise 404.
@@ -877,6 +921,20 @@ func (x *exchange) dispatchService() {
 			}
 		}
 	}
+	notFound := "no matching resource found for path : " + r.RequestURI + " , method : " + r.Method
+	if httpMethod != "options" && x.intercepted() {
+		// A dispatching error goes to the response error interceptors.
+		errType, message := internalResourceNotFoundError, notFound
+		if served != nil {
+			errType, message = internalResourceMethodNotAllowedError, "Method not allowed"
+		}
+		x.deliver(nil, httpError(ctx, errType, message, nil), x.lastStage())
+		return
+	}
+	if !x.conn.claim() {
+		return
+	}
+	defer x.conn.markSent()
 	switch {
 	case httpMethod == "options":
 		// As jBallerina, only the base path itself, ignoring trailing slashes and without a query, lists the whole service.
@@ -889,7 +947,7 @@ func (x *exchange) dispatchService() {
 	case served != nil:
 		writeErrorJSON(rt, w, r, http.StatusMethodNotAllowed, "Method not allowed")
 	default:
-		writeErrorJSON(rt, w, r, http.StatusNotFound, "no matching resource found for path : "+r.RequestURI+" , method : "+r.Method)
+		writeErrorJSON(rt, w, r, http.StatusNotFound, notFound)
 	}
 }
 
@@ -916,29 +974,29 @@ func answerOptions(rt *runtime.Runtime, w *responseEncoder, r *http.Request, fou
 }
 
 // bindResource binds the arguments of the resource behind handle and returns them with the
-// http:Request it binds, if any. When binding fails it sends the error response, returns ctx to
-// the pool and reports false.
+// http:Request it binds, if any, or the binding failure.
 func bindResource(ctx *extern.Context, state *listenerState, conn *callerConn, handle extern.MethodHandle,
-	extraArgs int) ([]values.BalValue, bool, *values.Object, bool) {
+	extraArgs int) ([]values.BalValue, bool, *values.Object, *bindingError) {
 	if extraArgs == 0 {
 		closeBody(conn.r)
-		return nil, false, nil, true
+		return nil, false, nil, nil
 	}
-	args, hasCaller, req, bindErr := resourceArgs(ctx, state, handle, conn)
-	if bindErr != nil {
-		conn.rt.ReleasePooledContext(ctx)
-		conn.fail(bindErr.status, bindErr.message)
-		return nil, false, nil, false
-	}
-	return args, hasCaller, req, true
+	return resourceArgs(ctx, state, handle, conn)
 }
 
 // invokeResource binds the arguments of the resource behind handle, calls it and sends its
-// response. It owns ctx and returns it to the pool once the resource has finished.
-func invokeResource(ctx *extern.Context, state *listenerState, conn *callerConn, handle extern.MethodHandle,
-	extraArgs int) {
-	args, hasCaller, _, ok := bindResource(ctx, state, conn, handle, extraArgs)
-	if !ok {
+// response. It owns ctx and returns it to the pool once the resource has finished. A binding
+// failure is answered with its error response, through the response error interceptors.
+func (x *exchange) invokeResource(ctx *extern.Context, handle extern.MethodHandle, extraArgs int) {
+	conn := x.conn
+	args, hasCaller, _, bindErr := bindResource(ctx, x.state, conn, handle, extraArgs)
+	if bindErr != nil {
+		defer conn.rt.ReleasePooledContext(ctx)
+		if x.intercepted() {
+			x.deliver(nil, bindErr.toError(ctx), x.lastStage())
+			return
+		}
+		conn.fail(bindErr.status, bindErr.message)
 		return
 	}
 	if hasCaller {
@@ -950,11 +1008,14 @@ func invokeResource(ctx *extern.Context, state *listenerState, conn *callerConn,
 	}
 	defer conn.rt.ReleasePooledContext(ctx)
 	result, failure, failed := invokeStage(ctx, conn.rt, conn.r, handle, args)
-	if failed {
+	switch {
+	case failed:
 		conn.failPanic(failure)
-		return
+	case x.intercepted():
+		x.answer(ctx, result, false, x.lastStage())
+	default:
+		conn.complete(ctx, result, false)
 	}
-	conn.complete(ctx, result, false)
 }
 
 // runCallerResource runs a resource that has an http:Caller parameter.
@@ -976,6 +1037,10 @@ func runCallerResource(ctx *extern.Context, conn *callerConn, handle extern.Meth
 		if !conn.close() {
 			writePanicResponse(conn.w, panicMessage(err))
 		}
+		return
+	}
+	if x := conn.exchange; x.intercepted() {
+		x.answer(ctx, result, true, x.lastStage())
 		return
 	}
 	conn.finish(ctx, result)

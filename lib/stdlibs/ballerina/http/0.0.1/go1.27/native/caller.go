@@ -55,6 +55,9 @@ type callerConn struct {
 	// pipeline is the state the http:RequestContext of the request shares with the dispatcher.
 	pipeline   *requestPipeline
 	requestCtx *values.Object
+	exchange   *exchange
+	// handledError is the error the running request error interceptor handles.
+	handledError *values.Error
 	// payloadSet marks a request body an interceptor set, which the stages after it read as set.
 	payloadSet bool
 }
@@ -161,12 +164,20 @@ func connOf(caller values.BalValue) *callerConn {
 // interim response and leaves the exchange open. A response that cannot be sent as given is
 // replaced by a 500, and respond returns the reason.
 func (c *callerConn) respond(ctx *extern.Context, resp *values.Object) values.BalValue {
+	statusCode, _ := resp.Get("statusCode")
+	// Unlike jBallerina, a 100 Continue bypasses the response interceptors (#9903).
+	if x := c.exchange; x.intercepted() && statusCode != int64(http.StatusContinue) {
+		if c.isClosed() {
+			return httpError(ctx, genericListenerError, illegalRespond, nil)
+		}
+		return x.deliver(resp, nil, c.pipeline.responseStart())
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.closed() {
 		return httpError(ctx, genericListenerError, illegalRespond, nil)
 	}
-	if statusCode, _ := resp.Get("statusCode"); statusCode == int64(http.StatusContinue) {
+	if statusCode == int64(http.StatusContinue) {
 		// net/http answers "Expect: 100-continue" itself when a bound parameter reads the body.
 		if !c.state.has(stateBodyBound) || !strings.EqualFold(c.r.Header.Get("Expect"), "100-continue") {
 			c.w.WriteHeader(http.StatusContinue)
@@ -290,6 +301,9 @@ func nativeRespondError(ctx *extern.Context, args []values.BalValue) (values.Bal
 	// Checked first so an error that cannot be sent is not logged as handled.
 	if conn.isClosed() {
 		return httpError(ctx, genericListenerError, illegalRespond, nil), nil
+	}
+	if x := conn.exchange; x.intercepted() {
+		return x.deliver(nil, args[1].(*values.Error), conn.pipeline.responseStart()), nil
 	}
 	resp, err := errorResponse(ctx, args[1].(*values.Error), conn.r)
 	if err != nil {

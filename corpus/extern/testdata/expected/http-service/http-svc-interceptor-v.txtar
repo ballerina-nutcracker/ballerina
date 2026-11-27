@@ -75,7 +75,6 @@ query 1
 200 text/plain no next service to be returned
 interceptor late /a
 200 application/json {"seen":["late"]}
-interceptor service registration failed: response and error interceptors are not yet supported
 -- stderr --
 time=<TIME> level=ERROR module="" message="unhandled error returned from the service" error=error("boom from b") path="/x/a" method="GET"
 error [ballerina/http]: panic while handling GET /x/a: missing map key 'missing'

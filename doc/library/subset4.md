@@ -226,9 +226,59 @@ service http:InterceptableService /albums on new http:Listener(9090) {
 | Interceptor result | Response |
 |---|---|
 | The stage `ctx.next()` returned | The request goes on to the next matching interceptor, then to the resource; a 404 or 405 for the resource comes after the interceptors |
-| Another service | 500 `next interceptor service did not match with the configuration`, or `target service did not match with the configuration` past the last interceptor |
+| Another service | An `http:InterceptorReturnError`, `next interceptor service did not match with the configuration`, or `target service did not match with the configuration` past the last interceptor, which by default answers 500 |
 | `()` from an interceptor without an `http:Caller` parameter | 202, and the request goes no further |
 | `()` from an interceptor with an `http:Caller` parameter | 500 if it sent no response, and the request goes no further |
-| Any other value, `http:Response`, status code response or error | That response, with the `@http:ServiceConfig` of the service applied |
+| An error | The error goes to the next `http:RequestErrorInterceptor`, or else to the error handling of the response |
+| Any other value, `http:Response` or status code response | That response, which the response interceptors before the interceptor (or before the stage its `ctx.next()` reached) receive, with the `@http:ServiceConfig` of the service applied |
 
-`ctx.next()` returns an error from the resource itself or once it has passed the service. Response interceptors, error interceptors and the `JWT_INFORMATION` member are not supported yet.
+`ctx.next()` returns an error from the resource itself or once it has passed the service. The `JWT_INFORMATION` member is not supported yet.
+
+## Response and error interceptors
+
+The `http:ResponseInterceptor` services of an `http:InterceptableService` receive each response through their `interceptResponse` remote method, from the last towards the first. An error skips them for the nearest `http:ResponseErrorInterceptor`, whose `interceptResponseError` receives the error and the response it maps to; an error no interceptor handles gets the default error response. An `http:RequestErrorInterceptor` handles the errors of the request interceptors before it through a `'default [string... path]` resource with an `error` parameter.
+
+```ballerina
+import ballerina/http;
+
+service class ServedBy {
+    *http:ResponseInterceptor;
+
+    remote function interceptResponse(http:RequestContext ctx, http:Response res) returns http:NextService|error? {
+        res.setHeader("x-served-by", "albums");
+        return ctx.next();
+    }
+}
+
+service class ErrorConverter {
+    *http:ResponseErrorInterceptor;
+
+    remote function interceptResponseError(error err, http:Response res) returns http:Response {
+        http:Response converted = new;
+        converted.statusCode = res.statusCode;
+        converted.setJsonPayload({message: err.message()});
+        return converted;
+    }
+}
+
+service http:InterceptableService /albums on new http:Listener(9090) {
+    public function createInterceptors() returns http:Interceptor[] => [new ErrorConverter(), new ServedBy()];
+
+    resource function get [string id]() returns string|error {
+        if id == "0" {
+            return error("no album 0");
+        }
+        return "album " + id;
+    }
+}
+```
+
+`GET /albums/1` answers `album 1` with `x-served-by: albums`; `GET /albums/0` answers 500 `{"message":"no album 0"}`, without the header, since the error skips `ServedBy` for the `ErrorConverter` before it.
+
+| Interceptor result | Response |
+|---|---|
+| The stage `ctx.next()` returned | The response goes on to the next response interceptor towards the first; once `ctx.next()` has passed the first, `()` sends it as it is |
+| Another service | An `http:InterceptorReturnError` for the error interceptors |
+| `()` | A 202 replaces the response, and the response interceptors before the interceptor receive it |
+| An error | The error goes to the nearest response error interceptor before the interceptor, or else gets the default error response |
+| Any other value, `http:Response` or status code response | That response replaces the response, and the response interceptors before the interceptor receive it |

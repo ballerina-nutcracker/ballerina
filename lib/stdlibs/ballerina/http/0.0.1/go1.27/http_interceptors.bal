@@ -53,5 +53,9 @@ public type Interceptor RequestInterceptor|ResponseInterceptor|RequestErrorInter
 // The dispatcher reads this signature to learn the interceptor types, which a native cannot name
 // directly.
 isolated function interceptorTypes(InterceptableService interceptableService, RequestInterceptor requestInterceptor,
-        NextService nextService) returns [InterceptableService, RequestInterceptor, NextService] =>
-    [interceptableService, requestInterceptor, nextService];
+        ResponseInterceptor responseInterceptor, RequestErrorInterceptor requestErrorInterceptor,
+        ResponseErrorInterceptor responseErrorInterceptor, NextService nextService, Response response)
+        returns [InterceptableService, RequestInterceptor, ResponseInterceptor, RequestErrorInterceptor,
+        ResponseErrorInterceptor, NextService, Response] =>
+    [interceptableService, requestInterceptor, responseInterceptor, requestErrorInterceptor, responseErrorInterceptor,
+            nextService, response];

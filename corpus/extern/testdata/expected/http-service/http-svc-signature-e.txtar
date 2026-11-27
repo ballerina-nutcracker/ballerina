@@ -10,6 +10,32 @@ error[SEMANTIC_ERROR]: RequestInterceptor must have a resource method
 120 | }
     | ^
 
+error[SEMANTIC_ERROR]: ResponseErrorInterceptor must have the remote method : 'interceptResponseError'
+   --> http-svc-signature-e.bal:234:1
+    |
+234 | service class NoRemote { // @error
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+235 |     *http:ResponseErrorInterceptor;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+236 | }
+    | ^
+
+error[SEMANTIC_ERROR]: ResponseInterceptor must have the remote method : 'interceptResponse'
+   --> http-svc-signature-e.bal:185:1
+    |
+185 | service class ResponseMisnamed { // @error
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+186 |     *http:ResponseInterceptor;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+187 | 
+    | 
+188 |     remote function intercept() { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+189 |     }
+    |     ^
+190 | }
+    | ^
+
 error[SEMANTIC_ERROR]: configuring base path in the 'http:ServiceConfig' annotation is not allowed for non service contract types
   --> http-svc-signature-e.bal:89:5
    |
@@ -40,11 +66,35 @@ error[SEMANTIC_ERROR]: invalid annotation 'http:ResourceConfig': annotations are
 142 |     @http:ResourceConfig {} // @error
     |     ^^^^^^^^^^^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: invalid interceptor remote method return type: expected 'anydata|http:Response|http:StatusCodeResponse|http:NextService|error?', but found 'int|typedesc<int>'
+   --> http-svc-signature-e.bal:197:45
+    |
+197 |             http:RequestContext x2) returns int|typedesc<int> { // @error
+    |                                             ^^^^^^^^^^^^^^^^^
+
 error[SEMANTIC_ERROR]: invalid interceptor resource method return type: expected 'anydata|http:Response|http:StatusCodeResponse|http:NextService|error?', but found 'typedesc<int>'
    --> http-svc-signature-e.bal:149:39
     |
 149 |     resource function get a() returns typedesc<int> => int; // @error
     |                                       ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid interceptor resource method: expected default resource method: 'default', but found 'get'
+   --> http-svc-signature-e.bal:241:23
+    |
+241 |     resource function get [string... path](error e) returns http:NextService|error? { // @error
+    |                       ^^^
+
+error[SEMANTIC_ERROR]: invalid interceptor resource path: expected default resource path: '[string... path]', but found '[int... path]'
+   --> http-svc-signature-e.bal:259:32
+    |
+259 |     resource function 'default [int... path](error e) returns http:NextService|error? { // @error
+    |                                ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid interceptor resource path: expected default resource path: '[string... path]', but found 'foo'
+   --> http-svc-signature-e.bal:250:32
+    |
+250 |     resource function 'default foo(error e) returns http:NextService|error? { // @error
+    |                                ^^^
 
 error[SEMANTIC_ERROR]: invalid media-type subtype 'vnd/a'
   --> http-svc-signature-e.bal:96:5
@@ -58,11 +108,35 @@ error[SEMANTIC_ERROR]: invalid media-type subtype prefix: subtype prefix should 
 88 |     mediaTypeSubtypePrefix: "vnd.a+json", // @error
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+error[SEMANTIC_ERROR]: invalid multiple 'error' parameter: 'f'
+   --> http-svc-signature-e.bal:277:64
+    |
+277 |     resource function 'default [string... path](error e, error f) returns http:NextService|error? { // @error
+    |                                                                ^
+
+error[SEMANTIC_ERROR]: invalid multiple 'error' parameter: 'second'
+   --> http-svc-signature-e.bal:214:63
+    |
+214 |     remote function interceptResponseError(error first, error second) returns @http:Payload {} http:Response { // @error
+    |                                                               ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple 'http:Caller' parameter: 'c2'
+   --> http-svc-signature-e.bal:196:40
+    |
+196 |             http:Caller c, http:Caller c2, http:Request r, http:Request r2, http:RequestContext x, // @error
+    |                                        ^^
+
 error[SEMANTIC_ERROR]: invalid multiple 'http:Caller' parameter: 'second'
   --> http-svc-signature-e.bal:47:69
    |
 47 |     resource function get twoCallers(http:Caller first, http:Caller second) { // @error
    |                                                                     ^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple 'http:Request' parameter: 'r2'
+   --> http-svc-signature-e.bal:196:73
+    |
+196 |             http:Caller c, http:Caller c2, http:Request r, http:Request r2, http:RequestContext x, // @error
+    |                                                                         ^^
 
 error[SEMANTIC_ERROR]: invalid multiple 'http:RequestContext' parameter: 'second'
    --> http-svc-signature-e.bal:161:76
@@ -76,10 +150,28 @@ error[SEMANTIC_ERROR]: invalid multiple 'http:RequestContext' parameter: 'second
 168 |     resource function get a(http:RequestContext first, http:RequestContext second) { // @error
     |                                                                            ^^^^^^
 
+error[SEMANTIC_ERROR]: invalid multiple 'http:RequestContext' parameter: 'x2'
+   --> http-svc-signature-e.bal:197:33
+    |
+197 |             http:RequestContext x2) returns int|typedesc<int> { // @error
+    |                                 ^^
+
+error[SEMANTIC_ERROR]: invalid multiple 'http:Response' parameter: 'second'
+   --> http-svc-signature-e.bal:195:74
+    |
+195 |     remote function interceptResponse(http:Response first, http:Response second, string s, error e, // @error
+    |                                                                          ^^^^^^
+
 error[SEMANTIC_ERROR]: invalid multiple interceptor resource functions
    --> http-svc-signature-e.bal:136:5
     |
 136 |     resource function get b() returns string => "b"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid multiple interceptor resource functions
+   --> http-svc-signature-e.bal:178:5
+    |
+178 |     resource function get b() returns string => "b"; // @error
     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error[SEMANTIC_ERROR]: invalid multiple interceptor type reference: 'http:ResponseInterceptor'
@@ -87,6 +179,44 @@ error[SEMANTIC_ERROR]: invalid multiple interceptor type reference: 'http:Respon
     |
 113 |     *http:ResponseInterceptor; // @error
     |      ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid parameter type: 'error' in 'interceptResponse' remote method
+   --> http-svc-signature-e.bal:195:98
+    |
+195 |     remote function interceptResponse(http:Response first, http:Response second, string s, error e, // @error
+    |                                                                                                  ^
+
+error[SEMANTIC_ERROR]: invalid parameter type: 'error<error&error>' in 'interceptResponseError' remote method
+   --> http-svc-signature-e.bal:291:63
+    |
+291 |     remote function interceptResponseError(http:ListenerError e) returns http:Response { // @error
+    |                                                               ^
+
+error[SEMANTIC_ERROR]: invalid parameter type: 'string' in 'interceptResponse' remote method
+   --> http-svc-signature-e.bal:195:89
+    |
+195 |     remote function interceptResponse(http:Response first, http:Response second, string s, error e, // @error
+    |                                                                                         ^
+
+error[SEMANTIC_ERROR]: invalid remote function : 'intercept'. ResponseInterceptor can have only 'interceptResponse' remote function
+   --> http-svc-signature-e.bal:188:5
+    |
+188 |     remote function intercept() { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+189 |     }
+    |     ^
+
+error[SEMANTIC_ERROR]: invalid remote function : 'interceptResponse'. ResponseErrorInterceptor can have only 'interceptResponseError' remote function
+   --> http-svc-signature-e.bal:223:5
+    |
+223 |     remote function interceptResponse(error e) returns http:Response { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+224 |         string _ = e.message();
+    |         ^^^^^^^^^^^^^^^^^^^^^^^
+225 |         return new;
+    |         ^^^^^^^^^^^
+226 |     }
+    |     ^
 
 error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Caller' and return 'nil|string|error' from a resource : expected 'error' or nil
   --> http-svc-signature-e.bal:57:67
@@ -106,6 +236,20 @@ error[SEMANTIC_ERROR]: invalid resource method return type: can not use 'http:Ca
 62 |     resource function post callerTwoRequests(http:Caller caller, http:Request first, http:Request second) returns string { // @error
    |                                                                                                                   ^^^^^^
 
+error[SEMANTIC_ERROR]: invalid resource parameter type: 'error<error>'
+   --> http-svc-signature-e.bal:300:60
+    |
+300 |     resource function 'default [string... path](NamedError e) returns http:NextService|error? { // @error
+    |                                                            ^
+
+error[SEMANTIC_ERROR]: remote function is not allowed in RequestErrorInterceptor
+   --> http-svc-signature-e.bal:282:5
+    |
+282 |     remote function r() { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+283 |     }
+    |     ^
+
 error[SEMANTIC_ERROR]: remote function is not allowed in RequestInterceptor
    --> http-svc-signature-e.bal:127:5
     |
@@ -114,8 +258,74 @@ error[SEMANTIC_ERROR]: remote function is not allowed in RequestInterceptor
 128 |     }
     |     ^
 
+error[SEMANTIC_ERROR]: remote function should have the mandatory parameter 'error'
+   --> http-svc-signature-e.bal:206:5
+    |
+206 |     remote function interceptResponseError(http:Response res) returns http:Response { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+207 |         return res;
+    |         ^^^^^^^^^^^
+208 |     }
+    |     ^
+
+error[SEMANTIC_ERROR]: remote function should have the mandatory parameter 'error'
+   --> http-svc-signature-e.bal:291:5
+    |
+291 |     remote function interceptResponseError(http:ListenerError e) returns http:Response { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+292 |         string _ = e.message();
+    |         ^^^^^^^^^^^^^^^^^^^^^^^
+293 |         return new;
+    |         ^^^^^^^^^^^
+294 |     }
+    |     ^
+
+error[SEMANTIC_ERROR]: resource function is not allowed in ResponseInterceptor
+   --> http-svc-signature-e.bal:177:5
+    |
+177 |     resource function get a() returns string => "a"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: resource function is not allowed in ResponseInterceptor
+   --> http-svc-signature-e.bal:178:5
+    |
+178 |     resource function get b() returns string => "b"; // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: resource function should have the mandatory parameter 'error'
+   --> http-svc-signature-e.bal:268:5
+    |
+268 |     resource function 'default [string... path]() returns http:NextService|error? { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+269 |         var _ = path;
+    |         ^^^^^^^^^^^^^
+270 |         return;
+    |         ^^^^^^^
+271 |     }
+    |     ^
+
+error[SEMANTIC_ERROR]: resource function should have the mandatory parameter 'error'
+   --> http-svc-signature-e.bal:300:5
+    |
+300 |     resource function 'default [string... path](NamedError e) returns http:NextService|error? { // @error
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+301 |         var _ = path;
+    |         ^^^^^^^^^^^^^
+302 |         string _ = e.message();
+    |         ^^^^^^^^^^^^^^^^^^^^^^^
+303 |         return;
+    |         ^^^^^^^
+304 |     }
+    |     ^
+
 error[SEMANTIC_ERROR]: return type annotation is not supported in interceptor service
    --> http-svc-signature-e.bal:155:39
     |
 155 |     resource function get a() returns @http:Payload string => "a"; // @error
     |                                       ^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: return type annotation is not supported in interceptor service
+   --> http-svc-signature-e.bal:214:79
+    |
+214 |     remote function interceptResponseError(error first, error second) returns @http:Payload {} http:Response { // @error
+    |                                                                               ^^^^^^^^^^^^^^^^

@@ -135,6 +135,23 @@ isolated function getClientConnectorErrorCause(error err) returns string {
     return err.message();
 }
 
+// toResponse converts what a stage of a service with interceptors returned into the response the
+// response interceptors receive; a () return becomes an empty response with nilStatus.
+isolated function toResponse(any message, string? resourceAccessor, int nilStatus) returns Response|error {
+    if message is () {
+        Response response = new;
+        response.statusCode = nilStatus;
+        return response;
+    }
+    if message is StatusCodeResponse {
+        return createStatusCodeResponse(message);
+    }
+    if message is ResponseMessage {
+        return buildResponse(message, resourceAccessor);
+    }
+    return error InitializingOutboundResponseError("unexpected return type from resource method");
+}
+
 isolated function buildResponse(ResponseMessage message, string? resourceAccessor) returns Response|ListenerError {
     if message is () {
         return new Response();

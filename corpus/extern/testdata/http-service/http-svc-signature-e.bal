@@ -170,3 +170,136 @@ service /contexts on new http:Listener(19228) {
         var _ = second;
     }
 }
+
+service class ResponseWithResources {
+    *http:ResponseInterceptor;
+
+    resource function get a() returns string => "a"; // @error
+    resource function get b() returns string => "b"; // @error
+
+    remote function interceptResponse() returns http:NextService|error? {
+        return;
+    }
+}
+
+service class ResponseMisnamed { // @error
+    *http:ResponseInterceptor;
+
+    remote function intercept() { // @error
+    }
+}
+
+service class ResponseParams {
+    *http:ResponseInterceptor;
+
+    remote function interceptResponse(http:Response first, http:Response second, string s, error e, // @error
+            http:Caller c, http:Caller c2, http:Request r, http:Request r2, http:RequestContext x, // @error
+            http:RequestContext x2) returns int|typedesc<int> { // @error
+        var _ = [first, second, s, e, c, c2, r, r2, x, x2];
+        return 1;
+    }
+}
+
+service class ResponseErrorWithoutError {
+    *http:ResponseErrorInterceptor;
+
+    remote function interceptResponseError(http:Response res) returns http:Response { // @error
+        return res;
+    }
+}
+
+service class ResponseErrorTwoErrors {
+    *http:ResponseErrorInterceptor;
+
+    remote function interceptResponseError(error first, error second) returns @http:Payload {} http:Response { // @error
+        var _ = [first, second];
+        return new;
+    }
+}
+
+service class ResponseErrorWrongName {
+    *http:ResponseErrorInterceptor;
+
+    remote function interceptResponse(error e) returns http:Response { // @error
+        string _ = e.message();
+        return new;
+    }
+
+    remote function interceptResponseError(error e) returns http:Response {
+        string _ = e.message();
+        return new;
+    }
+}
+
+service class NoRemote { // @error
+    *http:ResponseErrorInterceptor;
+}
+
+service class RequestErrorGet {
+    *http:RequestErrorInterceptor;
+
+    resource function get [string... path](error e) returns http:NextService|error? { // @error
+        var _ = [path, e];
+        return;
+    }
+}
+
+service class RequestErrorPath {
+    *http:RequestErrorInterceptor;
+
+    resource function 'default foo(error e) returns http:NextService|error? { // @error
+        string _ = e.message();
+        return;
+    }
+}
+
+service class RequestErrorIntRest {
+    *http:RequestErrorInterceptor;
+
+    resource function 'default [int... path](error e) returns http:NextService|error? { // @error
+        var _ = [path, e];
+        return;
+    }
+}
+
+service class RequestErrorWithoutError {
+    *http:RequestErrorInterceptor;
+
+    resource function 'default [string... path]() returns http:NextService|error? { // @error
+        var _ = path;
+        return;
+    }
+}
+
+service class RequestErrorTwoErrors {
+    *http:RequestErrorInterceptor;
+
+    resource function 'default [string... path](error e, error f) returns http:NextService|error? { // @error
+        var _ = [path, e, f];
+        return;
+    }
+
+    remote function r() { // @error
+    }
+}
+
+type NamedError distinct error;
+
+service class ResponseErrorNamedError {
+    *http:ResponseErrorInterceptor;
+
+    remote function interceptResponseError(http:ListenerError e) returns http:Response { // @error
+        string _ = e.message();
+        return new;
+    }
+}
+
+service class RequestErrorNamedError {
+    *http:RequestErrorInterceptor;
+
+    resource function 'default [string... path](NamedError e) returns http:NextService|error? { // @error
+        var _ = path;
+        string _ = e.message();
+        return;
+    }
+}

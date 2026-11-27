@@ -32,6 +32,13 @@ const (
 	genericListenerError errorType = "GenericListenerError"
 	// internalInterceptorReturnError is a 500 that error handling does not log.
 	internalInterceptorReturnError errorType = "InternalInterceptorReturnError"
+	// The internal errors dispatching and binding raise, which error handling does not log.
+	internalQueryParameterBindingError     errorType = "InternalQueryParameterBindingError"
+	internalHeaderBindingListenerError     errorType = "InternalHeaderBindingListenerError"
+	internalPayloadBindingListenerError    errorType = "InternalPayloadBindingListenerError"
+	internalResourceNotFoundError          errorType = "InternalResourceNotFoundError"
+	internalResourceMethodNotAllowedError  errorType = "InternalResourceMethodNotAllowedError"
+	internalResourceDispatchingServerError errorType = "InternalResourceDispatchingServerError"
 )
 
 // httpError returns a distinct http error of type t with message and an optional cause.

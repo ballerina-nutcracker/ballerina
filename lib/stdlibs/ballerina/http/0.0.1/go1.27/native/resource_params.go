@@ -44,6 +44,7 @@ const (
 	headerParam
 	payloadParam
 	requestContextParam
+	errorParam
 )
 
 type resourceParam struct {
@@ -77,20 +78,27 @@ var (
 	queryAnnotation   = model.AnnotationKey(httpPackage, "Query")
 )
 
-// bindingError is reported to the client as a JSON error response with the given status.
+// bindingError is reported to the client as a JSON error response with the given status, or
+// handed to the error interceptors as an error of errType.
 type bindingError struct {
 	status  int
+	errType errorType
 	message string
 }
 
-func badRequest(message string) *bindingError {
-	return &bindingError{status: http.StatusBadRequest, message: message}
+func badRequest(errType errorType, message string) *bindingError {
+	return &bindingError{status: http.StatusBadRequest, errType: errType, message: message}
 }
 
 // jBallerina rejects these signatures at compile time; without a compiler plugin they are
 // only detected when a request reaches the resource.
 func invalidSignature(message string) *bindingError {
-	return &bindingError{status: http.StatusInternalServerError, message: message}
+	return &bindingError{status: http.StatusInternalServerError, errType: internalResourceDispatchingServerError,
+		message: message}
+}
+
+func (e *bindingError) toError(ctx *extern.Context) *values.Error {
+	return httpError(ctx, e.errType, e.message, nil)
 }
 
 // resourceArgs binds the non-path parameters of the resource behind handle from r. The
@@ -142,6 +150,8 @@ func classifyParams(tc semtypes.Context, state *listenerState, sigParams []exter
 		}
 		params[i] = resourceParam{kind: queryParam, name: encodeParamName(label), label: label, ty: p.Type}
 		switch {
+		case semtypes.IsSubtype(tc, p.Type, semtypes.Error):
+			params[i].kind = errorParam
 		case isExactType(tc, state.callerTy, p.Type):
 			if hasCaller {
 				return nil, invalidSignature("invalid multiple 'http:Caller' parameter: '" + label + "'")
@@ -420,7 +430,7 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 	case hasPayload:
 		data, err := readBody(r)
 		if err != nil {
-			return nil, nil, badRequest("failed to read request body: " + err.Error())
+			return nil, nil, badRequest(internalPayloadBindingListenerError, "failed to read request body: "+err.Error())
 		}
 		body = data
 		if hasRequest || hasHeaders {
@@ -429,7 +439,7 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 	case hasRequest:
 		built, err := buildRequestFromHTTP(r)
 		if err != nil {
-			return nil, nil, badRequest("failed to read request body: " + err.Error())
+			return nil, nil, badRequest(internalPayloadBindingListenerError, "failed to read request body: "+err.Error())
 		}
 		req = built
 	default:
@@ -461,6 +471,8 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 				return nil, nil, invalidSignature(err.Error())
 			}
 			args[i] = requestCtx
+		case errorParam:
+			args[i] = boundError(conn.handledError)
 		case headersParam:
 			headers, err := ctx.InvokeFunction(state.createHeaders, []values.BalValue{req})
 			if err != nil {
@@ -471,7 +483,8 @@ func bindParams(ctx *extern.Context, state *listenerState, params []resourcePara
 			if query == nil {
 				parsed, err := parseQueryParams(r.URL.RawQuery)
 				if err != nil {
-					return nil, nil, &bindingError{status: http.StatusInternalServerError, message: err.Error()}
+					return nil, nil, &bindingError{status: http.StatusInternalServerError,
+						errType: internalResourceDispatchingServerError, message: err.Error()}
 				}
 				query = parsed
 			}
@@ -540,9 +553,9 @@ func bindQueryParam(ctx *extern.Context, types *httpTypes, p resourceParam, quer
 		if admits(tc, p.ty, semtypes.Nil) && (nilableOptional || present) {
 			return nil, nil
 		}
-		return nil, badRequest("no query param value found for '" + p.name + "'")
+		return nil, badRequest(internalQueryParameterBindingError, "no query param value found for '"+p.name+"'")
 	}
-	castErr := badRequest("error in casting query param : '" + p.name + "'")
+	castErr := badRequest(internalQueryParameterBindingError, "error in casting query param : '"+p.name+"'")
 	kind := queryScalarKind(tc, types, p.ty)
 	parsed, ok := parseParamValues(ctx, types, kind, p.ty, vals)
 	if !ok {
@@ -624,9 +637,9 @@ func bindHeaderParam(ctx *extern.Context, types *httpTypes, p resourceParam, hea
 		if admits(tc, p.ty, semtypes.Nil) && (nilableOptional || len(vals) == 1) {
 			return nil, nil
 		}
-		return nil, badRequest("no header value found for '" + p.name + "'")
+		return nil, badRequest(internalHeaderBindingListenerError, "no header value found for '"+p.name+"'")
 	}
-	bindErr := badRequest("header binding failed for parameter: '" + p.name + "'")
+	bindErr := badRequest(internalHeaderBindingListenerError, "header binding failed for parameter: '"+p.name+"'")
 	parsed, ok := parseParamValues(ctx, types, headerScalarKind(tc, p.ty), p.ty, vals)
 	if !ok {
 		return nil, bindErr
@@ -657,18 +670,18 @@ func bindHeaderRecord(ctx *extern.Context, types *httpTypes, p resourceParam, re
 			case admits(tc, p.ty, semtypes.Nil):
 				return nil, nil
 			default:
-				return nil, badRequest("no header value found for '" + key + "'")
+				return nil, badRequest(internalHeaderBindingListenerError, "no header value found for '"+key+"'")
 			}
 		}
 		parsed, ok := parseParamValues(ctx, types, headerScalarKind(tc, fieldTy), fieldTy, vals)
 		if !ok {
-			return nil, badRequest("header binding failed for parameter: '" + key + "'")
+			return nil, badRequest(internalHeaderBindingListenerError, "header binding failed for parameter: '"+key+"'")
 		}
 		fields.Put(tc, field, parsed)
 	}
 	bound, err := values.CloneWithType(tc, fields, p.ty)
 	if err != nil {
-		return nil, badRequest("header binding failed for parameter: '" + p.name + "'")
+		return nil, badRequest(internalHeaderBindingListenerError, "header binding failed for parameter: '"+p.name+"'")
 	}
 	return bound, nil
 }
@@ -705,7 +718,7 @@ func bindPayloadParam(ctx *extern.Context, types *httpTypes, ty semtypes.SemType
 		value, msg = payloadFromType(ctx, types, ty, body, lax)
 	}
 	if msg != "" {
-		return nil, badRequest("data binding failed: " + msg)
+		return nil, badRequest(internalPayloadBindingListenerError, "data binding failed: "+msg)
 	}
 	return value, nil
 }
