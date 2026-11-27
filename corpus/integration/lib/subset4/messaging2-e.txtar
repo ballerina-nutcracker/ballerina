@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type: expected decimal, got "1"
+  --> messaging2-e.bal:20:42
+   |
+20 |     return new (store, pollingInterval = "1"); // @error
+   |                                          ^^^
+
+error[SEMANTIC_ERROR]: incompatible type: expected int, got 1.5
+  --> messaging2-e.bal:24:37
+   |
+24 |     return new (store, {maxRetries: 1.5}); // @error
+   |                                     ^^^

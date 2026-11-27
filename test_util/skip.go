@@ -46,6 +46,15 @@ var WASMUnsupportedTests = []string{
 	"lib/subset2/os-exec-v.bal",
 }
 
+// RaceUnsupportedTests lists integration tests skipped under the race detector.
+// TODO(#1123): run them once the per-call-site callee cache race is fixed; overlapping task runs share a call site.
+var RaceUnsupportedTests = []string{
+	"lib/subset4/messaging-listener1-v.bal",
+	"lib/subset4/messaging-listener2-v.bal",
+	"lib/subset4/messaging-listener3-v.bal",
+	"lib/subset4/messaging-showcase-v.bal",
+}
+
 // UnsupportedTests is the single authoritative list of corpus tests that pi
 // cannot run end-to-end yet. It is owned by the integration test (which
 // exercises the full compile + interpret pipeline) and reused by every
@@ -179,6 +188,11 @@ func IsUnsupported(path string) bool {
 		return true
 	}
 	return MatchesSkip(path, UnsupportedTests)
+}
+
+// IsRaceUnsupported reports whether the race detector is on and path is in RaceUnsupportedTests.
+func IsRaceUnsupported(path string) bool {
+	return raceEnabled && MatchesSkip(path, RaceUnsupportedTests)
 }
 
 // MatchesSkip reports whether path matches any of the given skip entries by

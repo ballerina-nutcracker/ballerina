@@ -1,0 +1,13 @@
+-- stdout --
+error Error ("no service is attached")
+0
+error Error ("service is already attached. Only one service can be attached to the message store listener")
+3
+true true true
+true
+{"kind":"created"}
+3
+4
+error Error ("the provided service is not attached to the listener")
+5
+-- stderr --

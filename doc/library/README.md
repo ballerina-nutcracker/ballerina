@@ -18,6 +18,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [ldap](../../lib/stdlibs/ballerina/ldap/0.0.1/go1.27/README.md)               | 15 | 2 | 0 | 83% |
 | [log](../../lib/stdlibs/ballerina/log/0.0.1/go1.27/README.md)                 | 7 | 2 | 15 | 29% |
 | [math.vector](../../lib/stdlibs/ballerina/math.vector/0.0.1/go1.27/README.md) | 5 | 0 | 0 | 100% |
+| [messaging](../../lib/stdlibs/ballerina/messaging/0.0.1/go1.27/README.md)     | 12 | 1 | 0 | 92% |
 | [mime](../../lib/stdlibs/ballerina/mime/0.0.1/go1.27/README.md)               | 15 | 2 | 2 | 79% |
 | [mqtt](../../lib/stdlibs/ballerina/mqtt/0.0.1/go1.27/README.md)               | 21 | 2 | 2 | 84% |
 | [os](../../lib/stdlibs/ballerina/os/0.0.1/go1.27/README.md)                   | 11 | 1 | 0 | 92% |
@@ -29,7 +30,7 @@ Support % is computed as `round(Supported / Total * 100)`, where *Total* is the 
 | [udp](../../lib/stdlibs/ballerina/udp/0.0.1/go1.27/README.md)                 | 16 | 2 | 2 | 80% |
 | [url](../../lib/stdlibs/ballerina/url/0.0.1/go1.27/README.md)                 | 3 | 0 | 1 | 75% |
 | [uuid](../../lib/stdlibs/ballerina/uuid/0.0.1/go1.27/README.md)               | 20 | 0 | 0 | 100% |
-| **Total**                                                                     | **291** | **36** | **73** | **73%** |
+| **Total**                                                                     | **303** | **37** | **73** | **73%** |
 
 <!-- END stdlib-coverage-table -->
 
@@ -101,6 +102,13 @@ Consolidated from each package's README. Only permanent divergences are listed h
 
 - **Module name always empty.** jBallerina uses JVM `StackWalker` to detect the calling module name at runtime; the Go-native version has no equivalent mechanism, so `module=""` in all log records.
 - **Error field format.** jBallerina serialises a full `FullErrorDetails` record (message, stack trace, cause chain) for the `error` field; the Go-native version formats the error as `error("message")` using the Ballerina `toBalString` representation of the error value.
+
+### messaging
+
+- **A panic on a retry is treated as a failed attempt.** jBallerina traps a panic in `onMessage` only on the first attempt, so a panic on a retry escapes the polling job, skips the remaining retries and the dead letter store, and leaves the message in flight and never acknowledged; the Go-native version traps every attempt, so the message is retried, stored in the dead letter store or acknowledged as configured ([ballerina-library#9371](https://github.com/ballerina-platform/ballerina-library/issues/9371)).
+- **A rejected `detach` does not stop polling.** jBallerina unschedules the polling job before checking that the given service is the attached one, so `detach` with a service that is not attached returns an error but leaves the attached service without polling; the Go-native version checks the service first and leaves the listener running ([ballerina-library#9704](https://github.com/ballerina-platform/ballerina-library/issues/9704)).
+- **Stopping the listener cancels pending retries.** In jBallerina, `immediateStop`, `gracefulStop` and `detach` only unschedule the polling job, so a message waiting between retries keeps being delivered to `onMessage` and is then acknowledged or dead-lettered after the listener has stopped; the Go-native version cancels it after the current retry sleep and acknowledges it with failure, so the store can deliver it again after a restart ([ballerina-library#9705](https://github.com/ballerina-platform/ballerina-library/issues/9705)).
+- **A message retrieved after the listener has stopped is not delivered.** In jBallerina, a poll run that has already started when `immediateStop`, `gracefulStop` or `detach` unschedules the polling job keeps going, so its `retrieve` call can take a message stored after the stop returned and deliver it to `onMessage`; the Go-native version checks for the stop before and after `retrieve`, and acknowledges a message that `retrieve` returns after the stop with `success = false`, so the store can deliver it again once the listener is started again. A message that `retrieve` returned before the stop is still delivered, and its `onMessage` call can start after the stop returns ([ballerina-library#9901](https://github.com/ballerina-platform/ballerina-library/issues/9901)).
 
 ### mime
 

@@ -271,10 +271,10 @@ func isTestSkipped(tc test_util.TestCase) bool {
 
 // isSkipKey reports whether the given corpus-relative key should be skipped at
 // integration time. A test is skipped when it is on the shared
-// test_util.UnsupportedTests baseline or on the integration-only
-// skipIntegrationTests additions.
+// test_util.UnsupportedTests baseline, on test_util.RaceUnsupportedTests when
+// built with -race, or on the integration-only skipIntegrationTests additions.
 func isSkipKey(key string) bool {
-	return test_util.IsUnsupported(key) || slices.Contains(skipIntegrationTests, key)
+	return test_util.IsUnsupported(key) || test_util.IsRaceUnsupported(key) || slices.Contains(skipIntegrationTests, key)
 }
 
 func isProjectTestSkipped(dirName string) bool {

@@ -1,0 +1,6 @@
+-- stdout --
+shipped: ["book","pen"]
+error Error ("maxRetries must be greater than or equal to zero")
+error Error ("pollingInterval must be greater than zero")
+error Error ("retryInterval must be greater than zero")
+-- stderr --
