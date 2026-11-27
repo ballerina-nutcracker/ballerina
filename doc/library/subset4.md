@@ -282,3 +282,23 @@ service http:InterceptableService /albums on new http:Listener(9090) {
 | `()` | A 202 replaces the response, and the response interceptors before the interceptor receive it |
 | An error | The error goes to the nearest response error interceptor before the interceptor, or else gets the default error response |
 | Any other value, `http:Response` or status code response | That response replaces the response, and the response interceptors before the interceptor receive it |
+
+## Default listener
+
+`http:getDefaultListener()` returns one listener shared by every module of the program. It is created on the first call, on port `http:defaultListenerPort` with `http:defaultListenerConfig`.
+
+```ballerina
+import ballerina/http;
+
+listener http:Listener albums = http:getDefaultListener();
+
+service /albums on albums {
+    resource function get .() returns string[] => ["Blue Train"];
+}
+
+service /artists on albums {
+    resource function get .() returns string[] => ["John Coltrane"];
+}
+```
+
+Both services are served on port 9090, and a `listener` declaration in another module that calls `http:getDefaultListener()` gets the same listener. A service cannot attach to `http:getDefaultListener()` directly, since it may return an error; jBallerina rejects that, but the Go-native compiler does not yet ([#1811](https://github.com/ballerina-nutcracker/ballerina/issues/1811)). `defaultListenerPort` and `defaultListenerConfig` keep jBallerina's defaults, since `Config.toml` cannot set them until configurable variables are supported.
