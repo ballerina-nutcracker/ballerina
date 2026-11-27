@@ -18,8 +18,8 @@ error[SEMANTIC_ERROR]: redeclared symbol 'foo'
 21 | function foo() returns int { // @error
    |          ^^^
 
-error[SEMANTIC_ERROR]: unused variable 'unusedLocal'
+warning[WARNING]: unused variable 'unusedLocal'
   --> 16-e.bal:22:5
    |
-22 |     int unusedLocal = 2; // @error
+22 |     int unusedLocal = 2; // @warn
    |     ^^^^^^^^^^^^^^^^^^^^

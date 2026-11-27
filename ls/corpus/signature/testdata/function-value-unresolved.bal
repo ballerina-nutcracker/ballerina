@@ -15,7 +15,7 @@
 // under the License.
 
 function apply(function (int, string) returns int g) returns int {
-    int unused = 0;
+    MissingType unused = 0;
     return g(1, "a");
 }
 function named(function (int count, string title) k) {

@@ -26,8 +26,8 @@ function returnsBad() returns mod:_ {} // @error
 public public function qualifiers() {} // @error
 function valid() returns int => 1;
 function discardedReferences() returns int {
-    int ordinaryResult = ordinary(1); // @error discarded declaration reference
-    int defaultResult = defaults(); // @error discarded declaration reference
+    int ordinaryResult = ordinary(1); // @warn unused surviving sibling
+    int defaultResult = defaults(); // @warn unused surviving sibling
     int later = valid();
     return later;
 }
@@ -103,34 +103,6 @@ error[SEMANTIC_ERROR]: Unknown symbol:
    |
 22 | function defaults(int x = ) {} // @error
    |
-
-error[SEMANTIC_ERROR]: unused variable 'defaultResult'
-  --> signatures-e.bal:29:1
-   |
-29 |     int defaultResult = defaults(); // @error discarded declaration reference
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-30 |     int later = valid();
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'ordinaryResult'
-  --> signatures-e.bal:28:1
-   |
-28 |     int ordinaryResult = ordinary(1); // @error discarded declaration reference
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-29 |     int defaultResult = defaults(); // @error discarded declaration reference
-   |
-
-error[SEMANTIC_ERROR]: unused variable 'x'
-  --> signatures-e.bal:18:11
-   |
-18 | function (int x) {} // @error
-   |           ^^^^^
-
-error[SEMANTIC_ERROR]: unused variable 'x'
-  --> signatures-e.bal:22:19
-   |
-22 | function defaults(int x = ) {} // @error
-   |                   ^^^^^^^^
 
 error[SYNTAX_ERROR]: '_' is a keyword, and may not be used as an identifier
   --> signatures-e.bal:17:10

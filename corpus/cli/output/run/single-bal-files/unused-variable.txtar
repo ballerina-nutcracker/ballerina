@@ -1,0 +1,11 @@
+-- stdout --
+ran
+-- stderr --
+warning[WARNING]: unused variable 'unused'
+  --> unused-variable.bal:20:5
+   |
+20 |     int unused = 1;
+   |     ^^^^^^^^^^^^^^^
+
+-- exitcode --
+0

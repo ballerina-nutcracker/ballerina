@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+warning[WARNING]: unused variable 's'
+  --> unused2-v.bal:20:9
+   |
+20 |         string s = "100"; // @warn
+   |         ^^^^^^^^^^^^^^^^^

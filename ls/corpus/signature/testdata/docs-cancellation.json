@@ -172,6 +172,22 @@
           {
             "range": {
               "start": {
+                "line": 16,
+                "character": 0
+              },
+              "end": {
+                "line": 16,
+                "character": 17
+              }
+            },
+            "severity": 1,
+            "code": "SEMANTIC_ERROR",
+            "source": "ballerina",
+            "message": "unused import prefix 'gate'"
+          },
+          {
+            "range": {
+              "start": {
                 "line": 20,
                 "character": 13
               },
@@ -180,8 +196,8 @@
                 "character": 22
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'count'"
           },
@@ -196,26 +212,10 @@
                 "character": 36
               }
             },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
+            "severity": 2,
+            "code": "WARNING",
             "source": "ballerina",
             "message": "unused variable 'title'"
-          },
-          {
-            "range": {
-              "start": {
-                "line": 16,
-                "character": 0
-              },
-              "end": {
-                "line": 16,
-                "character": 17
-              }
-            },
-            "severity": 1,
-            "code": "SEMANTIC_ERROR",
-            "source": "ballerina",
-            "message": "unused import prefix 'gate'"
           }
         ]
       }

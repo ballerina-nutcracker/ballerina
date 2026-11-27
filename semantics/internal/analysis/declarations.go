@@ -145,6 +145,23 @@ func validateVariable(cx scope.Context, v *ast.BLangVariable, expected semtypes.
 		cx.SemanticErr("wildcard binding pattern type must be a subtype of 'any'", v.GetPosition())
 		return false
 	}
+	return reportUnusedInferredVariable(cx, v)
+}
+
+// reportUnusedInferredVariable reports an unused single-use var capture. It is
+// an error when the inferred type includes error, so that the error is not silently
+// discarded, and a warning otherwise.
+func reportUnusedInferredVariable(cx scope.Context, v *ast.BLangVariable) bool {
+	ctx := cx.CompilerCtx()
+	if !v.IsDeclaredWithVar || !ctx.IsUnusedInferredVariable(v.Symbol()) {
+		return true
+	}
+	name := v.GetName().GetValue()
+	if !semtypes.IsEmpty(cx.TyCtx(), semtypes.Intersect(ctx.SymbolType(v.Symbol()), semtypes.Error)) {
+		cx.SemanticErr("unused variable '"+name+"' with inferred type including error", v.GetPosition())
+		return false
+	}
+	ctx.Warning("unused variable '"+name+"'", v.GetPosition())
 	return true
 }
 

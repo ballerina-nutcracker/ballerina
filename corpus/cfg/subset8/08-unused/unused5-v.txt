@@ -1,0 +1,8 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable x (type
+        (value-type string)) (expr
+        (literal str))))
+  )
+)

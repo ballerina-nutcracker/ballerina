@@ -1,0 +1,37 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: unused variable 'moduleErr' with inferred type including error
+  --> unused4-e.bal:18:1
+   |
+18 | var moduleErr = error("boom"); // @error
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'x' with inferred type including error
+  --> unused4-e.bal:22:5
+   |
+22 |     var x = intOrError(); // @error
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unused variable 'y' with inferred type including error
+  --> unused4-e.bal:24:9
+   |
+24 |         var y = intOrError(); // @error
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning[WARNING]: unused variable 'a'
+  --> unused4-e.bal:30:5
+   |
+30 |     var a = intOrNil(); // @warn
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning[WARNING]: unused variable 'b'
+  --> unused4-e.bal:31:5
+   |
+31 |     int|error b = intOrError(); // @warn
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning[WARNING]: unused variable 'moduleInt'
+  --> unused4-e.bal:19:1
+   |
+19 | var moduleInt = 1; // @warn
+   | ^^^^^^^^^^^^^^^^^^

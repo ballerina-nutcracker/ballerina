@@ -13,7 +13,7 @@ Corpus execution contributes to native Go coverage when the coverage harness ins
 
 - `corpus/bal/`: compiler pipeline fixtures, with goldens in `corpus/ast/`, `corpus/cfg/`, `corpus/desugared/`, `corpus/bir/`, and `corpus/integration/`.
 - `corpus/project/`: project fixtures for behaviour requiring multiple files or modules; use the same outcome suffixes as `.bal` fixtures.
-- `corpus/recovery/`: `.txtar` fixtures with embedded Ballerina source, a recovered AST golden (`ast`) and a golden of every reported diagnostic in the CLI's format (`stderr`), run by `TestRecovery`. `corpus/recovery/ast/` exercises parsing and recovered AST construction only; other recovery fixtures continue through semantic analysis past syntax errors and stop after the first phase that reports any other error. All fixtures validate `@error` markers and reject panics and `INTERNAL_ERROR` diagnostics.
+- `corpus/recovery/`: `.txtar` fixtures with embedded Ballerina source, a recovered AST golden (`ast`) and a golden of every reported error diagnostic in the CLI's format (`stderr`), run by `TestRecovery`. `corpus/recovery/ast/` exercises parsing and recovered AST construction only; other recovery fixtures continue through semantic analysis past syntax errors and stop after the first phase that reports any other error. All fixtures validate `@error` markers and reject panics and `INTERNAL_ERROR` diagnostics.
 - `corpus/lib/subset<N>/`: standard-library fixtures. These are outside `corpus/bal/`, so per-stage drivers do not discover them. Their only goldens are `corpus/integration/lib/**.txtar`, updated through `TestLibIntegration`, which runs the full pipeline and validates the source markers.
 - `corpus/*_test.go`: end-to-end integration drivers for CLI, extern, package resolution, BIR roundtrip, and other areas. Area-specific drivers use fixtures under `corpus/<area>/testdata/`; shared integration drivers use `corpus/bal/`, `corpus/lib/`, `corpus/project/`, and `corpus/workspace/` directly, with project and workspace fixtures in immediate subdirectories of their roots. No Go files belong in fixture directories except embedded native modules under test balas.
 
@@ -33,6 +33,8 @@ Use no leading zeros in numeric filename parts: `1-e.bal`, `call2-v.bal`, or `di
 - `@output <expected output>`: expected stdout, collected in source order. Place it next to the corresponding print call where practical.
 - `@error`: an expected frontend diagnostic must cover the marked line. One marker within a multi-line diagnostic's range is sufficient. Marker text does not validate diagnostic wording.
 - `@panic`: the expected first runtime stack frame's file and line. Marker text does not validate panic wording.
+- `@warn`: an expected warning after the front-end pass; place the marker on the warning’s start line in the fixture’s own file. Supported in `-v`, `-p`, and `-e` tests and in recovery fixtures. `TestSemanticAnalysis` and `TestSemanticAnalysisErrors` require an exact match of warning lines, while `TestRecovery` only requires that marked lines have warnings. Marker text does not validate warning wording.
+- Multiple markers can share a line if each starts with `//` (for example, `// @output 3 // @warn`). An `@output` value ends at the next marker.
 
 ## Updating corpus tests
 

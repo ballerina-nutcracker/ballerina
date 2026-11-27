@@ -1,0 +1,22 @@
+(main
+  (bb0 () ()
+    (named-worker w (
+      (value-type null))
+      (block-function-body
+        (var-def
+          (variable unused (type
+            (value-type int)) (expr
+            (literal 1))))))
+    (expression-stmt
+      (invocation io println (
+        (literal main))))
+  )
+)
+(worker w
+  (bb0 () ()
+    (var-def
+      (variable unused (type
+        (value-type int)) (expr
+        (literal 1))))
+  )
+)

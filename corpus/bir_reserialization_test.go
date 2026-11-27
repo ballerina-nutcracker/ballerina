@@ -92,7 +92,7 @@ func testBIRSerializationRoundtrip(t *testing.T, testPair test_util.TestCase) {
 		t.Fatalf("failed to load expected from %s: %v", testPair.ExpectedPath, err)
 	}
 
-	result := evaluateTestResult(expectedStdout, expectedStderr, rtStdoutBuf.String(), rtStderrBuf.String())
+	result := evaluateTestResult(expectedStdout, expectedStderr, rtStdoutBuf.String(), stderrBuf.String()+rtStderrBuf.String())
 	if result.success {
 		return
 	}
