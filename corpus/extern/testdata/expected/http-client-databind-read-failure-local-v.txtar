@@ -3,6 +3,9 @@ true
 true
 true
 true
+Error occurred while retrieving the json payload from the response
+Error occurred while retrieving the binary payload from the response
+Error occurred while retrieving body parts from the response:
 true
 true
 true

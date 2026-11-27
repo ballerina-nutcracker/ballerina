@@ -1,0 +1,11 @@
+-- stdout --
+GenericListenerError: File does not contain valid certificates: testdata/certs
+GenericListenerError: File does not contain valid private key: testdata/certs
+GenericListenerError: File does not contain valid certificates: testdata/certs/malformed.pem
+GenericListenerError: File does not contain valid private key: testdata/certs/malformed.pem
+GenericListenerError: File does not contain valid certificates: testdata/certs/server.key
+GenericListenerError: File does not contain valid private key: testdata/certs/server.crt
+GenericListenerError: File does not contain valid certificates: testdata/certs/malformed.pem
+ok
+GenericListenerError: Listener.start: X509KeyPair: tls: private key does not match public key
+-- stderr --

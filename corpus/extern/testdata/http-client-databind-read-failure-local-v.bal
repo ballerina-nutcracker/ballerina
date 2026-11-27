@@ -46,6 +46,24 @@ public function main() returns error? {
     xml|error direct = rawXml.getXmlPayload();
     io:println(direct is error); // @output true
 
+    // The other payload accessors on a raw response report the read failure the same way.
+    http:Response rawJson = check c->get("/trunc-json");
+    json|http:ClientError directJson = rawJson.getJsonPayload();
+    if directJson is http:GenericClientError {
+        io:println(directJson.message()); // @output Error occurred while retrieving the json payload from the response
+    }
+    http:Response rawBlob = check c->get("/trunc-blob");
+    byte[]|http:ClientError directBlob = rawBlob.getBinaryPayload();
+    if directBlob is http:GenericClientError {
+        io:println(directBlob.message()); // @output Error occurred while retrieving the binary payload from the response
+    }
+    // Only the prefix is asserted: the rest is the transport's own text.
+    http:Response rawParts = check c->get("/trunc-parts");
+    var directParts = rawParts.getBodyParts();
+    if directParts is http:GenericClientError {
+        io:println(directParts.message().substring(0, 61)); // @output Error occurred while retrieving body parts from the response:
+    }
+
     // A narrow target adds a conversion step the read failure has to survive.
     Colour|error viaNarrowText = c->get("/trunc-text");
     io:println(viaNarrowText is error); // @output true

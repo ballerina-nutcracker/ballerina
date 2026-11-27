@@ -7,6 +7,7 @@ moved body
 Payload binding failed: '7' value cannot be converted to '{| age: int, name: string, never... |}'
 failed to parse JSON payload: invalid character 'o' in literal null (expecting 'u')
 failed to parse JSON payload: invalid character 'a' in literal true (expecting 'u')
+Error occurred while retrieving the json payload from the response
 failed to parse JSON payload: invalid character 'a' in literal true (expecting 'u')
 incompatible '{| age: int, name: string, never... |}' found for 'text/plain' mime type
 incompatible 'string' found for 'application/xml' mime type

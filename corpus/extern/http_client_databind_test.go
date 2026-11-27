@@ -96,12 +96,13 @@ func truncatingServer() *httptest.Server {
 		body        string
 	}
 	routes := map[string]canned{
-		"/trunc-json": {200, "application/json", `{"name": "Alice"}`},
-		"/trunc-text": {200, "text/plain", "red"},
-		"/trunc-xml":  {200, "application/xml", "<a>1</a>"},
-		"/trunc-blob": {200, "application/octet-stream", "\x01\x02"},
-		"/trunc-form": {200, "application/x-www-form-urlencoded", "a=1"},
-		"/trunc-404":  {404, "application/json", `{"error": "gone"}`},
+		"/trunc-json":  {200, "application/json", `{"name": "Alice"}`},
+		"/trunc-text":  {200, "text/plain", "red"},
+		"/trunc-xml":   {200, "application/xml", "<a>1</a>"},
+		"/trunc-blob":  {200, "application/octet-stream", "\x01\x02"},
+		"/trunc-form":  {200, "application/x-www-form-urlencoded", "a=1"},
+		"/trunc-404":   {404, "application/json", `{"error": "gone"}`},
+		"/trunc-parts": {200, "multipart/form-data; boundary=b", "--b\r\nContent-Type: text/plain\r\n\r\nhi\r\n"},
 		// A () target discards the body without inspecting its Content-Type, so it must
 		// still surface the read failure rather than silently returning ().
 		"/trunc-nil": {200, "text/plain", "ignored"},

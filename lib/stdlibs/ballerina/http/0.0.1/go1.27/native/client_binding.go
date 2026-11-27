@@ -78,8 +78,8 @@ func responseStatusCode(resp *values.Object) int {
 	return int(code)
 }
 
-// Mirrors jBallerina's createResponseError. ClientRequestError and RemoteServerError are not
-// declared here, so the distinction survives only in the error's type name.
+// Mirrors jBallerina's createResponseError. The error carries only the ClientRequestError or
+// RemoteServerError type name; the declared distinct types are not produced yet.
 func statusCodeError(ctx *extern.Context, types *httpTypes, resp *values.Object, statusCode int) *values.Error {
 	body, extractErr := statusErrorPayload(ctx, types, resp)
 	if extractErr != nil {
@@ -116,7 +116,7 @@ func statusErrorPayload(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	case jsonContentType.MatchString(contentType):
 		return decodeJSONBody(ctx, types, body)
 	case xmlContentType.MatchString(contentType):
-		return decodeXMLBody(ctx, body, "response")
+		return decodeXMLBody(ctx, body, "response", false)
 	case octetStreamContentType.MatchString(contentType):
 		return byteArrayValue(ctx, types, body), nil
 	default:
@@ -295,8 +295,8 @@ func jsonPayloadBuilder(ctx *extern.Context, types *httpTypes, resp *values.Obje
 	return bound
 }
 
-// The prefix and type name match jBallerina's PayloadBindingClientError, though the distinct
-// type itself is not declared here.
+// The prefix and type name match jBallerina's PayloadBindingClientError, though the declared
+// distinct type is not produced yet.
 func payloadBindingError(message string, cause *values.Error) *values.Error {
 	return values.NewError(semtypes.Error, "Payload binding failed: "+message, cause,
 		"PayloadBindingClientError", nil)
@@ -393,26 +393,23 @@ func formDataValue(ctx *extern.Context, types *httpTypes, resp *values.Object) v
 // needs its own error check.
 func xmlValue(ctx *extern.Context, resp *values.Object) values.BalValue {
 	body, _ := responseBody(resp)
-	payload, xmlErr := decodeXMLBody(ctx, body, "response")
+	payload, xmlErr := decodeXMLBody(ctx, body, "response", false)
 	if xmlErr != nil {
 		return xmlErr
 	}
 	return payload
 }
 
-// Error names and messages come from jBallerina (http_commons.bal:367), though neither
-// distinct type is declared here. The Go parser's wording differs from Java's, so it goes in
-// the cause rather than the message callers assert on.
-func decodeXMLBody(ctx *extern.Context, body []byte, source string) (values.BalValue, *values.Error) {
-	if len(body) == 0 {
-		return nil, values.NewError(semtypes.Error, "No content",
-			values.NewErrorWithMessage("Empty xml payload"), "NoContentError", nil)
+// Messages come from jBallerina (http_commons.bal:367). The Go parser's wording differs from
+// Java's, so it goes in the cause rather than the message callers assert on.
+// payloadSet marks a payload set explicitly, which decodes to empty xml even when it is empty.
+func decodeXMLBody(ctx *extern.Context, body []byte, source string, payloadSet bool) (values.BalValue, *values.Error) {
+	if len(body) == 0 && !payloadSet {
+		return nil, noContent(ctx, "xml")
 	}
 	parsed, err := values.ParseAsXMLValue(ctx.TypeCtx(), values.FromBytes(body), values.XMLLenientMode)
 	if err != nil {
-		return nil, values.NewError(semtypes.Error,
-			"Error occurred while retrieving the xml payload from the "+source,
-			values.NewErrorWithMessage(err.Error()), "GenericClientError", nil)
+		return nil, payloadError(ctx, "xml", source, errorCause(err))
 	}
 	return parsed, nil
 }

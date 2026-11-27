@@ -17,14 +17,19 @@
 package extern_test
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
 	"testing"
 
 	"github.com/ballerina-nutcracker/ballerina/platform/palnative"
+	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
 	"github.com/ballerina-nutcracker/ballerina/test_util"
+	"github.com/ballerina-nutcracker/ballerina/test_util/testharness"
+	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
 // skipIfNoLoopback skips on platforms without loopback TCP (js/wasm). Unlike
@@ -290,6 +295,26 @@ func TestHttpServiceConfig(t *testing.T) {
 	runExtern(t, fileCase("http-service/http-svc-config-v"), newHTTPPal(palnative.NewHTTPClient), nil)
 }
 
+// TestHttpServiceRequestReadFailure covers the payload accessors of an inbound request whose
+// client disconnects mid-body, which an http:Client cannot produce.
+func TestHttpServiceRequestReadFailure(t *testing.T) {
+	skipIfNoLoopback(t)
+	t.Parallel()
+	externs := []testharness.ExternRegistration{
+		{Org: "$anon", Module: "http-svc-request-read-failure-v", FuncName: "abortUpload",
+			Impl: func(_ *extern.Context, args []values.BalValue) (values.BalValue, error) {
+				conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", args[0].(int64)))
+				if err != nil {
+					return nil, err
+				}
+				_, err = fmt.Fprintf(conn, "POST %s HTTP/1.1\r\nHost: localhost\r\nContent-Type: %s\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhel",
+					args[1].(string), args[2].(string))
+				return nil, errors.Join(err, conn.Close())
+			}},
+	}
+	runExtern(t, fileCase("http-service/http-svc-request-read-failure-v"), newHTTPPal(palnative.NewHTTPClient), externs)
+}
+
 // TestHttpServiceLargeBody covers the streaming (non-eager) request body path
 // in buildRequestFromHTTP by posting a body larger than eagerBufferThreshold.
 func TestHttpServiceLargeBody(t *testing.T) {
@@ -315,6 +340,12 @@ func TestHttpServiceTLSOptions(t *testing.T) {
 	skipIfNoLoopback(t)
 	t.Parallel()
 	runExtern(t, fileCase("http-service/http-svc-tls-options-v"), newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
+}
+
+// TestHttpServiceTLSErrors covers listener key material that exists but cannot be loaded.
+func TestHttpServiceTLSErrors(t *testing.T) {
+	t.Parallel()
+	runExtern(t, fileCase("http-service/http-svc-tls-errors-v"), newHTTPPal(palnative.NewHTTPClient).withRealFS(), nil)
 }
 
 // TestHttpServiceGracefulStop verifies gracefulStop invoked from a non-serving
