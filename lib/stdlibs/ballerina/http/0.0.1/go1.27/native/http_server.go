@@ -70,6 +70,7 @@ type listenerState struct {
 	// start does not then serve.
 	starting      bool
 	stopRequested bool
+	pushes        *pushRegistry
 }
 
 type serviceEntry struct {
@@ -118,6 +119,7 @@ func registerListenerExterns(rt *runtime.Runtime, types *httpTypes) {
 				callerTy:         callerSignature.ReturnType,
 				createCaller:     createCaller,
 				interceptorTypes: interceptorTypes,
+				pushes:           newPushRegistry(),
 				host:             "0.0.0.0",
 				port:             port,
 				timeout:          60 * time.Second,
@@ -573,7 +575,9 @@ func startHTTPServer(rt *runtime.Runtime, state *listenerState) (pal.ServerHandl
 				}
 			}
 		}()
-		dispatchRequest(rt, state, encoder, r)
+		if !servePush(state, encoder, r) {
+			dispatchRequest(rt, state, encoder, r)
+		}
 	})
 	cfg := pal.ServerConfig{
 		Host:         state.host,
@@ -655,6 +659,8 @@ func dispatchRequest(rt *runtime.Runtime, state *listenerState, w *responseEncod
 	x := &exchange{state: state, w: w, r: r, service: found, segments: splitURLPath(subPath),
 		method: strings.ToLower(r.Method), conn: conn, body: body}
 	conn.exchange = x
+	conn.hold()
+	defer conn.release()
 	x.runFrom(1)
 }
 
@@ -747,7 +753,9 @@ func (x *exchange) runInterceptor(ctx *extern.Context, index int, handle extern.
 		x.completeInterceptor(ctx, index, handle, args, req, false)
 		return
 	}
+	x.conn.hold()
 	go func() {
+		defer x.conn.release()
 		defer x.conn.markSent()
 		defer func() {
 			if rec := recover(); rec != nil {
@@ -988,6 +996,7 @@ func (x *exchange) invokeResource(ctx *extern.Context, handle extern.MethodHandl
 	if hasCaller {
 		// The handler returns once a response is sent, which ends the exchange (an HTTP/2
 		// stream ends only then), while the resource carries on.
+		conn.hold()
 		go runCallerResource(ctx, conn, handle, args)
 		<-conn.sent
 		return
@@ -1008,6 +1017,7 @@ func (x *exchange) invokeResource(ctx *extern.Context, handle extern.MethodHandl
 func runCallerResource(ctx *extern.Context, conn *callerConn, handle extern.MethodHandle, args []values.BalValue) {
 	rt := conn.rt
 	defer rt.ReleasePooledContext(ctx)
+	defer conn.release()
 	defer conn.markSent()
 	defer func() {
 		if rec := recover(); rec != nil {

@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: incompatible types: '()' cannot be cast to 'string'
+        at ballerina/http:PushPromise.getHeader(0.0.1::http2_push_promise.bal:50)
+           main(http-push-promise-p.bal:21)

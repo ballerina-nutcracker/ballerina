@@ -1,0 +1,16 @@
+-- stdout --
+/ GET
+/styles.css HEAD
+false []
+true text/css
+["text/css","*/*"]
+["Accept","X-Trace"]
+["A-h","b-h"] 1
+["A-h","B-h"] 4
+["text/css"]
+["text/html"] ["ACCEPT","content-type","X-Trace"]
+["ACCEPT","content-type"]
+[]
+[]
+/script.js GET
+-- stderr --

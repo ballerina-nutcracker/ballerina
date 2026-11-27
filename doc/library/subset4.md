@@ -302,3 +302,25 @@ service /artists on albums {
 ```
 
 Both services are served on port 9090, which `albums.getPort()` returns, and a `listener` declaration in another module that calls `http:getDefaultListener()` gets the same listener. A service cannot attach to `http:getDefaultListener()` directly, since it may return an error; jBallerina rejects that, but the Go-native compiler does not yet ([#1811](https://github.com/ballerina-nutcracker/ballerina/issues/1811)). `defaultListenerPort` and `defaultListenerConfig` keep jBallerina's defaults, since `Config.toml` cannot set them until configurable variables are supported.
+
+## HTTP/2 server push
+
+Over an HTTP/2 connection, a resource can promise the client a response it has not asked for yet and send it on a stream of its own.
+
+```ballerina
+import ballerina/http;
+
+service / on new http:Listener(9090) {
+    resource function get page(http:Caller caller) returns error? {
+        http:PushPromise styles = new ("/styles.css");
+        check caller->promise(styles);
+        check caller->respond("<link rel=\"stylesheet\" href=\"/styles.css\">");
+
+        http:Response css = new;
+        css.setTextPayload("body { margin: 0; }", "text/css");
+        check caller->pushPromisedResponse(styles, css);
+    }
+}
+```
+
+`promise` returns an `http:ListenerError` over HTTP/1.x, when the client has disabled push, and for a promise with a relative or malformed path or a method other than `GET` or `HEAD`; jBallerina sends such promises, and the client then drops the connection. A promise the resource returns without answering is reset, where jBallerina leaves the client waiting for it.

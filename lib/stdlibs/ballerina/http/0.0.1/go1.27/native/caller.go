@@ -60,6 +60,11 @@ type callerConn struct {
 	handledError *values.Error
 	// payloadSet marks a request body an interceptor set, which the stages after it read as set.
 	payloadSet bool
+	// stages counts the stages using the exchange: its dispatch, and each stage that runs on
+	// its own goroutine since it has an http:Caller parameter.
+	stages int
+	// pushes are the streams promised on the exchange, reset once no stage uses it.
+	pushes []*pushedStream
 }
 
 func newCallerConn(rt *runtime.Runtime, types *httpTypes, w http.ResponseWriter, r *http.Request,
