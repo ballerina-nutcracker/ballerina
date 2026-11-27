@@ -1,0 +1,23 @@
+(C
+  (f
+    (bb0 () ()
+      (return
+        (simple-var-ref y))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation f expr:
+          (simple-var-ref c) ( <default>)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref self))))
+  )
+)

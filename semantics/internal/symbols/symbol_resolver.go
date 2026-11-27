@@ -144,6 +144,9 @@ type (
 		// inFunction is true for function and default-expression resolvers and for
 		// every resolver nested inside one.
 		inFunction bool
+		// hideOuterSelf hides the enclosing class or service `self` during lookup.
+		// Spec §6.8.1.2 binds `self` only in a method body, not in a parameter default.
+		hideOuterSelf bool
 	}
 )
 
@@ -427,10 +430,27 @@ func (bs *blockSymbolResolver) GetSymbol(name string) (symbolLookup, bool) {
 		return symbolLookup{ref: ref, kind: blockScopeKind, captured: false}, true
 	}
 	lookup, ok := bs.parent.GetSymbol(name)
-	if ok && lookup.kind == blockScopeKind && bs.captureRegionKind == captureRegionClosure {
+	if !ok {
+		return lookup, false
+	}
+	// Spec §6.8.1.2 does not bind the class or service receiver in a parameter
+	// default; skip past the class/service scope so a module-level `'self` can
+	// still resolve.
+	if bs.hideOuterSelf && name == "self" && lookup.kind == blockScopeKind {
+		// hideOuterSelf is only set for class/service methods, so an enclosing
+		// class or service resolver is always present on this path.
+		enclosing, _ := enclosingClassOrServiceResolver(bs)
+		if receiver, found := enclosing.scope.MainSpace().GetSymbol(name); found && lookup.ref == receiver {
+			lookup, ok = enclosing.parent.GetSymbol(name)
+			if !ok {
+				return lookup, false
+			}
+		}
+	}
+	if lookup.kind == blockScopeKind && bs.captureRegionKind == captureRegionClosure {
 		lookup.captured = true
 	}
-	return lookup, ok
+	return lookup, true
 }
 
 func (bs *blockSymbolResolver) GetPrefixedSymbol(prefix, name string) (model.SymbolRef, bool) {
@@ -1197,11 +1217,14 @@ func resolveInvokableChildren(functionResolver *blockSymbolResolver, fn ast.Invo
 		}
 	}
 	params := fn.GetParameters()
+	hideSelfInDefaults := isMethodOfClassOrService(functionResolver)
 	for i := range params {
 		param := &params[i]
 		ok = resolveVariableDeclaredType(functionResolver, param, param.Symbol()) && ok
 		if param.Expr != nil {
-			ok = resolveExpr(newDefaultExprResolver(functionResolver, param), param.Expr) && ok
+			defResolver := newDefaultExprResolver(functionResolver, param)
+			defResolver.hideOuterSelf = hideSelfInDefaults
+			ok = resolveExpr(defResolver, param.Expr) && ok
 		}
 	}
 	if rest := fn.GetRestParam(); rest != nil {
@@ -2187,6 +2210,16 @@ func resolveResourceMethod(functionResolver *blockSymbolResolver, rm *ast.BLangR
 }
 
 func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope, bool) {
+	bs, ok := enclosingClassOrServiceResolver(resolver)
+	if !ok {
+		return nil, false
+	}
+	return bs.scope, true
+}
+
+// enclosingClassOrServiceResolver returns the nearest enclosing class or
+// service block resolver along resolver's parent chain (including resolver).
+func enclosingClassOrServiceResolver(resolver symbolResolver) (*blockSymbolResolver, bool) {
 	for {
 		bs, ok := resolver.(*blockSymbolResolver)
 		if !ok {
@@ -2194,9 +2227,26 @@ func getEnclosingClassBodyScope(resolver symbolResolver) (model.BlockLevelScope,
 		}
 		switch bs.node.(type) {
 		case *ast.BLangClassDefinition, *ast.BLangService:
-			return bs.scope, true
+			return bs, true
 		}
 		resolver = bs.parent
+	}
+}
+
+// isMethodOfClassOrService reports whether functionResolver is a method, init,
+// or resource method whose immediate enclosing scope is a class or service body.
+// Nested functions inside a method body are excluded so their defaults may still
+// capture an enclosing `self` through normal lexical lookup.
+func isMethodOfClassOrService(functionResolver *blockSymbolResolver) bool {
+	parent, ok := functionResolver.parent.(*blockSymbolResolver)
+	if !ok {
+		return false
+	}
+	switch parent.node.(type) {
+	case *ast.BLangClassDefinition, *ast.BLangService:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -2209,6 +2259,17 @@ func resolveSelfFieldAccess(resolver symbolResolver, n *ast.BLangFieldBaseAccess
 		ok = false
 	}
 	return ok
+}
+
+// resolvesToClassReceiverSelf reports whether "self" in this resolver refers to
+// the enclosing class or service receiver, not a module-level `'self`.
+func resolvesToClassReceiverSelf(r symbolResolver, classScope model.BlockLevelScope) bool {
+	lookup, ok := r.GetSymbol("self")
+	if !ok {
+		return false
+	}
+	classSelf, found := classScope.MainSpace().GetSymbol("self")
+	return found && lookup.ref == classSelf
 }
 
 func reportUnexpectedNode(r symbolResolver, node ast.Node) bool {
@@ -2854,7 +2915,7 @@ func resolveFieldBaseAccess(r symbolResolver, n *ast.BLangFieldBaseAccess) bool 
 		r.markPrefixUsed(n.PkgAlias.GetValue())
 	}
 	if common.IsSelfFieldAccess(n) {
-		if classScope, ok := getEnclosingClassBodyScope(r); ok {
+		if classScope, ok := getEnclosingClassBodyScope(r); ok && resolvesToClassReceiverSelf(r, classScope) {
 			return resolveSelfFieldAccess(r, n, classScope)
 		}
 	}
