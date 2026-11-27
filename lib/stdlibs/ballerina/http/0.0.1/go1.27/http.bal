@@ -844,6 +844,7 @@ function createHeaders(Request request) returns Headers {
 # Use `service /path on new http:Listener(port)` to attach a service at declaration time,
 # or call `attach` programmatically and then `start`.
 public isolated class Listener {
+    private final int port;
 
     # Initialises the HTTP listener on the specified port.
     #
@@ -851,6 +852,7 @@ public isolated class Listener {
     # + config - Optional listener configuration (host, timeout, TLS)
     # + return - `()` on success, or an `http:ListenerError` if initialisation fails
     public isolated function init(int port, ListenerConfiguration? config = ()) returns ListenerError? {
+        self.port = port;
         return self.initNative(port, config);
     }
 
@@ -883,6 +885,13 @@ public isolated class Listener {
     #
     # + return - `()` on success, or an `error` if stopping fails
     public isolated function immediateStop() returns error? = external;
+
+    # Retrieves the port of the HTTP listener.
+    #
+    # + return - The HTTP listener port
+    public isolated function getPort() returns int {
+        return self.port;
+    }
 }
 
 // ── Client ────────────────────────────────────────────────────────────────────

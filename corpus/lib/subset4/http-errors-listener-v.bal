@@ -22,4 +22,9 @@ public function main() {
     if missingCert is http:ListenerError {
         io:println(missingCert is http:GenericListenerError, " ", missingCert.message()); // @output true Key file or server certificates file not found
     }
+
+    http:Listener|http:ListenerError noPort = new (0);
+    if noPort is http:ListenerError {
+        io:println(noPort is http:GenericListenerError, " ", noPort.message()); // @output true Listener port is not defined!
+    }
 }

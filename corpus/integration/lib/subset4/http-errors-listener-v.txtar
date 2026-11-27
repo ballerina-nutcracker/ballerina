@@ -1,3 +1,4 @@
 -- stdout --
 true Key file or server certificates file not found
+true Listener port is not defined!
 -- stderr --
