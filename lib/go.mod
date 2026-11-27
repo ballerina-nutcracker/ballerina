@@ -17,6 +17,8 @@ require (
 	github.com/ballerina-nutcracker/ballerina/tools v0.7.0
 	github.com/ballerina-nutcracker/ballerina/values v0.7.0
 	github.com/eclipse/paho.golang v0.23.0
+	github.com/emersion/go-imap/v2 v2.0.0-beta.9
+	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6
 	github.com/go-ldap/ldap/v3 v3.4.13
 	golang.org/x/crypto v0.52.0
 	golang.org/x/text v0.37.0
@@ -30,6 +32,7 @@ require (
 	github.com/ballerina-nutcracker/ballerina/parser v0.7.0 // indirect
 	github.com/ballerina-nutcracker/ballerina/prettyprint v0.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
+	github.com/emersion/go-message v0.18.2 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect

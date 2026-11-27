@@ -1,0 +1,8 @@
+-- stdout --
+refused-auto: Error while connecting to the IMAP store: not now
+refused-always: Error while connecting to the IMAP store: not now
+greeting-code: Error while connecting to the IMAP store: not now
+untagged: Error while connecting to the IMAP store: not now
+tagged-code: Error while connecting to the IMAP store: not now
+long-line: Error while connecting to the IMAP store: Connect failed (line too long)
+-- stderr --
