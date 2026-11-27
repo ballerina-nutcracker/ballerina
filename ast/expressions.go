@@ -165,39 +165,6 @@ func NewBLangNamedArgsExpression(pos diagnostics.Location, name IdentifierNode, 
 	}
 }
 
-func NewBLangAssignmentLExpr(expr BLangExpression, compound bool) LExpr {
-	var result LExpr
-	switch expr := expr.(type) {
-	case *BLangFieldBaseAccess:
-		clone := *expr
-		clone.flags |= valueExpressionFlagLexpr
-		result = &clone
-	case *BLangIndexBasedAccess:
-		clone := *expr
-		clone.flags |= valueExpressionFlagLexpr
-		result = &clone
-	default:
-		return expr.(LExpr)
-	}
-	if compound {
-		switch expr := result.(type) {
-		case *BLangFieldBaseAccess:
-			expr.flags |= valueExpressionFlagCompoundAssignmentLValue
-		case *BLangIndexBasedAccess:
-			expr.flags |= valueExpressionFlagCompoundAssignmentLValue
-		}
-	}
-	return result
-}
-
-func (b *bLangValueExpressionBase) IsCompoundAssignmentLValue() bool {
-	return b.flags.Has(valueExpressionFlagCompoundAssignmentLValue)
-}
-
-func (b *bLangValueExpressionBase) IsLexpr() bool {
-	return b.flags.Has(valueExpressionFlagLexpr)
-}
-
 func (b *bLangValueExpressionBase) IsOptionalAccess() bool {
 	return b.flags.Has(valueExpressionFlagOptionalAccess)
 }
@@ -236,9 +203,7 @@ const (
 )
 
 const (
-	valueExpressionFlagCompoundAssignmentLValue BLangValueExpressionFlags = 1 << iota
-	valueExpressionFlagLexpr
-	valueExpressionFlagOptionalAccess
+	valueExpressionFlagOptionalAccess BLangValueExpressionFlags = 1 << iota
 	valueExpressionFlagLax
 )
 

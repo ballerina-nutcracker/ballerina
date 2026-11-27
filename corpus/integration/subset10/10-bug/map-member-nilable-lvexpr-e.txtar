@@ -1,0 +1,31 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: invalid assignment target: container of type 'nil|{| a: int, never... |}' may be nil
+  --> map-member-nilable-lvexpr-e.bal:43:5
+   |
+43 |     s.a = 1; // @error
+   |     ^^^
+
+error[SEMANTIC_ERROR]: invalid assignment target: container of type 'nil|{| int... |}' may be nil
+  --> map-member-nilable-lvexpr-e.bal:37:5
+   |
+37 |     mm["k"]["j"] = 1; // @error
+   |     ^^^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: invalid assignment target: container of type 'nil|{| int... |}' may be nil
+  --> map-member-nilable-lvexpr-e.bal:39:5
+   |
+39 |     n["x"] = 1; // @error
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: unsupported container type for index based access
+  --> map-member-nilable-lvexpr-e.bal:35:5
+   |
+35 |     ml["k"][0] = 1; // @error
+   |     ^^^^^^^^^^
+
+error[SEMANTIC_ERROR]: unsupported container type for index based access
+  --> map-member-nilable-lvexpr-e.bal:41:5
+   |
+41 |     r.xs[0] = 1; // @error
+   |     ^^^^^^^

@@ -1,0 +1,137 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (type-definition R
+    (record-type
+      (field xs optional
+        (array-type
+          (value-type int) dimensions: 1 ([])))))
+  (type-definition Q
+    (record-type
+      (field xss optional
+        (array-type
+          (value-type int) dimensions: 2 ([][])))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type int) dimensions: 1 ([])))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (simple-var-ref m)
+            (literal k))
+          (literal 0))
+        (literal 1))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (var-def
+        (variable r (type
+          (user-defined-type R)) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (field-based-access xs
+            (simple-var-ref r))
+          (literal 0))
+        (literal 2))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (compound-assignment +
+        (index-based-access
+          (index-based-access
+            (simple-var-ref m)
+            (literal k))
+          (literal 0))
+        (literal 5))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (compound-assignment *
+        (index-based-access
+          (field-based-access xs
+            (simple-var-ref r))
+          (literal 0))
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref r))))
+      (var-def
+        (variable mr (type
+          (constrained-type
+            (builtin-ref-type map)
+            (user-defined-type R))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (field-based-access xs
+            (index-based-access
+              (simple-var-ref mr)
+              (literal a)))
+          (literal 1))
+        (literal 3))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mr))))
+      (var-def
+        (variable mll (type
+          (constrained-type
+            (builtin-ref-type map)
+            (array-type
+              (value-type int) dimensions: 2 ([][])))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref mll)
+              (literal k))
+            (literal 1))
+          (literal 0))
+        (literal 4))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mll))))
+      (var-def
+        (variable q (type
+          (user-defined-type Q)) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (field-based-access xss
+              (simple-var-ref q))
+            (literal 0))
+          (literal 1))
+        (literal 7))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref q))))
+      (var-def
+        (variable mml (type
+          (constrained-type
+            (builtin-ref-type map)
+            (constrained-type
+              (builtin-ref-type map)
+              (array-type
+                (value-type int) dimensions: 1 ([]))))) (expr
+          (mapping-constructor-expr))))
+      (assignment
+        (index-based-access
+          (index-based-access
+            (index-based-access
+              (simple-var-ref mml)
+              (literal a))
+            (literal b))
+          (literal 2))
+        (literal 8))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref mml)))))))

@@ -1914,7 +1914,7 @@ func resolveCompoundAssignment(t typeResolver, chain *binding, s *ast.BLangCompo
 func resolveCompoundAssignmentLhs(t typeResolver, chain *binding, lhs ast.BLangExpression) (semtypes.SemType, *binding, bool) {
 	switch lhs.(type) {
 	case *ast.BLangIndexBasedAccess, *ast.BLangFieldBaseAccess:
-		lhsResult, ok := resolveActionOrExpression(t, chain, lhs, semtypes.SemType{})
+		lhsResult, ok := resolveLvexpr(t, chain, lhs, accessCompoundStore)
 		if !ok {
 			return semtypes.SemType{}, nil, false
 		}
@@ -1981,7 +1981,7 @@ func resolveAssignment(t typeResolver, chain *binding, s assignmentNode) (statem
 	case *ast.BLangIndexBasedAccess, *ast.BLangFieldBaseAccess:
 		// we don't assign to the actual container so shoud use the narrowed type for the container variable
 		var lhsEffect expressionEffect
-		lhsResult, ok := resolveActionOrExpression(t, chain, lhs, semtypes.SemType{})
+		lhsResult, ok := resolveLvexpr(t, chain, lhs, accessStore)
 		if !ok {
 			return statementEffect{}, false
 		}
@@ -7345,15 +7345,70 @@ func createClosedRecordType(env semtypes.Env, fields []semtypes.Field, rest semt
 	return md.Define(env, fields, rest)
 }
 
+// accessMode is the role a field or member access plays where it occurs.
+type accessMode uint8
+
+const (
+	// accessRead is an access evaluated as an expression.
+	accessRead accessMode = iota
+	// accessStore is the lvexpr of an assignment statement.
+	accessStore
+	// accessCompoundStore is the lvexpr of a compound assignment statement.
+	accessCompoundStore
+	// accessLvexprOperand is the lvexpr operand of a field or member access lvexpr. A filling-read is performed on
+	// it, so it is neither read nor stored to.
+	accessLvexprOperand
+)
+
+func (m accessMode) isLvexpr() bool {
+	return m != accessRead
+}
+
+func (m accessMode) isStore() bool {
+	return m == accessStore || m == accessCompoundStore
+}
+
+// resolveLvexpr resolves expr as an lvexpr used as mode. The operand of a field or member access lvexpr is itself
+// resolved as an lvexpr, so it has the static type of the lvexpr (spec §7.15.1) rather than the type of reading it.
+func resolveLvexpr(t typeResolver, chain *binding, expr ast.BLangExpression, mode accessMode) (expressionResult, bool) {
+	result, ok := resolveLvexprInner(t, chain, expr, mode)
+	if !ok {
+		setNodeType(t, expr, semtypes.Never)
+		return expressionResult{}, false
+	}
+	return withSingletonEffect(chain, result), true
+}
+
+func resolveLvexprInner(t typeResolver, chain *binding, expr ast.BLangExpression, mode accessMode) (expressionResult, bool) {
+	switch expr := expr.(type) {
+	case *ast.BLangIndexBasedAccess:
+		container, ok := resolveLvexpr(t, chain, expr.Expr, accessLvexprOperand)
+		if !ok {
+			return expressionResult{}, false
+		}
+		ty, effect, ok := resolveIndexBasedAccessOn(t, sequentialChain(t, container.effect), expr, container.ty, mode)
+		return expressionResult{ty: ty, effect: effect}, ok
+	case *ast.BLangFieldBaseAccess:
+		container, ok := resolveLvexpr(t, chain, expr.Expr, accessLvexprOperand)
+		if !ok {
+			return expressionResult{}, false
+		}
+		return resolveFieldBaseAccessOn(t, sequentialChain(t, container.effect), expr, container, mode)
+	default:
+		return resolveExpressionInner(t, chain, expr, semtypes.SemType{})
+	}
+}
+
 func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangIndexBasedAccess) (semtypes.SemType, expressionEffect, bool) {
-	containerExpr := expr.Expr
-	containerExprResult, ok := resolveActionOrExpression(t, chain, containerExpr, semtypes.SemType{})
+	containerExprResult, ok := resolveActionOrExpression(t, chain, expr.Expr, semtypes.SemType{})
 	if !ok {
 		return semtypes.SemType{}, expressionEffect{}, false
 	}
-	containerExprTy := containerExprResult.ty
-	chain = sequentialChain(t, containerExprResult.effect)
+	return resolveIndexBasedAccessOn(t, sequentialChain(t, containerExprResult.effect), expr, containerExprResult.ty, accessRead)
+}
 
+// resolveIndexBasedAccessOn resolves expr, used as mode, whose container has already been resolved to containerExprTy.
+func resolveIndexBasedAccessOn(t typeResolver, chain *binding, expr *ast.BLangIndexBasedAccess, containerExprTy semtypes.SemType, mode accessMode) (semtypes.SemType, expressionEffect, bool) {
 	keyExpr := expr.IndexExpr
 	keyExprResult, ok := resolveActionOrExpression(t, chain, keyExpr, semtypes.SemType{})
 	if !ok {
@@ -7369,16 +7424,22 @@ func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangInde
 		resultTy = semtypes.ListMemberTypeInnerVal(t.typeContext(), containerExprTy, keyExprTy)
 	} else if semtypes.IsSubtype(tyCtx, containerExprTy, semtypes.Union(semtypes.Mapping, semtypes.Nil)) {
 		containerNilable := !semtypes.IsSubtype(t.typeContext(), containerExprTy, semtypes.Mapping)
+		if containerNilable && mode.isLvexpr() {
+			reportNilableLvexprContainer(t, tyCtx, containerExprTy, expr.GetPosition())
+			return semtypes.SemType{}, expressionEffect{}, false
+		}
 		mappingTy := containerExprTy
 		if containerNilable {
 			mappingTy = semtypes.Diff(containerExprTy, semtypes.Nil)
 		}
 		memberTy := semtypes.MappingMemberTypeInner(t.typeContext(), mappingTy, keyExprTy)
-		maybeMissing := semtypes.ContainsUndef(memberTy) || containerNilable
-		if maybeMissing {
+		// An lvexpr operand is potentially undefined rather than nilable: the filling-read fills a missing member.
+		if mode == accessLvexprOperand {
+			memberTy = semtypes.Diff(memberTy, semtypes.Undef)
+		} else if semtypes.ContainsUndef(memberTy) || containerNilable {
 			memberTy = semtypes.Union(semtypes.Diff(memberTy, semtypes.Undef), semtypes.Nil)
 		}
-		if expr.IsLexpr() {
+		if mode.isStore() {
 			singletonStringKey := func(keyTy semtypes.SemType) (string, bool) {
 				shape := semtypes.SingleShape(keyTy)
 				if shape.IsEmpty() {
@@ -7394,7 +7455,7 @@ func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangInde
 		}
 		resultTy = memberTy
 	} else if semtypes.IsSubtype(tyCtx, containerExprTy, semtypes.String) {
-		if expr.IsLexpr() {
+		if mode.isLvexpr() {
 			t.semanticError(fmt.Sprintf("invalid operation: type '%s' does not support member access for assignment", semtypes.ToString(tyCtx, containerExprTy)), expr.GetPosition())
 			return semtypes.SemType{}, expressionEffect{}, false
 		}
@@ -7406,6 +7467,12 @@ func resolveIndexBasedAccess(t typeResolver, chain *binding, expr *ast.BLangInde
 
 	setNodeType(t, expr, resultTy)
 	return resultTy, defaultExpressionEffect(chain), true
+}
+
+// reportNilableLvexprContainer reports a field or member access lvexpr whose operand may be nil: the operand of such
+// an lvexpr must be a mapping or a list (spec §7.15.1).
+func reportNilableLvexprContainer(t typeResolver, tyCtx semtypes.Context, containerTy semtypes.SemType, loc diagnostics.Location) {
+	t.semanticError(fmt.Sprintf("invalid assignment target: container of type '%s' may be nil", semtypes.ToString(tyCtx, containerTy)), loc)
 }
 
 func isLax(t typeResolver, ty semtypes.SemType) bool {
@@ -7454,18 +7521,23 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	if !ok {
 		return expressionResult{}, false
 	}
+	return resolveFieldBaseAccessOn(t, sequentialChain(t, containerExprResult.effect), expr, containerExprResult, accessRead)
+}
+
+// resolveFieldBaseAccessOn resolves expr, used as mode, whose container has already been resolved to
+// containerExprResult.
+func resolveFieldBaseAccessOn(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, containerExprResult expressionResult, mode accessMode) (expressionResult, bool) {
 	containerExprTy := containerExprResult.ty
-	chain = sequentialChain(t, containerExprResult.effect)
 	if expr.PkgAlias != nil {
-		return resolveXMLAttributeAccess(t, expr, containerExprTy)
+		return resolveXMLAttributeAccess(t, expr, containerExprTy, mode)
 	}
 	key := expr.Field.GetValue()
 	if expr.IsOptionalAccess() {
-		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprResult, key)
+		return resolveOptionalFieldBaseAccess(t, chain, expr, containerExprResult, key, mode)
 	}
 	tyCtx := t.typeContext()
 	if rawMemberTy, memberTy, lax := laxFieldMemberType(t, expr, containerExprResult); lax {
-		if expr.IsLexpr() {
+		if mode.isLvexpr() {
 			t.semanticError("lax field access cannot be used as an lvalue", expr.GetPosition())
 			return expressionResult{}, false
 		}
@@ -7493,29 +7565,33 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 		}
 	case semtypes.IsSubtype(tyCtx, containerExprTy, semtypes.Union(semtypes.Mapping, semtypes.Nil)):
 		containerNilable := !semtypes.IsSubtype(t.typeContext(), containerExprTy, semtypes.Mapping)
+		if containerNilable && mode.isLvexpr() {
+			reportNilableLvexprContainer(t, tyCtx, containerExprTy, expr.GetPosition())
+			return expressionResult{}, false
+		}
 		mappingTy := containerExprTy
 		if containerNilable {
 			mappingTy = semtypes.Diff(containerExprTy, semtypes.Nil)
 		}
 		var ok bool
-		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, expr.IsLexpr())
+		memberTy, ok = fieldBaseAccessMappingType(tyCtx, mappingTy, key, mode)
 		if !ok {
-			if !expr.IsLexpr() && optionalFieldIncludesNil(tyCtx, mappingTy, key) {
+			if mode == accessRead && optionalFieldIncludesNil(tyCtx, mappingTy, key) {
 				t.semanticError(fmt.Sprintf("field access cannot be used to access optional field '%s' whose type includes nil", key), expr.GetPosition())
 				return expressionResult{}, false
 			}
 			t.semanticError("field base access is only possible for declared fields", expr.GetPosition())
 			return expressionResult{}, false
 		}
-		if expr.IsCompoundAssignmentLValue() {
-			readTy, readOk := fieldBaseAccessMappingType(tyCtx, mappingTy, key, false)
-			writeTy, writeOk := fieldBaseAccessMappingType(tyCtx, mappingTy, key, true)
+		if mode == accessCompoundStore {
+			readTy, readOk := fieldBaseAccessMappingType(tyCtx, mappingTy, key, accessRead)
+			writeTy, writeOk := fieldBaseAccessMappingType(tyCtx, mappingTy, key, accessStore)
 			if readOk && writeOk && !semtypes.IsSubtype(tyCtx, readTy, writeTy) {
 				t.semanticError(fmt.Sprintf("incompatible type: expected %s, got %s", semtypes.ToString(tyCtx, writeTy), semtypes.ToString(tyCtx, readTy)), expr.GetPosition())
 				return expressionResult{}, false
 			}
 		}
-		if expr.IsLexpr() && mappingFieldIsReadonly(tyCtx, mappingTy, key) {
+		if mode.isStore() && mappingFieldIsReadonly(tyCtx, mappingTy, key) {
 			reportReadonlyMutation(t, tyCtx, mappingTy, key, expr.GetPosition())
 			return expressionResult{}, false
 		}
@@ -7531,8 +7607,8 @@ func resolveFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangField
 	return expressionResult{ty: memberTy, effect: defaultExpressionEffect(chain)}, true
 }
 
-func resolveXMLAttributeAccess(t typeResolver, expr *ast.BLangFieldBaseAccess, containerTy semtypes.SemType) (expressionResult, bool) {
-	if expr.IsLexpr() {
+func resolveXMLAttributeAccess(t typeResolver, expr *ast.BLangFieldBaseAccess, containerTy semtypes.SemType, mode accessMode) (expressionResult, bool) {
+	if mode.isLvexpr() {
 		t.semanticError("xml attribute access cannot be used as an lvalue", expr.GetPosition())
 		return expressionResult{}, false
 	}
@@ -7545,8 +7621,8 @@ func resolveXMLAttributeAccess(t typeResolver, expr *ast.BLangFieldBaseAccess, c
 	return expressionResult{}, false
 }
 
-func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, container expressionResult, fieldname string) (expressionResult, bool) {
-	if expr.IsLexpr() {
+func resolveOptionalFieldBaseAccess(t typeResolver, chain *binding, expr *ast.BLangFieldBaseAccess, container expressionResult, fieldname string, mode accessMode) (expressionResult, bool) {
+	if mode.isLvexpr() {
 		t.semanticError("optional field access cannot be used as an lvalue", expr.GetPosition())
 		return expressionResult{}, false
 	}
@@ -7640,28 +7716,33 @@ func optionalFieldIncludesNil(tyCtx semtypes.Context, containerExprTy semtypes.S
 	return semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) && semtypes.ContainsUndef(memberTy) && semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef))
 }
 
-func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, isLexpr bool) (semtypes.SemType, bool) {
+func fieldBaseAccessMappingType(tyCtx semtypes.Context, containerExprTy semtypes.SemType, key string, mode accessMode) (semtypes.SemType, bool) {
 	keyTy := semtypes.StringConst(key)
 	memberTy := semtypes.MappingMemberTypeInner(tyCtx, containerExprTy, keyTy)
 	if !semtypes.ContainsUndef(memberTy) {
 		return memberTy, true
 	}
-	// A read of an optional field is rewritten to an optional access only if some declared field has that name and
-	// the member type does not include nil, otherwise an absent field and a field holding () look the same.
-	if !isLexpr && semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
+	if mode == accessRead {
+		// A read of an optional field is rewritten to an optional access only if some declared field has that name
+		// and the member type does not include nil, otherwise an absent field and a field holding () look the same.
+		if !semtypes.AnyMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
+			return semtypes.SemType{}, false
+		}
 		if semtypes.IsSubtype(tyCtx, semtypes.Nil, semtypes.Diff(memberTy, semtypes.Undef)) {
 			return semtypes.SemType{}, false
 		}
 		return semtypes.Union(semtypes.Diff(memberTy, semtypes.Undef), semtypes.Nil), true
 	}
-	if isLexpr && semtypes.AllMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
-		result := semtypes.Diff(memberTy, semtypes.Undef)
-		if semtypes.AllMappingAtomsHaveOptionalFieldByName(tyCtx, containerExprTy, key) {
-			result = semtypes.Union(result, semtypes.Nil)
-		}
-		return result, true
+	if !semtypes.AllMappingAtomHasFieldByName(tyCtx, containerExprTy, key) {
+		return semtypes.SemType{}, false
 	}
-	return semtypes.SemType{}, false
+	result := semtypes.Diff(memberTy, semtypes.Undef)
+	// Storing () to an optional field whose type excludes () removes the field. An lvexpr operand is only
+	// potentially undefined: the filling-read fills a missing field.
+	if mode.isStore() && semtypes.AllMappingAtomsHaveOptionalFieldByName(tyCtx, containerExprTy, key) {
+		result = semtypes.Union(result, semtypes.Nil)
+	}
+	return result, true
 }
 
 func resolveInvocation(t typeResolver, chain *binding, expr *ast.BLangInvocation, expectedType semtypes.SemType) (expressionResult, bool) {
