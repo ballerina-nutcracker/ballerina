@@ -85,6 +85,7 @@ type (
 		Fields      []ObjectField
 		VTable      map[string]*BIRFunction
 		RTable      map[string][]BIRResourceMethod
+		IsReadonly  bool
 	}
 
 	BIRResourceMethod struct {

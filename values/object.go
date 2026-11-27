@@ -29,6 +29,7 @@ type Object struct {
 	methodKeys  map[string]string
 	rtable      map[string][]ResourceEntry
 	annotations AnnotationValues
+	isReadonly  bool
 }
 
 type ResourceEntry struct {
@@ -55,6 +56,12 @@ func LiteralPathSegment(seg ResourcePathSegmentDef) (string, bool) {
 }
 
 func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, rtable map[string][]ResourceEntry, annotations AnnotationValues) *Object {
+	return NewObjectWithReadonly(typ, fieldValues, methodKeys, rtable, annotations, false)
+}
+
+// NewObjectWithReadonly creates an object that, when isReadonly is set, belongs to
+// a readonly class and so may only be stored while being initialized.
+func NewObjectWithReadonly(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys map[string]string, rtable map[string][]ResourceEntry, annotations AnnotationValues, isReadonly bool) *Object {
 	if fieldValues == nil {
 		fieldValues = make(map[string]BalValue)
 	}
@@ -72,6 +79,7 @@ func NewObject(typ semtypes.SemType, fieldValues map[string]BalValue, methodKeys
 		methodKeys:  methodKeys,
 		rtable:      rtable,
 		annotations: annotations,
+		isReadonly:  isReadonly,
 	}
 	for field, value := range fieldValues {
 		o.Put(field, value)
@@ -103,6 +111,11 @@ func (o *Object) AllResourceMethodNames() []string {
 
 func (o *Object) Put(field string, value BalValue) {
 	o.fields.Store(field, value)
+}
+
+// IsReadonly reports whether o belongs to a readonly class.
+func (o *Object) IsReadonly() bool {
+	return o.isReadonly
 }
 
 func (o *Object) Get(field string) (BalValue, bool) {

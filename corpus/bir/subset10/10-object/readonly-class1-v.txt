@@ -1,0 +1,284 @@
+module $anon.. v 0.0.0;
+class ReadonlyPoint {
+  x int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 7
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class ReadonlyList {
+  values readonly&[int...]
+
+  init(readonly&[int...]) -> nil{
+    bb0 {
+      %3 = ConstantLoad 1
+      %4 = ConstantLoad 2
+      %5 = ConstantLoad 2
+      %6 = newArray [int...][%5]{%3, %4}
+      %7 = ConstantLoad values
+      self[%7] = %6;
+      %8 = ConstantLoad items
+      self[%8] = items;
+      return;
+    }
+  }
+}
+class ReadonlyClient {
+
+  init() -> nil{
+    bb0 {
+      return;
+    }
+  }
+
+  $remote$ping() -> int{
+    bb0 {
+      %2 = ConstantLoad 1
+      %0 = %2;
+      return;
+    }
+  }
+
+  resource get count ReadonlyClient.$resource$get$0() -> int{
+    bb0 {
+      %2 = ConstantLoad 2
+      %0 = %2;
+      return;
+    }
+  }
+}
+class IsolatedReadonlyPoint {
+  x int
+
+  getX() -> int{
+    bb0 {
+      %3 = ConstantLoad x
+      %2 = self[%3];
+      %0 = %2;
+      return;
+    }
+  }
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 4
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+class MutablePoint {
+  x int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad x
+      self[%3] = %2;
+      return;
+    }
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = newObject $anon/.:ReadonlyPoint
+    %2 = %1.init() -> bb1;
+  }
+  bb1 {
+    %4 = %2 is nil
+    %4 ? bb2 : bb3;
+  }
+  bb2 {
+    %3 = %1;
+    GOTO bb4;
+  }
+  bb3 {
+    %3 = %2;
+    GOTO bb4;
+  }
+  bb4 {
+    point = %3;
+    %7 = ConstantLoad x
+    %6 = point[%7];
+    %8 = %6;
+    %9 = println(%8) -> bb5;
+  }
+  bb5 {
+    %10 = newObject $anon/.:ReadonlyPoint
+    %11 = %10.init() -> bb6;
+  }
+  bb6 {
+    %13 = %11 is nil
+    %13 ? bb7 : bb8;
+  }
+  bb7 {
+    %12 = %10;
+    GOTO bb9;
+  }
+  bb8 {
+    %12 = %11;
+    GOTO bb9;
+  }
+  bb9 {
+    value = %12;
+    %15 = value is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %16 = %15;
+    %17 = println(%16) -> bb10;
+  }
+  bb10 {
+    %18 = value is readonly&object { public int x }
+    %19 = %18;
+    %20 = println(%19) -> bb11;
+  }
+  bb11 {
+    %21 = newObject $anon/.:ReadonlyPoint
+    %22 = %21.init() -> bb12;
+  }
+  bb12 {
+    %24 = %22 is nil
+    %24 ? bb13 : bb14;
+  }
+  bb13 {
+    %23 = %21;
+    GOTO bb15;
+  }
+  bb14 {
+    %23 = %22;
+    GOTO bb15;
+  }
+  bb15 {
+    readonlyPoint = %23;
+    readonlyValue = readonlyPoint;
+    %27 = readonlyValue is object { public function init() returns nil; public int x }
+    %28 = %27;
+    %29 = println(%28) -> bb16;
+  }
+  bb16 {
+    %30 = newObject $anon/.:ReadonlyList
+    %31 = ConstantLoad 3
+    %32 = ConstantLoad 1
+    %33 = newArray [int...][%32]{%31}
+    %34 = %30.init(%33) -> bb17;
+  }
+  bb17 {
+    %36 = %34 is nil
+    %36 ? bb18 : bb19;
+  }
+  bb18 {
+    %35 = %30;
+    GOTO bb20;
+  }
+  bb19 {
+    %35 = %34;
+    GOTO bb20;
+  }
+  bb20 {
+    list = %35;
+    %39 = ConstantLoad values
+    %38 = list[%39];
+    values = %38;
+    %41 = println(values) -> bb21;
+  }
+  bb21 {
+    %43 = ConstantLoad values
+    %42 = list[%43];
+    listValue = %42;
+    %45 = listValue is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %46 = %45;
+    %47 = println(%46) -> bb22;
+  }
+  bb22 {
+    %49 = ConstantLoad items
+    %48 = list[%49];
+    items = %48;
+    %51 = items is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %52 = %51;
+    %53 = println(%52) -> bb23;
+  }
+  bb23 {
+    %54 = newObject $anon/.:ReadonlyClient
+    %55 = %54.init() -> bb24;
+  }
+  bb24 {
+    %57 = %55 is nil
+    %57 ? bb25 : bb26;
+  }
+  bb25 {
+    %56 = %54;
+    GOTO bb27;
+  }
+  bb26 {
+    %56 = %55;
+    GOTO bb27;
+  }
+  bb27 {
+    readonlyClient = %56;
+    clientValue = readonlyClient;
+    %60 = clientValue is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %61 = %60;
+    %62 = println(%61) -> bb28;
+  }
+  bb28 {
+    %63 = readonlyClient.$remote$ping() -> bb29;
+  }
+  bb29 {
+    pinged = %63;
+    %65 = pinged;
+    %66 = println(%65) -> bb30;
+  }
+  bb30 {
+    %67 = newObject $anon/.:IsolatedReadonlyPoint
+    %68 = %67.init() -> bb31;
+  }
+  bb31 {
+    %70 = %68 is nil
+    %70 ? bb32 : bb33;
+  }
+  bb32 {
+    %69 = %67;
+    GOTO bb34;
+  }
+  bb33 {
+    %69 = %68;
+    GOTO bb34;
+  }
+  bb34 {
+    getter = %69;
+    %72 = getter.getX() -> bb35;
+  }
+  bb35 {
+    %73 = %72;
+    %74 = println(%73) -> bb36;
+  }
+  bb36 {
+    %75 = newObject $anon/.:MutablePoint
+    %76 = %75.init() -> bb37;
+  }
+  bb37 {
+    %78 = %76 is nil
+    %78 ? bb38 : bb39;
+  }
+  bb38 {
+    %77 = %75;
+    GOTO bb40;
+  }
+  bb39 {
+    %77 = %76;
+    GOTO bb40;
+  }
+  bb40 {
+    mutableValue = %77;
+    %80 = mutableValue is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %81 = %80;
+    %82 = println(%81) -> bb41;
+  }
+  bb41 {
+    return;
+  }
+}
