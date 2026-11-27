@@ -288,7 +288,8 @@ func (r *PackageResolution) resolveOwnDirectDependencies(ctx context.Context, pk
 // compiled ahead of the root package's modules and seeded into the
 // implicit-imports map. Explicitly imported bundles (e.g. ballerina/io) are
 // not listed here; they resolve through normal dependency resolution from the
-// bundled langlibs repository.
+// bundled langlibs repository. A lib may import the libs listed before it:
+// lang.object imports lang.__internal.
 var bundledLangLibs = []struct{ org, name, version string }{
 	{"ballerina", "lang.__internal", "0.0.1"},
 	{"ballerina", "lang.int", "0.0.1"},
@@ -344,23 +345,24 @@ func bundledLangLibID(org, name, version string) string {
 	return fmt.Sprintf("%s/%s:%s", org, name, version)
 }
 
-// prependImplicitLangLibs returns the bundled lang-lib modules that are not
-// already present in resolved, so an explicitly imported lang lib (resolved via
-// normal dependency resolution) is not compiled and published a second time.
-func prependImplicitLangLibs(bundled, resolved []*moduleContext) []*moduleContext {
-	existing := make(map[ModuleID]bool, len(resolved))
-	for _, mod := range resolved {
-		existing[mod.getModuleID()] = true
-	}
-	var implicit []*moduleContext
-	for _, mod := range bundled {
-		if existing[mod.getModuleID()] {
-			continue
+// prependBundledLangLibs returns the bundled lang-lib modules followed by the
+// resolved modules that are not bundled lang libs. The bundled modules keep
+// their dependency order even when one of them is also imported explicitly
+// (and so resolved via normal dependency resolution), and none of them is
+// compiled and published a second time.
+func prependBundledLangLibs(bundled, resolved []*moduleContext) []*moduleContext {
+	modules := make([]*moduleContext, 0, len(bundled)+len(resolved))
+	seen := make(map[ModuleID]bool, len(bundled)+len(resolved))
+	for _, group := range [][]*moduleContext{bundled, resolved} {
+		for _, mod := range group {
+			if seen[mod.getModuleID()] {
+				continue
+			}
+			seen[mod.getModuleID()] = true
+			modules = append(modules, mod)
 		}
-		existing[mod.getModuleID()] = true
-		implicit = append(implicit, mod)
 	}
-	return implicit
+	return modules
 }
 
 // ResolvedDependencies returns the map of resolved external package dependencies.
@@ -425,7 +427,7 @@ func (r *PackageResolution) resolveDependencies() {
 	// TODO: avoid always adding implicit lang libs here. Instead we need to think of away from front end to signal
 	// to driver which implicit imports were added.
 	bundledModules := r.bundledLangLibModules()
-	sortedModuleList = append(prependImplicitLangLibs(bundledModules, sortedModuleList), sortedModuleList...)
+	sortedModuleList = prependBundledLangLibs(bundledModules, sortedModuleList)
 
 	r.topologicallySortedModuleList = sortedModuleList
 	r.diagnosticResult = NewDiagnosticResult(r.diagnostics)

@@ -30,7 +30,7 @@ VET_MODULE_TARGETS := $(addprefix vet-module/,$(WORKSPACE_MODULES))
 LINT_MODULE_TARGETS := $(addprefix lint-module/,$(LINT_MODULES))
 TEST_RUNNER = .github/scripts/run_native_tests.py
 
-.PHONY: build vet lint lint-configs lint-walks lint-node-bases lint-func-usage lint-shallow force test test-coverage test-race check update-testdata release install-hooks \
+.PHONY: build vet lint lint-configs lint-walks lint-node-bases lint-func-usage lint-shallow lint-langlib-deps force test test-coverage test-race check update-testdata release install-hooks \
 	test-wasm test-wasm-corpus-light test-wasm-corpus-integration benchmark-corpus
 
 force:
@@ -63,7 +63,7 @@ vet-module/%: force
 	@echo "Vetting $*"
 	@(cd "$*" && go vet ./...)
 
-lint: $(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage lint-shallow
+lint: $(LINT_MODULE_TARGETS) lint-walks lint-node-bases lint-func-usage lint-shallow lint-langlib-deps
 
 lint-configs:
 	@$(PYTHON) .github/scripts/check_lint_configs.py
@@ -86,6 +86,10 @@ lint-shallow:
 	@echo "Checking shallow declarations"
 	@go run ./compiler-tools/shallow/cmd/shallow -test=false $(SHALLOW_PATTERNS)
 	@GOFLAGS="$$(go env GOFLAGS) -tags=debug,native_interp" go run ./compiler-tools/shallow/cmd/shallow -test=false $(SHALLOW_PATTERNS)
+
+lint-langlib-deps:
+	@echo "Checking lang library dependencies"
+	@$(PYTHON) .github/scripts/check_langlib_deps.py
 
 lint-walks:
 	@echo "Checking AST walk purity"

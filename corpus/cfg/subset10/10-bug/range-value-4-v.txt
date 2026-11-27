@@ -1,0 +1,111 @@
+(Holder
+  (init
+    (bb0 () ()
+      (assignment
+        (field-based-access r
+          (simple-var-ref self))
+        (binary-expr ...
+          (literal 1)
+          (literal 2)))
+    )
+  )
+  (reset
+    (bb0 () ()
+      (assignment
+        (field-based-access r
+          (simple-var-ref self))
+        (binary-expr ...
+          (literal 4)
+          (literal 5)))
+    )
+  )
+)
+(count
+  (bb0 () (bb1)
+    (var-def
+      (variable c (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (simple-var-ref n))
+    (var-def
+      (variable _ (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref c)
+      (literal 1))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref c))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation sum (
+          (literal 4))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation count (
+          (literal 3))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref range)
+          (user-defined-type object Iterable)))))
+    (var-def
+      (variable h (type
+        (user-defined-type Holder)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation reset expr:
+        (simple-var-ref h) ()))
+  )
+)
+(sum
+  (bb0 () (bb1)
+    (var-def
+      (variable r (expr
+        (binary-expr ...
+          (literal 1)
+          (simple-var-ref n)))))
+    (var-def
+      (variable it (expr
+        (invocation iterator expr:
+          (simple-var-ref r) ()))))
+    (var-def
+      (variable total (type
+        (value-type int)) (expr
+        (literal 0))))
+    (var-def
+      (variable next (expr
+        (invocation next expr:
+          (simple-var-ref it) ()))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (type-test-expr !is
+      (simple-var-ref next)
+      (value-type null))
+  )
+  (bb2 (bb1) (bb1)
+    (compound-assignment +
+      (simple-var-ref total)
+      (field-based-access value
+        (simple-var-ref next)))
+    (assignment
+      (simple-var-ref next)
+      (invocation next expr:
+        (simple-var-ref it) ()))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref total))
+  )
+)

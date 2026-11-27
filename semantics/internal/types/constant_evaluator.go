@@ -54,6 +54,9 @@ func isConstantExpression(t typeResolver, expr ast.BLangExpression) (ast.BLangEx
 	case *ast.BLangTypeTestExpr:
 		return isConstantExpression(t, e.Expr)
 	case *ast.BLangBinaryExpr:
+		if common.IsRangeExpr(e) {
+			return expr, false
+		}
 		if offender, ok := isConstantExpression(t, e.LhsExpr); !ok {
 			return offender, false
 		}

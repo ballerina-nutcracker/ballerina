@@ -1,0 +1,79 @@
+(main
+  (bb0 () (bb1)
+    (var-def
+      (variable r (expr
+        (binary-expr ...
+          (literal 7)
+          (literal 8)))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (simple-var-ref r)
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+  (bb3 (bb1) (bb4))
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref r)
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb5 (bb4) (bb4)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+  (bb6 (bb4) (bb7))
+  (bb7 (bb6 bb8) (bb8 bb9)
+    (group-expr
+      (binary-expr ..<
+        (literal 5)
+        (literal 6)))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb8 (bb7) (bb7)
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref i))))
+  )
+  (bb9 (bb7) ()
+    (var-def
+      (variable it (type
+        (user-defined-type object Iterable)) (expr
+        (binary-expr ..<
+          (literal 1)
+          (literal 3)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref it)
+          (user-defined-type object Iterable)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref R)
+          (user-defined-type object Iterable)))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (invocation upTo (
+            (literal 2)))
+          (user-defined-type object Iterable)))))
+  )
+)
+(upTo
+  (bb0 () ()
+    (return
+      (binary-expr ..<
+        (literal 0)
+        (simple-var-ref n)))
+  )
+)

@@ -704,7 +704,7 @@ func Resolve(
 	parent context.TraceSpan,
 ) (model.Scope, model.ExportedSymbolSpace, map[string]model.ExportedSymbolSpace) {
 	importSpan := parent.StartChild("Import Binding", "")
-	cuImportsList := bindImports(cx, compilationUnits, implicitImports, publicSymbols, moduleVisibility, defaultOrg, currentPackageName)
+	cuImportsList := bindImports(cx, isLangLibPackage(pkgID), compilationUnits, implicitImports, publicSymbols, moduleVisibility, defaultOrg, currentPackageName)
 	importSpan.End()
 	moduleResolver := newModuleSymbolResolver(cx, pkgID)
 	// Opaque symbols go into the module scope before source top-level symbols are
@@ -894,7 +894,7 @@ func (ms *compilationUnitSymbolResolver) allocateFunctionSymbol(fn *ast.BLangFun
 	if !ok {
 		return false
 	}
-	if isLangLibPackage(ms) && isOpaqueDeclaration(fn) {
+	if isLangLibPackage(ms.moduleResolver.pkgID) && isOpaqueDeclaration(fn) {
 		return ms.bindOpaqueDeclaration(fn, name)
 	}
 	symbol, ok := ms.allocateFunctionSymbolInner(fn, name, fn.IsPublic())
@@ -1042,17 +1042,21 @@ func (ms *compilationUnitSymbolResolver) allocateClassSymbol(classDef *ast.BLang
 	}
 }
 
-// isLangLibPackage reports whether the module being resolved belongs to a
+// isLangLibPackage reports whether pkgID is a
 // ballerina/lang.* package, the only place lang library specific declarations such
-// as distinct type symbols and opaque function declarations are honoured.
-func isLangLibPackage(ms *compilationUnitSymbolResolver) bool {
-	pkgID := ms.moduleResolver.pkgID
+// as distinct type symbols, opaque function declarations and imports of
+// lang.__internal are honoured.
+func isLangLibPackage(pkgID model.PackageID) bool {
 	return pkgID.OrgName != nil && pkgID.PkgName != nil &&
 		pkgID.OrgName.Value() == "ballerina" && strings.HasPrefix(pkgID.PkgName.Value(), "lang.")
 }
 
+// langInternalPackage is the lang library that holds what the compiler and the
+// other lang libraries use but Ballerina source must not.
+var langInternalPackage = PackageIdentifier{OrgName: "ballerina", ModuleName: "lang.__internal"}
+
 func registerLangLibDistinctTypeSymbol(ms *compilationUnitSymbolResolver, typeName string, ref model.SymbolRef, pos diagnostics.Location) bool {
-	if !isLangLibPackage(ms) {
+	if !isLangLibPackage(ms.moduleResolver.pkgID) {
 		return true
 	}
 	if !ms.moduleResolver.ctx.RegisterLangLibDistinctTypeSymbol(ms.moduleResolver.pkgID.PkgName.Value(), typeName, ref) {
@@ -1474,6 +1478,7 @@ func resolveLambdaFunction(functionResolver *blockSymbolResolver, parent *blockS
 
 func bindImports(
 	ctx *context.CompilerContext,
+	fromLangLib bool,
 	compilationUnits []*ast.BLangCompilationUnit,
 	implicitImports map[string]model.ExportedSymbolSpace,
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
@@ -1484,7 +1489,7 @@ func bindImports(
 	for i, cu := range compilationUnits {
 		imports := make(map[string]model.ExportedSymbolSpace)
 		for _, imp := range compilationUnitImports(cu) {
-			resolveExternalImport(ctx, &imp, defaultOrg, currentPackageName, publicSymbols, moduleVisibility, imports)
+			resolveExternalImport(ctx, &imp, fromLangLib, defaultOrg, currentPackageName, publicSymbols, moduleVisibility, imports)
 		}
 		maps.Copy(imports, implicitImports)
 		result[i] = compilationUnitImportsWithSymbols{compilationUnit: cu, imports: imports}
@@ -1498,17 +1503,24 @@ func bindImports(
 // when the package was not resolved upstream, or a "not exported" error when
 // the resolved module belongs to a different package and isn't in that
 // package's exported-modules list — same-package imports are always exempt.
+// Only a lang library may import lang.__internal; fromLangLib reports whether
+// the importing module is one.
 // Java source: org.wso2.ballerinalang.compiler.semantics.analyzer.SymbolEnter
 // (the bPackageSymbol.exported check around import-declaration visiting)
 func resolveExternalImport(
 	ctx *context.CompilerContext,
 	imp *ast.BLangImportPackage,
+	fromLangLib bool,
 	defaultOrg, currentPackageName string,
 	publicSymbols map[PackageIdentifier]model.ExportedSymbolSpace,
 	moduleVisibility map[PackageIdentifier]ModuleVisibility,
 	result map[string]model.ExportedSymbolSpace,
 ) bool {
 	id := resolveImportPackageIdentifier(imp, defaultOrg)
+	if id == langInternalPackage && !fromLangLib {
+		ctx.SemanticError("module '"+id.OrgName+"/"+id.ModuleName+"' is internal and cannot be imported", imp.GetPosition())
+		return false
+	}
 	symbols, ok := publicSymbols[id]
 	if !ok {
 		ctx.SemanticError("Unknown import: "+id.OrgName+"/"+id.ModuleName, imp.GetPosition())

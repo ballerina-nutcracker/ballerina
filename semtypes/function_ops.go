@@ -43,7 +43,7 @@ func (f *functionOps) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 }
 
 func functionFormulaIsEmpty(cx Context, pos conjunctionHandle, neg conjunctionHandle) bool {
-	return functionPathIsEmpty(cx, functionIntersectRet(cx, pos), functionUnionParams(cx, pos), functionUnionQualifiers(cx, pos), pos, neg)
+	return functionPathIsEmpty(cx, functionIntersectRet(cx, pos), functionUnionParams(cx, pos), functionIntersectQualifiers(cx, pos), pos, neg)
 }
 
 func functionPathIsEmpty(cx Context, rets SemType, params SemType, qualifiers SemType, pos conjunctionHandle, neg conjunctionHandle) bool {
@@ -88,11 +88,11 @@ func functionUnionParams(cx Context, pos conjunctionHandle) SemType {
 	return Union(cx.FunctionAtomType(cx.conjunctionAtom(pos)).ParamType, functionUnionParams(cx, cx.conjunctionNext(pos)))
 }
 
-func functionUnionQualifiers(cx Context, pos conjunctionHandle) SemType {
+func functionIntersectQualifiers(cx Context, pos conjunctionHandle) SemType {
 	if pos == conjunctionNil {
-		return Never
+		return Val
 	}
-	return Union(cx.FunctionAtomType(cx.conjunctionAtom(pos)).Qualifiers, functionUnionQualifiers(cx, cx.conjunctionNext(pos)))
+	return Intersect(cx.FunctionAtomType(cx.conjunctionAtom(pos)).Qualifiers, functionIntersectQualifiers(cx, cx.conjunctionNext(pos)))
 }
 
 func functionIntersectRet(cx Context, pos conjunctionHandle) SemType {
