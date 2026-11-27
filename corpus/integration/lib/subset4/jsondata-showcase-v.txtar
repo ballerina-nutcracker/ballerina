@@ -1,0 +1,24 @@
+-- stdout --
+Alice 30 165.0 Colombo 2 true
+Bob 1.8 bobby 7
+20000
+25
+{"name":"Bob"}
+true
+{"name":"C"}
+{"name":"D","alias":null}
+{"id":"x","extra":{"k":1}}
+{"id":"y","a":1,"b":2}
+[1,2]
+[4,5]
+{"a":1,"b":2}
+hello
+12.50
+{"n":1,"f":1.5,"b":true,"z":null}
+true
+Dune by Herbert
+incompatible expected type 'int' for value 'abc'
+required field 'age' not present in JSON
+'expected ':'' at line: '1' column: '6'
+{"name":"F","items":[1,2],"nested":{"ok":true}}
+-- stderr --
