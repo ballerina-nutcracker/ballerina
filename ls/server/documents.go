@@ -52,15 +52,15 @@ func applyChanges(text string, changes []protocol.TextDocumentContentChangeEvent
 	return text, true
 }
 
-// With clamp, a line past the end resolves to the document end and a position
-// within a surrogate pair resolves to the rune's starting byte.
+// A line past the end always resolves to the document end. With clamp, a
+// position within a UTF-16 surrogate pair resolves to the rune's starting byte.
 func utf16Offset(text string, position protocol.Position, clamp bool) (int, bool) {
 	lineStart := 0
 	line := uint32(0)
 	for line < position.Line {
 		nextLineStart, ok := nextLineStart(text, lineStart)
 		if !ok {
-			return len(text), clamp
+			return len(text), true
 		}
 		lineStart = nextLineStart
 		line++
@@ -94,7 +94,7 @@ func utf16Offset(text string, position protocol.Position, clamp bool) (int, bool
 
 func nextLineStart(text string, start int) (int, bool) {
 	if start >= len(text) {
-		return start, true
+		return start, false
 	}
 	for offset := start; offset < len(text); {
 		switch text[offset] {
