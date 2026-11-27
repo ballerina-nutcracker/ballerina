@@ -1390,7 +1390,7 @@ func (n *nodeBuilder) createSimpleLiteralFromText(literal st.Node, textValue str
 			// Try to unescape, but handle errors gracefully
 			// We may reach here when the string literal has syntax diagnostics.
 			// Therefore mock the compiler with an empty string on error.
-			text = unescapeBallerinaString(text)
+			text = unescapeBackslashEscapes(unescapeUnicodeCodepoints(text))
 		}
 
 		literalKind = ast.LiteralKindString
@@ -3443,11 +3443,7 @@ func (n *nodeBuilder) createSpecificFieldNameLiteral(fieldName st.Node) (*ast.BL
 	if !ok {
 		return nil, false
 	}
-	return fieldNameLiteral(n.getPosition(fieldName), identifier.Value), true
-}
-
-func fieldNameLiteral(pos diagnostics.Location, name string) *ast.BLangLiteral {
-	return ast.NewBLangLiteral(pos, ast.LiteralKindString, name, name, false)
+	return ast.NewBLangLiteral(n.getPosition(fieldName), ast.LiteralKindString, identifier.Value, identifier.Value, false), true
 }
 
 // shorthandFieldName returns the field name of a `{x}` shorthand field from tokens already checked by the
@@ -3702,7 +3698,7 @@ func (n *nodeBuilder) addSpecificField(mappingConstructor *ast.BLangMappingConst
 		if !ok || !n.expectOptionalToken(specificField.Colon()) {
 			return false
 		}
-		keyLiteral = fieldNameLiteral(n.getPosition(fieldName), name)
+		keyLiteral = ast.NewBLangLiteral(n.getPosition(fieldName), ast.LiteralKindString, name, name, false)
 	} else {
 		var ok bool
 		keyLiteral, ok = n.createSpecificFieldNameLiteral(fieldName)

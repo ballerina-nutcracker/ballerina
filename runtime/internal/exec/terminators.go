@@ -28,7 +28,7 @@ import (
 
 func execStartAction(ctx *extern.Context, action *bir.StartAction, frame *Frame) *bir.BIRBasicBlock {
 	if ctx.HoldsLock() {
-		panic(values.NewErrorWithMessage("attempted strand start while holding a lock"))
+		panic(values.NewError(semtypes.Error, "attempted strand start while holding a lock", nil, "", nil))
 	}
 	call := bootstrapCall(ctx, &action.Call, frame)
 	spawnFrames := snapshotSpawnFrames(ctx.CallStack.(*callStack))
@@ -50,7 +50,8 @@ func bootstrapCall(ctx *extern.Context, call *bir.CallSite, frame *Frame) *boots
 		receiver := getOperandValue(ctx, call.Receiver, frame).(*values.Object)
 		lookupKey, found := receiver.MethodLookupKey(call.Name.Value())
 		if !found {
-			panic(values.NewErrorWithMessage("function not found: " + call.Name.Value()))
+			message := "function not found: " + call.Name.Value()
+			panic(values.NewError(semtypes.Error, message, nil, "", nil))
 		}
 		handle, err = newLookupKeyHandle(ctx.Env, lookupKey, nil)
 	case bir.CallKindResource:
@@ -58,7 +59,7 @@ func bootstrapCall(ctx *extern.Context, call *bir.CallSite, frame *Frame) *boots
 		path := extractArgs(ctx, call.PathSegments, frame)
 		impl, ok := LookupResourceMethod(ctx, receiver, call.MethodName, path)
 		if !ok {
-			panic(values.NewErrorWithMessage("no matching resource method"))
+			panic(values.NewError(semtypes.Error, "no matching resource method", nil, "", nil))
 		}
 		handle = impl.(*InvokableHandle)
 	case bir.CallKindFunction:
@@ -119,7 +120,7 @@ func waitAllFutures(ctx *extern.Context, futures []*values.Future) []values.BalV
 		}
 		// I am not entirely sure this is the correct behaviour. This means you can multiple wait on a given future any number of
 		// of times as long as you have another fresh future.
-		results[i] = values.NewErrorWithMessage("multiple waits on the same future is not allowed")
+		results[i] = values.NewError(semtypes.Error, "multiple waits on the same future is not allowed", nil, "", nil)
 		completed[i] = true
 		remaining--
 	}
@@ -229,7 +230,8 @@ func dispatchMethodCall(ctx *extern.Context, callInfo *bir.Call, args []values.B
 	receiver := args[0].(*values.Object)
 	lookupKey, found := receiver.MethodLookupKey(callInfo.Name.Value())
 	if !found {
-		panic(values.NewErrorWithMessage("function not found: " + callInfo.Name.Value()))
+		message := "function not found: " + callInfo.Name.Value()
+		panic(values.NewError(semtypes.Error, message, nil, "", nil))
 	}
 	// The same call site can be polymorphic across executions (e.g., iterating over a list
 	// of objects with different concrete types). Cache only when it matches the receiver.
@@ -270,7 +272,8 @@ func lookupAndExecute(ctx *extern.Context, callInfo *bir.Call, args []values.Bal
 		callInfo.CachedNativeFunc = externFn.Impl
 		return externFn.Impl(ctx, args)
 	}
-	panic(values.NewErrorWithMessage("function not found: " + callInfo.Name.Value()))
+	message := "function not found: " + callInfo.Name.Value()
+	panic(values.NewError(semtypes.Error, message, nil, "", nil))
 }
 
 func execResourceCall(ctx *extern.Context, instr *bir.ResourceFunctionCall, frame *Frame) *bir.BIRBasicBlock {
@@ -278,7 +281,7 @@ func execResourceCall(ctx *extern.Context, instr *bir.ResourceFunctionCall, fram
 	pathVals := extractArgs(ctx, instr.PathSegments, frame)
 	impl, ok := LookupResourceMethod(ctx, receiver, instr.MethodName, pathVals)
 	if !ok {
-		panic(values.NewErrorWithMessage("no matching resource method"))
+		panic(values.NewError(semtypes.Error, "no matching resource method", nil, "", nil))
 	}
 	argVals := extractArgs(ctx, instr.Args, frame)
 	result, err := Invoke(ctx, impl, argVals)
@@ -383,7 +386,7 @@ func execFpCall(ctx *extern.Context, callInfo *bir.Call, frame *Frame) *bir.BIRB
 			panicWithExternError(err)
 		}
 	} else {
-		panic(values.NewErrorWithMessage("function not found: " + lookupKey))
+		panic(values.NewError(semtypes.Error, "function not found: "+lookupKey, nil, "", nil))
 	}
 	if callInfo.LhsOp != nil {
 		setOperandValue(ctx, callInfo.LhsOp, frame, result)

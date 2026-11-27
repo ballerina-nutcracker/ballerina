@@ -335,9 +335,9 @@ func (dc *bddDeserializationContext) deserializeType(poolIndex int) SemType {
 		return dc.pool.tys[poolIndex]
 	}
 	te := dc.bp.types[poolIndex]
-	var subtypeDataList []properSubtypeData
+	var subtypeDataList []subtypeData
 	for _, sde := range dc.bp.subtypeData[te.subtypeDataStart:te.subtypeDataEnd] {
-		var data properSubtypeData
+		var data subtypeData
 		switch sde.kind {
 		case intSubtypeData:
 			data = toIntSubtype(dc.bp.intSubtypes[sde.index])

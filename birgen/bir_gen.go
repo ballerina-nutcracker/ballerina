@@ -30,12 +30,6 @@ import (
 	"github.com/ballerina-nutcracker/ballerina/values"
 )
 
-// birLoc converts a diagnostics.Location (byte offsets) to a bir.Location (line/column)
-// using a DiagnosticEnv to resolve byte offsets.
-func birLoc(de *diagnostics.DiagnosticEnv, pos diagnostics.Location) bir.Location {
-	return bir.NewLocation(de.FileName(pos), de.StartLine(pos), de.EndLine(pos), de.StartColumn(pos), de.EndColumn(pos))
-}
-
 type packageContext struct {
 	CompilerContext *compilerctx.CompilerContext
 	packageID       *model.PackageID // Current package ID
@@ -78,13 +72,14 @@ func (fn *functionContext) lastBBNumber() int {
 }
 
 func (fn *functionContext) loc(pos diagnostics.Location) bir.Location {
-	return birLoc(fn.pkgCtx.CompilerContext.DiagnosticEnv(), pos)
+	de := fn.pkgCtx.CompilerContext.DiagnosticEnv()
+	return bir.NewLocation(de.FileName(pos), de.StartLine(pos), de.EndLine(pos), de.StartColumn(pos), de.EndColumn(pos))
 }
 
 // context is one node of the lexical block tree. The whole tree (across
 // nested lambdas, via `enclosing`) is the single source of truth for both
 // variable resolution and abrupt-exit cleanup. Every block owns a runtime
-// frame; `enclosing` stays within one function (nil at the funcBlock) and
+// frame; `enclosing` stays within one function (nil at the function root) and
 // closure lookups cross into the enclosing function via fn.definedIn.
 type context interface {
 	enclosingBlock() context
@@ -108,16 +103,14 @@ type context interface {
 }
 
 // blockContext is the state every block shares, and is itself the node used
-// for an ordinary block (if branch / match clause / bare block). funcBlock,
+// for an ordinary block (if branch / match clause / bare block).
 // loopBlock and lockBlock embed it.
 type blockContext struct {
 	fn        *functionContext
-	enclosing context // lexical parent within this function; nil at the funcBlock
+	enclosing context // lexical parent within this function; nil at the function root
 	localVars []*bir.BIRLocalVariableDcl
 	vars      map[model.SymbolRef]*bir.BIROperand
 }
-
-type funcBlock struct{ blockContext }
 
 type loopBlock struct {
 	blockContext
@@ -223,7 +216,7 @@ func lookupVar(b context, symRef model.SymbolRef) (*bir.BIROperand, bool, bool) 
 		}
 		next := cur.enclosingBlock()
 		if next == nil {
-			// reached the funcBlock of curFn; cross into the defining function
+			// reached the root block of curFn; cross into the defining function
 			next = curFn.enclosing
 			if next == nil {
 				return nil, false, false
@@ -366,10 +359,6 @@ func buildFunctionLookupKeyFromSymbol(ctx *packageContext, symRef model.SymbolRe
 	return buildLookupKey(ctx.CompilerContext.SymbolPackage(symRef), ctx.CompilerContext.SymbolName(symRef))
 }
 
-func buildMethodLookupKeyFromSymbol(ctx *packageContext, className string, symRef model.SymbolRef) string {
-	return buildLookupKey(ctx.CompilerContext.SymbolPackage(symRef), className+"."+ctx.CompilerContext.SymbolName(symRef))
-}
-
 func buildGlobalVarLookupKey(pkgId *model.PackageID, name model.Name) string {
 	return pkgId.OrgName.Value() + "/" + pkgId.PkgName.Value() + ":" + name.Value()
 }
@@ -464,8 +453,10 @@ func addGlobalVar(birPkg *bir.BIRPackage, dcl bir.BIRGlobalVariableDcl) {
 
 func transformGlobalVariableDcl(ctx *packageContext, ast *ast.BLangVariable) bir.BIRGlobalVariableDcl {
 	name := model.Name(ast.GetName().GetValue())
+	de := ctx.CompilerContext.DiagnosticEnv()
+	pos := ast.GetPosition()
 	dcl := bir.BIRGlobalVariableDcl{
-		Pos:                birLoc(ctx.CompilerContext.DiagnosticEnv(), ast.GetPosition()),
+		Pos:                bir.NewLocation(de.FileName(pos), de.StartLine(pos), de.EndLine(pos), de.StartColumn(pos), de.EndColumn(pos)),
 		Name:               name,
 		PkgID:              ctx.packageID,
 		Type:               ctx.CompilerContext.SymbolType(ast.Symbol()),
@@ -485,12 +476,12 @@ func transformFunction(
 // newFunctionRoot creates the root block (the call frame) of a function.
 // definedIn is the block the function literal sits in (nil at top level),
 // used by closures to resolve captured variables.
-func newFunctionRoot(ctx *packageContext, definedIn context) *funcBlock {
+func newFunctionRoot(ctx *packageContext, definedIn context) *blockContext {
 	fn := &functionContext{pkgCtx: ctx, enclosing: definedIn}
-	return &funcBlock{blockContext{fn: fn, vars: make(map[model.SymbolRef]*bir.BIROperand)}}
+	return &blockContext{fn: fn, vars: make(map[model.SymbolRef]*bir.BIROperand)}
 }
 
-func transformFunctionInner(root *funcBlock, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
+func transformFunctionInner(root *blockContext, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	birFunc := transformFunctionSignature(root, astFunc, selfSymbolRef)
 	var generated bool
 	switch body := astFunc.Body.(type) {
@@ -513,7 +504,7 @@ func transformFunctionInner(root *funcBlock, astFunc *ast.BLangFunction, selfSym
 	return birFunc
 }
 
-func transformNativeFunction(root *funcBlock, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
+func transformNativeFunction(root *blockContext, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	if _, ok := root.fn.pkgCtx.CompilerContext.GetSymbol(astFunc.Symbol()).(model.DependentlyTypedFunctionSymbol); ok {
 		name := model.Name(astFunc.GetName().GetValue())
 		return &bir.BIRFunction{
@@ -529,7 +520,7 @@ func transformNativeFunction(root *funcBlock, astFunc *ast.BLangFunction, selfSy
 	return birFunc
 }
 
-func transformFunctionSignature(root *funcBlock, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
+func transformFunctionSignature(root *blockContext, astFunc *ast.BLangFunction, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	symRef := astFunc.Symbol()
 	funcName := model.Name(astFunc.GetName().GetValue())
 	birFunc := &bir.BIRFunction{}
@@ -568,7 +559,7 @@ func transformFunctionSignature(root *funcBlock, astFunc *ast.BLangFunction, sel
 	return birFunc
 }
 
-func setFunctionLocals(root *funcBlock, birFunc *bir.BIRFunction) {
+func setFunctionLocals(root *blockContext, birFunc *bir.BIRFunction) {
 	for _, varPtr := range root.localVars {
 		birFunc.LocalVars = append(birFunc.LocalVars, *varPtr)
 	}
@@ -1111,7 +1102,7 @@ type expressionEffect struct {
 // of an expression dont' affect the other.
 func snapshotIfNeeded(ctx context, effect expressionEffect, pos bir.Location) expressionEffect {
 	op := effect.result
-	if _, isLocal := op.VariableDcl.(*bir.BIRLocalVariableDcl); isLocal && hasNoStorageIdentity(ctx.function().pkgCtx.typeContext(), op.VariableDcl.GetType()) {
+	if _, isLocal := op.VariableDcl.(*bir.BIRLocalVariableDcl); isLocal && semtypes.IsSubtype(ctx.function().pkgCtx.typeContext(), op.VariableDcl.GetType(), semtypes.SimpleBasic) {
 		tempOp := ctx.addTempVar(op.VariableDcl.GetType())
 		effect.block.Instructions = append(effect.block.Instructions, bir.NewMove(op, tempOp, pos))
 		effect.result = tempOp
@@ -1144,7 +1135,7 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 	case *ast.BLangWildCardBindingPattern:
 		return wildcardBindingPattern(ctx, curBB)
 	case *ast.BLangGroupExpr:
-		return groupExpression(ctx, curBB, expr)
+		return handleActionOrExpression(ctx, curBB, expr.Expression)
 	case *ast.BLangIndexBasedAccess:
 		return indexBasedAccess(ctx, curBB, expr)
 	case *ast.BLangFieldBaseAccess:
@@ -1296,18 +1287,10 @@ func typedescExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangTy
 func newTypeDescValue(ctx context, constraint semtypes.SemType, typeDesc ast.TypeDescriptor) *values.TypeDesc {
 	udt, ok := typeDesc.(*ast.BLangUserDefinedType)
 	if !ok || !ast.SymbolIsSet(udt) {
-		return values.NewTypeDesc(ctx.typeEnv(), constraint, nil)
+		return values.NewTypeDescWithFieldAnnotations(ctx.typeEnv(), constraint, nil, nil)
 	}
-	return newTypeDescValueForSymbol(ctx, constraint, udt.Symbol())
-}
-
-func newTypeDescValueForSymbol(ctx context, constraint semtypes.SemType, symRef model.SymbolRef) *values.TypeDesc {
-	return values.NewTypeDescWithFieldAnnotations(
-		ctx.typeEnv(),
-		constraint,
-		ctx.compilerContext().SymbolAnnotationValues(symRef),
-		ctx.compilerContext().RecordFieldAnnotationValues(symRef),
-	)
+	symRef := udt.Symbol()
+	return values.NewTypeDescWithFieldAnnotations(ctx.typeEnv(), constraint, ctx.compilerContext().SymbolAnnotationValues(symRef), ctx.compilerContext().RecordFieldAnnotationValues(symRef))
 }
 
 func annotAccessExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangAnnotAccessExpr) (expressionEffect, bool) {
@@ -1963,10 +1946,6 @@ func optionalFieldAccess(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangF
 	return expressionEffect{result: resultOperand, block: doneBB}, true
 }
 
-func groupExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangGroupExpr) (expressionEffect, bool) {
-	return handleActionOrExpression(ctx, curBB, expr.Expression)
-}
-
 func wildcardBindingPattern(ctx context, curBB *bir.BIRBasicBlock) (expressionEffect, bool) {
 	return expressionEffect{
 		result: ctx.addTempVar(semtypes.Never),
@@ -2540,7 +2519,10 @@ func simpleVariableReference(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BL
 	sym := ctx.getSymbol(symRef)
 	if sym.Kind() == model.SymbolKindType {
 		resultOperand := ctx.addTempVar(expr.Type())
-		td := newTypeDescValueForSymbol(ctx, ctx.symbolType(symRef), symRef)
+
+		constraint := ctx.symbolType(symRef)
+		td := values.NewTypeDescWithFieldAnnotations(ctx.typeEnv(), constraint, ctx.compilerContext().SymbolAnnotationValues(symRef), ctx.compilerContext().RecordFieldAnnotationValues(symRef))
+
 		curBB.Instructions = append(curBB.Instructions, bir.NewConstantLoad(resultOperand, td, ctx.function().loc(expr.GetPosition())))
 		return expressionEffect{
 			result: resultOperand,
@@ -2617,7 +2599,7 @@ func transformClassDefinition(
 	defer span.End()
 	classLookupKey := buildLookupKey(ctx.CompilerContext.SymbolPackage(class.Symbol()), ctx.CompilerContext.SymbolName(class.Symbol()))
 	methodLookupKey := func(methodName string, symRef model.SymbolRef) string {
-		return buildMethodLookupKeyFromSymbol(ctx, className, symRef)
+		return buildLookupKey(ctx.CompilerContext.SymbolPackage(symRef), className+"."+ctx.CompilerContext.SymbolName(symRef))
 	}
 	resourceLookupKey := func(rm *ast.BLangResourceMethod) string {
 		return buildFunctionLookupKeyFromSymbol(ctx, rm.Symbol())
@@ -2775,7 +2757,7 @@ func resourcePathSegmentType(seg *ast.BLangResourcePathSegment) semtypes.SemType
 	return seg.ParamType.Type()
 }
 
-func transformResourceMethodInner(root *funcBlock, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
+func transformResourceMethodInner(root *blockContext, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	birFunc := transformResourceMethodSignature(root, rm, selfSymbolRef)
 	var generated bool
 	switch body := rm.Body.(type) {
@@ -2798,7 +2780,7 @@ func transformResourceMethodInner(root *funcBlock, rm *ast.BLangResourceMethod, 
 	return birFunc
 }
 
-func transformNativeResourceMethod(root *funcBlock, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
+func transformNativeResourceMethod(root *blockContext, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	if _, ok := root.fn.pkgCtx.CompilerContext.GetSymbol(rm.Symbol()).(model.DependentlyTypedFunctionSymbol); ok {
 		name := model.Name(root.fn.pkgCtx.CompilerContext.SymbolName(rm.Symbol()))
 		return &bir.BIRFunction{
@@ -2814,7 +2796,7 @@ func transformNativeResourceMethod(root *funcBlock, rm *ast.BLangResourceMethod,
 	return birFunc
 }
 
-func transformResourceMethodSignature(root *funcBlock, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
+func transformResourceMethodSignature(root *blockContext, rm *ast.BLangResourceMethod, selfSymbolRef *model.SymbolRef) *bir.BIRFunction {
 	symRef := rm.Symbol()
 	ctx := root.fn.pkgCtx
 	funcName := model.Name(ctx.CompilerContext.SymbolName(symRef))
@@ -2968,8 +2950,4 @@ func newStreamExpression(ctx context, curBB *bir.BIRBasicBlock, expr *ast.BLangN
 	instr := bir.NewStreamConstructor(expr.Type(), result, argEffect.result, ctx.function().loc(expr.GetPosition()))
 	curBB.Instructions = append(curBB.Instructions, instr)
 	return expressionEffect{result: result, block: curBB}, true
-}
-
-func hasNoStorageIdentity(tyCtx semtypes.Context, ty semtypes.SemType) bool {
-	return semtypes.IsSubtype(tyCtx, ty, semtypes.SimpleBasic)
 }

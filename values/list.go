@@ -82,10 +82,10 @@ func (l *List) FillingSet(tc semtypes.Context, idx int, value BalValue) {
 		return
 	}
 	if l.filler == nil {
-		panic(NewErrorWithMessage("no filler value"))
+		panic(NewError(semtypes.Error, "no filler value", nil, "", nil))
 	}
 	if idx >= math.MaxInt32 {
-		panic(NewErrorWithMessage("list too long"))
+		panic(NewError(semtypes.Error, "list too long", nil, "", nil))
 	}
 	newLen := idx + 1
 	if newLen <= cap(l.elems) {
@@ -110,10 +110,10 @@ func (l *List) FillingGet(idx int) BalValue {
 	}
 	l.checkMutable()
 	if l.filler == nil {
-		panic(NewErrorWithMessage("no filler value"))
+		panic(NewError(semtypes.Error, "no filler value", nil, "", nil))
 	}
 	if idx >= math.MaxInt32 {
-		panic(NewErrorWithMessage("list too long"))
+		panic(NewError(semtypes.Error, "list too long", nil, "", nil))
 	}
 	for len(l.elems) <= idx {
 		l.elems = append(l.elems, l.filler())
@@ -168,10 +168,11 @@ func (l *List) checkCanShrinkTo(newLen int) {
 		return
 	}
 	if semtypes.IsNever(l.atomic.Rest()) {
-		panic(NewErrorWithMessage("inherent type violation: cannot change the length of a fixed-length list"))
+		panic(NewError(semtypes.Error, "inherent type violation: cannot change the length of a fixed-length list", nil, "", nil))
 	}
-	panic(NewErrorWithMessage(fmt.Sprintf(
-		"inherent type violation: cannot reduce the length of a tuple below its %d mandatory member(s)", mandatory)))
+	message := fmt.Sprintf(
+		"inherent type violation: cannot reduce the length of a tuple below its %d mandatory member(s)", mandatory)
+	panic(NewError(semtypes.Error, message, nil, "", nil))
 }
 
 // checkShiftedMemberTypes panics if removing idx would slide a member into a
@@ -185,7 +186,7 @@ func (l *List) checkShiftedMemberTypes(tc semtypes.Context, idx int) {
 
 func (l *List) checkMutable() {
 	if l.isReadonly {
-		panic(NewErrorWithMessage("inherent type violation: cannot mutate readonly value"))
+		panic(NewError(semtypes.Error, "inherent type violation: cannot mutate readonly value", nil, "", nil))
 	}
 }
 
@@ -193,12 +194,12 @@ func (l *List) checkMemberType(tc semtypes.Context, idx int, value BalValue) {
 	memberTy := l.atomic.MemberAtInnerVal(idx)
 	valueTy := SemTypeForValue(value)
 	if !semtypes.IsSubtype(tc, valueTy, memberTy) {
-		panic(NewErrorWithMessage("inherent type violation"))
+		panic(NewError(semtypes.Error, "inherent type violation", nil, "", nil))
 	}
 }
 
 func (l *List) String(visited map[uintptr]bool) string {
-	return l.stringify(visited, toStringNested)
+	return l.stringify(visited, func(v BalValue, visited map[uintptr]bool) string { return toString(v, visited, false) })
 }
 
 func (l *List) BalString(visited map[uintptr]bool) string {

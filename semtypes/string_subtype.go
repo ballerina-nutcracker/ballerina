@@ -29,9 +29,9 @@ type stringSubtype struct {
 }
 
 var (
-	emptyStringArr                   = []enumerableType[string]{}
-	emptyCharArr                     = []enumerableType[string]{}
-	_              properSubtypeData = &stringSubtype{}
+	emptyStringArr             = []enumerableType[string]{}
+	emptyCharArr               = []enumerableType[string]{}
+	_              subtypeData = &stringSubtype{}
 )
 
 func newStringSubtypeListCoverageFromBoolInts(isSubtype bool, indices []int) stringSubtypeListCoverage {
@@ -41,6 +41,7 @@ func newStringSubtypeListCoverageFromBoolInts(isSubtype bool, indices []int) str
 	return this
 }
 
+//shallow:allow named string-coverage constructor keeps its representation behind the factory
 func stringSubtypeListCoverageFrom(isSubtype bool, indices []int) stringSubtypeListCoverage {
 	return newStringSubtypeListCoverageFromBoolInts(isSubtype, indices)
 }
@@ -52,6 +53,7 @@ func newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(charData charStri
 	return this
 }
 
+//shallow:allow semantic subtype factory is kept consistently with the other subtype factories
 func stringSubtypeFrom(chara charStringSubtype, nonChar nonCharStringSubtype) stringSubtype {
 	return newStringSubtypeFromCharStringSubtypeNonCharStringSubtype(chara, nonChar)
 }

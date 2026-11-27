@@ -32,6 +32,8 @@ import (
 // LookupObjectMethod resolves a regular method named methodName on obj. The
 // second return is false if obj has no such method. Remote methods are not
 // resolved through this entry point; use LookupRemoteMethod for those.
+//
+//shallow:allow runtime entry point exposes method lookup without exposing the private dispatcher
 func LookupObjectMethod(ctx *extern.Context, obj *values.Object, methodName string) (any, bool) {
 	return lookupByMethodName(ctx, obj, methodName)
 }

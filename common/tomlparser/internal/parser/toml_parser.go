@@ -671,24 +671,20 @@ func (p *Parser) parseNumericValue() ast.ValueNode {
 		// TODO: TOML-P2 — special floats
 		p.reader.read()
 		if sign == "-" {
-			return ast.NewFloatValueNode(negInf(), p.locationOf(startTok, tok))
+			return ast.NewFloatValueNode(math.Inf(-1), p.locationOf(startTok, tok))
 		}
-		return ast.NewFloatValueNode(posInf(), p.locationOf(startTok, tok))
+		return ast.NewFloatValueNode(math.Inf(1), p.locationOf(startTok, tok))
 
 	case lexer.TokenNan:
 		// TODO: TOML-P2 — special floats
 		p.reader.read()
-		return ast.NewFloatValueNode(nanVal(), p.locationOf(startTok, tok))
+		return ast.NewFloatValueNode(math.NaN(), p.locationOf(startTok, tok))
 
 	default:
 		p.addError(fmt.Sprintf("expected numeric token but got %q", tok.Value), tok)
 		return nil
 	}
 }
-
-func posInf() float64 { return math.Inf(1) }
-func negInf() float64 { return math.Inf(-1) }
-func nanVal() float64 { return math.NaN() }
 
 func (p *Parser) parseArray() ast.ValueNode {
 	openTok := p.reader.read() // consume [

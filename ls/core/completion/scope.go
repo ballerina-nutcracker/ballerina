@@ -132,9 +132,6 @@ func walkScope(c *cursor, visit func(model.SymbolRef)) {
 				visitSpace(scope.Main, true)
 			}
 			return scope.Parent
-		case *model.FunctionScope:
-			visitSpace(scope.Main, true)
-			return scope.Parent
 		case *model.ModuleScope:
 			visitSpace(scope.Main, false)
 			return nil

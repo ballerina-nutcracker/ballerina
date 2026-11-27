@@ -155,7 +155,7 @@ func TestGetRunningJobsReportsShutdownScheduler(t *testing.T) {
 
 func TestPanicMessage(t *testing.T) {
 	t.Parallel()
-	if panicMessage(values.NewErrorWithMessage("e")) != "e" || panicMessage(errors.New("g")) != "g" || panicMessage(3) != "3" {
+	if panicMessage(values.NewError(semtypes.Error, "e", nil, "", nil)) != "e" || panicMessage(errors.New("g")) != "g" || panicMessage(3) != "3" {
 		t.Fatal("unexpected panic message")
 	}
 }

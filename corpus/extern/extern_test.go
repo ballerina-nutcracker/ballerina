@@ -115,7 +115,7 @@ func TestDependentlyTyped(t *testing.T) {
 			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.String):
 				return "foo", nil
 			}
-			panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
+			panic(values.NewError(semtypes.Error, "unsupported inferred typedesc constraint", nil, "", nil))
 		}},
 		{Org: org, Module: mod, FuncName: "inferredSubType", Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			td, ok := args[1].(*values.TypeDesc)
@@ -123,7 +123,7 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			if !semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int) {
-				panic(values.NewErrorWithMessage("inferredSubType requires typedesc<int>"))
+				panic(values.NewError(semtypes.Error, "inferredSubType requires typedesc<int>", nil, "", nil))
 			}
 			return int64(1), nil
 		}},
@@ -138,7 +138,7 @@ func TestDependentlyTyped(t *testing.T) {
 			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Constraint()):
 				return "bar", nil
 			}
-			panic(values.NewErrorWithMessage("unsupported inferredPartially typedesc constraint"))
+			panic(values.NewError(semtypes.Error, "unsupported inferredPartially typedesc constraint", nil, "", nil))
 		}},
 		{Org: org, Module: mod, FuncName: "shiftBy", Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			src, ok := args[0].(*values.Map)
@@ -174,7 +174,7 @@ func TestDependentlyTyped(t *testing.T) {
 			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.String):
 				return fmt.Sprintf("%d", val), nil
 			}
-			panic(values.NewErrorWithMessage("unsupported inferredWithDefault typedesc constraint"))
+			panic(values.NewError(semtypes.Error, "unsupported inferredWithDefault typedesc constraint", nil, "", nil))
 		}},
 		{Org: org, Module: mod, FuncName: "inferredMaybeError", Impl: func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 			td, ok := args[0].(*values.TypeDesc)
@@ -183,9 +183,9 @@ func TestDependentlyTyped(t *testing.T) {
 			}
 			// return an error to verify the inferred typedesc was widened to include error
 			if semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Error, td.Constraint()) {
-				return values.NewErrorWithMessage("error"), nil
+				return values.NewError(semtypes.Error, "error", nil, "", nil), nil
 			}
-			panic(values.NewErrorWithMessage("inferredMaybeError: expected error to be in typedesc"))
+			panic(values.NewError(semtypes.Error, "inferredMaybeError: expected error to be in typedesc", nil, "", nil))
 		}},
 		{Org: org, Module: mod, FuncName: "inferredOpenArray", Impl: dependentArrayExtern(arrayReturnOpen)},
 		{Org: org, Module: mod, FuncName: "inferredFixedArray", Impl: dependentArrayExtern(arrayReturnFixed)},
@@ -200,7 +200,7 @@ func TestDependentlyTyped(t *testing.T) {
 				return nil, fmt.Errorf("expected typedesc argument, got %T", args[1])
 			}
 			if !semtypes.IsSubtype(ctx.TypeCtx(), semtypes.String, td.Constraint()) {
-				panic(values.NewErrorWithMessage("Getter.get: expected string-compatible typedesc"))
+				panic(values.NewError(semtypes.Error, "Getter.get: expected string-compatible typedesc", nil, "", nil))
 			}
 			return "immutable", nil
 		}},
@@ -295,7 +295,7 @@ func TestDependentlyTypedAlias(t *testing.T) {
 		case 1, 3:
 			return "alias", nil
 		}
-		panic(values.NewErrorWithMessage("unsupported alias typedesc constraint"))
+		panic(values.NewError(semtypes.Error, "unsupported alias typedesc constraint", nil, "", nil))
 	}
 	const org, mod = "$anon", "dependent-alias-v"
 	externs := []testharness.ExternRegistration{
@@ -350,7 +350,7 @@ func TestDependentlyTypedMethod(t *testing.T) {
 			case semtypes.IsSubtype(ctx.TypeCtx(), semtypes.Int, td.Constraint()):
 				return int64(2), nil
 			}
-			panic(values.NewErrorWithMessage("unsupported targetType"))
+			panic(values.NewError(semtypes.Error, "unsupported targetType", nil, "", nil))
 		},
 	}}
 	runExtern(t, projectCase("dependently-typed-method-v"), testharness.NewTestPal(), externs)
@@ -469,7 +469,7 @@ func TestDependentlyTypedResourceMethod(t *testing.T) {
 			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int):
 				return int64(42), nil
 			}
-			panic(values.NewErrorWithMessage("unsupported targetType"))
+			panic(values.NewError(semtypes.Error, "unsupported targetType", nil, "", nil))
 		},
 	}, {
 		Org: "testorg", Module: "dependentresourcemethod.api", FuncName: "ItemClient.$resource$get$0",
@@ -488,7 +488,7 @@ func TestDependentlyTypedResourceMethod(t *testing.T) {
 			case semtypes.IsSubtype(ctx.TypeCtx(), td.Constraint(), semtypes.Int):
 				return id * 2, nil
 			}
-			panic(values.NewErrorWithMessage("unsupported targetType"))
+			panic(values.NewError(semtypes.Error, "unsupported targetType", nil, "", nil))
 		},
 	}}
 	runExtern(t, projectCase("dependently-typed-resource-method-v"), testharness.NewTestPal(), externs)
@@ -1170,7 +1170,7 @@ func TestDependentlyTypedCrossModuleRoundtrip(t *testing.T) {
 		case semtypes.IsSubtype(tyCtx, td.Constraint(), semtypes.String):
 			return "foo", nil
 		}
-		panic(values.NewErrorWithMessage("unsupported inferred typedesc constraint"))
+		panic(values.NewError(semtypes.Error, "unsupported inferred typedesc constraint", nil, "", nil))
 	})
 	runtime.RegisterExternFunction(rt, org, helperMod, "inferredNestedFixedArray", func(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 		td, ok := args[0].(*values.TypeDesc)

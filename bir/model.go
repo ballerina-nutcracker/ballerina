@@ -105,6 +105,7 @@ type (
 		Name model.Name
 	}
 
+	//shallow:allow marker struct
 	BIRLocalVariableDcl struct {
 		birVariableDclBase
 	}

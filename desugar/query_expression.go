@@ -360,7 +360,7 @@ func appendInitialQueryRows(
 
 	rowTuple := createQueryRowTupleExpr(
 		nil,
-		[]ast.BLangExpression{createQueryBindingVarRef(loopBinding)},
+		[]ast.BLangExpression{createVarRef(loopBinding.varName, loopBinding.symbol, loopBinding.valueTy)},
 		pos,
 	)
 	pushRow := createArrayPushInvocation(cx.pkgCtx, rowsRef, rowTuple)
@@ -427,17 +427,13 @@ func createQueryBindingDeclaration(binding queryRowBinding, pos diagnostics.Loca
 	return varDef
 }
 
-func createQueryBindingVarRef(binding queryRowBinding) *ast.BLangVarRef {
-	return createVarRef(binding.varName, binding.symbol, binding.valueTy)
-}
-
 func createQueryBindingAssignment(
 	binding queryRowBinding,
 	expr ast.BLangExpression,
 	pos diagnostics.Location,
 ) *ast.BLangAssignment {
 	assign := &ast.BLangAssignment{
-		VarRef: createQueryBindingVarRef(binding),
+		VarRef: createVarRef(binding.varName, binding.symbol, binding.valueTy),
 		Expr:   expr,
 	}
 	setPositionIfMissing(assign, pos)
@@ -482,7 +478,7 @@ func createQueryRowTupleExpr(
 ) *ast.BLangListConstructorExpr {
 	exprs := make([]ast.BLangExpression, 0, len(bindings)+len(extraExprs))
 	for _, binding := range bindings {
-		exprs = append(exprs, createQueryBindingVarRef(binding))
+		exprs = append(exprs, createVarRef(binding.varName, binding.symbol, binding.valueTy))
 	}
 	exprs = append(exprs, extraExprs...)
 	rowTuple := &ast.BLangListConstructorExpr{Exprs: exprs}
@@ -542,7 +538,7 @@ func applyQueryLetClauseToRows(
 			pos,
 		))
 
-		pushLetValue := createArrayPushInvocation(cx.pkgCtx, rowRef, createQueryBindingVarRef(binding))
+		pushLetValue := createArrayPushInvocation(cx.pkgCtx, rowRef, createVarRef(binding.varName, binding.symbol, binding.valueTy))
 		if pushLetValue == nil {
 			return nil, false
 		}
@@ -663,14 +659,14 @@ func applyQueryGroupByClauseToRows(
 				}
 				*initStmts = append(*initStmts, createQueryBindingDeclaration(binding, pos))
 				bodyStmts = append(bodyStmts, createQueryBindingAssignment(binding, keyExpr, pos))
-				pushGroupVar := createPushInvocation(cx, rowRef, createQueryBindingVarRef(binding))
+				pushGroupVar := createPushInvocation(cx, rowRef, createVarRef(binding.varName, binding.symbol, binding.valueTy))
 				if pushGroupVar == nil {
 					return nil, nil, false
 				}
 				bodyStmts = append(bodyStmts, &ast.BLangExpressionStmt{Expr: pushGroupVar})
 				groupingSymbols[binding.symbol] = true
 				newBindings = append(newBindings, binding)
-				keyExpr = createQueryBindingVarRef(binding)
+				keyExpr = createVarRef(binding.varName, binding.symbol, binding.valueTy)
 			}
 			keyExprs = append(keyExprs, keyExpr)
 		default:
@@ -978,7 +974,7 @@ func appendQueryJoinClauseRows(
 		setPositionIfMissing(markMatched, pos)
 		matchBodyStmts = append(matchBodyStmts, markMatched)
 	}
-	matchTuple := createQueryRowTupleExpr(bindings, []ast.BLangExpression{createQueryBindingVarRef(joinBinding)}, pos)
+	matchTuple := createQueryRowTupleExpr(bindings, []ast.BLangExpression{createVarRef(joinBinding.varName, joinBinding.symbol, joinBinding.valueTy)}, pos)
 	pushMatch := createArrayPushInvocation(cx.pkgCtx, newRowsRef, matchTuple)
 	if pushMatch == nil {
 		return nil, nil, false
@@ -1290,7 +1286,7 @@ func appendQueryOrderByStageStmts(
 		return queryOrderStageInput{}, false
 	}
 	for _, store := range stageStores {
-		pushStore := createArrayPushInvocation(cx.pkgCtx, store.storeRef, createQueryBindingVarRef(store.binding))
+		pushStore := createArrayPushInvocation(cx.pkgCtx, store.storeRef, createVarRef(store.binding.varName, store.binding.symbol, store.binding.valueTy))
 		if pushStore == nil {
 			return queryOrderStageInput{}, false
 		}

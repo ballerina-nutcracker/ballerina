@@ -37,6 +37,7 @@ func ObjectDefinitionDistinct(distinctId int) SemType {
 	return getBasicSubtype(btObject, bdd)
 }
 
+//shallow:allow public object-type operation hides the private distinct-atom representation
 func StripObjectDistinctAtoms(ty SemType) SemType {
 	return stripDistinctAtomsFromSemType(ty, btObject, stripDistinctAtomsFromBdd)
 }
@@ -64,7 +65,7 @@ func stripDistinctAtomsFromSemType(ty SemType, typeCode basicTypeCode, stripBdd 
 				}
 				continue
 			}
-			data = stripped.(properSubtypeData)
+			data = stripped.(subtypeData)
 		}
 		subtypes = append(subtypes, basicSubtypeFrom(basicTypeCodeFrom(code), data))
 	}

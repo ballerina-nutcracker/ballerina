@@ -19,25 +19,21 @@ package semtypes
 type commonOps = commonBasicTypeOps
 
 type commonOpsBase struct {
-	commonOpsMethods
-}
-
-type commonOpsMethods struct {
 	Self commonOps
 }
 
-func (m *commonOpsMethods) Union(t1 subtypeData, t2 subtypeData) subtypeData {
+func (m *commonOpsBase) Union(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddUnion(t1.(bdd), t2.(bdd))
 }
 
-func (m *commonOpsMethods) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
+func (m *commonOpsBase) Intersect(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddIntersect(t1.(bdd), t2.(bdd))
 }
 
-func (m *commonOpsMethods) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
+func (m *commonOpsBase) Diff(t1 subtypeData, t2 subtypeData) subtypeData {
 	return bddDiff(t1.(bdd), t2.(bdd))
 }
 
-func (m *commonOpsMethods) complement(t subtypeData) subtypeData {
+func (m *commonOpsBase) complement(t subtypeData) subtypeData {
 	return bddComplement(t.(bdd))
 }
