@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -67,6 +68,7 @@ func Listen(cfg pal.ServerConfig, handler http.Handler) (pal.ServerHandle, error
 		Addr:      addr,
 		Handler:   handler,
 		Protocols: protocols,
+		TLSConfig: tlsCfg,
 		// ReadHeaderTimeout guards against slow-loris without aborting request bodies
 		// mid-stream (ReadTimeout would do that and breaks proxies/uploads).
 		ReadHeaderTimeout: 5 * time.Second,
@@ -81,14 +83,31 @@ func Listen(cfg pal.ServerConfig, handler http.Handler) (pal.ServerHandle, error
 	if err != nil {
 		return nil, err
 	}
-	serveLn := ln
-	if tlsCfg != nil {
-		serveLn = tls.NewListener(ln, tlsCfg)
+	switch {
+	case tlsCfg != nil && cfg.HTTPVersion == "2.0" && carriesHTTP2(tlsCfg):
+		// ServeTLS offers "h2" through ALPN, which a listener wrapped in TLS beforehand would not.
+		go func() { _ = server.ServeTLS(ln, "", "") }()
+	case tlsCfg != nil:
+		// No ALPN, so a client that offers only "h2" still falls back to HTTP/1.1.
+		go func() { _ = server.Serve(tls.NewListener(ln, tlsCfg)) }()
+	default:
+		go func() { _ = server.Serve(ln) }()
 	}
-	go func() {
-		_ = server.Serve(serveLn)
-	}()
 	return &httpServerHandle{server: server}, nil
+}
+
+// carriesHTTP2 reports whether HTTP/2 can run over tlsCfg: it needs TLS 1.2 or later, and with a
+// TLS 1.2 cipher list, one of the AES-128-GCM suites net/http's HTTP/2 server requires.
+func carriesHTTP2(tlsCfg *tls.Config) bool {
+	if tlsCfg.MaxVersion != 0 && tlsCfg.MaxVersion < tls.VersionTLS12 {
+		return false
+	}
+	if tlsCfg.CipherSuites == nil || tlsCfg.MinVersion >= tls.VersionTLS13 {
+		return true
+	}
+	return slices.ContainsFunc(tlsCfg.CipherSuites, func(id uint16) bool {
+		return id == tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 || id == tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	})
 }
 
 // httpServerHandle adapts *http.Server to pal.ServerHandle.
