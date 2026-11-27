@@ -113,6 +113,11 @@ type (
 		// localAddr first (empty = OS-chosen) and optionally upgrading to
 		// TLS (tlsCfg != nil) before returning. Reuses TLSConfig from HTTP.
 		Dial func(ctx context.Context, network, address, localAddr string, tlsCfg *TLSConfig) (net.Conn, error)
+		// UpgradeTLS performs a client TLS handshake over an already-open
+		// connection, as STARTTLS-style protocols (SMTP, POP3, IMAP) require.
+		// address is the dialed "host:port", used as the server name when
+		// tlsCfg.ServerName is empty. conn is closed if the handshake fails.
+		UpgradeTLS func(ctx context.Context, conn net.Conn, address string, tlsCfg *TLSConfig) (net.Conn, error)
 		// Listen binds a TCP listener on address, optionally wrapping it in
 		// TLS (tlsCfg != nil). Reuses ServerTLSConfig from HTTP. The caller
 		// owns the accept loop and per-connection dispatch.

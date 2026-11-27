@@ -1,0 +1,31 @@
+-- stdout --
+ssl-default-protocol: sent
+ssl-der-cert: sent
+ssl-bundle: sent
+ssl-tls13: sent
+ssl-cipher: sent
+ssl-cipher-mixed: sent
+ssl-cipher-tls12: sent
+ssl-cipher-tls13: sent
+ssl-cipher-tls13-subset: init error: TLS 1.3 cipher suites cannot be restricted; list all of TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256 or none
+ssl-untrusted: Could not connect to SMTP host: 127.0.0.1
+ssl-system-trust: Could not connect to SMTP host: 127.0.0.1
+ssl-hostname: Could not connect to SMTP host: localhost
+ssl-no-hostname-check: sent
+starttls-always: sent
+starttls-auto: sent
+starttls-untrusted: Could not convert socket to TLS
+starttls-always-unsupported: STARTTLS is required but host does not support STARTTLS
+starttls-auto-unsupported: sent
+never-with-secure-socket: sent
+never: sent
+missing-cert: init error: /no/such/cert.pem (No such file or directory)
+garbage-cert: init error: Could not parse certificate
+bad-version: init error: Unsupported TLS protocol version: SSLv3
+bad-cipher: init error: Unsupported cipher suite: NOT_A_CIPHER
+bad-cipher-mixed: init error: Unsupported cipher suite: NOT_A_CIPHER
+ssl-cipher-tls13-repeated: init error: TLS 1.3 cipher suites cannot be restricted; list all of TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256 or none
+ssl-tls13-only-tls12-cipher: init error: The cipher suites cannot be used with the TLS protocol versions
+ssl-tls12-only-tls13-ciphers: init error: The cipher suites cannot be used with the TLS protocol versions
+ssl-tls11-only-gcm-cipher: init error: The cipher suites cannot be used with the TLS protocol versions
+-- stderr --

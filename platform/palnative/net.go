@@ -48,6 +48,13 @@ func Dial(ctx context.Context, network, address, localAddr string, tlsCfg *pal.T
 	if tlsCfg == nil {
 		return conn, nil
 	}
+	return UpgradeTLS(ctx, conn, address, tlsCfg)
+}
+
+// UpgradeTLS is the pal.Net.UpgradeTLS factory for the native-CLI platform.
+// It performs a client TLS handshake over conn, deriving the server name from
+// address when tlsCfg leaves it empty, and closes conn if the upgrade fails.
+func UpgradeTLS(ctx context.Context, conn net.Conn, address string, tlsCfg *pal.TLSConfig) (net.Conn, error) {
 	effectiveTLSCfg := *tlsCfg
 	if effectiveTLSCfg.ServerName == "" {
 		// tls.Client (unlike tls.Dial) never derives ServerName from the
