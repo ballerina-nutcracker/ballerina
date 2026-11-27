@@ -1,0 +1,5 @@
+-- stdout --
+HTTP/2.0 200
+HTTP/1.1 200
+HTTP/1.1 200
+-- stderr --
