@@ -1,0 +1,38 @@
+-- stdout --
+<x><p>1</p></x>
+<e><q a="1"/></e>
+{"n":"a"}
+{"n":["a"]}
+2
+<items><b/></items>
+{"id":"1","n":5,"f":true}
+{"id":"1","n":5,"f":true}
+E: attribute 'tag' cannot be converted into the array type 'string[]'
+{"child":{"v":"x"}}
+true
+{"r":{"b":"s"}}
+{"y":1}
+{}
+E: xml root element is missing
+[<a>1</a>]
+[<a>1</a>,<a>2</a>]
+[<a>1</a>]
+{"a":[]}
+E: array size is not compatible with the expected size
+{"a":[]}
+{"a":[]}
+E: array size is not compatible with the expected size
+{"a":[]}
+E: array size is not compatible with the expected size
+{"a":[]}
+{"a":[]}
+{"a":"x"}
+{"a":"x"}
+{"b":1,"c":[]}
+E: array size is not compatible with the expected size
+{"i":{"a":[]},"j":2}
+true
+{"i":{"a":[]},"j":2}
+{"a":[],"z":9}
+{"a":[],"z":9}
+-- stderr --

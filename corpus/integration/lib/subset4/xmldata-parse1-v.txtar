@@ -1,0 +1,180 @@
+-- stdout --
+{"isbn":"978-0","id":601970,"title":"Dune","author":{"name":"Herbert","country":"US"},"tag":["scifi","classic"],"price":10.50,"available":true,"rating":4.5}
+{"isbn":"978-0","id":601970,"title":"Dune","author":{"name":"Herbert","country":"US"},"tag":["scifi","classic"],"price":10.50,"available":true,"rating":4.5}
+{"id":601970}
+{"id":601970}
+E: undefined field 'isbn'
+E: undefined field 'isbn'
+E: 'string' value 'x' cannot be converted to 'int'
+E: 'string' value 'x' cannot be converted to 'int'
+E: expected 'int' value for the field 'id' found 'array' value
+E: expected 'int' value for the field 'id' found 'array' value
+E: required field 'id' not present in XML
+E: required field 'id' not present in XML
+{"tag":["a","b"]}
+{"tag":["a","b"]}
+E: array size is not compatible with the expected size
+E: array size is not compatible with the expected size
+{"tag":["a",""]}
+{"tag":["a",""]}
+{"u":5,"n":"t","o":3,"g":"B","h":2,"y":7,"s":-8,"f":2.0}
+{"u":5,"n":"t","o":3,"g":"B","h":2,"y":7,"s":-8,"f":2.0}
+{"u":"x","g":"A","h":1,"y":255,"s":127,"f":1.5,"n":null}
+{"u":"x","g":"A","h":1,"y":255,"s":127,"f":1.5,"n":null}
+E: 'string' value 'C' cannot be converted to '("A"|"B")'
+E: 'string' value 'C' cannot be converted to '("A"|"B")'
+E: 'string' value '256' cannot be converted to 'byte'
+E: 'string' value '256' cannot be converted to 'byte'
+E: 'string' value '1.5f' cannot be converted to 'float'
+E: 'string' value '1.5f' cannot be converted to 'float'
+{"b":false,"f":2.5,"i":1,"n":4,"y":3}
+{"b":false,"f":2.5,"i":1,"n":4,"y":3}
+{"b":false,"f":0.0,"i":0,"n":null,"y":0}
+E: field 'b' cannot be converted into the type 'boolean'
+{"t":"  spaced  "}
+{"t":"  spaced  "}
+{"t":"a & <b> A"}
+{"t":"a &amp; &lt;b&gt; A"}
+{"t":" <raw> "}
+{"t":" &lt;raw&gt; "}
+{"t":"xyz"}
+{"t":"xyz"}
+{"t":"xz"}
+{"t":"xz"}
+E: invalid type expected 'int' but found 'string'
+E: invalid type expected 'int' but found 'string'
+E: field 't' cannot be converted into the type 'string'
+E: field 't' cannot be converted into the type 'string'
+{"t":"v"}
+E: xml root element is missing
+{"person":[{"name":"A","age":1},{"name":"B","age":2}],"score":[7,8]}
+{"person":[{"name":"A","age":1},{"name":"B","age":2}],"score":[7,8]}
+{"a":{"b":{"c":"deep"}}}
+{"a":{"b":{"c":"deep"}}}
+E: undefined field 'd'
+E: undefined field 'd'
+E: required field 'c' not present in XML
+E: required field 'c' not present in XML
+E: xml root element is missing
+E: xml root element is missing
+true
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: XML syntax error on line 1: unexpected character data "x" outside the root element
+E: failed to parse xml: XML syntax error on line 1: multiple root elements
+E: failed to parse xml: XML syntax error on line 1: undeclared namespace prefix "p"
+true
+E: failed to parse xml: Maximum Element Depth limit (1000) Exceeded
+E: failed to parse xml: XML syntax error on line 1: Duplicate attribute 'id'.
+E: failed to parse xml: XML syntax error on line 1: Duplicate attribute '{urn:n}id'.
+true
+E: failed to parse xml: XML syntax error on line 1: Duplicate declaration for namespace prefix 'p'.
+E: failed to parse xml: XML syntax error on line 1: Duplicate default namespace declaration.
+E: failed to parse xml: XML syntax error on line 1: prefixed namespace declaration cannot have an empty URI
+E: failed to parse xml: XML syntax error on line 1: invalid xml namespace binding
+E: failed to parse xml: XML syntax error on line 1: reserved xmlns namespace binding
+E: failed to parse xml: XML syntax error on line 1: invalid xml namespace binding
+E: failed to parse xml: XML syntax error on line 1: reserved xmlns namespace binding
+{"id":"1"}
+{}
+{"id":"ok"}
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("XML"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("Xml"); xml (case insensitive) is reserved by the specs.
+{"id":"ok"}
+E: failed to parse xml: XML syntax error on line 1: Illegal processing instruction target ("xml"); xml (case insensitive) is reserved by the specs.
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected keyword 'version'
+E: failed to parse xml: XML syntax error on line 1: Invalid XML pseudo-attribute 'standalone' value 'maybe'; expected "yes" or "no"
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'f' (code 102); expected "?>" end marker
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected "?>" end marker
+E: failed to parse xml: XML syntax error on line 1: Missing XML pseudo-attribute 'encoding' value
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'e' (code 101); expected either '?' or white space
+{"id":"ok"}
+{"id":"ok"}
+E: failed to parse xml: XML syntax error on line 1: Invalid XML pseudo-attribute 'version' value 'abc'; expected "1.0" or "1.1"
+E: failed to parse xml: XML syntax error on line 1: Invalid XML pseudo-attribute 'version' value '1.9'; expected "1.0" or "1.1"
+E: failed to parse xml: XML syntax error on line 1: Unexpected character ''' (code 39); expected '=' after 'version'
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '?' (code 63); expected '=' after 'version'
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '1' (code 49); expected a quote character enclosing value for 'version'
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '?' (code 63); expected a quote character enclosing value for 'version'
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'é' (code 233); expected "?>" end marker
+E: failed to parse xml: XML syntax error on line 1: Unrecognized XML directive; expected CDATA or comment ('<![CDATA[' or '<!--').
+E: failed to parse xml: XML syntax error on line 1: Can not have DOCTYPE declaration in epilog
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'E' (code 69) after '<!' (malformed comment?)
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'F' (code 70) after '<!' (malformed comment?)
+E: failed to parse xml: XML syntax error on line 1: CDATA not allowed in prolog/epilog
+E: failed to parse xml: XML syntax error on line 1: CDATA not allowed in prolog/epilog
+E: failed to parse xml: XML syntax error on line 1: unexpected character data "\u00a0" outside the root element
+E: failed to parse xml: XML syntax error on line 1: unexpected character data "\u00a0" outside the root element
+E: failed to parse xml: XML syntax error on line 1: Illegal character entity: expansion character (code 0xd800
+E: failed to parse xml: XML syntax error on line 1: Illegal character entity: expansion character (code 0xdfff
+{"id":"&#xD800;"}
+E: failed to parse xml: XML syntax error on line 1: invalid XML name: r:
+E: failed to parse xml: XML syntax error on line 1: Unexpected character ':' (code 58) (missing namespace prefix?)
+E: failed to parse xml: XML syntax error on line 1: Unexpected character ':' (code 58) (missing namespace prefix?)
+E: failed to parse xml: XML syntax error on line 1: invalid XML name: a:
+false
+false
+true
+true
+true
+true
+true
+false
+false
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '>' (code 62) (expected a name start character)
+E: failed to parse xml: XML syntax error on line 1: Unrecognized XML directive '<!DOCTYPEt' (misspelled DOCTYPE?).
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '1' (code 49) (expected a name start character)
+E: failed to parse xml: XML syntax error on line 1: Duplicate DOCTYPE declaration
+E: failed to parse xml: XML syntax error on line 1: Unexpected character 'g' (code 103) (in internal DTD subset; expected a '<' to start a directive)
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFE
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFF
+{"r":{"id":"x"}}
+{"r":{"id":"vA"}}
+{"r":{"id":"ab&lt;"}}
+E: failed to parse xml: XML syntax error on line 1: Entity "e" contains markup, which is not supported
+E: failed to parse xml: XML syntax error on line 1: External entity "e" is not supported
+E: failed to parse xml: XML syntax error on line 1: Illegal entity expansion: entity "e" expands itself recursively
+E: failed to parse xml: XML syntax error on line 1: invalid character entity &g;
+E: failed to parse xml: XML syntax error on line 1: Unexpected character '>' (code 62) (expected a name start character)
+E: xml root element is missing
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: Illegal character ((CTRL-CHAR, code 1))
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFE
+E: failed to parse xml: XML syntax error on line 1: illegal character code U+FFFF
+{"r":{"a":"p q\tr","b":"m n","id":"x"}}
+{"r":{"a":"given","id":"x"}}
+{"r":{"a":"ev!","b":"n","id":"x"}}
+E: failed to parse xml: XML syntax error on line 1: Undeclared general entity "e"
+E: failed to parse xml: XML syntax error on line 1: Unexpected '<' in attribute value
+E: failed to parse xml: XML syntax error on line 1: Unrecognized attribute type "FOO"
+{"r":{"id":"w"}}
+E: failed to parse xml: XML syntax error on line 1: External parameter entity "pe" is not supported
+E: failed to parse xml: XML syntax error on line 1: Unexpected end of DOCTYPE declaration; expected ']' to end the internal subset
+1
+90000
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+1
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion count limit (100000) exceeded
+1
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion depth limit (500) exceeded
+1
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion depth limit (500) exceeded
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+5
+100
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+67
+E: failed to parse xml: XML syntax error on line 1: Maximum entity expansion length limit (67108864 characters) exceeded
+E: xml root element is missing
+-- stderr --

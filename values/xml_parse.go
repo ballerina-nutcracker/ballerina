@@ -20,6 +20,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
@@ -36,7 +37,20 @@ const (
 func FromBytes(data []byte) string { return string(data) }
 
 func ParseAsXMLValue(tc semtypes.Context, content string, mode XMLParseMode) (XMLValue, error) {
-	return parseXML(newXMLBuildCtx(tc, mode), content, mode)
+	return parseXML(newXMLBuildCtx(tc, mode), content, mode, XMLDTD{})
+}
+
+// XMLDTD is what a DOCTYPE's internal subset adds to a document: the replacement text of general entities, and
+// the default attributes of elements, keyed by their lexical name as encoding/xml's RawToken reports it.
+type XMLDTD struct {
+	Entities          map[string]string
+	AttributeDefaults map[xml.Name][]xml.Attr
+}
+
+// ParseAsXMLValueWithDTD parses content as ParseAsXMLValue does, expanding references to dtd's entities and
+// adding the default attributes an element does not specify.
+func ParseAsXMLValueWithDTD(tc semtypes.Context, content string, mode XMLParseMode, dtd XMLDTD) (XMLValue, error) {
+	return parseXML(newXMLBuildCtx(tc, mode), content, mode, dtd)
 }
 
 type xmlBuildCtx struct {
@@ -96,9 +110,10 @@ func qualifiedLexicalName(name xml.Name) string {
 	return name.Space + ":" + name.Local
 }
 
-func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode) (XMLValue, error) {
+func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode, dtd XMLDTD) (XMLValue, error) {
 	decoder := xml.NewDecoder(strings.NewReader(content))
 	decoder.Strict = true
+	decoder.Entity = dtd.Entities
 	ctx := lexicalNamespaceContext{"xml": XMLNamespaceURI}
 	var stack []xmlParseFrame
 	var top []XMLValue
@@ -119,6 +134,7 @@ func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode) (XMLValue, err
 		}
 		switch t := token.(type) {
 		case xml.StartElement:
+			t.Attr = withDefaultAttributes(t.Attr, dtd.AttributeDefaults[t.Name])
 			var undos []lexicalNamespaceUndo
 			var nsEntries []MapEntry
 			localPrefixes := map[string]bool{}
@@ -238,4 +254,13 @@ func parseXML(bc *xmlBuildCtx, content string, mode XMLParseMode) (XMLValue, err
 		return nil, fmt.Errorf("unexpected end of XML content")
 	}
 	return NewNormalizedXMLSequence(top), nil
+}
+
+func withDefaultAttributes(attrs, defaults []xml.Attr) []xml.Attr {
+	for _, attr := range defaults {
+		if !slices.ContainsFunc(attrs, func(given xml.Attr) bool { return given.Name == attr.Name }) {
+			attrs = append(attrs, attr)
+		}
+	}
+	return attrs
 }

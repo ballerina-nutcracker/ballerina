@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: incompatible type for argument: expected 'string|typedesc<{| anydata... |}>', got '5'
+  --> xmldata-api2-e.bal:21:45
+   |
+21 |     io:println(xmldata:validate(xml `<a/>`, 5)); // @error
+   |                                             ^
