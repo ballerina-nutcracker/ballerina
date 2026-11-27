@@ -1,0 +1,39 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang value (as lang.value))
+  (function main () (
+    (union-type
+      (error-type)
+      (value-type null)))
+    (block-function-body
+      (var-def
+        (variable j (type
+          (builtin-ref-type json)) (expr
+          (literal k))))
+      (var-def
+        (variable m (type
+          (constrained-type
+            (builtin-ref-type map)
+            (value-type int))) (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (checked-expr
+                (invocation lang.value cloneWithType (
+                  (simple-var-ref j)
+                  (typedesc-expr))))
+              (literal 1))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref m))))
+      (var-def
+        (variable v (expr
+          (mapping-constructor-expr
+            (computed-key-value
+              (checked-expr
+                (invocation lang.value cloneWithType (
+                  (simple-var-ref j)
+                  (typedesc-expr))))
+              (literal 2))))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref v)))))))

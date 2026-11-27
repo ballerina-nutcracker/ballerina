@@ -27,21 +27,21 @@
           (builtin-ref-type map)
           (value-type int))) (expr
         (mapping-constructor-expr
-          (key-value
+          (computed-key-value
             (simple-var-ref first)
             (literal 3))
           (key-value
             (literal specific)
             (literal 1))
-          (key-value
+          (computed-key-value
             (simple-var-ref second)
             (literal 4))
           (mapping-spread-field
             (simple-var-ref seed))
-          (key-value
+          (computed-key-value
             (simple-var-ref first)
             (literal 5))
-          (key-value
+          (computed-key-value
             (simple-var-ref third)
             (literal 6))))))
   )

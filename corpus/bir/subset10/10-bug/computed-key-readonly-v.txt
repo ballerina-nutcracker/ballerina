@@ -1,0 +1,44 @@
+module $anon.. v 0.0.0;
+isReadonly(any) -> boolean{
+  bb0 {
+    %2 = v is nil|boolean|int|float|decimal|string|error|typedesc|handle|function|regexp|readonly|readonly|table|xml<xml:Text|xml:Element|xml:Comment|xml:ProcessingInstruction>|readonly
+    %0 = %2;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    %1 = ConstantLoad a
+    k = %1;
+    %3 = ConstantLoad 1
+    %4 = ConstantLoad 2
+    %5 = ConstantLoad 2
+    %6 = newArray [int...][%5]{%3, %4}
+    %7 = newMap {| readonly&[int...]... |}{[k]=%6}
+    ra = %7;
+    %9 = ra[k];
+    %10 = isReadonly(%9) -> bb1;
+  }
+  bb1 {
+    %11 = %10;
+    %12 = println(%11) -> bb2;
+  }
+  bb2 {
+    %13 = ConstantLoad a
+    %14 = ConstantLoad 1
+    %15 = ConstantLoad 2
+    %16 = newMap {| a: int, int... |}{%13=%14, [k]=%15}
+    r = %16;
+    %19 = ConstantLoad a
+    %18 = r[%19];
+    %20 = %18;
+    %21 = isReadonly(r) -> bb3;
+  }
+  bb3 {
+    %22 = %21;
+    %23 = println(%20,%22) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
