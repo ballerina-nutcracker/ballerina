@@ -1,0 +1,41 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: error resolving type inclusion
+  --> object-inclusion-cycle4-e.bal:16:1
+   |
+16 | class A { // @error
+   | ^^^^^^^^^^^^^^^^^^^
+17 |     *B;
+   |     ^^^
+18 | }
+   | ^
+
+error[SEMANTIC_ERROR]: error resolving type inclusion
+  --> object-inclusion-cycle4-e.bal:20:1
+   |
+20 | class B { // @error
+   | ^^^^^^^^^^^^^^^^^^^
+21 |     *A;
+   |     ^^^
+22 | }
+   | ^
+
+error[SEMANTIC_ERROR]: error resolving type inclusion
+  --> object-inclusion-cycle4-e.bal:24:1
+   |
+24 | class F { // @error
+   | ^^^^^^^^^^^^^^^^^^^
+25 |     *A;
+   |     ^^^
+26 | }
+   | ^
+
+error[SEMANTIC_ERROR]: invalid cycle detected for type definition A
+  --> object-inclusion-cycle4-e.bal:16:1
+   |
+16 | class A { // @error
+   | ^^^^^^^^^^^^^^^^^^^
+17 |     *B;
+   |     ^^^
+18 | }
+   | ^
