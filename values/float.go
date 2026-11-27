@@ -22,9 +22,9 @@ import (
 	"strings"
 )
 
-// FloatDeepEqual is Ballerina `==` for plain float values: +0 and -0 compare
+// floatDeepEqual is Ballerina `==` for plain float values: +0 and -0 compare
 // equal; any two NaNs compare equal.
-func FloatDeepEqual(a, b float64) bool {
+func floatDeepEqual(a, b float64) bool {
 	if a == b {
 		return true
 	}

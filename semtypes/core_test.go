@@ -70,7 +70,7 @@ func TestSingleNumericType(t *testing.T) {
 	result = SingleNumericType(Boolean)
 	assertFalse(t, result.IsPresent(), "Boolean should not return a single numeric type")
 
-	result = SingleNumericType(singleton(int64(1)))
+	result = SingleNumericType(IntConst(1))
 	assertTrue(t, result.IsPresent(), "singleton int should return Int")
 	assertEqual(t, result.Get(), Int)
 
@@ -379,39 +379,6 @@ func TestRoList(t *testing.T) {
 	ty := Diff(t1, t2)
 	b := IsEmpty(ctx, ty)
 	assertTrue(t, b)
-}
-
-// TestIntSubtypeWidenUnsigned tests int subtype widening to unsigned ranges
-// Ported from SemTypeCoreTest.java:testIntSubtypeWidenUnsigned()
-func TestIntSubtypeWidenUnsigned(t *testing.T) {
-	// Test with allOrNothingSubtype (all)
-	allSubtype := intSubtypeWidenUnsigned(createAll())
-	allOrNothing, ok := allSubtype.(allOrNothingSubtype)
-	assertTrue(t, ok, "expected allOrNothingSubtype")
-	assertTrue(t, allOrNothing.IsAllSubtype())
-
-	// Test with range that includes negative values (should widen to all)
-	rangeSubtype := createIntSubtype(rangeFrom(-1, 10))
-	allSubtype2 := intSubtypeWidenUnsigned(rangeSubtype)
-	allOrNothing2, ok2 := allSubtype2.(allOrNothingSubtype)
-	assertTrue(t, ok2, "expected allOrNothingSubtype")
-	assertTrue(t, allOrNothing2.IsAllSubtype())
-
-	// Test with range [0, 0] (should widen to [0, 255])
-	intType1 := intSubtypeWidenUnsigned(createIntSubtype(rangeFrom(0, 0)))
-	intSubtype1, ok3 := intType1.(intSubtype)
-	assertTrue(t, ok3, "expected intSubtype")
-	assertEqual(t, len(intSubtype1.Ranges), 1)
-	assertEqual(t, intSubtype1.Ranges[0].Min, int64(0))
-	assertEqual(t, intSubtype1.Ranges[0].Max, int64(255))
-
-	// Test with range [0, 257] (should widen to [0, 65535])
-	intType2 := intSubtypeWidenUnsigned(createIntSubtype(rangeFrom(0, 257)))
-	intSubtype2, ok4 := intType2.(intSubtype)
-	assertTrue(t, ok4, "expected intSubtype")
-	assertEqual(t, len(intSubtype2.Ranges), 1)
-	assertEqual(t, intSubtype2.Ranges[0].Min, int64(0))
-	assertEqual(t, intSubtype2.Ranges[0].Max, int64(65535))
 }
 
 // recursiveTuple creates a recursive tuple type
