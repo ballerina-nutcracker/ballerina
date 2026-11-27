@@ -1,0 +1,25 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'host'
+  --> assign-e.bal:26:5
+   |
+26 |     host = "localhost"; // @error
+   |     ^^^^
+
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'port'
+  --> assign-e.bal:25:5
+   |
+25 |     port = 8080; // @error
+   |     ^^^^
+
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'port'
+  --> assign-e.bal:30:5
+   |
+30 |     port = 1; // @error
+   |     ^^^^
+
+error[SEMANTIC_ERROR]: cannot assign a value to final variable 'port'
+  --> assign-e.bal:31:5
+   |
+31 |     port += 1; // @error
+   |     ^^^^

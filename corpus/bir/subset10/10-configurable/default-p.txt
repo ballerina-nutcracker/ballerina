@@ -1,0 +1,17 @@
+module $anon.. v 0.0.0;
+port  int;
+main() -> nil{
+  bb0 {
+    %1 = println(port) -> bb1;
+  }
+  bb1 {
+    return;
+  }
+}
+$default$0() -> int{
+  bb0 {
+    %1 = ConstantLoad 9090
+    %0 = %1;
+    return;
+  }
+}

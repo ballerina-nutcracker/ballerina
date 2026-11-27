@@ -1,0 +1,25 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (variable port (type
+    (value-type int)))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref port)
+        (invocation lang.__internal configurableValue (
+          (literal $anon)
+          (literal .)
+          (literal port)
+          (lambda
+            (function $default$0 () ()
+              (block-function-body
+                (return
+                  (literal 9090)))))
+          (typedesc-expr))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref port)))))))

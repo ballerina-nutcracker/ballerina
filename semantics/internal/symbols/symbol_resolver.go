@@ -1018,6 +1018,18 @@ func (ms *compilationUnitSymbolResolver) allocateGlobalVarSymbol(globalVar *ast.
 	return true
 }
 
+// allocateDefaultClosure allocates, in scope, a module unique function symbol and the scope owning
+// the closure desugar generates to evaluate a default value: a record field default or the default
+// value of a configurable variable. The symbol's typed signature is left empty; desugar sets it when
+// it builds the closure.
+func allocateDefaultClosure(resolver symbolResolver, scope model.Scope, pos diagnostics.Location) (model.SymbolRef, model.Scope) {
+	name := resolver.nextDefaultSymbolName()
+	symbol := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false, pos)
+	scope.AddSymbol(name, symbol)
+	symRef, _ := scope.GetSymbol(name)
+	return symRef, resolver.GetCtx().NewBlockScope(scope, resolver.GetPkgID())
+}
+
 func (ms *compilationUnitSymbolResolver) allocateClassSymbol(classDef *ast.BLangClassDefinition) {
 	name, ok := declaredName(classDef.Name)
 	if !ok {
@@ -1888,22 +1900,15 @@ func resolveObjectInclusions(resolver symbolResolver, unresolvedInclusions []*as
 	return inclusions, positions, includedFields, ok
 }
 
-// allocateRecordDefaultSymbols allocates a module unique function symbol and the scope owning the
-// closure desugar generates for each record field with a default expression. Since the field type is
-// not known at symbol resolution the typed signature is left empty and populated during type
-// resolution.
+// allocateRecordDefaultSymbols allocates the default closure of each record field with a default
+// expression. See allocateDefaultClosure.
 func allocateRecordDefaultSymbols(resolver symbolResolver, recordType *ast.BLangRecordType) {
 	scope := resolver.recordDefaultScope()
 	for _, field := range recordType.FieldPtrs() {
 		if field.Default == nil {
 			continue
 		}
-		name := resolver.nextDefaultSymbolName()
-		symbol := model.NewFunctionSymbol(name, model.TypedFunctionSignature{}, false, field.GetPosition())
-		scope.AddSymbol(name, symbol)
-		symRef, _ := scope.GetSymbol(name)
-		field.Default.FnRef = symRef
-		field.Default.FnScope = resolver.GetCtx().NewBlockScope(scope, resolver.GetPkgID())
+		field.Default.FnRef, field.Default.FnScope = allocateDefaultClosure(resolver, scope, field.GetPosition())
 	}
 }
 
@@ -2783,8 +2788,11 @@ func resolveExpr(r symbolResolver, expr ast.BLangActionOrExpression) bool {
 			return resolveTypeDesc(r, typeDescriptor)
 		}
 		return true
-	case *ast.BLangInferredTypedescDefault, *ast.BLangDefaultArg:
+	case *ast.BLangInferredTypedescDefault, *ast.BLangDefaultArg, *ast.BLangRequiredDefaultValueExpr:
 		return true
+	case *ast.BLangConfigurableDefaultExpr:
+		n.FnRef, n.FnScope = allocateDefaultClosure(r, r.recordDefaultScope(), n.GetPosition())
+		return resolveExpr(r, n.Expr)
 	case *ast.BLangTypeConversionExpr:
 		ok := resolveOptionalExpr(r, n.Expression)
 		if n.TypeDescriptor != nil {

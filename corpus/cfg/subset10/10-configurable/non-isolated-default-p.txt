@@ -1,0 +1,15 @@
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref port))))
+  )
+)
+(nextPort
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref base)
+        (literal 1)))
+  )
+)

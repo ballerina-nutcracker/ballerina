@@ -1,0 +1,43 @@
+(package
+  (import-package ballerina io (as io))
+  (import-package ballerina lang __internal (as lang.__internal))
+  (import-package ballerina lang array (as lang.array))
+  (variable ports (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref ports)
+        (invocation lang.__internal configurableValue (
+          (literal $anon)
+          (literal .)
+          (literal ports)
+          (lambda
+            (function $default$0 () ()
+              (block-function-body
+                (return
+                  (list-constructor-expr
+                    (literal 80)
+                    (literal 443))))))
+          (typedesc-expr))))))
+  (function count () (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation lang.array length (
+          (simple-var-ref ports))))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (intersection-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type readonly))) (expr
+          (simple-var-ref ports))))
+      (expression-stmt
+        (invocation io println (
+          (invocation count ())
+          (simple-var-ref p)))))))

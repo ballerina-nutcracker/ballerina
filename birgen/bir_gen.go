@@ -1201,6 +1201,8 @@ func handleActionOrExpression(ctx context, curBB *bir.BIRBasicBlock, expr ast.BL
 		*ast.BLangConstRef,
 		*ast.BLangDefaultArg,
 		*ast.BLangInferredTypedescDefault,
+		*ast.BLangRequiredDefaultValueExpr,
+		*ast.BLangConfigurableDefaultExpr,
 		*ast.BLangNamedArgsExpression,
 		*ast.BLangQueryExpr,
 		*ast.BLangWorkerReceive,

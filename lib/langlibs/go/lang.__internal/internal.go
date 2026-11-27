@@ -17,6 +17,7 @@
 package langinternalruntime
 
 import (
+	"errors"
 	"github.com/ballerina-nutcracker/ballerina/decimal"
 	"github.com/ballerina-nutcracker/ballerina/runtime"
 	"github.com/ballerina-nutcracker/ballerina/runtime/extern"
@@ -111,6 +112,13 @@ func initInternalModule(rt *runtime.Runtime) {
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "createLatch", createLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "waitOnLatch", waitOnLatch)
 	runtime.RegisterExternFunction(rt, orgName, moduleName, "openLatch", openLatch)
+	runtime.RegisterExternFunction(rt, orgName, moduleName, "configurableValue", configurableValue)
+}
+
+// configurableValue returns the value of a configurable module variable. Reading
+// configuration is not supported yet, so it always fails.
+func configurableValue(_ *extern.Context, _ []values.BalValue) (values.BalValue, error) {
+	return nil, errors.New("configurable variables are not supported yet")
 }
 
 // latch is a one-shot barrier: strands that wait on it are held until it is

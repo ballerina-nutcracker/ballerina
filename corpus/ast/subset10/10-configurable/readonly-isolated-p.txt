@@ -1,0 +1,30 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable ports (type
+    (array-type
+      (value-type int) dimensions: 1 ([]))) (expr
+    (configurable-default
+      (list-constructor-expr
+        (literal 80)
+        (literal 443)))))
+  (function count () (
+    (value-type int))
+    (block-function-body
+      (return
+        (invocation length expr:
+          (simple-var-ref ports) ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable p (type
+          (intersection-type
+            (array-type
+              (value-type int) dimensions: 1 ([]))
+            (value-type readonly))) (expr
+          (simple-var-ref ports))))
+      (expression-stmt
+        (invocation io println (
+          (invocation count ())
+          (simple-var-ref p)))))))

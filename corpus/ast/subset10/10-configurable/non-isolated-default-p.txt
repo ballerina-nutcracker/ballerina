@@ -1,0 +1,23 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (variable base (type
+    (value-type int)) (expr
+    (literal 8000)))
+  (function nextPort () (
+    (value-type int))
+    (block-function-body
+      (return
+        (binary-expr +
+          (simple-var-ref base)
+          (literal 1)))))
+  (variable port (type
+    (value-type int)) (expr
+    (configurable-default
+      (invocation nextPort ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref port)))))))

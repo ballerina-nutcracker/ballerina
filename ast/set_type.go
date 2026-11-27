@@ -84,6 +84,10 @@ func SetType(node BLangActionOrExpression, ty semtypes.SemType) {
 		n.Ty = ty
 	case *BLangInferredTypedescDefault:
 		n.Ty = ty
+	case *BLangRequiredDefaultValueExpr:
+		n.Ty = ty
+	case *BLangConfigurableDefaultExpr:
+		n.Ty = ty
 	case *BLangCheckedExpr:
 		n.Ty = ty
 	case *BLangCheckPanickedExpr:

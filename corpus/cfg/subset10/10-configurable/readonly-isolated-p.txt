@@ -1,0 +1,22 @@
+(count
+  (bb0 () ()
+    (return
+      (invocation lang.array length (
+        (simple-var-ref ports))))
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable p (type
+        (intersection-type
+          (array-type
+            (value-type int) dimensions: 1 ([]))
+          (value-type readonly))) (expr
+        (simple-var-ref ports))))
+    (expression-stmt
+      (invocation io println (
+        (invocation count ())
+        (simple-var-ref p))))
+  )
+)

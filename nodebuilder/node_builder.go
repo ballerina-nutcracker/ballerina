@@ -2165,7 +2165,7 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 		return nil, false
 	}
 	pos := n.getPositionWithoutMetadata(moduleVariableDeclarationNode)
-	flags, ok := n.moduleVariableFlags(moduleVariableDeclarationNode, pos)
+	flags, ok := n.moduleVariableFlags(moduleVariableDeclarationNode)
 	if !ok {
 		return nil, false
 	}
@@ -2181,13 +2181,20 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 	} else if !n.transformVarTypeKeyword(typeDesc) {
 		return nil, false
 	}
+	if flags.Has(model.FlagConfigurable) && !n.checkConfigurableTypedBindingPattern(typedBindingPattern, isDeclaredWithVar) {
+		return nil, false
+	}
 	nameNode, ok := n.getBLangVariableNode(typedBindingPattern.BindingPattern(), pos)
 	if !ok || !n.expectOptionalToken(moduleVariableDeclarationNode.EqualsToken()) {
 		return nil, false
 	}
 	var expr ast.BLangActionOrExpression
 	if initializer := moduleVariableDeclarationNode.Initializer(); initializer != nil {
-		expr = n.transformExpr(initializer)
+		initExpr := n.transformExpr(initializer)
+		if flags.Has(model.FlagConfigurable) {
+			initExpr = configurableInitializer(initExpr)
+		}
+		expr = initExpr
 	}
 	if !n.expectToken(moduleVariableDeclarationNode.SemicolonToken()) {
 		return nil, false
@@ -2203,7 +2210,36 @@ func (n *nodeBuilder) transformModuleVariableDeclaration(moduleVariableDeclarati
 	return simpleVar, true
 }
 
-func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode, pos diagnostics.Location) (model.Flag, bool) {
+// configurableInitializer returns the initializer of a configurable variable: `?` as it is,
+// and a default value wrapped so that it can carry the closure desugar evaluates it in.
+func configurableInitializer(expr ast.BLangExpression) ast.BLangExpression {
+	if _, required := expr.(*ast.BLangRequiredDefaultValueExpr); required {
+		return expr
+	}
+	wrapper := &ast.BLangConfigurableDefaultExpr{Expr: expr}
+	wrapper.SetPosition(expr.GetPosition())
+	return wrapper
+}
+
+// checkConfigurableTypedBindingPattern reports a configurable variable declared with `var` or
+// with a binding pattern other than a variable name.
+func (n *nodeBuilder) checkConfigurableTypedBindingPattern(typedBindingPattern *st.TypedBindingPatternNode, isDeclaredWithVar bool) bool {
+	if isDeclaredWithVar {
+		n.cx.SyntaxError("configurable variable must have an explicit type descriptor", n.getPosition(typedBindingPattern.TypeDescriptor()))
+		return false
+	}
+	bindingPattern := typedBindingPattern.BindingPattern()
+	if _, ok := bindingPattern.(*st.CaptureBindingPatternNode); !ok {
+		if !n.expectNode(bindingPattern) {
+			return false
+		}
+		n.cx.SyntaxError("configurable variable must be declared with a variable name", n.getPosition(bindingPattern))
+		return false
+	}
+	return true
+}
+
+func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode) (model.Flag, bool) {
 	visibility := node.VisibilityQualifier()
 	if !n.expectOptionalSignificantToken(visibility) {
 		return 0, false
@@ -2220,8 +2256,7 @@ func (n *nodeBuilder) moduleVariableFlags(node *st.ModuleVariableDeclarationNode
 		case st.ISOLATED_KEYWORD:
 			flags |= model.FlagIsolated
 		case st.CONFIGURABLE_KEYWORD:
-			n.cx.Unimplemented("configurable module variables are not supported yet", pos)
-			return 0, false
+			flags |= model.FlagConfigurable | model.FlagFinal
 		default:
 			n.internalError("unexpected module variable qualifier", qualifier)
 			return 0, false
@@ -5841,11 +5876,12 @@ func (n *nodeBuilder) transformByteArrayLiteral(byteArrayLiteralNode *st.ByteArr
 }
 
 func (n *nodeBuilder) transformRequiredExpression(requiredExpression *st.RequiredExpressionNode) (ast.BLangExpression, bool) {
-	if !n.expectNode(requiredExpression) {
+	if !n.expectNode(requiredExpression) || !n.expectToken(requiredExpression.QuestionMarkToken()) {
 		return nil, false
 	}
-	n.unimplemented("transformRequiredExpression unimplemented", requiredExpression)
-	return nil, false
+	node := &ast.BLangRequiredDefaultValueExpr{}
+	node.SetPosition(n.getPosition(requiredExpression))
+	return node, true
 }
 
 func (n *nodeBuilder) transformNaturalExpression(naturalExpression *st.NaturalExpressionNode) (ast.BLangExpression, bool) {

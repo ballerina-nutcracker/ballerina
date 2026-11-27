@@ -52,6 +52,11 @@ func validateActionOrExprInner(cx scope.Context, e ast.BLangActionOrExpression, 
 		*ast.BLangInferredTypedescDefault, *ast.BLangDefaultArg, *ast.BLangXMLPILiteral, *ast.BLangXMLCommentLiteral,
 		*ast.BLangXMLTextLiteral:
 		return validateLeafExpr(cx, e, expected)
+	case *ast.BLangRequiredDefaultValueExpr:
+		return scope.NoFacts, true
+	case *ast.BLangConfigurableDefaultExpr:
+		// Desugar evaluates the default in a closure.
+		return validateActionOrExpr(scope.NewExpressionClosure(cx, scope.ConfigurableDefault), e.Expr, expected)
 	case *ast.BLangVarRef:
 		return validateVarRef(cx, e, expected)
 	case *ast.BLangBinaryExpr:

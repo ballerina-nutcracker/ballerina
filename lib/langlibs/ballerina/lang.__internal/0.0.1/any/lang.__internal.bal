@@ -24,6 +24,15 @@ public isolated function escapeXMLContent(string|boolean|int|float|decimal value
 
 public isolated function escapeXMLAttribute(string|boolean|int|float|decimal value) returns string = external;
 
+# Returns the value of a configurable module variable. The runtime looks the variable up by
+# organization, module and variable name in the configuration sources (configuration files or
+# environment variables), validates the supplied value against `td`, and returns it as a
+# read-only value. If no value is supplied, it returns the result of `defaultSupplier`, which is
+# called only in that case; if `defaultSupplier` is `()`, the value is required and module
+# initialization fails.
+public function configurableValue(string org, string module, string name,
+        (function () returns anydata)? defaultSupplier, typedesc<anydata> td) returns anydata = external;
+
 # Creates a fresh closed one-shot latch. Strands that wait on it are held until
 # it is opened, and it can never be closed again.
 public isolated function createLatch() returns handle = external;

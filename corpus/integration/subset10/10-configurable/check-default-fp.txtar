@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: 'check' in a default expression is not supported
+  --> check-default-fp.bal:21:32
+   |
+21 | public configurable int port = check int:fromString("9090"); // @error check in a default expression is unimplemented (#1219)
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

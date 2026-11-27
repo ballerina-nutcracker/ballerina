@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: expression is not a constant expression
+  --> array-length-local-e.bal:21:9
+   |
+21 |     int[n] a = [1, 2, 3]; // @error
+   |         ^
