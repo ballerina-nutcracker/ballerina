@@ -148,13 +148,11 @@ func TestGracefulStopConcurrentCallsDoNotEscalate(t *testing.T) {
 
 	start := make(chan struct{})
 	var wg sync.WaitGroup
-	for i := 0; i < 20; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 20 {
+		wg.Go(func() {
 			<-start
 			rt.GracefulStop()
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()
