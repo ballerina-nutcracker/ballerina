@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive from more than one worker under trap is not supported
+  --> message-multiple-trap1-fe.bal:24:42
+   |
+24 |     record {| int a; int b; |}|error _ = trap check <- {a, b}; // @error trap still catches a sender's panic under check
+   |                                          ^^^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: a multiple receive from more than one worker under trap is not supported
+  --> message-multiple-trap1-fe.bal:34:42
+   |
+34 |     record {| int a; int b; |}|error _ = trap (<- {a, b}); // @error trap reaches the receive through parentheses
+   |                                          ^^^^^^^^^^^^^^^^

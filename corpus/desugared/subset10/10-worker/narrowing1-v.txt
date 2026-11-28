@@ -10,7 +10,29 @@
       (var-def
         (variable $desugar$1))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:typeTest:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (if
+                  (type-test-expr is
+                    (simple-var-ref $desugar$2)
+                    (constrained-type
+                      (builtin-ref-type future)
+                      (value-type int)))
+                  (block-stmt
+                    (expression-stmt
+                      (invocation io println (
+                        (literal is future<int>))))) ())
+                (block-stmt)))))))
+      (var-def
+        (variable $desugar$4 (expr
           (lambda
             (function $worker:typeTest:w () (
               (value-type int))
@@ -23,21 +45,17 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$2 ())))
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))
-      (if
-        (type-test-expr is
-          (simple-var-ref $desugar$1)
-          (constrained-type
-            (builtin-ref-type future)
-            (value-type int)))
-        (block-stmt
-          (expression-stmt
-            (invocation io println (
-              (literal is future<int>))))) ())
-      (block-stmt)))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
   (function typeTestResult () (
     (value-type null))
     (block-function-body
@@ -47,7 +65,29 @@
       (var-def
         (variable $desugar$1))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:typeTestResult:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (var-def
+                  (variable isString (type
+                    (value-type boolean)) (expr
+                    (type-test-expr is
+                      (simple-var-ref $desugar$2)
+                      (constrained-type
+                        (builtin-ref-type future)
+                        (value-type string))))))
+                (expression-stmt
+                  (invocation io println (
+                    (simple-var-ref isString))))))))))
+      (var-def
+        (variable $desugar$4 (expr
           (lambda
             (function $worker:typeTestResult:w () (
               (value-type int))
@@ -60,21 +100,17 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$2 ())))
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))
-      (var-def
-        (variable isString (type
-          (value-type boolean)) (expr
-          (type-test-expr is
-            (simple-var-ref $desugar$1)
-            (constrained-type
-              (builtin-ref-type future)
-              (value-type string))))))
-      (expression-stmt
-        (invocation io println (
-          (simple-var-ref isString))))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
   (function matchStatement () (
     (value-type null))
     (block-function-body
@@ -84,7 +120,26 @@
       (var-def
         (variable $desugar$1))
       (var-def
-        (variable $desugar$2 (expr
+        (variable $desugar$2))
+      (var-def
+        (variable $desugar$3 (expr
+          (lambda
+            (function $worker:matchStatement:$function () (
+              (value-type null))
+              (block-function-body
+                (expression-stmt
+                  (invocation lang.__internal waitOnLatch (
+                    (simple-var-ref $desugar$0))))
+                (match
+                  (simple-var-ref $desugar$2)
+                  (match-clause
+                    (wildcard-match-pattern)
+                    (block-stmt
+                      (expression-stmt
+                        (invocation io println (
+                          (literal matched)))))))))))))
+      (var-def
+        (variable $desugar$4 (expr
           (lambda
             (function $worker:matchStatement:w () (
               (value-type int))
@@ -97,18 +152,17 @@
       (assignment
         (simple-var-ref $desugar$1)
         (start-action
-          (invocation $desugar$2 ())))
+          (invocation $desugar$3 ())))
+      (assignment
+        (simple-var-ref $desugar$2)
+        (start-action
+          (invocation $desugar$4 ())))
       (expression-stmt
         (invocation lang.__internal openLatch (
           (simple-var-ref $desugar$0))))
-      (match
-        (simple-var-ref $desugar$1)
-        (match-clause
-          (wildcard-match-pattern)
-          (block-stmt
-            (expression-stmt
-              (invocation io println (
-                (literal matched)))))))))
+      (return
+        (single-wait-action
+          (simple-var-ref $desugar$1)))))
   (function main () (
     (value-type null))
     (block-function-body

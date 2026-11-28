@@ -1,0 +1,242 @@
+module $anon.. v 0.0.0;
+failWith(string) -> nil|error{
+  bb0 {
+    %2 = newError error(message)
+    %0 = %2;
+    return;
+  }
+}
+flushAll() -> nil{
+  bb0 {
+    %1 = createLatch() -> bb1;
+  }
+  bb1 {
+    $desugar$0 = %1;
+    %3 = createWorkerMessage() -> bb2;
+  }
+  bb2 {
+    $desugar$1 = %3;
+    %5 = createWorkerMessage() -> bb3;
+  }
+  bb3 {
+    $desugar$2 = %5;
+    %7 = createWorkerMessage() -> bb4;
+  }
+  bb4 {
+    $desugar$3 = %7;
+    %13 = closure_fp $anon/.:$worker:flushAll:$function$body
+    $desugar$8 = %13;
+    %15 = closure_fp $anon/.:$worker:flushAll:$function
+    $desugar$10 = %15;
+    %17 = closure_fp $anon/.:$worker:flushAll:a
+    $desugar$11 = %17;
+    %19 = closure_fp $anon/.:$worker:flushAll:b
+    $desugar$12 = %19;
+    %21 = closure_fp $anon/.:$worker:flushAll:c
+    $desugar$13 = %21;
+    %23 = start $desugar$10() isolated=false -> bb5;
+  }
+  bb5 {
+    $desugar$4 = %23;
+    %24 = start $desugar$11() isolated=false -> bb6;
+  }
+  bb6 {
+    $desugar$5 = %24;
+    %25 = start $desugar$12() isolated=false -> bb7;
+  }
+  bb7 {
+    $desugar$6 = %25;
+    %26 = start $desugar$13() isolated=false -> bb8;
+  }
+  bb8 {
+    $desugar$7 = %26;
+    %27 = openLatch($desugar$0) -> bb9;
+  }
+  bb9 {
+    %28 = wait $desugar$4 -> bb10;
+  }
+  bb10 {
+    %0 = %28;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = flushAll() -> bb2;
+  }
+  bb2 {
+    %1 = %2;
+    GOTO bb3;
+  }
+  bb3 {
+    r = %1;
+    %5 = r is error
+    %5 ? bb4 : bb5;
+  }
+  bb4 {
+    %6 = message(r) -> bb7;
+  }
+  bb5 {
+    %7 = ConstantLoad terminated
+    %4 = %7;
+    GOTO bb6;
+  }
+  bb6 {
+    %8 = println(%4) -> bb8;
+  }
+  bb7 {
+    %4 = %6;
+    GOTO bb6;
+  }
+  bb8 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+  }
+}
+$worker:flushAll:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = (1, $desugar$8)() -> bb2;
+  }
+  bb2 {
+    $desugar$9 = %2;
+    %4 = ConstantLoad 3
+    %5 = newArray list[%4]{(1, $desugar$1), (1, $desugar$2), (1, $desugar$3)}
+    %6 = ConstantLoad 3
+    %7 = newArray list[%6]{(1, $desugar$6), (1, $desugar$5), (1, $desugar$7)}
+    %8 = awaitWorkerMessageDelivery(%5,%7) -> bb3;
+  }
+  bb3 {
+    %0 = $desugar$9;
+    return;
+  }
+}
+$worker:flushAll:$function$body() -> nil{
+  bb0 {
+    %1 = ConstantLoad 1
+    %2 = %1;
+    %3 = setWorkerMessageValue((1, $desugar$1),%2) -> bb1;
+  }
+  bb1 {
+    %4 = ConstantLoad 2
+    %5 = %4;
+    %6 = setWorkerMessageValue((1, $desugar$2),%5) -> bb2;
+  }
+  bb2 {
+    %7 = ConstantLoad 3
+    %8 = %7;
+    %9 = setWorkerMessageValue((1, $desugar$3),%8) -> bb3;
+  }
+  bb3 {
+    %10 = ConstantLoad 1
+    %11 = newArray list[%10]{(1, $desugar$2)}
+    %12 = ConstantLoad 1
+    %13 = newArray list[%12]{(1, $desugar$1)}
+    %14 = ConstantLoad 1
+    %15 = newArray list[%14]{(1, $desugar$3)}
+    %16 = ConstantLoad 3
+    %17 = newArray list[%16]{%11, %13, %15}
+    %18 = ConstantLoad 3
+    %19 = newArray list[%18]{(1, $desugar$5), (1, $desugar$6), (1, $desugar$7)}
+    %20 = flushWorkerMessages(%17,%19) -> bb4;
+  }
+  bb4 {
+    r = %20;
+    %23 = r is error
+    %23 ? bb5 : bb6;
+  }
+  bb5 {
+    %24 = message(r) -> bb8;
+  }
+  bb6 {
+    %25 = ConstantLoad flushed
+    %22 = %25;
+    GOTO bb7;
+  }
+  bb7 {
+    %26 = println(%22) -> bb9;
+  }
+  bb8 {
+    %22 = %24;
+    GOTO bb7;
+  }
+  bb9 {
+    return;
+  }
+}
+$worker:flushAll:a() -> nil|error{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad a failed
+    %4 = failWith(%3) -> bb2;
+  }
+  bb2 {
+    %5 = %4 is error
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    %0 = %4;
+    return;
+  }
+  bb4 {
+    %2 = %4;
+    GOTO bb5;
+  }
+  bb5 {
+    %6 = getWorkerMessageValue((1, $desugar$2),(1, $desugar$4)) -> bb6;
+  }
+  bb6 {
+    _ = %6;
+    return;
+  }
+}
+$worker:flushAll:b() -> nil|error{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %3 = ConstantLoad b failed
+    %4 = failWith(%3) -> bb2;
+  }
+  bb2 {
+    %5 = %4 is error
+    %5 ? bb3 : bb4;
+  }
+  bb3 {
+    %0 = %4;
+    return;
+  }
+  bb4 {
+    %2 = %4;
+    GOTO bb5;
+  }
+  bb5 {
+    %6 = getWorkerMessageValue((1, $desugar$1),(1, $desugar$4)) -> bb6;
+  }
+  bb6 {
+    _ = %6;
+    return;
+  }
+}
+$worker:flushAll:c() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = getWorkerMessageValue((1, $desugar$3),(1, $desugar$4)) -> bb2;
+  }
+  bb2 {
+    _ = %2;
+    return;
+  }
+}

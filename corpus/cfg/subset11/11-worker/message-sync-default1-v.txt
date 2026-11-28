@@ -1,0 +1,165 @@
+(delivered
+  (bb0 () ()
+    (named-worker a (
+      (value-type string))
+      (block-function-body
+        (var-def
+          (variable sent (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-sync-send-action function
+              (literal 1)))))
+        (return
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref sent)
+              (value-type null))
+            (binary-expr +
+              (literal taken after )
+              (invocation lang.value toString (
+                (simple-var-ref progress))))
+            (literal failed)))))
+    (assignment
+      (simple-var-ref progress)
+      (literal 1))
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (var-def
+      (variable r (type
+        (value-type string)) (expr
+        (single-wait-action
+          (simple-var-ref a)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(failed
+  (bb0 () (bb1 bb3)
+    (named-worker a (
+      (value-type string))
+      (block-function-body
+        (var-def
+          (variable sent (type
+            (union-type
+              (error-type)
+              (value-type null))) (expr
+            (worker-sync-send-action function
+              (literal 1)))))
+        (return
+          (ternary-expr
+            (type-test-expr is
+              (simple-var-ref sent)
+              (error-type))
+            (invocation lang.error message (
+              (simple-var-ref sent)))
+            (literal taken)))))
+    (assignment
+      (simple-var-ref pending)
+      (simple-var-ref a))
+    (simple-var-ref early)
+  )
+  (bb1 (bb0) ()
+    (return
+      (error-constructor-expr (
+        (literal default failed))))
+  )
+  (bb2 (bb3) ()
+    (var-def
+      (variable _ (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+  )
+  (bb3 (bb0) (bb2))
+)
+(main
+  (bb0 () (bb1 bb2)
+    (expression-stmt
+      (invocation delivered ()))
+    (var-def
+      (variable e (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (invocation failed (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (ternary-expr
+          (type-test-expr is
+            (simple-var-ref e)
+            (error-type))
+          (invocation lang.error message (
+            (simple-var-ref e)))
+          (literal done)))))
+    (var-def
+      (variable f (type
+        (union-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type string))
+          (value-type null))) (expr
+        (simple-var-ref pending))))
+    (type-test-expr is
+      (simple-var-ref f)
+      (constrained-type
+        (builtin-ref-type future)
+        (value-type string)))
+  )
+  (bb1 (bb0) (bb2)
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type string)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable sent (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-sync-send-action function
+          (literal 1)))))
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref sent)
+          (error-type))
+        (invocation lang.error message (
+          (simple-var-ref sent)))
+        (literal taken)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (var-def
+      (variable sent (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (worker-sync-send-action function
+          (literal 1)))))
+    (return
+      (ternary-expr
+        (type-test-expr is
+          (simple-var-ref sent)
+          (value-type null))
+        (binary-expr +
+          (literal taken after )
+          (invocation lang.value toString (
+            (simple-var-ref progress))))
+        (literal failed)))
+  )
+)

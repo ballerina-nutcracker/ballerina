@@ -1,0 +1,82 @@
+module $anon.. v 0.0.0;
+counter  int;
+spawner() -> int{
+  bb0 {
+    %1 = ConstantLoad before
+    %2 = println(%1) -> bb1;
+  }
+  bb1 {
+    %3 = createLatch() -> bb2;
+  }
+  bb2 {
+    $desugar$0 = %3;
+    %7 = closure_fp $anon/.:$worker:spawner:$function
+    $desugar$3 = %7;
+    %9 = closure_fp $anon/.:$worker:spawner:w
+    $desugar$4 = %9;
+    %11 = start $desugar$3() isolated=true -> bb3;
+  }
+  bb3 {
+    $desugar$1 = %11;
+    %12 = start $desugar$4() isolated=true -> bb4;
+  }
+  bb4 {
+    $desugar$2 = %12;
+    %13 = openLatch($desugar$0) -> bb5;
+  }
+  bb5 {
+    %14 = wait $desugar$1 -> bb6;
+  }
+  bb6 {
+    %0 = %14;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    lock-start "$anon/.:counter" GOTO bb1;
+  }
+  bb1 {
+    PushScopeFrame 1
+    %0 = spawner() -> bb2;
+  }
+  bb2 {
+    counter = %0;
+    (1, result) = counter;
+    PopScopeFrame
+    lock-end "$anon/.:counter" GOTO bb3;
+  }
+  bb3 {
+    %2 = result;
+    %3 = println(%2) -> bb4;
+  }
+  bb4 {
+    return;
+  }
+}
+$worker:spawner:$function() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad after
+    %3 = println(%2) -> bb2;
+  }
+  bb2 {
+    %4 = wait (1, $desugar$2) -> bb3;
+  }
+  bb3 {
+    %0 = %4;
+    return;
+  }
+}
+$worker:spawner:w() -> int{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = ConstantLoad 1
+    %0 = %2;
+    return;
+  }
+}

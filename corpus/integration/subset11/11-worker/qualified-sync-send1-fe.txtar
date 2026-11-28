@@ -1,0 +1,7 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: worker message send/receive is not supported here
+  --> qualified-sync-send1-fe.bal:25:9
+   |
+25 |         xml:XML_NAMESPACE_URI ->> w; // @error worker message send/receive is not supported here
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^

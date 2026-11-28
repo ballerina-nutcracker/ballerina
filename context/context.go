@@ -21,6 +21,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/ballerina-nutcracker/ballerina/context/internal/workermessages"
 	"github.com/ballerina-nutcracker/ballerina/model"
 	"github.com/ballerina-nutcracker/ballerina/semtypes"
 	"github.com/ballerina-nutcracker/ballerina/tools/diagnostics"
@@ -172,6 +173,24 @@ func (c *CompilerContext) NewCaptureGroup() model.CaptureGroupRef {
 
 func (c *CompilerContext) AddToCaptureGroup(group model.CaptureGroupRef, ref model.SymbolRef) {
 	c.env.addToCaptureGroup(group, ref)
+}
+
+type WorkerMessageType = workermessages.Result
+
+func (c *CompilerContext) NewWorkerMessage() model.WorkerMessageRef {
+	return c.env.newWorkerMessage()
+}
+
+func (c *CompilerContext) SetWorkerMessageType(ref model.WorkerMessageRef, ty semtypes.SemType) error {
+	return c.env.workerMessageTypes.Publish(ref, ty)
+}
+
+func (c *CompilerContext) WorkerMessageType(ref model.WorkerMessageRef) <-chan WorkerMessageType {
+	return c.env.workerMessageTypes.Type(ref)
+}
+
+func (c *CompilerContext) FailWorkerMessageTypeIfUnset(ref model.WorkerMessageRef) {
+	c.env.workerMessageTypes.FailIfUnset(ref)
 }
 
 func (c *CompilerContext) CaptureGroupContains(group model.CaptureGroupRef, ref model.SymbolRef) bool {

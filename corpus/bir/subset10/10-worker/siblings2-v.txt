@@ -5,29 +5,47 @@ main() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %5 = closure_fp $anon/.:$worker:main:first
-    $desugar$3 = %5;
-    %7 = closure_fp $anon/.:$worker:main:second
-    $desugar$4 = %7;
-    %9 = start $desugar$3() isolated=false -> bb2;
+    %6 = closure_fp $anon/.:$worker:main:$function
+    $desugar$4 = %6;
+    %8 = closure_fp $anon/.:$worker:main:first
+    $desugar$5 = %8;
+    %10 = closure_fp $anon/.:$worker:main:second
+    $desugar$6 = %10;
+    %12 = start $desugar$4() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %9;
-    %10 = start $desugar$4() isolated=false -> bb3;
+    $desugar$1 = %12;
+    %13 = start $desugar$5() isolated=false -> bb3;
   }
   bb3 {
-    $desugar$2 = %10;
-    %11 = openLatch($desugar$0) -> bb4;
+    $desugar$2 = %13;
+    %14 = start $desugar$6() isolated=false -> bb4;
   }
   bb4 {
-    %12 = wait $desugar$2 -> bb5;
+    $desugar$3 = %14;
+    %15 = openLatch($desugar$0) -> bb5;
   }
   bb5 {
-    result = %12;
-    %14 = result;
-    %15 = println(%14) -> bb6;
+    %16 = wait $desugar$1 -> bb6;
   }
   bb6 {
+    %0 = %16;
+    return;
+  }
+}
+$worker:main:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
+  }
+  bb1 {
+    %2 = wait (1, $desugar$3) -> bb2;
+  }
+  bb2 {
+    result = %2;
+    %4 = result;
+    %5 = println(%4) -> bb3;
+  }
+  bb3 {
     return;
   }
 }
@@ -46,7 +64,7 @@ $worker:main:second() -> int{
     %1 = waitOnLatch((1, $desugar$0)) -> bb1;
   }
   bb1 {
-    %2 = wait (1, $desugar$1) -> bb2;
+    %2 = wait (1, $desugar$2) -> bb2;
   }
   bb2 {
     peer = %2;

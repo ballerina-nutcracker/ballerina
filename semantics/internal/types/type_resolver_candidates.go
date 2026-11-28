@@ -27,9 +27,8 @@ type ephemeralState struct {
 	// unimplementedReported records that a trial reported an unimplemented error. Compilation fails on that
 	// diagnostic, so a new expression whose trials all failed does not add its own.
 	unimplementedReported bool
-	// symbolTypes shadows the compiler context's symbol types while a trial runs. It is non-nil exactly while
-	// depth > 0 and is shared by every trial in the nesting: a trial writes a symbol's type before reading it, so
-	// stale entries from sibling candidates or inner trials are overwritten before they can be read.
+	// symbolTypes holds types written by this resolver's trials and is non-nil
+	// exactly while depth > 0.
 	symbolTypes map[model.SymbolRef]semtypes.SemType
 }
 
@@ -54,7 +53,7 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 	case *packageTypeResolver:
 		return &resolver.ephemeralState
 	case *functionTypeResolver:
-		return resolver.ephemeralState
+		return &resolver.ephemeralState
 	case *loopTypeResolver:
 		return resolverEphemeralState(resolver.parentResolver)
 	default:
@@ -62,6 +61,7 @@ func resolverEphemeralState(t typeResolver) *ephemeralState {
 	}
 }
 
+// enterEphemeral starts a candidate trial.
 func enterEphemeral(t typeResolver) func() {
 	state := resolverEphemeralState(t)
 	if state == nil {

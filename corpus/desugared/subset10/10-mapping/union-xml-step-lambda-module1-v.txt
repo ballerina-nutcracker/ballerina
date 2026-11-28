@@ -1,5 +1,6 @@
 (package
   (import-package ballerina io (as io))
+  (import-package ballerina lang xml (as lang.xml))
   (variable m (type
     (union-type
       (user-defined-type A)

@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: async send to a worker that can fail must be followed by a sync send or flush to it
+  --> message-semantic1-e.bal:33:5
+   |
+33 |     1 -> a; // @error a can fail and nothing reports it
+   |     ^^^^^^
+
+error[SEMANTIC_ERROR]: worker message value must be a subtype of value:Cloneable
+  --> message-semantic1-e.bal:26:5
+   |
+26 |     new Counter() -> a; // @error an object isn't Cloneable
+   |     ^^^^^^^^^^^^^

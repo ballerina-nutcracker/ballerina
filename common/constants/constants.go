@@ -36,6 +36,10 @@ const (
 	WorkerClosurePrefix = "$worker:"
 )
 
+// DefaultWorkerName is the name of the default worker of a block function body
+// with named workers. Source code can't produce it.
+const DefaultWorkerName = "$function"
+
 type SymbolFlag int64
 
 const (

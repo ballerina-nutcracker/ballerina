@@ -1,0 +1,4 @@
+-- stdout --
+trapped b panicked
+run panicked: b panicked
+-- stderr --

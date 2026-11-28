@@ -5,30 +5,48 @@ main() -> nil{
   }
   bb1 {
     $desugar$0 = %1;
-    %4 = closure_fp $anon/.:$worker:main:w
-    $desugar$2 = %4;
-    %6 = start $desugar$2() isolated=false -> bb2;
+    %5 = closure_fp $anon/.:$worker:main:$function
+    $desugar$3 = %5;
+    %7 = closure_fp $anon/.:$worker:main:w
+    $desugar$4 = %7;
+    %9 = start $desugar$3() isolated=false -> bb2;
   }
   bb2 {
-    $desugar$1 = %6;
-    %7 = openLatch($desugar$0) -> bb3;
+    $desugar$1 = %9;
+    %10 = start $desugar$4() isolated=false -> bb3;
   }
   bb3 {
-    alias = $desugar$1;
-    %9 = wait alias -> bb4;
+    $desugar$2 = %10;
+    %11 = openLatch($desugar$0) -> bb4;
   }
   bb4 {
-    first = %9;
-    %11 = wait alias -> bb5;
+    %12 = wait $desugar$1 -> bb5;
   }
   bb5 {
-    second = %11;
-    %13 = println(first) -> bb6;
+    %0 = %12;
+    return;
   }
-  bb6 {
-    %14 = println(second) -> bb7;
+}
+$worker:main:$function() -> nil{
+  bb0 {
+    %1 = waitOnLatch((1, $desugar$0)) -> bb1;
   }
-  bb7 {
+  bb1 {
+    alias = (1, $desugar$2);
+    %3 = wait alias -> bb2;
+  }
+  bb2 {
+    first = %3;
+    %5 = wait alias -> bb3;
+  }
+  bb3 {
+    second = %5;
+    %7 = println(first) -> bb4;
+  }
+  bb4 {
+    %8 = println(second) -> bb5;
+  }
+  bb5 {
     return;
   }
 }
