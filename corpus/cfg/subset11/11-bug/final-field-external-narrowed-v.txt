@@ -1,0 +1,78 @@
+(main
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable x (type
+        (union-type
+          (user-defined-type C)
+          (value-type int))) (expr
+        (new
+          (user-defined-type C) ()))))
+    (var-def
+      (variable positive (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation writePositive (
+            (simple-var-ref x)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref positive)
+          (error-type)))))
+    (var-def
+      (variable negative (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation writeNegative (
+            (simple-var-ref x)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref negative)
+          (error-type)))))
+    (type-test-expr is
+      (simple-var-ref x)
+      (user-defined-type C))
+  )
+  (bb1 (bb0) (bb2)
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref x)))))
+  )
+  (bb2 (bb1 bb0) ())
+)
+(writeNegative
+  (bb0 () (bb1 bb2)
+    (type-test-expr !is
+      (simple-var-ref x)
+      (user-defined-type C))
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal <nil>))
+  )
+  (bb2 (bb0) ()
+    (assignment
+      (field-based-access a
+        (simple-var-ref x))
+      (literal 2))
+  )
+)
+(writePositive
+  (bb0 () (bb1 bb2)
+    (type-test-expr is
+      (simple-var-ref x)
+      (user-defined-type C))
+  )
+  (bb1 (bb0) (bb2)
+    (assignment
+      (field-based-access a
+        (simple-var-ref x))
+      (literal 1))
+  )
+  (bb2 (bb1 bb0) ())
+)

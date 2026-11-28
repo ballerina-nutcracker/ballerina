@@ -1,0 +1,36 @@
+(main
+  (bb0 () ()
+    (var-def
+      (variable c (expr
+        (new
+          (user-defined-type C) ()))))
+    (var-def
+      (variable res (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation writeFinal (
+            (simple-var-ref c)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref res)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+  )
+)
+(writeFinal
+  (bb0 () ()
+    (var-def
+      (variable x (expr
+        (simple-var-ref c))))
+    (assignment
+      (field-based-access a
+        (simple-var-ref x))
+      (literal 2))
+  )
+)

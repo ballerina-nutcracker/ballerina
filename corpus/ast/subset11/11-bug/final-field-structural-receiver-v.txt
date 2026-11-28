@@ -1,0 +1,65 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (class-definition P
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (class-definition Q
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (function write (
+    (variable p (type
+      (user-defined-type P)))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (field-based-access a
+          (simple-var-ref p))
+        (literal 5))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable q (type
+          (user-defined-type Q)) (expr
+          (new ()))))
+      (var-def
+        (variable mutableResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref q)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref mutableResult)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref q)))))
+      (var-def
+        (variable finalValue (type
+          (user-defined-type P)) (expr
+          (new ()))))
+      (var-def
+        (variable finalResult (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref finalValue)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref finalResult)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (field-based-access a
+            (simple-var-ref finalValue))))))))

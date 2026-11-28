@@ -6,7 +6,7 @@ class Base {
     bb0 {
       %2 = ConstantLoad 1
       %3 = ConstantLoad tag
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
@@ -23,12 +23,13 @@ class Base {
   }
 }
 class Derived {
+  tag int
 
   init() -> nil{
     bb0 {
       %2 = ConstantLoad 2
       %3 = ConstantLoad tag
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }

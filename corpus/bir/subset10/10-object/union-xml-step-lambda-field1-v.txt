@@ -9,7 +9,7 @@ class Holder {
       %4 = ConstantLoad 2
       %5 = newArray [function(xml) returns [xml...], int, never...][%4]{%2, %3}
       %6 = ConstantLoad l
-      self[%6] = %5;
+      self[%6] = %5 (unsafe);
       return;
     }
   }

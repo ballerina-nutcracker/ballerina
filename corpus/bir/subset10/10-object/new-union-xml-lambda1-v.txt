@@ -5,7 +5,7 @@ class XmlFn {
   init(function(xml) returns xml) -> nil{
     bb0 {
       %3 = ConstantLoad f
-      self[%3] = f;
+      self[%3] = f (unsafe);
       return;
     }
   }
@@ -16,7 +16,7 @@ class IntFn {
   init(function(int) returns xml) -> nil{
     bb0 {
       %3 = ConstantLoad f
-      self[%3] = f;
+      self[%3] = f (unsafe);
       return;
     }
   }

@@ -1,0 +1,79 @@
+(package
+  (import-package ballerina io (as io))
+  (variable moduleVar (type
+    (user-defined-type C)))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (function init () ()
+    (block-function-body
+      (assignment
+        (simple-var-ref moduleVar)
+        (new ()))))
+  (function write (
+    (variable p (type
+      (user-defined-type C)))) (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref p)
+          (literal a))
+        (literal 2))))
+  (function writeModule () (
+    (value-type null))
+    (block-function-body
+      (assignment
+        (index-based-access
+          (simple-var-ref moduleVar)
+          (literal a))
+        (literal 3))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable moduleWrite (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation writeModule ())))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref moduleWrite)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref moduleVar)
+            (literal a)))))
+      (var-def
+        (variable c (type
+          (user-defined-type C)) (expr
+          (new ()))))
+      (var-def
+        (variable parameterWrite (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation write (
+              (simple-var-ref c)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref parameterWrite)
+            (error-type)))))
+      (expression-stmt
+        (invocation io println (
+          (index-based-access
+            (simple-var-ref c)
+            (literal a))))))))

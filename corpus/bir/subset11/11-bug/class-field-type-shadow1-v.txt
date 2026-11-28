@@ -7,10 +7,10 @@ class Person {
     bb0 {
       %2 = ConstantLoad x
       %3 = ConstantLoad Name
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = ConstantLoad y
       %5 = ConstantLoad n
-      self[%5] = %4;
+      self[%5] = %4 (unsafe);
       return;
     }
   }

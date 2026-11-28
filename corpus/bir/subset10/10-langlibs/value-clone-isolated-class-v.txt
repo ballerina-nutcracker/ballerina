@@ -30,7 +30,7 @@ class Store {
       %2 = ConstantLoad 0
       %3 = newArray [int...][%2]{}
       %4 = ConstantLoad xs
-      self[%4] = %3;
+      self[%4] = %3 (unsafe);
       return;
     }
   }
@@ -45,7 +45,7 @@ class Store {
     }
     bb2 {
       %1 = ConstantLoad xs
-      (1, self)[%1] = %0;
+      (1, self)[%1] = %0 (unsafe);
       PopScopeFrame
       lock-end "$anon/.:Store.xs" GOTO bb3;
     }

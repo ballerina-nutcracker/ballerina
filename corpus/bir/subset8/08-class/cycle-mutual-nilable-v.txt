@@ -1,28 +1,28 @@
 module $anon.. v 0.0.0;
 class A {
-  va int
   b nil|object { nil|object { nil|... b; public function init(int, nil|...) returns nil; int va } a; public function init(int, nil|object { nil|... b; public function init(int, nil|...) returns nil; int va }) returns nil; int vb }
+  va int
 
   init(int,nil|object { nil|object { nil|... b; public function init(int, nil|...) returns nil; int va } a; public function init(int, nil|object { nil|... b; public function init(int, nil|...) returns nil; int va }) returns nil; int vb }) -> nil{
     bb0 {
       %4 = ConstantLoad va
-      self[%4] = va;
+      self[%4] = va (unsafe);
       %5 = ConstantLoad b
-      self[%5] = b;
+      self[%5] = b (unsafe);
       return;
     }
   }
 }
 class B {
-  vb int
   a nil|object { nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb } b; public function init(int, nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb }) returns nil; int va }
+  vb int
 
   init(int,nil|object { nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb } b; public function init(int, nil|object { nil|... a; public function init(int, nil|...) returns nil; int vb }) returns nil; int va }) -> nil{
     bb0 {
       %4 = ConstantLoad vb
-      self[%4] = vb;
+      self[%4] = vb (unsafe);
       %5 = ConstantLoad a
-      self[%5] = a;
+      self[%5] = a (unsafe);
       return;
     }
   }

@@ -5,7 +5,7 @@ class IntBox {
   init(int) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = value;
+      self[%3] = value (unsafe);
       return;
     }
   }
@@ -16,7 +16,7 @@ class StringBox {
   init(string) -> nil{
     bb0 {
       %3 = ConstantLoad value
-      self[%3] = value;
+      self[%3] = value (unsafe);
       return;
     }
   }
@@ -27,7 +27,7 @@ class IntOuter {
   init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value },int) -> nil{
     bb0 {
       %4 = ConstantLoad inner
-      self[%4] = inner;
+      self[%4] = inner (unsafe);
       _ = marker;
       return;
     }
@@ -39,7 +39,7 @@ class StringOuter {
   init(object { public function init(int) returns nil; int value }|object { public function init(string) returns nil; string value },string) -> nil{
     bb0 {
       %4 = ConstantLoad inner
-      self[%4] = inner;
+      self[%4] = inner (unsafe);
       _ = marker;
       return;
     }

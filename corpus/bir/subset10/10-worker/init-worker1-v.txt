@@ -26,7 +26,7 @@ class Holder {
     bb0 {
       %2 = ConstantLoad 0
       %3 = ConstantLoad value
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       %4 = createLatch() -> bb1;
     }
     bb1 {
@@ -87,7 +87,7 @@ $worker:Holder.init:w() -> nil{
     PushScopeFrame 2
     %0 = ConstantLoad 1
     %1 = ConstantLoad value
-    (2, self)[%1] = %0;
+    (2, self)[%1] = %0 (unsafe);
     PopScopeFrame
     lock-end "$anon/.:Holder.value" GOTO bb3;
   }

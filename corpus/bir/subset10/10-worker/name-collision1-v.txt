@@ -21,7 +21,7 @@ class A {
     }
     bb4 {
       %10 = ConstantLoad value
-      self[%10] = %9;
+      self[%10] = %9 (unsafe);
       return;
     }
   }
@@ -48,7 +48,7 @@ class B {
     }
     bb4 {
       %10 = ConstantLoad value
-      self[%10] = %9;
+      self[%10] = %9 (unsafe);
       return;
     }
   }

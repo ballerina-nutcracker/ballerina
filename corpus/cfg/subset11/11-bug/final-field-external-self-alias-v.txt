@@ -1,0 +1,69 @@
+(C
+  (init
+    (bb0 () (bb1 bb2)
+      (simple-var-ref writeAlias)
+    )
+    (bb1 (bb0) (bb2)
+      (var-def
+        (variable other (type
+          (user-defined-type C)) (expr
+          (simple-var-ref self))))
+      (assignment
+        (field-based-access a
+          (simple-var-ref other))
+        (literal 6))
+    )
+    (bb2 (bb1 bb0) ())
+  )
+  (reset
+    (bb0 () ()
+      (var-def
+        (variable other (type
+          (user-defined-type C)) (expr
+          (simple-var-ref self))))
+      (assignment
+        (field-based-access a
+          (simple-var-ref other))
+        (literal 5))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable initialized (type
+        (union-type
+          (user-defined-type C)
+          (error-type))) (expr
+        (trap-expr
+          (new
+            (user-defined-type C) (
+            (literal true)))))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref initialized)
+          (error-type)))))
+    (var-def
+      (variable c (type
+        (user-defined-type C)) (expr
+        (new ( <default>)))))
+    (var-def
+      (variable reset (type
+        (union-type
+          (error-type)
+          (value-type null))) (expr
+        (trap-expr
+          (invocation reset expr:
+            (simple-var-ref c) ())))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (simple-var-ref reset)
+          (error-type)))))
+    (expression-stmt
+      (invocation io println (
+        (field-based-access a
+          (simple-var-ref c)))))
+  )
+)

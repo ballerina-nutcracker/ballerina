@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: cannot update 'final' object field 'a'
+        at main(final-field-external-closure-p.bal:23)
+           main(final-field-external-closure-p.bal:25)

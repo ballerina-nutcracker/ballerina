@@ -1,0 +1,97 @@
+(package
+  (import-package ballerina io (as io))
+  (class-definition C
+    (variable a (type
+      (value-type int)))
+    (function init () ()
+      (block-function-body
+        (assignment
+          (index-based-access
+            (simple-var-ref self)
+            (literal a))
+          (literal 1)))))
+  (function writePositive (
+    (variable x (type
+      (union-type
+        (user-defined-type C)
+        (value-type int))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type C))
+        (block-stmt
+          (assignment
+            (index-based-access
+              (simple-var-ref x)
+              (literal a))
+            (literal 1))) ())
+      (block-stmt)))
+  (function writeNegative (
+    (variable x (type
+      (union-type
+        (user-defined-type C)
+        (value-type int))))) (
+    (value-type null))
+    (block-function-body
+      (if
+        (type-test-expr !is
+          (simple-var-ref x)
+          (user-defined-type C))
+        (block-stmt
+          (return
+            (literal <nil>))) ())
+      (block-stmt
+        (assignment
+          (index-based-access
+            (simple-var-ref x)
+            (literal a))
+          (literal 2)))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (union-type
+            (user-defined-type C)
+            (value-type int))) (expr
+          (new
+            (user-defined-type C) ()))))
+      (var-def
+        (variable positive (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation writePositive (
+              (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref positive)
+            (error-type)))))
+      (var-def
+        (variable negative (type
+          (union-type
+            (error-type)
+            (value-type null))) (expr
+          (trap-expr
+            (invocation writeNegative (
+              (simple-var-ref x)))))))
+      (expression-stmt
+        (invocation io println (
+          (type-test-expr is
+            (simple-var-ref negative)
+            (error-type)))))
+      (if
+        (type-test-expr is
+          (simple-var-ref x)
+          (user-defined-type C))
+        (block-stmt
+          (expression-stmt
+            (invocation io println (
+              (index-based-access
+                (simple-var-ref x)
+                (literal a)))))) ())
+      (block-stmt))))

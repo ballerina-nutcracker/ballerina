@@ -20,11 +20,11 @@ class Listener {
       %4 = ConstantLoad path
       %3 = config[%4];
       %5 = ConstantLoad path
-      self[%5] = %3;
+      self[%5] = %3 (unsafe);
       %7 = ConstantLoad recursive
       %6 = config[%7];
       %8 = ConstantLoad recursive
-      self[%8] = %6;
+      self[%8] = %6 (unsafe);
       return;
     }
   }

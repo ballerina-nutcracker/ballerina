@@ -61,7 +61,7 @@ func length(_ *extern.Context, args []values.BalValue) (values.BalValue, error) 
 func xmlIterator(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {
 	xmlValue := asXML(args[0])
 	iteratorTy := xmlIteratorType(ctx.TypeEnv(), semtypes.XMLItemType(xmlValue.Type()))
-	return values.NewObject(iteratorTy, map[string]values.BalValue{"items": xmlValue.IterItems(), "idx": int64(0)}, map[string]string{"next": orgName + "/" + moduleName + ":" + nextMethodName}, nil, nil), nil
+	return values.NewObject(iteratorTy, map[string]values.BalValue{"items": xmlValue.IterItems(), "idx": int64(0)}, map[string]string{"next": orgName + "/" + moduleName + ":" + nextMethodName}, nil, nil, nil), nil
 }
 
 func xmlIteratorNext(ctx *extern.Context, args []values.BalValue) (values.BalValue, error) {

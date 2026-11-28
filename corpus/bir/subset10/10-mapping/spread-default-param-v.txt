@@ -6,7 +6,7 @@ class Box {
   init({| x: int, y: int, never... |},{| x: int, y: int, z: int, never... |}) -> nil{
     bb0 {
       %4 = ConstantLoad value
-      self[%4] = q;
+      self[%4] = q (unsafe);
       return;
     }
   }

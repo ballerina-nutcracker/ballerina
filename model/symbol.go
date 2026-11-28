@@ -711,16 +711,6 @@ func (f *FieldDescriptor) HasDefault() bool { return f.flags&FieldDescriptorHasD
 
 func (f *FieldDescriptor) IsFinal() bool { return f.flags&FieldDescriptorFinal != 0 }
 
-// WithoutDefault returns a copy of f that has no default value. Type inclusion copies a field's
-// declaration but not its initializer, so a class including f's type must initialize the field
-// itself. The copy leaves the included type's own descriptor unchanged.
-func (f *FieldDescriptor) WithoutDefault() *FieldDescriptor {
-	fd := *f
-	fd.flags &^= FieldDescriptorHasDefault
-	fd.DefaultFnRef = SymbolRef{}
-	return &fd
-}
-
 type MethodDescriptor struct {
 	name      string
 	kind      InclusionMemberKind

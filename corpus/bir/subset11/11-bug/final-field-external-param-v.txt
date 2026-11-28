@@ -1,0 +1,101 @@
+module $anon.. v 0.0.0;
+moduleVar  object { int a; public function init() returns nil };
+class C {
+  a int
+
+  init() -> nil{
+    bb0 {
+      %2 = ConstantLoad 1
+      %3 = ConstantLoad a
+      self[%3] = %2 (unsafe);
+      return;
+    }
+  }
+}
+write(object { int a; public function init() returns nil }) -> nil{
+  bb0 {
+    %2 = ConstantLoad 2
+    %3 = ConstantLoad a
+    p[%3] = %2;
+    return;
+  }
+}
+writeModule() -> nil{
+  bb0 {
+    %1 = ConstantLoad 3
+    %2 = ConstantLoad a
+    moduleVar[%2] = %1;
+    return;
+  }
+}
+main() -> nil{
+  bb0 {
+    GOTO bb1;
+  }
+  bb1 {
+    %2 = writeModule() -> bb2;
+  }
+  bb2 {
+    %1 = %2;
+    GOTO bb3;
+  }
+  bb3 {
+    moduleWrite = %1;
+    %4 = moduleWrite is error
+    %5 = %4;
+    %6 = println(%5) -> bb4;
+  }
+  bb4 {
+    %8 = ConstantLoad a
+    %7 = moduleVar[%8];
+    %9 = %7;
+    %10 = println(%9) -> bb5;
+  }
+  bb5 {
+    %11 = newObject $anon/.:C
+    %12 = %11.init() -> bb6;
+  }
+  bb6 {
+    %14 = %12 is nil
+    %14 ? bb7 : bb8;
+  }
+  bb7 {
+    %13 = %11;
+    GOTO bb9;
+  }
+  bb8 {
+    %13 = %12;
+    GOTO bb9;
+  }
+  bb9 {
+    c = %13;
+    GOTO bb10;
+  }
+  bb10 {
+    %17 = write(c) -> bb11;
+  }
+  bb11 {
+    %16 = %17;
+    GOTO bb12;
+  }
+  bb12 {
+    parameterWrite = %16;
+    %19 = parameterWrite is error
+    %20 = %19;
+    %21 = println(%20) -> bb13;
+  }
+  bb13 {
+    %23 = ConstantLoad a
+    %22 = c[%23];
+    %24 = %22;
+    %25 = println(%24) -> bb14;
+  }
+  bb14 {
+    return;
+  }
+  
+  error-table {
+    [bb1, bb2] -> bb3, %1
+    [bb10, bb11] -> bb12, %16
+  }
+}

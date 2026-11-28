@@ -29,7 +29,9 @@ import (
 // reference across all instances, so object creation only allocates the
 // per-instance field map. FieldCount pre-sizes that map.
 type ClassTemplate struct {
-	MethodKeys  map[string]string
+	MethodKeys map[string]string
+	// FinalFields is the set of final field names, shared by reference.
+	FinalFields map[string]struct{}
 	RTable      map[string][]values.ResourceEntry
 	Annotations values.AnnotationValues
 	FieldCount  int
@@ -78,12 +80,19 @@ func buildClassTemplate(def *bir.BIRClassDef) *ClassTemplate {
 		}
 		rtable[methodName] = copied
 	}
+	finalFields := make(map[string]struct{})
+	for _, field := range def.Fields {
+		if field.Final {
+			finalFields[field.Name] = struct{}{}
+		}
+	}
 	annotations := def.Annotations
 	if annotations == nil {
 		annotations = values.NewAnnotationValues()
 	}
 	return &ClassTemplate{
 		MethodKeys:  methodKeys,
+		FinalFields: finalFields,
 		RTable:      rtable,
 		Annotations: annotations,
 		FieldCount:  len(def.Fields),

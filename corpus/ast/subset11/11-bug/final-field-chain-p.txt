@@ -1,0 +1,22 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (class-definition C
+    (variable a (type
+      (value-type int)) (expr
+      (literal 1))))
+  (class-definition Holder
+    (variable c (type
+      (user-defined-type C)) (expr
+      (new ()))))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable h (type
+          (user-defined-type Holder)) (expr
+          (new ()))))
+      (assignment
+        (field-based-access a
+          (field-based-access c
+            (simple-var-ref h)))
+        (literal 2)))))

@@ -7,7 +7,7 @@ class Counter {
     bb0 {
       %2 = ConstantLoad 9
       %3 = ConstantLoad value
-      self[%3] = %2;
+      self[%3] = %2 (unsafe);
       return;
     }
   }
