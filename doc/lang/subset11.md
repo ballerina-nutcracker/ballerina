@@ -23,6 +23,7 @@
   - Supports `client`, `service`, `isolated`, `readonly` and `distinct` [`class-type-quals`](https://ballerina.io/spec/lang/master/#class-type-quals)
   - Supports `object-field`, `method-defn` and `object-type-inclusion` members
   - Supports [`remote-method-defn`](https://ballerina.io/spec/lang/master/#remote-method-defn) for client classes and `resource-method-defn` for service classes
+  - `self` is implicitly final in methods and service declarations; assigning to it is a compile-time error
 
 ## Statements
 
