@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+fatal[UNIMPLEMENTED_ERROR]: non-private field of a mutable type in a readonly isolated object
+  --> readonly-isolated-class-nonprivate-mutable-type-fv.bal:22:5
+   |
+22 |     int[] xs = [1, 2]; // @error future: field types of a readonly class are not intersected with readonly (#1043)
+   |     ^^^^^^^^^^^^^^^^^^
+
+fatal[UNIMPLEMENTED_ERROR]: non-private field of a mutable type in a readonly isolated object
+  --> readonly-isolated-class-nonprivate-mutable-type-fv.bal:23:5
+   |
+23 |     public map<int> m = {}; // @error future: field types of a readonly class are not intersected with readonly (#1043)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^

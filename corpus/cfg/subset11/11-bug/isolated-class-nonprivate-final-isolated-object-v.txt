@@ -1,0 +1,43 @@
+(SimpleCounter
+  (next
+    (bb0 () ()
+      (compound-assignment +
+        (field-based-access n
+          (simple-var-ref self))
+        (literal 1))
+      (return
+        (field-based-access n
+          (simple-var-ref self)))
+    )
+  )
+)
+(main
+  (bb0 () ()
+    (var-def
+      (variable w (type
+        (user-defined-type Worker)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation next expr:
+          (field-based-access counter
+            (simple-var-ref w)) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation next expr:
+          (field-based-access counter
+            (simple-var-ref w)) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation next expr:
+          (field-based-access other
+            (simple-var-ref w)) ()))))
+    (expression-stmt
+      (invocation io println (
+        (type-test-expr is
+          (field-based-access mixed
+            (simple-var-ref w))
+          (array-type
+            (value-type int) dimensions: 1 ([]))))))
+  )
+)
