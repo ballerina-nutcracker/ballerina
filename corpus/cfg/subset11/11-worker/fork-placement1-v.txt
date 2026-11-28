@@ -1,0 +1,282 @@
+(Counter
+  (next
+    (bb0 () ()
+      (var-def
+        (variable b (type
+          (value-type int)) (expr
+          (field-based-access base
+            (simple-var-ref self)))))
+      (named-worker f (
+        (value-type int))
+        (block-function-body
+          (return
+            (simple-var-ref b))))
+      (return
+        (single-wait-action
+          (simple-var-ref f)))
+    )
+  )
+)
+(afterIfWithoutElse
+  (bb0 () (bb1 bb2)
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) ()
+    (return
+      (literal 0))
+  )
+  (bb2 (bb0) ()
+    (named-worker f (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 9))))
+    (return
+      (single-wait-action
+        (simple-var-ref f)))
+  )
+)
+(inIsolated
+  (bb0 () ()
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref x))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr *
+            (simple-var-ref x)
+            (literal 2)))))
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (multiple-wait-action a
+          (simple-var-ref a) b
+          (simple-var-ref b)))))
+    (return
+      (binary-expr +
+        (invocation lang.map get (
+          (simple-var-ref r)
+          (literal a)))
+        (invocation lang.map get (
+          (simple-var-ref r)
+          (literal b)))))
+  )
+)
+(inLambda
+  (bb0 () ()
+    (var-def
+      (variable g (expr
+        (lambda
+          (function $anonFunc$_0 () (
+            (value-type int))
+            (block-function-body
+              (fork
+                (named-worker f (
+                  (value-type int))
+                  (block-function-body
+                    (return
+                      (literal 6)))))
+              (return
+                (single-wait-action
+                  (simple-var-ref f)))))))))
+    (return
+      (invocation g ()))
+  )
+)
+(initStatements
+  (bb0 () ()
+    (named-worker f (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 1))))
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 2))))
+    (var-def
+      (variable a (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (var-def
+      (variable b (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (simple-var-ref b)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation initStatements ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation trailingStatements ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation nestedFork ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inLambda ()))))
+    (var-def
+      (variable c (type
+        (user-defined-type Counter)) (expr
+        (new ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation next expr:
+          (simple-var-ref c) ()))))
+    (expression-stmt
+      (invocation io println (
+        (invocation afterIfWithoutElse (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inIsolated (
+          (literal 10))))))
+  )
+)
+(nestedFork
+  (bb0 () ()
+    (named-worker host (
+      (value-type int))
+      (block-function-body
+        (fork
+          (named-worker inner (
+            (value-type int))
+            (block-function-body
+              (return
+                (literal 5)))))
+        (return
+          (single-wait-action
+            (simple-var-ref inner)))))
+    (return
+      (single-wait-action
+        (simple-var-ref host)))
+  )
+)
+(trailingStatements
+  (bb0 () ()
+    (named-worker w (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 3))))
+    (var-def
+      (variable a (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref w)))))
+    (named-worker f (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref a)
+            (literal 1)))))
+    (return
+      (single-wait-action
+        (simple-var-ref f)))
+  )
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker f (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 6))))
+    (return
+      (single-wait-action
+        (simple-var-ref f)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (simple-var-ref x))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (binary-expr *
+        (simple-var-ref x)
+        (literal 2)))
+  )
+)
+(worker f
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref a)
+        (literal 1)))
+  )
+)
+(worker f
+  (bb0 () ()
+    (return
+      (literal 1))
+  )
+)
+(worker f
+  (bb0 () ()
+    (return
+      (literal 6))
+  )
+)
+(worker f
+  (bb0 () ()
+    (return
+      (literal 9))
+  )
+)
+(worker f
+  (bb0 () ()
+    (return
+      (simple-var-ref b))
+  )
+)
+(worker host
+  (bb0 () ()
+    (named-worker inner (
+      (value-type int))
+      (block-function-body
+        (return
+          (literal 5))))
+    (return
+      (single-wait-action
+        (simple-var-ref inner)))
+  )
+)
+(worker inner
+  (bb0 () ()
+    (return
+      (literal 5))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 2))
+  )
+)
+(worker w
+  (bb0 () ()
+    (return
+      (literal 3))
+  )
+)

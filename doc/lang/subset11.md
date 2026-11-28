@@ -47,9 +47,11 @@
 - [Match statement](https://ballerina.io/spec/lang/master/#match-stmt)
   - Currently only supports [const-pattern](https://ballerina.io/spec/lang/master/#const-pattern) and [wildcard-match-pattern](https://ballerina.io/spec/lang/master/#wildcard-match-pattern)
 - [Named workers](https://ballerina.io/spec/lang/master/#section_7.3.2) ([`named-worker-decl`](https://ballerina.io/spec/lang/master/#named-worker-decl))
-  - Only in a `block-function-body`, with optional annotations and return type
+  - Declarations directly in a `block-function-body` or in a [`fork` statement](https://ballerina.io/spec/lang/master/#section_7.5) are supported, with optional annotations and return type
   - [`wait`](https://ballerina.io/spec/lang/master/#wait-action) on a worker name has the worker's return type as its eventual type
-  - `fork`, `transactional` workers and `on fail` are not supported; message passing is listed under Actions
+  - `transactional` workers and `on fail` are not supported; message passing is listed under Actions
+- [Fork statement](https://ballerina.io/spec/lang/master/#fork-stmt)
+  - A non-final local variable captured by any fork worker cannot be narrowed inside the fork's workers or after the fork. This applies even if the capture is read-only or no worker can run between a type test and the use of the variable.
 
 ## Expressions
 
@@ -64,7 +66,7 @@
 - [Wait action](https://ballerina.io/spec/lang/master/#wait-action)
 - [Worker message passing](https://ballerina.io/spec/lang/master/#section_7.8)
   - Message actions are not supported inside nested statement blocks or after an `if` without `else` in the same block.
-    - When a function body's worker group contains message actions, `wait` actions referring directly to workers in that group are also unsupported in those positions, including references enclosed in parentheses.
+    - When a function body's or `fork`'s worker group contains message actions, `wait` actions referring directly to workers in that group are also unsupported in those positions, including references enclosed in parentheses.
   - Message actions are not supported in query expressions or as compound-assignment operands.
   - Send actions are not supported under `trap`.
   - A multiple receive with more than one receive field and a possible error result is supported only as the operand of `check`, `checkpanic` or `return`. A multiple receive with more than one receive field is not supported under `trap`.

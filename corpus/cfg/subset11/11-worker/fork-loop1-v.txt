@@ -1,0 +1,540 @@
+(foreachEach
+  (bb0 () (bb1))
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 3))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (simple-var-ref i)))
+        (return
+          (simple-var-ref i))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (return
+          (binary-expr *
+            (simple-var-ref v)
+            (literal 10)))))
+    (var-def
+      (variable r (type
+        (constrained-type
+          (builtin-ref-type map)
+          (value-type int))) (expr
+        (multiple-wait-action a
+          (simple-var-ref a) b
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+  (bb3 (bb1) ())
+)
+(foreachOverlapping
+  (bb0 () (bb1)
+    (var-def
+      (variable results (type
+        (array-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ..<
+      (literal 0)
+      (literal 3))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation runtime sleep (
+            (binary-expr *
+              (type-conversion-expr
+                (group-expr
+                  (binary-expr -
+                    (literal 3)
+                    (simple-var-ref i)))
+                (value-type decimal))
+              (literal 0.05)))))
+        (expression-stmt
+          (worker-async-send-action b
+            (simple-var-ref i)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (return
+          (binary-expr *
+            (simple-var-ref v)
+            (literal 10)))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (simple-var-ref b))))
+  )
+  (bb3 (bb1) (bb4))
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref results)
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int)))))
+  )
+  (bb5 (bb4) (bb4)
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+  (bb6 (bb4) ())
+)
+(inNamedWorkerLoop
+  (bb0 () ()
+    (named-worker host (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable sum (type
+            (value-type int)) (expr
+            (literal 0))))
+        (foreach
+          (var-def
+            (variable i (type
+              (value-type int))))
+          (binary-expr ...
+            (literal 1)
+            (literal 3))
+          (block-stmt
+            (fork
+              (named-worker a (
+                (value-type null))
+                (block-function-body
+                  (expression-stmt
+                    (worker-async-send-action b
+                      (simple-var-ref i)))))
+              (named-worker b (
+                (value-type int))
+                (block-function-body
+                  (return
+                    (worker-receive-action a)))))
+            (compound-assignment +
+              (simple-var-ref sum)
+              (single-wait-action
+                (simple-var-ref b)))))
+        (return
+          (simple-var-ref sum))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref host)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+)
+(lambdaCalledRepeatedly
+  (bb0 () ()
+    (var-def
+      (variable f (expr
+        (lambda
+          (function $anonFunc$_0 (
+            (variable x (type
+              (value-type int)))) (
+            (value-type int))
+            (block-function-body
+              (fork
+                (named-worker a (
+                  (value-type null))
+                  (block-function-body
+                    (expression-stmt
+                      (worker-async-send-action b
+                        (simple-var-ref x)))))
+                (named-worker b (
+                  (value-type int))
+                  (block-function-body
+                    (var-def
+                      (variable v (type
+                        (value-type int)) (expr
+                        (worker-receive-action a))))
+                    (return
+                      (binary-expr *
+                        (simple-var-ref v)
+                        (literal 2))))))
+              (return
+                (single-wait-action
+                  (simple-var-ref b)))))))))
+    (expression-stmt
+      (invocation io println (
+        (binary-expr +
+          (invocation f (
+            (literal 1)))
+          (invocation f (
+            (literal 2)))))))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation foreachEach ()))
+    (expression-stmt
+      (invocation foreachOverlapping ()))
+    (expression-stmt
+      (invocation whileEach ()))
+    (expression-stmt
+      (invocation whileOverlapping ()))
+    (expression-stmt
+      (invocation lambdaCalledRepeatedly ()))
+    (expression-stmt
+      (invocation inNamedWorkerLoop ()))
+  )
+)
+(whileEach
+  (bb0 () (bb1)
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 2))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (simple-var-ref n)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (return
+          (binary-expr +
+            (simple-var-ref v)
+            (literal 100)))))
+    (var-def
+      (variable r (type
+        (value-type int)) (expr
+        (single-wait-action
+          (simple-var-ref b)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) ())
+)
+(whileOverlapping
+  (bb0 () (bb1)
+    (var-def
+      (variable results (type
+        (array-type
+          (constrained-type
+            (builtin-ref-type future)
+            (value-type int)) dimensions: 1 ([]))) (expr
+        (list-constructor-expr))))
+    (var-def
+      (variable i (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr <
+      (simple-var-ref i)
+      (literal 3))
+  )
+  (bb2 (bb1) (bb1)
+    (var-def
+      (variable n (type
+        (value-type int)) (expr
+        (simple-var-ref i))))
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (invocation runtime sleep (
+            (binary-expr *
+              (type-conversion-expr
+                (group-expr
+                  (binary-expr -
+                    (literal 3)
+                    (simple-var-ref n)))
+                (value-type decimal))
+              (literal 0.05)))))
+        (expression-stmt
+          (worker-async-send-action b
+            (simple-var-ref n)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (return
+          (binary-expr +
+            (simple-var-ref v)
+            (literal 1000)))))
+    (expression-stmt
+      (invocation lang.array push (
+        (simple-var-ref results)
+        (simple-var-ref b))))
+    (compound-assignment +
+      (simple-var-ref i)
+      (literal 1))
+  )
+  (bb3 (bb1) (bb4))
+  (bb4 (bb3 bb5) (bb5 bb6)
+    (simple-var-ref results)
+    (var-def
+      (variable f (type
+        (constrained-type
+          (builtin-ref-type future)
+          (value-type int)))))
+  )
+  (bb5 (bb4) (bb4)
+    (var-def
+      (variable r (type
+        (union-type
+          (value-type int)
+          (error-type))) (expr
+        (single-wait-action
+          (simple-var-ref f)))))
+    (expression-stmt
+      (invocation io println (
+        (simple-var-ref r))))
+  )
+  (bb6 (bb4) ())
+)
+($anonFunc$_0
+  (bb0 () ()
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (simple-var-ref x)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (worker-receive-action a))))
+        (return
+          (binary-expr *
+            (simple-var-ref v)
+            (literal 2)))))
+    (return
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (invocation runtime sleep (
+        (binary-expr *
+          (type-conversion-expr
+            (group-expr
+              (binary-expr -
+                (literal 3)
+                (simple-var-ref i)))
+            (value-type decimal))
+          (literal 0.05)))))
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref i)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (invocation runtime sleep (
+        (binary-expr *
+          (type-conversion-expr
+            (group-expr
+              (binary-expr -
+                (literal 3)
+                (simple-var-ref n)))
+            (value-type decimal))
+          (literal 0.05)))))
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref n)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref i)))
+    (return
+      (simple-var-ref i))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref i)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref n)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action b
+        (simple-var-ref x)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (return
+      (worker-receive-action a))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (return
+      (binary-expr *
+        (simple-var-ref v)
+        (literal 10)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (return
+      (binary-expr *
+        (simple-var-ref v)
+        (literal 10)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (return
+      (binary-expr *
+        (simple-var-ref v)
+        (literal 2)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (return
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 100)))
+  )
+)
+(worker b
+  (bb0 () ()
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action a))))
+    (return
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1000)))
+  )
+)
+(worker host
+  (bb0 () (bb1)
+    (var-def
+      (variable sum (type
+        (value-type int)) (expr
+        (literal 0))))
+  )
+  (bb1 (bb0 bb2) (bb2 bb3)
+    (binary-expr ...
+      (literal 1)
+      (literal 3))
+    (var-def
+      (variable i (type
+        (value-type int))))
+  )
+  (bb2 (bb1) (bb1)
+    (named-worker a (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action b
+            (simple-var-ref i)))))
+    (named-worker b (
+      (value-type int))
+      (block-function-body
+        (return
+          (worker-receive-action a))))
+    (compound-assignment +
+      (simple-var-ref sum)
+      (single-wait-action
+        (simple-var-ref b)))
+  )
+  (bb3 (bb1) ()
+    (return
+      (simple-var-ref sum))
+  )
+)

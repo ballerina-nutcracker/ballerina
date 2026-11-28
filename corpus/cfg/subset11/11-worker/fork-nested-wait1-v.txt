@@ -1,0 +1,127 @@
+(inMessagingDefaultWorker
+  (bb0 () (bb1 bb2)
+    (named-worker other (
+      (value-type null))
+      (block-function-body
+        (expression-stmt
+          (worker-async-send-action function
+            (literal 1)))))
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action other))))
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (binary-expr +
+            (simple-var-ref v)
+            (literal 1)))))
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) ()
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(inMessagingNamedWorker
+  (bb0 () ()
+    (named-worker host (
+      (value-type int))
+      (block-function-body
+        (var-def
+          (variable v (type
+            (value-type int)) (expr
+            (worker-receive-action function))))
+        (fork
+          (named-worker a (
+            (value-type int))
+            (block-function-body
+              (return
+                (simple-var-ref v)))))
+        (if
+          (simple-var-ref flag)
+          (block-stmt
+            (return
+              (single-wait-action
+                (simple-var-ref a)))) ())
+        (block-stmt
+          (return
+            (literal 0)))))
+    (expression-stmt
+      (worker-async-send-action host
+        (literal 5)))
+    (return
+      (single-wait-action
+        (simple-var-ref host)))
+  )
+)
+(main
+  (bb0 () ()
+    (expression-stmt
+      (invocation io println (
+        (invocation inMessagingNamedWorker (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inMessagingNamedWorker (
+          (literal false))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inMessagingDefaultWorker (
+          (literal true))))))
+    (expression-stmt
+      (invocation io println (
+        (invocation inMessagingDefaultWorker (
+          (literal false))))))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (binary-expr +
+        (simple-var-ref v)
+        (literal 1)))
+  )
+)
+(worker a
+  (bb0 () ()
+    (return
+      (simple-var-ref v))
+  )
+)
+(worker host
+  (bb0 () (bb1 bb2)
+    (var-def
+      (variable v (type
+        (value-type int)) (expr
+        (worker-receive-action function))))
+    (named-worker a (
+      (value-type int))
+      (block-function-body
+        (return
+          (simple-var-ref v))))
+    (simple-var-ref flag)
+  )
+  (bb1 (bb0) ()
+    (return
+      (single-wait-action
+        (simple-var-ref a)))
+  )
+  (bb2 (bb0) ()
+    (return
+      (literal 0))
+  )
+)
+(worker other
+  (bb0 () ()
+    (expression-stmt
+      (worker-async-send-action function
+        (literal 1)))
+  )
+)

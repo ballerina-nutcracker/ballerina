@@ -42,6 +42,8 @@ func walkStatement(cx *functionContext, node ast.StatementNode) desugaredNode[as
 		return walkDo(cx, stmt)
 	case *ast.BLangLock:
 		return walkLock(cx, stmt)
+	case *ast.BLangFork:
+		return walkFork(cx, stmt)
 	case *ast.BLangForeach:
 		return visitForEach(cx, stmt)
 	case *ast.BLangVariableDef:
@@ -79,14 +81,14 @@ func walkBlockStmt(cx *functionContext, stmt *ast.BLangBlockStmt) desugaredNode[
 
 func walkBlockFunctionBody(cx *functionContext, body *ast.BLangBlockFunctionBody) {
 	allStmts := walkStatementList(cx, body.InitStmts)
-	if len(body.Workers) == 0 {
+	if body.Region == nil {
 		allStmts = append(allStmts, walkStatementList(cx, body.Stmts)...)
 	} else {
-		allStmts = append(allStmts, desugarWorkerRegion(cx, body)...)
+		allStmts = append(allStmts, desugarBodyWorkerRegion(cx, body)...)
 	}
 
 	body.InitStmts = nil
-	body.Workers = nil
+	body.Region = nil
 	body.Stmts = allStmts
 }
 

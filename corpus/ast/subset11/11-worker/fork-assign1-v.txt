@@ -1,0 +1,38 @@
+(compilation-unit
+(package-id $anon . 0.0.0)
+  (import-package ballerina io (as io))
+  (function main () (
+    (value-type null))
+    (block-function-body
+      (var-def
+        (variable x (type
+          (value-type int)) (expr
+          (literal 0))))
+      (var-def
+        (variable s (type
+          (value-type string)) (expr
+          (literal a))))
+      (fork
+        (named-worker w (
+          (value-type null))
+          (block-function-body
+            (assignment
+              (simple-var-ref x)
+              (literal 5))))
+        (named-worker v (
+          (value-type null))
+          (block-function-body
+            (assignment
+              (simple-var-ref s)
+              (literal b)))))
+      (assignment
+        (wildcard-binding-pattern)
+        (multiple-wait-action w
+          (simple-var-ref w) v
+          (simple-var-ref v)))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref x))))
+      (expression-stmt
+        (invocation io println (
+          (simple-var-ref s)))))))

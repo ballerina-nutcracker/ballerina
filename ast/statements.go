@@ -123,6 +123,12 @@ type (
 		IsExhaustive bool
 	}
 
+	// BLangFork is `fork { named-worker-decl+ }`.
+	BLangFork struct {
+		bLangStatementBase
+		Region *WorkerRegion
+	}
+
 	BLangLock struct {
 		bLangStatementBase
 		Body BLangBlockStmt
@@ -231,6 +237,7 @@ var (
 	_ BLangNode = &BLangPanic{}
 	_ BLangNode = &BLangMatchStatement{}
 	_ BLangNode = &BLangLock{}
+	_ BLangNode = &BLangFork{}
 )
 
 func (b *BLangAssignment) GetVariable() LExpr {

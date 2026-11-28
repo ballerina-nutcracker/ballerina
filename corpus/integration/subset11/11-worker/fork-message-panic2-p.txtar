@@ -1,0 +1,5 @@
+-- stdout --
+-- stderr --
+error: b panicked
+        at boom(fork-message-panic2-p.bal:18)
+           main(fork-message-panic2-p.bal:28)

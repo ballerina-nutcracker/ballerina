@@ -1,0 +1,13 @@
+-- stdout --
+-- stderr --
+error[SEMANTIC_ERROR]: worker 'b' may be evaluated more than once
+  --> fork-ref3-e.bal:23:30
+   |
+23 |                 int r = wait b; // @error b may be evaluated once per iteration
+   |                              ^
+
+error[SEMANTIC_ERROR]: worker 'd' may be evaluated more than once
+  --> fork-ref3-e.bal:37:29
+   |
+37 |                 return wait d; // @error the lambda may be called more than once
+   |                             ^
